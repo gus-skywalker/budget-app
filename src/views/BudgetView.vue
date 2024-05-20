@@ -1,62 +1,96 @@
 <template>
-    <div>
-        <FinancialGoal />
-
+    <v-container>
         <h1>Entrada de Dados</h1>
 
         <!-- Seção de Entradas -->
-        <div class="section">
-            <h2>Entradas</h2>
-            <label>Data:</label>
-            <input type="date" v-model="income.date">
-            <label>Valor:</label>
-            <input type="number" v-model="income.amount">
-            <label>Descrição:</label>
-            <input type="text" v-model="income.description">
-            <label>Categoria:</label>
-            <select v-model="income.category">
-                <option v-for="category in categories" :key="category.id" :value="category">{{ category.name }}</option>
-            </select>
-            <label>Método de Pagamento:</label>
-            <select v-model="income.paymentMethod">
-                <option v-for="paymentMethod in paymentMethods" :key="paymentMethod.id" :value="paymentMethod">{{
-                    paymentMethod.name }}</option>
-            </select>
-            <button @click="saveIncome">Salvar Entrada</button>
-        </div>
+        <v-card class="section">
+            <v-card-title>
+                <h2>Entradas</h2>
+            </v-card-title>
+            <v-card-text>
+                <v-row>
+                    <v-col cols="12" sm="6" md="4">
+                        <v-text-field label="Data" type="date" v-model="income.date"
+                            class="input--is-label-active"></v-text-field>
+                    </v-col>
+                    <v-col cols="12" sm="6" md="4">
+                        <v-text-field label="Valor" type="number" v-model="income.amount"
+                            :rules="[value => !!value || 'Valor é obrigatório', value => /^\d+(\.\d{1,2})?$/.test(value) || 'Formato de moeda inválido']"></v-text-field>
+                    </v-col>
+                    <v-col cols="12" md="4">
+                        <v-text-field label="Descrição" v-model="income.description"></v-text-field>
+                    </v-col>
+                    <v-col cols="12" sm="6" md="6">
+                        <v-select label="Categoria" v-model="income.category" :items="categories" item-text="name"
+                            item-value="id"></v-select>
+                    </v-col>
+                    <v-col cols="12" sm="6" md="6">
+                        <v-select label="Método de Pagamento" v-model="income.paymentMethod" :items="paymentMethods"
+                            item-text="name" item-value="id"></v-select>
+                    </v-col>
+                </v-row>
+            </v-card-text>
+            <v-card-actions>
+                <v-btn color="primary" @click="saveIncome">Salvar Entrada</v-btn>
+            </v-card-actions>
+        </v-card>
 
         <!-- Seção de Débitos -->
-        <div class="section">
-            <h2>Débitos</h2>
-            <label>Data:</label>
-            <input type="date" v-model="expense.date">
-            <label>Valor:</label>
-            <input type="number" v-model="expense.amount">
-            <label>Descrição:</label>
-            <input type="text" v-model="expense.description">
-            <label>Método de Pagamento:</label>
-            <select v-model="expense.paymentMethod">
-                <option v-for="paymentMethod in paymentMethods" :key="paymentMethod.id" :value="paymentMethod">{{
-                    paymentMethod.name }}</option>
-            </select>
-            <button @click="saveExpense">Salvar Débito</button>
-        </div>
+        <v-card class="section">
+            <v-card-title>
+                <h2>Débitos</h2>
+            </v-card-title>
+            <v-card-text>
+                <v-row>
+                    <v-col cols="12" sm="6" md="4">
+                        <v-text-field label="Data" type="date" v-model="expense.date" filled></v-text-field>
+                    </v-col>
+                    <v-col cols="12" sm="6" md="4">
+                        <v-text-field label="Valor" type="number" v-model="expense.amount" filled outlined
+                            :rules="[value => !!value || 'Valor é obrigatório', value => /^\d+(\.\d{1,2})?$/.test(value) || 'Formato de moeda inválido']"></v-text-field>
+                    </v-col>
+                    <v-col cols="12" md="4">
+                        <v-text-field label="Descrição" v-model="expense.description"></v-text-field>
+                    </v-col>
+                    <v-col cols="12" md="6">
+                        <v-select label="Método de Pagamento" v-model="expense.paymentMethod" :items="paymentMethods"
+                            item-text="name" item-value="id"></v-select>
+                    </v-col>
+                </v-row>
+            </v-card-text>
+            <v-card-actions>
+                <v-btn color="primary" @click="saveExpense">Salvar Débito</v-btn>
+            </v-card-actions>
+        </v-card>
 
         <!-- Lista de Débitos Mensais -->
-        <div class="section">
-            <h2>Débitos Mensais</h2>
-            <label>Selecione o Mês:</label>
-            <select v-model="selectedMonth" @change="fetchMonthlyExpenses">
-                <option v-for="(month, index) in months" :key="index" :value="month">{{ month }}</option>
-            </select>
-            <ul v-if="monthlyExpenses.length">
-                <li v-for="(expense, index) in monthlyExpenses" :key="index">
-                    {{ expense.date }} - {{ expense.description }} - R$ {{ expense.amount }}
-                </li>
-            </ul>
-            <p v-else>Nenhum débito encontrado para este mês.</p>
-        </div>
-    </div>
+        <v-card class="section">
+            <v-card-title>
+                <h2>Débitos Mensais</h2>
+            </v-card-title>
+            <v-card-text>
+                <v-row align="center">
+                    <v-col cols="12" md="6">
+                        <v-select label="Selecione o Mês" v-model="selectedMonth" @change="fetchMonthlyExpenses"
+                            :items="months"></v-select>
+                    </v-col>
+                </v-row>
+                <v-divider class="my-4"></v-divider>
+                <v-list v-if="monthlyExpenses.length">
+                    <v-list-item v-for="(expense, index) in monthlyExpenses" :key="index">
+                        <v-list-item-content>
+                            <v-list-item-title>{{ expense.date }} - {{ expense.description }} - R$ {{ expense.amount
+                                }}</v-list-item-title>
+                        </v-list-item-content>
+                    </v-list-item>
+                </v-list>
+                <v-alert v-else type="info">
+                    Nenhum débito encontrado para este mês.
+                </v-alert>
+            </v-card-text>
+        </v-card>
+    </v-container>
+    <FinancialGoal />
 </template>
 
 <script>
