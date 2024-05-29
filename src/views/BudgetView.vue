@@ -95,6 +95,8 @@
 
 <script>
 import FinancialGoal from '../components/FinancialGoal.vue'
+import IncomeService from '@/services/IncomeService'
+import ExpenseService from '@/services/ExpenseService'
 import axios from 'axios'
 
 export default {
@@ -156,24 +158,41 @@ export default {
                 });
         },
         saveIncome() {
-            axios.post('/api/incomes', this.income)
+            IncomeService.create(this.income)
                 .then(response => {
                     console.log('Income saved successfully:', response.data);
-                    // Limpar os campos após o salvamento, se necessário
+                    this.resetIncomeForm();
                 })
                 .catch(error => {
                     console.error('Error saving income:', error);
                 });
         },
         saveExpense() {
-            axios.post('/api/expenses', this.expense)
+            ExpenseService.create(this.expense)
                 .then(response => {
                     console.log('Expense saved successfully:', response.data);
-                    // Limpar os campos após o salvamento, se necessário
+                    this.resetExpenseForm();
                 })
                 .catch(error => {
                     console.error('Error saving expense:', error);
                 });
+        },
+        resetIncomeForm() {
+            this.income = {
+                date: '',
+                amount: 0,
+                description: '',
+                category: null,
+                paymentMethod: null
+            };
+        },
+        resetExpenseForm() {
+            this.expense = {
+                date: '',
+                amount: 0,
+                description: '',
+                paymentMethod: null
+            };
         }
     }
 }
