@@ -1,27 +1,23 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { useRouter } from 'vue-router';
 import { useTheme } from 'vuetify';
-import { useStore } from 'vuex';
+import { useStore, mapGetters } from 'vuex';
 
+const router = useRouter();
 const theme = useTheme();
 const store = useStore();
-const loginEmail = ref('');
-const loginPassword = ref('');
-
 const user = computed(() => store.getters.user);
 
-function login() {
-    store.dispatch('login', { email: loginEmail.value, password: loginPassword.value });
+// Method to logout the user
+const logoutUser = () => {
+    store.dispatch('resetUser')
+    router.push('/login')
 }
-
 // Function to redirect users to the OAuth2 login page
 function redirectToOAuth2LoginPage() {
     // Replace 'oauth2_login_url' with the actual URL of your OAuth2 login page
     window.location.href = 'http://localhost:9000/login';
-}
-
-function logout() {
-    store.dispatch('logout');
 }
 
 // Function to toggle the theme
@@ -33,9 +29,10 @@ function toggleTheme(): void {
 
 <template>
     <v-navigation-drawer app expand-on-hover rail>
+
         <v-list v-if="user">
             <v-list-item :prepend-avatar="user.avatar" :subtitle="user.email" :title="user.name"></v-list-item>
-            <v-list-item @click="logout" title="Logout" prepend-icon="mdi-logout"></v-list-item>
+            <v-list-item @click="logoutUser" title="Logout" prepend-icon="mdi-logout"></v-list-item>
         </v-list>
         <v-list v-else>
             <!-- Instead of directly logging in, redirect users to the OAuth2 login page -->
