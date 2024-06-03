@@ -31,7 +31,7 @@ function toggleTheme(): void {
     <v-navigation-drawer app expand-on-hover rail>
 
         <v-list v-if="user">
-            <v-list-item :prepend-avatar="user.avatar" :subtitle="user.email" :title="user.name"></v-list-item>
+            <v-list-item :prepend-avatar="user.avatar" :subtitle="user.email" :title="user.username"></v-list-item>
             <v-list-item @click="logoutUser" title="Logout" prepend-icon="mdi-logout"></v-list-item>
         </v-list>
         <v-list v-else>

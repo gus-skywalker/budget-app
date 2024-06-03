@@ -12,10 +12,16 @@ const error = ref(null)
 const userLogin = async () => {
     try {
         const res = await axios.post('http://localhost:9000/auth/signin', userData.value)
-        console.log(res);
         store.commit('SET_AUTH', true)
         store.commit('SET_TOKEN', res.data.token)
-        store.commit('SET_USER', res.data.username)
+        store.commit('SET_USER', {
+            username: res.data.username,
+            email: res.data.email,
+            id: res.data.id,
+            language: res.data.language,
+            userRole: res.data.userRole,
+            createdAt: res.data.createdAt,
+        })
         router.push('/')
     } catch (err) {
         error.value = 'Invalid credentials. Please try again.'

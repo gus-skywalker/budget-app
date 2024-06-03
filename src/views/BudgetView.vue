@@ -22,12 +22,8 @@
                                 <v-text-field label="Descrição" v-model="income.description"></v-text-field>
                             </v-col>
                             <v-col cols="12" sm="6" md="6">
-                                <v-select label="Categoria" v-model="income.category" :items="categories"
-                                    item-text="name" item-value="id"></v-select>
-                            </v-col>
-                            <v-col cols="12" sm="6" md="6">
                                 <v-select label="Método de Pagamento" v-model="income.paymentMethod"
-                                    :items="paymentMethods" item-text="name" item-value="id"></v-select>
+                                    :items="paymentMethods" item-title="name" item-value="id"></v-select>
                             </v-col>
                         </v-row>
                     </v-card-text>
@@ -53,9 +49,13 @@
                             <v-col cols="12" md="12">
                                 <v-text-field label="Descrição" v-model="expense.description"></v-text-field>
                             </v-col>
-                            <v-col cols="12" md="12">
+                            <v-col cols="12" sm="6" md="6">
+                                <v-select label="Categoria" v-model="expense.category" :items="categories"
+                                    item-title="name" item-value="id"></v-select>
+                            </v-col>
+                            <v-col cols="12" sm="6" md="6">
                                 <v-select label="Método de Pagamento" v-model="expense.paymentMethod"
-                                    :items="paymentMethods" item-text="name" item-value="id"></v-select>
+                                    :items="paymentMethods" item-title="name" item-value="id"></v-select>
                             </v-col>
                         </v-row>
                     </v-card-text>
@@ -75,17 +75,16 @@
                     <v-card-text>
                         <v-row align="center">
                             <v-col cols="12" md="12">
-                                <v-select label="Selecione o Mês" v-model="selectedMonth" @change="fetchMonthlyIncomes"
-                                    :items="months"></v-select>
+                                <v-select label="Selecione o Mês" v-model="selectedIncomeMonth"
+                                    @update:model-value="fetchMonthlyIncomes" :items="months" item-title="name"
+                                    item-value="value"></v-select>
                             </v-col>
                         </v-row>
                         <v-divider class="my-4"></v-divider>
                         <v-list v-if="monthlyIncomes.length">
                             <v-list-item v-for="(income, index) in monthlyIncomes" :key="index">
-                                <v-list-item-content>
-                                    <v-list-item-title>{{ income.date }} - {{ income.description }} - R$ {{
-                                        income.amount }}</v-list-item-title>
-                                </v-list-item-content>
+                                <v-list-item-title>{{ income.date }} - R$ {{ income.amount }} - {{ income.description
+                                    }}</v-list-item-title>
                             </v-list-item>
                         </v-list>
                         <v-alert v-else type="info">
@@ -102,17 +101,16 @@
                     <v-card-text>
                         <v-row align="center">
                             <v-col cols="12" md="12">
-                                <v-select label="Selecione o Mês" v-model="selectedMonth" @change="fetchMonthlyExpenses"
-                                    :items="months"></v-select>
+                                <v-select label="Selecione o Mês" v-model="selectedExpenseMonth"
+                                    @update:model-value="fetchMonthlyExpenses" :items="months" item-title="name"
+                                    item-value="value"></v-select>
                             </v-col>
                         </v-row>
                         <v-divider class="my-4"></v-divider>
                         <v-list v-if="monthlyExpenses.length">
                             <v-list-item v-for="(expense, index) in monthlyExpenses" :key="index">
-                                <v-list-item-content>
-                                    <v-list-item-title>{{ expense.date }} - {{ expense.description }} - R$ {{
-                                        expense.amount }}</v-list-item-title>
-                                </v-list-item-content>
+                                <v-list-item-title>{{ expense.date }} - R$ {{ expense.amount }} - {{ expense.description
+                                    }}</v-list-item-title>
                             </v-list-item>
                         </v-list>
                         <v-alert v-else type="info">
@@ -143,19 +141,34 @@ export default {
                 date: '',
                 amount: 0,
                 description: '',
-                category: null,
                 paymentMethod: null
             },
             expense: {
                 date: '',
                 amount: 0,
                 description: '',
+                category: null,
                 paymentMethod: null
             },
             categories: [],
             paymentMethods: [],
-            selectedMonth: '',
-            months: ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'],
+            selectedIncomeMonth: null,
+            selectedExpenseMonth: null,
+            selectedLanguage: 'pt',
+            months: [
+                { name: 'Janeiro', value: 1 },
+                { name: 'Fevereiro', value: 2 },
+                { name: 'Março', value: 3 },
+                { name: 'Abril', value: 4 },
+                { name: 'Maio', value: 5 },
+                { name: 'Junho', value: 6 },
+                { name: 'Julho', value: 7 },
+                { name: 'Agosto', value: 8 },
+                { name: 'Setembro', value: 9 },
+                { name: 'Outubro', value: 10 },
+                { name: 'Novembro', value: 11 },
+                { name: 'Dezembro', value: 12 }
+            ],
             monthlyExpenses: [],
             monthlyIncomes: [],
         };
@@ -166,40 +179,70 @@ export default {
     },
     methods: {
         fetchCategories() {
-            axios.get('/api/categories')
+            axios.get('http://localhost:8080/api/categories/translated', {
+                params: {
+                    lang: this.selectedLanguage
+                }
+            })
                 .then(response => {
-                    this.categories = response.data;
+                    this.categories = response.data.map(category => ({
+                        id: category.id,
+                        code: category.code,
+                        name: category.name
+                    }));
                 })
                 .catch(error => {
                     console.error('Error fetching categories:', error);
                 });
         },
         fetchPaymentMethods() {
-            axios.get('/api/payment-methods')
+            axios.get('http://localhost:8080/api/payment-methods/translated', {
+                params: {
+                    lang: this.selectedLanguage
+                }
+            })
                 .then(response => {
-                    this.paymentMethods = response.data;
+                    this.paymentMethods = response.data.map(method => ({
+                        id: method.id,
+                        code: method.code,
+                        name: method.name
+                    }));
                 })
                 .catch(error => {
                     console.error('Error fetching payment methods:', error);
                 });
         },
         fetchMonthlyExpenses() {
-            axios.get(`/api/expenses/monthly?month=${this.selectedMonth}`)
-                .then(response => {
-                    this.monthlyExpenses = response.data;
-                })
-                .catch(error => {
-                    console.error('Error fetching monthly expenses:', error);
-                });
+            const monthNumber = this.selectedExpenseMonth;
+            if (monthNumber !== null) {
+                console.log('Fetching expenses for month:', monthNumber);
+                axios.get(`http://localhost:8080/api/expenses/monthly?month=${monthNumber}`)
+                    .then(response => {
+                        console.log(response);
+                        this.monthlyExpenses = response.data;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching monthly expenses:', error);
+                    });
+            } else {
+                console.error('Invalid month selected');
+            }
         },
         fetchMonthlyIncomes() {
-            axios.get(`/api/incomes/monthly?month=${this.selectedMonth}`)
-                .then(response => {
-                    this.monthlyIncomes = response.data;
-                })
-                .catch(error => {
-                    console.error('Error fetching monthly incomes:', error);
-                });
+            const monthNumber = this.selectedIncomeMonth;
+            if (monthNumber !== null) {
+                console.log('Fetching incomes for month:', monthNumber);
+                axios.get(`http://localhost:8080/api/incomes/monthly?month=${monthNumber}`)
+                    .then(response => {
+                        console.log(response);
+                        this.monthlyIncomes = response.data;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching monthly incomes:', error);
+                    });
+            } else {
+                console.error('Invalid month selected');
+            }
         },
         saveIncome() {
             IncomeService.create(this.income)
