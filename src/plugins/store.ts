@@ -1,71 +1,33 @@
-// store/index.ts
-import { createStore } from 'vuex'
+import Vuex from 'vuex'
 
-import axios from 'axios'
-// Define the User type
-interface User {
-  name: string
-  email: string
-  avatar: string
-}
-
-// Define the State type
-interface State {
-  user: User | null
-}
-
-// Define the mutations types
-type Mutations<S = State> = {
-  SET_USER(state: S, user: User): void
-  CLEAR_USER(state: S): void
-}
-
-// Define the actions context
-interface ActionsContext {
-  commit<K extends keyof Mutations>(
-    key: K,
-    payload?: Parameters<Mutations[K]>[1]
-  ): ReturnType<Mutations[K]>
-}
-
-// Define the actions types
-type Actions = {
-  login(context: ActionsContext, payload: { email: string; password: string }): Promise<void>
-  logout(context: ActionsContext): void
-}
-
-// Define the getters types
-type Getters = {
-  user(state: State): User | null
-}
-
-// Create the store
-export const store = createStore<State>({
+const store = new Vuex.Store({
   state: {
-    user: null
+    token: null,
+    auth: false,
+    user: {}
+  },
+  getters: {
+    user: (state) => state.user,
+    auth: (state) => state.auth,
+    token: (state) => state.token
   },
   mutations: {
-    SET_USER(state, user: User) {
-      state.user = user
+    SET_TOKEN(state, value) {
+      state.token = value
     },
-    CLEAR_USER(state) {
-      state.user = null
+    SET_AUTH(state, value) {
+      state.auth = value
+    },
+    SET_USER(state, value) {
+      state.user = value
     }
-  } as Mutations,
+  },
   actions: {
-    async login({ commit }, { email, password }) {
-      try {
-        const response = await axios.post('/api/login', { email, password })
-        commit('SET_USER', response.data.user)
-      } catch (error) {
-        alert('Invalid credentials')
-      }
-    },
-    logout({ commit }) {
-      commit('CLEAR_USER')
+    resetUser({ commit }) {
+      commit('SET_TOKEN', null)
+      commit('SET_USER', {})
+      commit('SET_AUTH', false)
     }
-  } as Actions,
-  getters: {
-    user: (state) => state.user
-  } as Getters
+  }
 })
+export default store

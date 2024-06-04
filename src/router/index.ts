@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import SideBar from '@/components/SideBar.vue'
-import store from '@/plugins/store2'
+import store from '@/plugins/store'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -33,7 +33,7 @@ const router = createRouter({
       // route level code-splitting
       // this generates a separate chunk (About.[hash].js) for this route
       // which is lazy-loaded when the route is visited.
-      component: () => import('../views/DashboardViewMAT.vue')
+      component: () => import('../views/DashboardView.vue')
     },
     {
       path: '/login',

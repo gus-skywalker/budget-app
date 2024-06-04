@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
 import SideBar from './components/SideBar.vue'
-import LoginView from './views/LoginView.vue'
 import { useStore } from 'vuex'
 import { computed } from 'vue';
 

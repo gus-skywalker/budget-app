@@ -1,66 +1,75 @@
 <template>
-    <div>
+    <v-container>
         <!-- Overview Section -->
-        <div class="section">
-            <h2>Overview</h2>
-            <div>Total Income: {{ totalIncome }}</div>
-            <div>Total Expenses: {{ totalExpenses }}</div>
-            <div>Savings: {{ savings }}</div>
-        </div>
+        <v-card class="section">
+            <v-card-title>
+                <h2>Overview</h2>
+            </v-card-title>
+            <v-card-text>
+                <div>Total Income: {{ totalIncome }}</div>
+                <div>Total Expenses: {{ totalExpenses }}</div>
+                <div>Savings: {{ savings }}</div>
+            </v-card-text>
+        </v-card>
 
         <!-- Trends Over Time -->
-        <div class="section">
-            <h2>Trends Over Time</h2>
-            <div class="dropdown">
-                <label for="chart-type-select">Select Chart Type:</label>
-                <select id="chart-type-select" v-model="chartType" @change="updateCharts">
-                    <option value="line">Line Chart</option>
-                    <option value="bar">Bar Chart</option>
-                </select>
-            </div>
-            <!-- Dropdown for Expense Categories -->
-            <div class="dropdown">
-                <label for="category-select">Select Expense Category:</label>
-                <select id="category-select" v-model="selectedCategory" @change="updateCharts">
-                    <option value="">All Categories</option>
-                    <option v-for="category in expenseCategories" :key="category.id" :value="category.id">{{
-                        category.name }}</option>
-                </select>
-            </div>
-            <!-- Charts -->
-            <div class="chart-container">
-                <div class="chart">
+        <v-card class="section">
+            <v-card-title>
+                <h2>Trends Over Time</h2>
+            </v-card-title>
+            <v-card-text>
+                <v-row align="center">
+                    <v-col cols="12" md="6" lg="4">
+                        <v-select v-model="chartType" :items="chartTypes" label="Select Chart Type" outlined
+                            @change="updateCharts"></v-select>
+                    </v-col>
+                    <v-col cols="12" md="6" lg="4">
+                        <v-select v-model="selectedCategory" :items="expenseCategories" label="Select Expense Category"
+                            outlined @change="updateCharts"></v-select>
+                    </v-col>
+                </v-row>
+                <v-divider class="my-4"></v-divider>
+                <div class="chart-container">
                     <canvas ref="trendsChart"></canvas>
                 </div>
-            </div>
-        </div>
+            </v-card-text>
+        </v-card>
 
         <!-- Budget Tracker -->
-        <div class="section">
-            <h2>Budget Tracker</h2>
+        <v-card class="section">
+            <v-card-title>
+                <h2>Budget Tracker</h2>
+            </v-card-title>
             <!-- Display budget for different expense categories -->
-        </div>
+        </v-card>
 
         <!-- Financial Goals -->
-        <div class="section">
-            <h2>Financial Goals</h2>
-            <!-- Display Financial Goals -->
-            <div v-if="financialGoals.length">
-                <div v-for="goal in financialGoals" :key="goal.id">
-                    <div>{{ goal.name }}</div>
-                    <div>Target Amount: ${{ goal.targetAmount }}</div>
-                    <div>Deadline: {{ goal.deadline }}</div>
-                    <div>Progress: {{ calculateProgress(goal) }}%</div>
-                    <!-- Visual indicator for progress -->
-                    <div class="progress-bar" :style="{ width: calculateProgress(goal) + '%' }"></div>
-                </div>
-            </div>
-            <div v-else>
-                <p>No financial goals found.</p>
-            </div>
-        </div>
+        <v-card class="section">
+            <v-card-title>
+                <h2>Financial Goals</h2>
+            </v-card-title>
+            <v-card-text>
+                <v-row v-if="financialGoals.length">
+                    <v-col cols="12" md="6" lg="4" v-for="goal in financialGoals" :key="goal.id">
+                        <v-card>
+                            <v-card-title>{{ goal.name }}</v-card-title>
+                            <v-card-text>
+                                <div>Target Amount: ${{ goal.targetAmount }}</div>
+                                <div>Deadline: {{ goal.deadline }}</div>
+                                <div>Progress: {{ calculateProgress(goal) }}%</div>
+                                <!-- Visual indicator for progress -->
+                                <v-progress-linear :value="calculateProgress(goal)"></v-progress-linear>
+                            </v-card-text>
+                        </v-card>
+                    </v-col>
+                </v-row>
+                <v-alert v-else type="info">
+                    No financial goals found.
+                </v-alert>
+            </v-card-text>
+        </v-card>
 
-    </div>
+    </v-container>
 </template>
 
 <script>
@@ -69,13 +78,16 @@ import Chart from 'chart.js/auto';
 export default {
     data() {
         return {
-            // Mock data for demonstration
             chart: null,
             totalIncome: 5000,
             totalExpenses: 3000,
             savings: 2000,
-            chartType: 'bar', // Initially set to line chart
-            selectedCategory: '', // Initially no category selected
+            chartType: 'line',
+            chartTypes: [
+                { title: 'Line Chart', value: 'line' },
+                { title: 'Bar Chart', value: 'bar' }
+            ],
+            selectedCategory: '',
             expenseCategories: [],
             financialGoals: [],
         };
@@ -119,29 +131,19 @@ export default {
         },
         updateCharts() {
             if (this.chart) {
-                console.log(this.chart);
+                console.log(this.chart)
                 this.chart.destroy();
             }
             this.createChart();
-            // Fetch income and expenses data for the selected category from the backend API
-            // Update the data for the chart based on the selected category
-            // Redraw the chart with the updated data and selected chart type
-
         },
-        // Fetch financial goals (simulated)
         fetchFinancialGoals() {
-            // Simulate fetching financial goals (replace with actual API requests)
             this.financialGoals = [
                 { id: 1, name: 'Car Purchase', targetAmount: 20000, deadline: '2024-12-31', currentAmount: 15000 },
                 { id: 2, name: 'House Down Payment', targetAmount: 50000, deadline: '2025-06-30', currentAmount: 25000 }
-                // Add more financial goals as needed
             ];
         },
-        // Calculate progress towards a specific financial goal
         calculateProgress(goal) {
-            // Calculate progress percentage based on current and target amounts
             const progressPercentage = (goal.currentAmount / goal.targetAmount) * 100;
-            // Return progress percentage (rounded to two decimal places)
             return progressPercentage.toFixed(2);
         }
     }
@@ -151,5 +153,10 @@ export default {
 <style scoped>
 .section {
     margin-bottom: 30px;
+}
+
+.chart-container {
+    position: relative;
+    height: 400px;
 }
 </style>

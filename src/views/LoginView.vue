@@ -12,6 +12,8 @@ const error = ref(null)
 const userLogin = async () => {
     try {
         const res = await axios.post('http://localhost:9000/auth/signin', userData.value)
+
+        console.log(res)
         store.commit('SET_AUTH', true)
         store.commit('SET_TOKEN', res.data.token)
         store.commit('SET_USER', {

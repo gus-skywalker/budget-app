@@ -129,7 +129,7 @@
 import FinancialGoal from '../components/FinancialGoal.vue'
 import IncomeService from '@/services/IncomeService'
 import ExpenseService from '@/services/ExpenseService'
-import axios from 'axios'
+import DataService from '@/services/DataService'
 
 export default {
     components: {
@@ -179,11 +179,7 @@ export default {
     },
     methods: {
         fetchCategories() {
-            axios.get('http://localhost:8080/api/categories/translated', {
-                params: {
-                    lang: this.selectedLanguage
-                }
-            })
+            DataService.fetchCategories(this.selectedLanguage)
                 .then(response => {
                     this.categories = response.data.map(category => ({
                         id: category.id,
@@ -196,11 +192,7 @@ export default {
                 });
         },
         fetchPaymentMethods() {
-            axios.get('http://localhost:8080/api/payment-methods/translated', {
-                params: {
-                    lang: this.selectedLanguage
-                }
-            })
+            DataService.fetchPaymentMethods(this.selectedLanguage)
                 .then(response => {
                     this.paymentMethods = response.data.map(method => ({
                         id: method.id,
@@ -216,7 +208,7 @@ export default {
             const monthNumber = this.selectedExpenseMonth;
             if (monthNumber !== null) {
                 console.log('Fetching expenses for month:', monthNumber);
-                axios.get(`http://localhost:8080/api/expenses/monthly?month=${monthNumber}`)
+                ExpenseService.fetchMonthlyExpenses(monthNumber)
                     .then(response => {
                         console.log(response);
                         this.monthlyExpenses = response.data;
@@ -232,7 +224,7 @@ export default {
             const monthNumber = this.selectedIncomeMonth;
             if (monthNumber !== null) {
                 console.log('Fetching incomes for month:', monthNumber);
-                axios.get(`http://localhost:8080/api/incomes/monthly?month=${monthNumber}`)
+                IncomeService.fetchMonthlyIncomes(monthNumber)
                     .then(response => {
                         console.log(response);
                         this.monthlyIncomes = response.data;
