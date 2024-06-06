@@ -82,10 +82,8 @@
                         </v-row>
                         <v-divider class="my-4"></v-divider>
                         <v-list v-if="monthlyIncomes.length">
-                            <v-list-item v-for="(income, index) in monthlyIncomes" :key="index">
-                                <v-list-item-title>{{ income.date }} - R$ {{ income.amount }} - {{ income.description
-                                    }}</v-list-item-title>
-                            </v-list-item>
+                            <income-item v-for="(income, index) in monthlyIncomes" :key="index" :income="income"
+                                @toggle-recurring="toggleRecurring" @deleteIncome="deleteIncome"></income-item>
                         </v-list>
                         <v-alert v-else type="info">
                             Nenhuma entrada encontrada para este mês.
@@ -127,13 +125,15 @@
 
 <script>
 import FinancialGoal from '../components/FinancialGoal.vue'
+import IncomeItem from '../components/IncomeItem.vue'
 import IncomeService from '@/services/IncomeService'
 import ExpenseService from '@/services/ExpenseService'
 import DataService from '@/services/DataService'
 
 export default {
     components: {
-        FinancialGoal
+        FinancialGoal,
+        IncomeItem
     },
     data() {
         return {
@@ -141,7 +141,8 @@ export default {
                 date: '',
                 amount: 0,
                 description: '',
-                paymentMethod: null
+                paymentMethod: null,
+                isRecurring: false
             },
             expense: {
                 date: '',
@@ -272,7 +273,21 @@ export default {
                 description: '',
                 paymentMethod: null
             };
-        }
+        },
+        toggleRecurring(income) {
+            const incomeIndex = this.monthlyIncomes.findIndex(item => item.id === income.id);
+            if (incomeIndex !== -1) {
+                this.monthlyIncomes[incomeIndex].isRecurring = !this.monthlyIncomes[incomeIndex].isRecurring;
+            }
+        },
+        deleteIncome(income) {
+            if (confirm('Are you sure you want to delete this income?')) {
+                const incomeIndex = this.monthlyIncomes.findIndex((item) => item.id === income.id);
+                if (incomeIndex !== -1) {
+                    this.monthlyIncomes.splice(incomeIndex, 1);
+                }
+            }
+        },
     }
 }
 </script>
