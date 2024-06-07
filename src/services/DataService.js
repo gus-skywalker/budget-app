@@ -19,5 +19,8 @@ export default {
         lang: language
       }
     })
+  },
+  fetchMonthlyNubankBill(year, month) {
+    return axiosInterceptor.get(`${API_URL}/nubank-bills/getMonthlyExpenses/${year}/${month}`)
   }
 }

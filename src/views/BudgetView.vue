@@ -100,7 +100,7 @@
                         <v-row align="center">
                             <v-col cols="12" md="12">
                                 <v-select label="Selecione o Mês" v-model="selectedExpenseMonth"
-                                    @update:model-value="fetchMonthlyExpenses" :items="months" item-title="name"
+                                    @update:model-value="fetchMonthlyNubankBill" :items="months" item-title="name"
                                     item-value="value"></v-select>
                             </v-col>
                         </v-row>
@@ -205,22 +205,6 @@ export default {
                     console.error('Error fetching payment methods:', error);
                 });
         },
-        fetchMonthlyExpenses() {
-            const monthNumber = this.selectedExpenseMonth;
-            if (monthNumber !== null) {
-                console.log('Fetching expenses for month:', monthNumber);
-                ExpenseService.fetchMonthlyExpenses(monthNumber)
-                    .then(response => {
-                        console.log(response);
-                        this.monthlyExpenses = response.data;
-                    })
-                    .catch(error => {
-                        console.error('Error fetching monthly expenses:', error);
-                    });
-            } else {
-                console.error('Invalid month selected');
-            }
-        },
         fetchMonthlyIncomes() {
             const monthNumber = this.selectedIncomeMonth;
             if (monthNumber !== null) {
@@ -232,6 +216,22 @@ export default {
                     })
                     .catch(error => {
                         console.error('Error fetching monthly incomes:', error);
+                    });
+            } else {
+                console.error('Invalid month selected');
+            }
+        },
+        fetchMonthlyExpenses() {
+            const monthNumber = this.selectedExpenseMonth;
+            if (monthNumber !== null) {
+                console.log('Fetching expenses for month:', monthNumber);
+                ExpenseService.fetchMonthlyExpenses(monthNumber)
+                    .then(response => {
+                        console.log(response);
+                        this.monthlyExpenses = response.data;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching monthly expenses:', error);
                     });
             } else {
                 console.error('Invalid month selected');
@@ -287,6 +287,27 @@ export default {
                     this.monthlyIncomes.splice(incomeIndex, 1);
                 }
             }
+        },
+        fetchMonthlyNubankBill() {
+            const monthNumber = this.selectedExpenseMonth;
+            DataService.fetchMonthlyNubankBill(2024, monthNumber)
+                .then(response => {
+                    console.log(response);
+                    this.transformExpenses(response.data.bill.line_items);
+                })
+                .catch(error => {
+                    console.error('Error fetching monthly expenses:', error);
+                });
+        },
+        transformExpenses(lineItems) {
+            this.monthlyExpenses = lineItems.map(item => {
+                return {
+                    date: item.post_date,
+                    amount: (item.amount / 100).toFixed(2),
+                    description: item.title,
+                    category: item.category
+                };
+            });
         },
     }
 }
