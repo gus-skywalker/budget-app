@@ -8,7 +8,7 @@ pipeline {
     stages {
         
         stage('SCM checkout ') {
-            git https://github.com/gus-skywalker/budget-app.git
+            git 'https://github.com/gus-skywalker/budget-app.git'
         }
         
         stage('Setup') {
