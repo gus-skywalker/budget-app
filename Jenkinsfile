@@ -7,13 +7,9 @@ pipeline {
 
     stages {
         
-        stage('SCM checkout ') {
-            git 'https://github.com/gus-skywalker/budget-app.git'
-        }
-        
         stage('Setup') {
             steps {
-                https://github.com/gus-skywalker/budget-app.git
+                git 'https://github.com/gus-skywalker/budget-app.git'
                 script {
                     // Set up Node.js environment
                     def nodeHome = tool name: 'NodeJS', type: 'NodeJSInstallation'
