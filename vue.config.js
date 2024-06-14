@@ -21,5 +21,12 @@ import { VuetifyPlugin } from 'webpack-plugin-vuetify'
 export const configureWebpack = {
   plugins: [
     new VuetifyPlugin({ autoImport: true }) // autoImport habilitado por padrão
-  ]
+  ],
+  optimization: {
+    splitChunks: {
+      chunks: 'async',
+      minSize: 50000, // Ajuste o tamanho mínimo conforme necessário
+      maxSize: 200000 // Ajuste o tamanho máximo conforme necessário
+    }
+  }
 }

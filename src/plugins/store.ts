@@ -7,18 +7,18 @@ const store = new Vuex.Store({
     user: {}
   },
   getters: {
-    user: (state) => state.user,
-    auth: (state) => state.auth,
-    token: (state) => state.token
+    user: (state: { user: any }) => state.user,
+    auth: (state: { auth: any }) => state.auth,
+    token: (state: { token: any }) => state.token
   },
   mutations: {
-    SET_TOKEN(state, value) {
+    SET_TOKEN(state: { token: any }, value: any) {
       state.token = value
     },
-    SET_AUTH(state, value) {
+    SET_AUTH(state: { auth: any }, value: any) {
       state.auth = value
     },
-    SET_USER(state, value) {
+    SET_USER(state: { user: any }, value: any) {
       state.user = value
     }
   },
