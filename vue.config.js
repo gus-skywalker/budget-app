@@ -14,19 +14,19 @@ export default defineConfig({
   // Configuração do Vue CLI Service pode continuar aqui, se necessário
 })
 
-// Importa VuetifyPlugin diretamente do módulo webpack-plugin-vuetify
-import { VuetifyPlugin } from 'webpack-plugin-vuetify'
+// // Importa VuetifyPlugin diretamente do módulo webpack-plugin-vuetify
+// import { VuetifyPlugin } from 'webpack-plugin-vuetify'
 
-// Adiciona o VuetifyPlugin aos plugins de webpack
-export const configureWebpack = {
-  plugins: [
-    new VuetifyPlugin({ autoImport: true }) // autoImport habilitado por padrão
-  ],
-  optimization: {
-    splitChunks: {
-      chunks: 'async',
-      minSize: 50000, // Ajuste o tamanho mínimo conforme necessário
-      maxSize: 200000 // Ajuste o tamanho máximo conforme necessário
-    }
-  }
-}
+// // Adiciona o VuetifyPlugin aos plugins de webpack
+// export const configureWebpack = {
+//   plugins: [
+//     new VuetifyPlugin({ autoImport: true }) // autoImport habilitado por padrão
+//   ],
+//   optimization: {
+//     splitChunks: {
+//       chunks: 'async',
+//       minSize: 50000, // Ajuste o tamanho mínimo conforme necessário
+//       maxSize: 200000 // Ajuste o tamanho máximo conforme necessário
+//     }
+//   }
+// }
