@@ -39,8 +39,10 @@ pipeline {
                 // sh 'scp -r dist/ user@server:/path/to/deploy'
                 // or use a specific deployment tool like Firebase, Netlify, or others
                 sh 'echo "Deploying the application..."'
-                sh 'npm install -g serve'
-                sh 'serve -s build'
+                sh 'npm install serve'  // Instalar localmente
+                sh 'npx serve -s build'  // Usar npx para executar o serve
+                // sh 'npm install -g serve'
+                // sh 'serve -s build'
             }
         }
     }
