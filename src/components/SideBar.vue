@@ -2,25 +2,28 @@
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useTheme } from 'vuetify';
-import { useStore } from 'vuex';
+import { useUserStore } from '@/plugins/userStore';  // Importe a store de Pinia
 
 const router = useRouter();
 const theme = useTheme();
-const store = useStore();
-const user = computed(() => store.getters.user);
+const userStore = useUserStore();  // Use a store de Pinia
 
-// Method to logout the user
+// Computed property para acessar o usuário da store
+const user = computed(() => userStore.getUser);
+
+// Método para fazer logout do usuário
 const logoutUser = () => {
-    store.dispatch('resetUser')
-    router.push('/login')
+    userStore.resetUser();  // Use o método da store de Pinia
+    router.push('/login');
 }
-// Function to redirect users to the OAuth2 login page
+
+// Função para redirecionar os usuários para a página de login OAuth2
 function redirectToOAuth2LoginPage() {
-    // Replace 'oauth2_login_url' with the actual URL of your OAuth2 login page
+    // Substitua 'oauth2_login_url' pelo URL real da sua página de login OAuth2
     window.location.href = 'http://localhost:9000/login';
 }
 
-// Function to toggle the theme
+// Função para alternar o tema
 function toggleTheme(): void {
     const isLightTheme = computed(() => theme.global.name.value === 'light');
     theme.global.name.value = isLightTheme.value ? 'dark' : 'light';
@@ -29,7 +32,6 @@ function toggleTheme(): void {
 
 <template>
     <v-navigation-drawer app expand-on-hover rail>
-
         <v-list v-if="user">
             <v-list-item :prepend-avatar="user.avatar" :subtitle="user.email" :title="user.username"></v-list-item>
             <v-list-item @click="logoutUser" title="Logout" prepend-icon="mdi-logout"></v-list-item>

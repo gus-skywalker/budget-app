@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
 import SideBar from './components/SideBar.vue'
-import { useStore } from 'vuex'
+import { useUserStore } from '@/plugins/userStore'
+// import { useStore } from 'vuex'
 import { computed } from 'vue';
 
 // Access the Vuex store
-const store = useStore()
+const userStore = useUserStore()
 
 // Computed property to check if the user is authenticated
-const isAuthenticated = computed(() => store.state.auth)
+const isAuthenticated = computed(() => userStore.isAuthenticated)
 </script>
 <template>
   <v-app>

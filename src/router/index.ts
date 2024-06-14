@@ -1,6 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
-import store from '@/plugins/store'
+import HomeView from '@/views/HomeView.vue'
+import AboutView from '@/views/AboutView.vue'
+import BudgetView from '@/views/BudgetView.vue'
+import DashboardView from '@/views/DashboardView.vue'
+import LoginView from '@/views/LoginView.vue'
+
+import { useUserStore } from '@/plugins/userStore'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -13,40 +18,29 @@ const router = createRouter({
     {
       path: '/about',
       name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/AboutView.vue')
+      component: AboutView
     },
     {
       path: '/budget',
       name: 'budget',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/BudgetView.vue')
+      component: BudgetView
     },
     {
       path: '/dashboard',
       name: 'dashboard',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/DashboardView.vue')
+      component: DashboardView
     },
     {
       path: '/login',
       name: 'login',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/LoginView.vue')
+      component: LoginView
     }
   ]
 })
 
 router.beforeEach((to, from, next) => {
-  const isAuthenticated = store.getters['auth']
+  const userStore = useUserStore();
+  const isAuthenticated = userStore.isAuthenticated;
 
   if (!isAuthenticated && to.name !== 'login') {
     next({ name: 'login' })

@@ -17,10 +17,10 @@
     "@mdi/font": "^7.4.47",
     "axios": "^1.6.8",
     "chart.js": "^4.4.2",
+    "pinia": "^2.1.7",
     "vue": "^3.4.21",
     "vue-router": "^4.3.0",
     "vuetify": "^3.6.6",
-    "vuex": "^4.0.2",
     "webpack-plugin-vuetify": "^3.0.3"
   },
   "devDependencies": {

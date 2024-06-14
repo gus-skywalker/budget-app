@@ -1,10 +1,10 @@
 <script setup>
 import { ref } from 'vue'
-import { useStore } from 'vuex'
+import { useUserStore } from '@/plugins/userStore'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 
-const store = useStore()
+const userStore = useUserStore();  // Use a store de Pinia
 const router = useRouter()
 const userData = ref({ email: '', password: '' })
 const error = ref(null)
@@ -14,16 +14,16 @@ const userLogin = async () => {
         const res = await axios.post('http://localhost:9000/auth/signin', userData.value)
 
         console.log(res)
-        store.commit('SET_AUTH', true)
-        store.commit('SET_TOKEN', res.data.token)
-        store.commit('SET_USER', {
+        userStore.setAuth(true);
+        userStore.setToken(res.data.token);
+        userStore.setUser({
             username: res.data.username,
             email: res.data.email,
             id: res.data.id,
             language: res.data.language,
             userRole: res.data.userRole,
             createdAt: res.data.createdAt,
-        })
+        });
         router.push('/')
     } catch (err) {
         error.value = 'Invalid credentials. Please try again.'
