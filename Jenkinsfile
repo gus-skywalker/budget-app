@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     tools {
-        NodeJS = '18.19.0'  // Specify your Node.js version
+        nodejs '18.19.0'  // Specify your Node.js version
     }
 
     stages {
