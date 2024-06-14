@@ -1,12 +1,8 @@
 pipeline {
     agent any
 
-    // environment {
-    //     NODE_VERSION = '18.19.0'  // Specify your Node.js version
-    // }
-
-    tools {
-        nodejs 'NodeJS 18.19.0'  // Nome que você deu à instalação do Node.js no Jenkins
+    environment {
+        NODE_VERSION = '18.19.0'  // Specify your Node.js version
     }
 
     stages {
