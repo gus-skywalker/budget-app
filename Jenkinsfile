@@ -9,7 +9,7 @@ pipeline {
         
         stage('Setup') {
             steps {
-                git 'https://github.com/gus-skywalker/budget-app.git'
+                // git 'https://github.com/gus-skywalker/budget-app.git'
                 script {
                     // Set up Node.js environment
                     def nodeHome = tool name: 'NodeJS', type: 'NodeJSInstallation'
