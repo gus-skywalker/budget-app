@@ -9,7 +9,8 @@ pipeline {
         
         stage('Setup') {
             steps {
-                // git 'https://github.com/gus-skywalker/budget-app.git'
+                git 'https://github.com/gus-skywalker/budget-app.git'
+                git branch: 'main', credentialsId: 'budget-app-token', url: 'https://github.com/gus-skywalker/budget-app.git'
                 script {
                     // Set up Node.js environment
                     def nodeHome = tool name: 'NodeJS', type: 'NodeJSInstallation'
@@ -20,25 +21,25 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                sh 'npm install'
+                sh 'cd /Users/gugadam/workspaces/budget-app && npm install'
             }
         }
 
         stage('Lint') {
             steps {
-                sh 'npm run lint'
+                sh 'cd /Users/gugadam/workspaces/budget-app && npm run lint'
             }
         }
 
         stage('Test') {
             steps {
-                sh 'npm run test'
+                sh 'cd /Users/gugadam/workspaces/budget-app && npm run test'
             }
         }
 
         stage('Build') {
             steps {
-                sh 'npm run build'
+                sh 'cd /Users/gugadam/workspaces/budget-app && npm run build'
             }
         }
 
