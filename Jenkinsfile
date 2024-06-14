@@ -10,7 +10,7 @@ pipeline {
         stage('Setup') {
             steps {
                 git 'https://github.com/gus-skywalker/budget-app.git'
-                git branch: 'main', credentialsId: 'budget-app-token', url: 'https://github.com/gus-skywalker/budget-app.git'
+                git branch: 'main', credentialsId: '3bafab71-29e5-4d84-93d0-bc33a57123df', url: 'https://github.com/gus-skywalker/budget-app.git'
                 script {
                     // Set up Node.js environment
                     def nodeHome = tool name: 'NodeJS', type: 'NodeJSInstallation'
