@@ -1,9 +1,9 @@
 import axios from 'axios'
 import router from '../router'
 import { computed } from 'vue'
-import { useUserStore } from '@/plugins/userStore'
+import { useUserStore } from '../plugins/userStore.ts'
 
-const access_token = computed(() => useUserStore.getToken());
+const access_token = computed(() => useUserStore().getToken)
 
 const axiosInstance = axios.create({
   baseURL: 'http://localhost:8080/api',

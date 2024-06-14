@@ -21,6 +21,7 @@
     "vue": "^3.4.21",
     "vue-router": "^4.3.0",
     "vuetify": "^3.6.6",
+    "webfontloader": "^1.6.28",
     "webpack-plugin-vuetify": "^3.0.3"
   },
   "devDependencies": {

@@ -1,3 +1,4 @@
+//tsconfig.vitest.json
 {
   "extends": "./tsconfig.app.json",
   "exclude": [],
