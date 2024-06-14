@@ -20,7 +20,8 @@
     "vue": "^3.4.21",
     "vue-router": "^4.3.0",
     "vuetify": "^3.6.6",
-    "vuex": "^4.0.2"
+    "vuex": "^4.0.2",
+    "webpack-plugin-vuetify": "^3.0.3"
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.8.0",
