@@ -21,25 +21,25 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                sh 'cd /home/user/workspaces/budget-app && npm install'
+                sh 'npm install'
             }
         }
 
         stage('Lint') {
             steps {
-                sh 'cd /home/user/workspaces/budget-app && npm run lint'
+                sh 'npm run lint'
             }
         }
 
         stage('Test') {
             steps {
-                sh 'cd /home/user/workspaces/budget-app && npm run test'
+                sh 'npm run test'
             }
         }
 
         stage('Build') {
             steps {
-                sh 'cd /home/user/workspaces/budget-app && npm run build'
+                sh 'npm run build'
             }
         }
 
