@@ -21,25 +21,25 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                sh 'cd /Users/gugadam/workspaces/budget-app && npm install'
+                sh 'cd /home/user/workspaces/budget-app && npm install'
             }
         }
 
         stage('Lint') {
             steps {
-                sh 'cd /Users/gugadam/workspaces/budget-app && npm run lint'
+                sh 'cd /home/user/workspaces/budget-app && npm run lint'
             }
         }
 
         stage('Test') {
             steps {
-                sh 'cd /Users/gugadam/workspaces/budget-app && npm run test'
+                sh 'cd /home/user/workspaces/budget-app && npm run test'
             }
         }
 
         stage('Build') {
             steps {
-                sh 'cd /Users/gugadam/workspaces/budget-app && npm run build'
+                sh 'cd /home/user/workspaces/budget-app && npm run build'
             }
         }
 
