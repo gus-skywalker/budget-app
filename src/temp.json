@@ -1,0 +1,1415 @@
+[
+  {
+    "state": "future",
+    "summary": {
+      "due_date": "2024-11-21",
+      "close_date": "2024-11-14",
+      "past_balance": 0,
+      "effective_due_date": "2024-11-21",
+      "spent_amount": "304.41",
+      "total_balance": 30441,
+      "interest_rate": "0.161",
+      "interest": 0,
+      "total_cumulative": 30441,
+      "paid": 0,
+      "minimum_payment": 0,
+      "open_date": "2024-10-14"
+    },
+    "_links": {}
+  },
+  {
+    "state": "future",
+    "summary": {
+      "due_date": "2024-10-21",
+      "close_date": "2024-10-14",
+      "past_balance": 0,
+      "effective_due_date": "2024-10-21",
+      "spent_amount": "472.83",
+      "total_balance": 47283,
+      "interest_rate": "0.161",
+      "interest": 0,
+      "total_cumulative": 47283,
+      "paid": 0,
+      "minimum_payment": 0,
+      "open_date": "2024-09-14"
+    },
+    "_links": {}
+  },
+  {
+    "state": "future",
+    "summary": {
+      "due_date": "2024-09-21",
+      "close_date": "2024-09-14",
+      "past_balance": 0,
+      "effective_due_date": "2024-09-23",
+      "spent_amount": "1222.31",
+      "total_balance": 122231,
+      "interest_rate": "0.161",
+      "interest": 0,
+      "total_cumulative": 122231,
+      "paid": 0,
+      "minimum_payment": 0,
+      "open_date": "2024-08-14"
+    },
+    "_links": {}
+  },
+  {
+    "state": "future",
+    "summary": {
+      "due_date": "2024-08-21",
+      "close_date": "2024-08-14",
+      "past_balance": 0,
+      "effective_due_date": "2024-08-21",
+      "spent_amount": "1321.73",
+      "total_balance": 132173,
+      "interest_rate": "0.161",
+      "interest": 0,
+      "total_cumulative": 132173,
+      "paid": 0,
+      "minimum_payment": 0,
+      "open_date": "2024-07-14"
+    },
+    "_links": {}
+  },
+  {
+    "state": "future",
+    "summary": {
+      "due_date": "2024-07-21",
+      "close_date": "2024-07-14",
+      "past_balance": 0,
+      "effective_due_date": "2024-07-22",
+      "spent_amount": "1489.45",
+      "total_balance": 148945,
+      "interest_rate": "0.161",
+      "interest": 0,
+      "total_cumulative": 148945,
+      "paid": 0,
+      "minimum_payment": 0,
+      "open_date": "2024-06-14"
+    },
+    "_links": {}
+  },
+  {
+    "state": "open",
+    "summary": {
+      "due_date": "2024-06-21",
+      "close_date": "2024-06-14",
+      "late_interest_rate": "0.171",
+      "past_balance": 0,
+      "late_fee": "0.02",
+      "effective_due_date": "2024-06-21",
+      "spent_amount": "3216.91",
+      "total_balance": 321691,
+      "interest_rate": "0.161",
+      "interest": 0,
+      "total_cumulative": 321691,
+      "paid": 0,
+      "minimum_payment": 0,
+      "open_date": "2024-05-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/accounts/5da74988-2c32-4739-b92a-53340c50cbae/bills/open"
+      },
+      "barcode": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/accounts/5da74988-2c32-4739-b92a-53340c50cbae/bills/open/boleto/barcode"
+      },
+      "boleto_email": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/accounts/5da74988-2c32-4739-b92a-53340c50cbae/bills/open/boleto/email"
+      }
+    }
+  },
+  {
+    "id": "6642e8ad-e2c4-4f47-b2d1-554b8d2e31c9",
+    "state": "overdue",
+    "summary": {
+      "remaining_balance": 0,
+      "due_date": "2024-05-21",
+      "close_date": "2024-05-14",
+      "late_interest_rate": "0.171",
+      "past_balance": 0,
+      "effective_due_date": "2024-05-21",
+      "spent_amount": "7094.10832863",
+      "total_balance": 709411,
+      "interest_rate": "0.161",
+      "interest": 0,
+      "total_cumulative": 709411,
+      "paid": 0,
+      "minimum_payment": 106412,
+      "remaining_minimum_payment": 0,
+      "open_date": "2024-04-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/6642e8ad-e2c4-4f47-b2d1-554b8d2e31c9"
+      }
+    }
+  },
+  {
+    "id": "661b582c-6671-40a9-8f0a-8e9ea19e9d78",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2024-04-21",
+      "close_date": "2024-04-14",
+      "late_interest_rate": "0.171",
+      "past_balance": 0,
+      "effective_due_date": "2024-04-22",
+      "spent_amount": "6317.40256463",
+      "total_balance": 631740,
+      "interest_rate": "0.161",
+      "interest": 0,
+      "total_cumulative": 631740,
+      "paid": 0,
+      "minimum_payment": 103531,
+      "open_date": "2024-03-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/661b582c-6671-40a9-8f0a-8e9ea19e9d78"
+      }
+    }
+  },
+  {
+    "id": "65f278d4-f224-4ba8-9dd0-ee58dd1d244a",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2024-03-21",
+      "close_date": "2024-03-14",
+      "late_interest_rate": "0.171",
+      "past_balance": 0,
+      "effective_due_date": "2024-03-21",
+      "spent_amount": "6502.515622",
+      "total_balance": 650251,
+      "interest_rate": "0.161",
+      "interest": 0,
+      "total_cumulative": 650252,
+      "paid": 0,
+      "minimum_payment": 97537,
+      "open_date": "2024-02-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/65f278d4-f224-4ba8-9dd0-ee58dd1d244a"
+      }
+    }
+  },
+  {
+    "id": "65cc3e0c-a4c4-48bd-898b-f901b5c16594",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2024-02-21",
+      "close_date": "2024-02-14",
+      "late_interest_rate": "0.171",
+      "past_balance": 0,
+      "effective_due_date": "2024-02-21",
+      "spent_amount": "7610.72808781",
+      "total_balance": 761073,
+      "interest_rate": "0.161",
+      "interest": 0,
+      "total_cumulative": 761073,
+      "paid": 0,
+      "minimum_payment": 114161,
+      "open_date": "2024-01-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/65cc3e0c-a4c4-48bd-898b-f901b5c16594"
+      }
+    }
+  },
+  {
+    "id": "65a360a2-2cf5-4e71-8b74-c817396e1327",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2024-01-21",
+      "close_date": "2024-01-14",
+      "late_interest_rate": "0.171",
+      "past_balance": 0,
+      "effective_due_date": "2024-01-22",
+      "spent_amount": "7182.402238",
+      "total_balance": 718240,
+      "interest_rate": "0.161",
+      "interest": 0,
+      "total_cumulative": 718240,
+      "paid": 0,
+      "minimum_payment": 107736,
+      "open_date": "2023-12-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/65a360a2-2cf5-4e71-8b74-c817396e1327"
+      }
+    }
+  },
+  {
+    "id": "657a7e42-a8d9-4a43-a67f-947630de9e46",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2023-12-21",
+      "close_date": "2023-12-14",
+      "late_interest_rate": "0.171",
+      "past_balance": 0,
+      "effective_due_date": "2023-12-21",
+      "spent_amount": "8363.729580",
+      "total_balance": 836373,
+      "interest_rate": "0.161",
+      "interest": 0,
+      "total_cumulative": 836373,
+      "paid": 0,
+      "minimum_payment": 125456,
+      "open_date": "2023-11-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/657a7e42-a8d9-4a43-a67f-947630de9e46"
+      }
+    }
+  },
+  {
+    "id": "6552f966-3ebf-469f-8026-87e918f141e5",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2023-11-21",
+      "close_date": "2023-11-14",
+      "late_interest_rate": "0.171",
+      "past_balance": 0,
+      "effective_due_date": "2023-11-21",
+      "spent_amount": "12163.84232342",
+      "total_balance": 1216384,
+      "interest_rate": "0.161",
+      "interest": 0,
+      "total_cumulative": 1216384,
+      "paid": 0,
+      "minimum_payment": 617447,
+      "open_date": "2023-10-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/6552f966-3ebf-469f-8026-87e918f141e5"
+      }
+    }
+  },
+  {
+    "id": "652a11f9-5c13-4585-ab73-d5863c7a6540",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2023-10-21",
+      "close_date": "2023-10-14",
+      "late_interest_rate": "0.171",
+      "past_balance": 0,
+      "effective_due_date": "2023-10-23",
+      "spent_amount": "9855.57596839",
+      "total_balance": 985558,
+      "interest_rate": "0.161",
+      "interest": 0,
+      "total_cumulative": 985558,
+      "paid": 0,
+      "minimum_payment": 262739,
+      "open_date": "2023-09-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/652a11f9-5c13-4585-ab73-d5863c7a6540"
+      }
+    }
+  },
+  {
+    "id": "65028424-5150-42c3-82be-721848a39bdf",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2023-09-21",
+      "close_date": "2023-09-14",
+      "late_interest_rate": "0.171",
+      "past_balance": 0,
+      "effective_due_date": "2023-09-21",
+      "spent_amount": "10314.38977064",
+      "total_balance": 1031439,
+      "interest_rate": "0.161",
+      "interest": 0,
+      "total_cumulative": 1031439,
+      "paid": 0,
+      "minimum_payment": 271143,
+      "open_date": "2023-08-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/65028424-5150-42c3-82be-721848a39bdf"
+      }
+    }
+  },
+  {
+    "id": "64d99fa0-7abb-4a05-8269-8491cbfd0554",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2023-08-21",
+      "close_date": "2023-08-14",
+      "late_interest_rate": "0.171",
+      "past_balance": -300000,
+      "effective_due_date": "2023-08-21",
+      "spent_amount": "12653.90742903",
+      "total_balance": 965390,
+      "interest_rate": "0.161",
+      "interest": 0,
+      "total_cumulative": 1265391,
+      "paid": 0,
+      "minimum_payment": 194763,
+      "open_date": "2023-07-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/64d99fa0-7abb-4a05-8269-8491cbfd0554"
+      }
+    }
+  },
+  {
+    "id": "64b0c018-8306-474d-9d54-1273cd4cfcb0",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2023-07-21",
+      "close_date": "2023-07-14",
+      "late_interest_rate": "0.171",
+      "past_balance": -500000,
+      "effective_due_date": "2023-07-21",
+      "spent_amount": "14967.76761216",
+      "total_balance": 996777,
+      "interest_rate": "0.161",
+      "interest": 0,
+      "total_cumulative": 1496777,
+      "paid": 0,
+      "minimum_payment": 376989,
+      "open_date": "2023-06-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/64b0c018-8306-474d-9d54-1273cd4cfcb0"
+      }
+    }
+  },
+  {
+    "id": "64893859-0b7e-42bf-93b4-027af8bcd259",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2023-06-21",
+      "close_date": "2023-06-14",
+      "late_interest_rate": "0.171",
+      "past_balance": 0,
+      "effective_due_date": "2023-06-21",
+      "spent_amount": "6740.31477488",
+      "total_balance": 674031,
+      "interest_rate": "0.161",
+      "interest": 0,
+      "total_cumulative": 674031,
+      "paid": 0,
+      "minimum_payment": 101105,
+      "open_date": "2023-05-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/64893859-0b7e-42bf-93b4-027af8bcd259"
+      }
+    }
+  },
+  {
+    "id": "64605a30-febd-48fb-8167-63e22ab7f82a",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2023-05-21",
+      "close_date": "2023-05-14",
+      "late_interest_rate": "0.171",
+      "past_balance": -1330,
+      "effective_due_date": "2023-05-22",
+      "spent_amount": "3553.28477488",
+      "total_balance": 353998,
+      "interest_rate": "0.161",
+      "interest": 0,
+      "total_cumulative": 355328,
+      "paid": 0,
+      "minimum_payment": 53100,
+      "open_date": "2023-04-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/64605a30-febd-48fb-8167-63e22ab7f82a"
+      }
+    }
+  },
+  {
+    "id": "6438cd3d-0d43-41ef-8ca2-4b00dac64033",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2023-04-21",
+      "close_date": "2023-04-14",
+      "late_interest_rate": "0.171",
+      "past_balance": 0,
+      "effective_due_date": "2023-04-24",
+      "spent_amount": "2767.27477488",
+      "total_balance": 267830,
+      "interest_rate": "0.161",
+      "interest": 0,
+      "total_cumulative": 267830,
+      "paid": 0,
+      "minimum_payment": 40175,
+      "open_date": "2023-03-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/6438cd3d-0d43-41ef-8ca2-4b00dac64033"
+      }
+    }
+  },
+  {
+    "id": "640fef02-7ac6-420f-a3e9-82bec14b8de5",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2023-03-21",
+      "close_date": "2023-03-14",
+      "late_interest_rate": "0.171",
+      "past_balance": 0,
+      "effective_due_date": "2023-03-21",
+      "spent_amount": "1838.66477488",
+      "total_balance": 183866,
+      "interest_rate": "0.161",
+      "interest": 0,
+      "total_cumulative": 183866,
+      "paid": 0,
+      "minimum_payment": 27580,
+      "open_date": "2023-02-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/640fef02-7ac6-420f-a3e9-82bec14b8de5"
+      }
+    }
+  },
+  {
+    "id": "63eafe96-8b86-4f97-856f-ff9de1870ba1",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2023-02-21",
+      "close_date": "2023-02-14",
+      "late_interest_rate": "0.171",
+      "past_balance": 0,
+      "effective_due_date": "2023-02-22",
+      "spent_amount": "3198.49477488",
+      "total_balance": 319849,
+      "interest_rate": "0.161",
+      "interest": 0,
+      "total_cumulative": 319849,
+      "paid": 0,
+      "minimum_payment": 47977,
+      "open_date": "2023-01-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/63eafe96-8b86-4f97-856f-ff9de1870ba1"
+      }
+    }
+  },
+  {
+    "id": "63c22029-35e9-4144-bcf9-87f642ebc8aa",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2023-01-21",
+      "close_date": "2023-01-14",
+      "late_interest_rate": "0.171",
+      "past_balance": 0,
+      "effective_due_date": "2023-01-23",
+      "spent_amount": "3023.51477488",
+      "total_balance": 302351,
+      "interest_rate": "0.161",
+      "interest": 0,
+      "total_cumulative": 302351,
+      "paid": 0,
+      "minimum_payment": 45353,
+      "open_date": "2022-12-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/63c22029-35e9-4144-bcf9-87f642ebc8aa"
+      }
+    }
+  },
+  {
+    "id": "639941c9-5a13-45bf-9443-56c6f56cd00f",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2022-12-21",
+      "close_date": "2022-12-14",
+      "late_interest_rate": "0.171",
+      "past_balance": 0,
+      "effective_due_date": "2022-12-21",
+      "spent_amount": "3350.874208",
+      "total_balance": 335087,
+      "interest_rate": "0.161",
+      "interest": 0,
+      "total_cumulative": 335087,
+      "paid": 0,
+      "minimum_payment": 50263,
+      "open_date": "2022-11-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/639941c9-5a13-45bf-9443-56c6f56cd00f"
+      }
+    }
+  },
+  {
+    "id": "6371b4fb-d66b-45d7-a370-d1cce5849f55",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2022-11-21",
+      "close_date": "2022-11-14",
+      "late_interest_rate": "0.171",
+      "past_balance": 0,
+      "effective_due_date": "2022-11-21",
+      "spent_amount": "2654.471510",
+      "total_balance": 265447,
+      "interest_rate": "0.161",
+      "interest": 0,
+      "total_cumulative": 265447,
+      "paid": 0,
+      "minimum_payment": 39817,
+      "open_date": "2022-10-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/6371b4fb-d66b-45d7-a370-d1cce5849f55"
+      }
+    }
+  },
+  {
+    "id": "6348d691-a720-4f9b-9611-532402941a04",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2022-10-21",
+      "close_date": "2022-10-14",
+      "late_interest_rate": "0.163",
+      "past_balance": 0,
+      "effective_due_date": "2022-10-21",
+      "spent_amount": "2147.22012359",
+      "total_balance": 219656,
+      "interest_rate": "0.153",
+      "interest": 0,
+      "total_cumulative": 219656,
+      "paid": 0,
+      "minimum_payment": 50539,
+      "open_date": "2022-09-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/6348d691-a720-4f9b-9611-532402941a04"
+      }
+    }
+  },
+  {
+    "id": "63214987-b19a-43d8-a9ec-86253538184d",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2022-09-21",
+      "close_date": "2022-09-14",
+      "late_interest_rate": "0.163",
+      "past_balance": 0,
+      "effective_due_date": "2022-09-21",
+      "spent_amount": "2058.15",
+      "total_balance": 205815,
+      "interest_rate": "0.153",
+      "interest": 0,
+      "total_cumulative": 205815,
+      "paid": 0,
+      "minimum_payment": 30872,
+      "open_date": "2022-08-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/63214987-b19a-43d8-a9ec-86253538184d"
+      }
+    }
+  },
+  {
+    "id": "62f86aca-9d31-4da1-b0fe-b35dab2e232d",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2022-08-21",
+      "close_date": "2022-08-14",
+      "late_interest_rate": "0.157",
+      "past_balance": 0,
+      "effective_due_date": "2022-08-22",
+      "spent_amount": "2448.63646625",
+      "total_balance": 244864,
+      "interest_rate": "0.147",
+      "interest": 0,
+      "total_cumulative": 244864,
+      "paid": 0,
+      "minimum_payment": 36730,
+      "open_date": "2022-07-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/62f86aca-9d31-4da1-b0fe-b35dab2e232d"
+      }
+    }
+  },
+  {
+    "id": "62cf8c40-a411-4f7d-8239-fba8c7490253",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2022-07-21",
+      "close_date": "2022-07-14",
+      "late_interest_rate": "0.157",
+      "past_balance": 0,
+      "effective_due_date": "2022-07-21",
+      "spent_amount": "2163.703108",
+      "total_balance": 216370,
+      "interest_rate": "0.147",
+      "interest": 0,
+      "total_cumulative": 216370,
+      "paid": 0,
+      "minimum_payment": 32455,
+      "open_date": "2022-06-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/62cf8c40-a411-4f7d-8239-fba8c7490253"
+      }
+    }
+  },
+  {
+    "id": "62a7ff92-f22e-4b7e-86ba-0563c1f1e874",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2022-06-21",
+      "close_date": "2022-06-14",
+      "late_interest_rate": "0.15",
+      "past_balance": 0,
+      "effective_due_date": "2022-06-21",
+      "spent_amount": "2940.63",
+      "total_balance": 294063,
+      "interest_rate": "0.14",
+      "interest": 0,
+      "total_cumulative": 294063,
+      "paid": 0,
+      "minimum_payment": 44109,
+      "open_date": "2022-05-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/62a7ff92-f22e-4b7e-86ba-0563c1f1e874"
+      }
+    }
+  },
+  {
+    "id": "627f20e7-5e06-4683-928a-e7a9a9b25e62",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2022-05-21",
+      "close_date": "2022-05-14",
+      "late_interest_rate": "0.15",
+      "past_balance": 0,
+      "effective_due_date": "2022-05-23",
+      "spent_amount": "2255.27",
+      "total_balance": 225527,
+      "interest_rate": "0.14",
+      "interest": 0,
+      "total_cumulative": 225527,
+      "paid": 0,
+      "minimum_payment": 33829,
+      "open_date": "2022-04-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/627f20e7-5e06-4683-928a-e7a9a9b25e62"
+      }
+    }
+  },
+  {
+    "id": "625793a6-0016-4128-a401-4da3db3d96f7",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2022-04-21",
+      "close_date": "2022-04-14",
+      "late_interest_rate": "0.15",
+      "past_balance": 0,
+      "effective_due_date": "2022-04-22",
+      "spent_amount": "2962.61",
+      "total_balance": 296261,
+      "interest_rate": "0.14",
+      "interest": 0,
+      "total_cumulative": 296261,
+      "paid": 0,
+      "minimum_payment": 44439,
+      "open_date": "2022-03-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/625793a6-0016-4128-a401-4da3db3d96f7"
+      }
+    }
+  },
+  {
+    "id": "622eb56f-470a-4b2e-af38-0200c65938d7",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2022-03-21",
+      "close_date": "2022-03-14",
+      "late_interest_rate": "0.15",
+      "past_balance": 0,
+      "effective_due_date": "2022-03-21",
+      "total_balance": 304593,
+      "interest_rate": "0.14",
+      "interest": 0,
+      "total_cumulative": 304593,
+      "paid": 0,
+      "minimum_payment": 45689,
+      "open_date": "2022-02-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/622eb56f-470a-4b2e-af38-0200c65938d7"
+      }
+    }
+  },
+  {
+    "id": "6209cb6c-8b46-4e4e-ac3c-20c4fede281c",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2022-02-21",
+      "close_date": "2022-02-14",
+      "late_interest_rate": "0.15",
+      "past_balance": 0,
+      "effective_due_date": "2022-02-21",
+      "total_balance": 430726,
+      "interest_rate": "0.14",
+      "interest": 0,
+      "total_cumulative": 430726,
+      "paid": 0,
+      "minimum_payment": 64609,
+      "open_date": "2022-01-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/6209cb6c-8b46-4e4e-ac3c-20c4fede281c"
+      }
+    }
+  },
+  {
+    "id": "61e0ed71-c022-4242-a010-9c5b065562ce",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2022-01-21",
+      "close_date": "2022-01-14",
+      "late_interest_rate": "0.15",
+      "past_balance": 0,
+      "effective_due_date": "2022-01-21",
+      "total_balance": 279735,
+      "interest_rate": "0.14",
+      "interest": 0,
+      "total_cumulative": 279735,
+      "paid": 0,
+      "minimum_payment": 41960,
+      "open_date": "2021-12-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/61e0ed71-c022-4242-a010-9c5b065562ce"
+      }
+    }
+  },
+  {
+    "id": "61b80e88-4d98-4a23-b7a4-1ef5f1fe37d3",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2021-12-21",
+      "close_date": "2021-12-14",
+      "late_interest_rate": "0.15",
+      "past_balance": 0,
+      "effective_due_date": "2021-12-21",
+      "total_balance": 301063,
+      "interest_rate": "0.14",
+      "interest": 0,
+      "total_cumulative": 301063,
+      "paid": 0,
+      "minimum_payment": 45159,
+      "open_date": "2021-11-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/61b80e88-4d98-4a23-b7a4-1ef5f1fe37d3"
+      }
+    }
+  },
+  {
+    "id": "619081a0-de8d-4e79-b5c8-483bc93c65b1",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2021-11-21",
+      "close_date": "2021-11-14",
+      "late_interest_rate": "0.15",
+      "past_balance": 0,
+      "effective_due_date": "2021-11-22",
+      "total_balance": 203325,
+      "interest_rate": "0.14",
+      "interest": 0,
+      "total_cumulative": 203325,
+      "paid": 0,
+      "minimum_payment": 30499,
+      "open_date": "2021-10-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/619081a0-de8d-4e79-b5c8-483bc93c65b1"
+      }
+    }
+  },
+  {
+    "id": "6167a32e-107a-41b4-8f61-21372fe33f11",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2021-10-21",
+      "close_date": "2021-10-14",
+      "late_interest_rate": "0.15",
+      "past_balance": 0,
+      "effective_due_date": "2021-10-21",
+      "total_balance": 235278,
+      "interest_rate": "0.14",
+      "interest": 0,
+      "total_cumulative": 235278,
+      "paid": 0,
+      "minimum_payment": 35292,
+      "open_date": "2021-09-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/6167a32e-107a-41b4-8f61-21372fe33f11"
+      }
+    }
+  },
+  {
+    "id": "61401619-af8d-4c55-9be6-3c5e66cb31e2",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2021-09-21",
+      "close_date": "2021-09-14",
+      "late_interest_rate": "0.15",
+      "past_balance": 0,
+      "effective_due_date": "2021-09-21",
+      "total_balance": 290187,
+      "interest_rate": "0.14",
+      "interest": 0,
+      "total_cumulative": 290187,
+      "paid": 0,
+      "minimum_payment": 43528,
+      "open_date": "2021-08-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/61401619-af8d-4c55-9be6-3c5e66cb31e2"
+      }
+    }
+  },
+  {
+    "id": "6117378b-8883-4ef5-a738-925f6fff897d",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2021-08-21",
+      "close_date": "2021-08-14",
+      "late_interest_rate": "0.15",
+      "past_balance": -226353,
+      "effective_due_date": "2021-08-23",
+      "total_balance": 0,
+      "interest_rate": "0.14",
+      "interest": 0,
+      "total_cumulative": 226353,
+      "paid": 0,
+      "minimum_payment": 0,
+      "open_date": "2021-07-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/6117378b-8883-4ef5-a738-925f6fff897d"
+      }
+    }
+  },
+  {
+    "id": "60ee819c-fc39-427e-a2cb-eeca81d02778",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2021-07-21",
+      "close_date": "2021-07-14",
+      "late_interest_rate": "0.15",
+      "past_balance": 0,
+      "effective_due_date": "2021-07-21",
+      "total_balance": 199949,
+      "interest_rate": "0.14",
+      "interest": 0,
+      "total_cumulative": 199949,
+      "paid": 0,
+      "minimum_payment": 29992,
+      "open_date": "2021-06-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/60ee819c-fc39-427e-a2cb-eeca81d02778"
+      }
+    }
+  },
+  {
+    "id": "60c6cc39-13c8-409c-bb1b-5501392aeec6",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2021-06-21",
+      "close_date": "2021-06-14",
+      "late_interest_rate": "0.15",
+      "past_balance": 0,
+      "effective_due_date": "2021-06-21",
+      "total_balance": 238813,
+      "interest_rate": "0.14",
+      "interest": 0,
+      "total_cumulative": 238813,
+      "paid": 0,
+      "minimum_payment": 35822,
+      "open_date": "2021-05-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/60c6cc39-13c8-409c-bb1b-5501392aeec6"
+      }
+    }
+  },
+  {
+    "id": "609defae-cb2d-46e5-ba23-8b9a316f7b8b",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2021-05-21",
+      "close_date": "2021-05-14",
+      "late_interest_rate": "0.15",
+      "past_balance": 0,
+      "effective_due_date": "2021-05-21",
+      "total_balance": 381142,
+      "interest_rate": "0.14",
+      "interest": 0,
+      "total_cumulative": 381142,
+      "paid": 0,
+      "minimum_payment": 57171,
+      "open_date": "2021-04-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/609defae-cb2d-46e5-ba23-8b9a316f7b8b"
+      }
+    }
+  },
+  {
+    "id": "60766348-cab5-4a04-b644-92145a45088a",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2021-04-21",
+      "close_date": "2021-04-14",
+      "late_interest_rate": "0.15",
+      "past_balance": 0,
+      "effective_due_date": "2021-04-22",
+      "total_balance": 211816,
+      "interest_rate": "0.14",
+      "interest": 0,
+      "total_cumulative": 211816,
+      "paid": 0,
+      "minimum_payment": 35818,
+      "open_date": "2021-03-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/60766348-cab5-4a04-b644-92145a45088a"
+      }
+    }
+  },
+  {
+    "id": "604d858d-867a-4ad2-8d7c-b83a82da6d84",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2021-03-21",
+      "close_date": "2021-03-14",
+      "late_interest_rate": "0.15",
+      "past_balance": 0,
+      "effective_due_date": "2021-03-22",
+      "total_balance": 198574,
+      "interest_rate": "0.14",
+      "interest": 0,
+      "total_cumulative": 198574,
+      "paid": 0,
+      "minimum_payment": 29786,
+      "open_date": "2021-02-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/604d858d-867a-4ad2-8d7c-b83a82da6d84"
+      }
+    }
+  },
+  {
+    "id": "60289c24-a85c-4a02-8693-64c74b285301",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2021-02-21",
+      "close_date": "2021-02-14",
+      "late_interest_rate": "0.15",
+      "past_balance": -232553,
+      "effective_due_date": "2021-02-22",
+      "total_balance": 0,
+      "interest_rate": "0.14",
+      "interest": 0,
+      "total_cumulative": 232553,
+      "paid": 0,
+      "minimum_payment": 0,
+      "open_date": "2021-01-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/60289c24-a85c-4a02-8693-64c74b285301"
+      }
+    }
+  },
+  {
+    "id": "5fffbd37-23ac-468d-b779-136b506b2fd4",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2021-01-21",
+      "close_date": "2021-01-14",
+      "late_interest_rate": "0.15",
+      "past_balance": 0,
+      "effective_due_date": "2021-01-21",
+      "total_balance": 180291,
+      "interest_rate": "0.14",
+      "interest": 0,
+      "total_cumulative": 180291,
+      "paid": 0,
+      "minimum_payment": 27043,
+      "open_date": "2020-12-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/5fffbd37-23ac-468d-b779-136b506b2fd4"
+      }
+    }
+  },
+  {
+    "id": "5fd6dd87-77d6-40d8-86b1-a9ffe4c29e1b",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2020-12-21",
+      "close_date": "2020-12-14",
+      "late_interest_rate": "0.15",
+      "past_balance": 0,
+      "effective_due_date": "2020-12-21",
+      "total_balance": 134337,
+      "interest_rate": "0.14",
+      "interest": 0,
+      "total_cumulative": 134337,
+      "paid": 0,
+      "minimum_payment": 20150,
+      "open_date": "2020-11-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/5fd6dd87-77d6-40d8-86b1-a9ffe4c29e1b"
+      }
+    }
+  },
+  {
+    "id": "5faf50bf-c020-4c5b-b6f4-99232274b23a",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2020-11-21",
+      "close_date": "2020-11-14",
+      "late_interest_rate": "0.15",
+      "past_balance": -499393,
+      "effective_due_date": "2020-11-23",
+      "total_balance": 0,
+      "interest_rate": "0.14",
+      "interest": 0,
+      "total_cumulative": 499393,
+      "paid": 0,
+      "minimum_payment": 0,
+      "open_date": "2020-10-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/5faf50bf-c020-4c5b-b6f4-99232274b23a"
+      }
+    }
+  },
+  {
+    "id": "5f8674d0-1bfa-46ad-8b67-bb0240b0a9d7",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2020-10-21",
+      "close_date": "2020-10-14",
+      "late_interest_rate": "0.15",
+      "past_balance": 0,
+      "effective_due_date": "2020-10-21",
+      "total_balance": 219269,
+      "interest_rate": "0.14",
+      "interest": 0,
+      "total_cumulative": 219269,
+      "paid": 0,
+      "minimum_payment": 32890,
+      "open_date": "2020-09-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/5f8674d0-1bfa-46ad-8b67-bb0240b0a9d7"
+      }
+    }
+  },
+  {
+    "id": "5f5ee69f-32e4-4e6f-842b-8693334b7691",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2020-09-21",
+      "close_date": "2020-09-14",
+      "late_interest_rate": "0.15",
+      "past_balance": 0,
+      "effective_due_date": "2020-09-21",
+      "total_balance": 130265,
+      "interest_rate": "0.14",
+      "interest": 0,
+      "total_cumulative": 130265,
+      "paid": 0,
+      "minimum_payment": 19539,
+      "open_date": "2020-08-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/5f5ee69f-32e4-4e6f-842b-8693334b7691"
+      }
+    }
+  },
+  {
+    "id": "5f360cf8-c9bc-4253-ac37-ccd1192049de",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2020-08-21",
+      "close_date": "2020-08-14",
+      "late_interest_rate": "0.15",
+      "past_balance": -922,
+      "effective_due_date": "2020-08-21",
+      "total_balance": 174396,
+      "interest_rate": "0.14",
+      "interest": 0,
+      "total_cumulative": 175318,
+      "paid": 0,
+      "minimum_payment": 26159,
+      "open_date": "2020-07-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/5f360cf8-c9bc-4253-ac37-ccd1192049de"
+      }
+    }
+  },
+  {
+    "id": "5f0d2db3-1587-450c-afaf-25bb5c7cf25a",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2020-07-21",
+      "close_date": "2020-07-14",
+      "late_interest_rate": "0.15",
+      "past_balance": 0,
+      "effective_due_date": "2020-07-21",
+      "total_balance": 172350,
+      "interest_rate": "0.14",
+      "interest": 0,
+      "total_cumulative": 172350,
+      "paid": 0,
+      "minimum_payment": 25853,
+      "open_date": "2020-06-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/5f0d2db3-1587-450c-afaf-25bb5c7cf25a"
+      }
+    }
+  },
+  {
+    "id": "5ee5a069-6f85-4d49-824e-d2aed0c17eea",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2020-06-21",
+      "close_date": "2020-06-14",
+      "late_interest_rate": "0.15",
+      "past_balance": 0,
+      "effective_due_date": "2020-06-22",
+      "total_balance": 101374,
+      "interest_rate": "0.14",
+      "interest": 0,
+      "total_cumulative": 101375,
+      "paid": 0,
+      "minimum_payment": 15206,
+      "open_date": "2020-05-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/5ee5a069-6f85-4d49-824e-d2aed0c17eea"
+      }
+    }
+  },
+  {
+    "id": "5ebcc6bd-8ce9-48a8-a58e-7fe825ba8c2a",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2020-05-21",
+      "close_date": "2020-05-14",
+      "late_interest_rate": "0.15",
+      "past_balance": 0,
+      "effective_due_date": "2020-05-21",
+      "total_balance": 123916,
+      "interest_rate": "0.14",
+      "interest": 0,
+      "total_cumulative": 123915,
+      "paid": 0,
+      "minimum_payment": 18587,
+      "open_date": "2020-04-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/5ebcc6bd-8ce9-48a8-a58e-7fe825ba8c2a"
+      }
+    }
+  },
+  {
+    "id": "5e95361c-59a3-4cab-a2a3-8315c4b4846d",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2020-04-21",
+      "close_date": "2020-04-14",
+      "late_interest_rate": "0.15",
+      "past_balance": 0,
+      "effective_due_date": "2020-04-22",
+      "total_balance": 170255,
+      "interest_rate": "0.14",
+      "interest": 0,
+      "total_cumulative": 170256,
+      "paid": 0,
+      "minimum_payment": 25538,
+      "open_date": "2020-03-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/5e95361c-59a3-4cab-a2a3-8315c4b4846d"
+      }
+    }
+  },
+  {
+    "id": "5e6c5888-6093-4d59-a11d-aa79d62ad59d",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2020-03-21",
+      "close_date": "2020-03-14",
+      "late_interest_rate": "0.15",
+      "past_balance": 0,
+      "effective_due_date": "2020-03-23",
+      "total_balance": 116876,
+      "interest_rate": "0.14",
+      "interest": 0,
+      "total_cumulative": 116876,
+      "paid": 0,
+      "minimum_payment": 17531,
+      "open_date": "2020-02-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/5e6c5888-6093-4d59-a11d-aa79d62ad59d"
+      }
+    }
+  },
+  {
+    "id": "5e461ba5-848a-472c-82f7-a28684fecc6f",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2020-02-21",
+      "close_date": "2020-02-14",
+      "late_interest_rate": "0.15",
+      "past_balance": -2538,
+      "effective_due_date": "2020-02-21",
+      "total_balance": 138300,
+      "interest_rate": "0.14",
+      "interest": 0,
+      "total_cumulative": 140838,
+      "paid": 0,
+      "minimum_payment": 20745,
+      "open_date": "2020-01-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/5e461ba5-848a-472c-82f7-a28684fecc6f"
+      }
+    }
+  },
+  {
+    "id": "5e1d3b35-ba7b-498a-99dc-d4d36ebaa828",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2020-01-21",
+      "close_date": "2020-01-14",
+      "late_interest_rate": "0.15",
+      "past_balance": -169501,
+      "effective_due_date": "2020-01-21",
+      "total_balance": 31938,
+      "interest_rate": "0.14",
+      "interest": 0,
+      "total_cumulative": 201439,
+      "paid": 0,
+      "minimum_payment": 0,
+      "open_date": "2019-12-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/5e1d3b35-ba7b-498a-99dc-d4d36ebaa828"
+      }
+    }
+  },
+  {
+    "id": "5df45c7b-98ba-4b23-8700-8c314471f529",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2019-12-21",
+      "close_date": "2019-12-14",
+      "late_interest_rate": "0.15",
+      "past_balance": 0,
+      "effective_due_date": "2019-12-23",
+      "total_balance": 101786,
+      "interest_rate": "0.14",
+      "interest": 0,
+      "total_cumulative": 101786,
+      "paid": 0,
+      "minimum_payment": 15268,
+      "open_date": "2019-11-14"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/5df45c7b-98ba-4b23-8700-8c314471f529"
+      }
+    }
+  },
+  {
+    "id": "5dccce5f-cf05-45f3-a563-5140bde4f4cb",
+    "state": "overdue",
+    "summary": {
+      "due_date": "2019-11-21",
+      "close_date": "2019-11-14",
+      "late_interest_rate": "0.15",
+      "past_balance": 0,
+      "effective_due_date": "2019-11-21",
+      "total_balance": 123827,
+      "interest_rate": "0.14",
+      "interest": 0,
+      "total_cumulative": 123827,
+      "paid": 0,
+      "minimum_payment": 18574,
+      "open_date": "2019-10-16"
+    },
+    "_links": {
+      "self": {
+        "href": "https://prod-s8-facade.nubank.com.br/api/bills/5dccce5f-cf05-45f3-a563-5140bde4f4cb"
+      }
+    }
+  }
+]
