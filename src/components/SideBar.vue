@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useTheme } from 'vuetify';
-import { useStore, mapGetters } from 'vuex';
+import { useStore } from 'vuex';
 
 const router = useRouter();
 const theme = useTheme();

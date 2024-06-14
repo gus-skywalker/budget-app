@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
-import SideBar from '@/components/SideBar.vue'
 import store from '@/plugins/store'
 
 const router = createRouter({
