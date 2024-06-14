@@ -1,42 +1,36 @@
 pipeline {
     agent any
 
-    environment {
-        NODE_VERSION = '18.19.0'  // Specify your Node.js version
+    // environment {
+    //     NODE_VERSION = '18.19.0'  // Specify your Node.js version
+    // }
+
+    tools {
+        nodejs 'NodeJS 18.19.0'  // Nome que você deu à instalação do Node.js no Jenkins
     }
 
     stages {
-        
         stage('Setup') {
             steps {
-                // git 'https://github.com/gus-skywalker/budget-app.git'
                 git branch: 'main', credentialsId: '3bafab71-29e5-4d84-93d0-bc33a57123df', url: 'https://github.com/gus-skywalker/budget-app.git'
-                // script {
-                //     // Set up Node.js environment
-                //     def nodeHome = tool name: 'NodeJS', type: 'NodeJSInstallation'
-                //     env.PATH = "${nodeHome}/bin:${env.PATH}"
-                // }
+
             }
         }
-
         stage('Install Dependencies') {
             steps {
                 sh 'npm install'
             }
         }
-
         stage('Lint') {
             steps {
                 sh 'npm run lint'
             }
         }
-
         // stage('Test') {
         //     steps {
         //         sh 'npm run test'
         //     }
         // }
-
         stage('Build') {
             steps {
                 sh 'npm run build'
@@ -49,6 +43,8 @@ pipeline {
                 // sh 'scp -r dist/ user@server:/path/to/deploy'
                 // or use a specific deployment tool like Firebase, Netlify, or others
                 sh 'echo "Deploying the application..."'
+                sh 'npm install -g serve'
+                sh 'serve -s build'
             }
         }
     }
