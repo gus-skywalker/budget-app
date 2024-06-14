@@ -1,8 +1,8 @@
 pipeline {
     agent any
 
-    environment {
-        NODE_VERSION = '18.19.0'  // Specify your Node.js version
+    tools {
+        nodejs = '18.19.0'  // Specify your Node.js version
     }
 
     stages {
@@ -11,20 +11,11 @@ pipeline {
             steps {
                 // git 'https://github.com/gus-skywalker/budget-app.git'
                 git branch: 'main', credentialsId: '3bafab71-29e5-4d84-93d0-bc33a57123df', url: 'https://github.com/gus-skywalker/budget-app.git'
-                node {
-                    env.NODEJS_HOME = "${tool 'Node 6.x'}"
-                    // on linux / mac
-                    env.PATH="${env.NODEJS_HOME}/bin:${env.PATH}"
-                    // on windows
-                    env.PATH="${env.NODEJS_HOME};${env.PATH}"
-                    sh 'npm --version'
+                script {
+                    // Set up Node.js environment
+                    def nodeHome = tool name: 'NodeJS', type: 'NodeJSInstallation'
+                    env.PATH = "${nodeHome}/bin:${env.PATH}"
                 }
-                // script {
-                //     // Set up Node.js environment
-                //     def nodeHome = tool name: 'NodeJS', type: 'NodeJSInstallation'
-                //     env.PATH = "${nodeHome}/bin:${env.PATH}"
-                // }
-
             }
         }
 
