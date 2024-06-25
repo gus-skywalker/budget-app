@@ -57,6 +57,10 @@
                                 <v-select label="Método de Pagamento" v-model="expense.paymentMethod"
                                     :items="paymentMethods" item-title="name" item-value="id"></v-select>
                             </v-col>
+                            <v-col cols="12" md="12">
+                                <v-select label="Compartilhar com Usuários" v-model="selectedUsers" :items="users"
+                                    item-title="username" item-value="id" multiple></v-select>
+                            </v-col>
                         </v-row>
                     </v-card-text>
                     <v-card-actions>
@@ -129,6 +133,7 @@ import IncomeItem from '../components/IncomeItem.vue'
 import IncomeService from '@/services/IncomeService'
 import ExpenseService from '@/services/ExpenseService'
 import DataService from '@/services/DataService'
+import UsersService from '@/services/UsersService'
 
 export default {
     components: {
@@ -156,6 +161,8 @@ export default {
             selectedIncomeMonth: null,
             selectedExpenseMonth: null,
             selectedLanguage: 'pt',
+            selectedUsers: [],
+            users: [],
             months: [
                 { name: 'Janeiro', value: 1 },
                 { name: 'Fevereiro', value: 2 },
@@ -177,6 +184,7 @@ export default {
     mounted() {
         this.fetchCategories();
         this.fetchPaymentMethods();
+        this.fetchUsers();
     },
     methods: {
         fetchCategories() {
@@ -203,6 +211,18 @@ export default {
                 })
                 .catch(error => {
                     console.error('Error fetching payment methods:', error);
+                });
+        },
+        fetchUsers() {
+            UsersService.fetchUsers()
+                .then(response => {
+                    this.users = response.data.map(user => ({
+                        id: user.id,
+                        username: user.username
+                    }));
+                })
+                .catch(error => {
+                    console.error('Error fetching users:', error);
                 });
         },
         fetchMonthlyIncomes() {
@@ -256,6 +276,17 @@ export default {
                 .catch(error => {
                     console.error('Error saving expense:', error);
                 });
+        },
+        notifyUsers(expense) {
+            this.selectedUsers.forEach(userId => {
+                UsersService.notifyUser(userId, expense)
+                    .then(response => {
+                        console.log(`User ${userId} notified successfully`);
+                    })
+                    .catch(error => {
+                        console.error(`Error notifying user ${userId}:`, error);
+                    });
+            });
         },
         resetIncomeForm() {
             this.income = {
