@@ -123,11 +123,15 @@
             </v-col>
         </v-row>
     </v-container>
+
+    <GroupManagement />
     <FinancialGoal />
+
 </template>
 
 
 <script>
+import GroupManagement from '../components/GroupManagement.vue'
 import FinancialGoal from '../components/FinancialGoal.vue'
 import IncomeItem from '../components/IncomeItem.vue'
 import IncomeService from '@/services/IncomeService'
@@ -138,7 +142,8 @@ import UsersService from '@/services/UsersService'
 export default {
     components: {
         FinancialGoal,
-        IncomeItem
+        IncomeItem,
+        GroupManagement
     },
     data() {
         return {
