@@ -236,7 +236,6 @@ export default {
                 console.log('Fetching incomes for month:', monthNumber);
                 IncomeService.fetchMonthlyIncomes(monthNumber)
                     .then(response => {
-                        console.log(response);
                         this.monthlyIncomes = response.data;
                     })
                     .catch(error => {
@@ -286,6 +285,7 @@ export default {
             this.selectedUsers.forEach(userId => {
                 UsersService.notifyUser(userId, expense)
                     .then(response => {
+                        console.log(response);
                         console.log(`User ${userId} notified successfully`);
                     })
                     .catch(error => {

@@ -74,7 +74,14 @@ export default {
         fetchGroups() {
             GroupService.fetchGroups()
                 .then(response => {
-                    this.groups = response.data;
+                    console.log(response.data)
+                    this.groups = response.data.map(group => ({
+                        id: group.id,
+                        name: group.name,
+                        description: group.description,
+                        adminId: group.adminId,
+                        createdDate: group.createdDate
+                    }));
                 })
                 .catch(error => {
                     console.error('Erro ao buscar grupos:', error);
