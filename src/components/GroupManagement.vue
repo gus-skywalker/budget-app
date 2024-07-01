@@ -26,7 +26,7 @@
                     </v-card-title>
                     <v-card-text>
                         <v-select label="Selecione o Grupo" v-model="selectedGroup" :items="groups" item-title="name"
-                            item-value="id" @change="fetchGroupMembers"></v-select>
+                            item-value="id" @update:model-value="fetchGroupMembers"></v-select>
                         <v-text-field label="Email do Usuário" v-model="inviteEmail"></v-text-field>
                     </v-card-text>
                     <v-card-actions>
@@ -37,8 +37,8 @@
                     </v-card-title>
                     <v-card-text>
                         <v-list v-if="groupMembers.length">
-                            <v-list-item v-for="member in groupMembers" :key="member.id">
-                                <v-list-item-title>{{ member.email }}</v-list-item-title>
+                            <v-list-item v-for="(member, index) in groupMembers" :key="index">
+                                <v-list-item-title>{{ member.name }} - {{ member.email }}</v-list-item-title>
                             </v-list-item>
                         </v-list>
                         <v-alert v-else type="info">
@@ -79,7 +79,7 @@ export default {
                         id: group.id,
                         name: group.name,
                         description: group.description,
-                        adminId: group.adminId,
+                        ownerId: group.ownerId,
                         createdDate: group.createdDate
                     }));
                 })
@@ -90,7 +90,12 @@ export default {
         fetchGroupMembers() {
             GroupService.fetchGroupMembers(this.selectedGroup)
                 .then(response => {
-                    this.groupMembers = response.data;
+                    console.log(response.data);
+                    this.groupMembers = response.data.map(member => ({
+                        id: member.userId,
+                        name: member.name,
+                        email: member.email
+                    }));
                 })
                 .catch(error => {
                     console.error('Erro ao buscar membros do grupo:', error);

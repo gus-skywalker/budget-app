@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useTheme } from 'vuetify';
 import { useUserStore } from '@/plugins/userStore';  // Importe a store de Pinia
+import NotificationService from '@/services/NotificationService';
 
 const router = useRouter();
 const theme = useTheme();
@@ -52,58 +53,49 @@ function toggleNotifications() {
 }
 
 // Função para aceitar a notificação
-function accept(notificationId: any) {
-    fetch(`/api/notifications/${notificationId}/accept`, { method: 'PUT' })
+function accept(notificationId: number) {
+    NotificationService.accept(notificationId)
         .then(() => {
             notifications.value = notifications.value.filter(n => n.id !== notificationId);
         });
 }
 
 // Função para declinar a notificação
-function decline(notificationId: any) {
-    fetch(`/api/notifications/${notificationId}/decline`, { method: 'PUT' })
+function decline(notificationId: number) {
+    NotificationService.accept(notificationId)
         .then(() => {
             notifications.value = notifications.value.filter(n => n.id !== notificationId);
         });
 }
+// Função para fazer polling de notificações
+function pollNotifications() {
+    NotificationService.getNotifications()
+        .then((response: { data: any[]; }) => {
+            notifications.value = response.data.map(notification => ({
+                id: notification.id,
+                user: notification.user,
+                message: notification.message,
+                status: notification.status
+            }));
+        })
+        .catch((error: any) => {
+            console.error('Erro ao buscar notificações:', error);
+        });
 
-// Configuração do WebSocket
-let socket: WebSocket;
-const reconnectInterval = 5000;  // Intervalo de reconexão de 5 segundos
-let reconnectTimeout: any;
+}
+
+let pollingInterval: any;
 
 onMounted(() => {
-    const connectWebSocket = () => {
-        const userId = userStore.getUser.id;
-        if (!userId) return;
-
-        socket = new WebSocket(`ws://localhost:8080/notifications?userId=${userId}`);
-
-        socket.onmessage = (event) => {
-            const notification = JSON.parse(event.data);
-            console.log(notification);
-            notifications.value.push(notification);
-        };
-
-        socket.onclose = () => {
-            console.log('WebSocket connection closed, attempting to reconnect...');
-            reconnectTimeout = setTimeout(connectWebSocket, reconnectInterval);
-        };
-
-        socket.onerror = (error) => {
-            console.error('WebSocket error:', error);
-        };
-    };
-
-    connectWebSocket();
+    // Iniciar polling
+    pollNotifications();
+    pollingInterval = setInterval(pollNotifications, 5000);  // Polling a cada 5 segundos
 });
 
 onUnmounted(() => {
-    if (socket) {
-        socket.close();
-    }
-    if (reconnectTimeout) {
-        clearTimeout(reconnectTimeout);
+    // Limpar o intervalo de polling
+    if (pollingInterval) {
+        clearInterval(pollingInterval);
     }
 });
 </script>
