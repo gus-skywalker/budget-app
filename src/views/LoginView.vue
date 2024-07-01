@@ -11,7 +11,7 @@ const error = ref(null)
 
 const userLogin = async () => {
     try {
-        const res = await axios.post('http://localhost:9000/auth/signin', userData.value)
+        const res = await axios.post('https://web-production-c952.up.railway.app/auth/signin', userData.value)
 
         console.log(res)
         userStore.setAuth(true);
