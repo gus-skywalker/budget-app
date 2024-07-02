@@ -1,103 +1,55 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useTheme } from 'vuetify';
-import { useUserStore } from '@/plugins/userStore';  // Importe a store de Pinia
-import NotificationService from '@/services/NotificationService';
+import { useUserStore } from '@/plugins/userStore';
+import type { Notification } from '@/services/NotificationService';
+
+// Import props and emits
+const props = defineProps<{
+    notifications: Notification[],
+}>();
+
+const emit = defineEmits(['accept', 'decline', 'toggle-notifications-popup']);
 
 const router = useRouter();
 const theme = useTheme();
-const userStore = useUserStore();  // Use a store de Pinia
-
-interface Notification {
-    id: number;
-    user: {
-        id: number;
-        username: string;
-        email: string;
-        avatar: string;
-    };
-    message: string;
-    status: string;
-}
-
-
-// Estado das notificações
-const notifications = ref<Notification[]>([]);
-const showNotifications = ref(false);
+const userStore = useUserStore();
 
 // Computed property para acessar o usuário da store
 const user = computed(() => userStore.getUser);
 
 // Método para fazer logout do usuário
 const logoutUser = () => {
-    userStore.resetUser();  // Use o método da store de Pinia
+    userStore.resetUser();
     router.push('/login');
-}
+};
 
 // Função para redirecionar os usuários para a página de login OAuth2
 function redirectToOAuth2LoginPage() {
-    // Substitua 'oauth2_login_url' pelo URL real da sua página de login OAuth2
     window.location.href = 'http://localhost:9000/login';
 }
 
 // Função para alternar o tema
-function toggleTheme(): void {
+function toggleTheme() {
     const isLightTheme = computed(() => theme.global.name.value === 'light');
     theme.global.name.value = isLightTheme.value ? 'dark' : 'light';
 }
 
 // Função para alternar a exibição das notificações
 function toggleNotifications() {
-    showNotifications.value = !showNotifications.value;
+    emit('toggle-notifications-popup', true);
 }
 
 // Função para aceitar a notificação
 function accept(notificationId: number) {
-    NotificationService.accept(notificationId)
-        .then(() => {
-            notifications.value = notifications.value.filter(n => n.id !== notificationId);
-        });
+    emit('accept', notificationId);
 }
 
 // Função para declinar a notificação
 function decline(notificationId: number) {
-    NotificationService.accept(notificationId)
-        .then(() => {
-            notifications.value = notifications.value.filter(n => n.id !== notificationId);
-        });
+    emit('decline', notificationId);
 }
-// Função para fazer polling de notificações
-function pollNotifications() {
-    NotificationService.getNotifications()
-        .then((response: { data: any[]; }) => {
-            notifications.value = response.data.map(notification => ({
-                id: notification.id,
-                user: notification.user,
-                message: notification.message,
-                status: notification.status
-            }));
-        })
-        .catch((error: any) => {
-            console.error('Erro ao buscar notificações:', error);
-        });
-
-}
-
-let pollingInterval: any;
-
-onMounted(() => {
-    // Iniciar polling
-    pollNotifications();
-    pollingInterval = setInterval(pollNotifications, 5000);  // Polling a cada 5 segundos
-});
-
-onUnmounted(() => {
-    // Limpar o intervalo de polling
-    if (pollingInterval) {
-        clearInterval(pollingInterval);
-    }
-});
 </script>
 
 <template>
@@ -107,7 +59,6 @@ onUnmounted(() => {
             <v-list-item @click="logoutUser" title="Logout" prepend-icon="mdi-logout"></v-list-item>
         </v-list>
         <v-list v-else>
-            <!-- Instead of directly logging in, redirect users to the OAuth2 login page -->
             <v-btn @click="redirectToOAuth2LoginPage">Login with OAuth2</v-btn>
         </v-list>
 
@@ -124,28 +75,17 @@ onUnmounted(() => {
 
         <v-switch @click="toggleTheme">Toggle</v-switch>
 
-        <!-- Notification Bell Icon -->
         <div class="notification-icon" @click="toggleNotifications">
             <v-badge :content="notifications.length" color="red" overlap>
                 <v-icon>mdi-bell</v-icon>
             </v-badge>
         </div>
 
-        <!-- Notification Dropdown -->
-        <div v-if="showNotifications" class="notification-dropdown">
-            <ul>
-                <li v-for="notification in notifications" :key="notification.id">
-                    {{ notification.message }}
-                    <button @click="accept(notification.id)">Accept</button>
-                    <button @click="decline(notification.id)">Decline</button>
-                </li>
-            </ul>
-        </div>
+        <!-- Notification Dropdown - removed from SideBar.vue -->
     </v-navigation-drawer>
 </template>
 
 <style scoped>
-/* Add any necessary styles here */
 .notification-icon {
     cursor: pointer;
     position: relative;
