@@ -113,10 +113,12 @@
                         </v-row>
                         <v-divider class="my-4"></v-divider>
                         <v-list v-if="monthlyExpenses.length">
-                            <v-list-item v-for="(expense, index) in monthlyExpenses" :key="index">
+                            <expense-item v-for="(expense, index) in monthlyExpenses" :key="index" :expense="expense"
+                                @toggle-recurring="toggleRecurring" @deleteExpense="deleteExpense"></expense-item>
+                            <!-- <v-list-item v-for="(expense, index) in monthlyExpenses" :key="index">
                                 <v-list-item-title>{{ expense.date }} - R$ {{ expense.amount }} - {{ expense.description
                                     }}</v-list-item-title>
-                            </v-list-item>
+                            </v-list-item> -->
                         </v-list>
                         <v-alert v-else type="info">
                             Nenhum débito encontrado para este mês.
@@ -137,6 +139,7 @@
 import GroupManagement from '../components/GroupManagement.vue'
 import FinancialGoal from '../components/FinancialGoal.vue'
 import IncomeItem from '../components/IncomeItem.vue'
+import ExpenseItem from '../components/ExpenseItem.vue'
 import IncomeService from '@/services/IncomeService'
 import ExpenseService from '@/services/ExpenseService'
 import DataService from '@/services/DataService'
@@ -147,6 +150,7 @@ export default {
     components: {
         FinancialGoal,
         IncomeItem,
+        ExpenseItem,
         GroupManagement
     },
     data() {
@@ -346,6 +350,14 @@ export default {
                 const incomeIndex = this.monthlyIncomes.findIndex((item) => item.id === income.id);
                 if (incomeIndex !== -1) {
                     this.monthlyIncomes.splice(incomeIndex, 1);
+                }
+            }
+        },
+        deleteExpense(expense) {
+            if (confirm('Are you sure you want to delete this expense?')) {
+                const expenseIndex = this.monthlyExpenses.findIndex((item) => item.id === expense.id);
+                if (incomeIndex !== -1) {
+                    this.monthlyExpenses.splice(expenseIndex, 1);
                 }
             }
         },
