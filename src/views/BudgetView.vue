@@ -58,8 +58,11 @@
                                     :items="paymentMethods" item-title="name" item-value="id"></v-select>
                             </v-col>
                             <v-col cols="12" md="12">
-                                <v-select label="Compartilhar com Usuários" v-model="selectedUsers" :items="users"
-                                    item-title="username" item-value="id" multiple></v-select>
+                                <v-select label="Selecione o Grupo" v-model="selectedGroup" :items="groups"
+                                    item-title="name" item-value="id"
+                                    @update:model-value="fetchGroupMembers"></v-select>
+                                <v-select label="Compartilhar com Usuários do Grupo" v-model="expense.selectedUsers"
+                                    :items="users" item-title="name" item-value="id" multiple></v-select>
                             </v-col>
                         </v-row>
                     </v-card-text>
@@ -104,7 +107,7 @@
                         <v-row align="center">
                             <v-col cols="12" md="12">
                                 <v-select label="Selecione o Mês" v-model="selectedExpenseMonth"
-                                    @update:model-value="fetchMonthlyNubankBill" :items="months" item-title="name"
+                                    @update:model-value="fetchMonthlyExpenses" :items="months" item-title="name"
                                     item-value="value"></v-select>
                             </v-col>
                         </v-row>
@@ -138,6 +141,7 @@ import IncomeService from '@/services/IncomeService'
 import ExpenseService from '@/services/ExpenseService'
 import DataService from '@/services/DataService'
 import UsersService from '@/services/UsersService'
+import GroupService from '@/services/GroupService'
 
 export default {
     components: {
@@ -159,15 +163,18 @@ export default {
                 amount: 0,
                 description: '',
                 category: null,
-                paymentMethod: null
+                paymentMethod: null,
+                selectedUsers: []
             },
             categories: [],
             paymentMethods: [],
             selectedIncomeMonth: null,
             selectedExpenseMonth: null,
             selectedLanguage: 'pt',
-            selectedUsers: [],
+            groups: [],
+            selectedGroup: null,
             users: [],
+            isLoadingMembers: false,
             months: [
                 { name: 'Janeiro', value: 1 },
                 { name: 'Fevereiro', value: 2 },
@@ -189,7 +196,15 @@ export default {
     mounted() {
         this.fetchCategories();
         this.fetchPaymentMethods();
-        this.fetchUsers();
+        // this.fetchUsers();
+        this.fetchGroups();
+    },
+    watch: {
+        selectedGroup(newGroup, oldGroup) {
+            if (newGroup !== oldGroup) {
+                this.fetchGroupMembers();
+            }
+        }
     },
     methods: {
         fetchCategories() {
@@ -218,17 +233,43 @@ export default {
                     console.error('Error fetching payment methods:', error);
                 });
         },
-        fetchUsers() {
-            UsersService.fetchUsers()
+        fetchGroups() {
+            GroupService.fetchGroups()
                 .then(response => {
-                    this.users = response.data.map(user => ({
-                        id: user.id,
-                        username: user.username
+                    console.log(response.data)
+                    this.groups = response.data.map(group => ({
+                        id: group.id,
+                        name: group.name,
+                        description: group.description,
+                        ownerId: group.ownerId,
+                        createdDate: group.createdDate
                     }));
                 })
                 .catch(error => {
-                    console.error('Error fetching users:', error);
+                    console.error('Erro ao buscar grupos:', error);
                 });
+        },
+        fetchGroupMembers() {
+            if (this.selectedGroup) {
+                this.isLoadingMembers = true;
+                GroupService.fetchGroupMembers(this.selectedGroup)
+                    .then(response => {
+                        console.log(response.data);
+                        this.users = response.data.map(member => ({
+                            id: member.userId,
+                            name: member.name,
+                            email: member.email
+                        }));
+                    })
+                    .catch(error => {
+                        console.error('Erro ao buscar membros do grupo:', error);
+                    })
+                    .finally(() => {
+                        this.isLoadingMembers = false;
+                    });
+            } else {
+                this.users = [];
+            }
         },
         fetchMonthlyIncomes() {
             const monthNumber = this.selectedIncomeMonth;
@@ -240,22 +281,6 @@ export default {
                     })
                     .catch(error => {
                         console.error('Error fetching monthly incomes:', error);
-                    });
-            } else {
-                console.error('Invalid month selected');
-            }
-        },
-        fetchMonthlyExpenses() {
-            const monthNumber = this.selectedExpenseMonth;
-            if (monthNumber !== null) {
-                console.log('Fetching expenses for month:', monthNumber);
-                ExpenseService.fetchMonthlyExpenses(monthNumber)
-                    .then(response => {
-                        console.log(response);
-                        this.monthlyExpenses = response.data;
-                    })
-                    .catch(error => {
-                        console.error('Error fetching monthly expenses:', error);
                     });
             } else {
                 console.error('Invalid month selected');
@@ -324,26 +349,42 @@ export default {
                 }
             }
         },
-        fetchMonthlyNubankBill() {
+        // fetchMonthlyNubankBill() {
+        //     const monthNumber = this.selectedExpenseMonth;
+        //     DataService.fetchMonthlyNubankBill(monthNumber, 2024)
+        //         .then(response => {
+        //             console.log(response);
+        //             this.transformExpenses(response.data.bill.line_items);
+        //         })
+        //         .catch(error => {
+        //             console.error('Error fetching monthly expenses:', error);
+        //         });
+        // },
+        // transformExpenses(lineItems) {
+        //     this.monthlyExpenses = lineItems.map(item => {
+        //         return {
+        //             date: item.post_date,
+        //             amount: (item.amount / 100).toFixed(2),
+        //             description: item.title,
+        //             category: item.category
+        //         };
+        //     });
+        // },
+        fetchMonthlyExpenses() {
             const monthNumber = this.selectedExpenseMonth;
-            DataService.fetchMonthlyNubankBill(2024, monthNumber)
-                .then(response => {
-                    console.log(response);
-                    this.transformExpenses(response.data.bill.line_items);
-                })
-                .catch(error => {
-                    console.error('Error fetching monthly expenses:', error);
-                });
-        },
-        transformExpenses(lineItems) {
-            this.monthlyExpenses = lineItems.map(item => {
-                return {
-                    date: item.post_date,
-                    amount: (item.amount / 100).toFixed(2),
-                    description: item.title,
-                    category: item.category
-                };
-            });
+            if (monthNumber !== null) {
+                console.log('Fetching expenses for month:', monthNumber);
+                ExpenseService.fetchMonthlyExpenses(monthNumber, 2024)
+                    .then(response => {
+                        console.log(response);
+                        this.monthlyExpenses = response.data;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching monthly expenses:', error);
+                    });
+            } else {
+                console.error('Invalid month selected');
+            }
         },
     }
 }
