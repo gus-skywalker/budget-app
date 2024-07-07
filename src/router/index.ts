@@ -4,6 +4,7 @@ import AboutView from '@/views/AboutView.vue'
 import BudgetView from '@/views/BudgetView.vue'
 import DashboardView from '@/views/DashboardView.vue'
 import LoginView from '@/views/LoginView.vue'
+import AccountAdmin from '@/views/AccountAdmin.vue'
 
 import { useUserStore } from '@/plugins/userStore'
 
@@ -34,7 +35,8 @@ const router = createRouter({
       path: '/login',
       name: 'login',
       component: LoginView
-    }
+    },
+    { path: '/account-admin', name: 'account-admin', component: AccountAdmin }
   ]
 })
 
