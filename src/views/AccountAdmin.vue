@@ -1,4 +1,3 @@
-<!-- views/AccountAdmin.vue -->
 <template>
     <div>
         <h1>Administração de Conta</h1>
