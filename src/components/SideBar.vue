@@ -2,42 +2,71 @@
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useTheme } from 'vuetify';
-import { useUserStore } from '@/plugins/userStore';  // Importe a store de Pinia
+import { useUserStore } from '@/plugins/userStore';
+import type { Notification } from '@/services/NotificationService';
+
+// Import props and emits
+const props = defineProps<{
+    notifications: Notification[],
+}>();
+
+const emit = defineEmits(['accept', 'decline', 'toggle-notifications-popup']);
 
 const router = useRouter();
 const theme = useTheme();
-const userStore = useUserStore();  // Use a store de Pinia
+const userStore = useUserStore();
 
 // Computed property para acessar o usuário da store
 const user = computed(() => userStore.getUser);
 
+const userAvatar = computed(() => user.value?.avatar || '/favicon.ico');
+
 // Método para fazer logout do usuário
 const logoutUser = () => {
-    userStore.resetUser();  // Use o método da store de Pinia
+    userStore.resetUser();
     router.push('/login');
-}
+};
 
 // Função para redirecionar os usuários para a página de login OAuth2
 function redirectToOAuth2LoginPage() {
-    // Substitua 'oauth2_login_url' pelo URL real da sua página de login OAuth2
     window.location.href = 'http://localhost:9000/login';
 }
 
 // Função para alternar o tema
-function toggleTheme(): void {
+function toggleTheme() {
     const isLightTheme = computed(() => theme.global.name.value === 'light');
     theme.global.name.value = isLightTheme.value ? 'dark' : 'light';
 }
+
+// Função para alternar a exibição das notificações
+function toggleNotifications() {
+    emit('toggle-notifications-popup', true);
+}
+
+// Função para aceitar a notificação
+function accept(notificationId: number) {
+    emit('accept', notificationId);
+}
+
+// Função para declinar a notificação
+function decline(notificationId: number) {
+    emit('decline', notificationId);
+}
+
+function navigateToAccountAdmin() {
+    router.push({ name: 'account-admin' });
+}
+
 </script>
 
 <template>
     <v-navigation-drawer app expand-on-hover rail>
         <v-list v-if="user">
-            <v-list-item :prepend-avatar="user.avatar" :subtitle="user.email" :title="user.username"></v-list-item>
+            <v-list-item :prepend-avatar="userAvatar" :subtitle="user.email" :title="user.username"
+                @click="navigateToAccountAdmin"></v-list-item>
             <v-list-item @click="logoutUser" title="Logout" prepend-icon="mdi-logout"></v-list-item>
         </v-list>
         <v-list v-else>
-            <!-- Instead of directly logging in, redirect users to the OAuth2 login page -->
             <v-btn @click="redirectToOAuth2LoginPage">Login with OAuth2</v-btn>
         </v-list>
 
@@ -52,10 +81,30 @@ function toggleTheme(): void {
 
         <v-divider></v-divider>
 
-        <v-switch @click="toggleTheme" label="Dark Mode">Toggle</v-switch>
+        <v-switch @click="toggleTheme">Toggle</v-switch>
+
+        <div class="notification-icon" @click="toggleNotifications">
+            <v-badge :content="notifications.length" color="red" overlap>
+                <v-icon>mdi-bell</v-icon>
+            </v-badge>
+        </div>
+
+        <!-- Notification Dropdown - removed from SideBar.vue -->
     </v-navigation-drawer>
 </template>
 
 <style scoped>
-/* Add any necessary styles here */
+.notification-icon {
+    cursor: pointer;
+    position: relative;
+}
+
+.notification-dropdown {
+    position: absolute;
+    top: 50px;
+    right: 0;
+    background: white;
+    border: 1px solid #ccc;
+    z-index: 1000;
+}
 </style>

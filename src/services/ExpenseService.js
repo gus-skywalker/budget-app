@@ -19,7 +19,7 @@ export default {
   delete(id) {
     return axiosInterceptor.delete(`${API_URL}/${id}`)
   },
-  fetchMonthlyExpenses(monthNumber) {
-    return axiosInterceptor.get(`${API_URL}/monthly?month=${monthNumber}`)
+  fetchMonthlyExpenses(monthNumber, year) {
+    return axiosInterceptor.get(`${API_URL}/monthly?year=${year}&month=${monthNumber}`)
   }
 }

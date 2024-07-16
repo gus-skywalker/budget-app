@@ -8,10 +8,12 @@ const userStore = useUserStore();  // Use a store de Pinia
 const router = useRouter()
 const userData = ref({ email: '', password: '' })
 const error = ref(null)
+const baseUrl = 'https://web-production-c952.up.railway.app';
+const localBaseUrl = 'http://localhost:9000';
 
 const userLogin = async () => {
     try {
-        const res = await axios.post('http://localhost:9000/auth/signin', userData.value)
+        const res = await axios.post(`${localBaseUrl}/auth/signin`, userData.value)
 
         console.log(res)
         userStore.setAuth(true);
@@ -29,6 +31,15 @@ const userLogin = async () => {
         error.value = 'Invalid credentials. Please try again.'
     }
 }
+const loginWithGoogle = async () => {
+    // window.location.href = `${localBaseUrl}/oauth2/authorization/google`;
+    window.location.href = `${localBaseUrl}/oauth2/authorization/google`;
+}
+
+const loginWithGitHub = () => {
+    window.location.href = `${localBaseUrl}/oauth2/authorization/github`;
+}
+
 </script>
 
 <template>
@@ -49,6 +60,10 @@ const userLogin = async () => {
             <button type="submit">Login</button>
         </div>
         <div v-if="error" class="error">{{ error }}</div>
+        <div class="oauth-buttons">
+            <button @click.prevent="loginWithGoogle">Login with Google</button>
+            <button @click.prevent="loginWithGitHub">Login with GitHub</button>
+        </div>
     </form>
 </template>
 
@@ -106,6 +121,12 @@ img.avatar {
     color: red;
     text-align: center;
 }
+
+/* .oauth-buttons {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 20px;
+} */
 
 @media screen and (max-width: 300px) {
     span.psw {
