@@ -40,22 +40,24 @@ function decline(notificationId: number) {
 
 // Função para fazer polling de notificações
 function pollNotifications() {
-  NotificationService.getNotifications()
-    .then(response => {
-      console.log('Response data:', response.data);
-      notifications.value = response.data.map(notification => ({
-        id: notification.id,
-        destinationUser: notification.destinationUser,
-        message: notification.message,
-        status: notification.status
-      }));
-      if (notifications.value.length > 0) {
-        showNotificationsPopup.value = true;
-      }
-    })
-    .catch((error: any) => {
-      console.error('Erro ao buscar notificações:', error);
-    });
+  if (isAuthenticated.value) {
+    NotificationService.getNotifications()
+      .then(response => {
+        console.log('Response data:', response.data);
+        notifications.value = response.data.map(notification => ({
+          id: notification.id,
+          destinationUser: notification.destinationUser,
+          message: notification.message,
+          status: notification.status
+        }));
+        if (notifications.value.length > 0) {
+          showNotificationsPopup.value = true;
+        }
+      })
+      .catch((error: any) => {
+        console.error('Erro ao buscar notificações:', error);
+      });
+  }
 }
 
 let pollingInterval: any;
