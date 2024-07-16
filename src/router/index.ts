@@ -49,14 +49,11 @@ router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
   const isAuthenticated = userStore.isAuthenticated
   console.log(isAuthenticated)
-  if (isAuthenticated === false && to.name !== 'login' && to.name !== 'oauth2redirect') {
+  if (!isAuthenticated && to.name !== 'login' && to.name !== 'oauth2redirect') {
     next({ name: 'login' })
-    console.log('nao autenticado')
   } else if (isAuthenticated && (to.name === 'login' || to.name === 'oauth2redirect')) {
-    console.log('autenticado')
     next({ name: 'home' })
   } else {
-    console.log('whatever')
     next()
   }
 })
