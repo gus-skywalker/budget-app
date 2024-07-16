@@ -1,3 +1,59 @@
+<template>
+    <div>
+        <div v-if="!showSignupForm">
+            <form @submit.prevent="userLogin">
+                <h2>Login Page</h2>
+                <div class="imgcontainer">
+                    <img src="https://cdn.icon-icons.com/icons2/2468/PNG/512/user_kids_avatar_user_profile_icon_149314.png"
+                        alt="Avatar" class="avatar" />
+                </div>
+
+                <div class="container">
+                    <label for="email">Email</label>
+                    <input type="email" v-model="userData.email" placeholder="abc@gmail.com" required />
+
+                    <label for="passcode">Password</label>
+                    <input type="password" v-model="userData.password" placeholder="please enter your password"
+                        required />
+
+                    <button type="submit">Login</button>
+                </div>
+                <div v-if="error" class="error">{{ error }}</div>
+                <div class="oauth-buttons">
+                    <button @click.prevent="loginWithGoogle">Login with Google</button>
+                    <button @click.prevent="loginWithGitHub">Login with GitHub</button>
+                </div>
+                <p>Not registered yet? <a href="#" @click.prevent="toggleForm(true)">Create an account</a>.</p>
+            </form>
+        </div>
+
+        <div v-if="showSignupForm">
+            <form @submit.prevent="userSignup">
+                <h2>Signup Page</h2>
+                <div class="container">
+                    <label for="username">Username</label>
+                    <input type="text" v-model="signupData.username" placeholder="Enter your username" required />
+
+                    <label for="email">Email</label>
+                    <input type="email" v-model="signupData.email" placeholder="abc@gmail.com" required />
+
+                    <label for="password">Password</label>
+                    <input type="password" v-model="signupData.password" placeholder="please enter your password"
+                        required />
+
+                    <label for="confirmPassword">Confirm Password</label>
+                    <input type="password" v-model="signupData.confirmPassword"
+                        placeholder="please confirm your password" required />
+
+                    <button type="submit">Signup</button>
+                </div>
+                <div v-if="signupError" class="error">{{ signupError }}</div>
+                <p>Already have an account? <a href="#" @click.prevent="toggleForm(false)">Login here</a>.</p>
+            </form>
+        </div>
+    </div>
+</template>
+
 <script setup>
 import { ref } from 'vue'
 import { useUserStore } from '@/plugins/userStore'
@@ -7,7 +63,10 @@ import axios from 'axios'
 const userStore = useUserStore();  // Use a store de Pinia
 const router = useRouter()
 const userData = ref({ email: '', password: '' })
+const signupData = ref({ email: '', password: '', confirmPassword: '', username: '' })
 const error = ref(null)
+const signupError = ref(null)
+const showSignupForm = ref(false);
 const baseUrl = 'https://web-production-c952.up.railway.app';
 const localBaseUrl = 'http://localhost:9000';
 
@@ -31,8 +90,28 @@ const userLogin = async () => {
         error.value = 'Invalid credentials. Please try again.'
     }
 }
+
+const userSignup = async () => {
+    if (signupData.value.password !== signupData.value.confirmPassword) {
+        signupError.value = 'Passwords do not match. Please try again.';
+        return;
+    }
+    try {
+        const res = await axios.post(`${localBaseUrl}/auth/signup`, {
+            email: signupData.value.email,
+            password: signupData.value.password,
+            username: signupData.value.username
+        })
+
+        console.log(res)
+        // Log user in after successful signup
+        await userLogin();
+    } catch (err) {
+        signupError.value = 'Error creating account. Please try again.'
+    }
+}
+
 const loginWithGoogle = async () => {
-    // window.location.href = `${localBaseUrl}/oauth2/authorization/google`;
     window.location.href = `${localBaseUrl}/oauth2/authorization/google`;
 }
 
@@ -40,32 +119,11 @@ const loginWithGitHub = () => {
     window.location.href = `${localBaseUrl}/oauth2/authorization/github`;
 }
 
+const toggleForm = (isSignup) => {
+    showSignupForm.value = isSignup;
+}
+
 </script>
-
-<template>
-    <form @submit.prevent="userLogin">
-        <h2>Login Page</h2>
-        <div class="imgcontainer">
-            <img src="https://cdn.icon-icons.com/icons2/2468/PNG/512/user_kids_avatar_user_profile_icon_149314.png"
-                alt="Avatar" class="avatar" />
-        </div>
-
-        <div class="container">
-            <label for="email">Email</label>
-            <input type="email" v-model="userData.email" placeholder="abc@gmail.com" required />
-
-            <label for="passcode">Password</label>
-            <input type="password" v-model="userData.password" placeholder="please enter your password" required />
-
-            <button type="submit">Login</button>
-        </div>
-        <div v-if="error" class="error">{{ error }}</div>
-        <div class="oauth-buttons">
-            <button @click.prevent="loginWithGoogle">Login with Google</button>
-            <button @click.prevent="loginWithGitHub">Login with GitHub</button>
-        </div>
-    </form>
-</template>
 
 <style scoped>
 body {
@@ -74,6 +132,7 @@ body {
 
 form {
     border: 3px solid #fff;
+    margin-bottom: 20px;
 }
 
 h2 {
@@ -81,7 +140,8 @@ h2 {
 }
 
 input[type="email"],
-input[type="password"] {
+input[type="password"],
+input[type="text"] {
     width: 100%;
     padding: 12px 20px;
     margin: 8px 0;
@@ -122,11 +182,11 @@ img.avatar {
     text-align: center;
 }
 
-/* .oauth-buttons {
+.oauth-buttons {
     display: flex;
     justify-content: space-around;
     margin-top: 20px;
-} */
+}
 
 @media screen and (max-width: 300px) {
     span.psw {
