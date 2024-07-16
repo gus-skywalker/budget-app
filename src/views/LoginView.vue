@@ -72,7 +72,7 @@ const localBaseUrl = 'http://localhost:9000';
 
 const userLogin = async () => {
     try {
-        const res = await axios.post(`${localBaseUrl}/auth/signin`, userData.value)
+        const res = await axios.post(`${baseUrl}/auth/signin`, userData.value)
 
         console.log(res)
         userStore.setAuth(true);
@@ -97,7 +97,7 @@ const userSignup = async () => {
         return;
     }
     try {
-        const res = await axios.post(`${localBaseUrl}/auth/signup`, {
+        const res = await axios.post(`${baseUrl}/auth/signup`, {
             email: signupData.value.email,
             password: signupData.value.password,
             username: signupData.value.username
@@ -112,11 +112,11 @@ const userSignup = async () => {
 }
 
 const loginWithGoogle = async () => {
-    window.location.href = `${localBaseUrl}/oauth2/authorization/google`;
+    window.location.href = `${baseUrl}/oauth2/authorization/google`;
 }
 
 const loginWithGitHub = () => {
-    window.location.href = `${localBaseUrl}/oauth2/authorization/github`;
+    window.location.href = `${baseUrl}/oauth2/authorization/github`;
 }
 
 const toggleForm = (isSignup) => {
