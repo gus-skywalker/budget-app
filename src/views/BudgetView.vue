@@ -363,7 +363,7 @@ export default {
         },
         // fetchMonthlyNubankBill() {
         //     const monthNumber = this.selectedExpenseMonth;
-        //     DataService.fetchMonthlyNubankBill(monthNumber, 2024)
+        //     BankService.fetchMonthlyNubankBill(monthNumber, 2024)
         //         .then(response => {
         //             console.log(response);
         //             this.transformExpenses(response.data.bill.line_items);
