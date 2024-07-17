@@ -99,7 +99,9 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import BankService from '@/services/BankService';
+import { useBankStore } from '@/plugins/bankStore';
 
+const bankStore = useBankStore();
 // Informações Básicas do Perfil
 const username = ref('');
 const email = ref('');
@@ -186,14 +188,10 @@ const authenticateNubank = async () => {
             cpf: bankLogin.value,
             password: bankPassword.value
         };
-
         const response = await BankService.authenticateNubank(data);
-        const accessToken = response.data;
-
-        // Exemplo de como lidar com o token de acesso retornado
-        console.log('Token de acesso:', accessToken);
-
         // Aqui você pode salvar o token de acesso localmente ou atualizar o estado do Vue.js
+        bankStore.setNubankToken(response);
+        return response;
     } catch (error) {
         console.error('Erro ao autenticar no Nubank:', error);
         // Tratar o erro conforme necessário

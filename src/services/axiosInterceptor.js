@@ -2,12 +2,15 @@ import axios from 'axios'
 import router from '../router'
 import { computed } from 'vue'
 import { useUserStore } from '../plugins/userStore.ts'
+import { useBankStore } from '@/plugins/bankStore'
 
 const access_token = computed(() => useUserStore().getToken)
+const nubankToken = computed(() => useBankStore().getNubankToken)
 
 const axiosInstance = axios.create({
   baseURL: 'http://localhost:8080/api',
-  timeout: 5000
+  timeout: 5000,
+  withCredentials: true
 })
 
 // // Function to initialize the axios instance with interceptors
@@ -26,7 +29,11 @@ axiosInstance.interceptors.request.use(
   (config) => {
     if (access_token.value) {
       config.headers.Authorization = `Bearer ${access_token.value}`
+      if (nubankToken.value) {
+        config.headers['X-Nubank-Token'] = nubankToken.value
+      }
     }
+
     return config
   },
   (error) => {
