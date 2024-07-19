@@ -190,8 +190,9 @@ const authenticateNubank = async () => {
         };
         const response = await BankService.authenticateNubank(data);
         // Aqui você pode salvar o token de acesso localmente ou atualizar o estado do Vue.js
-        bankStore.setNubankToken(response);
-        return response;
+        bankStore.setNubankToken(response.data);
+        console.log(response.data)
+        return response.data;
     } catch (error) {
         console.error('Erro ao autenticar no Nubank:', error);
         // Tratar o erro conforme necessário

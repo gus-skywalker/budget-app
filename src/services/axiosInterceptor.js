@@ -2,7 +2,7 @@ import axios from 'axios'
 import router from '../router'
 import { computed } from 'vue'
 import { useUserStore } from '../plugins/userStore.ts'
-import { useBankStore } from '@/plugins/bankStore'
+import { useBankStore } from '@/plugins/bankStore.ts'
 
 const access_token = computed(() => useUserStore().getToken)
 const nubankToken = computed(() => useBankStore().getNubankToken)
@@ -27,10 +27,13 @@ const axiosInstance = axios.create({
 // Interceptor para adicionar o token JWT em todas as requisições
 axiosInstance.interceptors.request.use(
   (config) => {
+    console.log(config)
     if (access_token.value) {
       config.headers.Authorization = `Bearer ${access_token.value}`
+
       if (nubankToken.value) {
-        config.headers['X-Nubank-Token'] = nubankToken.value
+        const nubankTokenString = String(nubankToken.value)
+        config.headers['X-Nubank-Token'] = nubankTokenString
       }
     }
 
