@@ -48,6 +48,7 @@
                     <button type="submit">Signup</button>
                 </div>
                 <div v-if="signupError" class="error">{{ signupError }}</div>
+                <div v-if="signupSuccess" class="success">{{ signupSuccess }}</div>
                 <p>Already have an account? <a href="#" @click.prevent="toggleForm(false)">Login here</a>.</p>
             </form>
         </div>
@@ -66,6 +67,7 @@ const userData = ref({ email: '', password: '' })
 const signupData = ref({ email: '', password: '', confirmPassword: '', username: '' })
 const error = ref(null)
 const signupError = ref(null)
+const signupSuccess = ref(null)
 const showSignupForm = ref(false);
 const baseUrl = 'https://web-production-c952.up.railway.app';
 const localBaseUrl = 'http://localhost:9000';
@@ -100,12 +102,14 @@ const userSignup = async () => {
         const res = await axios.post(`${baseUrl}/auth/signup`, {
             email: signupData.value.email,
             password: signupData.value.password,
-            username: signupData.value.username
+            username: signupData.value.username,
+            language: 'PT'
         })
 
-        console.log(res)
-        // Log user in after successful signup
-        await userLogin();
+        if(res.status === 201) {
+            signupSuccess.value = 'Account created successfully.';
+        }
+
     } catch (err) {
         signupError.value = 'Error creating account. Please try again.'
     }
@@ -179,6 +183,11 @@ img.avatar {
 
 .error {
     color: red;
+    text-align: center;
+}
+
+.success {
+    color: green;
     text-align: center;
 }
 
