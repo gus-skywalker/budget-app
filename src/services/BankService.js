@@ -9,6 +9,12 @@ export default {
   generateNubankCert(data) {
     return axiosInterceptor.post(`${API_URL}/nubank/generate-cert`, data)
   },
+  requestCode(data) {
+    return axiosInterceptor.post(`${API_URL}/request-code`, data)
+  },
+  exchangeCertificate(data) {
+    return axiosInterceptor.post(`${API_URL}/exchange-cert`, data)
+  },
   fetchMonthlyNubankBill(month, year) {
     return axiosInterceptor.get(`${API_URL}/nubank-bills/getMonthlyExpenses/${year}/${month}`)
   }

@@ -73,7 +73,6 @@
                 </v-col>
             </v-row>
         </v-container>
-
         <!-- Diálogo de Login do Banco -->
         <v-dialog v-model="bankDialog" max-width="500">
             <v-card>
@@ -88,8 +87,46 @@
                     </v-form>
                 </v-card-text>
                 <v-card-actions>
-                    <v-btn @click="connectBank">Conectar</v-btn>
+                    <v-btn @click="authenticateBank">Conectar</v-btn>
                     <v-btn @click="closeBankDialog">Cancelar</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
+        <!-- Modal para gerar certificado -->
+        <v-dialog v-model="certDialog" max-width="500">
+            <v-card>
+                <v-card-title>
+                    <v-icon color="primary" class="mr-2">mdi-alert</v-icon>
+                    <span class="headline">Gerar Novo Certificado</span>
+                </v-card-title>
+                <v-card-text>
+                    <p>Você precisa gerar um novo certificado para se autenticar. Deseja gerar um novo código de
+                        verificação?</p>
+                    <v-btn @click="requestCode">Enviar Código</v-btn>
+                </v-card-text>
+                <v-card-actions>
+                    <v-btn @click="closeCertDialog">Cancelar</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
+        <!-- Modal de Código de Verificação -->
+        <v-dialog v-model="verificationDialog" max-width="500">
+            <v-card>
+                <v-card-title>
+                    <v-icon color="primary" class="mr-2">mdi-lock</v-icon>
+                    <span class="headline">Código de Verificação</span>
+                </v-card-title>
+                <v-card-text>
+                    <p>Insira o código de verificação recebido por e-mail:</p>
+                    <v-form>
+                        <v-text-field v-model="verificationCode" label="Código de Verificação"></v-text-field>
+                    </v-form>
+                </v-card-text>
+                <v-card-actions>
+                    <v-btn @click="verifyCode">Verificar Código</v-btn>
+                    <v-btn @click="closeVerificationDialog">Cancelar</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
@@ -117,12 +154,18 @@ const notificationEmail = ref(true);
 const notificationPush = ref(true);
 const darkTheme = ref(false);
 
-// Estado do diálogo de banco
+// Estado dos diálogos
 const bankDialog = ref(false);
+const certDialog = ref(false);
+const verificationDialog = ref(false);
+
 const selectedBank = ref('');
 const bankLogin = ref('');
 const bankPassword = ref('');
 const highlightedCard = ref('');
+
+const verificationCode = ref('');
+const sessionId = ref('');
 
 // Funções para manipular as ações do usuário
 const saveProfile = () => {
@@ -152,73 +195,74 @@ const closeBankDialog = () => {
     bankPassword.value = '';
 };
 
+const openCertDialog = () => {
+    certDialog.value = true;
+};
+
+const closeCertDialog = () => {
+    certDialog.value = false;
+};
+
+const openVerificationDialog = () => {
+    verificationDialog.value = true;
+};
+
+const closeVerificationDialog = () => {
+    verificationDialog.value = false;
+    verificationCode.value = '';
+};
+
 const highlightCard = (cardName: string) => {
     highlightedCard.value = cardName;
 };
 
-const connectBank = async () => {
+const authenticateBank = async () => {
     try {
-        // Autenticar no Nubank
-        const accessTokenResponse = await authenticateNubank();
-        const accessToken = accessTokenResponse;
-
-        // Gerar certificado no Nubank
-        // const certDataResponse = await generateNubankCert();
-        // const certData = certDataResponse;
-
-        // Exemplo de como lidar com os dados retornados
-        console.log('Token de acesso:', accessToken);
-        // console.log('Dados do certificado:', certData);
-
-        // Aqui você pode salvar o token de acesso e os dados do certificado localmente,
-        // ou atualizar o estado do Vue.js conforme necessário
-
-        // Fechar o diálogo de banco após a conexão bem sucedida
+        // Tenta autenticar no banco
+        const response = await BankService.authenticateNubank({
+            cpf: bankLogin.value,
+            password: bankPassword.value
+        });
+        console.log(response.data);
+        bankStore.setNubankToken(response.data.access_token);
+        // Fechar o diálogo de banco após a conexão bem-sucedida
         closeBankDialog();
     } catch (error) {
-        console.error('Erro ao conectar ao Nubank:', error);
-        // Tratar o erro conforme necessário, exibindo uma mensagem de erro ao usuário, por exemplo
+        console.error('Erro ao conectar o banco', error);
+        // Se a autenticação falhar, abrir o diálogo de certificado
+        openCertDialog();
     }
 };
 
-// Função para autenticar no Nubank
-const authenticateNubank = async () => {
+const requestCode = async () => {
     try {
-        const data = {
+        // Solicita um novo código de verificação
+        const response = await BankService.requestCode({
             cpf: bankLogin.value,
             password: bankPassword.value
-        };
-        const response = await BankService.authenticateNubank(data);
-        // Aqui você pode salvar o token de acesso localmente ou atualizar o estado do Vue.js
-        bankStore.setNubankToken(response.data);
-        console.log(response.data)
-        return response.data;
+        });
+
+        sessionId.value = response.sessionId;
+        openVerificationDialog();
     } catch (error) {
-        console.error('Erro ao autenticar no Nubank:', error);
-        // Tratar o erro conforme necessário
+        console.error('Erro ao solicitar o código de verificação', error);
     }
 };
 
-// Função para gerar certificado no Nubank
-const generateNubankCert = async () => {
+const verifyCode = async () => {
     try {
-        const data = {
-            cpf: bankLogin.value,
-            password: bankPassword.value
-        };
-
-        const response = await BankService.generateNubankCert(data);
-        const certData = response.data;
-
-        // Exemplo de como lidar com os dados do certificado retornado
-        console.log('Dados do certificado:', certData);
-
-        // Aqui você pode salvar os dados do certificado localmente ou atualizar o estado do Vue.js
+        // Verifica o código recebido por e-mail
+        await BankService.verifyCode({
+            sessionId: sessionId.value,
+            code: verificationCode.value
+        });
+        closeVerificationDialog();
+        // Prosseguir com a autenticação ou outra lógica após a verificação bem-sucedida
     } catch (error) {
-        console.error('Erro ao gerar certificado no Nubank:', error);
-        // Tratar o erro conforme necessário
+        console.error('Erro ao verificar o código', error);
     }
 };
+
 
 </script>
 
