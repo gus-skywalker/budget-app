@@ -1,13 +1,10 @@
 import axiosInterceptor from './axiosInterceptor'
 
-const API_URL = 'http://localhost:8080/api'
+const API_URL = 'http://localhost:8080/api/nubank'
 
 export default {
   authenticateNubank(data) {
-    return axiosInterceptor.post(`${API_URL}/nubank/authenticate`, data)
-  },
-  generateNubankCert(data) {
-    return axiosInterceptor.post(`${API_URL}/nubank/generate-cert`, data)
+    return axiosInterceptor.post(`${API_URL}/authenticate`, data)
   },
   requestCode(data) {
     return axiosInterceptor.post(`${API_URL}/request-code`, data)

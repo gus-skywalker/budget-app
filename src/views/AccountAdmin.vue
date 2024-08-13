@@ -241,8 +241,9 @@ const requestCode = async () => {
             cpf: bankLogin.value,
             password: bankPassword.value
         });
+        console.log(response);
 
-        sessionId.value = response.sessionId;
+        sessionId.value = response.data.session_id;
         openVerificationDialog();
     } catch (error) {
         console.error('Erro ao solicitar o código de verificação', error);
@@ -252,8 +253,9 @@ const requestCode = async () => {
 const verifyCode = async () => {
     try {
         // Verifica o código recebido por e-mail
-        await BankService.verifyCode({
-            sessionId: sessionId.value,
+        await BankService.exchangeCertificate({
+            cpf: bankLogin.value,
+            session_id: sessionId.value,
             code: verificationCode.value
         });
         closeVerificationDialog();
