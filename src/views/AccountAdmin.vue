@@ -241,7 +241,6 @@ const requestCode = async () => {
             cpf: bankLogin.value,
             password: bankPassword.value
         });
-        console.log(response);
 
         sessionId.value = response.data.session_id;
         openVerificationDialog();

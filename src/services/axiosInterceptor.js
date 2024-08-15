@@ -6,28 +6,19 @@ import { useBankStore } from '@/plugins/bankStore.ts'
 
 const access_token = computed(() => useUserStore().getToken)
 const nubankToken = computed(() => useBankStore().getNubankToken)
+const apiUrl = import.meta.env.VITE_API_BASE_URL
 
 const axiosInstance = axios.create({
-  baseURL: 'http://localhost:8080/api',
+  baseURL: apiUrl,
   timeout: 5000,
   withCredentials: true
 })
-
-// // Function to initialize the axios instance with interceptors
-// function createAxiosInstance() {
-//   const store = useStore() // Ensure this is within the composition API context
-//   const access_token = computed(() => store.getters.token)
-
-//   const axiosInstance = axios.create({
-//     baseURL: 'http://localhost:8080/api',
-//     timeout: 5000,
-//   })
-// }
 
 // Interceptor para adicionar o token JWT em todas as requisições
 axiosInstance.interceptors.request.use(
   (config) => {
     console.log(config)
+    console.log(apiUrl)
     if (access_token.value) {
       config.headers.Authorization = `Bearer ${access_token.value}`
 
@@ -52,7 +43,7 @@ axiosInstance.interceptors.response.use(
   (error) => {
     if (error.response && error.response.status === 401) {
       // Se a resposta for 401 (Não autorizado), você pode redirecionar o usuário para a página de login
-      router.push('/login') // Ajuste o caminho conforme necessário
+      router.push('/login')
     }
     return Promise.reject(error)
   }

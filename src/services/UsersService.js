@@ -1,6 +1,6 @@
 import axiosInterceptor from './axiosInterceptor'
 
-const API_URL = 'http://localhost:8080/api/users'
+const API_URL = `${import.meta.env.VITE_API_BASE_URL}/users`
 
 export default {
   fetchUsers() {

@@ -69,8 +69,7 @@ const error = ref(null)
 const signupError = ref(null)
 const signupSuccess = ref(null)
 const showSignupForm = ref(false);
-const baseUrl = 'https://web-production-c952.up.railway.app';
-const localBaseUrl = 'http://localhost:9000';
+const baseUrl = import.meta.env.VITE_AUTH_URL;
 
 const userLogin = async () => {
     try {
@@ -106,7 +105,7 @@ const userSignup = async () => {
             language: 'PT'
         })
 
-        if(res.status === 201) {
+        if (res.status === 201) {
             signupSuccess.value = 'Account created successfully.';
         }
 

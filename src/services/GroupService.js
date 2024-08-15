@@ -1,6 +1,6 @@
 import axiosInterceptor from './axiosInterceptor'
 
-const API_URL = 'http://localhost:8080/api/groups'
+const API_URL = `${import.meta.env.VITE_API_BASE_URL}/groups`
 
 export default {
   fetchGroups() {
