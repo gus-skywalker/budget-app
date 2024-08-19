@@ -88,7 +88,7 @@
                             </v-col>
                         </v-row>
                         <v-divider class="my-4"></v-divider>
-                        <v-list v-if="monthlyIncomes.length">
+                        <v-list v-if="monthlyIncomes.length" class="box-size-list">
                             <income-item v-for="(income, index) in monthlyIncomes" :key="index" :income="income"
                                 @toggle-recurring="toggleRecurring" @deleteIncome="deleteIncome"></income-item>
                         </v-list>
@@ -112,7 +112,7 @@
                             </v-col>
                         </v-row>
                         <v-divider class="my-4"></v-divider>
-                        <v-list v-if="monthlyExpenses.length">
+                        <v-list v-if="monthlyExpenses.length" class="box-size-list">
                             <expense-item v-for="(expense, index) in monthlyExpenses" :key="index" :expense="expense"
                                 @toggle-recurring="toggleRecurring" @deleteExpense="deleteExpense"></expense-item>
                             <!-- <v-list-item v-for="(expense, index) in monthlyExpenses" :key="index">
@@ -413,6 +413,13 @@ export default {
     border: 1px solid #ccc;
     border-radius: 4px;
     padding: 10px;
+}
+
+.box-size-list {
+    max-height: 300px;
+    /* Define a altura máxima da lista */
+    overflow-y: auto;
+    /* Adiciona rolagem vertical se necessário */
 }
 
 /* Estilo para os itens das listas */

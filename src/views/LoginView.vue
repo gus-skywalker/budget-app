@@ -191,7 +191,7 @@ img.avatar {
 }
 
 .oauth-buttons {
-    display: flex;
+    /* display: flex; */
     justify-content: space-around;
     margin-top: 20px;
 }
