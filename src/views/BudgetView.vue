@@ -325,7 +325,7 @@ export default {
         resetIncomeForm() {
             this.income = {
                 date: '',
-                amount: 0,
+                amount: 0.0,
                 description: '',
                 category: null,
                 paymentMethod: null
@@ -334,32 +334,49 @@ export default {
         resetExpenseForm() {
             this.expense = {
                 date: '',
-                amount: 0,
+                amount: 0.0,
                 description: '',
                 paymentMethod: null
             };
         },
         toggleRecurring(income) {
-            const incomeIndex = this.monthlyIncomes.findIndex(item => item.id === income.id);
-            if (incomeIndex !== -1) {
-                this.monthlyIncomes[incomeIndex].isRecurring = !this.monthlyIncomes[incomeIndex].isRecurring;
-            }
+            IncomeService.toggleRecurring(income.id)
+                .then(response => {
+                    const incomeIndex = this.monthlyIncomes.findIndex(item => item.id === income.id);
+                    if (incomeIndex !== -1) {
+                        this.monthlyIncomes[incomeIndex].isRecurring = !this.monthlyIncomes[incomeIndex].isRecurring;
+                    }
+                })
+                .catch(error => {
+                    console.error("Failed to toggle recurring status:", error);
+                });
         },
         deleteIncome(income) {
             if (confirm('Are you sure you want to delete this income?')) {
-                const incomeIndex = this.monthlyIncomes.findIndex((item) => item.id === income.id);
-                if (incomeIndex !== -1) {
-                    this.monthlyIncomes.splice(incomeIndex, 1);
-                }
+                IncomeService.delete(income.id)
+                    .then(response => {
+                        const incomeIndex = this.monthlyIncomes.findIndex((item) => item.id === income.id);
+                        if (incomeIndex !== -1) {
+                            this.monthlyIncomes.splice(incomeIndex, 1);
+                        }
+                    }).catch(error => {
+                        console.error("Failed to delete income:", error);
+                    });
             }
         },
         deleteExpense(expense) {
             if (confirm('Are you sure you want to delete this expense?')) {
-                const expenseIndex = this.monthlyExpenses.findIndex((item) => item.id === expense.id);
-                if (incomeIndex !== -1) {
-                    this.monthlyExpenses.splice(expenseIndex, 1);
-                }
+                ExpenseService.delete(expense.id)
+                    .then(response => {
+                        const expenseIndex = this.monthlyExpenses.findIndex((item) => item.id === expense.id);
+                        if (incomeIndex !== -1) {
+                            this.monthlyExpenses.splice(expenseIndex, 1);
+                        }
+                    }).catch(error => {
+                        console.error("Failed to delete expense:", error);
+                    });
             }
+
         },
         // fetchMonthlyNubankBill() {
         //     const monthNumber = this.selectedExpenseMonth;

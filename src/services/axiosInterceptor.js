@@ -17,8 +17,6 @@ const axiosInstance = axios.create({
 // Interceptor para adicionar o token JWT em todas as requisições
 axiosInstance.interceptors.request.use(
   (config) => {
-    console.log(config)
-    console.log(apiUrl)
     if (access_token.value) {
       config.headers.Authorization = `Bearer ${access_token.value}`
 
