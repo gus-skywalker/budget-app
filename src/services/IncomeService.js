@@ -21,7 +21,7 @@ export default {
   fetchMonthlyIncomes(monthNumber) {
     return axiosInterceptor.get(`${API_URL}/monthly?month=${monthNumber}`)
   },
-  toggleRecurring(id) {
-    return axiosInterceptor.put(`${API_URL}/${id}/toggle-recurring`)
+  toggleRecurring(id, months) {
+    return axiosInterceptor.put(`${API_URL}/${id}/${months}/toggle-recurring`)
   }
 }

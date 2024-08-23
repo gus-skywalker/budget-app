@@ -14,5 +14,13 @@ export default {
   },
   inviteMember(groupId, email) {
     return axiosInterceptor.post(`${API_URL}/${groupId}/invite`, { email })
+  },
+  respondInvite(groupId, userId, action) {
+    return axiosInterceptor.get(`${API_URL}/${groupId}/respond`, {
+      params: {
+        action: action,
+        user: userId
+      }
+    })
   }
 }

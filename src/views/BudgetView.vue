@@ -114,11 +114,7 @@
                         <v-divider class="my-4"></v-divider>
                         <v-list v-if="monthlyExpenses.length" class="box-size-list">
                             <expense-item v-for="(expense, index) in monthlyExpenses" :key="index" :expense="expense"
-                                @toggle-recurring="toggleRecurring" @deleteExpense="deleteExpense"></expense-item>
-                            <!-- <v-list-item v-for="(expense, index) in monthlyExpenses" :key="index">
-                                <v-list-item-title>{{ expense.date }} - R$ {{ expense.amount }} - {{ expense.description
-                                    }}</v-list-item-title>
-                            </v-list-item> -->
+                                @shareExpense="handleShareExpense" @deleteExpense="deleteExpense"></expense-item>
                         </v-list>
                         <v-alert v-else type="info">
                             Nenhum débito encontrado para este mês.
@@ -145,6 +141,8 @@ import ExpenseService from '@/services/ExpenseService'
 import DataService from '@/services/DataService'
 import UsersService from '@/services/UsersService'
 import GroupService from '@/services/GroupService'
+import NotificationService from '@/services/NotificationService'
+import { useUserStore } from '@/plugins/userStore'
 
 export default {
     components: {
@@ -339,8 +337,10 @@ export default {
                 paymentMethod: null
             };
         },
-        toggleRecurring(income) {
-            IncomeService.toggleRecurring(income.id)
+        toggleRecurring({ income, months }) {
+            console.log('Toggled income:', income);
+            console.log('Recurrence months:', months);
+            IncomeService.toggleRecurring(income.id, months)
                 .then(response => {
                     const incomeIndex = this.monthlyIncomes.findIndex(item => item.id === income.id);
                     if (incomeIndex !== -1) {
@@ -415,6 +415,26 @@ export default {
                 console.error('Invalid month selected');
             }
         },
+        handleShareExpense({ expense, email }) {
+            const userStore = useUserStore();
+            NotificationService.sendEmail({
+                user: {
+                    email: userStore.getUser.email,
+                    name: userStore.getUser.username
+                },
+                expense: {
+                    amount: expense.amount
+                },
+                destinationEmail: email,
+            })
+                .then(() => {
+                    console.log('Email sent successfully');
+                })
+                .catch((error) => {
+                    console.error('Failed to send email:', error);
+                });
+        }
+
     }
 }
 </script>

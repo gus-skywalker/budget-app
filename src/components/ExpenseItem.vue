@@ -19,7 +19,7 @@
                 </v-list-item-subtitle>
             </v-col>
             <v-col cols="3" class="d-flex justify-end">
-                <v-btn x-small icon height="35px" width="35px" @click="shareExpense(expense)" color="primary"
+                <v-btn x-small icon height="35px" width="35px" @click="isDialogOpen = true" color="primary"
                     class="mr-2">
                     <v-icon>mdi-share-variant</v-icon>
                 </v-btn>
@@ -28,6 +28,20 @@
                 </v-btn>
             </v-col>
         </v-row>
+        <!-- v-dialog para inserir o email do destinatário -->
+        <v-dialog v-model="isDialogOpen" max-width="500px">
+            <v-card>
+                <v-card-title>Informe o email do destinatário</v-card-title>
+                <v-card-text>
+                    <v-text-field v-model="email" label="Email" type="email" required></v-text-field>
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="blue darken-1" text @click="isDialogOpen = false">Cancelar</v-btn>
+                    <v-btn color="blue darken-1" text @click="shareExpense">Compartilhar</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
     </v-list-item>
 </template>
 
@@ -37,10 +51,21 @@ export default {
     props: {
         expense: Object
     },
+    data() {
+        return {
+            isDialogOpen: false,
+            email: ''
+        };
+    },
     methods: {
-        shareExpense(expense) {
-            console.info('Logica de compartilhamento');
-            this.$emit('shareExpense', expense);
+        shareExpense() {
+            if (this.email) {
+                console.log(`Compartilhando ${this.expense.description} com o email ${this.email}`);
+                this.$emit('shareExpense', { expense: this.expense, email: this.email });
+                this.isDialogOpen = false;
+            } else {
+                console.warn('Email não informado');
+            }
         }
     }
 }

@@ -48,6 +48,18 @@
                 </v-card>
             </v-col>
         </v-row>
+
+        <!-- Snackbar para mensagens de sucesso -->
+        <v-snackbar v-model="successSnackbar" color="success">
+            {{ successMessage }}
+            <v-btn color="white" text @click="successSnackbar = false">Fechar</v-btn>
+        </v-snackbar>
+
+        <!-- Snackbar para mensagens de erro -->
+        <v-snackbar v-model="errorSnackbar" color="error">
+            {{ errorMessage }}
+            <v-btn color="white" text @click="errorSnackbar = false">Fechar</v-btn>
+        </v-snackbar>
     </v-container>
 </template>
 
@@ -64,7 +76,11 @@ export default {
             groups: [],
             selectedGroup: null,
             inviteEmail: '',
-            groupMembers: []
+            groupMembers: [],
+            successSnackbar: false,
+            successMessage: '',
+            errorSnackbar: false,
+            errorMessage: ''
         };
     },
     mounted() {
@@ -74,7 +90,6 @@ export default {
         fetchGroups() {
             GroupService.fetchGroups()
                 .then(response => {
-                    console.log(response.data)
                     this.groups = response.data.map(group => ({
                         id: group.id,
                         name: group.name,
@@ -84,13 +99,15 @@ export default {
                     }));
                 })
                 .catch(error => {
+                    const errorMsg = error.response?.data?.message || 'Erro ao buscar grupos.';
                     console.error('Erro ao buscar grupos:', error);
+                    this.errorMessage = errorMsg;
+                    this.errorSnackbar = true;
                 });
         },
         fetchGroupMembers() {
             GroupService.fetchGroupMembers(this.selectedGroup)
                 .then(response => {
-                    console.log(response.data);
                     this.groupMembers = response.data.map(member => ({
                         id: member.userId,
                         name: member.name,
@@ -98,7 +115,10 @@ export default {
                     }));
                 })
                 .catch(error => {
+                    const errorMsg = error.response?.data?.message || 'Erro ao buscar membros do grupo.';
                     console.error('Erro ao buscar membros do grupo:', error);
+                    this.errorMessage = errorMsg;
+                    this.errorSnackbar = true;
                 });
         },
         createGroup() {
@@ -106,25 +126,34 @@ export default {
                 .then(response => {
                     this.groups.push(response.data);
                     this.newGroup = { name: '', description: '' };
-                    alert('Grupo criado com sucesso!');
+                    this.successMessage = 'Grupo criado com sucesso!';
+                    this.successSnackbar = true;
                 })
                 .catch(error => {
+                    const errorMsg = error.response?.data?.message || 'Erro ao criar grupo.';
                     console.error('Erro ao criar grupo:', error);
+                    this.errorMessage = errorMsg;
+                    this.errorSnackbar = true;
                 });
         },
         inviteMember() {
             if (this.inviteEmail === '') {
-                alert('Por favor, insira um email válido.');
+                this.errorMessage = 'Por favor, insira um email válido.';
+                this.errorSnackbar = true;
                 return;
             }
 
             GroupService.inviteMember(this.selectedGroup, this.inviteEmail)
                 .then(() => {
-                    alert(`Convite enviado para ${this.inviteEmail}`);
+                    this.successMessage = `Convite enviado para ${this.inviteEmail}`;
+                    this.successSnackbar = true;
                     this.inviteEmail = '';
                 })
                 .catch(error => {
+                    const errorMsg = error.response?.data?.message || `Erro ao convidar usuário ${this.inviteEmail}.`;
                     console.error(`Erro ao convidar usuário ${this.inviteEmail}:`, error);
+                    this.errorMessage = errorMsg;
+                    this.errorSnackbar = true;
                 });
         }
     }

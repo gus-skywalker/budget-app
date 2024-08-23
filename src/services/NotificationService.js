@@ -11,5 +11,8 @@ export default {
   },
   decline(notificationId) {
     return axiosInterceptor.put(`${API_URL}/${notificationId}/decline`)
+  },
+  sendEmail(data) {
+    return axiosInterceptor.post(`${API_URL}/sendEmail/html`, data)
   }
 }
