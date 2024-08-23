@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { useTheme } from 'vuetify';
+import { useDisplay, useTheme } from 'vuetify';
 import { useUserStore } from '@/plugins/userStore';
 import type { Notification } from '@/services/NotificationService';
 
@@ -9,6 +9,13 @@ import type { Notification } from '@/services/NotificationService';
 const props = defineProps<{
     notifications: Notification[],
 }>();
+
+const {width,  mobile } = useDisplay()
+
+onMounted(() => {
+    console.log(mobile.value) // false
+    console.log(width.value) // 960
+  })
 
 const emit = defineEmits(['accept', 'decline', 'toggle-notifications-popup']);
 
@@ -60,7 +67,7 @@ function navigateToAccountAdmin() {
 </script>
 
 <template>
-    <v-navigation-drawer app expand-on-hover rail>
+    <v-navigation-drawer app expand-on-hover rail ref="drawer" permanent>
         <v-list v-if="user">
             <v-list-item :prepend-avatar="userAvatar" :subtitle="user.email" :title="user.username"
                 @click="navigateToAccountAdmin"></v-list-item>

@@ -44,7 +44,7 @@ const router = createRouter({
     }
   ]
 })
-
+/*
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
   const isAuthenticated = userStore.isAuthenticated
@@ -57,5 +57,5 @@ router.beforeEach((to, from, next) => {
     next()
   }
 })
-
+*/
 export default router

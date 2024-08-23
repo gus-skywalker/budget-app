@@ -78,7 +78,7 @@ onUnmounted(() => {
 
 <template>
   <v-app>
-    <SideBar v-if="isAuthenticated" :notifications="notifications" @accept="accept" @decline="decline"
+    <SideBar :notifications="notifications" @accept="accept" @decline="decline"
       @toggle-notifications-popup="toggleNotificationsPopup" />
     <v-main class="main-content">
       <RouterView />
