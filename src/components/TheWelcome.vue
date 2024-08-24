@@ -124,7 +124,14 @@
 .section-content {
   flex-basis: 60%;
   margin: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: justify;
 }
+
+
 
 .section-content h2 {
   margin-top: 0;

@@ -10,13 +10,6 @@ const props = defineProps<{
     notifications: Notification[],
 }>();
 
-const {width,  mobile } = useDisplay()
-
-onMounted(() => {
-    console.log(mobile.value) // false
-    console.log(width.value) // 960
-  })
-
 const emit = defineEmits(['accept', 'decline', 'toggle-notifications-popup']);
 
 const router = useRouter();
