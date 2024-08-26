@@ -91,6 +91,6 @@ onUnmounted(() => {
 <style scoped>
 .main-content {
   /* margin-left: 200px; */
-  padding: 100px;
+  /* padding: 100px; */
 }
 </style>

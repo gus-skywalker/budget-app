@@ -1,7 +1,6 @@
 <template>
-    <div>
+    <v-container>
         <h1>Administração de Conta</h1>
-
         <v-container>
             <v-row>
                 <v-col cols="12" md="6">
@@ -50,20 +49,20 @@
                             <v-card @mouseover="highlightCard('Nubank')" @mouseleave="highlightCard('')"
                                 @click="openBankDialog('Nubank')" class="bank-card"
                                 :class="{ selected: selectedBank === 'Nubank' }">
-                                <v-img src="nubank-logo.png" aspect-ratio="1"></v-img>
+                                <v-img src="banks/nubank-logo.png" aspect-ratio="1"></v-img>
                                 <v-card-text>Nubank</v-card-text>
                             </v-card>
                             <v-card @mouseover="highlightCard('Banco do Brasil')" @mouseleave="highlightCard('')"
                                 @click="openBankDialog('Banco do Brasil')" class="bank-card"
                                 :class="{ selected: selectedBank === 'Banco do Brasil' }">
-                                <v-img src="banco-do-brasil-logo.png" aspect-ratio="1"></v-img>
+                                <v-img src="banks/bb-logo.webp" aspect-ratio="1"></v-img>
                                 <v-card-text>Banco do Brasil</v-card-text>
                             </v-card>
-                            <v-card @mouseover="highlightCard('Caixa Econômica')" @mouseleave="highlightCard('')"
-                                @click="openBankDialog('Caixa Econômica')" class="bank-card"
-                                :class="{ selected: selectedBank === 'Caixa Econômica' }">
-                                <v-img src="caixa-economica-logo.png" aspect-ratio="1"></v-img>
-                                <v-card-text>Caixa Econômica</v-card-text>
+                            <v-card @mouseover="highlightCard('Itaú')" @mouseleave="highlightCard('')"
+                                @click="openBankDialog('Itaú')" class="bank-card"
+                                :class="{ selected: selectedBank === 'Itaú' }">
+                                <v-img src="banks/itau-logo.jpg" aspect-ratio="1"></v-img>
+                                <v-card-text>Itaú</v-card-text>
                             </v-card>
                         </div>
                         <div class="card-name" v-if="highlightedCard">
@@ -130,7 +129,7 @@
                 </v-card-actions>
             </v-card>
         </v-dialog>
-    </div>
+    </v-container>
 </template>
 
 <script setup lang="ts">
@@ -212,8 +211,15 @@ const closeVerificationDialog = () => {
     verificationCode.value = '';
 };
 
+let timeoutId: number;
+
 const highlightCard = (cardName: string) => {
+    if (timeoutId) {
+    clearTimeout(timeoutId);
+  }
+  timeoutId = setTimeout(() => {
     highlightedCard.value = cardName;
+  }, 200); // adjust the delay as needed
 };
 
 const authenticateBank = async () => {
@@ -269,55 +275,43 @@ const verifyCode = async () => {
 
 <style scoped>
 /* Estilos para a página de administração da conta */
+
 .bank-cards-wrapper {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .bank-cards {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 200px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 20px;
 }
 
 .bank-card {
-    position: absolute;
-    width: 100px;
-    cursor: pointer;
-    transition: transform 0.5s ease, z-index 0.5s ease;
-    text-align: center;
-}
-
-.bank-card:nth-child(1) {
-    left: 0;
-    z-index: 3;
-}
-
-.bank-card:nth-child(2) {
-    left: 20px;
-    z-index: 2;
-}
-
-.bank-card:nth-child(3) {
-    left: 40px;
-    z-index: 1;
+  width: 100px;
+  margin: 10px;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+ /* transition-delay: 0.7s;  Add this line */
+  text-align: center;
 }
 
 .bank-card:hover {
-    transform: translateY(-20px);
+  transform: translateY(-10px);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
 
 .bank-card.selected {
-    transform: translateY(-40px) scale(1.1);
-    z-index: 4 !important;
+  transform: translateY(-20px);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+  border: 2px solid #333;
 }
 
 .card-name {
-    font-size: 1.2em;
-    font-weight: bold;
-    margin-left: 20px;
+  font-size: 1.2em;
+  font-weight: bold;
+  margin-left: 20px;
 }
 </style>

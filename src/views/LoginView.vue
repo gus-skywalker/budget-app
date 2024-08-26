@@ -69,13 +69,11 @@ const error = ref(null)
 const signupError = ref(null)
 const signupSuccess = ref(null)
 const showSignupForm = ref(false);
-const baseUrl = import.meta.env.VITE_AUTH_URL;
+const authUrl = import.meta.env.VITE_AUTH_URL;
 
 const userLogin = async () => {
     try {
-        const res = await axios.post(`${baseUrl}/auth/signin`, userData.value)
-
-        console.log(res)
+        const res = await axios.post(`${authUrl}/auth/signin`, userData.value)
         userStore.setAuth(true);
         userStore.setToken(res.data.token);
         userStore.setUser({
@@ -98,7 +96,7 @@ const userSignup = async () => {
         return;
     }
     try {
-        const res = await axios.post(`${baseUrl}/auth/signup`, {
+        const res = await axios.post(`${authUrl}/auth/signup`, {
             email: signupData.value.email,
             password: signupData.value.password,
             username: signupData.value.username,
@@ -115,11 +113,11 @@ const userSignup = async () => {
 }
 
 const loginWithGoogle = async () => {
-    window.location.href = `${baseUrl}/oauth2/authorization/google`;
+    window.location.href = `${authUrl}/oauth2/authorization/google`;
 }
 
 const loginWithGitHub = () => {
-    window.location.href = `${baseUrl}/oauth2/authorization/github`;
+    window.location.href = `${authUrl}/oauth2/authorization/github`;
 }
 
 const toggleForm = (isSignup) => {
