@@ -1,59 +1,62 @@
 <template>
-    <div>
-        <div v-if="!showSignupForm">
-            <form @submit.prevent="userLogin">
-                <h2>Login Page</h2>
-                <div class="imgcontainer">
-                    <img src="https://cdn.icon-icons.com/icons2/2468/PNG/512/user_kids_avatar_user_profile_icon_149314.png"
-                        alt="Avatar" class="avatar" />
-                </div>
-
-                <div class="container">
-                    <label for="email">Email</label>
-                    <input type="email" v-model="userData.email" placeholder="abc@gmail.com" required />
-
-                    <label for="passcode">Password</label>
-                    <input type="password" v-model="userData.password" placeholder="please enter your password"
-                        required />
-
-                    <button type="submit">Login</button>
-                </div>
-                <div v-if="error" class="error">{{ error }}</div>
-                <div class="oauth-buttons">
-                    <button @click.prevent="loginWithGoogle">Login with Google</button>
-                    <button @click.prevent="loginWithGitHub">Login with GitHub</button>
-                </div>
-                <p>Not registered yet? <a href="#" @click.prevent="toggleForm(true)">Create an account</a>.</p>
-            </form>
-        </div>
-
-        <div v-if="showSignupForm">
-            <form @submit.prevent="userSignup">
-                <h2>Signup Page</h2>
-                <div class="container">
-                    <label for="username">Username</label>
-                    <input type="text" v-model="signupData.username" placeholder="Enter your username" required />
-
-                    <label for="email">Email</label>
-                    <input type="email" v-model="signupData.email" placeholder="abc@gmail.com" required />
-
-                    <label for="password">Password</label>
-                    <input type="password" v-model="signupData.password" placeholder="please enter your password"
-                        required />
-
-                    <label for="confirmPassword">Confirm Password</label>
-                    <input type="password" v-model="signupData.confirmPassword"
-                        placeholder="please confirm your password" required />
-
-                    <button type="submit">Signup</button>
-                </div>
-                <div v-if="signupError" class="error">{{ signupError }}</div>
-                <div v-if="signupSuccess" class="success">{{ signupSuccess }}</div>
-                <p>Already have an account? <a href="#" @click.prevent="toggleForm(false)">Login here</a>.</p>
-            </form>
-        </div>
+    <div class="container">
+      <div v-if="!showSignupForm">
+        <form @submit.prevent="userLogin">
+          <h2>Login</h2>
+          <div class="imgcontainer">
+            <img src="https://cdn.icon-icons.com/icons2/2468/PNG/512/user_kids_avatar_user_profile_icon_149314.png" alt="Avatar" class="avatar" />
+          </div>
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" v-model="userData.email" placeholder="user@email.com" required />
+          </div>
+          <div class="form-group">
+            <label for="passcode">Password</label>
+            <input type="password" v-model="userData.password" placeholder="Please enter your password" required />
+          </div>
+          <button type="submit" class="btn btn-primary">Login</button>
+          <div v-if="error" class="error">{{ error }}</div>
+          <div class="oauth-buttons">
+            <button class="oauth-button" @click.prevent="loginWithGoogle">
+              <img src="https://cdn-icons-png.flaticon.com/512/281/281764.png" alt="Google" width="20" height="20" />
+              Login with Google
+            </button>
+            <button class="oauth-button" @click.prevent="loginWithGitHub">
+              <img src="https://cdn-icons-png.flaticon.com/512/2111/2111432.png" alt="GitHub" width="20" height="20" />
+              Login with GitHub
+            </button>
+          </div>
+          <p>Not registered yet? <a href="#" @click.prevent="toggleForm(true)">Create an account</a>.</p>
+        </form>
+      </div>
+  
+      <div v-if="showSignupForm">
+        <form @submit.prevent="userSignup">
+          <h2>Signup</h2>
+          <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" v-model="signupData.username" placeholder="Enter your username" required />
+          </div>
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" v-model="signupData.email" placeholder="user@email.com" required />
+          </div>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" v-model="signupData.password" placeholder="Please enter your password" required />
+          </div>
+          <div class="form-group">
+            <label for="confirmPassword">Confirm Password</label>
+            <input type="password" v-model="signupData.confirmPassword" placeholder="Please confirm your password" required />
+          </div>
+          <button type="submit" class="btn btn-primary">Signup</button>
+          <div v-if="signupError" class="error">{{ signupError }}</div>
+          <div v-if="signupSuccess" class="success">{{ signupSuccess }}</div>
+          <p>Already have an account? <a href="#" @click.prevent="toggleForm(false)">Login here</a>.</p>
+        </form>
+      </div>
     </div>
-</template>
+  </template>
 
 <script setup>
 import { ref } from 'vue'
@@ -84,7 +87,7 @@ const userLogin = async () => {
             userRole: res.data.userRole,
             createdAt: res.data.createdAt,
         });
-        router.push('/')
+        router.push('/dashboard')
     } catch (err) {
         error.value = 'Invalid credentials. Please try again.'
     }
@@ -127,81 +130,101 @@ const toggleForm = (isSignup) => {
 </script>
 
 <style scoped>
-body {
-    font-family: Arial, Helvetica, sans-serif;
-}
-
 form {
-    border: 3px solid #fff;
-    margin-bottom: 20px;
-}
-
-h2 {
-    text-align: center;
-}
-
-input[type="email"],
-input[type="password"],
-input[type="text"] {
-    width: 100%;
-    padding: 12px 20px;
-    margin: 8px 0;
-    display: inline-block;
-    border: 2px solid #ccc;
-    box-sizing: border-box;
-}
-
-button {
-    background-color: #1d71be;
-    color: white;
-    padding: 14px 20px;
-    margin: 8px 0;
-    border: none;
-    cursor: pointer;
-    width: 100%;
-}
-
-button:hover {
-    opacity: 0.8;
-}
-
-.imgcontainer {
-    text-align: center;
-}
-
-img.avatar {
-    width: 10%;
-    border-radius: 50%;
+  text-align: center;
 }
 
 .container {
-    padding: 50px;
+  max-width: 300px;
+  margin: 0 auto; /* Adicionado para centralizar horizontalmente */
+  padding: 20px;
+  background-color: #f9f9f9;
+  border: 1px solid #ccc;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-.error {
-    color: red;
-    text-align: center;
+h2 {
+  text-align: center; /* Adicionado para centralizar horizontalmente */
 }
 
-.success {
-    color: green;
-    text-align: center;
+.imgcontainer {
+  text-align: center;
+  margin: 20px 0;
+}
+
+.avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  margin: 0 auto;
+}
+
+.form-group {
+  margin-bottom: 20px;
+  margin-bottom: 10px; /* Adicionado para adicionar espaçamento entre os campos */
+}
+
+a {
+  text-decoration: underline;
+  color: blue; /* Adicionado para estilo do link */
+}
+
+label {
+  display: block;
+  margin-bottom: 10px;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+}
+
+button[type="submit"] {
+  background-color: #4CAF50;
+  color: #fff;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button[type="submit"]:hover {
+  background-color: #3e8e41;
 }
 
 .oauth-buttons {
-    /* display: flex; */
-    justify-content: space-around;
-    margin-top: 20px;
+  margin-top: 20px;
 }
 
-@media screen and (max-width: 300px) {
-    span.psw {
-        display: block;
-        float: none;
-    }
+.oauth-button {
+  background-color: #fff;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+}
 
-    .cancelbtn {
-        width: 100%;
-    }
+.oauth-button img {
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+}
+
+.error {
+  color: red;
+  margin-bottom: 20px;
+  background-color: #f2dede; /* Adicionado para estilo do erro */
+  padding: 10px;
+}
+
+.success {
+  color: green;
+  margin-bottom: 20px;
+  background-color: #f2dede; /* Adicionado para estilo do sucesso */
+  padding: 10px;
 }
 </style>
