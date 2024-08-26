@@ -1,14 +1,12 @@
 <template>
   <v-container>
-
-
      <!-- Header -->
      <header class="header">
       <img src="/logo.jpg" alt="Logo" class="logo">
       <h1>Finance Hub by Les Monades</h1>
     </header>
-  <div class="container">
 
+  <div class="container">
     <!-- Seção 1: Planejamento Financeiro -->
     <section class="section">
       <div class="section-image">

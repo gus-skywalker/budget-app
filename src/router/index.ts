@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import LandingPage from '@/views/LandingPage.vue'
 import HomeView from '@/views/HomeView.vue'
 import AboutView from '@/views/AboutView.vue'
 import BudgetView from '@/views/BudgetView.vue'
@@ -13,46 +14,73 @@ const router = createRouter({
   routes: [
     {
       path: '/',
+      name: 'landing',
+      component: LandingPage,
+    },
+    {
+      path: '/home',
       name: 'home',
-      component: HomeView
+      component: HomeView,
+      meta: { requiresAuth: true }
     },
     {
       path: '/about',
       name: 'about',
-      component: AboutView
+      component: AboutView,
+      meta: { requiresAuth: true }
     },
     {
       path: '/budget',
       name: 'budget',
-      component: BudgetView
+      component: BudgetView,
+      meta: { requiresAuth: true }
     },
     {
       path: '/dashboard',
       name: 'dashboard',
-      component: DashboardView
+      component: DashboardView,
+      meta: { requiresAuth: true }
     },
     {
       path: '/login',
       name: 'login',
       component: LoginView
     },
-    { path: '/account-admin', name: 'account-admin', component: AccountAdmin },
+    {
+      path: '/account-admin',
+      name: 'account-admin',
+      component: AccountAdmin,
+      meta: { requiresAuth: true }
+    },
     {
       path: '/oauth2/redirect',
       name: 'oauth2redirect',
-      component: OAuth2Redirect
+      component: OAuth2Redirect,
     }
   ]
 })
 
+// router.beforeEach((to, from, next) => {
+//   const userStore = useUserStore()
+//   const isAuthenticated = userStore.isAuthenticated
+//   console.log(isAuthenticated)
+//   if (!isAuthenticated && to.name !== 'login' && to.name !== 'oauth2redirect') {
+//     next({ name: 'login' })
+//   } else if (isAuthenticated && (to.name === 'login' || to.name === 'oauth2redirect')) {
+//     next({ name: 'home' })
+//   } else {
+//     next()
+//   }
+// })
+
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
   const isAuthenticated = userStore.isAuthenticated
-  console.log(isAuthenticated)
-  if (!isAuthenticated && to.name !== 'login' && to.name !== 'oauth2redirect') {
+
+  if (to.meta.requiresAuth && !isAuthenticated) {
     next({ name: 'login' })
   } else if (isAuthenticated && (to.name === 'login' || to.name === 'oauth2redirect')) {
-    next({ name: 'home' })
+    next({ name: 'dashboard' })
   } else {
     next()
   }
