@@ -1,4 +1,4 @@
-// src/stores/userStore.ts
+// src/plugins/userStore.ts
 import { defineStore } from 'pinia'
 
 interface User {

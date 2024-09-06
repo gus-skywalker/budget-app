@@ -15,7 +15,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'landing',
-      component: LandingPage,
+      component: LandingPage
     },
     {
       path: '/home',
@@ -55,23 +55,10 @@ const router = createRouter({
     {
       path: '/oauth2/redirect',
       name: 'oauth2redirect',
-      component: OAuth2Redirect,
+      component: OAuth2Redirect
     }
   ]
 })
-
-// router.beforeEach((to, from, next) => {
-//   const userStore = useUserStore()
-//   const isAuthenticated = userStore.isAuthenticated
-//   console.log(isAuthenticated)
-//   if (!isAuthenticated && to.name !== 'login' && to.name !== 'oauth2redirect') {
-//     next({ name: 'login' })
-//   } else if (isAuthenticated && (to.name === 'login' || to.name === 'oauth2redirect')) {
-//     next({ name: 'home' })
-//   } else {
-//     next()
-//   }
-// })
 
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
