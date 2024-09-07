@@ -19,5 +19,13 @@ export default {
         lang: language
       }
     })
+  },
+  fetchChartData(timePeriod, category) {
+    return axiosInterceptor.get(`${API_URL}/dashboard/chart`, {
+      params: {
+        timePeriod: timePeriod,
+        category: category
+      }
+    })
   }
 }

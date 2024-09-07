@@ -20,12 +20,17 @@
             <v-card-text>
                 <v-row align="center">
                     <v-col cols="12" md="6" lg="4">
-                        <v-select v-model="chartType" :items="chartTypes" label="Select Chart Type" outlined
-                            @change="updateCharts"></v-select>
+                        <v-select label="Select Chart Type" outlined v-model="chartType" :items="chartTypes"
+                            @update:modelValue="updateCharts"></v-select>
                     </v-col>
                     <v-col cols="12" md="6" lg="4">
-                        <v-select v-model="selectedCategory" :items="expenseCategories" label="Select Expense Category"
-                            outlined @change="updateCharts"></v-select>
+                        <v-select label="Select Time Period" outlined v-model="selectedTimePeriod" :items="timePeriods"
+                            @update:modelValue="updateCharts"></v-select>
+                    </v-col>
+                    <v-col cols="12" md="6" lg="4">
+                        <v-select label="Select Expense Category" outlined v-model="selectedCategory"
+                            :items="expenseCategories" item-title="name" item-value="code"
+                            @update:modelValue="updateCharts"></v-select>
                     </v-col>
                 </v-row>
                 <v-divider class="my-4"></v-divider>
@@ -73,7 +78,12 @@
 </template>
 
 <script>
-import Chart from 'chart.js/auto';
+import { Chart, registerables } from 'chart.js/auto';
+import moment from 'moment';
+import DataService from '@/services/DataService'
+import 'chartjs-adapter-moment';
+
+Chart.register(...registerables);
 
 export default {
     data() {
@@ -82,17 +92,49 @@ export default {
             totalIncome: 5000,
             totalExpenses: 3000,
             savings: 2000,
+            selectedTimePeriod: '3m',
+            selectedCategory: null,
+            isYearly: false,
+            expenseCategories: [],
+            selectedLanguage: 'en',
+            financialGoals: [],
             chartType: 'line',
             chartTypes: [
                 { title: 'Line Chart', value: 'line' },
                 { title: 'Bar Chart', value: 'bar' }
             ],
-            selectedCategory: '',
-            expenseCategories: [],
-            financialGoals: [],
+            timePeriods: [
+                { title: 'Last 3 Months', value: '3m' },
+                { title: 'Last 6 Months', value: '6m' },
+                { title: 'Last 12 Months', value: '12m' },
+                { title: 'Annual 2020', value: '2020' },
+                { title: 'Annual 2021', value: '2021' },
+                { title: 'Annual 2022', value: '2022' },
+                { title: 'Annual 2023', value: '2023' }
+            ],
+            chartData: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'Income',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1,
+                        data: []
+                    },
+                    {
+                        label: 'Expenses',
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1,
+                        data: []
+                    }
+                ]
+            },
         };
     },
     mounted() {
+        this.fetchCategories();
         this.createChart();
         this.fetchFinancialGoals();
     },
@@ -101,27 +143,24 @@ export default {
             const trendsCtx = this.$refs.trendsChart.getContext('2d');
             this.chart = new Chart(trendsCtx, {
                 type: this.chartType,
-                data: {
-                    labels: ['January', 'February', 'March', 'April', 'May', 'June'],
-                    datasets: [
-                        {
-                            label: 'Income',
-                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                            borderColor: 'rgba(75, 192, 192, 1)',
-                            borderWidth: 1,
-                            data: [2000, 2200, 2500, 2300, 2400, 2600]
-                        },
-                        {
-                            label: 'Expenses',
-                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                            borderColor: 'rgba(255, 99, 132, 1)',
-                            borderWidth: 1,
-                            data: [1500, 1700, 1800, 1600, 1700, 1900]
-                        }
-                    ]
-                },
+                data: this.chartData,
                 options: {
+                    responsive: true,
                     scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: this.isYearly ? 'year' : 'month',
+                                displayFormats: {
+                                    year: 'YYYY',
+                                    month: 'MM-YYYY'
+                                },
+                                tooltipFormat: 'DD/MM/YYYY',
+                            },
+                            ticks: {
+                                source: 'labels' // Usar as labels fornecidas para escalas
+                            }
+                        },
                         y: {
                             beginAtZero: true
                         }
@@ -131,10 +170,22 @@ export default {
         },
         updateCharts() {
             if (this.chart) {
-                console.log(this.chart)
                 this.chart.destroy();
             }
-            this.createChart();
+            this.fetchChartData();
+        },
+        fetchCategories() {
+            DataService.fetchCategories(this.selectedLanguage)
+                .then(response => {
+                    this.expenseCategories = response.data.map(category => ({
+                        id: category.id,
+                        code: category.code,
+                        name: category.name
+                    }));
+                })
+                .catch(error => {
+                    console.error('Error fetching categories:', error);
+                });
         },
         fetchFinancialGoals() {
             this.financialGoals = [
@@ -145,7 +196,33 @@ export default {
         calculateProgress(goal) {
             const progressPercentage = (goal.currentAmount / goal.targetAmount) * 100;
             return progressPercentage.toFixed(2);
-        }
+        },
+        fetchChartData() {
+            DataService.fetchChartData(this.selectedTimePeriod, this.selectedCategory)
+                .then(response => {
+                    const rawData = response.data;
+                    console.log(rawData);
+
+                    if (this.selectedTimePeriod.includes('m')) {
+                        this.isYearly = false;
+                        // Lógica para períodos flexíveis
+                        this.chartData.labels = rawData.labels.map(label => moment(label, 'MM-YYYY').toISOString());;
+                        this.chartData.datasets[0].data = rawData.datasets[0].data;
+                        this.chartData.datasets[1].data = rawData.datasets[1].data;
+                    } else {
+                        this.isYearly = true;
+                        // Lógica para períodos anuais
+                        this.chartData.labels = rawData.labels;
+                        this.chartData.datasets[0].data = rawData.datasets[0].data;
+                        this.chartData.datasets[1].data = rawData.datasets[1].data;
+                    }
+
+                    this.createChart();
+                })
+                .catch(error => {
+                    console.error('Error fetching chart data:', error);
+                });
+        },
     }
 }
 </script>
