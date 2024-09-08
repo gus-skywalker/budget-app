@@ -43,3 +43,24 @@ npm run test:unit
 ```sh
 npm run lint
 ```
+
+# Production
+
+npm run build
+
+pm2 start ecosystem.config.cjs
+or
+node server.js
+
+# pm2 commands for production
+
+npm install pm2
+
+pm2 start server.js --name "meu-app-ssr" --env production -- PORT=3000
+pm2 show id/name
+pm2 stop id/name
+pm2 restart id/name
+pm2 logs
+
+pm2 startup
+pm2 save
