@@ -211,15 +211,15 @@ const closeVerificationDialog = () => {
     verificationCode.value = '';
 };
 
-let timeoutId: number;
+let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
 const highlightCard = (cardName: string) => {
     if (timeoutId) {
-    clearTimeout(timeoutId);
-  }
-  timeoutId = setTimeout(() => {
-    highlightedCard.value = cardName;
-  }, 200); // adjust the delay as needed
+        clearTimeout(timeoutId);
+    }
+    timeoutId = setTimeout(() => {
+        highlightedCard.value = cardName;
+    }, 200); // adjust the delay as needed
 };
 
 const authenticateBank = async () => {
@@ -277,41 +277,41 @@ const verifyCode = async () => {
 /* Estilos para a página de administração da conta */
 
 .bank-cards-wrapper {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
 }
 
 .bank-cards {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  margin: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: 20px;
 }
 
 .bank-card {
-  width: 100px;
-  margin: 10px;
-  cursor: pointer;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
- /* transition-delay: 0.7s;  Add this line */
-  text-align: center;
+    width: 100px;
+    margin: 10px;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    /* transition-delay: 0.7s;  Add this line */
+    text-align: center;
 }
 
 .bank-card:hover {
-  transform: translateY(-10px);
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    transform: translateY(-10px);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
 
 .bank-card.selected {
-  transform: translateY(-20px);
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
-  border: 2px solid #333;
+    transform: translateY(-20px);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+    border: 2px solid #333;
 }
 
 .card-name {
-  font-size: 1.2em;
-  font-weight: bold;
-  margin-left: 20px;
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-left: 20px;
 }
 </style>
