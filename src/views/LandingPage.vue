@@ -1,205 +1,718 @@
 <template>
-    <v-container>
-      <!-- Header -->
-      <header class="header">
-        <div class="logo">
-            <img src="/logo.jpg" alt="Logo" />
-        </div>
-        <nav class="nav">
-            <ul>
-            <li><a href="#">Sobre</a></li>
-            <li><a href="#contact">Contato</a></li>
-            </ul>
-        </nav>
-        <button class="btn btn-primary login-btn" @click.prevent="$router.push({ name: 'login' })">Login</button>
-      </header>
+  <v-container>
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">
+        <img src="/logo.jpg" alt="Logo" />
+      </div>
+      <nav class="nav">
+        <ul>
+          <li><a href="#">Sobre</a></li>
+          <li><a href="#benefits">Benefícios</a></li>
+          <li><a href="#testimonials">Depoimentos</a></li>
+          <li><a href="#security">Segurança</a></li>
+          <li><a href="#contact">Contato</a></li>
+        </ul>
+      </nav>
+      <button class="btn btn-primary login-btn" @click.prevent="$router.push({ name: 'login' })">Login</button>
+      <button class="btn btn-secondary signup-btn" @click.prevent="$router.push({ name: 'login' })">Assine
+        Agora</button>
+    </header>
 
-      <!-- Seção 1: Planejamento Financeiro -->
-      <section class="section orange">
-        <div class="section-content">
-          <h2>Planejamento Financeiro</h2>
-          <p>Nossa aplicação financeira ajuda você a planejar seu futuro financeiro com confiança.</p>
-          <p>Com nossa ferramenta, você pode criar um plano personalizado para alcançar seus objetivos financeiros.</p>
-        </div>
-        <div class="section-image">
-          <img src="/planejamento_financeiro.jpg" alt="Planejamento Financeiro">
-        </div>
-      </section>
-  
-      <!-- Seção 2: Controle e Gestão -->
-      <section class="section red">
-        <div class="section-image">
-          <img src="/controle_gestao.jpg" alt="Controle e Gestão">
-        </div>
-        <div class="section-content">
-          <h2>Controle e Gestão</h2>
-          <p>Nossa aplicação financeira oferece recursos avançados de controle e gestão para ajudá-lo a gerenciar suas finanças de forma eficaz.</p>
-          <p>Você pode acompanhar suas despesas, receitas e investimentos em um só lugar.</p>
-        </div>
-      </section>
-  
-      <!-- Seção 3: Segurança e Proteção -->
-      <section class="section purple">
-        <div class="section-content">
-          <h2>Segurança e Proteção</h2>
-          <p>Nossa aplicação financeira é projetada com segurança em mente.</p>
-          <p>Nós usamos tecnologias de ponta para proteger suas informações financeiras e garantir que seus dados sejam seguros.</p>
-        </div>
-        <div class="section-image">
-          <img src="/seguranca.jpg" alt="Segurança e Proteção">
-        </div>
-      </section>
-  
-      <!-- Seção 4: Vantagens -->
-      <section class="section orange">
-        <div class="section-image">
-          <img src="/vantagens.jpg" alt="Vantagens">
-        </div>
-        <div class="section-content">
-          <h2>Vantagens</h2>
-          <p>Nossa aplicação financeira oferece uma série de vantagens, incluindo relatórios personalizados, alertas de gastos e recomendações de investimento.</p>
-          <p>Você pode aproveitar ao máximo suas finanças com nossa ferramenta.</p>
-        </div>
-      </section>
-  
-      <!-- Seção 5: Suporte e Ajuda -->
-      <section id="contact" class="section red">
-        <div class="section-content">
-          <h2>Suporte e Ajuda</h2>
-          <p>Nossa equipe de suporte está sempre pronta para ajudá-lo com qualquer dúvida ou problema que você possa ter.</p>
-          <p>Você pode contar conosco para obter ajuda em qualquer momento.</p>
-        </div>
-        <div class="section-image">
-          <img src="/suporte.jpg" alt="Suporte e Ajuda">
-        </div>
-      </section>
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="hero-content">
+        <h1>Tome o Controle do Seu Futuro Financeiro</h1>
+        <p>Planeje, gerencie e cresça suas finanças com nossa carteira de fintechs personalizada.</p>
+        <button class="btn btn-primary cta-btn" @click.prevent="$router.push({ name: 'signup' })">Experimente
+          Gratuitamente</button>
+      </div>
+      <div class="hero-image">
+        <img src="/hero_image.jpg" alt="Planejamento Financeiro">
+      </div>
+    </section>
 
-    </v-container>
+    <!-- Benefícios -->
+    <section id="benefits" class="section benefits-section">
+      <h2>Por Que Escolher Nossa Ferramenta</h2>
+      <div class="benefits-container">
+        <div class="benefit-item">
+          <img src="/monitoring.jpg" alt="Planejamento">
+          <h3>Planejamento Personalizado</h3>
+          <p>Crie planos financeiros sob medida para atingir seus objetivos a médio e longo prazo.</p>
+        </div>
+        <div class="benefit-item">
+          <img src="/support.jpg" alt="Controle">
+          <h3>Controle Total</h3>
+          <p>Monitore suas despesas, receitas e investimentos em uma única plataforma intuitiva.</p>
+        </div>
+        <div class="benefit-item">
+          <img src="/security.jpg" alt="Segurança">
+          <h3>Segurança de Dados</h3>
+          <p>Suas informações financeiras estão protegidas com as mais avançadas tecnologias de segurança.</p>
+        </div>
+        <div class="benefit-item">
+          <img src="/growth.jpg" alt="Crescimento">
+          <h3>Crescimento Financeiro</h3>
+          <p>Receba recomendações de investimento personalizadas para maximizar seu retorno.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Depoimentos -->
+    <section id="testimonials" class="section testimonials-section">
+      <h2>O Que Nossos Clientes Dizem</h2>
+      <div class="testimonials-container">
+        <!-- <div class="testimonial-item">
+          <img src="/testimonials/client1.jpg" alt="Cliente 1" class="client-photo">
+          <p>"Esta ferramenta transformou minha maneira de gerenciar minhas finanças. Agora me sinto mais seguro sobre
+            meu futuro financeiro."</p>
+          <h4>Maria Silva</h4>
+        </div>
+        <div class="testimonial-item">
+          <img src="/testimonials/client2.jpg" alt="Cliente 2" class="client-photo">
+          <p>"Com o planejamento personalizado, consegui economizar mais e investir de forma inteligente. Recomendo a
+            todos!"</p>
+          <h4>João Pereira</h4>
+        </div>
+        <div class="testimonial-item">
+          <img src="/testimonials/client3.jpg" alt="Cliente 3" class="client-photo">
+          <p>"A segurança dos meus dados me dá tranquilidade para focar no crescimento das minhas finanças."</p>
+          <h4>Ana Costa</h4>
+        </div> -->
+      </div>
+    </section>
+
+    <!-- Segurança e Garantia -->
+    <section id="security" class="section security-section">
+      <h2>Segurança e Confiabilidade</h2>
+      <div class="security-container">
+        <div class="security-content">
+          <p>Nossa aplicação financeira utiliza tecnologias de ponta para garantir a segurança dos seus dados. Estamos
+            comprometidos com a sua privacidade e segurança.</p>
+          <ul>
+            <!-- <li><img src="/icons/ssl.png" alt="SSL"> Criptografia SSL</li>
+            <li><img src="/icons/iso.png" alt="ISO"> Certificação ISO 27001</li>
+            <li><img src="/icons/partners.png" alt="Parceiros"> Parcerias com instituições financeiras renomadas</li> -->
+          </ul>
+        </div>
+        <div class="security-image">
+          <!-- <img src="/security_badge.jpg" alt="Segurança"> -->
+        </div>
+      </div>
+    </section>
+
+    <!-- QR Code de Doação -->
+    <section id="donation" class="section donation-section">
+      <div class="donation-container">
+        <h2>Ajude a Manter o Projeto Vivo</h2>
+        <p class="donation-subtitle">Sua contribuição é essencial para a continuidade e evolução do nosso trabalho.</p>
+
+        <div class="donation-options">
+          <div class="donation-card">
+            <h3>Doação Única</h3>
+            <p>Faça uma doação única e ajude-nos a alcançar novos objetivos.</p>
+            <button class="donation-button">Doar Agora</button>
+          </div>
+
+          <div class="donation-card">
+            <h3>Doação Mensal</h3>
+            <p>Contribua mensalmente e faça parte da nossa comunidade de apoiadores.</p>
+            <button class="donation-button">Apoiar Mensalmente</button>
+          </div>
+
+          <div class="donation-card">
+            <h3>Doação Anual</h3>
+            <p>Seu apoio anual nos ajuda a planejar o futuro e expandir nossos serviços.</p>
+            <button class="donation-button">Doar Anualmente</button>
+          </div>
+        </div>
+        <div class="image-container">
+          <h4>Escaneie o QR code abaixo e ajude a financiar a construção desta ferramenta incrível!</h4>
+          <div>
+            <img src="/qrcode-pix.png" alt="QR Code para Doação" class="qr-code" />
+          </div>
+        </div>
+        <div class="donation-footer">
+          <p>Qualquer valor é bem-vindo e faz toda a diferença. Obrigado pelo seu apoio!</p>
+        </div>
+      </div>
+    </section>
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="footer-content">
+        <div class="footer-links">
+          <a href="#">Sobre</a>
+          <a href="#benefits">Benefícios</a>
+          <a href="#testimonials">Depoimentos</a>
+          <a href="#security">Segurança</a>
+          <a href="#contact">Contato</a>
+        </div>
+        <div class="footer-cta">
+          <button class="btn btn-primary cta-btn" @click.prevent="$router.push({ name: 'signup' })">Pronto para
+            Transformar Suas Finanças? Inscreva-se Agora!</button>
+        </div>
+        <div class="footer-info">
+          <p>&copy; 2024 Sua Fintech. Todos os direitos reservados.</p>
+          <div class="social-icons">
+            <!-- <a href="#"><img src="/icons/facebook.png" alt="Facebook"></a>
+            <a href="#"><img src="/icons/twitter.png" alt="Twitter"></a>
+            <a href="#"><img src="/icons/linkedin.png" alt="LinkedIn"></a> -->
+          </div>
+        </div>
+      </div>
+    </footer>
+
+  </v-container>
 </template>
-  
-<style>
-/* Cores */
+
+<script>
+export default {
+  name: 'LandingPage',
+  data() {
+    return {};
+  },
+  methods: {
+    // Você pode adicionar métodos adicionais aqui se necessário
+  },
+};
+</script>
+
+<style scoped>
+/* Variáveis de Cores */
 :root {
   --orange: #FFA07A;
+  --dark-orange: #FF6F00;
   --yellow: #F7DC6F;
   --purple: #7A288A;
   --dark-purple: #5C3C8A;
+  --blue: #2E86C1;
+  --green: #28B463;
+  --white: #FFFFFF;
+  --light-gray: #F0F0F0;
+  --dark-gray: #333333;
+}
+
+/* Reset básico */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 /* Header */
 .header {
-  background-color: var(--orange);
-  padding: 20px;
+  background-color: var(--blue);
+  padding: 20px 40px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-/* .logo {
-  margin-right: 20px;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
 }
 
 .logo img {
-  width: 50px;
-  height: 50px;
-} */
-
-.logo {
-  position: absolute;
-  top: 10px;
-  left: 20px;
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background-color: #fff;
-  padding: 10px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-}
-
-.logo img {
-  width: 100%;
-  height: 100%;
   object-fit: cover;
-  border-radius: 50%;
 }
 
 .nav ul {
   list-style: none;
-  margin: 0;
-  padding: 0;
   display: flex;
-  justify-content: space-between;
-}
-
-.nav li {
-  margin-right: 20px;
+  gap: 20px;
 }
 
 .nav a {
-  color: #fff;
+  color: var(--white);
   text-decoration: none;
+  font-weight: 500;
+  padding: 10px 15px;
+  /* Adiciona padding para o efeito de fundo suave */
+  border-radius: 5px;
+  /* Bordas arredondadas para os botões */
 }
 
 .nav a:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  /* Fundo suave ao passar o mouse */
   color: var(--yellow);
 }
 
+.login-btn,
+.signup-btn {
+  margin-left: 10px;
+}
+
 .login-btn {
-  background-color: #FFC107; /* laranja */
-  color: #fff;
+  background-color: var(--yellow);
+  color: var(--dark-gray);
   border: none;
   padding: 10px 20px;
-  font-size: 16px;
   cursor: pointer;
+  border-radius: 5px;
 }
 
 .login-btn:hover {
-  background-color: #FFA07A; /* laranja escuro */
-}
-
-/* Seções */
-.section {
-  padding: 40px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.section.orange {
   background-color: var(--orange);
 }
 
-.section.red {
-  background-color: var(--yellow);
+.signup-btn {
+  background-color: var(--green);
+  color: var(--white);
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 5px;
 }
 
-.section.purple {
-  background-color: var(--purple);
+.signup-btn:hover {
+  background-color: var(--dark-purple);
 }
 
-.section-content {
+/* Hero Section */
+.hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 80px 40px;
+  background-color: var(--light-gray);
+}
+
+.hero-content {
   width: 50%;
 }
 
-.section-image {
-  width: 50%;
+.hero-content h1 {
+  font-size: 48px;
+  color: var(--dark-gray);
+  margin-bottom: 20px;
 }
 
-.section-image img {
+.hero-content p {
+  font-size: 18px;
+  color: var(--dark-gray);
+  margin-bottom: 30px;
+}
+
+/* Call-to-Action */
+.cta-btn {
+  background-color: var(--orange);
+  /* Altera a cor para laranja */
+  color: var(--white);
+  border: none;
+  padding: 15px 30px;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.cta-btn:hover {
+  background-color: var(--dark-orange);
+  /* Você pode definir uma cor escura para hover se desejar */
+}
+
+.hero-image img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
+  border-radius: 10px;
 }
 
-h2 {
-  color: var(--purple);
-  font-size: 24px;
+/* Seção de Benefícios */
+.benefits-section {
+  background-color: var(--white);
+  padding: 60px 40px;
+  text-align: center;
+}
+
+.benefits-section h2 {
+  font-size: 36px;
+  color: var(--dark-gray);
+  margin-bottom: 40px;
+}
+
+.benefits-container {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.benefit-item {
+  width: 22%;
+  background-color: var(--light-gray);
+  padding: 20px;
+  border-radius: 10px;
+  transition: transform 0.3s;
+}
+
+.benefit-item:hover {
+  transform: translateY(-10px);
+}
+
+.benefit-item img {
+  width: 60px;
+  height: 60px;
+  margin-bottom: 20px;
+}
+
+.benefit-item h3 {
+  font-size: 20px;
+  color: var(--dark-gray);
   margin-bottom: 10px;
 }
 
-p {
-  color: #333;
+.benefit-item p {
   font-size: 16px;
+  color: var(--dark-gray);
+}
+
+/* Seção de Depoimentos */
+.testimonials-section {
+  background-color: var(--orange);
+  padding: 60px 40px;
+  text-align: center;
+  color: var(--white);
+}
+
+.testimonials-section h2 {
+  font-size: 36px;
+  margin-bottom: 40px;
+}
+
+.testimonials-container {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.testimonial-item {
+  width: 30%;
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: 20px;
+  border-radius: 10px;
+  color: var(--white);
+  transition: transform 0.3s;
+}
+
+.testimonial-item:hover {
+  transform: translateY(-10px);
+}
+
+.client-photo {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
   margin-bottom: 20px;
+}
+
+.testimonial-item p {
+  font-size: 16px;
+  margin-bottom: 15px;
+}
+
+.testimonial-item h4 {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* Seção de Segurança */
+.security-section {
+  background-color: var(--white);
+  padding: 60px 40px;
+  text-align: center;
+}
+
+.security-section h2 {
+  font-size: 36px;
+  color: var(--dark-gray);
+  margin-bottom: 40px;
+}
+
+.security-container {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.security-content {
+  width: 50%;
+  text-align: left;
+}
+
+.security-content p {
+  font-size: 18px;
+  color: var(--dark-gray);
+  margin-bottom: 20px;
+}
+
+.security-content ul {
+  list-style: none;
+  padding: 0;
+}
+
+.security-content li {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.security-content li img {
+  width: 30px;
+  height: 30px;
+  margin-right: 10px;
+}
+
+.security-image img {
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+}
+
+/* Footer */
+.footer {
+  background-color: var(--blue);
+  padding: 40px;
+  color: var(--white);
+}
+
+.footer-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.footer-links {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.footer-links a {
+  color: var(--white);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.footer-links a:hover {
+  color: var(--yellow);
+}
+
+.footer-cta {
+  margin-bottom: 20px;
+}
+
+.footer-info {
+  text-align: center;
+}
+
+.footer-info p {
+  margin-bottom: 10px;
+}
+
+.social-icons {
+  display: flex;
+  gap: 10px;
+}
+
+.social-icons img {
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+
+.social-icons img:hover {
+  transform: scale(1.1);
+}
+
+/* Responsividade */
+@media (max-width: 1200px) {
+
+  .benefit-item,
+  .testimonial-item {
+    width: 45%;
+  }
+
+  .security-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .security-content,
+  .security-image {
+    width: 100%;
+  }
+
+  /* Estilos para a seção de doações */
+  .donation-section {
+    background-color: #f8f9fa;
+    /* Cor de fundo suave */
+    padding: 60px 20px;
+    text-align: center;
+  }
+
+  .donation-container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .donation-container h2 {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    color: #333;
+  }
+
+  .donation-subtitle {
+    font-size: 1.25rem;
+    color: #555;
+    margin-bottom: 40px;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .donation-options {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    /* Para garantir que o layout seja responsivo */
+  }
+
+  .donation-card {
+    background-color: #ffffff;
+    border: 1px solid #ddd;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    max-width: 300px;
+    text-align: left;
+    transition: transform 0.3s ease-in-out;
+  }
+
+  .donation-card:hover {
+    transform: translateY(-10px);
+  }
+
+  .donation-card h3 {
+    font-size: 1.75rem;
+    color: #333;
+    margin-bottom: 15px;
+  }
+
+  .donation-card p {
+    font-size: 1rem;
+    color: #666;
+    margin-bottom: 20px;
+  }
+
+  .donation-button {
+    background-color: #28a745;
+    color: #fff;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease-in-out;
+  }
+
+  .donation-button:hover {
+    background-color: #218838;
+  }
+
+  .donation-footer {
+    margin-top: 40px;
+    font-size: 1rem;
+    color: #666;
+  }
+
+  @media (max-width: 768px) {
+    .donation-options {
+      flex-direction: column;
+    }
+
+    .donation-card {
+      max-width: 100%;
+    }
+  }
+
+  .image-container {
+    position: relative;
+    height: 100vh;
+    /* Define a altura do contêiner */
+    text-align: center;
+    /* Centraliza o conteúdo (a imagem) horizontalmente */
+  }
+
+  .qr-code {
+    width: 100%;
+    max-width: 300px;
+    height: auto;
+  }
+
+  .hero {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .hero-content,
+  .hero-image {
+    width: 100%;
+  }
+
+  .hero-content h1 {
+    font-size: 32px;
+  }
+
+  .hero-content p {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+
+  .benefit-item,
+  .testimonial-item {
+    width: 100%;
+  }
+
+  .nav ul {
+    flex-direction: column;
+    gap: 10px;
+    background-color: var(--blue);
+    position: absolute;
+    top: 80px;
+    right: 40px;
+    padding: 20px;
+    border-radius: 10px;
+    display: none;
+  }
+
+  .nav ul.active {
+    display: flex;
+  }
+
+  .header {
+    position: relative;
+  }
+
+  .menu-toggle {
+    display: block;
+    cursor: pointer;
+  }
+
+  .menu-toggle img {
+    width: 30px;
+    height: 30px;
+  }
+
 }
 </style>
