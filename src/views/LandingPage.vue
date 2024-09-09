@@ -182,6 +182,7 @@ export default {
 /* Variáveis de Cores */
 :root {
   --orange: #FFA07A;
+  --dark-orange: #FF6F00;
   --yellow: #F7DC6F;
   --purple: #7A288A;
   --dark-purple: #5C3C8A;
@@ -228,9 +229,15 @@ export default {
   color: var(--white);
   text-decoration: none;
   font-weight: 500;
+  padding: 10px 15px;
+  /* Adiciona padding para o efeito de fundo suave */
+  border-radius: 5px;
+  /* Bordas arredondadas para os botões */
 }
 
 .nav a:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  /* Fundo suave ao passar o mouse */
   color: var(--yellow);
 }
 
@@ -290,8 +297,10 @@ export default {
   margin-bottom: 30px;
 }
 
+/* Call-to-Action */
 .cta-btn {
-  background-color: var(--purple);
+  background-color: var(--orange);
+  /* Altera a cor para laranja */
   color: var(--white);
   border: none;
   padding: 15px 30px;
@@ -301,7 +310,8 @@ export default {
 }
 
 .cta-btn:hover {
-  background-color: var(--dark-purple);
+  background-color: var(--dark-orange);
+  /* Você pode definir uma cor escura para hover se desejar */
 }
 
 .hero-image img {
