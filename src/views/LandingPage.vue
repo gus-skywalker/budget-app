@@ -14,21 +14,27 @@
           <li><a href="#contact">Contato</a></li>
         </ul>
       </nav>
-      <button class="btn btn-primary login-btn" @click.prevent="$router.push({ name: 'login' })">Login</button>
-      <button class="btn btn-secondary signup-btn" @click.prevent="$router.push({ name: 'login' })">Assine
-        Agora</button>
+      <button class="btn btn-primary login-btn" @click.prevent="$router.push({ name: 'login' })">
+        Login
+      </button>
+      <button class="btn btn-secondary signup-btn" @click.prevent="$router.push({ name: 'login' })">
+        Assine Agora
+      </button>
     </header>
 
     <!-- Hero Section -->
     <section class="hero">
       <div class="hero-content">
         <h1>Tome o Controle do Seu Futuro Financeiro</h1>
-        <p>Planeje, gerencie e cresça suas finanças com nossa carteira de fintechs personalizada.</p>
-        <button class="btn btn-primary cta-btn" @click.prevent="$router.push({ name: 'signup' })">Experimente
-          Gratuitamente</button>
+        <p>
+          Planeje, gerencie e cresça suas finanças com nossa carteira de fintechs personalizada.
+        </p>
+        <button class="btn btn-primary cta-btn" @click.prevent="$router.push({ name: 'signup' })">
+          Experimente Gratuitamente
+        </button>
       </div>
       <div class="hero-image">
-        <img src="/hero_image.jpg" alt="Planejamento Financeiro">
+        <img src="/hero_image.jpg" alt="Planejamento Financeiro" />
       </div>
     </section>
 
@@ -37,22 +43,27 @@
       <h2>Por Que Escolher Nossa Ferramenta</h2>
       <div class="benefits-container">
         <div class="benefit-item">
-          <img src="/monitoring.jpg" alt="Planejamento">
+          <img src="/monitoring.jpg" alt="Planejamento" />
           <h3>Planejamento Personalizado</h3>
-          <p>Crie planos financeiros sob medida para atingir seus objetivos a médio e longo prazo.</p>
+          <p>
+            Crie planos financeiros sob medida para atingir seus objetivos a médio e longo prazo.
+          </p>
         </div>
         <div class="benefit-item">
-          <img src="/support.jpg" alt="Controle">
+          <img src="/support.jpg" alt="Controle" />
           <h3>Controle Total</h3>
           <p>Monitore suas despesas, receitas e investimentos em uma única plataforma intuitiva.</p>
         </div>
         <div class="benefit-item">
-          <img src="/security.jpg" alt="Segurança">
+          <img src="/security.jpg" alt="Segurança" />
           <h3>Segurança de Dados</h3>
-          <p>Suas informações financeiras estão protegidas com as mais avançadas tecnologias de segurança.</p>
+          <p>
+            Suas informações financeiras estão protegidas com as mais avançadas tecnologias de
+            segurança.
+          </p>
         </div>
         <div class="benefit-item">
-          <img src="/growth.jpg" alt="Crescimento">
+          <img src="/growth.jpg" alt="Crescimento" />
           <h3>Crescimento Financeiro</h3>
           <p>Receba recomendações de investimento personalizadas para maximizar seu retorno.</p>
         </div>
@@ -88,8 +99,10 @@
       <h2>Segurança e Confiabilidade</h2>
       <div class="security-container">
         <div class="security-content">
-          <p>Nossa aplicação financeira utiliza tecnologias de ponta para garantir a segurança dos seus dados. Estamos
-            comprometidos com a sua privacidade e segurança.</p>
+          <p>
+            Nossa aplicação financeira utiliza tecnologias de ponta para garantir a segurança dos
+            seus dados. Estamos comprometidos com a sua privacidade e segurança.
+          </p>
           <ul>
             <!-- <li><img src="/icons/ssl.png" alt="SSL"> Criptografia SSL</li>
             <li><img src="/icons/iso.png" alt="ISO"> Certificação ISO 27001</li>
@@ -106,7 +119,9 @@
     <section id="donation" class="section donation-section">
       <div class="donation-container">
         <h2>Ajude a Manter o Projeto Vivo</h2>
-        <p class="donation-subtitle">Sua contribuição é essencial para a continuidade e evolução do nosso trabalho.</p>
+        <p class="donation-subtitle">
+          Sua contribuição é essencial para a continuidade e evolução do nosso trabalho.
+        </p>
 
         <div class="donation-options">
           <div class="donation-card">
@@ -114,22 +129,11 @@
             <p>Faça uma doação única e ajude-nos a alcançar novos objetivos.</p>
             <button class="donation-button">Doar Agora</button>
           </div>
-
           <div class="donation-card">
-            <h3>Doação Mensal</h3>
-            <p>Contribua mensalmente e faça parte da nossa comunidade de apoiadores.</p>
-            <button class="donation-button">Apoiar Mensalmente</button>
-          </div>
-
-          <div class="donation-card">
-            <h3>Doação Anual</h3>
-            <p>Seu apoio anual nos ajuda a planejar o futuro e expandir nossos serviços.</p>
-            <button class="donation-button">Doar Anualmente</button>
-          </div>
-        </div>
-        <div class="image-container">
-          <h4>Escaneie o QR code abaixo e ajude a financiar a construção desta ferramenta incrível!</h4>
-          <div>
+            <h3>Doação Pix</h3>
+            <p>
+              Escaneie o QR code abaixo e ajude a financiar a construção desta ferramenta incrível!
+            </p>
             <img src="/qrcode-pix.png" alt="QR Code para Doação" class="qr-code" />
           </div>
         </div>
@@ -149,8 +153,9 @@
           <a href="#contact">Contato</a>
         </div>
         <div class="footer-cta">
-          <button class="btn btn-primary cta-btn" @click.prevent="$router.push({ name: 'signup' })">Pronto para
-            Transformar Suas Finanças? Inscreva-se Agora!</button>
+          <button class="btn btn-primary cta-btn" @click.prevent="$router.push({ name: 'signup' })">
+            Pronto para Transformar Suas Finanças? Inscreva-se Agora!
+          </button>
         </div>
         <div class="footer-info">
           <p>&copy; 2024 Sua Fintech. Todos os direitos reservados.</p>
@@ -162,7 +167,6 @@
         </div>
       </div>
     </footer>
-
   </v-container>
 </template>
 
@@ -170,26 +174,26 @@
 export default {
   name: 'LandingPage',
   data() {
-    return {};
+    return {}
   },
   methods: {
     // Você pode adicionar métodos adicionais aqui se necessário
-  },
-};
+  }
+}
 </script>
 
-<style scoped>
+<style>
 /* Variáveis de Cores */
 :root {
-  --orange: #FFA07A;
-  --dark-orange: #FF6F00;
-  --yellow: #F7DC6F;
-  --purple: #7A288A;
-  --dark-purple: #5C3C8A;
-  --blue: #2E86C1;
-  --green: #28B463;
-  --white: #FFFFFF;
-  --light-gray: #F0F0F0;
+  --orange: #ffa07a;
+  --dark-orange: #ff6f00;
+  --yellow: #f7dc6f;
+  --purple: #7a288a;
+  --dark-purple: #5c3c8a;
+  --blue: #2e86c1;
+  --green: #28b463;
+  --white: #ffffff;
+  --light-gray: #f0f0f0;
   --dark-gray: #333333;
 }
 
@@ -475,6 +479,90 @@ export default {
   border-radius: 10px;
 }
 
+/* Estilos para a seção de doações */
+.donation-section {
+  background-color: #f8f9fa;
+  /* Cor de fundo suave */
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.donation-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.donation-container h2 {
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.donation-subtitle {
+  font-size: 1.25rem;
+  color: #555;
+  margin-bottom: 40px;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.donation-options {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  /* Para garantir que o layout seja responsivo */
+}
+
+.donation-card {
+  background-color: #ffffff;
+  border: 1px solid #ddd;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  max-width: 300px;
+  text-align: left;
+  transition: transform 0.3s ease-in-out;
+}
+
+.donation-card:hover {
+  transform: translateY(-10px);
+}
+
+.donation-card h3 {
+  font-size: 1.75rem;
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.donation-card p {
+  font-size: 1rem;
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.donation-button {
+  background-color: #28a745;
+  color: #fff;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease-in-out;
+}
+
+.donation-button:hover {
+  background-color: #218838;
+}
+
+.donation-footer {
+  margin-top: 40px;
+  font-size: 1rem;
+  color: #666;
+}
+
 /* Footer */
 .footer {
   background-color: var(--blue);
@@ -532,9 +620,14 @@ export default {
   transform: scale(1.1);
 }
 
+.qr-code {
+  width: 50%;
+  max-width: 300px;
+  height: auto;
+}
+
 /* Responsividade */
 @media (max-width: 1200px) {
-
   .benefit-item,
   .testimonial-item {
     width: 45%;
@@ -548,114 +641,6 @@ export default {
   .security-content,
   .security-image {
     width: 100%;
-  }
-
-  /* Estilos para a seção de doações */
-  .donation-section {
-    background-color: #f8f9fa;
-    /* Cor de fundo suave */
-    padding: 60px 20px;
-    text-align: center;
-  }
-
-  .donation-container {
-    max-width: 1200px;
-    margin: 0 auto;
-  }
-
-  .donation-container h2 {
-    font-size: 2.5rem;
-    margin-bottom: 20px;
-    color: #333;
-  }
-
-  .donation-subtitle {
-    font-size: 1.25rem;
-    color: #555;
-    margin-bottom: 40px;
-    max-width: 700px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-
-  .donation-options {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    flex-wrap: wrap;
-    /* Para garantir que o layout seja responsivo */
-  }
-
-  .donation-card {
-    background-color: #ffffff;
-    border: 1px solid #ddd;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    max-width: 300px;
-    text-align: left;
-    transition: transform 0.3s ease-in-out;
-  }
-
-  .donation-card:hover {
-    transform: translateY(-10px);
-  }
-
-  .donation-card h3 {
-    font-size: 1.75rem;
-    color: #333;
-    margin-bottom: 15px;
-  }
-
-  .donation-card p {
-    font-size: 1rem;
-    color: #666;
-    margin-bottom: 20px;
-  }
-
-  .donation-button {
-    background-color: #28a745;
-    color: #fff;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 5px;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: background-color 0.3s ease-in-out;
-  }
-
-  .donation-button:hover {
-    background-color: #218838;
-  }
-
-  .donation-footer {
-    margin-top: 40px;
-    font-size: 1rem;
-    color: #666;
-  }
-
-  @media (max-width: 768px) {
-    .donation-options {
-      flex-direction: column;
-    }
-
-    .donation-card {
-      max-width: 100%;
-    }
-  }
-
-  .image-container {
-    position: relative;
-    height: 100vh;
-    /* Define a altura do contêiner */
-    text-align: center;
-    /* Centraliza o conteúdo (a imagem) horizontalmente */
-  }
-
-  .qr-code {
-    width: 100%;
-    max-width: 300px;
-    height: auto;
   }
 
   .hero {
@@ -678,10 +663,17 @@ export default {
 }
 
 @media (max-width: 768px) {
-
   .benefit-item,
   .testimonial-item {
     width: 100%;
+  }
+
+  .donation-options {
+    flex-direction: column;
+  }
+
+  .donation-card {
+    max-width: 50%;
   }
 
   .nav ul {
@@ -713,6 +705,5 @@ export default {
     width: 30px;
     height: 30px;
   }
-
 }
 </style>

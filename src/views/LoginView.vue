@@ -4,8 +4,11 @@
       <form @submit.prevent="userLogin">
         <h2>Login</h2>
         <div class="imgcontainer">
-          <img src="https://cdn.icon-icons.com/icons2/2468/PNG/512/user_kids_avatar_user_profile_icon_149314.png"
-            alt="Avatar" class="avatar" />
+          <img
+            src="https://cdn.icon-icons.com/icons2/2468/PNG/512/user_kids_avatar_user_profile_icon_149314.png"
+            alt="Avatar"
+            class="avatar"
+          />
         </div>
         <div class="form-group">
           <label for="email">Email</label>
@@ -13,21 +16,38 @@
         </div>
         <div class="form-group">
           <label for="passcode">Password</label>
-          <input type="password" v-model="userData.password" placeholder="Please enter your password" required />
+          <input
+            type="password"
+            v-model="userData.password"
+            placeholder="Please enter your password"
+            required
+          />
         </div>
         <button type="submit" class="btn btn-primary">Login</button>
         <div v-if="error" class="error">{{ error }}</div>
         <div class="oauth-buttons">
           <button class="oauth-button" @click.prevent="loginWithGoogle">
-            <img src="https://cdn-icons-png.flaticon.com/512/281/281764.png" alt="Google" width="20" height="20" />
+            <img
+              src="https://cdn-icons-png.flaticon.com/512/281/281764.png"
+              alt="Google"
+              width="20"
+              height="20"
+            />
             Login with Google
           </button>
           <button class="oauth-button" @click.prevent="loginWithGitHub">
-            <img src="https://cdn-icons-png.flaticon.com/512/2111/2111432.png" alt="GitHub" width="20" height="20" />
+            <img
+              src="https://cdn-icons-png.flaticon.com/512/2111/2111432.png"
+              alt="GitHub"
+              width="20"
+              height="20"
+            />
             Login with GitHub
           </button>
         </div>
-        <p>Not registered yet? <a href="#" @click.prevent="toggleForm(true)">Create an account</a>.</p>
+        <p>
+          Not registered yet? <a href="#" @click.prevent="toggleForm(true)">Create an account</a>.
+        </p>
       </form>
     </div>
 
@@ -36,7 +56,12 @@
         <h2>Signup</h2>
         <div class="form-group">
           <label for="username">Username</label>
-          <input type="text" v-model="signupData.username" placeholder="Enter your username" required />
+          <input
+            type="text"
+            v-model="signupData.username"
+            placeholder="Enter your username"
+            required
+          />
         </div>
         <div class="form-group">
           <label for="email">Email</label>
@@ -44,17 +69,28 @@
         </div>
         <div class="form-group">
           <label for="password">Password</label>
-          <input type="password" v-model="signupData.password" placeholder="Please enter your password" required />
+          <input
+            type="password"
+            v-model="signupData.password"
+            placeholder="Please enter your password"
+            required
+          />
         </div>
         <div class="form-group">
           <label for="confirmPassword">Confirm Password</label>
-          <input type="password" v-model="signupData.confirmPassword" placeholder="Please confirm your password"
-            required />
+          <input
+            type="password"
+            v-model="signupData.confirmPassword"
+            placeholder="Please confirm your password"
+            required
+          />
         </div>
         <button type="submit" class="btn btn-primary">Signup</button>
         <div v-if="signupError" class="error">{{ signupError }}</div>
         <div v-if="signupSuccess" class="success">{{ signupSuccess }}</div>
-        <p>Already have an account? <a href="#" @click.prevent="toggleForm(false)">Login here</a>.</p>
+        <p>
+          Already have an account? <a href="#" @click.prevent="toggleForm(false)">Login here</a>.
+        </p>
       </form>
     </div>
   </div>
@@ -66,29 +102,29 @@ import { useUserStore } from '@/plugins/userStore'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 
-const userStore = useUserStore();  // Use a store de Pinia
+const userStore = useUserStore() // Use a store de Pinia
 const router = useRouter()
 const userData = ref({ email: '', password: '' })
 const signupData = ref({ email: '', password: '', confirmPassword: '', username: '' })
 const error = ref(null)
 const signupError = ref(null)
 const signupSuccess = ref(null)
-const showSignupForm = ref(false);
-const authUrl = import.meta.env.VITE_AUTH_URL;
+const showSignupForm = ref(false)
+const authUrl = import.meta.env.VITE_AUTH_URL
 
 const userLogin = async () => {
   try {
     const res = await axios.post(`${authUrl}/auth/signin`, userData.value)
-    userStore.setAuth(true);
-    userStore.setToken(res.data.token);
+    userStore.setAuth(true)
+    userStore.setToken(res.data.token)
     userStore.setUser({
       username: res.data.username,
       email: res.data.email,
       id: res.data.id,
       language: res.data.language,
       userRole: res.data.userRole,
-      createdAt: res.data.createdAt,
-    });
+      createdAt: res.data.createdAt
+    })
     router.push('/dashboard')
   } catch (err) {
     error.value = 'Invalid credentials. Please try again.'
@@ -97,8 +133,8 @@ const userLogin = async () => {
 
 const userSignup = async () => {
   if (signupData.value.password !== signupData.value.confirmPassword) {
-    signupError.value = 'Passwords do not match. Please try again.';
-    return;
+    signupError.value = 'Passwords do not match. Please try again.'
+    return
   }
   try {
     const res = await axios.post(`${authUrl}/auth/signup`, {
@@ -109,26 +145,24 @@ const userSignup = async () => {
     })
 
     if (res.status === 201) {
-      signupSuccess.value = 'Account created successfully.';
+      signupSuccess.value = 'Account created successfully.'
     }
-
   } catch (err) {
     signupError.value = 'Error creating account. Please try again.'
   }
 }
 
 const loginWithGoogle = async () => {
-  window.location.href = `${authUrl}/oauth2/authorization/google`;
+  window.location.href = `${authUrl}/oauth2/authorization/google`
 }
 
 const loginWithGitHub = () => {
-  window.location.href = `${authUrl}/oauth2/authorization/github`;
+  window.location.href = `${authUrl}/oauth2/authorization/github`
 }
 
 const toggleForm = (isSignup) => {
-  showSignupForm.value = isSignup;
+  showSignupForm.value = isSignup
 }
-
 </script>
 
 <style scoped>
@@ -190,17 +224,17 @@ label {
   margin-bottom: 10px;
 }
 
-input[type="text"],
-input[type="email"],
-input[type="password"] {
+input[type='text'],
+input[type='email'],
+input[type='password'] {
   width: 100%;
   padding: 10px;
   margin-bottom: 20px;
   border: 1px solid #ccc;
 }
 
-button[type="submit"] {
-  background-color: #4CAF50;
+button[type='submit'] {
+  background-color: #4caf50;
   color: #fff;
   padding: 10px 20px;
   border: none;
@@ -208,7 +242,7 @@ button[type="submit"] {
   cursor: pointer;
 }
 
-button[type="submit"]:hover {
+button[type='submit']:hover {
   background-color: #3e8e41;
 }
 

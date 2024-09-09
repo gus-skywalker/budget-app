@@ -1,89 +1,105 @@
 <template>
-    <v-container>
-      <!-- Header -->
-      <header class="header">
-        <div class="logo">
-            <img src="/logo.jpg" alt="Logo" />
-        </div>
-        <nav class="nav">
-            <ul>
-            <li><a href="#">Sobre</a></li>
-            <li><a href="#contact">Contato</a></li>
-            </ul>
-        </nav>
-        <button class="btn btn-primary login-btn" @click.prevent="$router.push({ name: 'login' })">Login</button>
-      </header>
+  <v-container>
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">
+        <img src="/logo.jpg" alt="Logo" />
+      </div>
+      <nav class="nav">
+        <ul>
+          <li><a href="#">Sobre</a></li>
+          <li><a href="#contact">Contato</a></li>
+        </ul>
+      </nav>
+      <button class="btn btn-primary login-btn" @click.prevent="$router.push({ name: 'login' })">
+        Login
+      </button>
+    </header>
 
-      <!-- Seção 1: Planejamento Financeiro -->
-      <section class="section orange">
-        <div class="section-content">
-          <h2>Planejamento Financeiro</h2>
-          <p>Nossa aplicação financeira ajuda você a planejar seu futuro financeiro com confiança.</p>
-          <p>Com nossa ferramenta, você pode criar um plano personalizado para alcançar seus objetivos financeiros.</p>
-        </div>
-        <div class="section-image">
-          <img src="/planejamento_financeiro.jpg" alt="Planejamento Financeiro">
-        </div>
-      </section>
-  
-      <!-- Seção 2: Controle e Gestão -->
-      <section class="section red">
-        <div class="section-image">
-          <img src="/controle_gestao.jpg" alt="Controle e Gestão">
-        </div>
-        <div class="section-content">
-          <h2>Controle e Gestão</h2>
-          <p>Nossa aplicação financeira oferece recursos avançados de controle e gestão para ajudá-lo a gerenciar suas finanças de forma eficaz.</p>
-          <p>Você pode acompanhar suas despesas, receitas e investimentos em um só lugar.</p>
-        </div>
-      </section>
-  
-      <!-- Seção 3: Segurança e Proteção -->
-      <section class="section purple">
-        <div class="section-content">
-          <h2>Segurança e Proteção</h2>
-          <p>Nossa aplicação financeira é projetada com segurança em mente.</p>
-          <p>Nós usamos tecnologias de ponta para proteger suas informações financeiras e garantir que seus dados sejam seguros.</p>
-        </div>
-        <div class="section-image">
-          <img src="/seguranca.jpg" alt="Segurança e Proteção">
-        </div>
-      </section>
-  
-      <!-- Seção 4: Vantagens -->
-      <section class="section orange">
-        <div class="section-image">
-          <img src="/vantagens.jpg" alt="Vantagens">
-        </div>
-        <div class="section-content">
-          <h2>Vantagens</h2>
-          <p>Nossa aplicação financeira oferece uma série de vantagens, incluindo relatórios personalizados, alertas de gastos e recomendações de investimento.</p>
-          <p>Você pode aproveitar ao máximo suas finanças com nossa ferramenta.</p>
-        </div>
-      </section>
-  
-      <!-- Seção 5: Suporte e Ajuda -->
-      <section id="contact" class="section red">
-        <div class="section-content">
-          <h2>Suporte e Ajuda</h2>
-          <p>Nossa equipe de suporte está sempre pronta para ajudá-lo com qualquer dúvida ou problema que você possa ter.</p>
-          <p>Você pode contar conosco para obter ajuda em qualquer momento.</p>
-        </div>
-        <div class="section-image">
-          <img src="/suporte.jpg" alt="Suporte e Ajuda">
-        </div>
-      </section>
+    <!-- Seção 1: Planejamento Financeiro -->
+    <section class="section orange">
+      <div class="section-content">
+        <h2>Planejamento Financeiro</h2>
+        <p>Nossa aplicação financeira ajuda você a planejar seu futuro financeiro com confiança.</p>
+        <p>
+          Com nossa ferramenta, você pode criar um plano personalizado para alcançar seus objetivos
+          financeiros.
+        </p>
+      </div>
+      <div class="section-image">
+        <img src="/planejamento_financeiro.jpg" alt="Planejamento Financeiro" />
+      </div>
+    </section>
 
-    </v-container>
+    <!-- Seção 2: Controle e Gestão -->
+    <section class="section red">
+      <div class="section-image">
+        <img src="/controle_gestao.jpg" alt="Controle e Gestão" />
+      </div>
+      <div class="section-content">
+        <h2>Controle e Gestão</h2>
+        <p>
+          Nossa aplicação financeira oferece recursos avançados de controle e gestão para ajudá-lo a
+          gerenciar suas finanças de forma eficaz.
+        </p>
+        <p>Você pode acompanhar suas despesas, receitas e investimentos em um só lugar.</p>
+      </div>
+    </section>
+
+    <!-- Seção 3: Segurança e Proteção -->
+    <section class="section purple">
+      <div class="section-content">
+        <h2>Segurança e Proteção</h2>
+        <p>Nossa aplicação financeira é projetada com segurança em mente.</p>
+        <p>
+          Nós usamos tecnologias de ponta para proteger suas informações financeiras e garantir que
+          seus dados sejam seguros.
+        </p>
+      </div>
+      <div class="section-image">
+        <img src="/seguranca.jpg" alt="Segurança e Proteção" />
+      </div>
+    </section>
+
+    <!-- Seção 4: Vantagens -->
+    <section class="section orange">
+      <div class="section-image">
+        <img src="/vantagens.jpg" alt="Vantagens" />
+      </div>
+      <div class="section-content">
+        <h2>Vantagens</h2>
+        <p>
+          Nossa aplicação financeira oferece uma série de vantagens, incluindo relatórios
+          personalizados, alertas de gastos e recomendações de investimento.
+        </p>
+        <p>Você pode aproveitar ao máximo suas finanças com nossa ferramenta.</p>
+      </div>
+    </section>
+
+    <!-- Seção 5: Suporte e Ajuda -->
+    <section id="contact" class="section red">
+      <div class="section-content">
+        <h2>Suporte e Ajuda</h2>
+        <p>
+          Nossa equipe de suporte está sempre pronta para ajudá-lo com qualquer dúvida ou problema
+          que você possa ter.
+        </p>
+        <p>Você pode contar conosco para obter ajuda em qualquer momento.</p>
+      </div>
+      <div class="section-image">
+        <img src="/suporte.jpg" alt="Suporte e Ajuda" />
+      </div>
+    </section>
+  </v-container>
 </template>
-  
+
 <style>
 /* Cores */
 :root {
-  --orange: #FFA07A;
-  --yellow: #F7DC6F;
-  --purple: #7A288A;
-  --dark-purple: #5C3C8A;
+  --orange: #ffa07a;
+  --yellow: #f7dc6f;
+  --purple: #7a288a;
+  --dark-purple: #5c3c8a;
 }
 
 /* Header */
@@ -145,7 +161,7 @@
 }
 
 .login-btn {
-  background-color: #FFC107; /* laranja */
+  background-color: #ffc107; /* laranja */
   color: #fff;
   border: none;
   padding: 10px 20px;
@@ -154,7 +170,7 @@
 }
 
 .login-btn:hover {
-  background-color: #FFA07A; /* laranja escuro */
+  background-color: #ffa07a; /* laranja escuro */
 }
 
 /* Seções */
