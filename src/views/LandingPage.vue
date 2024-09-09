@@ -1,25 +1,25 @@
 <template>
-  <v-container>
+  <v-container id="color-setup">
     <!-- Header -->
     <header class="header">
-      <div class="logo">
-        <img src="/logo.jpg" alt="Logo" />
-      </div>
-      <nav class="nav">
-        <ul>
-          <li><a href="#">Sobre</a></li>
-          <li><a href="#benefits">Benefícios</a></li>
-          <li><a href="#testimonials">Depoimentos</a></li>
-          <li><a href="#security">Segurança</a></li>
-          <li><a href="#contact">Contato</a></li>
-        </ul>
-      </nav>
-      <button class="btn btn-primary login-btn" @click.prevent="$router.push({ name: 'login' })">
-        Login
-      </button>
-      <button class="btn btn-secondary signup-btn" @click.prevent="$router.push({ name: 'login' })">
-        Assine Agora
-      </button>
+        <div class="logo">
+          <img src="/logo.jpg" alt="Logo" />
+        </div>
+        <nav class="nav">
+          <ul>
+            <li><a href="#">Sobre</a></li>
+            <li><a href="#benefits">Benefícios</a></li>
+            <li><a href="#testimonials">Depoimentos</a></li>
+            <li><a href="#security">Segurança</a></li>
+            <li><a href="#contact">Contato</a></li>
+          </ul>
+        </nav>
+        <button class="btn btn-primary login-btn" @click.prevent="$router.push({ name: 'login' })">
+          Login
+        </button>
+        <button class="btn btn-secondary signup-btn" @click.prevent="$router.push({ name: 'login' })">
+          Assine Agora
+        </button>
     </header>
 
     <!-- Hero Section -->
@@ -182,9 +182,9 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 /* Variáveis de Cores */
-:root {
+#color-setup {
   --orange: #ffa07a;
   --dark-orange: #ff6f00;
   --yellow: #f7dc6f;
@@ -206,7 +206,8 @@ export default {
 
 /* Header */
 .header {
-  background-color: var(--blue);
+  background-color: #d5cbcb; /* cor cinza escura */
+  opacity: 0.8; /* 80% de opacidade */
   padding: 20px 40px;
   display: flex;
   justify-content: space-between;
