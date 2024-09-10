@@ -4,11 +4,8 @@
       <form @submit.prevent="userLogin">
         <h2>Login</h2>
         <div class="imgcontainer">
-          <img
-            src="https://cdn.icon-icons.com/icons2/2468/PNG/512/user_kids_avatar_user_profile_icon_149314.png"
-            alt="Avatar"
-            class="avatar"
-          />
+          <img src="https://cdn.icon-icons.com/icons2/2468/PNG/512/user_kids_avatar_user_profile_icon_149314.png"
+            alt="Avatar" class="avatar" />
         </div>
         <div class="form-group">
           <label for="email">Email</label>
@@ -16,32 +13,17 @@
         </div>
         <div class="form-group">
           <label for="passcode">Password</label>
-          <input
-            type="password"
-            v-model="userData.password"
-            placeholder="Please enter your password"
-            required
-          />
+          <input type="password" v-model="userData.password" placeholder="Please enter your password" required />
         </div>
         <button type="submit" class="btn btn-primary">Login</button>
         <div v-if="error" class="error">{{ error }}</div>
         <div class="oauth-buttons">
           <button class="oauth-button" @click.prevent="loginWithGoogle">
-            <img
-              src="https://cdn-icons-png.flaticon.com/512/281/281764.png"
-              alt="Google"
-              width="20"
-              height="20"
-            />
+            <img src="https://cdn-icons-png.flaticon.com/512/281/281764.png" alt="Google" width="20" height="20" />
             Login with Google
           </button>
           <button class="oauth-button" @click.prevent="loginWithGitHub">
-            <img
-              src="https://cdn-icons-png.flaticon.com/512/2111/2111432.png"
-              alt="GitHub"
-              width="20"
-              height="20"
-            />
+            <img src="https://cdn-icons-png.flaticon.com/512/2111/2111432.png" alt="GitHub" width="20" height="20" />
             Login with GitHub
           </button>
         </div>
@@ -56,12 +38,7 @@
         <h2>Signup</h2>
         <div class="form-group">
           <label for="username">Username</label>
-          <input
-            type="text"
-            v-model="signupData.username"
-            placeholder="Enter your username"
-            required
-          />
+          <input type="text" v-model="signupData.username" placeholder="Enter your username" required />
         </div>
         <div class="form-group">
           <label for="email">Email</label>
@@ -69,21 +46,12 @@
         </div>
         <div class="form-group">
           <label for="password">Password</label>
-          <input
-            type="password"
-            v-model="signupData.password"
-            placeholder="Please enter your password"
-            required
-          />
+          <input type="password" v-model="signupData.password" placeholder="Please enter your password" required />
         </div>
         <div class="form-group">
           <label for="confirmPassword">Confirm Password</label>
-          <input
-            type="password"
-            v-model="signupData.confirmPassword"
-            placeholder="Please confirm your password"
-            required
-          />
+          <input type="password" v-model="signupData.confirmPassword" placeholder="Please confirm your password"
+            required />
         </div>
         <button type="submit" class="btn btn-primary">Signup</button>
         <div v-if="signupError" class="error">{{ signupError }}</div>
@@ -115,17 +83,19 @@ const authUrl = import.meta.env.VITE_AUTH_URL
 const userLogin = async () => {
   try {
     const res = await axios.post(`${authUrl}/auth/signin`, userData.value)
-    userStore.setAuth(true)
-    userStore.setToken(res.data.token)
-    userStore.setUser({
-      username: res.data.username,
-      email: res.data.email,
-      id: res.data.id,
-      language: res.data.language,
-      userRole: res.data.userRole,
-      createdAt: res.data.createdAt
-    })
-    router.push('/dashboard')
+    if (res.data) {
+      userStore.setAuth(true)
+      userStore.setToken(res.data.token)
+      userStore.setUser({
+        username: res.data.username,
+        email: res.data.email,
+        id: res.data.id,
+        language: res.data.language,
+        userRole: res.data.userRole,
+        createdAt: res.data.createdAt
+      })
+      router.push('/dashboard')
+    }
   } catch (err) {
     error.value = 'Invalid credentials. Please try again.'
   }
