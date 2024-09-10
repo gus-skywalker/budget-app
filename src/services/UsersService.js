@@ -8,8 +8,5 @@ export default {
   },
   notifyUser(userId, expense) {
     return axiosInterceptor.put(`${API_URL}/${userId}`, expense)
-  },
-  userTokenInfo() {
-    return axiosInterceptor.get(`${API_URL}/userinfo`)
   }
 }
