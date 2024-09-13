@@ -13,7 +13,6 @@ const userStore = useUserStore()
 
 const extractTokenFromUrl = async () => {
   const urlParams = new URLSearchParams(window.location.search)
-  console.log(urlParams);
   const token = urlParams.get('token')
   const email = urlParams.get('email')
 
@@ -21,7 +20,6 @@ const extractTokenFromUrl = async () => {
     console.log('Passou com sucesso pelo token')
     userStore.setAuth(true)
     userStore.setToken(token)
-    userStore.setUser({ email: email })
 
     AuthService.userTokenInfo()
       .then((res) => {

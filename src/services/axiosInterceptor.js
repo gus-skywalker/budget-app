@@ -10,7 +10,7 @@ const apiUrl = import.meta.env.VITE_API_BASE_URL
 
 const axiosInstance = axios.create({
   baseURL: apiUrl,
-  timeout: 5000,
+  timeout: 300000,
   withCredentials: true
 })
 
