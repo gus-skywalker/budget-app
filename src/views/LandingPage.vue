@@ -6,8 +6,8 @@
         <img src="/logo.jpg" alt="Logo" />
       </div>
       <nav class="nav">
-        <div class="menu-toggle" @click="toggleMenu">
-          <span class="menu-icon"></span>
+        <div class="menu-toggle" aria-label="Fazer login" @click="toggleMenu">
+          <span class=" menu-icon"></span>
           <span class="menu-icon"></span>
           <span class="menu-icon"></span>
         </div>
@@ -20,10 +20,12 @@
         </ul>
       </nav>
       <div class="auth-buttons">
-        <button class="btn btn-primary login-btn" @click.prevent="$router.push({ name: 'login' })">
+        <button class="btn btn-primary login-btn" aria-label="Fazer login"
+          @click.prevent="$router.push({ name: 'login' })">
           Login
         </button>
-        <button class="btn btn-secondary signup-btn" @click.prevent="$router.push({ name: 'signup' })">
+        <button class="btn btn-secondary signup-btn" aria-label="Fazer login"
+          @click.prevent="$router.push({ name: 'signup' })">
           Assine Agora
         </button>
       </div>
@@ -72,6 +74,64 @@
       </div>
     </section>
 
+    <!-- Testemunhos -->
+    <section id="testimonials" class="section testimonials-section">
+      <h2>O Que Nossos Clientes Dizem</h2>
+      <div class="testimonials-container">
+        <div class="testimonial-item">
+          <!-- <img src="/customer1.jpg" alt="Cliente 1" /> -->
+          <p>"Excelente ferramenta! Meu controle financeiro nunca foi tão fácil e eficiente."</p>
+          <h4>Maria Silva</h4>
+        </div>
+        <div class="testimonial-item">
+          <!-- <img src="/customer2.jpg" alt="Cliente 2" /> -->
+          <p>"A interface é intuitiva e as recomendações de investimento são ótimas."</p>
+          <h4>João Santos</h4>
+        </div>
+        <div class="testimonial-item">
+          <!-- <img src="/customer3.jpg" alt="Cliente 3" /> -->
+          <p>"Segurança e suporte de primeira linha. Recomendo a todos!"</p>
+          <h4>Ana Oliveira</h4>
+        </div>
+      </div>
+    </section>
+
+    <!-- Segurança -->
+    <section id="security" class="section security-section">
+      <h2>Segurança de Dados</h2>
+      <div class="security-content">
+        <p>Na nossa plataforma, a segurança dos seus dados é nossa prioridade. Utilizamos criptografia de ponta a ponta
+          e proteções avançadas para garantir que suas informações financeiras estejam sempre seguras.</p>
+        <ul>
+          <li>Criptografia SSL de alta segurança</li>
+          <li>Autenticação de dois fatores</li>
+          <li>Monitoramento contínuo de ameaças</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Contato -->
+    <section id="contact" class="section contact-section">
+      <div class="contact-container">
+        <h2>Entre em Contato Conosco</h2>
+        <form class="contact-form" @submit.prevent="handleSubmit">
+          <div class="form-group">
+            <label for="name">Nome:</label>
+            <input type="text" id="name" v-model="contactForm.name" required />
+          </div>
+          <div class="form-group">
+            <label for="email">E-mail:</label>
+            <input type="email" id="email" v-model="contactForm.email" required />
+          </div>
+          <div class="form-group">
+            <label for="message">Mensagem:</label>
+            <textarea id="message" v-model="contactForm.message" required></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">Enviar</button>
+        </form>
+      </div>
+    </section>
+
     <!-- Footer -->
     <footer class="footer">
       <div class="footer-content">
@@ -101,12 +161,26 @@ export default {
   data() {
     return {
       isMenuOpen: false,
+      contactForm: {
+        name: '',
+        email: '',
+        message: ''
+      }
     };
   },
   methods: {
     toggleMenu() {
       this.isMenuOpen = !this.isMenuOpen;
     },
+    handleSubmit() {
+      if (!this.contactForm.email.includes('@')) {
+        alert('Por favor, insira um e-mail válido.');
+        return;
+      }
+      console.log('Formulário enviado:', this.contactForm);
+      alert('Mensagem enviada com sucesso!');
+      this.contactForm = { name: '', email: '', message: '' }; // Limpa o formulário
+    }
   },
 };
 </script>
@@ -143,7 +217,6 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  position: fixed;
   top: 0;
   left: 0;
   right: 0;
@@ -152,8 +225,9 @@ body {
   box-sizing: border-box;
   z-index: 10;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  height: 80px;
+  height: 100px;
   /* Ajuste a altura conforme necessário */
+  position: fixed;
 }
 
 .section {
@@ -177,13 +251,18 @@ body {
 
 /* Para garantir que a largura total do body não exceda a largura da tela */
 body {
+  font-family: 'Roboto', sans-serif;
   overflow-x: hidden;
 }
 
 /* Ajuste a largura do logo e navegação conforme necessário */
 .logo img {
-  width: 100px;
-  height: 100px;
+  width: 95px;
+  height: 95px;
+  margin-top: 17px;
+  border-radius: 50%;
+  /* Faz a imagem circular */
+  object-fit: cover;
 }
 
 .nav ul {
@@ -191,18 +270,21 @@ body {
   display: flex;
   gap: 15px;
   transition: transform 0.3s ease;
+  margin: 0;
 }
 
 .nav ul {
-  display: none;
-  position: absolute;
-  top: 80px;
+  display: flex;
+  /* Garante que o menu seja visível no modo desktop */
+  position: relative;
+  top: 0;
   right: 0;
-  background-color: var(--light-gray);
-  padding: 20px;
-  flex-direction: column;
-  width: 200px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background-color: transparent;
+  /* Altere se precisar de fundo */
+  padding: 0;
+  /* Remove padding que pode estar causando o problema */
+  box-shadow: none;
+  /* Remove a sombra se não for necessária */
 }
 
 .nav ul.active {
@@ -214,6 +296,8 @@ body {
   text-decoration: none;
   font-weight: 500;
   padding: 5px 10px;
+  display: block;
+  /* Garante que os links ocupem o espaço necessário */
 }
 
 .nav a:hover {
@@ -314,17 +398,135 @@ body {
   color: var(--dark-gray);
 }
 
+/* Testemunhos */
+.testimonials-section {
+  background-color: var(--white);
+  padding: 60px 40px;
+  text-align: center;
+}
+
+.testimonials-container {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.testimonial-item {
+  width: 30%;
+  background-color: var(--light-gray);
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.testimonial-item img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  margin-bottom: 15px;
+}
+
+.testimonial-item p {
+  font-style: italic;
+  color: var(--dark-gray);
+  margin-bottom: 10px;
+}
+
+.testimonial-item h4 {
+  color: var(--dark-gray);
+}
+
+/* Segurança */
+.security-section {
+  background-color: var(--light-gray);
+  padding: 60px 40px;
+}
+
+.security-content {
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.security-content ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.security-content li {
+  font-size: 16px;
+  color: var(--dark-gray);
+  margin-bottom: 10px;
+}
+
+/* Contato */
+.contact-section {
+  background-color: var(--white);
+  padding: 60px 40px;
+  text-align: center;
+}
+
+.contact-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.contact-form label {
+  display: block;
+  font-size: 16px;
+  color: var(--dark-gray);
+  text-align: left;
+}
+
+.contact-form input,
+.contact-form textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--light-gray);
+  border-radius: 5px;
+  font-size: 16px;
+}
+
+.contact-form button {
+  align-self: flex-start;
+  background-color: var(--orange);
+  color: var(--white);
+  padding: 12px 24px;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.contact-form button:hover {
+  background-color: var(--dark-orange);
+}
+
 /* Footer */
 .footer {
   background-color: var(--dark-gray);
   padding: 40px;
   color: var(--white);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .footer-links a {
   color: var(--white);
   margin-right: 20px;
   text-decoration: none;
+  justify-content: center;
 }
 
 .footer-cta {
@@ -345,16 +547,46 @@ body {
 /* Responsividade */
 @media (max-width: 768px) {
   .header {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    /* Distribui os itens ao longo do header */
+    padding: 10px;
+  }
+
+  .logo {
+    margin-top: 17px;
+    flex: 1;
+    /* Ajusta a largura da logo */
+    text-align: left;
+  }
+
+  .logo img {
+    width: 80px;
+    height: 80px;
   }
 
   .menu-toggle {
     display: flex;
+    position: absolute;
+    top: 40px;
+    right: 20px;
+    flex-direction: column;
+    gap: 5px;
+    order: 2;
   }
 
   .nav ul {
     display: none;
+    position: absolute;
+    top: 75px;
+    right: 5px;
+    background-color: var(--light-gray);
+    padding: 20px;
+    flex-direction: column;
+    width: 200px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
   }
 
   .nav ul.active {
@@ -368,14 +600,99 @@ body {
   }
 
   .auth-buttons {
-    flex-direction: column;
-    gap: 5px;
+    flex: 1;
+    /* Ajusta a largura dos botões */
+    text-align: right;
+    /* Alinha os botões à direita */
+    gap: 10px;
   }
 
   .login-btn,
   .signup-btn {
     padding: 8px 12px;
     font-size: 14px;
+  }
+
+  .hero {
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+    text-align: center;
+  }
+
+  .hero-content {
+    width: 100%;
+  }
+
+  .hero-content h1 {
+    font-size: 32px;
+  }
+
+  .hero-content p {
+    font-size: 16px;
+    margin-top: 10px;
+  }
+
+  .hero-image img {
+    width: 100%;
+    max-width: 400px;
+    height: auto;
+  }
+
+  .benefits-container {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .benefit-item {
+    width: 100%;
+    background-color: var(--light-gray);
+    padding: 20px;
+    border-radius: 10px;
+  }
+
+  .benefit-item img {
+    width: 80px;
+    height: 80px;
+  }
+
+  .contact-form {
+    gap: 15px;
+  }
+
+  .contact-form input,
+  .contact-form textarea {
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .contact-form button {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+
+  .footer {
+    padding: 20px;
+    text-align: center;
+  }
+
+  .footer-links {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .footer-links a {
+    margin: 0;
+  }
+
+  .footer-cta {
+    margin-top: 10px;
+  }
+
+  .footer-info {
+    margin-top: 10px;
   }
 }
 </style>
