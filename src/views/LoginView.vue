@@ -116,10 +116,20 @@ const userSignup = async () => {
 
     if (res.status === 201) {
       signupSuccess.value = 'Account created successfully.'
+      clearSignupForm();
     }
   } catch (err) {
     signupError.value = 'Error creating account. Please try again.'
   }
+}
+
+const clearSignupForm = () => {
+  signupData.value = { email: '', password: '', confirmPassword: '', username: '' }
+}
+
+const clearFormData = () => {
+  userData.value = { email: '', password: '' }
+  clearSignupForm()
 }
 
 const loginWithGoogle = async () => {
@@ -131,7 +141,8 @@ const loginWithGitHub = () => {
 }
 
 const toggleForm = (isSignup) => {
-  showSignupForm.value = isSignup
+  showSignupForm.value = isSignup;
+  clearFormData()
 }
 </script>
 
@@ -141,7 +152,7 @@ form {
 }
 
 .container {
-  max-width: 400px;
+  max-width: 450px;
   padding: 20px;
   background-color: #f9f9f9;
   border: 1px solid #ccc;
