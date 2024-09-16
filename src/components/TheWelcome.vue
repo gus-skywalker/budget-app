@@ -3,7 +3,7 @@
     <!-- Header -->
     <header class="header">
       <img src="/logo.jpg" alt="Logo" class="logo" />
-      <h1>Finance Hub by Les Monades</h1>
+      <h1>Wallet Connect by Les Monades</h1>
     </header>
 
     <div class="container">

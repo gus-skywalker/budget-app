@@ -29,7 +29,8 @@ const logoutUser = () => {
 
 // Função para redirecionar os usuários para a página de login OAuth2
 function redirectToOAuth2LoginPage() {
-  window.location.href = 'http://localhost:9000/login'
+  const authUrl = `${import.meta.env.VITE_API_BASE_URL}/login`
+  window.location.href = authUrl;
 }
 
 // Função para alternar o tema
@@ -61,12 +62,8 @@ function navigateToAccountAdmin() {
 <template>
   <v-navigation-drawer app expand-on-hover rail ref="drawer" permanent>
     <v-list v-if="user">
-      <v-list-item
-        :prepend-avatar="userAvatar"
-        :subtitle="user.email"
-        :title="user.username"
-        @click="navigateToAccountAdmin"
-      ></v-list-item>
+      <v-list-item :prepend-avatar="userAvatar" :subtitle="user.email" :title="user.username"
+        @click="navigateToAccountAdmin"></v-list-item>
       <v-list-item @click="logoutUser" title="Logout" prepend-icon="mdi-logout"></v-list-item>
     </v-list>
     <v-list v-else>
@@ -76,22 +73,10 @@ function navigateToAccountAdmin() {
     <v-divider></v-divider>
 
     <v-list density="compact" nav>
-      <v-list-item prepend-icon="mdi-home" title="Home" :to="{ name: 'home' }"></v-list-item>
-      <v-list-item
-        prepend-icon="mdi-currency-usd"
-        title="Budget"
-        :to="{ name: 'budget' }"
-      ></v-list-item>
-      <v-list-item
-        prepend-icon="mdi-view-dashboard"
-        title="Dashboard"
-        :to="{ name: 'dashboard' }"
-      ></v-list-item>
-      <v-list-item
-        prepend-icon="mdi-information"
-        title="About"
-        :to="{ name: 'about' }"
-      ></v-list-item>
+      <v-list-item prepend-icon="mdi-view-dashboard" title="Dashboard" :to="{ name: 'dashboard' }"></v-list-item>
+      <v-list-item prepend-icon="mdi-currency-usd" title="Budget" :to="{ name: 'budget' }"></v-list-item>
+      <v-list-item prepend-icon="mdi-information" title="About" :to="{ name: 'home' }"></v-list-item>
+      <!-- <v-list-item prepend-icon="mdi-home" title="Home" :to="{ name: 'home' }"></v-list-item> -->
     </v-list>
 
     <v-divider></v-divider>

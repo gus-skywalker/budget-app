@@ -110,6 +110,29 @@
       </div>
     </section>
 
+    <!-- Seção de Planos -->
+    <section id="plans" class="section plans-section">
+      <h2>Escolha o Seu Plano</h2>
+      <div class="plans-container">
+        <div class="plan-item">
+          <h3>Plano Mensal</h3>
+          <p class="price">R$ 29,00 / mês</p>
+          <p>Comece com a nossa plataforma gratuitamente e, após 30 dias, continue com o plano mensal.</p>
+          <button class="btn btn-primary cta-btn" @click.prevent="$router.push({ name: 'signup' })">
+            Assine Mensalmente
+          </button>
+        </div>
+        <div class="plan-item">
+          <h3>Plano Anual</h3>
+          <p class="price">R$ 299,00 / ano</p>
+          <p>Ao invés de pagar R$ 348,00 (12 x R$ 29,00), aproveite o plano anual com um desconto especial.</p>
+          <button class="btn btn-primary cta-btn" @click.prevent="$router.push({ name: 'signup' })">
+            Assine Anualmente
+          </button>
+        </div>
+      </div>
+    </section>
+
     <!-- Contato -->
     <section id="contact" class="section contact-section">
       <div class="contact-container">
@@ -460,6 +483,55 @@ body {
   margin-bottom: 10px;
 }
 
+.plans-section {
+  background-color: var(--white);
+  padding: 60px 40px;
+  text-align: center;
+}
+
+.plans-container {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.plan-item {
+  width: 45%;
+  background-color: var(--light-gray);
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.plan-item h3 {
+  font-size: 24px;
+  color: var(--dark-gray);
+}
+
+.plan-item .price {
+  font-size: 32px;
+  color: var(--orange);
+  margin: 10px 0;
+}
+
+.plan-item p {
+  font-size: 16px;
+  color: var(--dark-gray);
+}
+
+.cta-btn {
+  background-color: var(--orange);
+  color: var(--white);
+  padding: 12px 24px;
+  border-radius: 5px;
+  margin-top: 20px;
+}
+
+.cta-btn:hover {
+  background-color: var(--dark-orange);
+}
+
 /* Contato */
 .contact-section {
   background-color: var(--white);
@@ -654,6 +726,10 @@ body {
   .benefit-item img {
     width: 80px;
     height: 80px;
+  }
+
+  .plan-item {
+    width: 100%;
   }
 
   .contact-form {
