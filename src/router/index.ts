@@ -23,26 +23,26 @@ const router = createRouter({
     {
       path: '/home',
       name: 'home',
-      component: HomeView
-      // meta: { requiresAuth: true }
+      component: HomeView,
+      meta: { requiresAuth: true }
     },
     {
       path: '/about',
       name: 'about',
-      component: AboutView
-      // meta: { requiresAuth: true }
+      component: AboutView,
+      meta: { requiresAuth: true }
     },
     {
       path: '/budget',
       name: 'budget',
-      component: BudgetView
-      // meta: { requiresAuth: true }
+      component: BudgetView,
+      meta: { requiresAuth: true }
     },
     {
       path: '/dashboard',
       name: 'dashboard',
-      component: DashboardView
-      // meta: { requiresAuth: true }
+      component: DashboardView,
+      meta: { requiresAuth: true }
     },
     {
       path: '/login',
@@ -52,8 +52,8 @@ const router = createRouter({
     {
       path: '/account-admin',
       name: 'account-admin',
-      component: AccountAdmin
-      // meta: { requiresAuth: true }
+      component: AccountAdmin,
+      meta: { requiresAuth: true }
     },
     {
       path: '/oauth2/redirect',
@@ -78,17 +78,17 @@ const router = createRouter({
   ]
 })
 
-// router.beforeEach((to, from, next) => {
-//   const userStore = useUserStore()
-//   const isAuthenticated = userStore.isAuthenticated
+router.beforeEach((to, from, next) => {
+  const userStore = useUserStore()
+  const isAuthenticated = userStore.isAuthenticated
 
-//   if (to.meta.requiresAuth && !isAuthenticated) {
-//     next({ name: 'login' })
-//   } else if (isAuthenticated && (to.name === 'login' || to.name === 'oauth2redirect')) {
-//     next({ name: 'dashboard' })
-//   } else {
-//     next()
-//   }
-// })
+  if (to.meta.requiresAuth && !isAuthenticated) {
+    next({ name: 'login' })
+  } else if (isAuthenticated && (to.name === 'login' || to.name === 'oauth2redirect')) {
+    next({ name: 'dashboard' })
+  } else {
+    next()
+  }
+})
 
 export default router
