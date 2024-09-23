@@ -1,7 +1,7 @@
 <template>
     <footer class="app-footer">
         <div class="footer-content">
-            <p>&copy; 2024 YourAppName. Todos os direitos reservados.</p>
+            <p>&copy; 2024 Wallet Connect. Todos os direitos reservados. Powered by Les Monades</p>
             <div class="footer-links">
                 <a @click.prevent="$router.push('/privacy-policy')">Política de Privacidade</a>
                 <a @click.prevent="$router.push('/terms-of-use')">Termos de Uso</a>
@@ -40,6 +40,7 @@
     margin: 0 10px;
     color: blue;
     text-decoration: none;
+    cursor: pointer;
 }
 
 .footer-links a:hover {
