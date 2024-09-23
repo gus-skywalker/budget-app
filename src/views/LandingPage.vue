@@ -172,7 +172,7 @@
           </button>
         </div>
         <div class="footer-info">
-          <p>&copy; 2024 Sua Fintech. Todos os direitos reservados.</p>
+          <p>&copy; 2024 Wallet Connect. Todos os direitos reservados. Powered by Les Monades</p>
         </div>
         <div class="footer-links">
           <a @click.prevent="$router.push('/privacy-policy')">Política de Privacidade</a>
