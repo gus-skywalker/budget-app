@@ -1,3 +1,4 @@
+<!-- eslint-disable @typescript-eslint/no-unused-vars -->
 <template>
   <v-container id="color-setup">
     <!-- Header -->
@@ -175,11 +176,19 @@
         </div>
       </div>
     </footer>
+    <PrivacyControls />
   </v-container>
 </template>
 
 <script>
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import PrivacyControls from '@/components/compliance/PrivacyControls.vue'
+
+
 export default {
+  components: {
+    PrivacyControls,
+  },
   name: 'LandingPage',
   data() {
     return {

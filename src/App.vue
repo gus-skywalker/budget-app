@@ -1,8 +1,10 @@
+<!-- App.vue -->
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import SideBar from './components/SideBar.vue'
 import NotificationPopup from '@/components/NotificationPopup.vue'
+import PrivacyControls from '@/components/compliance/PrivacyControls.vue'
 import { useUserStore } from '@/plugins/userStore'
 import NotificationService from '@/services/NotificationService'
 import type { Notification } from '@/services/NotificationService'
@@ -76,23 +78,14 @@ onUnmounted(() => {
 
 <template>
   <v-app>
-    <SideBar
-      v-if="isAuthenticated"
-      :notifications="notifications"
-      @accept="accept"
-      @decline="decline"
-      @toggle-notifications-popup="toggleNotificationsPopup"
-    />
+    <SideBar v-if="isAuthenticated" :notifications="notifications" @accept="accept" @decline="decline"
+      @toggle-notifications-popup="toggleNotificationsPopup" />
     <v-main class="main-content">
       <RouterView />
     </v-main>
-    <NotificationPopup
-      :visible="showNotificationsPopup"
-      :notifications="notifications"
-      @close="toggleNotificationsPopup"
-      @accept="accept"
-      @decline="decline"
-    />
+    <NotificationPopup :visible="showNotificationsPopup" :notifications="notifications"
+      @close="toggleNotificationsPopup" @accept="accept" @decline="decline" />
+    <PrivacyControls />
   </v-app>
 </template>
 

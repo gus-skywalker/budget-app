@@ -7,6 +7,9 @@ import DashboardView from '@/views/DashboardView.vue'
 import LoginView from '@/views/LoginView.vue'
 import AccountAdmin from '@/views/AccountAdmin.vue'
 import OAuth2Redirect from '@/views/OAuth2Redirect.vue'
+import PrivacyPolicy from '@/components/compliance/PrivacyPolicy.vue'
+import TermsOfUse from '@/components/compliance/TermsOfUse.vue'
+import CookiePolicy from '@/components/compliance/CookiePolicy.vue'
 import { useUserStore } from '@/plugins/userStore'
 
 const router = createRouter({
@@ -20,26 +23,26 @@ const router = createRouter({
     {
       path: '/home',
       name: 'home',
-      component: HomeView,
-      meta: { requiresAuth: true }
+      component: HomeView
+      // meta: { requiresAuth: true }
     },
     {
       path: '/about',
       name: 'about',
-      component: AboutView,
-      meta: { requiresAuth: true }
+      component: AboutView
+      // meta: { requiresAuth: true }
     },
     {
       path: '/budget',
       name: 'budget',
-      component: BudgetView,
-      meta: { requiresAuth: true }
+      component: BudgetView
+      // meta: { requiresAuth: true }
     },
     {
       path: '/dashboard',
       name: 'dashboard',
-      component: DashboardView,
-      meta: { requiresAuth: true }
+      component: DashboardView
+      // meta: { requiresAuth: true }
     },
     {
       path: '/login',
@@ -49,28 +52,43 @@ const router = createRouter({
     {
       path: '/account-admin',
       name: 'account-admin',
-      component: AccountAdmin,
-      meta: { requiresAuth: true }
+      component: AccountAdmin
+      // meta: { requiresAuth: true }
     },
     {
       path: '/oauth2/redirect',
       name: 'oauth2redirect',
       component: OAuth2Redirect
+    },
+    {
+      path: '/privacy-policy',
+      name: 'PrivacyPolicy',
+      component: PrivacyPolicy
+    },
+    {
+      path: '/terms-of-use',
+      name: 'TermsOfUse',
+      component: TermsOfUse
+    },
+    {
+      path: '/cookie-policy',
+      name: 'CookiePolicy',
+      component: CookiePolicy
     }
   ]
 })
 
-router.beforeEach((to, from, next) => {
-  const userStore = useUserStore()
-  const isAuthenticated = userStore.isAuthenticated
+// router.beforeEach((to, from, next) => {
+//   const userStore = useUserStore()
+//   const isAuthenticated = userStore.isAuthenticated
 
-  if (to.meta.requiresAuth && !isAuthenticated) {
-    next({ name: 'login' })
-  } else if (isAuthenticated && (to.name === 'login' || to.name === 'oauth2redirect')) {
-    next({ name: 'dashboard' })
-  } else {
-    next()
-  }
-})
+//   if (to.meta.requiresAuth && !isAuthenticated) {
+//     next({ name: 'login' })
+//   } else if (isAuthenticated && (to.name === 'login' || to.name === 'oauth2redirect')) {
+//     next({ name: 'dashboard' })
+//   } else {
+//     next()
+//   }
+// })
 
 export default router
