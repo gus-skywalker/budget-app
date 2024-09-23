@@ -174,6 +174,12 @@
         <div class="footer-info">
           <p>&copy; 2024 Sua Fintech. Todos os direitos reservados.</p>
         </div>
+        <div class="footer-links">
+          <a @click.prevent="$router.push('/privacy-policy')">Política de Privacidade</a>
+          <a @click.prevent="$router.push('/terms-of-use')">Termos de Uso</a>
+          <a @click.prevent="$router.push('/cookie-policy')">Política de Cookies</a>
+        </div>
+
       </div>
     </footer>
     <PrivacyControls />
@@ -608,6 +614,7 @@ body {
   margin-right: 20px;
   text-decoration: none;
   justify-content: center;
+  cursor: pointer;
 }
 
 .footer-cta {
