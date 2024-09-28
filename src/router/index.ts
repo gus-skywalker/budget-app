@@ -10,6 +10,8 @@ import OAuth2Redirect from '@/views/OAuth2Redirect.vue'
 import PrivacyPolicy from '@/components/compliance/PrivacyPolicy.vue'
 import TermsOfUse from '@/components/compliance/TermsOfUse.vue'
 import CookiePolicy from '@/components/compliance/CookiePolicy.vue'
+import ForgotPassword from '@/views/ForgotPassword.vue'
+import ResetPassword from '@/views/ResetPassword.vue'
 import { useUserStore } from '@/plugins/userStore'
 
 const router = createRouter({
@@ -54,6 +56,16 @@ const router = createRouter({
       name: 'account-admin',
       component: AccountAdmin,
       meta: { requiresAuth: true }
+    },
+    {
+      path: '/forgot-password',
+      name: 'forgot-password',
+      component: ForgotPassword
+    },
+    {
+      path: '/reset-password',
+      name: 'reset-password',
+      component: ResetPassword
     },
     {
       path: '/oauth2/redirect',
