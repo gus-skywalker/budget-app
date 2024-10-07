@@ -41,7 +41,7 @@
                 <v-list-item-title>{{ member.name }} - {{ member.email }}</v-list-item-title>
               </v-list-item>
             </v-list>
-            <v-alert v-else type="info"> Nenhum membro no grupo selecionado. </v-alert>
+            <v-alert v-else color="primary" type="info"> Nenhum membro no grupo selecionado. </v-alert>
           </v-card-text>
         </v-card>
       </v-col>

@@ -99,7 +99,7 @@
               <income-item v-for="(income, index) in monthlyIncomes" :key="index" :income="income"
                 @toggle-recurring="toggleRecurring" @deleteIncome="deleteIncome"></income-item>
             </v-list>
-            <v-alert v-else type="info"> Nenhuma entrada encontrada para este mês. </v-alert>
+            <v-alert v-else color="primary" type="info"> Nenhuma entrada encontrada para este mês. </v-alert>
           </v-card-text>
         </v-card>
 
@@ -125,20 +125,15 @@
               <expense-item v-for="(expense, index) in monthlyExpenses" :key="index" :expense="expense"
                 @shareExpense="handleShareExpenseWithAttachment" @deleteExpense="deleteExpense"></expense-item>
             </v-list>
-            <v-alert v-else type="info"> Nenhum débito encontrado para este mês. </v-alert>
+            <v-alert v-else color="primary" type="info"> Nenhum débito encontrado para este mês. </v-alert>
           </v-card-text>
         </v-card>
       </v-col>
     </v-row>
   </v-container>
-
-  <GroupManagement />
-  <FinancialGoal />
 </template>
 
 <script>
-import GroupManagement from '../components/GroupManagement.vue'
-import FinancialGoal from '../components/FinancialGoal.vue'
 import IncomeItem from '../components/IncomeItem.vue'
 import ExpenseItem from '../components/ExpenseItem.vue'
 import IncomeService from '@/services/IncomeService'
@@ -151,10 +146,8 @@ import { useUserStore } from '@/plugins/userStore'
 
 export default {
   components: {
-    FinancialGoal,
     IncomeItem,
     ExpenseItem,
-    GroupManagement
   },
   data() {
     // const currentYear = new Date().getFullYear();

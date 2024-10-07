@@ -14,6 +14,7 @@ import ForgotPassword from '@/views/ForgotPassword.vue'
 import ResetPassword from '@/views/ResetPassword.vue'
 import { useUserStore } from '@/plugins/userStore'
 import GroupView from '@/views/GroupView.vue'
+import GoalView from '@/views/GoalView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -27,31 +28,37 @@ const router = createRouter({
       path: '/home',
       name: 'home',
       component: HomeView,
-      meta: { requiresAuth: true }
+      // meta: { requiresAuth: true }
     },
     {
       path: '/about',
       name: 'about',
       component: AboutView,
-      meta: { requiresAuth: true }
+      // meta: { requiresAuth: true }
     },
     {
       path: '/budget',
       name: 'budget',
       component: BudgetView,
-      meta: { requiresAuth: true }
+      // meta: { requiresAuth: true }
     },
     {
       path: '/group',
       name: 'group',
       component: GroupView,
-      meta: { requiresAuth: true }
+      // meta: { requiresAuth: true }
+    },
+    {
+      path: '/goal',
+      name: 'goal',
+      component: GoalView,
+      // meta: { requiresAuth: true }
     },
     {
       path: '/dashboard',
       name: 'dashboard',
       component: DashboardView,
-      meta: { requiresAuth: true }
+      // meta: { requiresAuth: true }
     },
     {
       path: '/login',
@@ -97,17 +104,17 @@ const router = createRouter({
   ]
 })
 
-router.beforeEach((to, from, next) => {
-  const userStore = useUserStore()
-  const isAuthenticated = userStore.isAuthenticated
+// router.beforeEach((to, from, next) => {
+//   const userStore = useUserStore()
+//   const isAuthenticated = userStore.isAuthenticated
 
-  if (to.meta.requiresAuth && !isAuthenticated) {
-    next({ name: 'login' })
-  } else if (isAuthenticated && (to.name === 'login' || to.name === 'oauth2redirect')) {
-    next({ name: 'dashboard' })
-  } else {
-    next()
-  }
-})
+//   if (to.meta.requiresAuth && !isAuthenticated) {
+//     next({ name: 'login' })
+//   } else if (isAuthenticated && (to.name === 'login' || to.name === 'oauth2redirect')) {
+//     next({ name: 'dashboard' })
+//   } else {
+//     next()
+//   }
+// })
 
 export default router

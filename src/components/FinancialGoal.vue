@@ -66,7 +66,7 @@
                 <v-divider></v-divider>
               </v-list-item>
             </v-list>
-            <v-alert v-else type="info" class="mt-4"> No financial goals found. </v-alert>
+            <v-alert v-else color="primary" type="info" class="mt-4"> No financial goals found. </v-alert>
           </v-card-text>
         </v-card>
       </v-col>
