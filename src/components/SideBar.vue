@@ -16,6 +16,29 @@ const router = useRouter()
 const theme = useTheme()
 const userStore = useUserStore()
 
+var expandOnHover = true;
+const isMobile = ref('')
+let mql
+const display = useDisplay()
+onMounted(() => {
+  console.log(window.innerWidth)
+  if(window.innerWidth < 500) {
+    console.log(window.screen.width)
+    expandOnHover = false;
+  }
+})
+
+// onMounted(() => {
+//   mql = window.matchMedia('(max-width: 1024px)')
+//   isMobile.value = mql.matches
+//   mql.addEventListener('change', handleMqlChange)
+// })
+
+// onUnmounted(() => {
+//   mql.removeEventListener('change', handleMqlChange)
+// })
+
+
 // Computed property para acessar o usuário da store
 const user = computed(() => userStore.getUser)
 
@@ -60,7 +83,7 @@ function navigateToAccountAdmin() {
 </script>
 
 <template>
-  <v-navigation-drawer app expand-on-hover rail ref="drawer" permanent>
+  <v-navigation-drawer app :expand-on-hover="expandOnHover" rail ref="drawer" permanent>
     <v-list v-if="user">
       <v-list-item :prepend-avatar="userAvatar" :subtitle="user.email" :title="user.username"
         @click="navigateToAccountAdmin"></v-list-item>
