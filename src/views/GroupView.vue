@@ -1,8 +1,5 @@
 <template>
-    <v-container>
-        <h1>Gerenciamento de Grupos</h1>
-        <GroupManagement />
-    </v-container>
+    <GroupManagement />
 </template>
 
 <script>

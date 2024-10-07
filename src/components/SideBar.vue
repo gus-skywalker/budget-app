@@ -75,7 +75,7 @@ function navigateToAccountAdmin() {
     <v-list density="compact" nav>
       <v-list-item prepend-icon="mdi-view-dashboard" title="Dashboard" :to="{ name: 'dashboard' }"></v-list-item>
       <v-list-item prepend-icon="mdi-currency-usd" title="Budget" :to="{ name: 'budget' }"></v-list-item>
-      <v-list-item prepend-icon="mdi-account-group" title="Groups" :to="{ name: 'groups' }"></v-list-item>
+      <v-list-item prepend-icon="mdi-account-group" title="Groups" :to="{ name: 'group' }"></v-list-item>
       <v-list-item prepend-icon="mdi-information" title="About" :to="{ name: 'home' }"></v-list-item>
     </v-list>
 
@@ -89,7 +89,6 @@ function navigateToAccountAdmin() {
       </v-badge>
     </div>
 
-    <!-- Notification Dropdown - removed from SideBar.vue -->
   </v-navigation-drawer>
 </template>
 
