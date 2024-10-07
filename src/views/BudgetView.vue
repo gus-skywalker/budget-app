@@ -15,27 +15,17 @@
                 <v-text-field label="Data" type="date" v-model="income.date"></v-text-field>
               </v-col>
               <v-col cols="12" sm="6" md="6">
-                <v-text-field
-                  label="Valor"
-                  type="number"
-                  v-model="income.amount"
-                  :rules="[
-                    (value) => !!value || 'Valor é obrigatório',
-                    (value) => /^\d+(\.\d{1,2})?$/.test(value) || 'Formato de moeda inválido'
-                  ]"
-                ></v-text-field>
+                <v-text-field label="Valor" type="number" v-model="income.amount" :rules="[
+                  (value) => !!value || 'Valor é obrigatório',
+                  (value) => /^\d+(\.\d{1,2})?$/.test(value) || 'Formato de moeda inválido'
+                ]"></v-text-field>
               </v-col>
               <v-col cols="12" md="12">
                 <v-text-field label="Descrição" v-model="income.description"></v-text-field>
               </v-col>
               <v-col cols="12" sm="6" md="6">
-                <v-select
-                  label="Método de Pagamento"
-                  v-model="income.paymentMethod"
-                  :items="paymentMethods"
-                  item-title="name"
-                  item-value="id"
-                ></v-select>
+                <v-select label="Método de Pagamento" v-model="income.paymentMethod" :items="paymentMethods"
+                  item-title="name" item-value="id"></v-select>
               </v-col>
             </v-row>
           </v-card-text>
@@ -55,54 +45,27 @@
                 <v-text-field label="Data" type="date" v-model="expense.date"></v-text-field>
               </v-col>
               <v-col cols="12" sm="6" md="6">
-                <v-text-field
-                  label="Valor"
-                  type="number"
-                  v-model="expense.amount"
-                  :rules="[
-                    (value) => !!value || 'Valor é obrigatório',
-                    (value) => /^\d+(\.\d{1,2})?$/.test(value) || 'Formato de moeda inválido'
-                  ]"
-                ></v-text-field>
+                <v-text-field label="Valor" type="number" v-model="expense.amount" :rules="[
+                  (value) => !!value || 'Valor é obrigatório',
+                  (value) => /^\d+(\.\d{1,2})?$/.test(value) || 'Formato de moeda inválido'
+                ]"></v-text-field>
               </v-col>
               <v-col cols="12" md="12">
                 <v-text-field label="Descrição" v-model="expense.description"></v-text-field>
               </v-col>
               <v-col cols="12" sm="6" md="6">
-                <v-select
-                  label="Categoria"
-                  v-model="expense.category"
-                  :items="categories"
-                  item-title="name"
-                  item-value="id"
-                ></v-select>
+                <v-select label="Categoria" v-model="expense.category" :items="categories" item-title="name"
+                  item-value="id"></v-select>
               </v-col>
               <v-col cols="12" sm="6" md="6">
-                <v-select
-                  label="Método de Pagamento"
-                  v-model="expense.paymentMethod"
-                  :items="paymentMethods"
-                  item-title="name"
-                  item-value="id"
-                ></v-select>
+                <v-select label="Método de Pagamento" v-model="expense.paymentMethod" :items="paymentMethods"
+                  item-title="name" item-value="id"></v-select>
               </v-col>
               <v-col cols="12" md="12">
-                <v-select
-                  label="Selecione o Grupo"
-                  v-model="selectedGroup"
-                  :items="groups"
-                  item-title="name"
-                  item-value="id"
-                  @update:model-value="fetchGroupMembers"
-                ></v-select>
-                <v-select
-                  label="Compartilhar com Usuários do Grupo"
-                  v-model="expense.selectedUsers"
-                  :items="users"
-                  item-title="name"
-                  item-value="id"
-                  multiple
-                ></v-select>
+                <v-select label="Selecione o Grupo" v-model="selectedGroup" :items="groups" item-title="name"
+                  item-value="id" @update:model-value="fetchGroupMembers"></v-select>
+                <v-select label="Compartilhar com Usuários do Grupo" v-model="expense.selectedUsers" :items="users"
+                  item-title="name" item-value="id" multiple></v-select>
               </v-col>
             </v-row>
           </v-card-text>
@@ -121,26 +84,20 @@
           </v-card-title>
           <v-card-text>
             <v-row align="center">
-              <v-col cols="12" md="12">
-                <v-select
-                  label="Selecione o Mês"
-                  v-model="selectedIncomeMonth"
-                  @update:model-value="fetchMonthlyIncomes"
-                  :items="months"
-                  item-title="name"
-                  item-value="value"
-                ></v-select>
+              <v-col cols="9" md="9">
+                <v-select label="Selecione o Mês" v-model="selectedIncomeMonth"
+                  @update:model-value="fetchMonthlyIncomes" :items="months" item-title="name"
+                  item-value="value"></v-select>
+              </v-col>
+              <v-col cols="3" md="3">
+                <v-select label="Selecione o Ano" v-model="selectedIncomeYear" @update:model-value="fetchMonthlyIncomes"
+                  :items="years"></v-select>
               </v-col>
             </v-row>
             <v-divider class="my-4"></v-divider>
             <v-list v-if="monthlyIncomes.length" class="box-size-list">
-              <income-item
-                v-for="(income, index) in monthlyIncomes"
-                :key="index"
-                :income="income"
-                @toggle-recurring="toggleRecurring"
-                @deleteIncome="deleteIncome"
-              ></income-item>
+              <income-item v-for="(income, index) in monthlyIncomes" :key="index" :income="income"
+                @toggle-recurring="toggleRecurring" @deleteIncome="deleteIncome"></income-item>
             </v-list>
             <v-alert v-else type="info"> Nenhuma entrada encontrada para este mês. </v-alert>
           </v-card-text>
@@ -153,26 +110,20 @@
           </v-card-title>
           <v-card-text>
             <v-row align="center">
-              <v-col cols="12" md="12">
-                <v-select
-                  label="Selecione o Mês"
-                  v-model="selectedExpenseMonth"
-                  @update:model-value="fetchMonthlyExpenses"
-                  :items="months"
-                  item-title="name"
-                  item-value="value"
-                ></v-select>
+              <v-col cols="9" md="9">
+                <v-select label="Selecione o Mês" v-model="selectedExpenseMonth"
+                  @update:model-value="fetchMonthlyExpenses" :items="months" item-title="name"
+                  item-value="value"></v-select>
+              </v-col>
+              <v-col cols="3" md="3">
+                <v-select label="Selecione o Ano" v-model="selectedExpenseYear"
+                  @update:model-value="fetchMonthlyExpenses" :items="years"></v-select>
               </v-col>
             </v-row>
             <v-divider class="my-4"></v-divider>
             <v-list v-if="monthlyExpenses.length" class="box-size-list">
-              <expense-item
-                v-for="(expense, index) in monthlyExpenses"
-                :key="index"
-                :expense="expense"
-                @shareExpense="handleShareExpense"
-                @deleteExpense="deleteExpense"
-              ></expense-item>
+              <expense-item v-for="(expense, index) in monthlyExpenses" :key="index" :expense="expense"
+                @shareExpense="handleShareExpenseWithAttachment" @deleteExpense="deleteExpense"></expense-item>
             </v-list>
             <v-alert v-else type="info"> Nenhum débito encontrado para este mês. </v-alert>
           </v-card-text>
@@ -206,6 +157,9 @@ export default {
     GroupManagement
   },
   data() {
+    // const currentYear = new Date().getFullYear();
+    const years = Array.from({ length: 2026 - 2020 + 1 }, (v, i) => 2020 + i);
+
     return {
       income: {
         date: '',
@@ -226,6 +180,8 @@ export default {
       paymentMethods: [],
       selectedIncomeMonth: null,
       selectedExpenseMonth: null,
+      selectedIncomeYear: new Date().getFullYear(),
+      selectedExpenseYear: new Date().getFullYear(),
       selectedLanguage: 'pt',
       groups: [],
       selectedGroup: null,
@@ -245,6 +201,7 @@ export default {
         { name: 'Novembro', value: 11 },
         { name: 'Dezembro', value: 12 }
       ],
+      years,
       monthlyExpenses: [],
       monthlyIncomes: []
     }
@@ -329,9 +286,9 @@ export default {
     },
     fetchMonthlyIncomes() {
       const monthNumber = this.selectedIncomeMonth
+      const yearNumber = this.selectedIncomeYear
       if (monthNumber !== null) {
-        console.log('Fetching incomes for month:', monthNumber)
-        IncomeService.fetchMonthlyIncomes(monthNumber)
+        IncomeService.fetchMonthlyIncomes(monthNumber, yearNumber)
           .then((response) => {
             this.monthlyIncomes = response.data
           })
@@ -457,9 +414,10 @@ export default {
     // },
     fetchMonthlyExpenses() {
       const monthNumber = this.selectedExpenseMonth
+      const yearNumber = this.selectedExpenseYear
       if (monthNumber !== null) {
         console.log('Fetching expenses for month:', monthNumber)
-        ExpenseService.fetchMonthlyExpenses(monthNumber, 2024)
+        ExpenseService.fetchMonthlyExpenses(monthNumber, yearNumber)
           .then((response) => {
             console.log(response)
             this.monthlyExpenses = response.data
@@ -473,6 +431,7 @@ export default {
     },
     handleShareExpense({ expense, email }) {
       const userStore = useUserStore()
+
       NotificationService.sendEmail({
         user: {
           email: userStore.getUser.email,
@@ -489,6 +448,57 @@ export default {
         .catch((error) => {
           console.error('Failed to send email:', error)
         })
+    },
+    handleShareExpenseWithAttachment({ expense, email, files }) {
+      const userStore = useUserStore()
+      const expenseId = expense.id;
+
+      console.log(email);
+      console.log(expense);
+      console.log(files);
+      if (!email || files.length === 0) {
+        console.warn('Email ou arquivos não informados');
+        return;
+      }
+
+      const formData = new FormData();
+      files.forEach((files) => {
+        formData.append('files', files);
+      });
+
+      const expenseJson = {
+        user: {
+          email: userStore.getUser.email,
+          name: userStore.getUser.username
+        },
+        expense: {
+          amount: expense.amount,
+          description: expense.description,
+          date: expense.date,
+          category: expense.category ? expense.category.name : null
+        },
+        destinationEmail: email
+      };
+
+      formData.append('expenseData', expenseJson);
+
+      if (files > 0) {
+        ExpenseService.uploadAttachment(expenseId, formData)
+          .then(() => {
+            console.log('Dados enviados com sucesso');
+          })
+          .catch((error) => {
+            console.error('Erro ao enviar dados:', error);
+          });
+      }
+
+      NotificationService.sendEmailWithAttachment(expenseJson)
+        .then(() => {
+          console.log('Email enviados com sucesso');
+        })
+        .catch((error) => {
+          console.error('Erro ao enviar o email:', error);
+        });
     }
   }
 }

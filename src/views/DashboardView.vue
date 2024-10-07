@@ -20,33 +20,16 @@
       <v-card-text>
         <v-row align="center">
           <v-col cols="12" md="6" lg="4">
-            <v-select
-              label="Select Chart Type"
-              outlined
-              v-model="chartType"
-              :items="chartTypes"
-              @update:modelValue="updateCharts"
-            ></v-select>
+            <v-select label="Select Chart Type" outlined v-model="chartType" :items="chartTypes"
+              @update:modelValue="updateCharts"></v-select>
           </v-col>
           <v-col cols="12" md="6" lg="4">
-            <v-select
-              label="Select Time Period"
-              outlined
-              v-model="selectedTimePeriod"
-              :items="timePeriods"
-              @update:modelValue="updateCharts"
-            ></v-select>
+            <v-select label="Select Time Period" outlined v-model="selectedTimePeriod" :items="timePeriods"
+              @update:modelValue="updateCharts"></v-select>
           </v-col>
           <v-col cols="12" md="6" lg="4">
-            <v-select
-              label="Select Expense Category"
-              outlined
-              v-model="selectedCategory"
-              :items="expenseCategories"
-              item-title="name"
-              item-value="code"
-              @update:modelValue="updateCharts"
-            ></v-select>
+            <v-select label="Select Expense Category" outlined v-model="selectedCategory" :items="expenseCategories"
+              item-title="name" item-value="code" @update:modelValue="updateCharts"></v-select>
           </v-col>
         </v-row>
         <v-divider class="my-4"></v-divider>

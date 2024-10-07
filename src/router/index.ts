@@ -13,6 +13,7 @@ import CookiePolicy from '@/components/compliance/CookiePolicy.vue'
 import ForgotPassword from '@/views/ForgotPassword.vue'
 import ResetPassword from '@/views/ResetPassword.vue'
 import { useUserStore } from '@/plugins/userStore'
+import GroupView from '@/views/GroupView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -38,6 +39,12 @@ const router = createRouter({
       path: '/budget',
       name: 'budget',
       component: BudgetView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/group',
+      name: 'group',
+      component: GroupView,
       meta: { requiresAuth: true }
     },
     {

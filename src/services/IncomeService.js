@@ -18,8 +18,8 @@ export default {
   delete(id) {
     return axiosInterceptor.delete(`${API_URL}/${id}`)
   },
-  fetchMonthlyIncomes(monthNumber) {
-    return axiosInterceptor.get(`${API_URL}/monthly?month=${monthNumber}`)
+  fetchMonthlyIncomes(month, year) {
+    return axiosInterceptor.get(`${API_URL}/date?month=${month}&year=${year}`)
   },
   toggleRecurring(id, months) {
     return axiosInterceptor.put(`${API_URL}/${id}/${months}/toggle-recurring`)

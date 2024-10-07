@@ -25,14 +25,8 @@
             <h2>Gerenciar Membros</h2>
           </v-card-title>
           <v-card-text>
-            <v-select
-              label="Selecione o Grupo"
-              v-model="selectedGroup"
-              :items="groups"
-              item-title="name"
-              item-value="id"
-              @update:model-value="fetchGroupMembers"
-            ></v-select>
+            <v-select label="Selecione o Grupo" v-model="selectedGroup" :items="groups" item-title="name"
+              item-value="id" @update:model-value="fetchGroupMembers"></v-select>
             <v-text-field label="Email do Usuário" v-model="inviteEmail"></v-text-field>
           </v-card-text>
           <v-card-actions>

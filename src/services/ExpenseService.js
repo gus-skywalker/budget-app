@@ -13,6 +13,13 @@ export default {
   create(data) {
     return axiosInterceptor.post(API_URL, data)
   },
+  uploadAttachment(expenseId, formData) {
+    return axiosInterceptor.post(`${API_URL}/${expenseId}/attachments`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+  },
   update(id, data) {
     return axiosInterceptor.put(`${API_URL}/${id}`, data)
   },

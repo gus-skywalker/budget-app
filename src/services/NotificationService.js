@@ -14,5 +14,8 @@ export default {
   },
   sendEmail(data) {
     return axiosInterceptor.post(`${API_URL}/sendEmail/html`, data)
+  },
+  sendEmailWithAttachment(request) {
+    return axiosInterceptor.post(`${API_URL}/sendEmail/attachment`, request)
   }
 }
