@@ -443,20 +443,21 @@ export default {
         })
     },
     handleShareExpenseWithAttachment({ expense, email, files }) {
+
       const userStore = useUserStore()
       const expenseId = expense.id;
 
       console.log(email);
       console.log(expense);
       console.log(files);
-      if (!email || files.length === 0) {
-        console.warn('Email ou arquivos não informados');
+      if (!email) {
+        console.warn('Email não informados');
         return;
       }
 
       const formData = new FormData();
-      files.forEach((files) => {
-        formData.append('files', files);
+      files.forEach((file) => {
+        formData.append('files', file);
       });
 
       const expenseJson = {
@@ -464,34 +465,37 @@ export default {
           email: userStore.getUser.email,
           name: userStore.getUser.username
         },
-        expense: {
-          amount: expense.amount,
-          description: expense.description,
-          date: expense.date,
-          category: expense.category ? expense.category.name : null
-        },
+        expense: expense,
         destinationEmail: email
       };
 
-      formData.append('expenseData', expenseJson);
+      // formData.append('expenseRequest', expenseJson);
 
-      if (files > 0) {
-        ExpenseService.uploadAttachment(expenseId, formData)
-          .then(() => {
-            console.log('Dados enviados com sucesso');
-          })
-          .catch((error) => {
-            console.error('Erro ao enviar dados:', error);
-          });
+      // Upload Attachments
+      if (files.length > 0) {
+        console.log(formData.get("files"));
+        ExpenseService.uploadAttachment(expenseId, formData, {
+          timeout: 10000,
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          onUploadProgress: (progressEvent) => {
+            let progress = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total,
+            );
+            console.log("Upload Progress: " + progress + "%");
+          },
+        });
       }
 
-      NotificationService.sendEmailWithAttachment(expenseJson)
-        .then(() => {
-          console.log('Email enviados com sucesso');
-        })
-        .catch((error) => {
-          console.error('Erro ao enviar o email:', error);
-        });
+      // Then Sends Email Notification
+      // NotificationService.sendEmailWithAttachment(expenseJson)
+      //   .then(() => {
+      //     console.log('Email enviados com sucesso');
+      //   })
+      //   .catch((error) => {
+      //     console.error('Erro ao enviar o email:', error);
+      //   });
     }
   }
 }

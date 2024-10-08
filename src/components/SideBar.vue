@@ -17,12 +17,12 @@ const theme = useTheme()
 const userStore = useUserStore()
 
 var expandOnHover = true;
-const isMobile = ref('')
-let mql
-const display = useDisplay()
+// const isMobile = ref('')
+// let mql
+// const display = useDisplay()
 onMounted(() => {
   console.log(window.innerWidth)
-  if(window.innerWidth < 500) {
+  if (window.innerWidth < 780) {
     console.log(window.screen.width)
     expandOnHover = false;
   }

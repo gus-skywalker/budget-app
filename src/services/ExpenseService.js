@@ -14,7 +14,7 @@ export default {
     return axiosInterceptor.post(API_URL, data)
   },
   uploadAttachment(expenseId, formData) {
-    return axiosInterceptor.post(`${API_URL}/${expenseId}/attachments`, formData, {
+    return axiosInterceptor.post(`${API_URL}/${expenseId}/attachment`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
