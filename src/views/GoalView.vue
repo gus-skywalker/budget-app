@@ -20,6 +20,6 @@ export default {
 
 <style scoped>
 .section {
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 }
 </style>

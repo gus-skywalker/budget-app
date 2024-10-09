@@ -1,6 +1,6 @@
 <template>
   <v-container>
-    <h1>Entrada de Dados</h1>
+    <h1>Sua Contabilidade</h1>
     <v-row>
       <!-- Coluna Esquerda: Formulários de Entrada -->
       <v-col cols="12" md="6">
@@ -33,6 +33,37 @@
             <v-btn color="primary" @click="saveIncome">Salvar Entrada</v-btn>
           </v-card-actions>
         </v-card>
+
+        <!-- Lista de Entradas Mensais -->
+        <v-card class="section">
+          <v-card-title>
+            <h2>Entradas Mensais</h2>
+          </v-card-title>
+          <v-card-text>
+            <v-row align="center">
+              <v-col cols="9" md="9">
+                <v-select label="Selecione o Mês" v-model="selectedIncomeMonth"
+                  @update:model-value="fetchMonthlyIncomes" :items="months" item-title="name"
+                  item-value="value"></v-select>
+              </v-col>
+              <v-col cols="3" md="3">
+                <v-select label="Selecione o Ano" v-model="selectedIncomeYear" @update:model-value="fetchMonthlyIncomes"
+                  :items="years" class="year-select"></v-select>
+              </v-col>
+            </v-row>
+            <v-divider class="my-4"></v-divider>
+            <v-list v-if="monthlyIncomes.length" class="box-size-list">
+              <income-item v-for="(income, index) in monthlyIncomes" :key="index" :income="income"
+                @toggle-recurring="toggleRecurring" @deleteIncome="deleteIncome"></income-item>
+            </v-list>
+            <v-alert v-else color="primary" type="info"> Nenhuma entrada encontrada para este mês. </v-alert>
+          </v-card-text>
+        </v-card>
+
+      </v-col>
+
+      <!-- Coluna Direita: Listas de Entradas e Débitos -->
+      <v-col cols="12" md="6">
 
         <!-- Seção de Débitos -->
         <v-card class="section">
@@ -72,35 +103,6 @@
           <v-card-actions>
             <v-btn color="primary" @click="saveExpense">Salvar Débito</v-btn>
           </v-card-actions>
-        </v-card>
-      </v-col>
-
-      <!-- Coluna Direita: Listas de Entradas e Débitos -->
-      <v-col cols="12" md="6">
-        <!-- Lista de Entradas Mensais -->
-        <v-card class="section">
-          <v-card-title>
-            <h2>Entradas Mensais</h2>
-          </v-card-title>
-          <v-card-text>
-            <v-row align="center">
-              <v-col cols="9" md="9">
-                <v-select label="Selecione o Mês" v-model="selectedIncomeMonth"
-                  @update:model-value="fetchMonthlyIncomes" :items="months" item-title="name"
-                  item-value="value"></v-select>
-              </v-col>
-              <v-col cols="3" md="3">
-                <v-select label="Selecione o Ano" v-model="selectedIncomeYear" @update:model-value="fetchMonthlyIncomes"
-                  :items="years"></v-select>
-              </v-col>
-            </v-row>
-            <v-divider class="my-4"></v-divider>
-            <v-list v-if="monthlyIncomes.length" class="box-size-list">
-              <income-item v-for="(income, index) in monthlyIncomes" :key="index" :income="income"
-                @toggle-recurring="toggleRecurring" @deleteIncome="deleteIncome"></income-item>
-            </v-list>
-            <v-alert v-else color="primary" type="info"> Nenhuma entrada encontrada para este mês. </v-alert>
-          </v-card-text>
         </v-card>
 
         <!-- Lista de Débitos Mensais -->
@@ -475,7 +477,6 @@ export default {
       if (files.length > 0) {
         console.log(formData.get("files"));
         ExpenseService.uploadAttachment(expenseId, formData, {
-          timeout: 10000,
           headers: {
             "Content-Type": "multipart/form-data",
           },
@@ -507,6 +508,11 @@ export default {
   margin-bottom: 20px;
 }
 
+.year-select {
+  min-width: 100px;
+  /* Garante espaço suficiente para os anos */
+}
+
 /* Estilo para as listas de entradas e despesas */
 .list-container {
   border: 1px solid #ccc;
@@ -526,10 +532,86 @@ export default {
   margin-bottom: 8px;
 }
 
-/* Ajuste para o espaçamento entre as colunas em telas pequenas */
+/* ----- */
+
+/* Estilo geral para diminuir o tamanho das fontes */
+.v-text-field,
+.v-select,
+.v-btn {
+  font-size: 14px;
+  /* Tamanho da fonte menor */
+  height: 36px;
+  /* Altura reduzida dos campos de entrada */
+}
+
+/* Ajusta o título dos cards para um tamanho de fonte menor */
+.v-card-title h2,
+.v-card-title h1 {
+  font-size: 18px;
+}
+
+/* Ajusta o espaçamento interno (padding) nos inputs */
+.v-input__control {
+  padding: 6px 12px;
+  /* Reduzindo o padding */
+}
+
+/* Tamanho reduzido para os botões */
+.v-btn {
+  height: 36px;
+  min-width: 100px;
+  /* Largura mínima */
+  font-size: 14px;
+  /* Reduzindo a fonte */
+}
+
+/* Ajuste para as listas */
+.v-list {
+  max-height: 250px;
+  /* Ajustando a altura máxima */
+  overflow-y: auto;
+  /* Rolagem para o conteúdo da lista */
+  font-size: 14px;
+  /* Diminuindo o tamanho da fonte da lista */
+}
+
+/* Margens menores para os cartões */
+.v-card {
+  margin-bottom: 16px;
+  /* Menor espaçamento entre os cards */
+}
+
+/* Reduzindo o tamanho dos campos de texto e seleção */
+.v-text-field,
+.v-select {
+  min-height: 36px;
+  /* Ajustando a altura mínima dos campos */
+  margin-bottom: 16px;
+  /* Adiciona um espaçamento entre os selects */
+}
+
+.v-select.multiple {
+  height: auto;
+  /* Ajusta a altura quando há múltiplas opções */
+}
+
+/* Estilo responsivo para melhorar a exibição em telas menores */
 @media (max-width: 600px) {
   .section {
     margin-bottom: 10px;
+  }
+
+  .v-text-field,
+  .v-select {
+    font-size: 12px;
+    /* Reduz ainda mais o tamanho da fonte em telas pequenas */
+  }
+
+  .v-btn {
+    font-size: 12px;
+    /* Botões menores em dispositivos móveis */
+    min-width: 80px;
+    /* Menor largura mínima */
   }
 }
 </style>

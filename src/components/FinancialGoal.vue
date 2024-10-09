@@ -4,54 +4,49 @@
       <v-col>
         <v-card class="pa-5">
           <v-card-title>
-            <h2>Financial Goals</h2>
+            <h2>Objetivos Financeiros</h2>
           </v-card-title>
-
           <v-card-text>
             <v-form v-if="isAddingOrEditing" @submit.prevent="submitGoalForm">
-              <v-text-field
-                label="Goal Name"
-                v-model="goalForm.name"
-                required
-                outlined
-                class="mb-4"
-              ></v-text-field>
+              <v-text-field label="Goal Name" v-model="goalForm.name" required outlined class="mb-4"></v-text-field>
 
-              <v-text-field
-                label="Target Amount"
-                v-model="goalForm.targetAmount"
-                type="number"
-                required
-                outlined
-                class="mb-4"
-              ></v-text-field>
+              <v-text-field label="Target Amount" v-model="goalForm.targetAmount" type="number" required outlined
+                class="mb-4"></v-text-field>
 
-              <v-text-field
-                label="Deadline"
-                v-model="goalForm.deadline"
-                type="date"
-                required
-                outlined
-                class="mb-4"
-              ></v-text-field>
+              <v-text-field label="Deadline" v-model="goalForm.deadline" type="date" required outlined
+                class="mb-4"></v-text-field>
 
-              <v-btn type="submit" color="primary" class="mr-4">
-                {{ isEditing ? 'Update Goal' : 'Add Goal' }}
-              </v-btn>
-              <v-btn type="button" @click="cancelEdit" color="secondary"> Cancel </v-btn>
+              <!-- Centralizar os botões em uma linha -->
+              <v-row justify="center" class="mb-4">
+                <v-col cols="auto">
+                  <v-btn type="submit" color="primary">
+                    {{ isEditing ? 'Atualiza' : 'Adiciona' }}
+                  </v-btn>
+                </v-col>
+                <v-col cols="auto">
+                  <v-btn type="button" @click="cancelEdit" color="secondary">
+                    Cancela
+                  </v-btn>
+                </v-col>
+              </v-row>
+
+              <!-- Adiciona um divisor logo após os botões -->
+              <v-divider></v-divider>
             </v-form>
 
+            <!-- Botão para adicionar uma nova meta quando não estiver editando ou adicionando -->
             <v-btn v-if="!isAddingOrEditing" @click="addNewGoal" color="primary" class="mt-4">
-              Add New Goal
+              Novo Objetivo
             </v-btn>
 
+            <!-- Lista de objetivos financeiros -->
             <v-list v-if="financialGoals.length" class="mt-4">
               <v-list-item v-for="goal in financialGoals" :key="goal.id" class="goal-item">
                 <v-row align="center" class="w-200">
                   <v-col>
                     <v-list-item-title>{{ goal.name }}</v-list-item-title>
                     <v-list-item-subtitle>
-                      Target Amount: ${{ goal.targetAmount }} | Deadline: {{ goal.deadline }}
+                      Quantidade Almejada: ${{ goal.targetAmount }} | Data Limite: {{ goal.deadline }}
                     </v-list-item-subtitle>
                   </v-col>
                   <v-col class="d-flex justify-end">
@@ -66,7 +61,9 @@
                 <v-divider></v-divider>
               </v-list-item>
             </v-list>
-            <v-alert v-else color="primary" type="info" class="mt-4"> No financial goals found. </v-alert>
+
+            <!-- Alerta para quando não houver metas -->
+            <v-alert v-else color="primary" type="info" class="mt-4"> Nenhum objetivo financeiro encontrado. </v-alert>
           </v-card-text>
         </v-card>
       </v-col>
@@ -157,10 +154,4 @@ export default {
 }
 </script>
 
-<style scoped>
-.goal-item {
-  /* display: flex;
-    justify-content: space-between;
-    align-items: center; */
-}
-</style>
+<style scoped></style>
