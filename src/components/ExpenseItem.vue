@@ -22,7 +22,11 @@
         <v-btn x-small icon height="35px" width="35px" @click="isDialogOpen = true" color="primary" class="mr-2">
           <v-icon>mdi-share-variant</v-icon>
         </v-btn>
-        <v-btn x-small icon height="35px" width="35px" color="red" @click="$emit('deleteExpense', expense)">
+        <v-btn x-small icon height="35px" width="35px" color="orange" @click="scheduleAlarm" class="mr-2">
+          <v-icon>mdi-alarm</v-icon>
+        </v-btn>
+        <v-btn x-small icon height="35px" width="35px" color="red" @click="$emit('deleteExpense', expense)"
+          class="mr-2">
           <v-icon>mdi-delete</v-icon>
         </v-btn>
       </v-col>
@@ -88,6 +92,24 @@ export default {
         console.warn('Email não informado')
       }
     },
+    scheduleAlarm() {
+      const today = new Date();
+      const expenseDate = new Date(this.expense.date);
+      const oneDayBefore = new Date(expenseDate);
+      oneDayBefore.setDate(expenseDate.getDate() - 1);
+
+      if (oneDayBefore > today) {
+        const timeUntilAlarm = oneDayBefore - today;
+        setTimeout(() => {
+          console.log(`Alerta: A despesa ${this.expense.description} está próxima!`);
+          // Aqui você pode implementar a lógica de envio de email chamando uma API ou serviço backend
+          this.$emit('sendReminder', this.expense);
+        }, timeUntilAlarm);
+        console.log(`Alarme definido para um dia antes: ${oneDayBefore}`);
+      } else {
+        console.warn('A data da despesa já passou ou está muito próxima para agendar o alarme.');
+      }
+    }
   }
 }
 </script>
