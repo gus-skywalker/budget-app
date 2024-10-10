@@ -10,7 +10,7 @@
       <!-- Seção 1: Planejamento Financeiro -->
       <section class="section">
         <div class="section-image">
-          <img src="/planejamento_financeiro.jpg" alt="Planejamento Financeiro" />
+          <img src="/actress.jpg" alt="Planejamento Financeiro" />
         </div>
         <div class="section-content">
           <h2>Planejamento Financeiro</h2>

@@ -17,6 +17,8 @@ const extractTokenFromUrl = async () => {
   const email = urlParams.get('email')
 
   if (token && email) {
+    console.log(token)
+    console.log(email)
     console.log('Passou com sucesso pelo token')
     userStore.setAuth(true)
     userStore.setToken(token)
@@ -36,7 +38,7 @@ const extractTokenFromUrl = async () => {
       .catch((error) => {
         console.error('Erro ao buscar informações do usuário:', error)
       });
-    router.push('/')
+    router.push('/dashboard')
   } else {
     console.log('Falhamos em autenticar')
     router.push('/login')
