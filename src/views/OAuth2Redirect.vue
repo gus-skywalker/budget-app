@@ -16,6 +16,8 @@ const extractTokenFromUrl = async () => {
   const token = urlParams.get('token')
   const email = urlParams.get('email')
 
+  console.log(email);
+  console.log(token);
   if (token && email) {
     console.log(token)
     console.log(email)
