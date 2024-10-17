@@ -692,7 +692,16 @@ body {
     text-align: right;
     /* Alinha os botões à direita */
     gap: 10px;
+    position: relative;
+    left: -20px;
+    /* Afasta os botões para a esquerda */
+    z-index: 10;
+    /* Certifique-se de que eles fiquem abaixo do menu */
+    gap: 10px;
+
   }
+
+
 
   .login-btn,
   .signup-btn {
