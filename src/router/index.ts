@@ -49,8 +49,8 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
-      path: '/goal',
-      name: 'goal',
+      path: '/financialgoal',
+      name: 'financialgoal',
       component: GoalView,
       meta: { requiresAuth: true }
     },

@@ -27,5 +27,8 @@ export default {
         category: category
       }
     })
+  },
+  fetchMonthOverview() {
+    return axiosInterceptor.get(`${API_URL}/dashboard/overview`)
   }
 }

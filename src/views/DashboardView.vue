@@ -6,9 +6,9 @@
         <h2>Overview</h2>
       </v-card-title>
       <v-card-text>
-        <div>Total Income: {{ totalIncome }}</div>
-        <div>Total Expenses: {{ totalExpenses }}</div>
-        <div>Savings: {{ savings }}</div>
+        <div>Total Income: {{ overview.totalIncome }}</div>
+        <div>Total Expenses: {{ overview.totalExpense }}</div>
+        <div>Savings: {{ overview.savings }}</div>
       </v-card-text>
     </v-card>
 
@@ -85,9 +85,11 @@ export default {
   data() {
     return {
       chart: null,
-      totalIncome: 5000,
-      totalExpenses: 3000,
-      savings: 2000,
+      overview: {
+        totalIncome: 0.0,
+        totalExpense: 0.0,
+        savings: 0.0,
+      },
       selectedTimePeriod: '3m',
       selectedCategory: null,
       isYearly: false,
@@ -131,6 +133,7 @@ export default {
   },
   mounted() {
     this.fetchCategories()
+    this.fetchMonthOverview()
     this.createChart()
     this.fetchFinancialGoals()
   },
@@ -181,7 +184,16 @@ export default {
         })
         .catch((error) => {
           console.error('Error fetching categories:', error)
+        });
+    },
+    fetchMonthOverview() {
+      DataService.fetchMonthOverview()
+        .then(response => {
+          this.overview = response.data;
         })
+        .catch((error) => {
+          console.error('Error fetching month overview:', error)
+        });;
     },
     fetchFinancialGoals() {
       this.financialGoals = [

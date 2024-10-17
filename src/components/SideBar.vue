@@ -99,7 +99,7 @@ function navigateToAccountAdmin() {
       <v-list-item prepend-icon="mdi-view-dashboard" title="Dashboard" :to="{ name: 'dashboard' }"></v-list-item>
       <v-list-item prepend-icon="mdi-currency-usd" title="Budget" :to="{ name: 'budget' }"></v-list-item>
       <v-list-item prepend-icon="mdi-account-group" title="Groups" :to="{ name: 'group' }"></v-list-item>
-      <v-list-item prepend-icon="mdi-bullseye-arrow" title="Goals" :to="{ name: 'goal' }"></v-list-item>
+      <v-list-item prepend-icon="mdi-bullseye-arrow" title="Goals" :to="{ name: 'financialgoal' }"></v-list-item>
       <v-list-item prepend-icon="mdi-home" title="Home" :to="{ name: 'home' }"></v-list-item>
     </v-list>
 

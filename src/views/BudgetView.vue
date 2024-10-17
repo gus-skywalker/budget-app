@@ -202,10 +202,10 @@ export default {
     }
   },
   mounted() {
-    this.fetchCategories()
-    this.fetchPaymentMethods()
+    this.fetchCategories();
+    this.fetchPaymentMethods();
     // this.fetchUsers();
-    this.fetchGroups()
+    this.fetchGroups();
   },
   watch: {
     selectedGroup(newGroup, oldGroup) {
