@@ -119,7 +119,7 @@
           <h3>Plano Mensal</h3>
           <p class="price">R$ 29,00 / mês</p>
           <p>Comece com a nossa plataforma gratuitamente e, após 30 dias, continue com o plano mensal.</p>
-          <button class="btn btn-primary cta-btn" @click.prevent="$router.push({ name: 'signup' })">
+          <button class="btn btn-primary cta-btn" @click.prevent="redirectToCheckout('price_mensal_id')">
             Assine Mensalmente
           </button>
         </div>
@@ -127,7 +127,7 @@
           <h3>Plano Anual</h3>
           <p class="price">R$ 299,00 / ano</p>
           <p>Ao invés de pagar R$ 348,00 (12 x R$ 29,00), aproveite o plano anual com um desconto especial.</p>
-          <button class="btn btn-primary cta-btn" @click.prevent="$router.push({ name: 'signup' })">
+          <button class="btn btn-primary cta-btn" @click.prevent="redirectToCheckout('price_anual_id')">
             Assine Anualmente
           </button>
         </div>
@@ -188,7 +188,7 @@
 <script>
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import PrivacyControls from '@/components/compliance/PrivacyControls.vue'
-
+import axios from 'axios'
 
 export default {
   components: {
@@ -217,6 +217,22 @@ export default {
       console.log('Formulário enviado:', this.contactForm);
       alert('Mensagem enviada com sucesso!');
       this.contactForm = { name: '', email: '', message: '' }; // Limpa o formulário
+    },
+    async redirectToCheckout(priceId) {
+      try {
+        // Fazer a requisição ao back-end para criar a sessão de checkout
+        const response = await axios.post(`${import.meta.env.VITE_PAYMENT_URL}/subscriptions/create-checkout-session`, {
+          plan: priceId // ID do plano que o usuário escolheu (mensal ou anual)
+        });
+
+        // Carregar o Stripe.js com a chave pública
+        const stripe = await loadStripe('sua-chave-publica-do-stripe');
+
+        // Redirecionar para a página de checkout do Stripe
+        await stripe.redirectToCheckout({ sessionId: response.data.id });
+      } catch (error) {
+        console.error('Erro ao redirecionar para o checkout:', error);
+      }
     }
   },
 };

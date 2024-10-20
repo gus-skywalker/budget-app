@@ -6,7 +6,7 @@ import BudgetView from '@/views/BudgetView.vue'
 import DashboardView from '@/views/DashboardView.vue'
 import LoginView from '@/views/LoginView.vue'
 import AccountAdmin from '@/views/AccountAdmin.vue'
-import OAuth2Redirect from '@/views/OAuth2Redirect.vue'
+import OAuth2Redirect from '@/views/redirect_url/OAuth2Redirect.vue'
 import PrivacyPolicy from '@/components/compliance/PrivacyPolicy.vue'
 import TermsOfUse from '@/components/compliance/TermsOfUse.vue'
 import CookiePolicy from '@/components/compliance/CookiePolicy.vue'
@@ -15,6 +15,8 @@ import ResetPassword from '@/views/ResetPassword.vue'
 import { useUserStore } from '@/plugins/userStore'
 import GroupView from '@/views/GroupView.vue'
 import GoalView from '@/views/GoalView.vue'
+import StripeSuccess from '@/views/redirect_url/StripeSuccess.vue'
+import StripeCancel from '@/views/redirect_url/StripeCancel.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -85,6 +87,16 @@ const router = createRouter({
       path: '/oauth2/redirect',
       name: 'oauth2redirect',
       component: OAuth2Redirect
+    },
+    {
+      path: '/subscription/success',
+      name: 'payment-gateway-success',
+      component: StripeSuccess
+    },
+    {
+      path: '/subscription/cancel',
+      name: 'payment-gateway-cancel',
+      component: StripeCancel
     },
     {
       path: '/privacy-policy',
