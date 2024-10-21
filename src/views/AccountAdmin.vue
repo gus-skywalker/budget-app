@@ -16,16 +16,26 @@
         <v-col cols="12" md="6">
           <h2>Segurança</h2>
           <v-form>
-            <v-text-field
-              v-model="currentPassword"
-              label="Senha Atual"
-              type="password"
-            ></v-text-field>
+            <v-text-field v-model="currentPassword" label="Senha Atual" type="password"></v-text-field>
             <v-text-field v-model="newPassword" label="Nova Senha" type="password"></v-text-field>
             <v-btn @click="changePassword">Alterar Senha</v-btn>
           </v-form>
 
           <v-switch v-model="twoFactorAuth" label="Autenticação de Dois Fatores"></v-switch>
+        </v-col>
+      </v-row>
+
+      <v-divider></v-divider>
+
+      <!-- Adicionando a seção de escolha de plano -->
+      <v-row>
+        <v-col cols="12" md="6">
+          <h2>Escolha seu Plano</h2>
+          <v-radio-group v-model="selectedPlan" :mandatory="false">
+            <v-radio label="Plano Mensal - R$29,90" value="monthly"></v-radio>
+            <v-radio label="Plano Anual - R$299,00" value="annual"></v-radio>
+          </v-radio-group>
+          <v-btn color="primary" @click="updatePlan">Confirmar Plano</v-btn>
         </v-col>
       </v-row>
 
@@ -50,33 +60,19 @@
           <!-- Cartões de Bancos -->
           <div class="bank-cards-wrapper">
             <div class="bank-cards">
-              <v-card
-                @mouseover="highlightCard('Nubank')"
-                @mouseleave="highlightCard('')"
-                @click="openBankDialog('Nubank')"
-                class="bank-card"
-                :class="{ selected: selectedBank === 'Nubank' }"
-              >
+              <v-card @mouseover="highlightCard('Nubank')" @mouseleave="highlightCard('')"
+                @click="openBankDialog('Nubank')" class="bank-card" :class="{ selected: selectedBank === 'Nubank' }">
                 <v-img src="banks/nubank-logo.png" aspect-ratio="1"></v-img>
                 <v-card-text>Nubank</v-card-text>
               </v-card>
-              <v-card
-                @mouseover="highlightCard('Banco do Brasil')"
-                @mouseleave="highlightCard('')"
-                @click="openBankDialog('Banco do Brasil')"
-                class="bank-card"
-                :class="{ selected: selectedBank === 'Banco do Brasil' }"
-              >
+              <v-card @mouseover="highlightCard('Banco do Brasil')" @mouseleave="highlightCard('')"
+                @click="openBankDialog('Banco do Brasil')" class="bank-card"
+                :class="{ selected: selectedBank === 'Banco do Brasil' }">
                 <v-img src="banks/bb-logo.webp" aspect-ratio="1"></v-img>
                 <v-card-text>Banco do Brasil</v-card-text>
               </v-card>
-              <v-card
-                @mouseover="highlightCard('Itaú')"
-                @mouseleave="highlightCard('')"
-                @click="openBankDialog('Itaú')"
-                class="bank-card"
-                :class="{ selected: selectedBank === 'Itaú' }"
-              >
+              <v-card @mouseover="highlightCard('Itaú')" @mouseleave="highlightCard('')" @click="openBankDialog('Itaú')"
+                class="bank-card" :class="{ selected: selectedBank === 'Itaú' }">
                 <v-img src="banks/itau-logo.jpg" aspect-ratio="1"></v-img>
                 <v-card-text>Itaú</v-card-text>
               </v-card>
@@ -154,6 +150,7 @@
 import { ref } from 'vue'
 import BankService from '@/services/BankService'
 import { useBankStore } from '@/plugins/bankStore'
+import axios from 'axios'
 
 const bankStore = useBankStore()
 // Informações Básicas do Perfil
@@ -170,6 +167,8 @@ const twoFactorAuth = ref(false)
 const notificationEmail = ref(true)
 const notificationPush = ref(true)
 const darkTheme = ref(false)
+
+const selectedPlan = ref('')
 
 // Estado dos diálogos
 const bankDialog = ref(false)
@@ -191,6 +190,25 @@ const saveProfile = () => {
 
 const changePassword = () => {
   // Lógica para alterar a senha do usuário
+}
+
+const updatePlan = async () => {
+  if (!selectedPlan.value) {
+    alert("Por favor, selecione um plano.")
+    return
+  }
+
+  try {
+    const response = await axios.post(`${import.meta.env.VITE_PAYMENT_URL}/stripe/create-portal-session`, {
+      plan: selectedPlan.value
+    })
+
+    // Redireciona o usuário para o Stripe Checkout
+    window.location.href = response.data.checkoutUrl
+  } catch (error) {
+    console.error("Erro ao atualizar o plano:", error)
+    alert("Ocorreu um erro ao tentar atualizar o plano.")
+  }
 }
 
 const connectGoogle = () => {
