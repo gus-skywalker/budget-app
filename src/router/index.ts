@@ -5,7 +5,7 @@ import AboutView from '@/views/AboutView.vue'
 import BudgetView from '@/views/BudgetView.vue'
 import DashboardView from '@/views/DashboardView.vue'
 import LoginView from '@/views/LoginView.vue'
-import AccountAdmin from '@/views/AccountAdmin.vue'
+import Settings from '@/views/Settings.vue'
 import OAuth2Redirect from '@/views/redirect_url/OAuth2Redirect.vue'
 import PrivacyPolicy from '@/components/compliance/PrivacyPolicy.vue'
 import TermsOfUse from '@/components/compliance/TermsOfUse.vue'
@@ -69,9 +69,9 @@ const router = createRouter({
       component: LoginView
     },
     {
-      path: '/account-admin',
-      name: 'account-admin',
-      component: AccountAdmin,
+      path: '/settings',
+      name: 'settings',
+      component: Settings,
       meta: { requiresAuth: true }
     },
     {

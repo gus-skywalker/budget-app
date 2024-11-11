@@ -26,7 +26,7 @@
           Login
         </button>
         <button class="btn btn-secondary signup-btn" aria-label="Fazer login"
-          @click.prevent="$router.push({ name: 'signup' })">
+          @click.prevent="$router.push({ name: 'choose-plan' })">
           Assine Agora
         </button>
       </div>
@@ -39,7 +39,8 @@
         <p>
           Planeje, gerencie e cresça suas finanças com nossa carteira de fintechs personalizada.
         </p>
-        <button class="btn btn-primary cta-btn" @click.prevent="$router.push({ name: 'signup' })">
+        <button class="btn btn-primary cta-btn"
+          @click.prevent="$router.push({ name: 'login', query: { signup: 'true' } })">
           Experimente Gratuitamente
         </button>
       </div>
@@ -167,7 +168,7 @@
           <a href="#contact">Contato</a>
         </div>
         <div class="footer-cta">
-          <button class="btn btn-primary cta-btn" @click.prevent="$router.push({ name: 'signup' })">
+          <button class="btn btn-primary cta-btn" @click.prevent="$router.push({ name: 'choose-plan' })">
             Inscreva-se Agora!
           </button>
         </div>
@@ -220,20 +221,22 @@ export default {
     },
     async redirectToCheckout(priceId) {
       try {
-        // Fazer a requisição ao back-end para criar a sessão de checkout
-        const response = await axios.post(`${import.meta.env.VITE_PAYMENT_URL}/stripe/create-checkout-session`, {
-          plan: priceId // ID do plano que o usuário escolheu (mensal ou anual)
-        });
+        // Requisição ao backend para criar a sessão de checkout no Stripe
+        const response = await axios.post(
+          `${import.meta.env.VITE_PAYMENT_URL}/stripe/create-checkout-session`,
+          { plan: priceId }
+        );
 
-        // Carregar o Stripe.js com a chave pública
-        const stripe = await loadStripe('sua-chave-publica-do-stripe');
+        // Carrega o Stripe.js com sua chave pública
+        const stripe = await loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
-        // Redirecionar para a página de checkout do Stripe
-        await stripe.redirectToCheckout({ sessionId: response.data.id });
+        // Redireciona o usuário para o Stripe Checkout
+        await stripe.redirectToCheckout({ sessionId: response.data.sessionId });
       } catch (error) {
         console.error('Erro ao redirecionar para o checkout:', error);
+        alert('Erro ao processar o pagamento. Tente novamente mais tarde.');
       }
-    }
+    },
   },
 };
 </script>
@@ -716,8 +719,6 @@ body {
     gap: 10px;
 
   }
-
-
 
   .login-btn,
   .signup-btn {

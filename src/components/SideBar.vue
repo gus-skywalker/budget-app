@@ -78,7 +78,7 @@ function decline(notificationId: number) {
 }
 
 function navigateToAccountAdmin() {
-  router.push({ name: 'account-admin' })
+  router.push({ name: 'settings' })
 }
 </script>
 

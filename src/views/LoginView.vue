@@ -68,14 +68,15 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useUserStore } from '@/plugins/userStore'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import axios from 'axios'
 import Footer from '../components/Footer.vue'
 
 const userStore = useUserStore()
 const router = useRouter()
+const route = useRoute()
 const userData = ref({ email: '', password: '' })
 const signupData = ref({ email: '', password: '', confirmPassword: '', username: '' })
 const error = ref(null)
@@ -83,6 +84,13 @@ const signupError = ref(null)
 const signupSuccess = ref(null)
 const showSignupForm = ref(false)
 const authUrl = import.meta.env.VITE_AUTH_URL
+
+onMounted(() => {
+  console.log(route.query);
+  if (route.query && route.query.signup === 'true') {
+    toggleForm(true);
+  }
+});
 
 const userLogin = async () => {
   try {

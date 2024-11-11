@@ -27,17 +27,33 @@
 
       <v-divider></v-divider>
 
-      <!-- Adicionando a seção de escolha de plano -->
-      <v-row>
-        <v-col cols="12" md="6">
-          <h2>Escolha seu Plano</h2>
-          <v-radio-group v-model="selectedPlan" :mandatory="false">
-            <v-radio label="Plano Mensal - R$29,90" value="monthly"></v-radio>
-            <v-radio label="Plano Anual - R$299,00" value="annual"></v-radio>
-          </v-radio-group>
-          <v-btn color="primary" @click="updatePlan">Confirmar Plano</v-btn>
-        </v-col>
-      </v-row>
+      <!-- Seção de Assinatura -->
+      <v-container>
+        <v-row>
+          <v-col cols="12" md="6">
+            <h2>Gerenciamento de Assinatura</h2>
+            <p><strong>Plano atual:</strong> {{ currentPlanText }}</p>
+            <p><strong>Status:</strong> {{ subscriptionStatus }}</p>
+
+            <v-radio-group v-model="selectedPlan" :mandatory="false">
+              <v-radio label="Plano Mensal - R$29,90" value="monthly"></v-radio>
+              <v-radio label="Plano Anual - R$299,00" value="annual"></v-radio>
+            </v-radio-group>
+
+            <v-btn color="primary" @click="updatePlan">
+              Atualizar Plano
+            </v-btn>
+
+            <v-btn color="primary" @click="openBillingPortal">
+              Gerenciar Assinatura no Portal
+            </v-btn>
+
+            <v-btn color="error" v-if="subscriptionActive" @click="cancelSubscription">
+              Cancelar Assinatura
+            </v-btn>
+          </v-col>
+        </v-row>
+      </v-container>
 
       <v-divider></v-divider>
 
@@ -147,7 +163,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import BankService from '@/services/BankService'
 import { useBankStore } from '@/plugins/bankStore'
 import axios from 'axios'
@@ -168,7 +184,18 @@ const notificationEmail = ref(true)
 const notificationPush = ref(true)
 const darkTheme = ref(false)
 
-const selectedPlan = ref('')
+// Estado da assinatura e plano selecionado
+const currentPlan = ref('');
+const subscriptionStatus = ref('');
+const selectedPlan = ref(''); // Para atualizar o plano
+const subscriptionActive = computed(() => subscriptionStatus.value === 'Ativo');
+
+// Obter o texto do plano atual
+const currentPlanText = computed(() => {
+  if (currentPlan.value === 'monthly') return 'Mensal - R$29,90/mês';
+  if (currentPlan.value === 'annual') return 'Anual - R$299,00/ano';
+  return 'Gratuito';
+});
 
 // Estado dos diálogos
 const bankDialog = ref(false)
@@ -190,25 +217,6 @@ const saveProfile = () => {
 
 const changePassword = () => {
   // Lógica para alterar a senha do usuário
-}
-
-const updatePlan = async () => {
-  if (!selectedPlan.value) {
-    alert("Por favor, selecione um plano.")
-    return
-  }
-
-  try {
-    const response = await axios.post(`${import.meta.env.VITE_PAYMENT_URL}/stripe/create-portal-session`, {
-      plan: selectedPlan.value
-    })
-
-    // Redireciona o usuário para o Stripe Checkout
-    window.location.href = response.data.checkoutUrl
-  } catch (error) {
-    console.error("Erro ao atualizar o plano:", error)
-    alert("Ocorreu um erro ao tentar atualizar o plano.")
-  }
 }
 
 const connectGoogle = () => {
@@ -305,6 +313,63 @@ const verifyCode = async () => {
     console.error('Erro ao verificar o código', error)
   }
 }
+
+// Função para carregar o plano e status da assinatura do usuário
+const loadSubscriptionDetails = async () => {
+  try {
+    const response = await axios.get(`${import.meta.env.VITE_PAYMENT_URL}/api/subscription/details`);
+    currentPlan.value = response.data.plan;
+    subscriptionStatus.value = response.data.status;
+  } catch (error) {
+    console.error("Erro ao carregar detalhes da assinatura:", error);
+  }
+};
+
+// Função para abrir o portal de faturamento do Stripe
+const openBillingPortal = async () => {
+  try {
+    const response = await axios.post(`${import.meta.env.VITE_PAYMENT_URL}/api/subscription/create-portal-session`);
+    window.location.href = response.data; // Redireciona para o portal de faturamento
+  } catch (error) {
+    console.error("Erro ao abrir o portal de faturamento:", error);
+    alert("Não foi possível acessar o portal de faturamento. Tente novamente mais tarde.");
+  }
+};
+
+// Função para atualizar o plano diretamente
+const updatePlan = async () => {
+  if (!selectedPlan.value) {
+    alert("Por favor, selecione um plano.");
+    return;
+  }
+
+  try {
+    const response = await axios.post(`${import.meta.env.VITE_PAYMENT_URL}/api/subscription/update-plan`, {
+      plan: selectedPlan.value
+    });
+    window.location.href = response.data.checkoutUrl; // Redireciona para o checkout do plano
+  } catch (error) {
+    console.error("Erro ao atualizar o plano:", error);
+    alert("Ocorreu um erro ao tentar atualizar o plano.");
+  }
+};
+
+// Função para cancelar a assinatura
+const cancelSubscription = async () => {
+  try {
+    await axios.post(`${import.meta.env.VITE_PAYMENT_URL}/api/subscription/cancel`);
+    alert("Assinatura cancelada com sucesso. Você continuará a ter acesso até o fim do período já pago.");
+    loadSubscriptionDetails(); // Atualiza o status da assinatura após o cancelamento
+  } catch (error) {
+    console.error("Erro ao cancelar a assinatura:", error);
+    alert("Não foi possível cancelar a assinatura. Tente novamente mais tarde.");
+  }
+};
+
+// Carregar detalhes da assinatura ao montar o componente
+onMounted(() => {
+  loadSubscriptionDetails();
+});
 </script>
 
 <style scoped>
