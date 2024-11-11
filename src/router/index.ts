@@ -17,6 +17,7 @@ import GroupView from '@/views/GroupView.vue'
 import GoalView from '@/views/GoalView.vue'
 import StripeSuccess from '@/views/redirect_url/StripeSuccess.vue'
 import StripeCancel from '@/views/redirect_url/StripeCancel.vue'
+import ChoosePlan from '@/views/ChoosePlan.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -87,6 +88,11 @@ const router = createRouter({
       path: '/oauth2/redirect',
       name: 'oauth2redirect',
       component: OAuth2Redirect
+    },
+    {
+      path: '/choose-plan',
+      name: 'choose-plan',
+      component: ChoosePlan
     },
     {
       path: '/subscription/success',
