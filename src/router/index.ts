@@ -5,7 +5,7 @@ import AboutView from '@/views/AboutView.vue'
 import BudgetView from '@/views/BudgetView.vue'
 import DashboardView from '@/views/DashboardView.vue'
 import LoginView from '@/views/LoginView.vue'
-import Settings from '@/views/Settings.vue'
+import SettingsView from '@/views/SettingsView.vue'
 import OAuth2Redirect from '@/views/redirect_url/OAuth2Redirect.vue'
 import PrivacyPolicy from '@/components/compliance/PrivacyPolicy.vue'
 import TermsOfUse from '@/components/compliance/TermsOfUse.vue'
@@ -71,7 +71,7 @@ const router = createRouter({
     {
       path: '/settings',
       name: 'settings',
-      component: Settings,
+      component: SettingsView,
       meta: { requiresAuth: true }
     },
     {

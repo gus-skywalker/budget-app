@@ -189,7 +189,7 @@
 <script>
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import PrivacyControls from '@/components/compliance/PrivacyControls.vue'
-import axios from 'axios'
+import PaymentService from '@/services/PaymentService'
 
 export default {
   components: {
@@ -217,15 +217,12 @@ export default {
       }
       console.log('Formulário enviado:', this.contactForm);
       alert('Mensagem enviada com sucesso!');
-      this.contactForm = { name: '', email: '', message: '' }; // Limpa o formulário
+      this.contactForm = { name: '', email: '', message: '' };
     },
-    async redirectToCheckout(priceId) {
+    async redirectToCheckout(plan) {
       try {
         // Requisição ao backend para criar a sessão de checkout no Stripe
-        const response = await axios.post(
-          `${import.meta.env.VITE_PAYMENT_URL}/stripe/create-checkout-session`,
-          { plan: priceId }
-        );
+        const response = await PaymentService.createCheckoutSession(plan);
 
         // Carrega o Stripe.js com sua chave pública
         const stripe = await loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);

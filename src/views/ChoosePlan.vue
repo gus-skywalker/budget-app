@@ -62,8 +62,9 @@
 </template>
 
 <script>
-import FAQ from "@/components/FAQ.vue";
-import { loadStripe } from "@stripe/stripe-js";
+import FAQ from '@/components/FAQ.vue';
+import { loadStripe } from '@stripe/stripe-js';
+import PaymentService from '@/services/PaymentService'
 import axios from "axios";
 
 export default {
@@ -100,12 +101,9 @@ export default {
     methods: {
         async redirectToCheckout(plan) {
             try {
-                const response = await axios.post(
-                    `${import.meta.env.VITE_PAYMENT_URL}/api/subscription/create-checkout-session`,
-                    { plan }
-                );
+                const response = await PaymentService.createCheckoutSession(plan);
                 const stripe = await loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
-                await stripe.redirectToCheckout({ sessionId: response.data });
+                await stripe.redirectToCheckout({ sessionId: response.data.sessionId });
             } catch (error) {
                 console.error("Erro ao redirecionar para o checkout:", error);
             }

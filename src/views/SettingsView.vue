@@ -165,7 +165,9 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import BankService from '@/services/BankService'
+import PaymentService from '@/services/PaymentService'
 import { useBankStore } from '@/plugins/bankStore'
+
 import axios from 'axios'
 
 const bankStore = useBankStore()
@@ -317,7 +319,7 @@ const verifyCode = async () => {
 // Função para carregar o plano e status da assinatura do usuário
 const loadSubscriptionDetails = async () => {
   try {
-    const response = await axios.get(`${import.meta.env.VITE_PAYMENT_URL}/api/subscription/details`);
+    const response = await PaymentService.loadSubscriptionDetails();
     currentPlan.value = response.data.plan;
     subscriptionStatus.value = response.data.status;
   } catch (error) {
@@ -328,7 +330,7 @@ const loadSubscriptionDetails = async () => {
 // Função para abrir o portal de faturamento do Stripe
 const openBillingPortal = async () => {
   try {
-    const response = await axios.post(`${import.meta.env.VITE_PAYMENT_URL}/api/subscription/create-portal-session`);
+    const response = await PaymentService.openBillingPortal();
     window.location.href = response.data; // Redireciona para o portal de faturamento
   } catch (error) {
     console.error("Erro ao abrir o portal de faturamento:", error);
@@ -344,9 +346,7 @@ const updatePlan = async () => {
   }
 
   try {
-    const response = await axios.post(`${import.meta.env.VITE_PAYMENT_URL}/api/subscription/update-plan`, {
-      plan: selectedPlan.value
-    });
+    const response = await PaymentService.updatePlan(selectedPlan);
     window.location.href = response.data.checkoutUrl; // Redireciona para o checkout do plano
   } catch (error) {
     console.error("Erro ao atualizar o plano:", error);
@@ -357,7 +357,7 @@ const updatePlan = async () => {
 // Função para cancelar a assinatura
 const cancelSubscription = async () => {
   try {
-    await axios.post(`${import.meta.env.VITE_PAYMENT_URL}/api/subscription/cancel`);
+    await PaymentService.cancelSubscription();
     alert("Assinatura cancelada com sucesso. Você continuará a ter acesso até o fim do período já pago.");
     loadSubscriptionDetails(); // Atualiza o status da assinatura após o cancelamento
   } catch (error) {
