@@ -28,32 +28,7 @@
       <v-divider></v-divider>
 
       <!-- Seção de Assinatura -->
-      <v-container>
-        <v-row>
-          <v-col cols="12" md="6">
-            <h2>Gerenciamento de Assinatura</h2>
-            <p><strong>Plano atual:</strong> {{ currentPlanText }}</p>
-            <p><strong>Status:</strong> {{ subscriptionStatus }}</p>
-
-            <v-radio-group v-model="selectedPlan" :mandatory="false">
-              <v-radio label="Plano Mensal - R$29,90" value="monthly"></v-radio>
-              <v-radio label="Plano Anual - R$299,00" value="annual"></v-radio>
-            </v-radio-group>
-
-            <v-btn color="primary" @click="updatePlan">
-              Atualizar Plano
-            </v-btn>
-
-            <v-btn color="primary" @click="openBillingPortal">
-              Gerenciar Assinatura no Portal
-            </v-btn>
-
-            <v-btn color="error" v-if="subscriptionActive" @click="cancelSubscription">
-              Cancelar Assinatura
-            </v-btn>
-          </v-col>
-        </v-row>
-      </v-container>
+      <SubscriptionManagement :user="user" />
 
       <v-divider></v-divider>
 
@@ -163,14 +138,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
-import BankService from '@/services/BankService'
-import PaymentService from '@/services/PaymentService'
-import { useBankStore } from '@/plugins/bankStore'
+import { computed, ref } from 'vue';
+import { useBankStore } from '@/plugins/bankStore';
+import { useUserStore } from '@/plugins/userStore';
+import SubscriptionManagement from '@/components/SubscriptionManagement.vue';
 
-import axios from 'axios'
+const bankStore = useBankStore();
+const userStore = useUserStore();
 
-const bankStore = useBankStore()
+// Cria uma propriedade computada para o objeto `user`
+const user = computed(() => userStore.getUser);
+
 // Informações Básicas do Perfil
 const username = ref('')
 const email = ref('')
@@ -185,19 +163,6 @@ const twoFactorAuth = ref(false)
 const notificationEmail = ref(true)
 const notificationPush = ref(true)
 const darkTheme = ref(false)
-
-// Estado da assinatura e plano selecionado
-const currentPlan = ref('');
-const subscriptionStatus = ref('');
-const selectedPlan = ref(''); // Para atualizar o plano
-const subscriptionActive = computed(() => subscriptionStatus.value === 'Ativo');
-
-// Obter o texto do plano atual
-const currentPlanText = computed(() => {
-  if (currentPlan.value === 'monthly') return 'Mensal - R$29,90/mês';
-  if (currentPlan.value === 'annual') return 'Anual - R$299,00/ano';
-  return 'Gratuito';
-});
 
 // Estado dos diálogos
 const bankDialog = ref(false)
@@ -316,60 +281,6 @@ const verifyCode = async () => {
   }
 }
 
-// Função para carregar o plano e status da assinatura do usuário
-const loadSubscriptionDetails = async () => {
-  try {
-    const response = await PaymentService.loadSubscriptionDetails();
-    currentPlan.value = response.data.plan;
-    subscriptionStatus.value = response.data.status;
-  } catch (error) {
-    console.error("Erro ao carregar detalhes da assinatura:", error);
-  }
-};
-
-// Função para abrir o portal de faturamento do Stripe
-const openBillingPortal = async () => {
-  try {
-    const response = await PaymentService.openBillingPortal();
-    window.location.href = response.data; // Redireciona para o portal de faturamento
-  } catch (error) {
-    console.error("Erro ao abrir o portal de faturamento:", error);
-    alert("Não foi possível acessar o portal de faturamento. Tente novamente mais tarde.");
-  }
-};
-
-// Função para atualizar o plano diretamente
-const updatePlan = async () => {
-  if (!selectedPlan.value) {
-    alert("Por favor, selecione um plano.");
-    return;
-  }
-
-  try {
-    const response = await PaymentService.updatePlan(selectedPlan);
-    window.location.href = response.data.checkoutUrl; // Redireciona para o checkout do plano
-  } catch (error) {
-    console.error("Erro ao atualizar o plano:", error);
-    alert("Ocorreu um erro ao tentar atualizar o plano.");
-  }
-};
-
-// Função para cancelar a assinatura
-const cancelSubscription = async () => {
-  try {
-    await PaymentService.cancelSubscription();
-    alert("Assinatura cancelada com sucesso. Você continuará a ter acesso até o fim do período já pago.");
-    loadSubscriptionDetails(); // Atualiza o status da assinatura após o cancelamento
-  } catch (error) {
-    console.error("Erro ao cancelar a assinatura:", error);
-    alert("Não foi possível cancelar a assinatura. Tente novamente mais tarde.");
-  }
-};
-
-// Carregar detalhes da assinatura ao montar o componente
-onMounted(() => {
-  loadSubscriptionDetails();
-});
 </script>
 
 <style scoped>

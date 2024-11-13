@@ -1,14 +1,18 @@
 import axiosInterceptor from './axiosInterceptor'
 
-const API_URL = `${import.meta.env.VITE_PAYMENT_URL}/api/subscription`
+const API_URL = `${import.meta.env.VITE_PAYMENT_URL}/subscription`
 
 export default {
-  createCheckoutSession(priceId) {
-    return axiosInterceptor.post(`${API_URL}/create-checkout-session`, { plan: priceId })
+  createSubscription(customerRequest) {
+    return axiosInterceptor.post(`${API_URL}/create-subscription`, customerRequest)
   },
 
-  openBillingPortal() {
-    return axiosInterceptor.post(`${API_URL}/create-portal-session`)
+  createCheckoutSession(customerRequest) {
+    return axiosInterceptor.post(`${API_URL}/create-checkout-session`, customerRequest)
+  },
+
+  openBillingPortal(customerId) {
+    return axiosInterceptor.post(`${API_URL}/create-portal-session`, { customerId: customerId })
   },
 
   updatePlan(selectedPlan) {
@@ -17,8 +21,8 @@ export default {
     })
   },
 
-  loadSubscriptionDetails() {
-    return axiosInterceptor.get(`${API_URL}/details`)
+  loadSubscriptionDetails(userId) {
+    return axiosInterceptor.get(`${API_URL}/${userId}`)
   },
 
   cancelSubscription() {

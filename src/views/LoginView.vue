@@ -108,23 +108,36 @@ const userLogin = async () => {
 
 const userSignup = async () => {
   if (signupData.value.password !== signupData.value.confirmPassword) {
-    signupError.value = 'Passwords do not match. Please try again.'
-    return
+    signupError.value = 'Passwords do not match. Please try again.';
+    return;
   }
   try {
     const res = await axios.post(`${authUrl}/auth/signup`, {
       ...signupData.value,
       language: 'PT',
-    })
+    });
 
     if (res.status === 201) {
-      signupSuccess.value = 'Account created successfully.'
-      clearSignupForm()
+      const stripeCustomer = await PaymentService.createSubscription({
+        userId: res.data.id,
+        userName: res.data.username,
+        email: res.data.email,
+        plan: 'free',
+      });
+
+      if (stripeCustomer && stripeCustomer.data) {
+        // Processa a resposta do stripeCustomer aqui
+        signupSuccess.value = 'Account with free subscription created successfully.';
+        clearSignupForm();
+      } else {
+        signupError.value = 'Failed to create subscription. Please try again.';
+      }
     }
   } catch {
-    signupError.value = 'Error creating account. Please try again.'
+    signupError.value = 'Error creating account. Please try again.';
   }
-}
+};
+
 
 const clearSignupForm = () => {
   signupData.value = { email: '', password: '', confirmPassword: '', username: '' }

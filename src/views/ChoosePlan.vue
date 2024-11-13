@@ -65,7 +65,6 @@
 import FAQ from '@/components/FAQ.vue';
 import { loadStripe } from '@stripe/stripe-js';
 import PaymentService from '@/services/PaymentService'
-import axios from "axios";
 
 export default {
     name: "ChoosePlan",
