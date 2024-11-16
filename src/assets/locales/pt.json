@@ -3,6 +3,17 @@
   "login": "Entrar",
   "logout": "Sair",
 
+  "sidebar": {
+    "logout": "Sair",
+    "login_oauth2": "Entrar com OAuth2",
+    "dashboard": "Painel de Controle",
+    "budget": "Orçamento",
+    "groups": "Grupos",
+    "goals": "Metas",
+    "home": "Início",
+    "toggle_theme": "Alternar Tema"
+  },
+
   "account_management": "Administração de Conta",
   "basic_profile_information": "Informações Básicas do Perfil",
   "security": "Segurança",

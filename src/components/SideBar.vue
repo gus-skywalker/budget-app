@@ -92,34 +92,36 @@ function navigateToAccountAdmin() {
     <v-list v-if="user">
       <v-list-item :prepend-avatar="userAvatar" :subtitle="user.email" :title="user.username"
         @click="navigateToAccountAdmin"></v-list-item>
-      <v-list-item @click="logoutUser" title="Logout" prepend-icon="mdi-logout"></v-list-item>
+      <v-list-item @click="logoutUser" :title="$t('sidebar.logout')" prepend-icon="mdi-logout"></v-list-item>
     </v-list>
     <v-list v-else>
-      <v-btn @click="redirectToOAuth2LoginPage">Login with OAuth2</v-btn>
+      <v-btn @click="redirectToOAuth2LoginPage">{{ $t('sidebar.login_oauth2') }}</v-btn>
     </v-list>
 
     <v-divider></v-divider>
 
     <v-list density="compact" nav>
-      <v-list-item prepend-icon="mdi-view-dashboard" title="Dashboard" :to="{ name: 'dashboard' }"></v-list-item>
-      <v-list-item prepend-icon="mdi-currency-usd" title="Budget" :to="{ name: 'budget' }"></v-list-item>
-      <v-list-item prepend-icon="mdi-account-group" title="Groups" :to="{ name: 'group' }"></v-list-item>
-      <v-list-item prepend-icon="mdi-bullseye-arrow" title="Goals" :to="{ name: 'financialgoal' }"></v-list-item>
-      <v-list-item prepend-icon="mdi-home" title="Home" :to="{ name: 'home' }"></v-list-item>
+      <v-list-item prepend-icon="mdi-view-dashboard" :title="$t('sidebar.dashboard')"
+        :to="{ name: 'dashboard' }"></v-list-item>
+      <v-list-item prepend-icon="mdi-currency-usd" :title="$t('sidebar.budget')" :to="{ name: 'budget' }"></v-list-item>
+      <v-list-item prepend-icon="mdi-account-group" :title="$t('sidebar.groups')" :to="{ name: 'group' }"></v-list-item>
+      <v-list-item prepend-icon="mdi-bullseye-arrow" :title="$t('sidebar.goals')"
+        :to="{ name: 'financialgoal' }"></v-list-item>
+      <v-list-item prepend-icon="mdi-home" :title="$t('sidebar.home')" :to="{ name: 'home' }"></v-list-item>
     </v-list>
 
     <v-divider></v-divider>
 
-    <v-switch @click="toggleTheme">Toggle</v-switch>
+    <v-switch @click="toggleTheme">{{ $t('sidebar.toggle_theme') }}</v-switch>
 
     <div class="notification-icon" @click="toggleNotifications">
       <v-badge :content="notifications.length" color="red" overlap>
         <v-icon>mdi-bell</v-icon>
       </v-badge>
     </div>
-
   </v-navigation-drawer>
 </template>
+
 
 <style scoped>
 .notification-icon {
