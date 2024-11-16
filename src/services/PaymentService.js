@@ -11,8 +11,8 @@ export default {
     return axiosInterceptor.post(`${API_URL}/create-checkout-session`, customerRequest)
   },
 
-  openBillingPortal(customerId) {
-    return axiosInterceptor.post(`${API_URL}/create-portal-session`, { customerId: customerId })
+  openBillingPortal(customerRequest) {
+    return axiosInterceptor.post(`${API_URL}/create-portal-session`, customerRequest)
   },
 
   updatePlan(selectedPlan) {
@@ -25,7 +25,7 @@ export default {
     return axiosInterceptor.get(`${API_URL}/${userId}`)
   },
 
-  cancelSubscription() {
-    return axiosInterceptor.post(`${API_URL}/cancel`)
+  cancelSubscription(subscriptionId) {
+    return axiosInterceptor.delete(`${API_URL}/cancel-subscription/${subscriptionId}`)
   }
 }

@@ -4,23 +4,25 @@
             <v-col cols="12" md="6">
                 <h2>Gerenciamento de Assinatura</h2>
                 <p><strong>Plano atual:</strong> {{ currentPlanText }}</p>
-                <p><strong>Status:</strong> {{ subscriptionStatus }}</p>
+                <p><strong>Status:</strong> {{ statusText }}</p>
 
-                <v-radio-group v-model="selectedPlan" :mandatory="false">
-                    <v-radio label="Plano Mensal - R$29,90" value="monthly"></v-radio>
-                    <v-radio label="Plano Anual - R$299,00" value="annual"></v-radio>
+                <p>Selecione um novo plano caso deseje alterar sua assinatura: Você será redirecionado ao portal para
+                    concluir a mudança.</p>
+
+                <v-radio-group v-model="selectedPlan">
+                    <v-radio label="Plano Mensal - R$29,90" value="monthly"
+                        :disabled="currentPlan === 'monthly'"></v-radio>
+                    <v-radio label="Plano Anual - R$299,00" value="annual"
+                        :disabled="currentPlan === 'annual'"></v-radio>
                 </v-radio-group>
 
-                <v-btn v-if="subscriptionStatus === 'trialing'" @click="startCheckoutSession">
-                    Iniciar Assinatura
+                <v-btn v-if="subscriptionStatus === 'active'" @click="openBillingPortal">
+                    {{ selectedPlan ? 'Alterar para ' + selectedPlanText : 'Gerenciar Assinatura no Portal' }}
                 </v-btn>
 
-                <v-btn v-else-if="subscriptionStatus === 'active'" @click="openBillingPortal">
-                    Gerenciar Assinatura no Portal
-                </v-btn>
-
-                <v-btn v-else-if="subscriptionStatus === 'canceled'" color="primary" @click="startCheckoutSession">
-                    Renovar Assinatura
+                <!-- Botão de Cancelar Assinatura -->
+                <v-btn v-if="subscriptionStatus === 'active'" color="error" @click="cancelSubscription">
+                    Cancelar Assinatura
                 </v-btn>
             </v-col>
         </v-row>
@@ -43,6 +45,7 @@ const props = defineProps<{ user: User }>();
 
 // Estado da assinatura e plano selecionado
 const currentPlan = ref('');
+const subscriptionId = ref('');
 const subscriptionStatus = ref('');
 const customerId = ref('');
 const selectedPlan = ref(''); // Para atualizar o plano
@@ -54,6 +57,25 @@ const currentPlanText = computed(() => {
     return 'Gratuito';
 });
 
+const selectedPlanText = computed(() => {
+    if (selectedPlan.value === 'monthly') return 'Plano Mensal - R$29,90';
+    if (selectedPlan.value === 'annual') return 'Plano Anual - R$299,00';
+    return '';
+});
+
+const statusText = computed(() => {
+    switch (subscriptionStatus.value) {
+        case 'active':
+            return 'Ativa';
+        case 'trialing':
+            return 'Período de Teste';
+        case 'canceled':
+            return 'Cancelada ao Final do Período';
+        default:
+            return 'Inativa';
+    }
+});
+
 // Função para carregar o plano e status da assinatura do usuário
 const loadSubscriptionDetails = async () => {
     try {
@@ -61,6 +83,7 @@ const loadSubscriptionDetails = async () => {
         currentPlan.value = response.data.plan;
         subscriptionStatus.value = response.data.status;
         customerId.value = response.data.customerId;
+        subscriptionId.value = response.data.subscriptionId;
     } catch (error) {
         console.error('Erro ao carregar detalhes da assinatura:', error);
     }
@@ -70,6 +93,8 @@ const startCheckoutSession = async () => {
     try {
         const response = await PaymentService.createCheckoutSession({
             userId: props.user.id,
+            customerId: customerId.value,
+            subscriptionId: subscriptionId.value,
             plan: selectedPlan.value,
         });
         window.location.href = response.data.checkoutUrl;
@@ -82,11 +107,32 @@ const startCheckoutSession = async () => {
 // Função para abrir o portal de faturamento
 const openBillingPortal = async () => {
     try {
-        const response = await PaymentService.openBillingPortal(customerId);
+        const response = await PaymentService.openBillingPortal({
+            customerId: customerId.value,
+        });
         window.location.href = response.data.portalUrl;
     } catch (error) {
         console.error('Erro ao abrir o portal de faturamento:', error);
         alert('Não foi possível acessar o portal de faturamento. Tente novamente mais tarde.');
+    }
+};
+
+// Função para cancelar a assinatura
+const cancelSubscription = async () => {
+    try {
+        const confirmed = confirm('Tem certeza de que deseja cancelar sua assinatura?');
+        if (!confirmed) {
+            return;
+        }
+
+        await PaymentService.cancelSubscription(subscriptionId.value);
+
+        alert('Sua assinatura foi cancelada com sucesso. Você continuará a ter acesso até o fim do período já pago.');
+        // Recarrega os detalhes da assinatura para atualizar o status na interface
+        await loadSubscriptionDetails();
+    } catch (error) {
+        console.error('Erro ao cancelar a assinatura:', error);
+        alert('Não foi possível cancelar a assinatura. Tente novamente mais tarde.');
     }
 };
 

@@ -72,6 +72,7 @@ import { ref, onMounted } from 'vue'
 import { useUserStore } from '@/plugins/userStore'
 import { useRouter, useRoute } from 'vue-router'
 import axios from 'axios'
+import PaymentService from '@/services/PaymentService'
 import Footer from '../components/Footer.vue'
 
 const userStore = useUserStore()
