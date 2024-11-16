@@ -11,25 +11,10 @@
       </v-col>
       <v-col class="d-flex justify-end">
         <v-chip v-if="income.isRecurring" color="blue" dark>Renda Recorrente</v-chip>
-        <v-btn
-          x-small
-          icon
-          height="35px"
-          width="35px"
-          @click="handleToggleRecurring"
-          color="primary"
-          class="mr-2"
-        >
+        <v-btn x-small icon height="35px" width="35px" @click="handleToggleRecurring" color="primary" class="mr-2">
           <v-icon>{{ income.isRecurring ? 'mdi-star-outline' : 'mdi-star' }}</v-icon>
         </v-btn>
-        <v-btn
-          x-small
-          icon
-          height="35px"
-          width="35px"
-          color="red"
-          @click="$emit('deleteIncome', income)"
-        >
+        <v-btn x-small icon height="35px" width="35px" color="red" @click="$emit('deleteIncome', income)">
           <v-icon>mdi-delete</v-icon>
         </v-btn>
       </v-col>
@@ -40,12 +25,7 @@
       <v-card>
         <v-card-title>Escolha a quantidade de meses</v-card-title>
         <v-card-text>
-          <v-select
-            v-model="selectedMonths"
-            :items="monthsOptions"
-            label="Quantidade de meses"
-            dense
-          ></v-select>
+          <v-select v-model="selectedMonths" :items="monthsOptions" label="Quantidade de meses" dense></v-select>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>

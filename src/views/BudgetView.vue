@@ -1,54 +1,54 @@
 <template>
   <v-container>
-    <h1>Sua Contabilidade</h1>
+    <h1>{{ $t('accounting.title') }}</h1>
     <v-row>
       <!-- Coluna Esquerda: Formulários de Entrada -->
       <v-col cols="12" md="6">
         <!-- Seção de Entradas -->
         <v-card class="section">
           <v-card-title>
-            <h2>Entradas</h2>
+            <h2>{{ $t('income.title') }}</h2>
           </v-card-title>
           <v-card-text>
             <v-row>
               <v-col cols="12" sm="6" md="6">
-                <v-text-field label="Data" type="date" v-model="income.date"></v-text-field>
+                <v-text-field :label="$t('common.date')" type="date" v-model="income.date"></v-text-field>
               </v-col>
               <v-col cols="12" sm="6" md="6">
-                <v-text-field label="Valor" type="number" v-model="income.amount" :rules="[
-                  (value) => !!value || 'Valor é obrigatório',
-                  (value) => /^\d+(\.\d{1,2})?$/.test(value) || 'Formato de moeda inválido'
+                <v-text-field :label="$t('common.amount')" type="number" v-model="income.amount" :rules="[
+                  (value) => !!value || $t('validation.required', { field: $t('common.amount') }),
+                  (value) => /^\d+(\.\d{1,2})?$/.test(value) || $t('validation.invalid_currency')
                 ]"></v-text-field>
               </v-col>
               <v-col cols="12" md="12">
-                <v-text-field label="Descrição" v-model="income.description"></v-text-field>
+                <v-text-field :label="$t('common.description')" v-model="income.description"></v-text-field>
               </v-col>
               <v-col cols="12" sm="6" md="6">
-                <v-select label="Método de Pagamento" v-model="income.paymentMethod" :items="paymentMethods"
+                <v-select :label="$t('common.payment_method')" v-model="income.paymentMethod" :items="paymentMethods"
                   item-title="name" item-value="id"></v-select>
               </v-col>
             </v-row>
           </v-card-text>
           <v-card-actions>
-            <v-btn color="primary" @click="saveIncome">Salvar Entrada</v-btn>
+            <v-btn color="primary" @click="saveIncome">{{ $t('income.save') }}</v-btn>
           </v-card-actions>
         </v-card>
 
         <!-- Lista de Entradas Mensais -->
         <v-card class="section">
           <v-card-title>
-            <h2>Entradas Mensais</h2>
+            <h2>{{ $t('income.monthly_title') }}</h2>
           </v-card-title>
           <v-card-text>
             <v-row align="center">
               <v-col cols="9" md="9">
-                <v-select label="Selecione o Mês" v-model="selectedIncomeMonth"
+                <v-select :label="$t('common.select_month')" v-model="selectedIncomeMonth"
                   @update:model-value="fetchMonthlyIncomes" :items="months" item-title="name"
                   item-value="value"></v-select>
               </v-col>
               <v-col cols="3" md="3">
-                <v-select label="Selecione o Ano" v-model="selectedIncomeYear" @update:model-value="fetchMonthlyIncomes"
-                  :items="years" class="year-select"></v-select>
+                <v-select :label="$t('common.year')" v-model="selectedIncomeYear"
+                  @update:model-value="fetchMonthlyIncomes" :items="years" class="year-select"></v-select>
               </v-col>
             </v-row>
             <v-divider class="my-4"></v-divider>
@@ -56,69 +56,69 @@
               <income-item v-for="(income, index) in monthlyIncomes" :key="index" :income="income"
                 @toggle-recurring="toggleRecurring" @deleteIncome="deleteIncome"></income-item>
             </v-list>
-            <v-alert v-else color="primary" type="info"> Nenhuma entrada encontrada para este mês. </v-alert>
+            <v-alert v-else color="primary" type="info">
+              {{ $t('income.no_entries') }}
+            </v-alert>
           </v-card-text>
         </v-card>
-
       </v-col>
 
-      <!-- Coluna Direita: Listas de Entradas e Débitos -->
+      <!-- Coluna Direita: Listas de Entrada e Débitos -->
       <v-col cols="12" md="6">
-
         <!-- Seção de Débitos -->
         <v-card class="section">
           <v-card-title>
-            <h2>Débitos</h2>
+            <h2>{{ $t('expense.title') }}</h2>
           </v-card-title>
           <v-card-text>
             <v-row>
               <v-col cols="12" sm="6" md="6">
-                <v-text-field label="Data" type="date" v-model="expense.date"></v-text-field>
+                <v-text-field :label="$t('common.date')" type="date" v-model="expense.date"></v-text-field>
               </v-col>
               <v-col cols="12" sm="6" md="6">
-                <v-text-field label="Valor" type="number" v-model="expense.amount" :rules="[
-                  (value) => !!value || 'Valor é obrigatório',
-                  (value) => /^\d+(\.\d{1,2})?$/.test(value) || 'Formato de moeda inválido'
+                <v-text-field :label="$t('common.amount')" type="number" v-model="expense.amount" :rules="[
+                  (value) => !!value || $t('validation.required', { field: $t('common.amount') }),
+                  (value) => /^\d+(\.\d{1,2})?$/.test(value) || $t('validation.invalid_currency')
                 ]"></v-text-field>
               </v-col>
               <v-col cols="12" md="12">
-                <v-text-field label="Descrição" v-model="expense.description"></v-text-field>
+                <v-text-field :label="$t('common.description')" v-model="expense.description"></v-text-field>
               </v-col>
               <v-col cols="12" sm="6" md="6">
-                <v-select label="Categoria" v-model="expense.category" :items="categories" item-title="name"
-                  item-value="id"></v-select>
+                <v-select :label="$t('common.category')" v-model="expense.category" :items="categories"
+                  item-title="name" item-value="id"></v-select>
               </v-col>
               <v-col cols="12" sm="6" md="6">
-                <v-select label="Método de Pagamento" v-model="expense.paymentMethod" :items="paymentMethods"
+                <v-select :label="$t('common.payment_method')" v-model="expense.paymentMethod" :items="paymentMethods"
                   item-title="name" item-value="id"></v-select>
               </v-col>
               <v-col cols="12" md="12">
-                <v-select label="Selecione o Grupo" v-model="selectedGroup" :items="groups" item-title="name"
+                <v-select :label="$t('common.select_group')" v-model="selectedGroup" :items="groups" item-title="name"
                   item-value="id" @update:model-value="fetchGroupMembers"></v-select>
-                <v-select label="Compartilhar com Usuários do Grupo" v-model="expense.selectedUsers" :items="users"
+                <v-select :label="$t('expense.share_with_group')" v-model="expense.selectedUsers" :items="users"
                   item-title="name" item-value="id" multiple></v-select>
               </v-col>
             </v-row>
           </v-card-text>
           <v-card-actions>
-            <v-btn color="primary" @click="saveExpense">Salvar Débito</v-btn>
+            <v-btn color="primary" @click="saveExpense">{{ $t('expense.save') }}</v-btn>
           </v-card-actions>
         </v-card>
 
         <!-- Lista de Débitos Mensais -->
         <v-card class="section">
           <v-card-title>
-            <h2>Débitos Mensais</h2>
+            <h2>{{ $t('expense.monthly_title') }}</h2>
           </v-card-title>
           <v-card-text>
             <v-row align="center">
               <v-col cols="9" md="9">
-                <v-select label="Selecione o Mês" v-model="selectedExpenseMonth"
+                <v-select :label="$t('common.select_month')" v-model="selectedExpenseMonth"
                   @update:model-value="fetchMonthlyExpenses" :items="months" item-title="name"
                   item-value="value"></v-select>
               </v-col>
               <v-col cols="3" md="3">
-                <v-select label="Selecione o Ano" v-model="selectedExpenseYear"
+                <v-select :label="$t('common.year')" v-model="selectedExpenseYear"
                   @update:model-value="fetchMonthlyExpenses" :items="years"></v-select>
               </v-col>
             </v-row>
@@ -127,13 +127,16 @@
               <expense-item v-for="(expense, index) in monthlyExpenses" :key="index" :expense="expense"
                 @shareExpense="handleShareExpenseWithAttachment" @deleteExpense="deleteExpense"></expense-item>
             </v-list>
-            <v-alert v-else color="primary" type="info"> Nenhum débito encontrado para este mês. </v-alert>
+            <v-alert v-else color="primary" type="info">
+              {{ $t('expense.no_entries') }}
+            </v-alert>
           </v-card-text>
         </v-card>
       </v-col>
     </v-row>
   </v-container>
 </template>
+
 
 <script>
 import IncomeItem from '../components/IncomeItem.vue'

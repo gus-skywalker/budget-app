@@ -56,6 +56,11 @@ function redirectToOAuth2LoginPage() {
   window.location.href = authUrl;
 }
 
+const availableLanguages = [
+  { text: 'English', value: 'en' },
+  { text: 'Português', value: 'pt' },
+];
+
 // Função para alternar o tema
 function toggleTheme() {
   const isLightTheme = computed(() => theme.global.name.value === 'light')
@@ -129,5 +134,10 @@ function navigateToAccountAdmin() {
   background: white;
   border: 1px solid #ccc;
   z-index: 1000;
+}
+
+.language-select {
+  max-width: 120px;
+  font-size: 0.9rem;
 }
 </style>

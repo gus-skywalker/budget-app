@@ -1,27 +1,30 @@
 <template>
   <v-container>
-    <h1>Administração de Conta</h1>
+    <h1>{{ $t('account_management') }}</h1>
     <v-container>
       <v-row>
         <v-col cols="12" md="6">
-          <h2>Informações Básicas do Perfil</h2>
+          <h2>{{ $t('basic_profile_information') }}</h2>
           <v-form>
-            <v-text-field v-model="username" label="Nome de Usuário"></v-text-field>
-            <v-text-field v-model="email" label="Email" type="email"></v-text-field>
-            <v-file-input v-model="avatar" label="Foto de Perfil"></v-file-input>
-            <v-btn @click="saveProfile">Salvar Mudanças</v-btn>
+            <v-text-field v-model="username" :label="$t('username_label')"></v-text-field>
+            <v-text-field v-model="email" :label="$t('email_label')" type="email"></v-text-field>
+            <v-file-input v-model="avatar" :label="$t('profile_picture_label')"></v-file-input>
+            <v-select v-model="$i18n.locale" :items="availableLanguages" item-title="text" item-value="value"
+              :label="$t('language_label')" dense outlined></v-select>
+            <v-btn @click="saveProfile">{{ $t('save_changes') }}</v-btn>
           </v-form>
         </v-col>
 
         <v-col cols="12" md="6">
-          <h2>Segurança</h2>
+          <h2>{{ $t('security') }}</h2>
           <v-form>
-            <v-text-field v-model="currentPassword" label="Senha Atual" type="password"></v-text-field>
-            <v-text-field v-model="newPassword" label="Nova Senha" type="password"></v-text-field>
-            <v-btn @click="changePassword">Alterar Senha</v-btn>
+            <v-text-field v-model="currentPassword" :label="$t('current_password_label')"
+              type="password"></v-text-field>
+            <v-text-field v-model="newPassword" :label="$t('new_password_label')" type="password"></v-text-field>
+            <v-btn @click="changePassword">{{ $t('change_password') }}</v-btn>
           </v-form>
 
-          <v-switch v-model="twoFactorAuth" label="Autenticação de Dois Fatores"></v-switch>
+          <v-switch v-model="twoFactorAuth" :label="$t('two_factor_auth_label')"></v-switch>
         </v-col>
       </v-row>
 
@@ -34,18 +37,17 @@
 
       <v-row>
         <v-col cols="12" md="6">
-          <h2>Preferências</h2>
-          <v-switch v-model="notificationEmail" label="Notificações por Email"></v-switch>
-          <v-switch v-model="notificationPush" label="Notificações Push"></v-switch>
-          <v-switch v-model="darkTheme" label="Tema Escuro"></v-switch>
+          <h2>{{ $t('preferences') }}</h2>
+          <v-switch v-model="notificationEmail" :label="$t('email_notifications_label')"></v-switch>
+          <v-switch v-model="notificationPush" :label="$t('push_notifications_label')"></v-switch>
+          <v-switch v-model="darkTheme" :label="$t('dark_theme_label')"></v-switch>
         </v-col>
 
         <v-col cols="12" md="6">
-          <h2>Conexões de Conta</h2>
-          <v-btn @click="connectGoogle">Conectar Conta Google</v-btn>
-          <v-btn @click="disconnectGoogle">Desconectar Conta Google</v-btn>
+          <h2>{{ $t('account_connections') }}</h2>
+          <v-btn @click="connectGoogle">{{ $t('connect_google') }}</v-btn>
+          <v-btn @click="disconnectGoogle">{{ $t('disconnect_google') }}</v-btn>
 
-          <!-- Adicionando uma linha de divisão entre Google e Bancos -->
           <v-divider class="my-4"></v-divider>
 
           <!-- Cartões de Bancos -->
@@ -54,18 +56,18 @@
               <v-card @mouseover="highlightCard('Nubank')" @mouseleave="highlightCard('')"
                 @click="openBankDialog('Nubank')" class="bank-card" :class="{ selected: selectedBank === 'Nubank' }">
                 <v-img src="banks/nubank-logo.png" aspect-ratio="1"></v-img>
-                <v-card-text>Nubank</v-card-text>
+                <v-card-text>{{ $t('nubank') }}</v-card-text>
               </v-card>
               <v-card @mouseover="highlightCard('Banco do Brasil')" @mouseleave="highlightCard('')"
                 @click="openBankDialog('Banco do Brasil')" class="bank-card"
                 :class="{ selected: selectedBank === 'Banco do Brasil' }">
                 <v-img src="banks/bb-logo.webp" aspect-ratio="1"></v-img>
-                <v-card-text>Banco do Brasil</v-card-text>
+                <v-card-text>{{ $t('banco_do_brasil') }}</v-card-text>
               </v-card>
               <v-card @mouseover="highlightCard('Itaú')" @mouseleave="highlightCard('')" @click="openBankDialog('Itaú')"
                 class="bank-card" :class="{ selected: selectedBank === 'Itaú' }">
                 <v-img src="banks/itau-logo.jpg" aspect-ratio="1"></v-img>
-                <v-card-text>Itaú</v-card-text>
+                <v-card-text>{{ $t('itau') }}</v-card-text>
               </v-card>
             </div>
             <div class="card-name" v-if="highlightedCard">
@@ -75,22 +77,23 @@
         </v-col>
       </v-row>
     </v-container>
+
     <!-- Diálogo de Login do Banco -->
     <v-dialog v-model="bankDialog" max-width="500">
       <v-card>
         <v-card-title>
           <v-icon color="primary" class="mr-2">mdi-lock</v-icon>
-          <span class="headline">Conectar a {{ selectedBank }}</span>
+          <span class="headline">{{ $t('connect_to_bank', { selectedBank }) }}</span>
         </v-card-title>
         <v-card-text>
           <v-form>
-            <v-text-field v-model="bankLogin" label="Login"></v-text-field>
-            <v-text-field v-model="bankPassword" label="Senha" type="password"></v-text-field>
+            <v-text-field v-model="bankLogin" :label="$t('bank_login_label')"></v-text-field>
+            <v-text-field v-model="bankPassword" :label="$t('bank_password_label')" type="password"></v-text-field>
           </v-form>
         </v-card-text>
         <v-card-actions>
-          <v-btn @click="authenticateBank">Conectar</v-btn>
-          <v-btn @click="closeBankDialog">Cancelar</v-btn>
+          <v-btn @click="authenticateBank">{{ $t('connect') }}</v-btn>
+          <v-btn @click="closeBankDialog">{{ $t('cancel') }}</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -100,17 +103,14 @@
       <v-card>
         <v-card-title>
           <v-icon color="primary" class="mr-2">mdi-alert</v-icon>
-          <span class="headline">Gerar Novo Certificado</span>
+          <span class="headline">{{ $t('generate_certificate') }}</span>
         </v-card-title>
         <v-card-text>
-          <p>
-            Você precisa gerar um novo certificado para se autenticar. Deseja gerar um novo código
-            de verificação?
-          </p>
-          <v-btn @click="requestCode">Enviar Código</v-btn>
+          <p>{{ $t('generate_certificate_description') }}</p>
+          <v-btn @click="requestCode">{{ $t('send_code') }}</v-btn>
         </v-card-text>
         <v-card-actions>
-          <v-btn @click="closeCertDialog">Cancelar</v-btn>
+          <v-btn @click="closeCertDialog">{{ $t('cancel') }}</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -120,17 +120,17 @@
       <v-card>
         <v-card-title>
           <v-icon color="primary" class="mr-2">mdi-lock</v-icon>
-          <span class="headline">Código de Verificação</span>
+          <span class="headline">{{ $t('verification_code') }}</span>
         </v-card-title>
         <v-card-text>
-          <p>Insira o código de verificação recebido por e-mail:</p>
+          <p>{{ $t('verification_code_description') }}</p>
           <v-form>
-            <v-text-field v-model="verificationCode" label="Código de Verificação"></v-text-field>
+            <v-text-field v-model="verificationCode" :label="$t('verification_code_label')"></v-text-field>
           </v-form>
         </v-card-text>
         <v-card-actions>
-          <v-btn @click="verifyCode">Verificar Código</v-btn>
-          <v-btn @click="closeVerificationDialog">Cancelar</v-btn>
+          <v-btn @click="verifyCode">{{ $t('verify_code') }}</v-btn>
+          <v-btn @click="closeVerificationDialog">{{ $t('cancel') }}</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -176,6 +176,11 @@ const highlightedCard = ref('')
 
 const verificationCode = ref('')
 const sessionId = ref('')
+
+const availableLanguages = [
+  { text: 'English', value: 'en' },
+  { text: 'Português', value: 'pt' },
+];
 
 // Funções para manipular as ações do usuário
 const saveProfile = () => {

@@ -2,27 +2,28 @@
     <v-container>
         <v-row>
             <v-col cols="12" md="6">
-                <h2>Gerenciamento de Assinatura</h2>
-                <p><strong>Plano atual:</strong> {{ currentPlanText }}</p>
-                <p><strong>Status:</strong> {{ statusText }}</p>
+                <h2>{{ $t('subscription_management.title') }}</h2>
+                <p><strong>{{ $t('subscription_management.current_plan') }}:</strong> {{ currentPlanText }}</p>
+                <p><strong>{{ $t('subscription_management.status') }}:</strong> {{ statusText }}</p>
 
-                <p>Selecione um novo plano caso deseje alterar sua assinatura: Você será redirecionado ao portal para
-                    concluir a mudança.</p>
+                <p>{{ $t('subscription_management.change_plan_instructions') }}</p>
 
                 <v-radio-group v-model="selectedPlan">
-                    <v-radio label="Plano Mensal - R$29,90" value="monthly"
+                    <v-radio :label="$t('subscription_management.plans.monthly')" value="monthly"
                         :disabled="currentPlan === 'monthly'"></v-radio>
-                    <v-radio label="Plano Anual - R$299,00" value="annual"
+                    <v-radio :label="$t('subscription_management.plans.annual')" value="annual"
                         :disabled="currentPlan === 'annual'"></v-radio>
                 </v-radio-group>
 
                 <v-btn v-if="subscriptionStatus === 'active'" @click="openBillingPortal">
-                    {{ selectedPlan ? 'Alterar para ' + selectedPlanText : 'Gerenciar Assinatura no Portal' }}
+                    {{ selectedPlan
+                        ? $t('subscription_management.change_to', { plan: selectedPlanText })
+                        : $t('subscription_management.manage_subscription') }}
                 </v-btn>
 
                 <!-- Botão de Cancelar Assinatura -->
                 <v-btn v-if="subscriptionStatus === 'active'" color="error" @click="cancelSubscription">
-                    Cancelar Assinatura
+                    {{ $t('subscription_management.cancel_subscription') }}
                 </v-btn>
             </v-col>
         </v-row>

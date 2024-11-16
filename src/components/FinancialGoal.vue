@@ -4,43 +4,45 @@
       <v-col>
         <v-card class="pa-5">
           <v-card-title>
-            <h2>Objetivos Financeiros</h2>
+            <h2>{{ $t('financial_goals.title') }}</h2>
           </v-card-title>
           <v-card-text>
             <!-- Formulário para adicionar ou editar metas -->
             <v-form v-if="isAddingOrEditing" @submit.prevent="submitGoalForm">
-              <v-text-field label="Nome do Objetivo" v-model="goalForm.name" required outlined
+              <v-text-field :label="$t('financial_goals.goal_name')" v-model="goalForm.name" required outlined
                 class="mb-4"></v-text-field>
 
               <!-- Campo de Categoria -->
-              <v-select label="Categoria" v-model="goalForm.category" :items="categories" item-title="name"
-                item-value="code" @update:modelValue="onCategoryChange" outlined class="mb-4"></v-select>
+              <v-select :label="$t('financial_goals.category')" v-model="goalForm.category" :items="categories"
+                item-title="name" item-value="code" @update:modelValue="onCategoryChange" outlined
+                class="mb-4"></v-select>
 
-              <v-text-field label="Valor Alvo" v-model="goalForm.targetAmount" @update:modelValue="suggestDeadline"
-                type="number" required outlined class="mb-4"></v-text-field>
+              <v-text-field :label="$t('financial_goals.target_amount')" v-model="goalForm.targetAmount"
+                @update:modelValue="suggestDeadline" type="number" required outlined class="mb-4"></v-text-field>
 
-              <v-text-field label="Valor Inicial" v-model="goalForm.initialAmount" @update:modelValue="suggestDeadline"
-                type="number" outlined class="mb-4"></v-text-field>
-
-              <v-text-field label="Contribuição Periódica" v-model="goalForm.contributionFrequency"
+              <v-text-field :label="$t('financial_goals.initial_amount')" v-model="goalForm.initialAmount"
                 @update:modelValue="suggestDeadline" type="number" outlined class="mb-4"></v-text-field>
 
-              <v-select label="Periodicidade" v-model="goalForm.periodicity" :items="['weekly', 'monthly']"
-                @update:modelValue="suggestDeadline" outlined class="mb-4"></v-select>
+              <v-text-field :label="$t('financial_goals.contribution_frequency')"
+                v-model="goalForm.contributionFrequency" @update:modelValue="suggestDeadline" type="number" outlined
+                class="mb-4"></v-text-field>
+
+              <v-select :label="$t('financial_goals.periodicity')" v-model="goalForm.periodicity"
+                :items="['weekly', 'monthly']" @update:modelValue="suggestDeadline" outlined class="mb-4"></v-select>
 
               <!-- Data Limite (preenchida automaticamente) -->
-              <v-text-field label="Data Limite" v-model="goalForm.deadline" type="date" readonly outlined
-                class="mb-4"></v-text-field>
+              <v-text-field :label="$t('financial_goals.deadline')" v-model="goalForm.deadline" type="date" readonly
+                outlined class="mb-4"></v-text-field>
 
               <v-row justify="center" class="mb-4">
                 <v-col cols="auto">
                   <v-btn type="submit" color="primary">
-                    {{ isEditing ? 'Atualizar' : 'Adicionar' }}
+                    {{ isEditing ? $t('financial_goals.update') : $t('financial_goals.add') }}
                   </v-btn>
                 </v-col>
                 <v-col cols="auto">
                   <v-btn type="button" @click="cancelEdit" color="secondary">
-                    Cancelar
+                    {{ $t('common.cancel') }}
                   </v-btn>
                 </v-col>
               </v-row>
@@ -50,7 +52,7 @@
 
             <!-- Botão para adicionar uma nova meta -->
             <v-btn v-if="!isAddingOrEditing" @click="addNewGoal" color="primary" class="mt-4">
-              Novo Objetivo
+              {{ $t('financial_goals.new_goal') }}
             </v-btn>
 
             <!-- Lista de objetivos financeiros -->
@@ -60,20 +62,25 @@
                   <v-col>
                     <v-list-item-title>{{ goal.name }}</v-list-item-title>
                     <v-list-item-subtitle>
-                      Quantidade Almejada: ${{ goal.targetAmount }} | Data Limite: {{ goal.deadline }}
+                      {{ $t('financial_goals.target_amount_label') }}: ${{ goal.targetAmount }} |
+                      {{ $t('financial_goals.deadline_label') }}: {{ goal.deadline }}
                     </v-list-item-subtitle>
                     <!-- Progresso da meta -->
                     <v-progress-linear :value="calculateProgress(goal)"></v-progress-linear>
-                    <div>Progresso: {{ calculateProgress(goal) }}%</div>
+                    <div>{{ $t('financial_goals.progress') }}: {{ calculateProgress(goal) }}%</div>
 
                     <!-- Adicionar uma seção para o histórico de contribuições -->
                     <v-row v-if="selectedGoalContributions.length">
                       <v-col>
-                        <h3>Histórico de Contribuições</h3>
+                        <h3>{{ $t('financial_goals.contribution_history') }}</h3>
                         <v-list>
                           <v-list-item v-for="contribution in selectedGoalContributions" :key="contribution.id">
-                            <v-list-item-title>Valor: ${{ contribution.amount }}</v-list-item-title>
-                            <v-list-item-subtitle>Data: {{ contribution.date }}</v-list-item-subtitle>
+                            <v-list-item-title>
+                              {{ $t('financial_goals.amount') }}: ${{ contribution.amount }}
+                            </v-list-item-title>
+                            <v-list-item-subtitle>
+                              {{ $t('financial_goals.date') }}: {{ contribution.date }}
+                            </v-list-item-subtitle>
                             <v-list-item-action>
                               <v-btn icon @click="deleteContribution(contribution.id)">
                                 <v-icon>mdi-delete</v-icon>
@@ -89,7 +96,7 @@
 
                     <!-- Exibir se a meta é viável ou não -->
                     <v-alert v-if="!isGoalFeasible(goal)" type="warning">
-                      Este objetivo não é viável com a contribuição atual e o tempo restante.
+                      {{ $t('financial_goals.not_feasible') }}
                     </v-alert>
                   </v-col>
                   <v-col class="d-flex justify-end">
@@ -106,7 +113,9 @@
             </v-list>
 
             <!-- Alerta para quando não houver metas -->
-            <v-alert v-else color="primary" type="info" class="mt-4"> Nenhum objetivo financeiro encontrado. </v-alert>
+            <v-alert v-else color="primary" type="info" class="mt-4">
+              {{ $t('financial_goals.no_goals') }}
+            </v-alert>
           </v-card-text>
         </v-card>
       </v-col>

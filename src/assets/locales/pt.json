@@ -1,0 +1,143 @@
+{
+  "welcome": "Bem-vindo ao Aplicativo de Orçamento",
+  "login": "Entrar",
+  "logout": "Sair",
+
+  "account_management": "Administração de Conta",
+  "basic_profile_information": "Informações Básicas do Perfil",
+  "security": "Segurança",
+  "preferences": "Preferências",
+  "account_connections": "Conexões de Conta",
+  "username_label": "Nome de Usuário",
+  "email_label": "Email",
+  "profile_picture_label": "Foto de Perfil",
+  "language_label": "Idioma",
+  "save_changes": "Salvar Mudanças",
+  "current_password_label": "Senha Atual",
+  "new_password_label": "Nova Senha",
+  "change_password": "Alterar Senha",
+  "two_factor_auth_label": "Autenticação de Dois Fatores",
+  "email_notifications_label": "Notificações por Email",
+  "push_notifications_label": "Notificações Push",
+  "dark_theme_label": "Tema Escuro",
+  "connect_google": "Conectar Conta Google",
+  "disconnect_google": "Desconectar Conta Google",
+  "nubank": "Nubank",
+  "banco_do_brasil": "Banco do Brasil",
+  "itau": "Itaú",
+  "connect_to_bank": "Conectar a {{ selectedBank }}",
+  "bank_login_label": "Login",
+  "bank_password_label": "Senha",
+  "cancel": "Cancelar",
+  "generate_certificate": "Gerar Novo Certificado",
+  "verification_code_label": "Código de Verificação",
+  "verify_code": "Verificar Código",
+  "send_code": "Enviar Código",
+
+  "subscription_management": {
+    "title": "Gerenciamento de Assinatura",
+    "current_plan": "Plano atual",
+    "status": "Status",
+    "change_plan_instructions": "Selecione um novo plano caso deseje alterar sua assinatura. Você será redirecionado ao portal para concluir a mudança.",
+    "plans": {
+      "monthly": "Plano Mensal - R$29,90/mês",
+      "annual": "Plano Anual - R$299,00/ano"
+    },
+    "change_to": "Alterar para {plan}",
+    "manage_subscription": "Gerenciar Assinatura no Portal",
+    "cancel_subscription": "Cancelar Assinatura",
+    "statuses": {
+      "active": "Ativa",
+      "trialing": "Período de Teste",
+      "canceled": "Cancelada ao Final do Período",
+      "inactive": "Inativa"
+    }
+  },
+
+  "accounting": {
+    "title": "Sua Contabilidade"
+  },
+  "income": {
+    "title": "Entradas",
+    "save": "Salvar Entrada",
+    "monthly_title": "Entradas Mensais",
+    "no_entries": "Nenhuma entrada encontrada para este mês."
+  },
+  "expense": {
+    "title": "Débitos",
+    "save": "Salvar Débito",
+    "monthly_title": "Débitos Mensais",
+    "no_entries": "Nenhum débito encontrado para este mês.",
+    "share_with_group": "Compartilhar com Usuários do Grupo"
+  },
+  "common": {
+    "date": "Data",
+    "amount": "Valor",
+    "description": "Descrição",
+    "payment_method": "Método de Pagamento",
+    "category": "Categoria",
+    "select_group": "Selecione o Grupo",
+    "select_month": "Selecione o Mês",
+    "year": "Ano",
+    "close": "Fechar",
+    "cancel": "Cancelar"
+  },
+  "validation": {
+    "required": "{field} é obrigatório",
+    "invalid_currency": "Formato de moeda inválido"
+  },
+
+  "overview": {
+    "title": "Visão Geral",
+    "total_income": "Total de Entradas",
+    "total_expenses": "Total de Débitos",
+    "savings": "Economias"
+  },
+  "trends": {
+    "title": "Tendências ao Longo do Tempo",
+    "select_chart_type": "Selecione o Tipo de Gráfico",
+    "select_time_period": "Selecione o Período de Tempo",
+    "select_expense_category": "Selecione a Categoria de Débito"
+  },
+  "budget_tracker": {
+    "title": "Rastreador de Orçamento"
+  },
+
+  "group_management": {
+    "title": "Administração de Grupos",
+    "create_group": "Criar Grupo",
+    "group_name": "Nome do Grupo",
+    "group_description": "Descrição do Grupo",
+    "create_group_button": "Criar Grupo",
+    "manage_members": "Gerenciar Membros",
+    "select_group": "Selecione o Grupo",
+    "user_email": "Email do Usuário",
+    "invite_member": "Convidar Membro",
+    "group_members": "Membros do Grupo",
+    "no_members": "Nenhum membro no grupo selecionado.",
+    "success_message": "Operação concluída com sucesso.",
+    "error_message": "Ocorreu um erro. Tente novamente."
+  },
+
+  "financial_goals": {
+    "title": "Metas Financeiras",
+    "goal_name": "Nome do Objetivo",
+    "category": "Categoria",
+    "target_amount": "Valor Alvo",
+    "initial_amount": "Valor Inicial",
+    "contribution_frequency": "Contribuição Periódica",
+    "periodicity": "Periodicidade",
+    "deadline": "Data Limite",
+    "update": "Atualizar",
+    "add": "Adicionar",
+    "new_goal": "Novo Objetivo",
+    "progress": "Progresso",
+    "contribution_history": "Histórico de Contribuições",
+    "amount": "Valor",
+    "date": "Data",
+    "target_amount_label": "Quantidade Almejada",
+    "deadline_label": "Data Limite",
+    "not_feasible": "Este objetivo não é viável com a contribuição atual e o tempo restante.",
+    "no_goals": "Nenhuma meta financeira encontrada."
+  }
+}

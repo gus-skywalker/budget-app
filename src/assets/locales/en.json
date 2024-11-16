@@ -1,0 +1,143 @@
+{
+  "welcome": "Welcome to the Budget App",
+  "login": "Login",
+  "logout": "Logout",
+
+  "account_management": "Account Management",
+  "basic_profile_information": "Basic Profile Information",
+  "security": "Security",
+  "preferences": "Preferences",
+  "account_connections": "Account Connections",
+  "username_label": "Username",
+  "email_label": "Email",
+  "profile_picture_label": "Profile Picture",
+  "language_label": "Language",
+  "save_changes": "Save Changes",
+  "current_password_label": "Current Password",
+  "new_password_label": "New Password",
+  "change_password": "Change Password",
+  "two_factor_auth_label": "Two-Factor Authentication",
+  "email_notifications_label": "Email Notifications",
+  "push_notifications_label": "Push Notifications",
+  "dark_theme_label": "Dark Theme",
+  "connect_google": "Connect Google Account",
+  "disconnect_google": "Disconnect Google Account",
+  "nubank": "Nubank",
+  "banco_do_brasil": "Bank of Brazil",
+  "itau": "Itaú",
+  "connect_to_bank": "Connect to {{ selectedBank }}",
+  "bank_login_label": "Login",
+  "bank_password_label": "Password",
+  "cancel": "Cancel",
+  "generate_certificate": "Generate New Certificate",
+  "verification_code_label": "Verification Code",
+  "verify_code": "Verify Code",
+  "send_code": "Send Code",
+
+  "subscription_management": {
+    "title": "Subscription Management",
+    "current_plan": "Current Plan",
+    "status": "Status",
+    "change_plan_instructions": "Select a new plan if you wish to change your subscription. You will be redirected to the portal to complete the change.",
+    "plans": {
+      "monthly": "Monthly Plan - $29.90/month",
+      "annual": "Annual Plan - $299.00/year"
+    },
+    "change_to": "Change to {plan}",
+    "manage_subscription": "Manage Subscription in Portal",
+    "cancel_subscription": "Cancel Subscription",
+    "statuses": {
+      "active": "Active",
+      "trialing": "Trial Period",
+      "canceled": "Canceled at End of Period",
+      "inactive": "Inactive"
+    }
+  },
+
+  "accounting": {
+    "title": "Your Accounting"
+  },
+  "income": {
+    "title": "Incomes",
+    "save": "Save Income",
+    "monthly_title": "Monthly Incomes",
+    "no_entries": "No entries found for this month."
+  },
+  "expense": {
+    "title": "Expenses",
+    "save": "Save Expense",
+    "monthly_title": "Monthly Expenses",
+    "no_entries": "No expenses found for this month.",
+    "share_with_group": "Share with Group Users"
+  },
+  "common": {
+    "date": "Date",
+    "amount": "Amount",
+    "description": "Description",
+    "payment_method": "Payment Method",
+    "category": "Category",
+    "select_group": "Select Group",
+    "select_month": "Select Month",
+    "year": "Year",
+    "close": "Close",
+    "cancel": "Cancel"
+  },
+  "validation": {
+    "required": "{field} is required",
+    "invalid_currency": "Invalid currency format"
+  },
+
+  "overview": {
+    "title": "Overview",
+    "total_income": "Total Income",
+    "total_expenses": "Total Expenses",
+    "savings": "Savings"
+  },
+  "trends": {
+    "title": "Trends Over Time",
+    "select_chart_type": "Select Chart Type",
+    "select_time_period": "Select Time Period",
+    "select_expense_category": "Select Expense Category"
+  },
+  "budget_tracker": {
+    "title": "Budget Tracker"
+  },
+
+  "group_management": {
+    "title": "Group Management",
+    "create_group": "Create Group",
+    "group_name": "Group Name",
+    "group_description": "Group Description",
+    "create_group_button": "Create Group",
+    "manage_members": "Manage Members",
+    "select_group": "Select Group",
+    "user_email": "User Email",
+    "invite_member": "Invite Member",
+    "group_members": "Group Members",
+    "no_members": "No members in the selected group.",
+    "success_message": "Operation completed successfully.",
+    "error_message": "An error occurred. Please try again."
+  },
+
+  "financial_goals": {
+    "title": "Financial Goals",
+    "goal_name": "Goal Name",
+    "category": "Category",
+    "target_amount": "Target Amount",
+    "initial_amount": "Initial Amount",
+    "contribution_frequency": "Contribution Amount",
+    "periodicity": "Periodicity",
+    "deadline": "Deadline",
+    "update": "Update",
+    "add": "Add",
+    "new_goal": "New Goal",
+    "progress": "Progress",
+    "contribution_history": "Contribution History",
+    "amount": "Amount",
+    "date": "Date",
+    "target_amount_label": "Target Amount",
+    "deadline_label": "Deadline",
+    "not_feasible": "This goal is not feasible with the current contribution and time remaining.",
+    "no_goals": "No financial goals found."
+  }
+}

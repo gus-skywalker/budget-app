@@ -1,19 +1,20 @@
 <template>
   <v-container>
-    <h1>Administração de Grupos</h1>
+    <h1>{{ $t('group_management.title') }}</h1>
     <v-row>
       <!-- Coluna para criar grupo -->
       <v-col cols="12" md="6">
         <v-card class="section">
           <v-card-title>
-            <h2>Criar Grupo</h2>
+            <h2>{{ $t('group_management.create_group') }}</h2>
           </v-card-title>
           <v-card-text>
-            <v-text-field label="Nome do Grupo" v-model="newGroup.name"></v-text-field>
-            <v-text-field label="Descrição" v-model="newGroup.description"></v-text-field>
+            <v-text-field :label="$t('group_management.group_name')" v-model="newGroup.name"></v-text-field>
+            <v-text-field :label="$t('group_management.group_description')"
+              v-model="newGroup.description"></v-text-field>
           </v-card-text>
           <v-card-actions>
-            <v-btn color="primary" @click="createGroup">Criar Grupo</v-btn>
+            <v-btn color="primary" @click="createGroup">{{ $t('group_management.create_group_button') }}</v-btn>
           </v-card-actions>
         </v-card>
       </v-col>
@@ -22,26 +23,30 @@
       <v-col cols="12" md="6">
         <v-card class="section">
           <v-card-title>
-            <h2>Gerenciar Membros</h2>
+            <h2>{{ $t('group_management.manage_members') }}</h2>
           </v-card-title>
           <v-card-text>
-            <v-select label="Selecione o Grupo" v-model="selectedGroup" :items="groups" item-title="name"
-              item-value="id" @update:model-value="fetchGroupMembers"></v-select>
-            <v-text-field label="Email do Usuário" v-model="inviteEmail"></v-text-field>
+            <v-select :label="$t('group_management.select_group')" v-model="selectedGroup" :items="groups"
+              item-title="name" item-value="id" @update:model-value="fetchGroupMembers"></v-select>
+            <v-text-field :label="$t('group_management.user_email')" v-model="inviteEmail"></v-text-field>
           </v-card-text>
           <v-card-actions>
-            <v-btn color="primary" @click="inviteMember">Convidar Membro</v-btn>
+            <v-btn color="primary" @click="inviteMember">{{ $t('group_management.invite_member') }}</v-btn>
           </v-card-actions>
           <v-card-title>
-            <h2>Membros do Grupo</h2>
+            <h2>{{ $t('group_management.group_members') }}</h2>
           </v-card-title>
           <v-card-text>
             <v-list v-if="groupMembers.length">
               <v-list-item v-for="(member, index) in groupMembers" :key="index">
-                <v-list-item-title>{{ member.name }} - {{ member.email }}</v-list-item-title>
+                <v-list-item-title>
+                  {{ member.name }} - {{ member.email }}
+                </v-list-item-title>
               </v-list-item>
             </v-list>
-            <v-alert v-else color="primary" type="info"> Nenhum membro no grupo selecionado. </v-alert>
+            <v-alert v-else color="primary" type="info">
+              {{ $t('group_management.no_members') }}
+            </v-alert>
           </v-card-text>
         </v-card>
       </v-col>
@@ -49,17 +54,18 @@
 
     <!-- Snackbar para mensagens de sucesso -->
     <v-snackbar v-model="successSnackbar" color="success">
-      {{ successMessage }}
-      <v-btn color="white" text @click="successSnackbar = false">Fechar</v-btn>
+      {{ $t('group_management.success_message') }}
+      <v-btn color="white" text @click="successSnackbar = false">{{ $t('common.close') }}</v-btn>
     </v-snackbar>
 
     <!-- Snackbar para mensagens de erro -->
     <v-snackbar v-model="errorSnackbar" color="error">
-      {{ errorMessage }}
-      <v-btn color="white" text @click="errorSnackbar = false">Fechar</v-btn>
+      {{ $t('group_management.error_message') }}
+      <v-btn color="white" text @click="errorSnackbar = false">{{ $t('common.close') }}</v-btn>
     </v-snackbar>
   </v-container>
 </template>
+
 
 <script>
 import GroupService from '@/services/GroupService'

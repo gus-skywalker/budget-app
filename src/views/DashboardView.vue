@@ -3,33 +3,34 @@
     <!-- Overview Section -->
     <v-card class="section">
       <v-card-title>
-        <h2>Overview</h2>
+        <h2>{{ $t('overview.title') }}</h2>
       </v-card-title>
       <v-card-text>
-        <div>Total Income: {{ overview.totalIncome }}</div>
-        <div>Total Expenses: {{ overview.totalExpense }}</div>
-        <div>Savings: {{ overview.savings }}</div>
+        <div>{{ $t('overview.total_income') }}: {{ overview.totalIncome }}</div>
+        <div>{{ $t('overview.total_expenses') }}: {{ overview.totalExpense }}</div>
+        <div>{{ $t('overview.savings') }}: {{ overview.savings }}</div>
       </v-card-text>
     </v-card>
 
     <!-- Trends Over Time -->
     <v-card class="section">
       <v-card-title>
-        <h2>Trends Over Time</h2>
+        <h2>{{ $t('trends.title') }}</h2>
       </v-card-title>
       <v-card-text>
         <v-row align="center">
           <v-col cols="12" md="6" lg="4">
-            <v-select label="Select Chart Type" outlined v-model="chartType" :items="chartTypes"
+            <v-select :label="$t('trends.select_chart_type')" outlined v-model="chartType" :items="chartTypes"
               @update:modelValue="updateCharts"></v-select>
           </v-col>
           <v-col cols="12" md="6" lg="4">
-            <v-select label="Select Time Period" outlined v-model="selectedTimePeriod" :items="timePeriods"
-              @update:modelValue="updateCharts"></v-select>
+            <v-select :label="$t('trends.select_time_period')" outlined v-model="selectedTimePeriod"
+              :items="timePeriods" @update:modelValue="updateCharts"></v-select>
           </v-col>
           <v-col cols="12" md="6" lg="4">
-            <v-select label="Select Expense Category" outlined v-model="selectedCategory" :items="expenseCategories"
-              item-title="name" item-value="code" @update:modelValue="updateCharts"></v-select>
+            <v-select :label="$t('trends.select_expense_category')" outlined v-model="selectedCategory"
+              :items="expenseCategories" item-title="name" item-value="code"
+              @update:modelValue="updateCharts"></v-select>
           </v-col>
         </v-row>
         <v-divider class="my-4"></v-divider>
@@ -42,7 +43,7 @@
     <!-- Budget Tracker -->
     <v-card class="section">
       <v-card-title>
-        <h2>Budget Tracker</h2>
+        <h2>{{ $t('budget_tracker.title') }}</h2>
       </v-card-title>
       <!-- Display budget for different expense categories -->
     </v-card>
@@ -50,7 +51,7 @@
     <!-- Financial Goals -->
     <v-card class="section">
       <v-card-title>
-        <h2>Financial Goals</h2>
+        <h2>{{ $t('financial_goals.title') }}</h2>
       </v-card-title>
       <v-card-text>
         <v-row v-if="financialGoals.length">
@@ -58,20 +59,23 @@
             <v-card>
               <v-card-title>{{ goal.name }}</v-card-title>
               <v-card-text>
-                <div>Target Amount: ${{ goal.targetAmount }}</div>
-                <div>Deadline: {{ goal.deadline }}</div>
-                <div>Progress: {{ calculateProgress(goal) }}%</div>
+                <div>{{ $t('financial_goals.target_amount') }}: ${{ goal.targetAmount }}</div>
+                <div>{{ $t('financial_goals.deadline') }}: {{ goal.deadline }}</div>
+                <div>{{ $t('financial_goals.progress') }}: {{ calculateProgress(goal) }}%</div>
                 <!-- Visual indicator for progress -->
                 <v-progress-linear :value="calculateProgress(goal)"></v-progress-linear>
               </v-card-text>
             </v-card>
           </v-col>
         </v-row>
-        <v-alert v-else type="info"> No financial goals found. </v-alert>
+        <v-alert v-else type="info">
+          {{ $t('financial_goals.no_goals') }}
+        </v-alert>
       </v-card-text>
     </v-card>
   </v-container>
 </template>
+
 
 <script>
 import { Chart, registerables } from 'chart.js/auto'
