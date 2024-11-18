@@ -83,7 +83,7 @@
       <v-card>
         <v-card-title>
           <v-icon color="primary" class="mr-2">mdi-lock</v-icon>
-          <span class="headline">{{ $t('connect_to_bank', { selectedBank }) }}</span>
+          <span class="headline">{{ $t('connect_to_bank', { bank: selectedBank }) }}</span>
         </v-card-title>
         <v-card-text>
           <v-form>
@@ -142,6 +142,7 @@ import { computed, ref } from 'vue';
 import { useBankStore } from '@/plugins/bankStore';
 import { useUserStore } from '@/plugins/userStore';
 import SubscriptionManagement from '@/components/SubscriptionManagement.vue';
+import BankService from '@/services/BankService';
 
 const bankStore = useBankStore();
 const userStore = useUserStore();

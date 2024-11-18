@@ -36,7 +36,7 @@
   "nubank": "Nubank",
   "banco_do_brasil": "Banco do Brasil",
   "itau": "Itaú",
-  "connect_to_bank": "Conectar a {{ selectedBank }}",
+  "connect_to_bank": "Conectar a { bank }",
   "bank_login_label": "Login",
   "bank_password_label": "Senha",
   "cancel": "Cancelar",

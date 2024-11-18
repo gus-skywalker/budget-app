@@ -125,7 +125,8 @@
             <v-divider class="my-4"></v-divider>
             <v-list v-if="monthlyExpenses.length" class="box-size-list">
               <expense-item v-for="(expense, index) in monthlyExpenses" :key="index" :expense="expense"
-                @shareExpense="handleShareExpenseWithAttachment" @deleteExpense="deleteExpense"></expense-item>
+                @attachFiles="handleAttachFiles" @removeAttachment="handleRemoveAttachment"
+                @shareExpense="handleShareExpense" @deleteExpense="deleteExpense"></expense-item>
             </v-list>
             <v-alert v-else color="primary" type="info">
               {{ $t('expense.no_entries') }}
@@ -136,7 +137,6 @@
     </v-row>
   </v-container>
 </template>
-
 
 <script>
 import IncomeItem from '../components/IncomeItem.vue'
@@ -427,80 +427,66 @@ export default {
         console.error('Invalid month selected')
       }
     },
-    handleShareExpense({ expense, email }) {
-      const userStore = useUserStore()
-
-      NotificationService.sendEmail({
-        user: {
-          email: userStore.getUser.email,
-          name: userStore.getUser.username
+    handleAttachFiles({ expense, files }) {
+      // Faça a chamada à API para salvar os arquivos
+      const expenseId = expense.id;
+      ExpenseService.uploadAttachment(expenseId, files, {
+        headers: {
+          "Content-Type": "multipart/form-data",
         },
-        expense: {
-          amount: expense.amount
+        onUploadProgress: (progressEvent) => {
+          let progress = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total,
+          );
+          console.log("Upload Progress: " + progress + "%");
         },
-        destinationEmail: email
       })
         .then(() => {
-          console.log('Email sent successfully')
+          console.log('Arquivos anexados com sucesso');
+          // Atualize a lista de anexos da despesa, se necessário
+          // Por exemplo, você pode recarregar a despesa ou atualizar o estado local
         })
         .catch((error) => {
-          console.error('Failed to send email:', error)
-        })
+          console.error('Erro ao anexar arquivos:', error);
+        });
     },
-    handleShareExpenseWithAttachment({ expense, email, files }) {
+    handleShareExpense({ expense, email }) {
+      const userStore = useUserStore();
 
-      const userStore = useUserStore()
-      const expenseId = expense.id;
-
-      console.log(email);
-      console.log(expense);
-      console.log(files);
       if (!email) {
-        console.warn('Email não informados');
+        console.warn('Email não informado');
         return;
       }
 
-      const formData = new FormData();
-      files.forEach((file) => {
-        formData.append('files', file);
-      });
-
-      const expenseJson = {
+      // Preparar os dados para o e-mail
+      const emailData = {
         user: {
           email: userStore.getUser.email,
-          name: userStore.getUser.username
+          name: userStore.getUser.username,
         },
         expense: expense,
-        destinationEmail: email
+        destinationEmail: email,
       };
 
-      // formData.append('expenseRequest', expenseJson);
-
-      // Upload Attachments
-      if (files.length > 0) {
-        console.log(formData.get("files"));
-        ExpenseService.uploadAttachment(expenseId, formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-          onUploadProgress: (progressEvent) => {
-            let progress = Math.round(
-              (progressEvent.loaded * 100) / progressEvent.total,
-            );
-            console.log("Upload Progress: " + progress + "%");
-          },
+      // Enviar o e-mail
+      NotificationService.sendEmailWithAttachment(emailData)
+        .then(() => {
+          console.log('Email enviado com sucesso');
+        })
+        .catch((error) => {
+          console.error('Erro ao enviar o email:', error);
         });
-      }
-
-      // Then Sends Email Notification
-      // NotificationService.sendEmailWithAttachment(expenseJson)
-      //   .then(() => {
-      //     console.log('Email enviados com sucesso');
-      //   })
-      //   .catch((error) => {
-      //     console.error('Erro ao enviar o email:', error);
-      //   });
-    }
+    },
+    handleRemoveAttachment({ expenseId, attachmentId }) {
+      ExpenseService.removeAttachment(expenseId, attachmentId)
+        .then(() => {
+          console.log('Anexo removido com sucesso.');
+          // Atualize a lista de despesas ou faça outras ações necessárias
+        })
+        .catch(error => {
+          console.error('Erro ao remover o anexo:', error);
+        });
+    },
   }
 }
 </script>

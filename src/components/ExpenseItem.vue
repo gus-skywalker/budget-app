@@ -19,42 +19,80 @@
         </v-list-item-subtitle>
       </v-col>
       <v-col cols="3" class="d-flex justify-end">
-        <v-btn x-small icon height="35px" width="35px" @click="isDialogOpen = true" color="primary" class="mr-2">
-          <v-icon>mdi-share-variant</v-icon>
+        <v-btn icon size="small" @click="isDialogOpen = true" color="primary" class="mr-2">
+          <v-icon size="18">mdi-share-variant</v-icon>
         </v-btn>
-        <v-btn x-small icon height="35px" width="35px" color="orange" @click="scheduleAlarm" class="mr-2">
-          <v-icon>mdi-alarm</v-icon>
+        <v-btn icon size="small" color="orange" @click="scheduleAlarm" class="mr-2">
+          <v-icon size="18">mdi-alarm</v-icon>
         </v-btn>
-        <v-btn x-small icon height="35px" width="35px" color="red" @click="$emit('deleteExpense', expense)"
-          class="mr-2">
-          <v-icon>mdi-delete</v-icon>
+        <v-btn icon size="small" color="red" @click="$emit('deleteExpense', expense)" class="mr-2">
+          <v-icon size="18">mdi-delete</v-icon>
         </v-btn>
       </v-col>
     </v-row>
-    <!-- v-dialog para inserir o email do destinatário e anexar recibos -->
-    <v-dialog v-model="isDialogOpen" max-width="500px">
+    <!-- v-dialog para anexar arquivos -->
+    <v-dialog v-model="isDialogOpen" max-width="600px">
       <v-card>
-        <v-card-title>Informe o email do destinatário e anexe recibos</v-card-title>
+        <v-card-title>Gerenciar Anexos e Compartilhar</v-card-title>
         <v-card-text>
-          <v-text-field v-model="email" label="Email" type="email" required></v-text-field>
-          <!-- Campo para selecionar múltiplos arquivos -->
-          <v-file-input v-model="files" label="Selecione os recibos" accept="image/*,.pdf" multiple
-            @change="onFilesChange" required>
-          </v-file-input>
-          <!-- Lista de arquivos selecionados -->
+          <v-text-field v-model="email" label="Email" type="email" :rules="emailRules" required></v-text-field>
+          <!-- Lista de arquivos já anexados -->
           <v-list dense>
-            <v-list-item v-for="(file, index) in files" :key="index">
+            <v-list-item v-for="(file, index) in attachedFiles" :key="file.id">
+              <v-list-item-title>
+                {{ file.fileName }}
+              </v-list-item-title>
+              <v-list-item-action>
+                <v-btn icon size="x-small" @click="downloadFile(file)">
+                  <v-icon size="18">mdi-download</v-icon>
+                </v-btn>
+                <v-btn icon size="x-small" color="red" @click="removeAttachedFile(file)">
+                  <v-icon size="18">mdi-delete</v-icon>
+                </v-btn>
+              </v-list-item-action>
+            </v-list-item>
+          </v-list>
+          <!-- Campo para selecionar múltiplos arquivos -->
+          <v-file-input ref="fileInput" label="Adicionar novos anexos" accept="image/*,.pdf" multiple
+            @change="onNewFilesChange"></v-file-input>
+          <!-- Lista de novos arquivos selecionados -->
+          <v-list dense>
+            <v-list-item v-for="(file, index) in newFiles" :key="index">
               {{ file.name }}
+              <v-btn icon size="x-small" @click="removeFile(index)">
+                <v-icon size="18">mdi-delete</v-icon>
+              </v-btn>
             </v-list-item>
           </v-list>
         </v-card-text>
+        <!-- Botões de ação -->
         <v-card-actions>
           <v-spacer></v-spacer>
+          <!-- Botão "Anexar" -->
+          <v-btn color="green" text @click="attachFiles">Anexar</v-btn>
           <v-btn color="blue darken-1" text @click="isDialogOpen = false">Cancelar</v-btn>
-          <v-btn color="blue darken-1" text @click="shareExpense">Compartilhar</v-btn>
+          <v-btn color="blue darken-1" text @click="shareExpense" :disabled="!email">Compartilhar</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- Diálogo de Confirmação de Exclusão -->
+    <v-dialog v-model="confirmDeleteDialog" max-width="500">
+      <v-card>
+        <v-card-title class="headline">
+          Confirmar Exclusão
+        </v-card-title>
+        <v-card-text>
+          Tem certeza de que deseja excluir o arquivo "{{ fileToDelete?.fileName }}"?
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="blue darken-1" text @click="confirmDeleteDialog = false">Cancelar</v-btn>
+          <v-btn color="red" text @click="confirmDeleteAttachment">Excluir</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
   </v-list-item>
 </template>
 
@@ -63,34 +101,110 @@
 export default {
   name: 'ExpenseItem',
   props: {
-    expense: Object
+    expense: Object,
   },
   data() {
     return {
       isDialogOpen: false,
       email: '',
-      files: []
-    }
+      emailRules: [
+        v => !!v || 'Email é obrigatório',
+        v => /.+@.+\..+/.test(v) || 'E-mail deve ser válido',
+      ],
+      attachedFiles: [],
+      newFiles: [],
+      confirmDeleteDialog: false,
+      fileToDelete: null,
+    };
+  },
+  mounted() {
+    this.attachedFiles = this.expense.attachments || [];
   },
   methods: {
-    // Combinar novos arquivos com os já existentes
-    onFilesChange(newFiles) {
-      if (newFiles && newFiles.length > 0) {
-        this.files = [...this.files, ...newFiles]; // Adicionando novos arquivos à lista existente
+    onNewFilesChange(event) {
+      const files = event.target.files;
+      if (!files || files.length === 0) {
+        console.warn("Nenhum arquivo selecionado.");
+        return;
       }
-      // if (newFiles && newFiles.length > 0) {
-      //   this.files = [...newFiles]; // Substitui os arquivos existentes pelos novos selecionados
-      // }
+
+      const filesArray = Array.from(files);
+
+      const uniqueFiles = filesArray.filter(newFile => {
+        const isDuplicate = this.attachedFiles.some(existingFile => existingFile.name === newFile.name);
+        if (isDuplicate) {
+          console.warn(`O arquivo "${newFile.name}" já foi adicionado.`);
+        }
+        return !isDuplicate;
+      });
+
+      this.newFiles = [...this.newFiles, ...uniqueFiles];
+
+      console.log("Arquivos selecionados:", this.newFiles);
+    },
+    removeFile(index) {
+      this.newFiles.splice(index, 1);
+    },
+    removeAttachedFile(file) {
+      // Definir o arquivo a ser excluído e abrir o diálogo de confirmação
+      this.fileToDelete = file;
+      this.confirmDeleteDialog = true;
+    },
+    confirmDeleteAttachment() {
+      if (this.fileToDelete) {
+        // Remover o arquivo da lista local
+        this.attachedFiles = this.attachedFiles.filter(
+          file => file.id !== this.fileToDelete.id
+        );
+        // Emitir evento para remover o anexo no backend
+        this.$emit('removeAttachment', {
+          expenseId: this.expense.id,
+          attachmentId: this.fileToDelete.id,
+        });
+        // Limpar o arquivo selecionado e fechar o diálogo
+        this.fileToDelete = null;
+        this.confirmDeleteDialog = false;
+      }
+    },
+    downloadFile(file) {
+      const byteCharacters = atob(file.fileData);
+      const byteNumbers = Array.from(byteCharacters).map(c => c.charCodeAt(0));
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: file.fileType });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = file.fileName;
+      link.click();
+    },
+    // Novo método para anexar arquivos
+    attachFiles() {
+      if (this.newFiles.length === 0) {
+        console.warn('Nenhum arquivo novo para anexar.');
+        return;
+      }
+
+      // Crie um objeto FormData para enviar os arquivos para o backend
+      const formData = new FormData();
+      formData.append('expenseId', this.expense.id);
+      this.newFiles.forEach(file => {
+        formData.append('files', file);
+      });
+
+      // Faça a chamada à API para salvar os arquivos
+      // Supondo que você tenha um serviço chamado 'expenseService' com o método 'attachFiles'
+      this.$emit('attachFiles', { expense: this.expense, files: formData });
+
+      // Limpe os novos arquivos após o anexo
+      this.newFiles = [];
     },
     shareExpense() {
-      if (this.email) {
-        console.log(`Compartilhando ${this.expense.description} com o email ${this.email}`)
-        console.log(this.files);
-        this.$emit('shareExpense', { expense: this.expense, email: this.email, files: this.files });
-        this.isDialogOpen = false
-      } else {
-        console.warn('Email não informado')
+      if (!this.email) {
+        console.warn('Email não informado');
+        return;
       }
+      const combinedFiles = [...this.attachedFiles, ...this.newFiles];
+      this.$emit('shareExpense', { expense: this.expense, email: this.email, files: combinedFiles });
+      this.isDialogOpen = false;
     },
     scheduleAlarm() {
       const today = new Date();
@@ -102,21 +216,25 @@ export default {
         const timeUntilAlarm = oneDayBefore - today;
         setTimeout(() => {
           console.log(`Alerta: A despesa ${this.expense.description} está próxima!`);
-          // Aqui você pode implementar a lógica de envio de email chamando uma API ou serviço backend
           this.$emit('sendReminder', this.expense);
         }, timeUntilAlarm);
         console.log(`Alarme definido para um dia antes: ${oneDayBefore}`);
       } else {
         console.warn('A data da despesa já passou ou está muito próxima para agendar o alarme.');
       }
-    }
-  }
-}
+    },
+  },
+};
 </script>
 
-<style>
+<style scoped>
 .v-btn {
-  font-size: 0.75rem;
-  padding: 0.25rem 0.5rem;
+  /* Remove o padding extra para botões icônicos */
+  padding: 4px;
+}
+
+.v-icon {
+  /* Ajusta o tamanho do ícone */
+  line-height: 18px;
 }
 </style>

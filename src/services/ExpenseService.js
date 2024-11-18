@@ -16,6 +16,9 @@ export default {
   uploadAttachment(expenseId, formData) {
     return axiosInterceptor.post(`${API_URL}/${expenseId}/attachment`, formData)
   },
+  removeAttachment(expenseId, attachmentId) {
+    return axiosInterceptor.delete(`${API_URL}/${expenseId}/attachment/${attachmentId}`)
+  },
   update(id, data) {
     return axiosInterceptor.put(`${API_URL}/${id}`, data)
   },
