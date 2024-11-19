@@ -37,6 +37,14 @@
 
       <v-row>
         <v-col cols="12" md="6">
+          <h2>{{ $t('alert_settings') }}</h2>
+          <v-form>
+            <v-select v-model="alertDays" :items="alertOptions" :label="$t('alert_days_before_label')" dense
+              outlined></v-select>
+            <v-btn @click="saveAlertSettings">{{ $t('save_changes') }}</v-btn>
+          </v-form>
+        </v-col>
+        <v-col cols="12" md="6">
           <h2>{{ $t('preferences') }}</h2>
           <v-switch v-model="notificationEmail" :label="$t('email_notifications_label')"></v-switch>
           <v-switch v-model="notificationPush" :label="$t('push_notifications_label')"></v-switch>
@@ -138,14 +146,27 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useBankStore } from '@/plugins/bankStore';
 import { useUserStore } from '@/plugins/userStore';
 import SubscriptionManagement from '@/components/SubscriptionManagement.vue';
 import BankService from '@/services/BankService';
+import NotificationService, { type UserSettings } from '@/services/NotificationService';
 
 const bankStore = useBankStore();
 const userStore = useUserStore();
+
+onMounted(async () => {
+  try {
+    const settings = await NotificationService.getAlertSettings();
+    alertDays.value = settings.alertDaysBefore;
+    notificationEmail.value = settings.notificationEmail;
+    notificationPush.value = settings.notificationPush;
+    darkTheme.value = settings.darkTheme;
+  } catch (error) {
+    console.error('Erro ao carregar configurações:', error);
+  }
+});
 
 // Cria uma propriedade computada para o objeto `user`
 const user = computed(() => userStore.getUser);
@@ -164,6 +185,8 @@ const twoFactorAuth = ref(false)
 const notificationEmail = ref(true)
 const notificationPush = ref(true)
 const darkTheme = ref(false)
+const alertDays = ref(1);
+const alertOptions = [1, 2, 3, 5, 7, 10];
 
 // Estado dos diálogos
 const bankDialog = ref(false)
@@ -286,6 +309,21 @@ const verifyCode = async () => {
     console.error('Erro ao verificar o código', error)
   }
 }
+
+const saveAlertSettings = async () => {
+  try {
+    const settings: UserSettings = {
+      alertDaysBefore: alertDays.value,
+      notificationEmail: notificationEmail.value,
+      notificationPush: notificationPush.value,
+      darkTheme: darkTheme.value,
+    };
+    await NotificationService.updateAlertSettings(settings);
+    console.log('Configurações salvas com sucesso!');
+  } catch (error) {
+    console.error('Erro ao salvar configurações:', error);
+  }
+};
 
 </script>
 

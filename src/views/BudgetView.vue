@@ -126,7 +126,8 @@
             <v-list v-if="monthlyExpenses.length" class="box-size-list">
               <expense-item v-for="(expense, index) in monthlyExpenses" :key="index" :expense="expense"
                 @attachFiles="handleAttachFiles" @removeAttachment="handleRemoveAttachment"
-                @shareExpense="handleShareExpense" @deleteExpense="deleteExpense"></expense-item>
+                @sendReminder="handleSendReminder" @shareExpense="handleShareExpense"
+                @deleteExpense="deleteExpense"></expense-item>
             </v-list>
             <v-alert v-else color="primary" type="info">
               {{ $t('expense.no_entries') }}
@@ -410,6 +411,7 @@ export default {
     //         };
     //     });
     // },
+
     fetchMonthlyExpenses() {
       const monthNumber = this.selectedExpenseMonth
       const yearNumber = this.selectedExpenseYear
@@ -486,6 +488,27 @@ export default {
         .catch(error => {
           console.error('Erro ao remover o anexo:', error);
         });
+    },
+    async handleSendReminder(expense) {
+      const userStore = useUserStore();
+
+      const alarmData = {
+        user: {
+          email: userStore.getUser.email,
+          name: userStore.getUser.username,
+        },
+        expense: expense,
+      };
+
+      // Enviar o alerta
+      await NotificationService.scheduleExpenseAlert(alarmData)
+        .then(() => {
+          console.log('Alerta criado com sucesso');
+        })
+        .catch((error) => {
+          console.error('Erro ao criar o alerta:', error);
+        });
+      console.log(`Lembrete enviado para a despesa: ${expense.description}`);
     },
   }
 }

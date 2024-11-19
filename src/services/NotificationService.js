@@ -12,10 +12,19 @@ export default {
   decline(notificationId) {
     return axiosInterceptor.put(`${API_URL}/${notificationId}/decline`)
   },
-  sendEmail(data) {
-    return axiosInterceptor.post(`${API_URL}/sendEmail/html`, data)
+  sendEmail(expenseRequest) {
+    return axiosInterceptor.post(`${API_URL}/sendEmail/html`, expenseRequest)
   },
   sendEmailWithAttachment(request) {
     return axiosInterceptor.post(`${API_URL}/sendEmail/attachment`, request)
+  },
+  updateAlertSettings(settings) {
+    return axiosInterceptor.put(`${API_URL}/alerts/settings`, settings)
+  },
+  getAlertSettings() {
+    return axiosInterceptor.get(`${API_URL}/alerts/settings`)
+  },
+  scheduleExpenseAlert(expenseRequest) {
+    return axiosInterceptor.post(`${API_URL}/alerts/schedule`, expenseRequest)
   }
 }

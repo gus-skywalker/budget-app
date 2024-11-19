@@ -3,7 +3,15 @@
     <!-- Overview Section -->
     <v-card class="section">
       <v-card-title>
-        <h2>{{ $t('overview.title') }}</h2>
+        <v-row align="center" justify="space-between" style="width: 100%;">
+          <v-col cols="auto">
+            <h2>{{ $t('overview.title') }}</h2>
+          </v-col>
+          <v-col cols="auto" class="text-right">
+            <div style="font-size: 2em;">{{ monthName }}</div>
+            <div style="font-size: 0.8em;">{{ day }}/{{ month }}/{{ year }}</div>
+          </v-col>
+        </v-row>
       </v-card-title>
       <v-card-text>
         <div>{{ $t('overview.total_income') }}: {{ overview.totalIncome }}</div>
@@ -11,6 +19,7 @@
         <div>{{ $t('overview.savings') }}: {{ overview.savings }}</div>
       </v-card-text>
     </v-card>
+
 
     <!-- Trends Over Time -->
     <v-card class="section">
@@ -87,6 +96,7 @@ Chart.register(...registerables)
 
 export default {
   data() {
+    const today = new Date();
     return {
       chart: null,
       overview: {
@@ -100,6 +110,12 @@ export default {
       expenseCategories: [],
       selectedLanguage: 'en',
       financialGoals: [],
+
+      day: today.getDate(),
+      month: today.getMonth() + 1,
+      year: today.getFullYear(),
+      monthName: this.getMonthName(today.getMonth()),
+
       chartType: 'line',
       chartTypes: [
         { title: 'Line Chart', value: 'line' },
@@ -142,6 +158,13 @@ export default {
     this.fetchFinancialGoals()
   },
   methods: {
+    getMonthName(monthIndex) {
+      const monthNames = [
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      ];
+      return monthNames[monthIndex];
+    },
     createChart() {
       const trendsCtx = this.$refs.trendsChart.getContext('2d')
       this.chart = new Chart(trendsCtx, {

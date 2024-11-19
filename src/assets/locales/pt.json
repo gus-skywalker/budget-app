@@ -44,6 +44,8 @@
   "verification_code_label": "Código de Verificação",
   "verify_code": "Verificar Código",
   "send_code": "Enviar Código",
+  "alert_settings": "Configurações de Alerta",
+  "alert_days_before_label": "Definir antecedência do alerta (dias antes)",
 
   "subscription_management": {
     "title": "Gerenciamento de Assinatura",

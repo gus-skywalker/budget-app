@@ -23,8 +23,18 @@ declare module '@/services/NotificationService' {
     }
   }
 
+  export interface UserSettings {
+    alertDaysBefore: number
+    notificationEmail: boolean
+    notificationPush: boolean
+    darkTheme: boolean
+  }
+
   export function accept(notificationId: number): Promise<void>
   export function decline(notificationId: number): Promise<void>
   export function getNotifications(): Promise<{ data: any[] }>
   export function sendEmail(notification: ExpenseNotification): Promise<void>
+  export function updateAlertSettings(settings: UserSettings): Promise<void>
+  export function getAlertSettings(): Promise<UserSettings>
+  export function scheduleExpenseAlert(notification: ExpenseNotification): Promise<void>
 }

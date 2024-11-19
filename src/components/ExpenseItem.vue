@@ -98,6 +98,8 @@
 
 
 <script>
+import NotificationService from '@/services/NotificationService'
+
 export default {
   name: 'ExpenseItem',
   props: {
@@ -207,20 +209,11 @@ export default {
       this.isDialogOpen = false;
     },
     scheduleAlarm() {
-      const today = new Date();
-      const expenseDate = new Date(this.expense.date);
-      const oneDayBefore = new Date(expenseDate);
-      oneDayBefore.setDate(expenseDate.getDate() - 1);
-
-      if (oneDayBefore > today) {
-        const timeUntilAlarm = oneDayBefore - today;
-        setTimeout(() => {
-          console.log(`Alerta: A despesa ${this.expense.description} está próxima!`);
-          this.$emit('sendReminder', this.expense);
-        }, timeUntilAlarm);
-        console.log(`Alarme definido para um dia antes: ${oneDayBefore}`);
-      } else {
-        console.warn('A data da despesa já passou ou está muito próxima para agendar o alarme.');
+      try {
+        this.$emit('sendReminder', this.expense);
+        console.log(`Alerta agendado para a despesa: ${this.expense.description}`);
+      } catch (error) {
+        console.error('Erro ao agendar alerta:', error);
       }
     },
   },

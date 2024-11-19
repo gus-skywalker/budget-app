@@ -44,6 +44,8 @@
   "verification_code_label": "Verification Code",
   "verify_code": "Verify Code",
   "send_code": "Send Code",
+  "alert_settings": "Alert Settings",
+  "alert_days_before_label": "Set Alert Advance (days before)",
 
   "subscription_management": {
     "title": "Subscription Management",
