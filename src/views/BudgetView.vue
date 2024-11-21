@@ -86,7 +86,24 @@
               </v-col>
               <v-col cols="12" sm="6" md="6">
                 <v-select :label="$t('common.category')" v-model="expense.category" :items="categories"
-                  item-title="name" item-value="id"></v-select>
+                  item-title="name" item-value="id">
+                  <template #item="{ item, props }">
+                    <v-list-item v-bind="props">
+                      <template #prepend>
+                        <v-icon :icon="categoryIcons[item.raw.code]" class="mr-2"></v-icon>
+                      </template>
+                    </v-list-item>
+                  </template>
+
+                  <!-- Slot para personalizar o item selecionado -->
+                  <template #selection="{ item, props }">
+                    <v-chip v-bind="props" class="ma-1" small>
+                      <v-icon left :icon="categoryIcons[item.raw.code]"></v-icon>
+                      {{ item.raw.name }}
+                    </v-chip>
+                  </template>
+
+                </v-select>
               </v-col>
               <v-col cols="12" sm="6" md="6">
                 <v-select :label="$t('common.payment_method')" v-model="expense.paymentMethod" :items="paymentMethods"
@@ -175,6 +192,22 @@ export default {
         paymentMethod: null,
         selectedUsers: []
       },
+      categoryIcons: {
+        groceries: 'mdi-cart',
+        utilities: 'mdi-lightbulb',
+        transportation: 'mdi-bus',
+        entertainment: 'mdi-movie',
+        healthcare: 'mdi-heart-pulse',
+        education: 'mdi-school',
+        dining_out: 'mdi-silverware',
+        travel: 'mdi-airplane',
+        clothing: 'mdi-tshirt-crew',
+        home_maintenance: 'mdi-home',
+        gifts: 'mdi-gift',
+        charity: 'mdi-hand-heart',
+        subscriptions: 'mdi-receipt',
+        miscellaneous: 'mdi-dots-horizontal',
+      },
       categories: [],
       paymentMethods: [],
       selectedIncomeMonth: null,
@@ -227,6 +260,7 @@ export default {
             code: category.code,
             name: category.name
           }))
+          console.log(this.categories);
         })
         .catch((error) => {
           console.error('Error fetching categories:', error)

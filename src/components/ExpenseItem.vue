@@ -10,6 +10,7 @@
         </v-list-item-subtitle>
         <v-list-item-subtitle v-if="expense.category">
           Categoria: {{ expense.category.name }}
+          <v-icon :icon="categoryIcons[expense.category.code]" class="mr-2"></v-icon>
         </v-list-item-subtitle>
         <v-list-item-subtitle v-if="expense.users && expense.users.length">
           Compartilhado com:
@@ -107,6 +108,22 @@ export default {
   },
   data() {
     return {
+      categoryIcons: {
+        groceries: 'mdi-cart',
+        utilities: 'mdi-lightbulb',
+        transportation: 'mdi-bus',
+        entertainment: 'mdi-movie',
+        healthcare: 'mdi-heart-pulse',
+        education: 'mdi-school',
+        dining_out: 'mdi-silverware',
+        travel: 'mdi-airplane',
+        clothing: 'mdi-tshirt-crew',
+        home_maintenance: 'mdi-home',
+        gifts: 'mdi-gift',
+        charity: 'mdi-hand-heart',
+        subscriptions: 'mdi-receipt',
+        miscellaneous: 'mdi-dots-horizontal',
+      },
       isDialogOpen: false,
       email: '',
       emailRules: [
