@@ -158,7 +158,11 @@ const userStore = useUserStore();
 
 onMounted(async () => {
   try {
-    const settings = await NotificationService.getAlertSettings();
+    const response = await NotificationService.getAlertSettings();
+
+    const settings = response.data || {};
+
+    console.log(settings);
     alertDays.value = settings.alertDaysBefore;
     notificationEmail.value = settings.notificationEmail;
     notificationPush.value = settings.notificationPush;
