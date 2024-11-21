@@ -108,6 +108,7 @@ function navigateToAccountAdmin() {
       <v-list-item prepend-icon="mdi-bullseye-arrow" :title="$t('sidebar.goals')"
         :to="{ name: 'financialgoal' }"></v-list-item>
       <v-list-item prepend-icon="mdi-home" :title="$t('sidebar.home')" :to="{ name: 'home' }"></v-list-item>
+      <v-list-item prepend-icon="mdi-file-chart" :title="$t('sidebar.report')" :to="{ name: 'report' }"></v-list-item>
     </v-list>
 
     <v-divider></v-divider>

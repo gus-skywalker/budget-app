@@ -18,6 +18,7 @@ import GoalView from '@/views/GoalView.vue'
 import StripeSuccess from '@/views/redirect_url/StripeSuccess.vue'
 import StripeCancel from '@/views/redirect_url/StripeCancel.vue'
 import ChoosePlan from '@/views/ChoosePlan.vue'
+import ReportView from '@/views/ReportView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -61,6 +62,12 @@ const router = createRouter({
       path: '/dashboard',
       name: 'dashboard',
       component: DashboardView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/report',
+      name: 'report',
+      component: ReportView,
       meta: { requiresAuth: true }
     },
     {

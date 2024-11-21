@@ -130,7 +130,7 @@ import DataService from '@/services/DataService';
 
 export default {
   components: {
-    ContributionComponent
+    ContributionComponent,
   },
   data() {
     return {
@@ -229,31 +229,31 @@ export default {
     },
     fetchContributions() {
       // Simulação de chamada ao back-end para buscar contribuições do objetivo selecionado
-      // FinancialGoalService.fetchContributions(this.selectedGoal.id).then((response) => {
-      //   this.selectedGoalContributions = response.data;
-      // });
-      const mockContributions = [
-        {
-          id: 1,
-          amount: 200,
-          date: '2024-10-01',
-          description: 'Contribuição inicial'
-        },
-        {
-          id: 2,
-          amount: 150,
-          date: '2024-10-15',
-          description: 'Contribuição mensal'
-        }
-      ];
-
-      // Simulando um retorno assíncrono como se fosse uma resposta de uma API
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          this.selectedGoalContributions = mockContributions;
-          resolve(mockContributions);
-        }, 500); // Simula um pequeno atraso na resposta, como se fosse uma chamada real
+      FinancialGoalService.fetchContributions(this.selectedGoal.id).then((response) => {
+        this.selectedGoalContributions = response.data;
       });
+      // const mockContributions = [
+      //   {
+      //     id: 1,
+      //     amount: 200,
+      //     date: '2024-10-01',
+      //     description: 'Contribuição inicial'
+      //   },
+      //   {
+      //     id: 2,
+      //     amount: 150,
+      //     date: '2024-10-15',
+      //     description: 'Contribuição mensal'
+      //   }
+      // ];
+
+      // // Simulando um retorno assíncrono como se fosse uma resposta de uma API
+      // return new Promise((resolve) => {
+      //   setTimeout(() => {
+      //     this.selectedGoalContributions = mockContributions;
+      //     resolve(mockContributions);
+      //   }, 500); // Simula um pequeno atraso na resposta, como se fosse uma chamada real
+      // });
     },
     deleteContribution(contributionId) {
       if (confirm('Tem certeza que deseja excluir esta contribuição?')) {
