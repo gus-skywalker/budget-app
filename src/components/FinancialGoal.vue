@@ -229,9 +229,12 @@ export default {
     },
     fetchContributions() {
       // Simulação de chamada ao back-end para buscar contribuições do objetivo selecionado
-      FinancialGoalService.fetchContributions(this.selectedGoal.id).then((response) => {
-        this.selectedGoalContributions = response.data;
-      });
+      if (this.selectedGoal !== null) {
+        FinancialGoalService.fetchContributions(this.selectedGoal.id).then((response) => {
+          this.selectedGoalContributions = response.data;
+        });
+      }
+
       // const mockContributions = [
       //   {
       //     id: 1,
