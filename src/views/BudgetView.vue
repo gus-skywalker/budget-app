@@ -523,15 +523,20 @@ export default {
           console.error('Erro ao remover o anexo:', error);
         });
     },
-    async handleSendReminder(expense) {
+    async handleSendReminder(alertData) {
       const userStore = useUserStore();
 
+      console.log(alertData.isRecurring);
       const alarmData = {
         user: {
           email: userStore.getUser.email,
           name: userStore.getUser.username,
         },
-        expense: expense,
+        expense: alertData.expense,
+        daysBefore: alertData.daysBefore,
+        isRecurring: alertData.isRecurring,
+        recurrenceInterval: alertData.recurrenceInterval,
+        recurrenceEndDate: alertData.recurrenceEndDate,
       };
 
       // Enviar o alerta
@@ -542,7 +547,7 @@ export default {
         .catch((error) => {
           console.error('Erro ao criar o alerta:', error);
         });
-      console.log(`Lembrete enviado para a despesa: ${expense.description}`);
+      console.log(`Lembrete enviado para a despesa: ${alertData.expense.description}`);
     },
   }
 }

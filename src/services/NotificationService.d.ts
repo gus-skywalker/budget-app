@@ -19,8 +19,12 @@ declare module '@/services/NotificationService' {
       name: string
     }
     expense: {
+      id: string
       amount: number
+      category: object
+      paymentMethod: object
     }
+    daysBefore: number
   }
 
   export interface UserSettings {

@@ -23,7 +23,7 @@
         <v-btn icon size="small" @click="isDialogOpen = true" color="primary" class="mr-2">
           <v-icon size="18">mdi-share-variant</v-icon>
         </v-btn>
-        <v-btn icon size="small" color="orange" @click="scheduleAlarm" class="mr-2">
+        <v-btn icon size="small" color="orange" @click="openAlertDialog" class="mr-2">
           <v-icon size="18">mdi-alarm</v-icon>
         </v-btn>
         <v-btn icon size="small" color="red" @click="$emit('deleteExpense', expense)" class="mr-2">
@@ -94,6 +94,39 @@
       </v-card>
     </v-dialog>
 
+    <v-dialog v-model="isAlertDialogOpen" max-width="500">
+      <v-card>
+        <v-card-title>Configurar Alerta</v-card-title>
+        <v-card-text>
+          <v-radio-group v-model="useDefaultAlertDays" row>
+            <v-radio :label="`Usar configuração padrão (${defaultAlertDays} dias)`" :value="true"></v-radio>
+            <v-radio label="Definir um valor personalizado" :value="false"></v-radio>
+          </v-radio-group>
+
+          <v-text-field v-if="!useDefaultAlertDays" v-model="customAlertDays" type="number" min="1" max="30"
+            label="Dias antes do alerta" :rules="customAlertDaysRules" dense outlined></v-text-field>
+
+          <v-switch v-model="isRecurring" label="Definir como recorrente"></v-switch>
+
+          <v-select v-if="isRecurring" v-model="recurrenceInterval" :items="['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY']"
+            label="Intervalo de Recorrência" dense outlined></v-select>
+
+          <v-text-field v-if="isRecurring" v-model="recurrenceEndDate" type="date"
+            label="Data de Término da Recorrência" dense outlined></v-text-field>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="blue darken-1" text @click="isAlertDialogOpen = false">
+            Cancelar
+          </v-btn>
+          <v-btn color="green" text @click="saveAlert">
+            Salvar
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+
   </v-list-item>
 </template>
 
@@ -134,10 +167,37 @@ export default {
       newFiles: [],
       confirmDeleteDialog: false,
       fileToDelete: null,
+      isAlertDialogOpen: false,
+      useDefaultAlertDays: true,
+      defaultAlertDays: 3,
+      customAlertDays: 1,
+      isRecurring: false,
+      recurrenceInterval: null,
+      recurrenceEndDate: null,
+      customAlertDaysRules: [
+        v => !!v || 'O valor é obrigatório',
+        v => v > 0 || 'O valor deve ser maior que zero',
+        v => v <= 30 || 'O valor deve ser menor ou igual a 30',
+      ],
     };
   },
   mounted() {
     this.attachedFiles = this.expense.attachments || [];
+    this.fetchUserSettings();
+  },
+  watch: {
+    isRecurring(newVal) {
+      console.log(newVal);
+      if (!newVal) {
+        // Se a recorrência for desativada, limpe os campos relacionados
+        this.recurrenceInterval = null;
+        this.recurrenceEndDate = null;
+      } else {
+        // Defina valores padrão quando a recorrência for ativada
+        this.recurrenceInterval = 'MONTHLY'; // Exemplo de valor padrão
+        this.recurrenceEndDate = this.recurrenceEndDate || new Date().toISOString().split('T')[0]; // Data atual como padrão
+      }
+    },
   },
   methods: {
     onNewFilesChange(event) {
@@ -225,13 +285,37 @@ export default {
       this.$emit('shareExpense', { expense: this.expense, email: this.email, files: combinedFiles });
       this.isDialogOpen = false;
     },
-    scheduleAlarm() {
+    async fetchUserSettings() {
       try {
-        this.$emit('sendReminder', this.expense);
-        console.log(`Alerta agendado para a despesa: ${this.expense.description}`);
+        const response = await NotificationService.getAlertSettings();
+        const settings = response.data || {};
+
+        if (settings.alertDaysBefore) {
+          this.defaultAlertDays = settings.alertDaysBefore; // Define o padrão vindo da API
+        }
+        console.log('Configurações do usuário carregadas:', settings);
       } catch (error) {
-        console.error('Erro ao agendar alerta:', error);
+        console.error('Erro ao carregar configurações do usuário:', error);
       }
+    },
+    openAlertDialog() {
+      this.isAlertDialogOpen = true;
+    },
+    saveAlert() {
+      const daysBefore = this.useDefaultAlertDays ? this.defaultAlertDays : this.customAlertDays;
+
+      const alertData = {
+        expense: this.expense,
+        daysBefore: daysBefore,
+        isRecurring: this.isRecurring,
+        recurrenceInterval: this.isRecurring ? this.recurrenceInterval : null,
+        recurrenceEndDate: this.isRecurring ? this.recurrenceEndDate : null,
+      };
+      // Emita o evento para o backend ou salve localmente
+      this.$emit('sendReminder', alertData);
+
+      console.log(`Alerta configurado para ${daysBefore} dias antes.`);
+      this.isAlertDialogOpen = false;
     },
   },
 };
