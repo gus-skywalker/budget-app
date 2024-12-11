@@ -18,6 +18,11 @@
             {{ user.name }}
           </v-chip>
         </v-list-item-subtitle>
+        <v-list-item-subtitle v-if="hasAlerts">
+          <v-chip color="orange" dark class="ma-2">
+            Alerta configurado
+          </v-chip>
+        </v-list-item-subtitle>
       </v-col>
       <v-col cols="3" class="d-flex justify-end">
         <v-btn icon size="small" @click="isDialogOpen = true" color="primary" class="mr-2">
@@ -94,36 +99,95 @@
       </v-card>
     </v-dialog>
 
-    <v-dialog v-model="isAlertDialogOpen" max-width="500">
+    <v-dialog v-model="isAlertDialogOpen" max-width="600px">
       <v-card>
         <v-card-title>Configurar Alerta</v-card-title>
+        <v-divider></v-divider>
+
         <v-card-text>
+          <!-- Lista de alertas configurados -->
+          <v-list-subheader>Alertas Configurados</v-list-subheader>
+          <v-list dense v-if="expense.alerts && expense.alerts.length">
+            <v-list-item v-for="(alert, index) in expense.alerts" :key="index">
+              <v-list-item-title>
+                <v-chip color="blue" dark>
+                  Data do Alerta: {{ formatAlertDate(alert.alertDate) }}
+                </v-chip>
+              </v-list-item-title>
+              <v-list-item-subtitle>
+                <v-chip color="green" dark>
+                  Status: {{ alert.status }}
+                </v-chip>
+              </v-list-item-subtitle>
+              <v-list-item-subtitle>
+                <strong>Métodos:</strong> {{ formatMethods(alert.methods) }}
+              </v-list-item-subtitle>
+              <v-list-item-subtitle>
+                <strong>Recorrência:</strong>
+                <span v-if="alert.recurrenceInterval">{{ formatRecurrence(alert.recurrenceInterval) }}</span>
+                <span v-else>Não recorrente</span>
+              </v-list-item-subtitle>
+            </v-list-item>
+          </v-list>
+          <v-list v-else>
+            <v-list-item>
+              <v-list-item-title>Nenhum alerta configurado.</v-list-item-title>
+            </v-list-item>
+          </v-list>
+
+          <!-- Configuração de novos alertas -->
+          <v-divider class="my-4"></v-divider>
+          <v-list-subheader>Configurar Novo Alerta</v-list-subheader>
           <v-radio-group v-model="useDefaultAlertDays" row>
-            <v-radio :label="`Usar configuração padrão (${defaultAlertDays} dias)`" :value="true"></v-radio>
-            <v-radio label="Definir um valor personalizado" :value="false"></v-radio>
+            <v-radio :label="`Usar configuração padrão (${defaultAlertDays} dias)`" :value="true">
+            </v-radio>
+            <v-radio label="Definir um valor personalizado" :value="false">
+            </v-radio>
           </v-radio-group>
 
           <v-text-field v-if="!useDefaultAlertDays" v-model="customAlertDays" type="number" min="1" max="30"
-            label="Dias antes do alerta" :rules="customAlertDaysRules" dense outlined></v-text-field>
+            label="Dias antes do alerta" placeholder="Ex.: 5 dias" :rules="customAlertDaysRules" dense outlined>
+            <template v-slot:prepend>
+              <v-icon>mdi-calendar</v-icon>
+            </template>
+          </v-text-field>
 
-          <v-switch v-model="isRecurring" label="Definir como recorrente"></v-switch>
+          <v-switch v-model="isRecurring" label="Definir como recorrente">
+            <template v-slot:prepend>
+              <v-icon>mdi-repeat</v-icon>
+            </template>
+          </v-switch>
 
           <v-select v-if="isRecurring" v-model="recurrenceInterval" :items="['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY']"
-            label="Intervalo de Recorrência" dense outlined></v-select>
+            label="Intervalo de Recorrência" placeholder="Selecione a frequência" dense outlined>
+            <template v-slot:prepend>
+              <v-icon>mdi-timer</v-icon>
+            </template>
+          </v-select>
 
           <v-text-field v-if="isRecurring" v-model="recurrenceEndDate" type="date"
-            label="Data de Término da Recorrência" dense outlined></v-text-field>
+            label="Data de Término da Recorrência" dense outlined>
+            <template v-slot:prepend>
+              <v-icon>mdi-calendar-end</v-icon>
+            </template>
+          </v-text-field>
         </v-card-text>
+
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" text @click="isAlertDialogOpen = false">
-            Cancelar
-          </v-btn>
-          <v-btn color="green" text @click="saveAlert">
-            Salvar
-          </v-btn>
+          <v-btn text @click="isAlertDialogOpen = false">Cancelar</v-btn>
+          <v-btn color="red" text @click="resetAlertForm">Resetar</v-btn>
+          <v-btn color="green" dark text @click="saveAlert">Salvar</v-btn>
         </v-card-actions>
       </v-card>
+
+      <!-- Snackbar de feedback -->
+      <v-snackbar v-model="snackbar" color="green" top>
+        {{ snackbarMessage }}
+        <template v-slot:action="{ attrs }">
+          <v-btn text v-bind="attrs" @click="snackbar = false">Fechar</v-btn>
+        </template>
+      </v-snackbar>
     </v-dialog>
 
 
@@ -138,6 +202,11 @@ export default {
   name: 'ExpenseItem',
   props: {
     expense: Object,
+  },
+  computed: {
+    hasAlerts() {
+      return this.expense.alerts && this.expense.alerts.length > 0;
+    },
   },
   data() {
     return {
@@ -179,6 +248,8 @@ export default {
         v => v > 0 || 'O valor deve ser maior que zero',
         v => v <= 30 || 'O valor deve ser menor ou igual a 30',
       ],
+      snackbar: false,
+      snackbarMessage: '',
     };
   },
   mounted() {
@@ -301,6 +372,25 @@ export default {
     openAlertDialog() {
       this.isAlertDialogOpen = true;
     },
+    formatAlertDate(date) {
+      // Formata a data do alerta para um formato legível
+      const options = { year: 'numeric', month: 'long', day: 'numeric' };
+      return new Date(date).toLocaleDateString('pt-BR', options);
+    },
+    formatMethods(methods) {
+      // Converte os métodos de entrega para uma string legível
+      return methods.join(', ');
+    },
+    formatRecurrence(recurrenceInterval) {
+      // Converte o intervalo de recorrência para uma string legível
+      const map = {
+        DAILY: 'Diário',
+        WEEKLY: 'Semanal',
+        MONTHLY: 'Mensal',
+        YEARLY: 'Anual',
+      };
+      return map[recurrenceInterval] || 'Desconhecido';
+    },
     saveAlert() {
       const daysBefore = this.useDefaultAlertDays ? this.defaultAlertDays : this.customAlertDays;
 
@@ -314,8 +404,19 @@ export default {
       // Emita o evento para o backend ou salve localmente
       this.$emit('sendReminder', alertData);
 
+      this.snackbarMessage = 'Alerta configurado com sucesso!';
+      this.snackbar = true;
+      this.isAlertDialogOpen = false;
+
       console.log(`Alerta configurado para ${daysBefore} dias antes.`);
       this.isAlertDialogOpen = false;
+    },
+    resetAlertForm() {
+      this.useDefaultAlertDays = true;
+      this.customAlertDays = 1;
+      this.isRecurring = false;
+      this.recurrenceInterval = null;
+      this.recurrenceEndDate = null;
     },
   },
 };

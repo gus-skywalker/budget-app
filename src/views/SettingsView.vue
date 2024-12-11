@@ -162,11 +162,10 @@ onMounted(async () => {
 
     const settings = response.data || {};
 
-    console.log(settings);
-    alertDays.value = settings.alertDaysBefore;
-    notificationEmail.value = settings.notificationEmail;
-    notificationPush.value = settings.notificationPush;
-    darkTheme.value = settings.darkTheme;
+    alertDays.value = settings.alertDaysBefore ?? 1;
+    notificationEmail.value = settings.notificationEmail ?? true;
+    notificationPush.value = settings.notificationPush ?? true;
+    darkTheme.value = settings.darkTheme ?? false;
   } catch (error) {
     console.error('Erro ao carregar configurações:', error);
   }

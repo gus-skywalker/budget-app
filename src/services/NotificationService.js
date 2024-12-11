@@ -26,5 +26,8 @@ export default {
   },
   scheduleExpenseAlert(expenseRequest) {
     return axiosInterceptor.post(`${API_URL}/alerts/schedule`, expenseRequest)
+  },
+  updateExpenseAlert(expenseRequest) {
+    return axiosInterceptor.put(`${API_URL}/alerts/update`, expenseRequest)
   }
 }

@@ -415,7 +415,7 @@ export default {
         ExpenseService.delete(expense.id)
           .then((response) => {
             const expenseIndex = this.monthlyExpenses.findIndex((item) => item.id === expense.id)
-            if (incomeIndex !== -1) {
+            if (expenseIndex !== -1) {
               this.monthlyExpenses.splice(expenseIndex, 1)
             }
           })
@@ -528,10 +528,7 @@ export default {
 
       console.log(alertData.isRecurring);
       const alarmData = {
-        user: {
-          email: userStore.getUser.email,
-          name: userStore.getUser.username,
-        },
+        user: userStore.getUser,
         expense: alertData.expense,
         daysBefore: alertData.daysBefore,
         isRecurring: alertData.isRecurring,
@@ -539,15 +536,21 @@ export default {
         recurrenceEndDate: alertData.recurrenceEndDate,
       };
 
-      // Enviar o alerta
-      await NotificationService.scheduleExpenseAlert(alarmData)
-        .then(() => {
+      try {
+
+        if (alertData.expense.alerts && alertData.expense.alerts.length > 0) {
+
+          await NotificationService.updateExpenseAlert(alarmData);
+          console.log('Alerta atualizado com sucesso');
+        } else {
+
+          await NotificationService.scheduleExpenseAlert(alarmData);
           console.log('Alerta criado com sucesso');
-        })
-        .catch((error) => {
-          console.error('Erro ao criar o alerta:', error);
-        });
-      console.log(`Lembrete enviado para a despesa: ${alertData.expense.description}`);
+        }
+      } catch (error) {
+        console.error('Erro ao processar o alerta:', error);
+      }
+      console.log(`Lembrete processado para a despesa: ${alertData.expense.description}`);
     },
   }
 }

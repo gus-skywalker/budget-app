@@ -41,4 +41,5 @@ declare module '@/services/NotificationService' {
   export function updateAlertSettings(settings: UserSettings): Promise<void>
   export function getAlertSettings(): Promise<UserSettings>
   export function scheduleExpenseAlert(notification: ExpenseNotification): Promise<void>
+  export function updateExpenseAlert(notification: ExpenseNotification): Promise<void>
 }
