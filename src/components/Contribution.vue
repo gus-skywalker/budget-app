@@ -1,46 +1,60 @@
 <template>
-    <v-card class="mt-4">
-        <v-card-title>Adicionar Contribuição</v-card-title>
-        <v-card-text>
-            <v-form @submit.prevent="submitContribution">
-                <v-text-field label="Valor da Contribuição" v-model="contributionAmount" type="number" outlined required
-                    class="mb-4"></v-text-field>
-
-                <v-btn type="submit" color="primary">Adicionar Contribuição</v-btn>
-            </v-form>
-        </v-card-text>
-    </v-card>
+    <v-form @submit.prevent="submitContribution">
+        <v-text-field :label="$t('financial_goals.amount')" v-model="contributionForm.amount" type="number" required
+            outlined class="mb-4"></v-text-field>
+        <v-text-field :label="$t('financial_goals.description')" v-model="contributionForm.description" outlined
+            class="mb-4"></v-text-field>
+        <v-btn type="submit" color="primary">
+            {{ $t('financial_goals.add_contribution') }}
+        </v-btn>
+    </v-form>
 </template>
 
 <script>
+import FinancialGoalService from '@/services/FinancialGoalService';
+
 export default {
     props: {
         goal: {
             type: Object,
-            required: true,
-        },
+            required: true
+        }
     },
     data() {
         return {
-            contributionAmount: 0,
+            contributionForm: {
+                amount: 0,
+                description: '',
+                financialGoal: {
+                    id: this.goal.id
+                },
+                date: new Date().toISOString().substr(0, 10) // "YYYY-MM-DD"
+            }
         };
     },
     methods: {
         submitContribution() {
-            if (this.contributionAmount > 0) {
-                // Emitir evento com a contribuição para o componente pai
-                this.$emit('contribution-added', parseFloat(this.contributionAmount), this.goal.id);
-
-                // Resetar campo de contribuição
-                this.contributionAmount = 0;
-            } else {
-                alert('Por favor, insira um valor válido para a contribuição.');
-            }
-        },
-    },
-};
+            FinancialGoalService.addContribution(this.contributionForm)
+                .then(() => {
+                    this.$emit('contribution-added');
+                    // Resetar o formulário
+                    this.contributionForm = {
+                        amount: 0,
+                        description: '',
+                        financialGoal: {
+                            id: this.goal.id
+                        },
+                        date: new Date().toISOString().substr(0, 10)
+                    };
+                })
+                .catch((error) => {
+                    console.error('Erro ao adicionar contribuição:', error);
+                });
+        }
+    }
+}
 </script>
 
 <style scoped>
-/* Estilos personalizados para o componente de contribuição */
+/* Estilos específicos, se necessário */
 </style>
