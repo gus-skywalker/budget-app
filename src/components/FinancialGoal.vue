@@ -14,21 +14,20 @@
 
               <!-- Campo de Categoria -->
               <v-select :label="$t('financial_goals.category')" v-model="goalForm.category" :items="categories"
-                item-title="name" item-value="code" @update:modelValue="onCategoryChange" outlined
-                class="mb-4"></v-select>
+                item-title="name" item-value="code" @change="onCategoryChange" outlined class="mb-4"></v-select>
 
               <v-text-field :label="$t('financial_goals.target_amount')" v-model="goalForm.targetAmount"
-                @update:modelValue="suggestDeadline" type="number" required outlined class="mb-4"></v-text-field>
+                @input="suggestDeadline" type="number" required outlined class="mb-4"></v-text-field>
 
               <v-text-field :label="$t('financial_goals.initial_amount')" v-model="goalForm.initialAmount"
-                @update:modelValue="suggestDeadline" type="number" outlined class="mb-4"></v-text-field>
+                @input="suggestDeadline" type="number" outlined class="mb-4"></v-text-field>
 
               <v-text-field :label="$t('financial_goals.contribution_frequency')"
-                v-model="goalForm.contributionFrequency" @update:modelValue="suggestDeadline" type="number" outlined
+                v-model="goalForm.contributionFrequency" @input="suggestDeadline" type="number" outlined
                 class="mb-4"></v-text-field>
 
               <v-select :label="$t('financial_goals.periodicity')" v-model="goalForm.periodicity"
-                :items="['weekly', 'monthly']" @update:modelValue="suggestDeadline" outlined class="mb-4"></v-select>
+                :items="['weekly', 'monthly']" @change="suggestDeadline" outlined class="mb-4"></v-select>
 
               <!-- Data Limite (preenchida automaticamente) -->
               <v-text-field :label="$t('financial_goals.deadline')" v-model="goalForm.deadline" type="date" readonly
@@ -63,26 +62,26 @@
                     <v-list-item-title>{{ goal.name }}</v-list-item-title>
                     <v-list-item-subtitle>
                       {{ $t('financial_goals.target_amount_label') }}: ${{ goal.targetAmount }} |
-                      {{ $t('financial_goals.deadline_label') }}: {{ goal.deadline }}
+                      {{ $t('financial_goals.deadline_label') }}: {{ formatDate(goal.deadline) }}
                     </v-list-item-subtitle>
                     <!-- Progresso da meta -->
-                    <v-progress-linear :value="calculateProgress(goal)"></v-progress-linear>
-                    <div>{{ $t('financial_goals.progress') }}: {{ calculateProgress(goal) }}%</div>
+                    <v-progress-linear :value="goal.progress" color="green"></v-progress-linear>
+                    <div>{{ $t('financial_goals.progress') }}: {{ goal.progress }}%</div>
 
-                    <!-- Adicionar uma seção para o histórico de contribuições -->
-                    <v-row v-if="selectedGoalContributions.length">
+                    <!-- Histórico de contribuições -->
+                    <v-row>
                       <v-col>
                         <h3>{{ $t('financial_goals.contribution_history') }}</h3>
                         <v-list>
-                          <v-list-item v-for="contribution in selectedGoalContributions" :key="contribution.id">
+                          <v-list-item v-for="contribution in goal.contributions" :key="contribution.id">
                             <v-list-item-title>
                               {{ $t('financial_goals.amount') }}: ${{ contribution.amount }}
                             </v-list-item-title>
                             <v-list-item-subtitle>
-                              {{ $t('financial_goals.date') }}: {{ contribution.date }}
+                              {{ $t('financial_goals.date') }}: {{ formatDate(contribution.date) }}
                             </v-list-item-subtitle>
                             <v-list-item-action>
-                              <v-btn icon @click="deleteContribution(contribution.id)">
+                              <v-btn icon @click="deleteContribution(contribution.id, goal.id)">
                                 <v-icon>mdi-delete</v-icon>
                               </v-btn>
                             </v-list-item-action>
@@ -92,10 +91,10 @@
                     </v-row>
 
                     <!-- Adicionar contribuição -->
-                    <ContributionComponent :goal="goal" @contribution-added="handleContributionAdded" />
+                    <ContributionComponent :goal="goal" @contribution-added="fetchFinancialGoals" />
 
                     <!-- Exibir se a meta é viável ou não -->
-                    <v-alert v-if="!isGoalFeasible(goal)" type="warning">
+                    <v-alert v-if="!goal.feasible" type="warning">
                       {{ $t('financial_goals.not_feasible') }}
                     </v-alert>
                   </v-col>
@@ -116,6 +115,52 @@
             <v-alert v-else color="primary" type="info" class="mt-4">
               {{ $t('financial_goals.no_goals') }}
             </v-alert>
+            <!-- Seção para inserir visão geral do mês e buscar sugestões -->
+            <v-card class="pa-5 mt-5">
+              <v-card-title>
+                <h3>{{ $t('financial_goals.suggested_goals_title') }}</h3>
+              </v-card-title>
+              <v-card-text>
+                <v-form @submit.prevent="fetchSuggestions">
+                  <v-text-field :label="$t('financial_goals.total_income')" v-model.number="monthOverview.totalIncome"
+                    type="number" required outlined class="mb-4"></v-text-field>
+                  <v-text-field :label="$t('financial_goals.total_expense')" v-model.number="monthOverview.totalExpense"
+                    type="number" required outlined class="mb-4"></v-text-field>
+                  <v-btn type="submit" color="secondary">
+                    {{ $t('financial_goals.get_suggestions') }}
+                  </v-btn>
+                </v-form>
+
+                <!-- Lista de metas sugeridas -->
+                <v-list v-if="suggestedGoals.length" class="mt-4">
+                  <v-list-item v-for="suggestion in suggestedGoals" :key="suggestion.id" class="suggestion-item">
+                    <v-row align="center">
+                      <v-col>
+                        <v-list-item-title>{{ suggestion.name }}</v-list-item-title>
+                        <v-list-item-subtitle>
+                          {{ $t('financial_goals.target_amount_label') }}: ${{ suggestion.targetAmount }} |
+                          {{ $t('financial_goals.deadline_label') }}: {{ formatDate(suggestion.deadline) }}
+                        </v-list-item-subtitle>
+                        <v-progress-linear :value="suggestion.progress" color="green"></v-progress-linear>
+                        <div>{{ $t('financial_goals.progress') }}: {{ suggestion.progress }}%</div>
+                        <v-alert v-if="!suggestion.feasible" type="warning">
+                          {{ $t('financial_goals.not_feasible') }}
+                        </v-alert>
+                      </v-col>
+                      <v-col class="d-flex justify-end">
+                        <v-btn color="success" @click="acceptSuggestedGoal(suggestion)">
+                          {{ $t('financial_goals.accept') }}
+                        </v-btn>
+                      </v-col>
+                    </v-row>
+                    <v-divider></v-divider>
+                  </v-list-item>
+                </v-list>
+                <v-alert v-else-if="suggestedGoalsFetched" type="info" class="mt-4">
+                  {{ $t('financial_goals.no_suggestions') }}
+                </v-alert>
+              </v-card-text>
+            </v-card>
           </v-card-text>
         </v-card>
       </v-col>
@@ -135,8 +180,8 @@ export default {
   data() {
     return {
       financialGoals: [],
-      selectedGoal: null,
-      selectedGoalContributions: [],
+      suggestedGoals: [],
+      suggestedGoalsFetched: false, // Para controlar a exibição do alerta de ausência de sugestões
       isAddingOrEditing: false,
       isEditing: false,
       goalForm: {
@@ -151,6 +196,10 @@ export default {
       editedGoalId: null,
       categories: [],
       selectedLanguage: 'pt',
+      monthOverview: {
+        totalIncome: 0,
+        totalExpense: 0
+      },
     };
   },
   methods: {
@@ -197,7 +246,7 @@ export default {
     },
     submitGoalForm() {
       if (this.isEditing) {
-        DataService.updateFinancialGoal(this.editedGoalId, this.goalForm)
+        FinancialGoalService.updateFinancialGoal(this.editedGoalId, this.goalForm)
           .then(() => {
             this.fetchFinancialGoals();
             this.cancelEdit();
@@ -206,7 +255,7 @@ export default {
             console.error('Erro ao atualizar meta financeira:', error);
           });
       } else {
-        DataService.createFinancialGoal(this.goalForm)
+        FinancialGoalService.createFinancialGoal(this.goalForm)
           .then(() => {
             this.fetchFinancialGoals();
             this.cancelEdit();
@@ -218,7 +267,7 @@ export default {
     },
     deleteGoal(goal) {
       if (confirm('Tem certeza que deseja excluir este objetivo?')) {
-        DataService.deleteFinancialGoal(goal.id)
+        FinancialGoalService.deleteFinancialGoal(goal.id)
           .then(() => {
             this.fetchFinancialGoals();
           })
@@ -227,110 +276,74 @@ export default {
           });
       }
     },
-    fetchContributions() {
-      // Simulação de chamada ao back-end para buscar contribuições do objetivo selecionado
-      if (this.selectedGoal !== null) {
-        FinancialGoalService.fetchContributions(this.selectedGoal.id).then((response) => {
-          this.selectedGoalContributions = response.data;
-        });
-      }
-
-      // const mockContributions = [
-      //   {
-      //     id: 1,
-      //     amount: 200,
-      //     date: '2024-10-01',
-      //     description: 'Contribuição inicial'
-      //   },
-      //   {
-      //     id: 2,
-      //     amount: 150,
-      //     date: '2024-10-15',
-      //     description: 'Contribuição mensal'
-      //   }
-      // ];
-
-      // // Simulando um retorno assíncrono como se fosse uma resposta de uma API
-      // return new Promise((resolve) => {
-      //   setTimeout(() => {
-      //     this.selectedGoalContributions = mockContributions;
-      //     resolve(mockContributions);
-      //   }, 500); // Simula um pequeno atraso na resposta, como se fosse uma chamada real
-      // });
-    },
-    deleteContribution(contributionId) {
+    deleteContribution(contributionId, goalId) {
       if (confirm('Tem certeza que deseja excluir esta contribuição?')) {
-        FinancialGoalService.deleteContribution(contributionId).then(() => {
-          this.fetchContributions();
-        }).catch((error) => {
-          console.error('Erro ao excluir contribuição:', error);
+        FinancialGoalService.deleteContribution(goalId, contributionId)
+          .then(() => {
+            this.fetchFinancialGoals();
+          })
+          .catch((error) => {
+            console.error('Erro ao excluir contribuição:', error);
+          });
+      }
+    },
+    addContribution(goalId, contributionData) {
+      FinancialGoalService.addContribution(goalId, contributionData)
+        .then(() => {
+          this.fetchFinancialGoals();
+        })
+        .catch((error) => {
+          console.error('Erro ao adicionar contribuição:', error);
         });
-      }
     },
-    calculateProgress(goal) {
-      const totalSaved = goal.initialAmount || 0;
-      const progressPercentage = (totalSaved / goal.targetAmount) * 100;
-      return progressPercentage.toFixed(2);
-    },
-    handleContributionAdded(contribution, goalId) {
-      const goal = this.financialGoals.find(g => g.id === goalId);
-      if (goal) {
-        goal.initialAmount += contribution; // Adiciona a contribuição ao valor inicial
-        this.calculateProgress(goal); // Atualiza o progresso
-      }
-    },
-    isGoalFeasible(goal) {
-      const totalSaved = goal.initialAmount || 0;
-      const remainingAmount = goal.targetAmount - totalSaved;
-      const deadline = new Date(goal.deadline);
-      const today = new Date();
-      const weeksRemaining = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24 * 7));
-
-      let contributionsNeeded;
-      if (goal.periodicity === 'weekly') {
-        contributionsNeeded = remainingAmount / weeksRemaining;
-      } else if (goal.periodicity === 'monthly') {
-        const monthsRemaining = Math.ceil(weeksRemaining / 4);
-        contributionsNeeded = remainingAmount / monthsRemaining;
-      }
-
-      return contributionsNeeded <= goal.contributionFrequency;
-    },
-    checkGoalDeadlines() {
-      const today = new Date();
-      this.financialGoals.forEach((goal) => {
-        const deadline = new Date(goal.deadline);
-        const daysRemaining = (deadline - today) / (1000 * 60 * 60 * 24);
-
-        if (daysRemaining <= 7 && this.calculateProgress(goal) < 100) {
-          alert(`Atenção! O prazo para atingir o objetivo "${goal.name}" está se aproximando e você ainda não atingiu a meta.`);
-        }
-      });
+    acceptSuggestedGoal(suggestion) {
+      FinancialGoalService.createFinancialGoal(suggestion)
+        .then(() => {
+          this.fetchFinancialGoals();
+          this.suggestedGoals = this.suggestedGoals.filter(goal => goal.id !== suggestion.id);
+          if (this.suggestedGoals.length === 0) {
+            this.suggestedGoalsFetched = true;
+          }
+        })
+        .catch((error) => {
+          console.error('Erro ao aceitar meta sugerida:', error);
+        });
     },
     fetchFinancialGoals() {
-      FinancialGoalService.fetchFinancialGoals().then((response) => {
-        this.financialGoals = response.data;
-        // Atualizar progresso de cada meta
-        this.financialGoals.forEach((goal) => {
-          this.autoUpdateProgress(goal);
+      FinancialGoalService.fetchFinancialGoals()
+        .then((response) => {
+          this.financialGoals = response.data;
+          this.checkGoalDeadlines();
+        })
+        .catch((error) => {
+          console.error('Erro ao buscar metas financeiras:', error);
         });
-      }).catch((error) => {
-        console.error('Erro ao buscar metas financeiras:', error);
-      });
+    },
+    fetchSuggestedGoals(overview) {
+      FinancialGoalService.suggestGoalsBasedOnIncome(overview)
+        .then((response) => {
+          this.suggestedGoals = response.data;
+          this.suggestedGoalsFetched = false;
+        })
+        .catch((error) => {
+          console.error('Erro ao buscar metas sugeridas:', error);
+          this.suggestedGoalsFetched = true;
+        });
     },
     fetchCategories() {
-      DataService.fetchCategories(this.selectedLanguage).then((response) => {
-        this.categories = response.data.map((category) => ({
-          id: category.id,
-          code: category.code,
-          name: category.name
-        }));
-      }).catch((error) => {
-        console.error('Erro ao buscar categorias:', error);
-      });
+      DataService.fetchCategories(this.selectedLanguage)
+        .then((response) => {
+          this.categories = response.data.map((category) => ({
+            id: category.id,
+            code: category.code,
+            name: category.name
+          }));
+        })
+        .catch((error) => {
+          console.error('Erro ao buscar categorias:', error);
+        });
     },
     onCategoryChange(categoryCode) {
-      console.log(categoryCode);
       if (categoryCode) {
         const suggestions = {
           'carro': 20000,
@@ -344,115 +357,57 @@ export default {
       }
     },
     suggestDeadline() {
-      const remainingAmount = this.goalForm.targetAmount - (this.goalForm.initialAmount || 0);
-      const contributionFrequency = this.goalForm.contributionFrequency;
-      const periodicity = this.goalForm.periodicity;
-
-      let periodsRequired = 0;
-
-      if (periodicity === 'monthly' && contributionFrequency > 0) {
-        periodsRequired = Math.ceil(remainingAmount / contributionFrequency);
-        const suggestedDate = new Date();
-        suggestedDate.setMonth(suggestedDate.getMonth() + periodsRequired);
-        this.goalForm.deadline = suggestedDate.toISOString().substr(0, 10);
-      } else if (periodicity === 'weekly' && contributionFrequency > 0) {
-        periodsRequired = Math.ceil(remainingAmount / contributionFrequency);
-        const suggestedDate = new Date();
-        suggestedDate.setDate(suggestedDate.getDate() + periodsRequired * 7);
-        this.goalForm.deadline = suggestedDate.toISOString().substr(0, 10);
-      } else {
-        this.goalForm.deadline = '';
-      }
+      // Implementar se necessário, já que o back-end sugere deadline
+      // Opcionalmente, você pode chamar um endpoint do back-end para sugerir deadline
+      // Neste caso, vamos assumir que o back-end define o deadline automaticamente
+      // Portanto, este método pode ser deixado vazio ou utilizado para outras sugestões
     },
-    autoUpdateProgress(goal) {
-      FinancialGoalService.fetchTransactions().then((response) => {
-        const transactions = response.data;
-        const relevantTransactions = transactions.filter(
-          (transaction) => transaction.categoryCode === goal.category && transaction.type === 'income'
-        );
-        const totalContributions = relevantTransactions.reduce(
-          (total, transaction) => total + transaction.amount,
-          0
-        );
-        goal.initialAmount = totalContributions;
-      }).catch((error) => {
-        console.error('Erro ao buscar transações:', error);
-      });
-    },
-    suggestGoalsBasedOnIncome() {
-      DataService.fetchMonthOverview().then((response) => {
-        const income = response.data.totalIncome;
-        const expenses = response.data.totalExpense;
-        const disposableIncome = income - expenses;
+    checkGoalDeadlines() {
+      const today = new Date();
+      this.financialGoals.forEach((goal) => {
+        const deadline = new Date(goal.deadline);
+        const daysRemaining = (deadline - today) / (1000 * 60 * 60 * 24);
 
-        const suggestedGoals = [];
-
-        if (disposableIncome > 1000) {
-          suggestedGoals.push({
-            id: this.financialGoals.length + 1,
-            name: 'Fundo de Emergência',
-            targetAmount: disposableIncome * 6,
-            initialAmount: 0,
-            deadline: '',
-            contributionFrequency: disposableIncome * 0.2,
-            periodicity: 'monthly',
-            category: 'fundo_emergencia',
-          });
-        } else {
-          suggestedGoals.push({
-            id: this.financialGoals.length + 1,
-            name: 'Poupança Mensal',
-            targetAmount: disposableIncome * 3,
-            initialAmount: 0,
-            deadline: '',
-            contributionFrequency: disposableIncome * 0.1,
-            periodicity: 'monthly',
-            category: 'poupanca_mensal',
-          });
+        if (daysRemaining <= 7 && goal.progress < 100) {
+          alert(`Atenção! O prazo para atingir o objetivo "${goal.name}" está se aproximando e você ainda não atingiu a meta.`);
         }
-
-        this.financialGoals = [...this.financialGoals, ...suggestedGoals];
-
-        // Atualizar data limite e progresso das metas sugeridas
-        this.financialGoals.forEach((goal) => {
-          this.suggestDeadlineForGoal(goal);
-          this.autoUpdateProgress(goal);
-        });
-      }).catch((error) => {
-        console.error('Erro ao buscar overview:', error);
       });
     },
-    suggestDeadlineForGoal(goal) {
-      const remainingAmount = goal.targetAmount - (goal.initialAmount || 0);
-      const contributionFrequency = goal.contributionFrequency;
-      const periodicity = goal.periodicity;
-
-      let periodsRequired = 0;
-
-      if (periodicity === 'monthly' && contributionFrequency > 0) {
-        periodsRequired = Math.ceil(remainingAmount / contributionFrequency);
-        const suggestedDate = new Date();
-        suggestedDate.setMonth(suggestedDate.getMonth() + periodsRequired);
-        goal.deadline = suggestedDate.toISOString().substr(0, 10);
-      } else if (periodicity === 'weekly' && contributionFrequency > 0) {
-        periodsRequired = Math.ceil(remainingAmount / contributionFrequency);
-        const suggestedDate = new Date();
-        suggestedDate.setDate(suggestedDate.getDate() + periodsRequired * 7);
-        goal.deadline = suggestedDate.toISOString().substr(0, 10);
-      } else {
-        goal.deadline = '';
-      }
+    getCurrentMonthOverview() {
+      // Implemente a lógica para obter a visão geral do mês atual
+      // Pode ser uma chamada para um serviço ou utilizar dados já disponíveis
+      // Exemplo:
+      // Aqui, por simplicidade, assumimos que os dados estão no componente
+      return {
+        totalIncome: this.monthOverview.totalIncome,
+        totalExpense: this.monthOverview.totalExpense
+      };
     },
+    fetchSuggestions() {
+      const overview = this.getCurrentMonthOverview();
+      FinancialGoalService.suggestGoalsBasedOnIncome(overview)
+        .then((response) => {
+          this.suggestedGoals = response.data;
+          this.suggestedGoalsFetched = this.suggestedGoals.length === 0;
+        })
+        .catch((error) => {
+          console.error('Erro ao buscar metas sugeridas:', error);
+          this.suggestedGoalsFetched = true;
+        });
+    },
+    formatDate(dateStr) {
+      const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+      return new Date(dateStr).toLocaleDateString('pt-BR', options);
+    }
   },
   mounted() {
     this.fetchCategories();
     this.fetchFinancialGoals();
-    this.checkGoalDeadlines();
-    this.suggestGoalsBasedOnIncome();
-    this.fetchContributions();
+    // Remover chamadas de contribuições diretas, pois elas são agora gerenciadas dentro das metas
   },
-};
+}
 </script>
+
 
 <style scoped>
 .section {
