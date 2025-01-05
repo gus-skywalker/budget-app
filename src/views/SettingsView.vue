@@ -1,14 +1,14 @@
 <template>
   <v-container>
-    <h1>{{ $t('account_management') }}</h1>
+    <h1>{{ $t('account_management.title') }}</h1>
     <v-container>
       <v-row>
         <v-col cols="12" md="6">
-          <h2>{{ $t('basic_profile_information') }}</h2>
+          <h2>{{ $t('account_management.basic_profile_information') }}</h2>
           <v-form>
-            <v-text-field v-model="username" :label="$t('username_label')"></v-text-field>
-            <v-text-field v-model="email" :label="$t('email_label')" type="email"></v-text-field>
-            <v-file-input v-model="avatar" :label="$t('profile_picture_label')"></v-file-input>
+            <v-text-field v-model="username" :label="$t('account_management.username_label')"></v-text-field>
+            <v-text-field v-model="email" :label="$t('account_management.email_label')" type="email"></v-text-field>
+            <v-file-input v-model="avatar" :label="$t('account_management.profile_picture_label')"></v-file-input>
             <v-select v-model="$i18n.locale" :items="availableLanguages" item-title="text" item-value="value"
               :label="$t('language_label')" dense outlined></v-select>
             <v-btn @click="saveProfile">{{ $t('save_changes') }}</v-btn>
@@ -18,13 +18,14 @@
         <v-col cols="12" md="6">
           <h2>{{ $t('security') }}</h2>
           <v-form>
-            <v-text-field v-model="currentPassword" :label="$t('current_password_label')"
+            <v-text-field v-model="currentPassword" :label="$t('account_management.current_password_label')"
               type="password"></v-text-field>
-            <v-text-field v-model="newPassword" :label="$t('new_password_label')" type="password"></v-text-field>
-            <v-btn @click="changePassword">{{ $t('change_password') }}</v-btn>
+            <v-text-field v-model="newPassword" :label="$t('account_management.new_password_label')"
+              type="password"></v-text-field>
+            <v-btn @click="changePassword">{{ $t('account_management.change_password') }}</v-btn>
           </v-form>
 
-          <v-switch v-model="twoFactorAuth" :label="$t('two_factor_auth_label')"></v-switch>
+          <v-switch v-model="twoFactorAuth" :label="$t('account_management.two_factor_auth_label')"></v-switch>
         </v-col>
       </v-row>
 
@@ -37,24 +38,24 @@
 
       <v-row>
         <v-col cols="12" md="6">
-          <h2>{{ $t('alert_settings') }}</h2>
+          <h2>{{ $t('account_management.alert_settings') }}</h2>
           <v-form>
-            <v-select v-model="alertDays" :items="alertOptions" :label="$t('alert_days_before_label')" dense
-              outlined></v-select>
-            <v-btn @click="saveAlertSettings">{{ $t('save_changes') }}</v-btn>
+            <v-select v-model="alertDays" :items="alertOptions"
+              :label="$t('account_management.alert_days_before_label')" dense outlined></v-select>
+            <v-btn @click="saveAlertSettings">{{ $t('account_management.save_changes') }}</v-btn>
           </v-form>
         </v-col>
         <v-col cols="12" md="6">
           <h2>{{ $t('preferences') }}</h2>
-          <v-switch v-model="notificationEmail" :label="$t('email_notifications_label')"></v-switch>
-          <v-switch v-model="notificationPush" :label="$t('push_notifications_label')"></v-switch>
-          <v-switch v-model="darkTheme" :label="$t('dark_theme_label')"></v-switch>
+          <v-switch v-model="notificationEmail" :label="$t('account_management.email_notifications_label')"></v-switch>
+          <v-switch v-model="notificationPush" :label="$t('account_management.push_notifications_label')"></v-switch>
+          <v-switch v-model="darkTheme" :label="$t('account_management.dark_theme_label')"></v-switch>
         </v-col>
 
         <v-col cols="12" md="6">
           <h2>{{ $t('account_connections') }}</h2>
-          <v-btn @click="connectGoogle">{{ $t('connect_google') }}</v-btn>
-          <v-btn @click="disconnectGoogle">{{ $t('disconnect_google') }}</v-btn>
+          <v-btn @click="connectGoogle">{{ $t('account_management.connect_google') }}</v-btn>
+          <v-btn @click="disconnectGoogle">{{ $t('account_management.disconnect_google') }}</v-btn>
 
           <v-divider class="my-4"></v-divider>
 
@@ -91,17 +92,18 @@
       <v-card>
         <v-card-title>
           <v-icon color="primary" class="mr-2">mdi-lock</v-icon>
-          <span class="headline">{{ $t('connect_to_bank', { bank: selectedBank }) }}</span>
+          <span class="headline">{{ $t('account_management.connect_to_bank', { bank: selectedBank }) }}</span>
         </v-card-title>
         <v-card-text>
           <v-form>
-            <v-text-field v-model="bankLogin" :label="$t('bank_login_label')"></v-text-field>
-            <v-text-field v-model="bankPassword" :label="$t('bank_password_label')" type="password"></v-text-field>
+            <v-text-field v-model="bankLogin" :label="$t('account_management.bank_login_label')"></v-text-field>
+            <v-text-field v-model="bankPassword" :label="$t('account_management.bank_password_label')"
+              type="password"></v-text-field>
           </v-form>
         </v-card-text>
         <v-card-actions>
-          <v-btn @click="authenticateBank">{{ $t('connect') }}</v-btn>
-          <v-btn @click="closeBankDialog">{{ $t('cancel') }}</v-btn>
+          <v-btn @click="authenticateBank">{{ $t('account_management.connect_to_bank') }}</v-btn>
+          <v-btn @click="closeBankDialog">{{ $t('common.cancel') }}</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -111,14 +113,14 @@
       <v-card>
         <v-card-title>
           <v-icon color="primary" class="mr-2">mdi-alert</v-icon>
-          <span class="headline">{{ $t('generate_certificate') }}</span>
+          <span class="headline">{{ $t('account_management.generate_certificate') }}</span>
         </v-card-title>
         <v-card-text>
-          <p>{{ $t('generate_certificate_description') }}</p>
-          <v-btn @click="requestCode">{{ $t('send_code') }}</v-btn>
+          <p>{{ $t('account_management.generate_certificate_description') }}</p>
+          <v-btn @click="requestCode">{{ $t('account_management.send_code') }}</v-btn>
         </v-card-text>
         <v-card-actions>
-          <v-btn @click="closeCertDialog">{{ $t('cancel') }}</v-btn>
+          <v-btn @click="closeCertDialog">{{ $t('common.cancel') }}</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -128,17 +130,17 @@
       <v-card>
         <v-card-title>
           <v-icon color="primary" class="mr-2">mdi-lock</v-icon>
-          <span class="headline">{{ $t('verification_code') }}</span>
+          <span class="headline">{{ $t('account_management.verification_code') }}</span>
         </v-card-title>
         <v-card-text>
-          <p>{{ $t('verification_code_description') }}</p>
+          <p>{{ $t('account_management.verification_code_description') }}</p>
           <v-form>
             <v-text-field v-model="verificationCode" :label="$t('verification_code_label')"></v-text-field>
           </v-form>
         </v-card-text>
         <v-card-actions>
-          <v-btn @click="verifyCode">{{ $t('verify_code') }}</v-btn>
-          <v-btn @click="closeVerificationDialog">{{ $t('cancel') }}</v-btn>
+          <v-btn @click="verifyCode">{{ $t('account_management.verify_code') }}</v-btn>
+          <v-btn @click="closeVerificationDialog">{{ $t('common.cancel') }}</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>

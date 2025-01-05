@@ -14,39 +14,40 @@
     "home": "Home",
     "toggle_theme": "Toggle Theme"
   },
-
-  "account_management": "Account Management",
-  "basic_profile_information": "Basic Profile Information",
-  "security": "Security",
-  "preferences": "Preferences",
-  "account_connections": "Account Connections",
-  "username_label": "Username",
-  "email_label": "Email",
-  "profile_picture_label": "Profile Picture",
-  "language_label": "Language",
-  "save_changes": "Save Changes",
-  "current_password_label": "Current Password",
-  "new_password_label": "New Password",
-  "change_password": "Change Password",
-  "two_factor_auth_label": "Two-Factor Authentication",
-  "email_notifications_label": "Email Notifications",
-  "push_notifications_label": "Push Notifications",
-  "dark_theme_label": "Dark Theme",
-  "connect_google": "Connect Google Account",
-  "disconnect_google": "Disconnect Google Account",
-  "nubank": "Nubank",
-  "banco_do_brasil": "Bank of Brazil",
-  "itau": "Itaú",
-  "connect_to_bank": "Connect to { bank }",
-  "bank_login_label": "Login",
-  "bank_password_label": "Password",
-  "cancel": "Cancel",
-  "generate_certificate": "Generate New Certificate",
-  "verification_code_label": "Verification Code",
-  "verify_code": "Verify Code",
-  "send_code": "Send Code",
-  "alert_settings": "Alert Settings",
-  "alert_days_before_label": "Set Alert Advance (days before)",
+  "account_management": {
+    "title": "Account Management",
+    "basic_profile_information": "Basic Profile Information",
+    "security": "Security",
+    "preferences": "Preferences",
+    "account_connections": "Account Connections",
+    "username_label": "Username",
+    "email_label": "Email",
+    "profile_picture_label": "Profile Picture",
+    "language_label": "Language",
+    "save_changes": "Save Changes",
+    "current_password_label": "Current Password",
+    "new_password_label": "New Password",
+    "change_password": "Change Password",
+    "two_factor_auth_label": "Two-Factor Authentication",
+    "email_notifications_label": "Email Notifications",
+    "push_notifications_label": "Push Notifications",
+    "dark_theme_label": "Dark Theme",
+    "connect_google": "Connect Google Account",
+    "disconnect_google": "Disconnect Google Account",
+    "nubank": "Nubank",
+    "banco_do_brasil": "Bank of Brazil",
+    "itau": "Itaú",
+    "connect_to_bank": "Connect to { bank }",
+    "bank_login_label": "Login",
+    "bank_password_label": "Password",
+    "cancel": "Cancel",
+    "generate_certificate": "Generate New Certificate",
+    "verification_code_label": "Verification Code",
+    "verify_code": "Verify Code",
+    "send_code": "Send Code",
+    "alert_settings": "Alert Settings",
+    "alert_days_before_label": "Set Alert Advance (days before)"
+  },
 
   "subscription_management": {
     "title": "Subscription Management",
@@ -68,7 +69,7 @@
     }
   },
 
-  "accounting": {
+  "budget": {
     "title": "Your Accounting"
   },
   "income": {
@@ -150,8 +151,13 @@
     "amount": "Amount",
     "date": "Date",
     "target_amount_label": "Target Amount",
+    "total_income": "Total Income",
+    "total_expense": "Total Expenses",
     "deadline_label": "Deadline",
     "not_feasible": "This goal is not feasible with the current contribution and time remaining.",
-    "no_goals": "No financial goals found."
+    "no_goals": "No financial goals found.",
+    "suggested_goals_title": "Metas Sugeridas",
+    "get_suggestions": "Obter Sugestões",
+    "no_suggestions": "No goal suggestions are available at the moment. Try adjusting your income and expense values to get recommendations."
   }
 }

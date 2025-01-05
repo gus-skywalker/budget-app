@@ -8,30 +8,32 @@
           </v-card-title>
           <v-card-text>
             <!-- Formulário para adicionar ou editar metas -->
-            <v-form v-if="isAddingOrEditing" @submit.prevent="submitGoalForm">
-              <v-text-field :label="$t('financial_goals.goal_name')" v-model="goalForm.name" required outlined
-                class="mb-4"></v-text-field>
+            <v-form v-if="isAddingOrEditing" @submit.prevent="submitGoalForm" ref="formRef">
+              <v-text-field :label="$t('financial_goals.goal_name')" v-model="goalForm.name" :rules="[requiredRule]"
+                required outlined class="mb-4"></v-text-field>
 
-              <!-- Campo de Categoria -->
               <v-select :label="$t('financial_goals.category')" v-model="goalForm.category" :items="categories"
-                item-title="name" item-value="code" @change="onCategoryChange" outlined class="mb-4"></v-select>
+                item-title="name" item-value="code" :rules="[requiredRule]" @change="onCategoryChange" outlined
+                class="mb-4"></v-select>
 
               <v-text-field :label="$t('financial_goals.target_amount')" v-model="goalForm.targetAmount"
-                @input="suggestDeadline" type="number" required outlined class="mb-4"></v-text-field>
-
-              <v-text-field :label="$t('financial_goals.initial_amount')" v-model="goalForm.initialAmount"
-                @input="suggestDeadline" type="number" outlined class="mb-4"></v-text-field>
-
-              <v-text-field :label="$t('financial_goals.contribution_frequency')"
-                v-model="goalForm.contributionFrequency" @input="suggestDeadline" type="number" outlined
+                :rules="[requiredRule, positiveNumberRule]" @input="suggestDeadline" type="number" required outlined
                 class="mb-4"></v-text-field>
 
-              <v-select :label="$t('financial_goals.periodicity')" v-model="goalForm.periodicity"
-                :items="['weekly', 'monthly']" @change="suggestDeadline" outlined class="mb-4"></v-select>
+              <v-text-field :label="$t('financial_goals.initial_amount')" v-model="goalForm.initialAmount"
+                :rules="[positiveNumberRule]" @input="suggestDeadline" type="number" outlined
+                class="mb-4"></v-text-field>
 
-              <!-- Data Limite (preenchida automaticamente) -->
-              <v-text-field :label="$t('financial_goals.deadline')" v-model="goalForm.deadline" type="date" readonly
-                outlined class="mb-4"></v-text-field>
+              <v-text-field :label="$t('financial_goals.contribution_frequency')"
+                v-model="goalForm.contributionFrequency" :rules="[positiveNumberRule]" @input="suggestDeadline"
+                type="number" outlined class="mb-4"></v-text-field>
+
+              <v-select :label="$t('financial_goals.periodicity')" v-model="goalForm.periodicity"
+                :items="['weekly', 'monthly']" :rules="[requiredRule]" @change="suggestDeadline" outlined
+                class="mb-4"></v-select>
+
+              <v-text-field :label="$t('financial_goals.deadline')" v-model="goalForm.deadline"
+                :rules="[futureDateRule]" type="date" outlined class="mb-4"></v-text-field>
 
               <v-row justify="center" class="mb-4">
                 <v-col cols="auto">
@@ -203,6 +205,16 @@ export default {
     };
   },
   methods: {
+    requiredRule(value) {
+      return !!value || this.$t('validation.required');
+    },
+    positiveNumberRule(value) {
+      return value >= 0 || this.$t('validation.positive_number');
+    },
+    futureDateRule(value) {
+      const today = new Date().toISOString().split('T')[0];
+      return !value || value >= today || this.$t('validation.future_date');
+    },
     addNewGoal() {
       this.isAddingOrEditing = true;
       this.isEditing = false;
@@ -245,6 +257,9 @@ export default {
       };
     },
     submitGoalForm() {
+      const isFormValid = this.$refs.formRef.validate();
+      if (!isFormValid) return;
+
       if (this.isEditing) {
         FinancialGoalService.updateFinancialGoal(this.editedGoalId, this.goalForm)
           .then(() => {
@@ -357,10 +372,33 @@ export default {
       }
     },
     suggestDeadline() {
-      // Implementar se necessário, já que o back-end sugere deadline
-      // Opcionalmente, você pode chamar um endpoint do back-end para sugerir deadline
-      // Neste caso, vamos assumir que o back-end define o deadline automaticamente
-      // Portanto, este método pode ser deixado vazio ou utilizado para outras sugestões
+      const targetAmount = this.goalForm.targetAmount || 0; // Garante um valor numérico
+      const initialAmount = this.goalForm.initialAmount || 0; // Garante um valor numérico
+      const remainingAmount = Math.max(0, targetAmount - initialAmount); // Impede valores negativos
+      const contributionFrequency = this.goalForm.contributionFrequency || 0; // Garante um valor numérico
+      const periodicity = this.goalForm.periodicity;
+
+      if (contributionFrequency <= 0 || remainingAmount <= 0) {
+        // Data padrão em caso de valores inválidos
+        const fallbackDate = new Date();
+        fallbackDate.setDate(fallbackDate.getDate() + 1);
+        this.goalForm.deadline = fallbackDate.toISOString().substr(0, 10);
+        return;
+      }
+
+      let periodsRequired = Math.ceil(remainingAmount / contributionFrequency);
+      const suggestedDate = new Date();
+
+      if (periodicity === 'monthly') {
+        suggestedDate.setMonth(suggestedDate.getMonth() + periodsRequired);
+      } else if (periodicity === 'weekly') {
+        suggestedDate.setDate(suggestedDate.getDate() + periodsRequired * 7);
+      } else {
+        this.goalForm.deadline = '';
+        return;
+      }
+
+      this.goalForm.deadline = suggestedDate.toISOString().substr(0, 10);
     },
     checkGoalDeadlines() {
       const today = new Date();

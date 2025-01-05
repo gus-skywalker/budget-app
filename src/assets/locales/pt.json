@@ -15,42 +15,40 @@
     "toggle_theme": "Alternar Tema"
   },
 
-  "account_management": "Administração de Conta",
-  "basic_profile_information": "Informações Básicas do Perfil",
-  "security": "Segurança",
-  "preferences": "Preferências",
-  "account_connections": "Conexões de Conta",
-  "username_label": "Nome de Usuário",
-  "email_label": "Email",
-  "profile_picture_label": "Foto de Perfil",
-  "language_label": "Idioma",
-  "save_changes": "Salvar Mudanças",
-  "current_password_label": "Senha Atual",
-  "new_password_label": "Nova Senha",
-  "change_password": "Alterar Senha",
-  "two_factor_auth_label": "Autenticação de Dois Fatores",
-  "email_notifications_label": "Notificações por Email",
-  "push_notifications_label": "Notificações Push",
-  "dark_theme_label": "Tema Escuro",
-  "connect_google": "Conectar Conta Google",
-  "disconnect_google": "Desconectar Conta Google",
-  "nubank": "Nubank",
-  "banco_do_brasil": "Banco do Brasil",
-  "itau": "Itaú",
-  "connect_to_bank": "Conectar a { bank }",
-  "bank_login_label": "Login",
-  "bank_password_label": "Senha",
-  "cancel": "Cancelar",
-  "generate_certificate": "Gerar Novo Certificado",
-  "verification_code_label": "Código de Verificação",
-  "verify_code": "Verificar Código",
-  "send_code": "Enviar Código",
-  "alert_settings": "Configurações de Alerta",
-  "alert_days_before_label": "Definir antecedência do alerta (dias antes)",
+  "account_management": {
+    "title": "Administração de Conta",
+    "basic_profile_information": "Informações Básicas do Perfil",
+    "security": "Segurança",
+    "preferences": "Preferências",
+    "account_connections": "Conexões de Conta",
+    "username_label": "Nome de Usuário",
+    "email_label": "Email",
+    "profile_picture_label": "Foto de Perfil",
+    "language_label": "Idioma",
+    "save_changes": "Salvar Mudanças",
+    "current_password_label": "Senha Atual",
+    "new_password_label": "Nova Senha",
+    "change_password": "Alterar Senha",
+    "two_factor_auth_label": "Autenticação de Dois Fatores",
+    "email_notifications_label": "Notificações por Email",
+    "push_notifications_label": "Notificações Push",
+    "dark_theme_label": "Tema Escuro",
+    "connect_google": "Conectar Conta Google",
+    "disconnect_google": "Desconectar Conta Google",
+    "connect_to_bank": "Conectar a { bank }",
+    "bank_login_label": "Login",
+    "bank_password_label": "Senha",
+    "generate_certificate": "Gerar Novo Certificado",
+    "verification_code_label": "Código de Verificação",
+    "verify_code": "Verificar Código",
+    "send_code": "Enviar Código",
+    "alert_settings": "Configurações de Alerta",
+    "alert_days_before_label": "Definir antecedência do alerta (dias antes)"
+  },
 
   "subscription_management": {
     "title": "Gerenciamento de Assinatura",
-    "current_plan": "Plano atual",
+    "current_plan": "Plano Atual",
     "status": "Status",
     "change_plan_instructions": "Selecione um novo plano caso deseje alterar sua assinatura. Você será redirecionado ao portal para concluir a mudança.",
     "plans": {
@@ -68,15 +66,17 @@
     }
   },
 
-  "accounting": {
+  "budget": {
     "title": "Sua Contabilidade"
   },
+
   "income": {
     "title": "Entradas",
     "save": "Salvar Entrada",
     "monthly_title": "Entradas Mensais",
     "no_entries": "Nenhuma entrada encontrada para este mês."
   },
+
   "expense": {
     "title": "Débitos",
     "save": "Salvar Débito",
@@ -84,6 +84,17 @@
     "no_entries": "Nenhum débito encontrado para este mês.",
     "share_with_group": "Compartilhar com Usuários do Grupo"
   },
+
+  "trends": {
+    "title": "Tendências ao Longo do Tempo",
+    "select_chart_type": "Selecione o Tipo de Gráfico",
+    "select_time_period": "Selecione o Período de Tempo",
+    "select_expense_category": "Selecione a Categoria de Débito"
+  },
+  "budget_tracker": {
+    "title": "Rastreador de Orçamento"
+  },
+
   "common": {
     "date": "Data",
     "amount": "Valor",
@@ -96,9 +107,12 @@
     "close": "Fechar",
     "cancel": "Cancelar"
   },
+
   "validation": {
-    "required": "{field} é obrigatório",
-    "invalid_currency": "Formato de moeda inválido"
+    "required": "{field} é obrigatório.",
+    "positive_number": "{field} deve ser um número positivo.",
+    "invalid_currency": "Formato de moeda inválido.",
+    "future_date": "{field} deve ser uma data futura."
   },
 
   "overview": {
@@ -107,14 +121,32 @@
     "total_expenses": "Total de Débitos",
     "savings": "Economias"
   },
-  "trends": {
-    "title": "Tendências ao Longo do Tempo",
-    "select_chart_type": "Selecione o Tipo de Gráfico",
-    "select_time_period": "Selecione o Período de Tempo",
-    "select_expense_category": "Selecione a Categoria de Débito"
-  },
-  "budget_tracker": {
-    "title": "Rastreador de Orçamento"
+
+  "financial_goals": {
+    "title": "Metas Financeiras",
+    "goal_name": "Nome da Meta",
+    "category": "Categoria",
+    "target_amount": "Valor Alvo",
+    "initial_amount": "Valor Inicial",
+    "contribution_frequency": "Contribuição Periódica",
+    "periodicity": "Periodicidade",
+    "deadline": "Data Limite",
+    "update": "Atualizar",
+    "add": "Adicionar",
+    "new_goal": "Nova Meta",
+    "progress": "Progresso",
+    "contribution_history": "Histórico de Contribuições",
+    "amount": "Valor",
+    "date": "Data",
+    "target_amount_label": "Quantidade Almejada",
+    "total_income": "Renda Total",
+    "total_expense": "Despesas Totais",
+    "deadline_label": "Data Limite",
+    "not_feasible": "Esta meta não é viável com a contribuição atual e o tempo restante.",
+    "no_goals": "Nenhuma meta financeira encontrada.",
+    "suggested_goals_title": "Metas Sugeridas",
+    "get_suggestions": "Obter Sugestões",
+    "no_suggestions": "Nenhuma sugestão de meta disponível no momento. Tente ajustar os valores de entrada e despesas para obter recomendações."
   },
 
   "group_management": {
@@ -131,27 +163,5 @@
     "no_members": "Nenhum membro no grupo selecionado.",
     "success_message": "Operação concluída com sucesso.",
     "error_message": "Ocorreu um erro. Tente novamente."
-  },
-
-  "financial_goals": {
-    "title": "Metas Financeiras",
-    "goal_name": "Nome do Objetivo",
-    "category": "Categoria",
-    "target_amount": "Valor Alvo",
-    "initial_amount": "Valor Inicial",
-    "contribution_frequency": "Contribuição Periódica",
-    "periodicity": "Periodicidade",
-    "deadline": "Data Limite",
-    "update": "Atualizar",
-    "add": "Adicionar",
-    "new_goal": "Novo Objetivo",
-    "progress": "Progresso",
-    "contribution_history": "Histórico de Contribuições",
-    "amount": "Valor",
-    "date": "Data",
-    "target_amount_label": "Quantidade Almejada",
-    "deadline_label": "Data Limite",
-    "not_feasible": "Este objetivo não é viável com a contribuição atual e o tempo restante.",
-    "no_goals": "Nenhuma meta financeira encontrada."
   }
 }

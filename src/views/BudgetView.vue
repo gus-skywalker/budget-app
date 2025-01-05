@@ -1,6 +1,6 @@
 <template>
   <v-container>
-    <h1>{{ $t('accounting.title') }}</h1>
+    <h1>{{ $t('budget.title') }}</h1>
     <v-row>
       <!-- Coluna Esquerda: Formulários de Entrada -->
       <v-col cols="12" md="6">
