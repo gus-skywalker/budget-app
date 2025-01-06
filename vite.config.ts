@@ -1,3 +1,4 @@
+//vite.config.ts
 import { fileURLToPath, URL } from 'node:url'
 
 import { defineConfig } from 'vite'
@@ -11,7 +12,7 @@ export default defineConfig({
     vue(),
     vueJsx(),
     vuetify({
-      autoImport: false
+      autoImport: true
     })
   ],
   resolve: {

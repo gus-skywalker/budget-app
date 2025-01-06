@@ -12,7 +12,7 @@
     </div>
 </template>
 
-<script type="text/javascript">
+<script setup>
 (function (w, d) {
     var loader = function () {
         var s = d.createElement("script"),

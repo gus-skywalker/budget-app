@@ -28,6 +28,7 @@ declare module '@/services/NotificationService' {
   }
 
   export interface UserSettings {
+    data?: any
     alertDaysBefore: number
     notificationEmail: boolean
     notificationPush: boolean

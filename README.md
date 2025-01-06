@@ -92,3 +92,14 @@ $ pm2 save
 
 [PM2] Remove init script via:
 $ pm2 unstartup systemd
+
+# Dependencies Needed
+npm install --save-dev @types/node
+
+npm install --save-dev vite @types/vite
+
+npm install --save-dev vitest jsdom @types/jsdom
+
+npm install --save-dev @types/vuetify
+
+npm install @vitejs/plugin-vue --save-dev

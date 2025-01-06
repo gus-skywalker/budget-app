@@ -113,17 +113,17 @@ const router = createRouter({
     },
     {
       path: '/privacy-policy',
-      name: 'PrivacyPolicy',
+      name: 'privacy-policy',
       component: PrivacyPolicy
     },
     {
       path: '/terms-of-use',
-      name: 'TermsOfUse',
+      name: 'terms-of-use',
       component: TermsOfUse
     },
     {
       path: '/cookie-policy',
-      name: 'CookiePolicy',
+      name: 'cookie-policy',
       component: CookiePolicy
     }
   ]
