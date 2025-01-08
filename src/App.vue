@@ -7,7 +7,7 @@ import NotificationPopup from '@/components/NotificationPopup.vue'
 import PrivacyControls from '@/components/compliance/PrivacyControls.vue'
 import { useUserStore } from '@/plugins/userStore'
 import NotificationService from '@/services/NotificationService'
-import { Notification } from '@/services/NotificationService'
+import type { Notification } from '@/services/NotificationService'
 
 // Access the Pinia store
 const userStore = useUserStore()
