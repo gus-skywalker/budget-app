@@ -52,13 +52,14 @@
               </v-col>
             </v-row>
             <v-divider class="my-4"></v-divider>
-            <v-list v-if="monthlyIncomes.length" class="box-size-list">
+            <v-list v-if="!isLoadingIncomes && monthlyIncomes.length" class="box-size-list">
               <income-item v-for="(income, index) in monthlyIncomes" :key="index" :income="income"
                 @toggle-recurring="toggleRecurring" @deleteIncome="deleteIncome"></income-item>
             </v-list>
-            <v-alert v-else color="primary" type="info">
+            <v-alert v-else-if="!isLoadingIncomes" color="primary" type="info">
               {{ $t('income.no_entries') }}
             </v-alert>
+            <v-progress-circular v-else indeterminate color="primary"></v-progress-circular>
           </v-card-text>
         </v-card>
       </v-col>
@@ -140,19 +141,23 @@
               </v-col>
             </v-row>
             <v-divider class="my-4"></v-divider>
-            <v-list v-if="monthlyExpenses.length" class="box-size-list">
+            <v-list v-if="!isLoadingExpenses && monthlyExpenses.length" class="box-size-list">
               <expense-item v-for="(expense, index) in monthlyExpenses" :key="index" :expense="expense"
                 @attachFiles="handleAttachFiles" @removeAttachment="handleRemoveAttachment"
                 @sendReminder="handleSendReminder" @shareExpense="handleShareExpense"
                 @deleteExpense="deleteExpense"></expense-item>
             </v-list>
-            <v-alert v-else color="primary" type="info">
+            <v-alert v-else-if="!isLoadingExpenses" color="primary" type="info">
               {{ $t('expense.no_entries') }}
             </v-alert>
+            <v-progress-circular v-else indeterminate color="primary"></v-progress-circular>
           </v-card-text>
         </v-card>
       </v-col>
     </v-row>
+    <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="3000" top>
+      {{ snackbar.text }}
+    </v-snackbar>
   </v-container>
 </template>
 
@@ -235,7 +240,14 @@ export default {
       ],
       years,
       monthlyExpenses: [],
-      monthlyIncomes: []
+      monthlyIncomes: [],
+      isLoadingIncomes: false,
+      isLoadingExpenses: false,
+      snackbar: {
+        show: false,
+        text: '',
+        color: 'success',
+      },
     }
   },
   mounted() {
@@ -318,38 +330,45 @@ export default {
       }
     },
     fetchMonthlyIncomes() {
-      const monthNumber = this.selectedIncomeMonth
-      const yearNumber = this.selectedIncomeYear
+      const monthNumber = this.selectedIncomeMonth;
+      const yearNumber = this.selectedIncomeYear;
       if (monthNumber !== null) {
+        this.isLoadingIncomes = true;
         IncomeService.fetchMonthlyIncomes(monthNumber, yearNumber)
           .then((response) => {
-            this.monthlyIncomes = response.data
+            this.monthlyIncomes = response.data;
           })
           .catch((error) => {
-            console.error('Error fetching monthly incomes:', error)
+            console.error('Error fetching monthly incomes:', error);
           })
-      } else {
-        console.error('Invalid month selected')
+          .finally(() => {
+            this.isLoadingIncomes = false;
+          });
       }
     },
     saveIncome() {
       IncomeService.create(this.income)
         .then((response) => {
-          console.log('Income saved successfully:', response.data)
-          this.resetIncomeForm()
+          this.showToast(this.$t('income.saved_successfully'), 'success');
+          this.resetIncomeForm();
+          this.fetchMonthlyIncomes();
+
         })
         .catch((error) => {
           console.error('Error saving income:', error)
+          this.showToast(this.$t('income.save_failed'), 'error');
         })
     },
     saveExpense() {
       ExpenseService.create(this.expense)
         .then((response) => {
-          console.log('Expense saved successfully:', response.data)
-          this.resetExpenseForm()
+          this.showToast(this.$t('expense.saved_successfully'), 'success');
+          this.resetExpenseForm();
+          this.fetchMonthlyExpenses();
         })
         .catch((error) => {
           console.error('Error saving expense:', error)
+          this.showToast(this.$t('expense.save_failed'), 'error');
         })
     },
     notifyUsers(expense) {
@@ -447,20 +466,20 @@ export default {
     // },
 
     fetchMonthlyExpenses() {
-      const monthNumber = this.selectedExpenseMonth
-      const yearNumber = this.selectedExpenseYear
+      const monthNumber = this.selectedExpenseMonth;
+      const yearNumber = this.selectedExpenseYear;
       if (monthNumber !== null) {
-        console.log('Fetching expenses for month:', monthNumber)
+        this.isLoadingExpenses = true;
         ExpenseService.fetchMonthlyExpenses(monthNumber, yearNumber)
           .then((response) => {
-            console.log(response)
-            this.monthlyExpenses = response.data
+            this.monthlyExpenses = response.data;
           })
           .catch((error) => {
-            console.error('Error fetching monthly expenses:', error)
+            console.error('Error fetching monthly expenses:', error);
           })
-      } else {
-        console.error('Invalid month selected')
+          .finally(() => {
+            this.isLoadingExpenses = false;
+          });
       }
     },
     handleAttachFiles({ expense, files }) {
@@ -551,6 +570,11 @@ export default {
         console.error('Erro ao processar o alerta:', error);
       }
       console.log(`Lembrete processado para a despesa: ${alertData.expense.description}`);
+    },
+    showToast(message, color = 'success') {
+      this.snackbar.text = message;
+      this.snackbar.color = color;
+      this.snackbar.show = true;
     },
   }
 }

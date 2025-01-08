@@ -76,14 +76,18 @@
     "title": "Incomes",
     "save": "Save Income",
     "monthly_title": "Monthly Incomes",
-    "no_entries": "No entries found for this month."
+    "no_entries": "No entries found for this month.",
+    "saved_successfully": "Income saved successfully!",
+    "save_failed": "Failed to save income."
   },
   "expense": {
     "title": "Expenses",
     "save": "Save Expense",
     "monthly_title": "Monthly Expenses",
     "no_entries": "No expenses found for this month.",
-    "share_with_group": "Share with Group Users"
+    "share_with_group": "Share with Group Users",
+    "saved_successfully": "Expense saved successfully!",
+    "save_failed": "Failed to save expense."
   },
   "common": {
     "date": "Date",

@@ -74,7 +74,9 @@
     "title": "Entradas",
     "save": "Salvar Entrada",
     "monthly_title": "Entradas Mensais",
-    "no_entries": "Nenhuma entrada encontrada para este mês."
+    "no_entries": "Nenhuma entrada encontrada para este mês.",
+    "saved_successfully": "Entrada salva com sucesso!",
+    "save_failed": "Falha ao salvar entrada."
   },
 
   "expense": {
@@ -82,7 +84,9 @@
     "save": "Salvar Débito",
     "monthly_title": "Débitos Mensais",
     "no_entries": "Nenhum débito encontrado para este mês.",
-    "share_with_group": "Compartilhar com Usuários do Grupo"
+    "share_with_group": "Compartilhar com Usuários do Grupo",
+    "saved_successfully": "Despesa salva com sucesso!",
+    "save_failed": "Falha ao salvar despesa."
   },
 
   "trends": {
