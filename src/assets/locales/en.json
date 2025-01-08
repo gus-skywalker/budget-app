@@ -112,12 +112,14 @@
     "total_expenses": "Total Expenses",
     "savings": "Savings"
   },
+
   "trends": {
     "title": "Trends Over Time",
     "select_chart_type": "Select Chart Type",
     "select_time_period": "Select Time Period",
     "select_expense_category": "Select Expense Category"
   },
+
   "budget_tracker": {
     "title": "Budget Tracker"
   },
@@ -162,5 +164,34 @@
     "suggested_goals_title": "Metas Sugeridas",
     "get_suggestions": "Obter Sugestões",
     "no_suggestions": "No goal suggestions are available at the moment. Try adjusting your income and expense values to get recommendations."
+  },
+
+  "authentication": {
+    "login": {
+      "title": "Login",
+      "email_label": "Email",
+      "password_label": "Password",
+      "login_button": "Login",
+      "google_login": "Login with Google",
+      "not_registered": "Don't have an account yet?",
+      "create_account_link": "Create an account."
+    },
+    "signup": {
+      "title": "Sign Up",
+      "username_label": "Username",
+      "email_label": "Email",
+      "password_label": "Password",
+      "confirm_password_label": "Confirm Password",
+      "signup_button": "Sign Up",
+      "already_registered": "Already have an account?",
+      "login_here_link": "Login here."
+    },
+    "messages": {
+      "login_success": "Login successful!",
+      "login_failed": "Invalid credentials. Please try again.",
+      "signup_success": "Account created successfully.",
+      "signup_failed": "Error creating account. Please try again.",
+      "password_mismatch": "Passwords do not match. Please try again."
+    }
   }
 }

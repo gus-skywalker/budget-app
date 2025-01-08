@@ -13,8 +13,6 @@
                     {{ lang.text }}
                 </v-list-item>
             </v-list>
-
-
         </div>
     </footer>
 </template>

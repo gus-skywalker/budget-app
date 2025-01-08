@@ -89,16 +89,6 @@
     "save_failed": "Falha ao salvar despesa."
   },
 
-  "trends": {
-    "title": "Tendências ao Longo do Tempo",
-    "select_chart_type": "Selecione o Tipo de Gráfico",
-    "select_time_period": "Selecione o Período de Tempo",
-    "select_expense_category": "Selecione a Categoria de Débito"
-  },
-  "budget_tracker": {
-    "title": "Rastreador de Orçamento"
-  },
-
   "common": {
     "date": "Data",
     "amount": "Valor",
@@ -124,6 +114,33 @@
     "total_income": "Total de Entradas",
     "total_expenses": "Total de Débitos",
     "savings": "Economias"
+  },
+
+  "trends": {
+    "title": "Tendências ao Longo do Tempo",
+    "select_chart_type": "Selecione o Tipo de Gráfico",
+    "select_time_period": "Selecione o Período de Tempo",
+    "select_expense_category": "Selecione a Categoria de Débito"
+  },
+
+  "budget_tracker": {
+    "title": "Rastreador de Orçamento"
+  },
+
+  "group_management": {
+    "title": "Administração de Grupos",
+    "create_group": "Criar Grupo",
+    "group_name": "Nome do Grupo",
+    "group_description": "Descrição do Grupo",
+    "create_group_button": "Criar Grupo",
+    "manage_members": "Gerenciar Membros",
+    "select_group": "Selecione o Grupo",
+    "user_email": "Email do Usuário",
+    "invite_member": "Convidar Membro",
+    "group_members": "Membros do Grupo",
+    "no_members": "Nenhum membro no grupo selecionado.",
+    "success_message": "Operação concluída com sucesso.",
+    "error_message": "Ocorreu um erro. Tente novamente."
   },
 
   "financial_goals": {
@@ -152,19 +169,32 @@
     "no_suggestions": "Nenhuma sugestão de meta disponível no momento. Tente ajustar os valores de entrada e despesas para obter recomendações."
   },
 
-  "group_management": {
-    "title": "Administração de Grupos",
-    "create_group": "Criar Grupo",
-    "group_name": "Nome do Grupo",
-    "group_description": "Descrição do Grupo",
-    "create_group_button": "Criar Grupo",
-    "manage_members": "Gerenciar Membros",
-    "select_group": "Selecione o Grupo",
-    "user_email": "Email do Usuário",
-    "invite_member": "Convidar Membro",
-    "group_members": "Membros do Grupo",
-    "no_members": "Nenhum membro no grupo selecionado.",
-    "success_message": "Operação concluída com sucesso.",
-    "error_message": "Ocorreu um erro. Tente novamente."
+  "authentication": {
+    "login": {
+      "title": "Entrar",
+      "email_label": "E-mail",
+      "password_label": "Senha",
+      "login_button": "Entrar",
+      "google_login": "Entrar com Google",
+      "not_registered": "Ainda não tem uma conta?",
+      "create_account_link": "Crie uma conta."
+    },
+    "signup": {
+      "title": "Cadastrar",
+      "username_label": "Nome de usuário",
+      "email_label": "E-mail",
+      "password_label": "Senha",
+      "confirm_password_label": "Confirme a senha",
+      "signup_button": "Cadastrar",
+      "already_registered": "Já possui uma conta?",
+      "login_here_link": "Entre aqui."
+    },
+    "messages": {
+      "login_success": "Login realizado com sucesso!",
+      "login_failed": "Credenciais inválidas. Por favor, tente novamente.",
+      "signup_success": "Conta criada com sucesso.",
+      "signup_failed": "Erro ao criar a conta. Por favor, tente novamente.",
+      "password_mismatch": "As senhas não coincidem. Por favor, tente novamente."
+    }
   }
 }

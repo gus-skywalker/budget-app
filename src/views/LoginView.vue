@@ -3,62 +3,66 @@
     <div class="container">
       <div v-if="!showSignupForm">
         <form @submit.prevent="userLogin">
-          <h2>Login</h2>
+          <h2>{{ $t('authentication.login.title') }}</h2>
           <div class="imgcontainer">
             <img src="https://cdn.icon-icons.com/icons2/2468/PNG/512/user_kids_avatar_user_profile_icon_149314.png"
               alt="Avatar" class="avatar" />
           </div>
           <div class="form-group">
-            <label for="email">Email</label>
-            <input type="email" v-model="userData.email" placeholder="user@email.com" required />
+            <label for="email">{{ $t('authentication.login.email_label') }}</label>
+            <input type="email" v-model="userData.email" :placeholder="$t('authentication.login.email_label')"
+              required />
           </div>
           <div class="form-group">
-            <label for="passcode">Password</label>
-            <input type="password" v-model="userData.password" placeholder="Please enter your password" required />
+            <label for="password">{{ $t('authentication.login.password_label') }}</label>
+            <input type="password" v-model="userData.password" :placeholder="$t('authentication.login.password_label')"
+              required />
           </div>
-          <button type="submit" class="btn btn-primary">Login</button>
-          <div v-if="error" class="error">{{ error }}</div>
-          <div class="oauth-buttons">
-            <button class="oauth-button" @click.prevent="loginWithGoogle">
-              <img src="https://cdn-icons-png.flaticon.com/512/281/281764.png" alt="Google" width="20" height="20" />
-              Login with Google
-            </button>
-            <button class="oauth-button" @click.prevent="loginWithGitHub">
-              <img src="https://cdn-icons-png.flaticon.com/512/2111/2111432.png" alt="GitHub" width="20" height="20" />
-              Login with GitHub
-            </button>
+          <div class="button-container">
+            <button type="submit" class="btn btn-primary">{{ $t('authentication.login.login_button') }}</button>
+            <div class="oauth-buttons">
+              <button class="oauth-button" @click.prevent="loginWithGoogle">
+                <img src="https://cdn-icons-png.flaticon.com/512/281/281764.png" alt="Google" />
+                {{ $t('authentication.login.google_login') }}
+              </button>
+            </div>
           </div>
           <p>
-            Not registered yet? <a href="#" @click.prevent="toggleForm(true)">Create an account</a>.
+            {{ $t('authentication.login.not_registered') }} <a href="#" @click.prevent="toggleForm(true)">{{
+              $t('authentication.login.create_account_link') }}</a>
           </p>
         </form>
       </div>
 
       <div v-if="showSignupForm">
         <form @submit.prevent="userSignup">
-          <h2>Signup</h2>
+          <h2>{{ $t('authentication.signup.title') }}</h2>
           <div class="form-group">
-            <label for="username">Username</label>
-            <input type="text" v-model="signupData.username" placeholder="Enter your username" required />
-          </div>
-          <div class="form-group">
-            <label for="email">Email</label>
-            <input type="email" v-model="signupData.email" placeholder="user@email.com" required />
-          </div>
-          <div class="form-group">
-            <label for="password">Password</label>
-            <input type="password" v-model="signupData.password" placeholder="Please enter your password" required />
-          </div>
-          <div class="form-group">
-            <label for="confirmPassword">Confirm Password</label>
-            <input type="password" v-model="signupData.confirmPassword" placeholder="Please confirm your password"
+            <label for="username">{{ $t('authentication.signup.username_label') }}</label>
+            <input type="text" v-model="signupData.username" :placeholder="$t('authentication.signup.username_label')"
               required />
           </div>
-          <button type="submit" class="btn btn-primary">Signup</button>
-          <div v-if="signupError" class="error">{{ signupError }}</div>
-          <div v-if="signupSuccess" class="success">{{ signupSuccess }}</div>
+          <div class="form-group">
+            <label for="email">{{ $t('authentication.signup.email_label') }}</label>
+            <input type="email" v-model="signupData.email" :placeholder="$t('authentication.signup.email_label')"
+              required />
+          </div>
+          <div class="form-group">
+            <label for="password">{{ $t('authentication.signup.password_label') }}</label>
+            <input type="password" v-model="signupData.password"
+              :placeholder="$t('authentication.signup.password_label')" required />
+          </div>
+          <div class="form-group">
+            <label for="confirmPassword">{{ $t('authentication.signup.confirm_password_label') }}</label>
+            <input type="password" v-model="signupData.confirmPassword"
+              :placeholder="$t('authentication.signup.confirm_password_label')" required />
+          </div>
+          <div class="button-container">
+            <button type="submit" class="btn btn-primary">{{ $t('authentication.signup.signup_button') }}</button>
+          </div>
           <p>
-            Already have an account? <a href="#" @click.prevent="toggleForm(false)">Login here</a>.
+            {{ $t('authentication.signup.already_registered') }} <a href="#" @click.prevent="toggleForm(false)">{{
+              $t('authentication.signup.login_here_link') }}</a>
           </p>
         </form>
       </div>
@@ -212,6 +216,14 @@ input[type='password'] {
   padding: 10px;
   margin-bottom: 20px;
   border: 1px solid #ccc;
+}
+
+.button-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 20px;
+  margin-bottom: 20px;
 }
 
 button[type='submit'] {
