@@ -63,11 +63,12 @@
                   <v-col>
                     <v-list-item-title>{{ goal.name }}</v-list-item-title>
                     <v-list-item-subtitle>
-                      {{ $t('financial_goals.target_amount_label') }}: ${{ goal.targetAmount }} |
+                      {{ $t('financial_goals.target_amount') }}: ${{ goal.targetAmount }} |
                       {{ $t('financial_goals.deadline_label') }}: {{ formatDate(goal.deadline) }}
                     </v-list-item-subtitle>
                     <!-- Progresso da meta -->
-                    <v-progress-linear :value="goal.progress" color="green"></v-progress-linear>
+                    <v-progress-linear :model-value="goal.progress" color="green" height="10"
+                      rounded></v-progress-linear>
                     <div>{{ $t('financial_goals.progress') }}: {{ goal.progress }}%</div>
 
                     <!-- Histórico de contribuições -->

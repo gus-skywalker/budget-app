@@ -70,9 +70,9 @@
               <v-card-text>
                 <div>{{ $t('financial_goals.target_amount') }}: ${{ goal.targetAmount }}</div>
                 <div>{{ $t('financial_goals.deadline') }}: {{ goal.deadline }}</div>
-                <div>{{ $t('financial_goals.progress') }}: {{ calculateProgress(goal) }}%</div>
+                <div>{{ $t('financial_goals.progress') }}: {{ goal.progress }}%</div>
                 <!-- Visual indicator for progress -->
-                <v-progress-linear :value="calculateProgress(goal)"></v-progress-linear>
+                <v-progress-linear :model-value="goal.progress" color="blue" height="7"></v-progress-linear>
               </v-card-text>
             </v-card>
           </v-col>
@@ -90,6 +90,7 @@
 import { Chart, registerables } from 'chart.js/auto'
 import moment from 'moment'
 import DataService from '@/services/DataService'
+import FinancialGoalService from '@/services/FinancialGoalService';
 import 'chartjs-adapter-moment'
 
 Chart.register(...registerables)
@@ -223,26 +224,13 @@ export default {
         });;
     },
     fetchFinancialGoals() {
-      this.financialGoals = [
-        {
-          id: 1,
-          name: 'Car Purchase',
-          targetAmount: 20000,
-          deadline: '2024-12-31',
-          currentAmount: 15000
-        },
-        {
-          id: 2,
-          name: 'House Down Payment',
-          targetAmount: 50000,
-          deadline: '2025-06-30',
-          currentAmount: 25000
-        }
-      ]
-    },
-    calculateProgress(goal) {
-      const progressPercentage = (goal.currentAmount / goal.targetAmount) * 100
-      return progressPercentage.toFixed(2)
+      FinancialGoalService.fetchFinancialGoals()
+        .then((response) => {
+          this.financialGoals = response.data;
+        })
+        .catch((error) => {
+          console.error('Erro ao buscar metas financeiras:', error);
+        });
     },
     fetchChartData() {
       DataService.fetchChartData(this.selectedTimePeriod, this.selectedCategory)
