@@ -258,6 +258,11 @@ export default {
   box-sizing: border-box;
 }
 
+.v-container {
+  max-width: none !important;
+  padding: 0 !important;
+}
+
 body {
   font-family: 'Roboto', sans-serif;
   overflow-x: hidden;
@@ -390,6 +395,7 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 80px 40px;
+  margin-top: 20px;
   background-color: var(--light-gray);
 }
 
@@ -728,6 +734,7 @@ body {
     align-items: center;
     padding: 40px 20px;
     text-align: center;
+    margin-top: 50px;
   }
 
   .hero-content {
