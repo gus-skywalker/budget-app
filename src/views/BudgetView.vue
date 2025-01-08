@@ -157,6 +157,11 @@
     </v-row>
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="3000" top>
       {{ snackbar.text }}
+      <template #actions>
+        <v-btn color="white" text @click="snackbar.show = false">
+          {{ $t('common.close') }}
+        </v-btn>
+      </template>
     </v-snackbar>
   </v-container>
 </template>
