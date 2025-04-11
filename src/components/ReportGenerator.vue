@@ -1,11 +1,18 @@
 <template>
     <div class="report-generator-container">
         <v-row class="d-flex align-center mb-2">
-            <!-- Seleção do tipo de relatório -->
+            <!-- Tipo de Relatório -->
             <v-col cols="12" md="3">
                 <v-select v-model="reportType" :items="reportTypes" item-title="text" item-value="value"
-                    label="Tipo de Relatório" dense></v-select>
+                    label="Tipo de Relatório" dense />
             </v-col>
+
+            <!-- Tipo de Visualização -->
+            <v-col cols="12" md="3">
+                <v-select v-model="viewType" :items="viewTypes" item-title="text" item-value="value"
+                    label="Visualização" dense />
+            </v-col>
+
             <!-- Seleção de categorias -->
             <v-col cols="12" md="4">
                 <v-select :label="$t('common.category')" v-model="selectedCategories" :items="availableCategories"
@@ -28,42 +35,47 @@
 
                 </v-select>
             </v-col>
-            <!-- Data inicial -->
-            <v-col cols="12" md="2">
-                <v-menu ref="startDateMenu" v-model="startDateMenu" :close-on-content-click="false"
-                    transition="scale-transition" offset-y min-width="auto">
+        </v-row>
+
+        <v-row class="d-flex align-center mb-2">
+            <!-- Data Inicial -->
+            <v-col cols="12" md="3">
+                <v-menu v-model="startDateMenu" :close-on-content-click="false" transition="scale-transition" offset-y
+                    min-width="auto">
                     <template v-slot:activator="{ props }">
                         <v-text-field v-model="formattedStartDate" label="Data Inicial" prepend-icon="mdi-calendar"
-                            readonly dense v-bind="props"></v-text-field>
+                            readonly dense v-bind="props" />
                     </template>
-                    <v-date-picker v-model="startDate" no-title></v-date-picker>
+                    <v-date-picker v-model="startDate" no-title />
                 </v-menu>
             </v-col>
 
-            <!-- Data final -->
-            <v-col cols="12" md="2">
-                <v-menu ref="endDateMenu" v-model="endDateMenu" :close-on-content-click="false"
-                    transition="scale-transition" offset-y min-width="auto">
+            <!-- Data Final -->
+            <v-col cols="12" md="3">
+                <v-menu v-model="endDateMenu" :close-on-content-click="false" transition="scale-transition" offset-y
+                    min-width="auto">
                     <template v-slot:activator="{ props }">
                         <v-text-field v-model="formattedEndDate" label="Data Final" prepend-icon="mdi-calendar" readonly
-                            dense v-bind="props"></v-text-field>
+                            dense v-bind="props" />
                     </template>
-                    <v-date-picker v-model="endDate" no-title></v-date-picker>
+                    <v-date-picker v-model="endDate" no-title />
                 </v-menu>
             </v-col>
+
             <!-- Incluir proporções -->
-            <v-col cols="12" md="1">
-                <v-checkbox v-model="includeProportions" label="Proporções" dense hide-details></v-checkbox>
+            <v-col cols="12" md="2">
+                <v-checkbox v-model="includeProportions" label="Incluir proporções (%)" dense hide-details />
             </v-col>
-        </v-row>
-        <!-- Botões de geração de relatório -->
-        <v-row class="d-flex justify-end">
-            <v-btn @click="generateReport('pdf')" color="primary" class="mr-2" :disabled="loading">
-                <v-icon left>mdi-file-pdf-box</v-icon>PDF
-            </v-btn>
-            <v-btn @click="generateReport('xlsx')" color="primary" :disabled="loading">
-                <v-icon left>mdi-file-excel-box</v-icon>XLSX
-            </v-btn>
+
+            <!-- Botões -->
+            <v-col cols="12" md="4" class="text-right">
+                <v-btn @click="generateReport('pdf')" color="primary" :disabled="loading" class="mr-2">
+                    <v-icon left>mdi-file-pdf-box</v-icon>PDF
+                </v-btn>
+                <v-btn @click="generateReport('xlsx')" color="primary" :disabled="loading">
+                    <v-icon left>mdi-file-excel-box</v-icon>XLSX
+                </v-btn>
+            </v-col>
         </v-row>
         <!-- Snackbar para feedback -->
         <v-snackbar v-model="snackbar.show" :color="snackbar.color" :timeout="3000" top>
@@ -73,16 +85,22 @@
 </template>
 
 <script>
-import ReportService from "@/services/ReportService";
+import ReportService from '@/services/ReportService';
 import DataService from "@/services/DataService"
 
 export default {
     data() {
         return {
-            reportType: 'despesas',
+            reportType: 'expenses',
+            viewType: 'grouped',
             reportTypes: [
                 { text: 'Despesas', value: 'expenses' },
                 { text: 'Entradas', value: 'incomes' },
+            ],
+            viewTypes: [
+                { text: 'Normal (linha a linha)', value: 'normal' },
+                { text: 'Agrupado por mês', value: 'grouped' },
+                { text: 'Detalhado por mês', value: 'detailed' },
             ],
             categoryIcons: {
                 groceries: 'mdi-cart',
@@ -143,30 +161,26 @@ export default {
             if (!this.validateInputs()) return;
 
             const reportRequest = {
-                categories: this.selectedCategories,
+                categoryIds: this.selectedCategories,
                 startDate: this.startDate.toISOString().split('T')[0],
                 endDate: this.endDate.toISOString().split('T')[0],
                 includeProportions: this.includeProportions,
+                viewType: this.viewType,
             };
 
             try {
                 this.loading = true;
-                let response;
-                if (format === "pdf") {
-                    response = await this.reportService.generateReportPDF(this.reportType, reportRequest);
-                    this.downloadFile(response.data, "application/pdf", `relatorio_${this.reportType}.pdf`);
-                } else if (format === "xlsx") {
-                    response = await this.reportService.generateReportXLSX(this.reportType, reportRequest);
-                    this.downloadFile(
-                        response.data,
-                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                        `relatorio_${this.reportType}.xlsx`
-                    );
-                }
-                this.showSnackbar("Relatório gerado com sucesso!", "success");
+
+                const response = await this.reportService.generate(this.reportType, format, reportRequest);
+                const mimeType = format === 'pdf'
+                    ? 'application/pdf'
+                    : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+                const fileName = `relatorio_${this.reportType}_${this.viewType}.${format}`;
+                this.downloadFile(response.data, mimeType, fileName);
+
             } catch (error) {
-                console.error("Erro ao gerar relatório:", error);
-                this.showSnackbar("Erro ao gerar relatório.", "error");
+                console.error('Erro ao gerar relatório:', error);
             } finally {
                 this.loading = false;
             }
@@ -193,10 +207,6 @@ export default {
             this.snackbar.text = message;
         },
         validateInputs() {
-            if (!this.selectedCategories.length) {
-                this.showSnackbar("Selecione pelo menos uma categoria.", "warning");
-                return false;
-            }
             if (!this.startDate || !this.endDate) {
                 this.showSnackbar("Selecione o intervalo de datas.", "warning");
                 return false;
@@ -230,10 +240,5 @@ export default {
     padding: 20px;
     background-color: #f5f5f5;
     border-radius: 8px;
-    margin-bottom: 20px;
-}
-
-.mr-2 {
-    margin-right: 10px;
 }
 </style>
