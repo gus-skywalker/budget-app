@@ -102,6 +102,23 @@
     "cancel": "Cancelar"
   },
 
+  "categories": {
+    "groceries": "Mercado",
+    "utilities": "Contas",
+    "transportation": "Transporte",
+    "entertainment": "Lazer",
+    "healthcare": "Saúde",
+    "education": "Educação",
+    "dining_out": "Restaurantes",
+    "travel": "Viagens",
+    "clothing": "Roupas",
+    "home_maintenance": "Casa",
+    "gifts": "Presentes",
+    "charity": "Doações",
+    "subscriptions": "Assinaturas",
+    "miscellaneous": "Outros"
+  },
+
   "validation": {
     "required": "{field} é obrigatório.",
     "positive_number": "{field} deve ser um número positivo.",

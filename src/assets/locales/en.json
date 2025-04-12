@@ -101,6 +101,24 @@
     "close": "Close",
     "cancel": "Cancel"
   },
+
+  "categories": {
+    "groceries": "Groceries",
+    "utilities": "Utilities",
+    "transportation": "Transportation",
+    "entertainment": "Entertainment",
+    "healthcare": "Healthcare",
+    "education": "Education",
+    "dining_out": "Dining Out",
+    "travel": "Travel",
+    "clothing": "Clothing",
+    "home_maintenance": "Home Maintenance",
+    "gifts": "Gifts",
+    "charity": "Charity",
+    "subscriptions": "Subscriptions",
+    "miscellaneous": "Miscellaneous"
+  },
+
   "validation": {
     "required": "{field} is required",
     "invalid_currency": "Invalid currency format"

@@ -13,8 +13,8 @@
                     label="Visualização" dense />
             </v-col>
 
-            <!-- Seleção de categorias -->
-            <v-col cols="12" md="4">
+            <!-- Seleção de categorias (oculta se for receitas) -->
+            <v-col cols="12" md="4" v-if="reportType === 'expenses'">
                 <v-select :label="$t('common.category')" v-model="selectedCategories" :items="availableCategories"
                     item-title="name" item-value="id" multiple chips dense>
                     <template #item="{ item, props }">
@@ -25,14 +25,12 @@
                         </v-list-item>
                     </template>
 
-                    <!-- Slot para personalizar o item selecionado -->
                     <template #selection="{ item, props }">
                         <v-chip v-bind="props" class="ma-1" small>
                             <v-icon left :icon="categoryIcons[item.raw.code]"></v-icon>
                             {{ item.raw.name }}
                         </v-chip>
                     </template>
-
                 </v-select>
             </v-col>
         </v-row>
@@ -77,6 +75,7 @@
                 </v-btn>
             </v-col>
         </v-row>
+
         <!-- Snackbar para feedback -->
         <v-snackbar v-model="snackbar.show" :color="snackbar.color" :timeout="3000" top>
             {{ snackbar.text }}
@@ -145,23 +144,28 @@ export default {
             return new Intl.DateTimeFormat('pt-BR').format(new Date(date));
         },
         async fetchCategories() {
-            DataService.fetchCategories(this.selectedLanguage)
-                .then((response) => {
+            if (this.reportType === 'expenses') {
+                try {
+                    const response = await DataService.fetchCategories(this.selectedLanguage);
                     this.availableCategories = response.data.map((category) => ({
                         id: category.id,
                         code: category.code,
-                        name: category.name
-                    }))
-                })
-                .catch((error) => {
-                    console.error('Error fetching categories:', error)
-                });
+                        name: this.$t(`categories.${category.code}`) || category.name
+                    }));
+
+                } catch (error) {
+                    console.error('Erro ao buscar categorias:', error);
+                }
+            } else {
+                this.availableCategories = [];
+                this.selectedCategories = [];
+            }
         },
         async generateReport(format) {
             if (!this.validateInputs()) return;
 
             const reportRequest = {
-                categoryIds: this.selectedCategories,
+                categoryIds: this.reportType === 'expenses' ? this.selectedCategories : [],
                 startDate: this.startDate.toISOString().split('T')[0],
                 endDate: this.endDate.toISOString().split('T')[0],
                 includeProportions: this.includeProportions,
@@ -170,7 +174,6 @@ export default {
 
             try {
                 this.loading = true;
-
                 const response = await this.reportService.generate(this.reportType, format, reportRequest);
                 const mimeType = format === 'pdf'
                     ? 'application/pdf'
@@ -181,25 +184,20 @@ export default {
 
             } catch (error) {
                 console.error('Erro ao gerar relatório:', error);
+                this.showSnackbar('Erro ao gerar relatório.', 'error');
             } finally {
                 this.loading = false;
             }
         },
         downloadFile(data, mimeType, fileName) {
             const blob = new Blob([data], { type: mimeType });
-            if (navigator.msSaveBlob) {
-                // Para IE e Edge
-                navigator.msSaveBlob(blob, fileName);
-            } else {
-                const link = document.createElement("a");
-                const url = URL.createObjectURL(blob);
-                link.href = url;
-                link.setAttribute("download", fileName);
-                document.body.appendChild(link);
-                link.click();
-                link.parentNode.removeChild(link);
-                URL.revokeObjectURL(url);
-            }
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute("download", fileName);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
         },
         showSnackbar(message, color = "success") {
             this.snackbar.show = true;
@@ -227,11 +225,17 @@ export default {
             this.formattedEndDate = this.formatDate(value);
             this.endDateMenu = false;
         },
-        reportType(newType) {
-            // Recarrega as categorias disponíveis quando o tipo de relatório muda
+        reportType() {
             this.fetchCategories();
         },
+        '$i18n.locale'() {
+            this.availableCategories = this.availableCategories.map((cat) => ({
+                ...cat,
+                name: this.$t(`categories.${cat.code}`) || cat.name
+            }));
+        }
     },
+
 };
 </script>
 
