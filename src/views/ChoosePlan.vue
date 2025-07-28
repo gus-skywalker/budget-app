@@ -14,7 +14,7 @@
                         <li>Suporte ao cliente padrão</li>
                         <li>Atualizações mensais</li>
                     </ul>
-                    <button class="btn btn-primary cta-btn" @click.prevent="redirectToCheckout('monthly')">
+                    <button class="btn btn-primary cta-btn" @click.prevent="redirectToCheckout('MONTHLY')">
                         Assine Mensalmente
                     </button>
                 </div>
@@ -30,7 +30,7 @@
                         <li>Economia de R$ 49,00 por ano</li>
                         <li>Atualizações mensais e melhorias exclusivas</li>
                     </ul>
-                    <button class="btn btn-primary cta-btn" @click.prevent="redirectToCheckout('annual')">
+                    <button class="btn btn-primary cta-btn" @click.prevent="redirectToCheckout('ANNUAL')">
                         Assine Anualmente
                     </button>
                 </div>

@@ -11,7 +11,10 @@ const apiUrl = import.meta.env.VITE_API_BASE_URL
 const axiosInstance = axios.create({
   baseURL: apiUrl,
   timeout: 300000,
-  withCredentials: true
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json'
+  }
 })
 
 // Interceptor para adicionar o token JWT em todas as requisições

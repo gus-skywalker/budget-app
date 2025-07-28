@@ -123,21 +123,13 @@ const userSignup = async () => {
     });
 
     if (res.status === 201) {
-      const stripeCustomer = await PaymentService.createSubscription({
-        userId: res.data.id,
-        userName: res.data.username,
-        email: res.data.email,
-        plan: 'free',
-      });
-
-      if (stripeCustomer && stripeCustomer.data) {
-        // Processa a resposta do stripeCustomer aqui
-        signupSuccess.value = 'Account with free subscription created successfully.';
-        clearSignupForm();
-      } else {
-        signupError.value = 'Failed to create subscription. Please try again.';
-      }
+      signupSuccess.value = 'Account created successfully. You can now log in.';
+      clearSignupForm();
+      toggleForm(false);
+    } else {
+      signupError.value = 'Failed to create account. Please try again.';
     }
+
   } catch {
     signupError.value = 'Error creating account. Please try again.';
   }
