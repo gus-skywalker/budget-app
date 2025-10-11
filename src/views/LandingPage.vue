@@ -498,39 +498,40 @@ body {
   text-align: center;
 }
 
-.testimonials-container {
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 20px;
-}
+  .testimonials-container {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
 
-.testimonial-item {
-  width: 30%;
-  background-color: var(--light-gray);
-  padding: 20px;
-  border-radius: 10px;
-  text-align: center;
-}
+  .testimonial-item {
+    width: 30%;
+    min-width: 280px; /* Largura mínima para evitar boxes muito estreitos */
+    background-color: var(--light-gray);
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    box-sizing: border-box; /* Garante que o padding não aumente a largura */
+    margin: 0 auto; /* Centraliza os items quando em coluna */
+  }  .testimonial-item img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    margin-bottom: 15px;
+  }
 
-.testimonial-item img {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  margin-bottom: 15px;
-}
+  .testimonial-item p {
+    font-style: italic;
+    color: var(--dark-gray);
+    margin-bottom: 10px;
+    word-wrap: break-word; /* Garante que palavras longas quebrem */
+    overflow-wrap: break-word; /* Suporte adicional para quebra de palavras */
+  }
 
-.testimonial-item p {
-  font-style: italic;
-  color: var(--dark-gray);
-  margin-bottom: 10px;
-}
-
-.testimonial-item h4 {
-  color: var(--dark-gray);
-}
-
-/* Segurança */
+  .testimonial-item h4 {
+    color: var(--dark-gray);
+  }/* Segurança */
 .security-section {
   background-color: var(--light-gray);
   padding: 60px 40px;
@@ -814,6 +815,25 @@ body {
   .benefit-item img {
     width: 80px;
     height: 80px;
+  }
+
+  .testimonials-container {
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+  }
+
+  .testimonial-item {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto 20px;
+    padding: 25px 20px;
+  }
+
+  .testimonial-item p {
+    font-size: 14px;
+    padding: 0 10px;
+    margin-bottom: 15px;
   }
 
   .plan-item {
