@@ -7,15 +7,15 @@
 </template>
 
 <script>
-  export default {
-    data() {
-      return {
-        sessionId: ''
-      }
-    },
-    mounted() {
-      // Extrair o session_id da URL de sucesso
-      this.sessionId = new URLSearchParams(window.location.search).get('session_id')
+export default {
+  data() {
+    return {
+      sessionId: ''
     }
+  },
+  mounted() {
+    // Extrair o session_id da URL de sucesso
+    this.sessionId = new URLSearchParams(window.location.search).get('session_id')
   }
+}
 </script>

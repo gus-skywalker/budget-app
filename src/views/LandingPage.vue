@@ -120,7 +120,7 @@
           <h3>Plano Mensal</h3>
           <p class="price">R$ 29,00 / mês</p>
           <p>Comece com a nossa plataforma gratuitamente e, após 30 dias, continue com o plano mensal.</p>
-          <button class="btn btn-primary cta-btn" @click.prevent="redirectToCheckout('monthly')">
+          <button class="btn btn-primary cta-btn" @click.prevent="redirectToCheckout('MONTHLY')">
             Assine Mensalmente
           </button>
         </div>
@@ -128,7 +128,7 @@
           <h3>Plano Anual</h3>
           <p class="price">R$ 299,00 / ano</p>
           <p>Ao invés de pagar R$ 348,00 (12 x R$ 29,00), aproveite o plano anual com um desconto especial.</p>
-          <button class="btn btn-primary cta-btn" @click.prevent="redirectToCheckout('annual')">
+          <button class="btn btn-primary cta-btn" @click.prevent="redirectToCheckout('ANNUAL')">
             Assine Anualmente
           </button>
         </div>

@@ -9,16 +9,20 @@
                 <p>{{ $t('subscription_management.change_plan_instructions') }}</p>
 
                 <v-radio-group v-model="selectedPlan">
-                    <v-radio :label="$t('subscription_management.plans.monthly')" value="monthly"
-                        :disabled="currentPlan === 'monthly'"></v-radio>
-                    <v-radio :label="$t('subscription_management.plans.annual')" value="annual"
-                        :disabled="currentPlan === 'annual'"></v-radio>
+                    <v-radio :label="$t('subscription_management.plans.monthly')" value="MONTHLY"
+                        :disabled="currentPlan === 'MONTHLY'"></v-radio>
+                    <v-radio :label="$t('subscription_management.plans.annual')" value="ANNUAL"
+                        :disabled="currentPlan === 'ANNUAL'"></v-radio>
                 </v-radio-group>
 
-                <v-btn v-if="subscriptionStatus === 'active'" @click="openBillingPortal">
-                    {{ selectedPlan
-                        ? $t('subscription_management.change_to', { plan: selectedPlanText })
-                        : $t('subscription_management.manage_subscription') }}
+                <!-- Mudar plano pelo backend (Checkout) -->
+                <v-btn v-if="selectedPlan && currentPlan !== selectedPlan" @click="startCheckoutSession">
+                    {{ $t('subscription_management.change_to', { plan: selectedPlanText }) }}
+                </v-btn>
+
+                <!-- Acesso ao portal Stripe -->
+                <v-btn v-else @click="openBillingPortal">
+                    {{ $t('subscription_management.manage_subscription') }}
                 </v-btn>
 
                 <!-- Botão de Cancelar Assinatura -->
@@ -53,24 +57,24 @@ const selectedPlan = ref(''); // Para atualizar o plano
 
 // Obter o texto do plano atual
 const currentPlanText = computed(() => {
-    if (currentPlan.value === 'monthly') return 'Mensal - R$29,90/mês';
-    if (currentPlan.value === 'annual') return 'Anual - R$299,00/ano';
+    if (currentPlan.value === 'MONTHLY') return 'Mensal - R$27,50/mês';
+    if (currentPlan.value === 'ANNUAL') return 'Anual - R$330,00/ano';
     return 'Gratuito';
 });
 
 const selectedPlanText = computed(() => {
-    if (selectedPlan.value === 'monthly') return 'Plano Mensal - R$29,90';
-    if (selectedPlan.value === 'annual') return 'Plano Anual - R$299,00';
+    if (selectedPlan.value === 'MONTHLY') return 'Plano Mensal - R$27,50';
+    if (selectedPlan.value === 'ANNUAL') return 'Plano Anual - R$330,00';
     return '';
 });
 
 const statusText = computed(() => {
     switch (subscriptionStatus.value) {
-        case 'active':
+        case 'ACTIVE':
             return 'Ativa';
-        case 'trialing':
+        case 'TRIALING':
             return 'Período de Teste';
-        case 'canceled':
+        case 'CANCELED':
             return 'Cancelada ao Final do Período';
         default:
             return 'Inativa';
