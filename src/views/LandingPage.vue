@@ -736,6 +736,7 @@ body {
 
   .hero-content {
     width: 100%;
+    margin-bottom: 30px; /* Adiciona espaço entre o conteúdo e a imagem */
   }
 
   .hero-content h1 {
@@ -745,6 +746,11 @@ body {
   .hero-content p {
     font-size: 16px;
     margin-top: 10px;
+  }
+
+  .hero-content .cta-btn {
+    margin-top: 20px; /* Adiciona espaço acima do botão */
+    margin-bottom: 20px; /* Adiciona espaço abaixo do botão */
   }
 
   .hero-image img {
