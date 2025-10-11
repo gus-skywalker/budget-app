@@ -207,8 +207,9 @@ export default {
     };
   },
   methods: {
-    toggleMenu() {
+    toggleMenu(event) {
       this.isMenuOpen = !this.isMenuOpen;
+      event.currentTarget.classList.toggle('active');
     },
     handleSubmit() {
       if (!this.contactForm.email.includes('@')) {
@@ -298,13 +299,46 @@ body {
   cursor: pointer;
   flex-direction: column;
   gap: 5px;
+  position: relative;
+  width: 30px;
+  height: 25px;
 }
 
 .menu-icon {
-  width: 25px;
+  width: 100%;
   height: 3px;
   background-color: var(--dark-gray);
   border-radius: 5px;
+  position: absolute;
+  transition: all 0.3s ease-in-out;
+}
+
+.menu-icon:nth-child(1) {
+  top: 0;
+}
+
+.menu-icon:nth-child(2) {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.menu-icon:nth-child(3) {
+  bottom: 0;
+}
+
+/* Animação do menu quando ativo */
+.menu-toggle.active .menu-icon:nth-child(1) {
+  transform: rotate(45deg);
+  top: 50%;
+}
+
+.menu-toggle.active .menu-icon:nth-child(2) {
+  opacity: 0;
+}
+
+.menu-toggle.active .menu-icon:nth-child(3) {
+  transform: rotate(-45deg);
+  bottom: 40%;
 }
 
 /* Para garantir que a largura total do body não exceda a largura da tela */
@@ -688,7 +722,6 @@ body {
   }
 
   .nav ul {
-    display: none;
     position: absolute;
     top: 75px;
     right: 5px;
@@ -698,9 +731,16 @@ body {
     width: 200px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     border-radius: 8px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-20px);
+    transition: all 0.3s ease-in-out;
   }
 
   .nav ul.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
     display: flex;
   }
 
