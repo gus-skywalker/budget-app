@@ -678,11 +678,13 @@ body {
   .menu-toggle {
     display: flex;
     position: absolute;
-    top: 40px;
+    top: 50%;
     right: 20px;
+    transform: translateY(-50%);
     flex-direction: column;
     gap: 5px;
     order: 2;
+    z-index: 11; /* Garante que fique acima dos outros elementos */
   }
 
   .nav ul {
@@ -709,24 +711,19 @@ body {
   }
 
   .auth-buttons {
-    flex: 1;
-    /* Ajusta a largura dos botões */
-    text-align: right;
-    /* Alinha os botões à direita */
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
     gap: 10px;
-    position: relative;
-    left: -20px;
-    /* Afasta os botões para a esquerda */
+    margin-right: 60px; /* Espaço para o menu sandwich */
     z-index: 10;
-    /* Certifique-se de que eles fiquem abaixo do menu */
-    gap: 10px;
-
   }
 
   .login-btn,
   .signup-btn {
     padding: 8px 12px;
     font-size: 14px;
+    white-space: nowrap; /* Evita quebra de linha no texto do botão */
   }
 
   .hero {
