@@ -1,3 +1,4 @@
+// src/views/ChoosePlan.vue
 <template>
     <v-container id="color-setup">
         <!-- Seção de Planos -->
@@ -63,7 +64,6 @@
 
 <script>
 import FAQ from '@/components/FAQ.vue';
-import { loadStripe } from '@stripe/stripe-js';
 import PaymentService from '@/services/PaymentService'
 
 export default {
@@ -95,16 +95,79 @@ export default {
                     answer: "Sim, todos os pagamentos são processados com segurança através do Stripe, utilizando criptografia de última geração.",
                 },
             ],
+            selectedPlan: null
         };
+    },
+    computed: {
+        isAuthenticated() {
+            return this.$store?.state?.auth?.user != null;
+        }
     },
     methods: {
         async redirectToCheckout(plan) {
             try {
-                const response = await PaymentService.createCheckoutSession(plan);
-                const stripe = await loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
-                await stripe.redirectToCheckout({ sessionId: response.data.sessionId });
+                this.selectedPlan = plan;
+                
+                if (!this.isAuthenticated) {
+                    // Salva o plano selecionado no localStorage
+                    localStorage.setItem('selectedPlan', plan);
+                    // Redireciona para login com query param
+                    this.$router.push({
+                        name: 'login',
+                        query: { 
+                            redirect: '/choose-plan',
+                            plan: plan
+                        }
+                    });
+                    return;
+                }
+
+                // Se já está autenticado, continua com o checkout
+                await this.processCheckout(plan);
             } catch (error) {
-                console.error("Erro ao redirecionar para o checkout:", error);
+                this.handleError(error);
+            }
+        },
+
+        async processCheckout(plan) {
+            try {
+                const user = this.$store.state.auth.user;
+                if (!user?.id || !user?.name || !user?.email) {
+                    throw new Error('Informações do usuário incompletas');
+                }
+
+                const customerRequest = {
+                    userId: user.id,
+                    userName: user.name,
+                    email: user.email,
+                    plan: plan
+                };
+
+                const response = await PaymentService.createCheckoutSession(customerRequest);
+                
+                if (!response.data?.checkoutUrl) {
+                    throw new Error('URL de checkout não recebida do servidor');
+                }
+                
+                window.location.href = response.data.checkoutUrl;
+            } catch (error) {
+                this.handleError(error);
+            }
+        },
+
+        handleError(error) {
+            console.error("Erro no processo de checkout:", error);
+            const errorMessage = error.response?.data?.error || 
+                               error.message || 
+                               'Não foi possível continuar com o processo';
+            
+            if (this.$vuetify) {
+                this.$vuetify.notify({
+                    type: 'error',
+                    text: errorMessage
+                });
+            } else {
+                alert(errorMessage);
             }
         },
     },

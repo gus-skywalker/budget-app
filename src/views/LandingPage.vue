@@ -1,3 +1,4 @@
+// LandingPage.vue
 <!-- eslint-disable @typescript-eslint/no-unused-vars -->
 <template>
   <v-container id="color-setup">

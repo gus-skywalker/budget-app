@@ -135,7 +135,15 @@
         <v-card-text>
           <p>{{ $t('account_management.verification_code_description') }}</p>
           <v-form>
-            <v-text-field v-model="verificationCode" :label="$t('verification_code_label')"></v-text-field>
+            <v-text-field 
+              v-model="verificationCode" 
+              :label="$t('verification_code_label')"
+              type="text"
+              maxlength="6"
+              :rules="[v => v.length === 6 || $t('account_management.verification_code_length')]"
+              pattern="[0-9]*"
+              inputmode="numeric"
+            ></v-text-field>
           </v-form>
         </v-card-text>
         <v-card-actions>

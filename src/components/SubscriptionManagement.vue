@@ -1,3 +1,4 @@
+// src/components/SubscriptionManagement.vue
 <template>
     <v-container>
         <v-row>
