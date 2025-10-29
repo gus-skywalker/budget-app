@@ -100,43 +100,31 @@ const userLogin = async () => {
   try {
     const store = useUserStore()
     
-    console.log('Store antes do login:', {
-      methods: Object.keys(store),
-      state: {
-        token: store.token,
-        refreshToken: store.refreshToken,
-        auth: store.auth
-      }
-    })
+    console.log('Store antes do login:', store.$state)
 
     const res = await axios.post(`${authUrl}/auth/signin`, userData.value)
     
     if (res.data) {
       console.log('Login response:', res.data)
+      console.log('RefreshToken value:', res.data.refreshToken) // ✅ Verifique o valor
       
-      // Primeiro, define o usuário
-      store.$patch({
-        user: {
-          id: res.data.id,
-          username: res.data.username,
-          email: res.data.email
-        }
-      })
+      // ✅ Atualização DIRETA - não depende de métodos faltantes
+      store.token = res.data.token
+      store.refreshToken = res.data.refreshToken // ✅ Define diretamente
+      store.auth = true
+      store.user = {
+        id: res.data.id,
+        username: res.data.username,
+        email: res.data.email
+      }
       
-      // Depois, define os tokens
-      store.$patch({
-        token: res.data.token,
-        refreshToken: res.data.refreshToken,
-        auth: true
-      })
-      
-      // Salva o estado
+      // ✅ Salva explicitamente
       store.saveState()
       
       console.log('Estado final do store:', {
         user: store.user,
         token: store.token,
-        refreshToken: store.refreshToken,
+        refreshToken: store.refreshToken, // ✅ Deve mostrar o valor agora
         auth: store.auth
       })
       
@@ -144,10 +132,6 @@ const userLogin = async () => {
     }
   } catch (err) {
     console.error('Login error:', err)
-    console.error('Store no momento do erro:', useUserStore())
-    if (err.response) {
-      console.error('Error response:', err.response.data)
-    }
     error.value = 'Invalid credentials. Please try again.'
   }
 }

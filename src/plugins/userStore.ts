@@ -15,29 +15,32 @@ type State = {
   user: User
 }
 
-export const useUserStore = defineStore({
-  id: 'user',
-  
+export const useUserStore = defineStore('user', {
   state: (): State => {
-    // Tenta carregar do sessionStorage (igual na versão anterior)
     const saved = sessionStorage.getItem('userStore')
     if (saved) {
-      return JSON.parse(saved)
+      const parsed = JSON.parse(saved)
+      // Garante que refreshToken existe no estado salvo
+      return {
+        token: parsed.token || null,
+        refreshToken: parsed.refreshToken || null, // ✅ Garante que não seja undefined
+        auth: parsed.auth || false,
+        user: parsed.user || {}
+      }
     }
-    // Estado padrão
     return {
       token: null,
-      refreshToken: null,
+      refreshToken: null, // ✅ Inicializa como null, não undefined
       auth: false,
       user: {}
     }
   },
 
   getters: {
-    getUser: (state): User => state.user,
-    isAuthenticated: (state): boolean => state.auth,
-    getToken: (state): string | null => state.token,
-    getRefreshToken: (state): string | null => state.refreshToken
+    getUser: (state) => state.user,
+    isAuthenticated: (state) => state.auth,
+    getToken: (state) => state.token,
+    getRefreshToken: (state) => state.refreshToken
   },
 
   actions: {
@@ -46,8 +49,8 @@ export const useUserStore = defineStore({
       this.saveState()
     },
 
-    setRefreshToken(token: string | null) {
-      this.refreshToken = token
+    setRefreshToken(refreshToken: string | null) {
+      this.refreshToken = refreshToken
       this.saveState()
     },
 
@@ -70,24 +73,14 @@ export const useUserStore = defineStore({
     },
 
     saveState() {
-      sessionStorage.setItem('userStore', JSON.stringify({
+      // Garante que undefined vire null antes de salvar
+      const stateToSave = {
         token: this.token,
-        refreshToken: this.refreshToken,
+        refreshToken: this.refreshToken === undefined ? null : this.refreshToken,
         auth: this.auth,
         user: this.user
-      }))
-    },
-
-    // Método opcional para recarregar manualmente se necessário
-    loadState() {
-      const saved = sessionStorage.getItem('userStore')
-      if (saved) {
-        const state = JSON.parse(saved)
-        this.token = state.token
-        this.refreshToken = state.refreshToken || null // compatibilidade com versão anterior
-        this.auth = state.auth
-        this.user = state.user
       }
+      sessionStorage.setItem('userStore', JSON.stringify(stateToSave))
     }
   }
 })
