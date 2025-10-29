@@ -89,26 +89,22 @@ export default {
 
   methods: {
     async checkSubscriptionStatus() {
-      try {
-        const userStore = useUserStore();
-        const userId = userStore.user?.id;
+      const userStore = useUserStore();
+      const userId = userStore.user?.id;
 
-        if (!userId) {
-          throw new Error('Usuário não identificado');
-        }
+      if (!userId) {
+        throw new Error('Usuário não identificado');
+      }
 
-        // Aguarda alguns segundos para dar tempo do webhook processar
-        await new Promise(resolve => setTimeout(resolve, 3000));
+      // Aguarda alguns segundos para dar tempo do webhook processar
+      await new Promise(resolve => setTimeout(resolve, 3000));
 
-        // Verifica o status da assinatura
-        const response = await PaymentService.loadSubscriptionDetails(userId);
-        this.subscriptionDetails = response.data;
+      // Verifica o status da assinatura
+      const response = await PaymentService.loadSubscriptionDetails(userId);
+      this.subscriptionDetails = response.data;
 
-        if (!this.subscriptionDetails) {
-          throw new Error('Não foi possível encontrar os detalhes da assinatura');
-        }
-      } catch (error) {
-        throw error;
+      if (!this.subscriptionDetails) {
+        throw new Error('Não foi possível encontrar os detalhes da assinatura');
       }
     },
 
