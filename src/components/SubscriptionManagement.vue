@@ -90,6 +90,8 @@ const loadSubscriptionDetails = async () => {
         subscriptionStatus.value = response.data.status;
         customerId.value = response.data.customerId;
         subscriptionId.value = response.data.subscriptionId;
+
+        // selectedPlan.value = response.data.plan;
     } catch (error) {
         console.error('Erro ao carregar detalhes da assinatura:', error);
     }

@@ -16,7 +16,7 @@ type State = {
 }
 
 export const useUserStore = defineStore({
-  id: 'userStore',
+  id: 'user',
   
   state: (): State => ({
     token: null,
