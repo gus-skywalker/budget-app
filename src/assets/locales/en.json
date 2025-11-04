@@ -12,7 +12,11 @@
     "groups": "Groups",
     "goals": "Goals",
     "home": "Home",
-    "toggle_theme": "Toggle Theme"
+    "toggle_theme": "Toggle Theme",
+    "logout_confirmation_title": "Confirm Logout",
+    "logout_confirmation_message": "Are you sure you want to log out of your account?",
+    "cancel": "Cancel",
+    "confirm": "Confirm"
   },
   "account_management": {
     "title": "Account Management",

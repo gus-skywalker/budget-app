@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDisplay, useTheme } from 'vuetify'
 import { useUserStore } from '@/plugins/userStore'
@@ -15,6 +15,7 @@ const emit = defineEmits(['accept', 'decline', 'toggle-notifications-popup'])
 const router = useRouter()
 const theme = useTheme()
 const userStore = useUserStore()
+const showLogoutDialog = ref(false)
 
 var expandOnHover = true;
 // const isMobile = ref('')
@@ -48,6 +49,16 @@ const userAvatar = computed(() => user.value?.avatar || '/favicon.ico')
 const logoutUser = () => {
   userStore.resetUser()
   router.push('/login')
+}
+
+// Método para abrir o diálogo de confirmação de logout
+const confirmLogout = () => {
+  showLogoutDialog.value = true
+}
+
+// Método para cancelar o logout
+const cancelLogout = () => {
+  showLogoutDialog.value = false
 }
 
 // Função para redirecionar os usuários para a página de login OAuth2
@@ -92,7 +103,7 @@ function navigateToAccountAdmin() {
     <v-list v-if="user">
       <v-list-item :prepend-avatar="userAvatar" :subtitle="user.email" :title="user.username"
         @click="navigateToAccountAdmin"></v-list-item>
-      <v-list-item @click="logoutUser" :title="$t('sidebar.logout')" prepend-icon="mdi-logout"></v-list-item>
+      <v-list-item @click="confirmLogout" :title="$t('sidebar.logout')" prepend-icon="mdi-logout"></v-list-item>
     </v-list>
     <v-list v-else>
       <v-btn @click="redirectToOAuth2LoginPage">{{ $t('sidebar.login_oauth2') }}</v-btn>
@@ -121,6 +132,27 @@ function navigateToAccountAdmin() {
       </v-badge>
     </div>
   </v-navigation-drawer>
+
+  <!-- Diálogo de confirmação de logout -->
+  <v-dialog v-model="showLogoutDialog" max-width="400">
+    <v-card>
+      <v-card-title class="headline">
+        {{ $t('sidebar.logout_confirmation_title') }}
+      </v-card-title>
+      <v-card-text>
+        {{ $t('sidebar.logout_confirmation_message') }}
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn color="grey" text @click="cancelLogout">
+          {{ $t('sidebar.cancel') }}
+        </v-btn>
+        <v-btn color="red" text @click="logoutUser">
+          {{ $t('sidebar.confirm') }}
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 

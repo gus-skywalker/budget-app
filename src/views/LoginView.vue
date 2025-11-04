@@ -152,7 +152,7 @@ const userLogin = async () => {
       setTimeout(() => {
         loginSuccess.value = null
         router.push('/dashboard')
-      }, 4000)
+      }, 2000)
     }
   } catch (err) {
     console.error('Login error:', err)

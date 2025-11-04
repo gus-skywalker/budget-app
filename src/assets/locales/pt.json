@@ -12,7 +12,11 @@
     "groups": "Grupos",
     "goals": "Metas",
     "home": "Início",
-    "toggle_theme": "Alternar Tema"
+    "toggle_theme": "Alternar Tema",
+    "logout_confirmation_title": "Confirmar Saída",
+    "logout_confirmation_message": "Tem certeza de que deseja sair da sua conta?",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar"
   },
 
   "account_management": {
