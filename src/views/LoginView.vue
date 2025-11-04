@@ -837,6 +837,8 @@ input:focus {
   .login-wrapper {
     flex-direction: column;
     margin: 20px;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   }
   
   .hero-section {
@@ -853,12 +855,96 @@ input:focus {
 }
 
 @media (max-width: 768px) {
+  body:has(.login-page) {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  }
+
+  .app-container {
+    padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .login-wrapper {
+    margin: 0;
+    width: 100%;
+    max-width: 500px;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    background: white;
+  }
+
   .hero-section {
     display: none;
   }
   
   .form-section {
-    padding: 30px 20px;
+    padding: 40px 24px;
+    border-radius: 16px;
+  }
+
+  .form-container {
+    max-width: 100%;
+  }
+
+  .form-title {
+    font-size: 1.75rem;
+  }
+
+  .logo-image {
+    width: 80px;
+    height: 80px;
+  }
+
+  /* Adicionar pequeno header com logo no mobile */
+  .auth-form::before {
+    content: '';
+    display: block;
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 24px;
+    background-image: url('/logo.jpg');
+    background-size: cover;
+    background-position: center;
+    border-radius: 50%;
+    border: 3px solid rgba(102, 126, 234, 0.2);
+  }
+}
+
+@media (max-width: 480px) {
+  .app-container {
+    padding: 12px;
+  }
+
+  .form-section {
+    padding: 32px 20px;
+  }
+
+  .form-title {
+    font-size: 1.5rem;
+  }
+
+  .form-description {
+    font-size: 0.9rem;
+  }
+
+  input[type='text'],
+  input[type='email'],
+  input[type='password'] {
+    padding: 12px 14px;
+    font-size: 0.95rem;
+  }
+
+  .btn {
+    padding: 12px 20px;
+    font-size: 0.95rem;
+  }
+
+  .oauth-button {
+    padding: 10px 20px;
+    font-size: 0.95rem;
   }
 }
 </style>
