@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTheme } from 'vuetify'
 import { useUserStore } from '@/plugins/userStore'
@@ -16,17 +16,24 @@ const router = useRouter()
 const theme = useTheme()
 const userStore = useUserStore()
 const showLogoutDialog = ref(false)
+const expandOnHover = ref(true)
+const isMobile = ref(false)
 
-var expandOnHover = true;
-// const isMobile = ref('')
-// let mql
-// const display = useDisplay()
+// Função para verificar se é mobile
+const checkMobile = () => {
+  const width = window.innerWidth
+  isMobile.value = width < 780
+  expandOnHover.value = !isMobile.value
+  console.log('Width:', width, 'isMobile:', isMobile.value, 'expandOnHover:', expandOnHover.value)
+}
+
 onMounted(() => {
-  console.log(window.innerWidth)
-  if (window.innerWidth < 780) {
-    console.log(window.screen.width)
-    expandOnHover = false;
-  }
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
 })
 
 // onMounted(() => {
@@ -99,7 +106,13 @@ function navigateToAccountAdmin() {
 </script>
 
 <template>
-  <v-navigation-drawer app :expand-on-hover="expandOnHover" rail ref="drawer" permanent>
+  <v-navigation-drawer 
+    app 
+    :expand-on-hover="expandOnHover" 
+    :rail="true"
+    permanent
+    ref="drawer"
+  >
     <v-list v-if="user">
       <v-list-item :prepend-avatar="userAvatar" :subtitle="user.email" :title="user.username"
         @click="navigateToAccountAdmin"></v-list-item>
