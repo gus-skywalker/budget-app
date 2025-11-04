@@ -118,13 +118,17 @@ function navigateToAccountAdmin() {
       <v-list-item prepend-icon="mdi-account-group" :title="$t('sidebar.groups')" :to="{ name: 'group' }"></v-list-item>
       <v-list-item prepend-icon="mdi-bullseye-arrow" :title="$t('sidebar.goals')"
         :to="{ name: 'financialgoal' }"></v-list-item>
-      <v-list-item prepend-icon="mdi-home" :title="$t('sidebar.home')" :to="{ name: 'home' }"></v-list-item>
       <v-list-item prepend-icon="mdi-file-chart" :title="$t('sidebar.report')" :to="{ name: 'report' }"></v-list-item>
+      <v-list-item prepend-icon="mdi-home" :title="$t('sidebar.home')" :to="{ name: 'home' }"></v-list-item>
     </v-list>
 
     <v-divider></v-divider>
 
-    <v-switch @click="toggleTheme" :label="$t('sidebar.toggle_theme')"></v-switch>
+    <v-switch @click="toggleTheme" hide-details class="ml-4 mt-2">
+      <template v-slot:prepend>
+        <v-icon>{{ theme.global.current.value.dark ? 'mdi-weather-night' : 'mdi-weather-sunny' }}</v-icon>
+      </template>
+    </v-switch>
 
     <div class="notification-icon" @click="toggleNotifications">
       <v-badge :content="notifications.length" color="red" overlap>
@@ -160,6 +164,12 @@ function navigateToAccountAdmin() {
 .notification-icon {
   cursor: pointer;
   position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+  margin: 8px 0;
+  width: 56px; /* Largura fixa do rail */
 }
 
 .notification-dropdown {

@@ -49,7 +49,11 @@
           <h2>{{ $t('preferences') }}</h2>
           <v-switch v-model="notificationEmail" :label="$t('account_management.email_notifications_label')"></v-switch>
           <v-switch v-model="notificationPush" :label="$t('account_management.push_notifications_label')"></v-switch>
-          <v-switch v-model="darkTheme" :label="$t('account_management.dark_theme_label')"></v-switch>
+          <v-switch v-model="darkTheme" :label="$t('account_management.dark_theme_label')">
+            <template v-slot:prepend>
+              <v-icon>{{ darkTheme ? 'mdi-weather-night' : 'mdi-weather-sunny' }}</v-icon>
+            </template>
+          </v-switch>
         </v-col>
 
         <v-col cols="12" md="6">
