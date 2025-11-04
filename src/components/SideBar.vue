@@ -148,10 +148,10 @@ function navigateToAccountAdmin() {
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn color="grey" text @click="cancelLogout">
+        <v-btn color="grey" variant="text" @click="cancelLogout">
           {{ $t('sidebar.cancel') }}
         </v-btn>
-        <v-btn color="red" text @click="logoutUser">
+        <v-btn color="red" variant="text" @click="logoutUser">
           {{ $t('sidebar.confirm') }}
         </v-btn>
       </v-card-actions>
