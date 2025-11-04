@@ -94,3 +94,10 @@ onUnmounted(() => {
   padding: 20px;
 }
 </style>
+
+<style>
+/* Permitir que cada página controle seu próprio background */
+.v-application__wrap {
+  min-height: 100vh;
+}
+</style>

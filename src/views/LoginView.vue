@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container">
+  <div class="app-container login-page">
     <!-- Snackbar de erro -->
     <transition name="fade">
       <div v-if="error" class="snackbar error-snackbar" @click="closeNotification('error')">
@@ -28,139 +28,191 @@
         <span class="close-btn">&times;</span>
       </div>
     </transition>
-    <div class="container">
-      <div v-if="!showSignupForm">
-        <form @submit.prevent="userLogin">
-          <h2>{{ $t('authentication.login.title') }}</h2>
-          <div class="imgcontainer">
-            <img src="https://cdn.icon-icons.com/icons2/2468/PNG/512/user_kids_avatar_user_profile_icon_149314.png"
-              alt="Avatar" class="avatar" />
+
+    <div class="login-wrapper">
+      <!-- Lado esquerdo - Branding / Hero -->
+      <div class="hero-section">
+        <div class="hero-content">
+          <div class="brand-logo">
+            <img src="/logo.jpg" alt="Wallet Connect Logo" class="logo-image" />
           </div>
-          <div class="form-group">
-            <label for="email">{{ $t('authentication.login.email_label') }}</label>
-            <input 
-              type="email" 
-              v-model="userData.email" 
-              :placeholder="$t('authentication.login.email_label')"
-              @input="resetEmailValidation"
-              @blur="validateEmail"
-              :class="{ 'invalid-email': !emailValid }"
-              required 
-            />
-            <span v-if="!emailValid" class="error-message">{{ $t('authentication.login.invalid_email') }}</span>
-          </div>
-          <div class="form-group password-field">
-            <label for="password">{{ $t('authentication.login.password_label') }}</label>
-            <div class="password-input-wrapper">
-              <input 
-                :type="showPassword ? 'text' : 'password'" 
-                v-model="userData.password" 
-                :placeholder="$t('authentication.login.password_label')"
-                required 
-              />
-              <span class="toggle-password" @click="togglePasswordVisibility" :title="showPassword ? 'Ocultar senha' : 'Mostrar senha'">
-                <svg v-if="!showPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                  <circle cx="12" cy="12" r="3"></circle>
-                </svg>
-                <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                  <line x1="1" y1="1" x2="23" y2="23"></line>
-                </svg>
-              </span>
+          <h1 class="hero-title">Wallet Connect</h1>
+          <p class="hero-subtitle">Sua jornada financeira começa aqui</p>
+          <div class="hero-features">
+            <div class="feature-item">
+              <v-icon color="white" size="24">mdi-shield-check</v-icon>
+              <span>Segurança garantida</span>
+            </div>
+            <div class="feature-item">
+              <v-icon color="white" size="24">mdi-chart-line</v-icon>
+              <span>Controle total das finanças</span>
+            </div>
+            <div class="feature-item">
+              <v-icon color="white" size="24">mdi-account-group</v-icon>
+              <span>Gestão em grupo</span>
             </div>
           </div>
-          <div class="button-container">
-            <button type="submit" class="btn btn-primary" :disabled="isLoading">
-              <span v-if="isLoading" class="spinner"></span>
-              <span v-else>{{ $t('authentication.login.login_button') }}</span>
-            </button>
-            <div class="oauth-buttons">
+        </div>
+      </div>
+
+      <!-- Lado direito - Formulário -->
+      <div class="form-section">
+        <div class="form-container">
+          <!-- Login Form -->
+          <div v-if="!showSignupForm" class="auth-form">
+            <h2 class="form-title">{{ $t('authentication.login.title') }}</h2>
+            <p class="form-description">Acesse sua conta para continuar</p>
+            
+            <form @submit.prevent="userLogin">
+              <div class="form-group">
+                <label for="email">{{ $t('authentication.login.email_label') }}</label>
+                <input 
+                  type="email" 
+                  v-model="userData.email" 
+                  :placeholder="$t('authentication.login.email_label')"
+                  @input="resetEmailValidation"
+                  @blur="validateEmail"
+                  :class="{ 'invalid-email': !emailValid }"
+                  required 
+                />
+                <span v-if="!emailValid" class="error-message">{{ $t('authentication.login.invalid_email') }}</span>
+              </div>
+              
+              <div class="form-group password-field">
+                <label for="password">{{ $t('authentication.login.password_label') }}</label>
+                <div class="password-input-wrapper">
+                  <input 
+                    :type="showPassword ? 'text' : 'password'" 
+                    v-model="userData.password" 
+                    :placeholder="$t('authentication.login.password_label')"
+                    required 
+                  />
+                  <span class="toggle-password" @click="togglePasswordVisibility" :title="showPassword ? 'Ocultar senha' : 'Mostrar senha'">
+                    <svg v-if="!showPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                      <line x1="1" y1="1" x2="23" y2="23"></line>
+                    </svg>
+                  </span>
+                </div>
+              </div>
+
+              <p class="forgot-password-link">
+                <a href="#" @click.prevent="goToForgotPassword">{{ $t('authentication.login.forgot_password') }}</a>
+              </p>
+              
+              <button type="submit" class="btn btn-primary" :disabled="isLoading">
+                <span v-if="isLoading" class="spinner"></span>
+                <span v-else>{{ $t('authentication.login.login_button') }}</span>
+              </button>
+
+              <div class="divider">
+                <span>ou</span>
+              </div>
+
               <button class="oauth-button" @click.prevent="loginWithGoogle">
                 <img src="https://cdn-icons-png.flaticon.com/512/281/281764.png" alt="Google" />
                 {{ $t('authentication.login.google_login') }}
               </button>
-            </div>
-          </div>
-          <p class="forgot-password-link">
-            <a href="#" @click.prevent="goToForgotPassword">{{ $t('authentication.login.forgot_password') }}</a>
-          </p>
-          <p>
-            {{ $t('authentication.login.not_registered') }} <a href="#" @click.prevent="toggleForm(true)">{{
-              $t('authentication.login.create_account_link') }}</a>
-          </p>
-        </form>
-      </div>
 
-      <div v-if="showSignupForm">
-        <form @submit.prevent="userSignup">
-          <h2>{{ $t('authentication.signup.title') }}</h2>
-          <div class="form-group">
-            <label for="username">{{ $t('authentication.signup.username_label') }}</label>
-            <input type="text" v-model="signupData.username" :placeholder="$t('authentication.signup.username_label')"
-              required />
+              <p class="switch-form">
+                {{ $t('authentication.login.not_registered') }} 
+                <a href="#" @click.prevent="toggleForm(true)">{{ $t('authentication.login.create_account_link') }}</a>
+              </p>
+
+              <p class="terms-links">
+                Ao fazer login, você concorda com nossos 
+                <router-link to="/terms-of-use">Termos de Uso</router-link> e 
+                <router-link to="/privacy-policy">Política de Privacidade</router-link>
+              </p>
+            </form>
           </div>
-          <div class="form-group">
-            <label for="email">{{ $t('authentication.signup.email_label') }}</label>
-            <input type="email" v-model="signupData.email" :placeholder="$t('authentication.signup.email_label')"
-              required />
+
+          <!-- Signup Form -->
+          <div v-if="showSignupForm" class="auth-form">
+            <h2 class="form-title">{{ $t('authentication.signup.title') }}</h2>
+            <p class="form-description">Crie sua conta gratuita</p>
+            
+            <form @submit.prevent="userSignup">
+              <div class="form-group">
+                <label for="username">{{ $t('authentication.signup.username_label') }}</label>
+                <input type="text" v-model="signupData.username" :placeholder="$t('authentication.signup.username_label')"
+                  required />
+              </div>
+              
+              <div class="form-group">
+                <label for="email">{{ $t('authentication.signup.email_label') }}</label>
+                <input type="email" v-model="signupData.email" :placeholder="$t('authentication.signup.email_label')"
+                  required />
+              </div>
+              
+              <div class="form-group password-field">
+                <label for="password">{{ $t('authentication.signup.password_label') }}</label>
+                <div class="password-input-wrapper">
+                  <input 
+                    :type="showPassword ? 'text' : 'password'" 
+                    v-model="signupData.password"
+                    :placeholder="$t('authentication.signup.password_label')" 
+                    required 
+                  />
+                  <span class="toggle-password" @click="togglePasswordVisibility" :title="showPassword ? 'Ocultar senha' : 'Mostrar senha'">
+                    <svg v-if="!showPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                      <line x1="1" y1="1" x2="23" y2="23"></line>
+                    </svg>
+                  </span>
+                </div>
+              </div>
+              
+              <div class="form-group password-field">
+                <label for="confirmPassword">{{ $t('authentication.signup.confirm_password_label') }}</label>
+                <div class="password-input-wrapper">
+                  <input 
+                    :type="showConfirmPassword ? 'text' : 'password'" 
+                    v-model="signupData.confirmPassword"
+                    :placeholder="$t('authentication.signup.confirm_password_label')" 
+                    required 
+                  />
+                  <span class="toggle-password" @click="toggleConfirmPasswordVisibility" :title="showConfirmPassword ? 'Ocultar senha' : 'Mostrar senha'">
+                    <svg v-if="!showConfirmPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                      <line x1="1" y1="1" x2="23" y2="23"></line>
+                    </svg>
+                  </span>
+                </div>
+              </div>
+              
+              <button type="submit" class="btn btn-primary" :disabled="isLoading">
+                <span v-if="isLoading" class="spinner"></span>
+                <span v-else>{{ $t('authentication.signup.signup_button') }}</span>
+              </button>
+
+              <p class="switch-form">
+                {{ $t('authentication.signup.already_registered') }} 
+                <a href="#" @click.prevent="toggleForm(false)">{{ $t('authentication.signup.login_here_link') }}</a>
+              </p>
+
+              <p class="terms-links">
+                Ao criar uma conta, você concorda com nossos 
+                <router-link to="/terms-of-use">Termos de Uso</router-link> e 
+                <router-link to="/privacy-policy">Política de Privacidade</router-link>
+              </p>
+            </form>
           </div>
-          <div class="form-group password-field">
-            <label for="password">{{ $t('authentication.signup.password_label') }}</label>
-            <div class="password-input-wrapper">
-              <input 
-                :type="showPassword ? 'text' : 'password'" 
-                v-model="signupData.password"
-                :placeholder="$t('authentication.signup.password_label')" 
-                required 
-              />
-              <span class="toggle-password" @click="togglePasswordVisibility" :title="showPassword ? 'Ocultar senha' : 'Mostrar senha'">
-                <svg v-if="!showPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                  <circle cx="12" cy="12" r="3"></circle>
-                </svg>
-                <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                  <line x1="1" y1="1" x2="23" y2="23"></line>
-                </svg>
-              </span>
-            </div>
-          </div>
-          <div class="form-group password-field">
-            <label for="confirmPassword">{{ $t('authentication.signup.confirm_password_label') }}</label>
-            <div class="password-input-wrapper">
-              <input 
-                :type="showConfirmPassword ? 'text' : 'password'" 
-                v-model="signupData.confirmPassword"
-                :placeholder="$t('authentication.signup.confirm_password_label')" 
-                required 
-              />
-              <span class="toggle-password" @click="toggleConfirmPasswordVisibility" :title="showConfirmPassword ? 'Ocultar senha' : 'Mostrar senha'">
-                <svg v-if="!showConfirmPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                  <circle cx="12" cy="12" r="3"></circle>
-                </svg>
-                <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                  <line x1="1" y1="1" x2="23" y2="23"></line>
-                </svg>
-              </span>
-            </div>
-          </div>
-          <div class="button-container">
-            <button type="submit" class="btn btn-primary" :disabled="isLoading">
-              <span v-if="isLoading" class="spinner"></span>
-              <span v-else>{{ $t('authentication.signup.signup_button') }}</span>
-            </button>
-          </div>
-          <p>
-            {{ $t('authentication.signup.already_registered') }} <a href="#" @click.prevent="toggleForm(false)">{{
-              $t('authentication.signup.login_here_link') }}</a>
-          </p>
-        </form>
+        </div>
       </div>
     </div>
-    <Footer />
   </div>
 </template>
 
@@ -169,8 +221,6 @@ import { ref, onMounted } from 'vue'
 import { useUserStore } from '@/plugins/userStore'
 import { useRouter, useRoute } from 'vue-router'
 import axios from 'axios'
-import PaymentService from '@/services/PaymentService'
-import Footer from '../components/Footer.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -352,11 +402,36 @@ const closeNotification = (type) => {
 }
 </script>
 
+<style>
+/* Estilo global (sem scoped) para forçar o background na página de login */
+body:has(.login-page) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  overflow-x: hidden;
+}
+
+body:has(.login-page) .v-application {
+  background: transparent !important;
+}
+
+body:has(.login-page) .v-main {
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+body:has(.login-page) .main-content {
+  padding: 0 !important;
+  background: transparent !important;
+}
+</style>
+
 <style scoped>
 .app-container {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  background: transparent;
+  position: relative;
+  width: 100%;
 }
 
 /* Fade transition para snackbar */
@@ -401,36 +476,162 @@ const closeNotification = (type) => {
   cursor: pointer;
 }
 
-.spinner {
-  border: 2px solid #f3f3f3;
-  border-top: 2px solid #fff;
-  border-radius: 50%;
-  width: 16px;
-  height: 16px;
-  animation: spin 1s linear infinite;
-  display: inline-block;
+.login-wrapper {
+  display: flex;
+  flex: 1;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+  box-shadow: none;
+  border-radius: 0;
+  overflow: hidden;
+  background: transparent;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+/* Hero Section - Lado Esquerdo */
+.hero-section {
+  flex: 1;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  position: relative;
+  overflow: hidden;
 }
 
-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  animation: pulse 15s ease-in-out infinite;
 }
 
-.forgot-password-link {
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
   text-align: center;
-  margin-top: 10px;
-  margin-bottom: 10px;
+  max-width: 500px;
 }
 
-.forgot-password-link a {
-  font-size: 0.9em;
-  color: #4caf50;
-  text-decoration: underline;
+.brand-logo {
+  margin-bottom: 30px;
+}
+
+.logo-image {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.hero-title {
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.hero-subtitle {
+  font-size: 1.25rem;
+  margin-bottom: 50px;
+  opacity: 0.95;
+}
+
+.hero-features {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 1.1rem;
+}
+
+.feature-item i {
+  font-size: 1.5rem;
+}
+
+/* Form Section - Lado Direito */
+.form-section {
+  flex: 1;
+  background-color: #ffffff;
+  padding: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.form-container {
+  width: 100%;
+  max-width: 450px;
+}
+
+.auth-form {
+  width: 100%;
+}
+
+.form-title {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #1a1a1a;
+  text-align: center;
+}
+
+.form-description {
+  text-align: center;
+  color: #666;
+  opacity: 0.9;
+  margin-bottom: 32px;
+}
+
+.form-group {
+  margin-bottom: 24px;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+input[type='text'],
+input[type='email'],
+input[type='password'] {
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #ffffff;
+  color: #1a1a1a;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 .password-field {
@@ -445,18 +646,18 @@ button:disabled {
 
 .password-input-wrapper input {
   width: 100%;
-  padding-right: 40px;
+  padding-right: 45px;
 }
 
 .toggle-password {
   position: absolute;
-  right: 10px;
+  right: 12px;
   cursor: pointer;
   user-select: none;
   color: #666;
   top: 50%;
   transform: translateY(-50%);
-  padding: 5px;
+  padding: 8px;
   transition: all 0.2s;
   display: flex;
   align-items: center;
@@ -479,114 +680,185 @@ button:disabled {
 .error-message {
   color: #f44336;
   font-size: 0.85em;
-  margin-top: 5px;
+  margin-top: 6px;
   display: block;
 }
 
-.container {
-  flex: 1;
-  max-width: 450px;
-  padding: 20px;
-  background-color: rgb(var(--v-theme-surface));
-  border: 1px solid rgb(var(--v-theme-surface-variant));
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  margin: auto;
-  color: rgb(var(--v-theme-on-surface));
+.forgot-password-link {
+  text-align: right;
+  margin-bottom: 24px;
 }
 
-h2 {
-  text-align: center;
+.forgot-password-link a {
+  font-size: 0.9rem;
+  color: #667eea;
+  text-decoration: none;
+  transition: color 0.2s;
 }
 
-.imgcontainer {
-  text-align: center;
-  margin: 20px 0;
-}
-
-.avatar {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  margin: 0 auto;
-}
-
-.form-group {
-  margin-bottom: 20px;
-}
-
-a {
+.forgot-password-link a:hover {
+  color: #764ba2;
   text-decoration: underline;
-  color: rgb(var(--v-theme-primary));
 }
 
-label {
-  display: block;
-  margin-bottom: 10px;
-  color: rgb(var(--v-theme-on-surface));
-}
-
-input[type='text'],
-input[type='email'],
-input[type='password'] {
+.btn {
   width: 100%;
-  padding: 10px;
-  margin-bottom: 20px;
-  border: 1px solid rgb(var(--v-theme-surface-variant));
-  background-color: rgb(var(--v-theme-surface));
-  color: rgb(var(--v-theme-on-surface));
-}
-
-.button-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: 20px;
-  margin-bottom: 20px;
-}
-
-button[type='submit'] {
-  background-color: #4caf50;
-  color: #fff;
-  padding: 10px 20px;
+  padding: 14px 24px;
   border: none;
-  border-radius: 5px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
-button[type='submit']:hover {
-  background-color: #3e8e41;
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 }
 
-.oauth-buttons {
-  margin-top: 20px;
+.btn-primary:hover:not(:disabled) {
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  transform: translateY(-2px);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.spinner {
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid #fff;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 24px 0;
+  color: #666;
+  opacity: 0.7;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e0e0e0;
+}
+
+.divider span {
+  padding: 0 16px;
+  font-size: 0.9rem;
 }
 
 .oauth-button {
-  background-color: rgb(var(--v-theme-surface));
-  border: 1px solid rgb(var(--v-theme-surface-variant));
-  padding: 10px 20px;
-  font-size: 16px;
+  width: 100%;
+  padding: 12px 24px;
+  background-color: #ffffff;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
   cursor: pointer;
-  color: rgb(var(--v-theme-on-surface));
+  color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.oauth-button:hover {
+  border-color: #667eea;
+  background-color: rgba(102, 126, 234, 0.05);
 }
 
 .oauth-button img {
   width: 20px;
   height: 20px;
-  margin-right: 10px;
 }
 
-.error {
-  color: red;
-  margin-bottom: 20px;
-  background-color: #f2dede;
-  padding: 10px;
+.switch-form {
+  text-align: center;
+  margin-top: 32px;
+  color: #666;
+  opacity: 0.9;
 }
 
-.success {
-  color: green;
-  margin-bottom: 20px;
-  background-color: #dff0d8;
-  padding: 10px;
+.switch-form a {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+
+.switch-form a:hover {
+  color: #764ba2;
+  text-decoration: underline;
+}
+
+.terms-links {
+  text-align: center;
+  margin-top: 24px;
+  font-size: 0.85rem;
+  color: #999;
+  line-height: 1.5;
+}
+
+.terms-links a {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.terms-links a:hover {
+  text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .login-wrapper {
+    flex-direction: column;
+    margin: 20px;
+  }
+  
+  .hero-section {
+    padding: 40px 30px;
+  }
+  
+  .hero-title {
+    font-size: 2rem;
+  }
+  
+  .form-section {
+    padding: 40px 30px;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-section {
+    display: none;
+  }
+  
+  .form-section {
+    padding: 30px 20px;
+  }
 }
 </style>
