@@ -1,5 +1,19 @@
 <template>
   <div class="app-container">
+    <!-- Snackbar de erro -->
+    <transition name="fade">
+      <div v-if="error" class="snackbar error-snackbar" @click="closeNotification('error')">
+        {{ error }}
+        <span class="close-btn">&times;</span>
+      </div>
+    </transition>
+    <!-- Snackbar de sucesso -->
+    <transition name="fade">
+      <div v-if="loginSuccess" class="snackbar success-snackbar" @click="closeNotification('success')">
+        {{ loginSuccess }}
+        <span class="close-btn">&times;</span>
+      </div>
+    </transition>
     <div class="container">
       <div v-if="!showSignupForm">
         <form @submit.prevent="userLogin">
@@ -84,6 +98,7 @@ const route = useRoute()
 const userData = ref({ email: '', password: '' })
 const signupData = ref({ email: '', password: '', confirmPassword: '', username: '' })
 const error = ref(null)
+const loginSuccess = ref(null)
 const signupError = ref(null)
 const signupSuccess = ref(null)
 const showSignupForm = ref(false)
@@ -133,7 +148,11 @@ const userLogin = async () => {
         refreshToken: store.refreshToken,
         auth: store.auth
       })
-      router.push('/dashboard')
+      loginSuccess.value = 'Login realizado com sucesso!'
+      setTimeout(() => {
+        loginSuccess.value = null
+        router.push('/dashboard')
+      }, 4000)
     }
   } catch (err) {
     console.error('Login error:', err)
@@ -141,7 +160,10 @@ const userLogin = async () => {
     if (err.response) {
       console.error('Error response:', err.response.data)
     }
-    error.value = 'Invalid credentials. Please try again.'
+    error.value = 'Credenciais inválidas. Tente novamente.'
+    setTimeout(() => {
+      error.value = null
+    }, 4000)
   }
 }
 
@@ -186,6 +208,12 @@ const loginWithGoogle = () => {
 const loginWithGitHub = () => {
   window.location.href = `${authUrl}/oauth2/authorization/github`
 }
+
+// Notificações: fechar manualmente ou sumir automaticamente
+const closeNotification = (type) => {
+  if (type === 'error') error.value = null
+  if (type === 'success') loginSuccess.value = null
+}
 </script>
 
 <style scoped>
@@ -193,6 +221,48 @@ const loginWithGitHub = () => {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+}
+
+/* Fade transition para snackbar */
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.5s;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+}
+
+.snackbar {
+  position: fixed;
+  top: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 280px;
+  max-width: 90vw;
+  padding: 16px 32px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  font-size: 1rem;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+.error-snackbar {
+  background: #f2dede;
+  color: #a94442;
+  border: 1px solid #ebccd1;
+}
+.success-snackbar {
+  background: #dff0d8;
+  color: #3c763d;
+  border: 1px solid #d6e9c6;
+}
+.close-btn {
+  margin-left: 24px;
+  font-size: 1.2em;
+  font-weight: bold;
+  cursor: pointer;
 }
 
 .container {
