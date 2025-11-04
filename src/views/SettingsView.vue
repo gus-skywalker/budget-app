@@ -156,7 +156,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
+import { useTheme } from 'vuetify';
 import { useBankStore } from '@/plugins/bankStore';
 import { useUserStore } from '@/plugins/userStore';
 import SubscriptionManagement from '@/components/SubscriptionManagement.vue';
@@ -165,6 +166,7 @@ import NotificationService, { type UserSettings } from '@/services/NotificationS
 
 const bankStore = useBankStore();
 const userStore = useUserStore();
+const theme = useTheme();
 
 onMounted(async () => {
   try {
@@ -176,6 +178,9 @@ onMounted(async () => {
     notificationEmail.value = settings.notificationEmail ?? true;
     notificationPush.value = settings.notificationPush ?? true;
     darkTheme.value = settings.darkTheme ?? false;
+    
+    // Sincronizar com o tema atual do Vuetify
+    darkTheme.value = theme.global.current.value.dark;
   } catch (error) {
     console.error('Erro ao carregar configurações:', error);
   }
@@ -200,6 +205,11 @@ const notificationPush = ref(true)
 const darkTheme = ref(false)
 const alertDays = ref(1);
 const alertOptions = [1, 2, 3, 5, 7, 10];
+
+// Watch para aplicar o tema quando o switch mudar
+watch(darkTheme, (newValue) => {
+  theme.global.name.value = newValue ? 'dark' : 'light';
+});
 
 // Estado dos diálogos
 const bankDialog = ref(false)

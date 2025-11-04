@@ -27,10 +27,11 @@ const availableLanguages = [
 
 <style scoped>
 .app-footer {
-    background-color: #f9f9f9;
+    background-color: rgb(var(--v-theme-surface));
+    color: rgb(var(--v-theme-on-surface));
     padding: 20px;
     text-align: center;
-    border-top: 1px solid #ccc;
+    border-top: 1px solid rgb(var(--v-theme-surface-variant));
     position: relative;
     width: 100%;
     bottom: 0;
@@ -48,7 +49,7 @@ const availableLanguages = [
 
 .footer-links a {
     margin: 0 10px;
-    color: blue;
+    color: rgb(var(--v-theme-primary));
     text-decoration: none;
     cursor: pointer;
 }

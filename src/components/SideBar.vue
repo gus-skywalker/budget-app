@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useDisplay, useTheme } from 'vuetify'
+import { useTheme } from 'vuetify'
 import { useUserStore } from '@/plugins/userStore'
 import type { Notification } from '@/services/NotificationService'
 
@@ -74,8 +74,8 @@ const availableLanguages = [
 
 // Função para alternar o tema
 function toggleTheme() {
-  const isLightTheme = computed(() => theme.global.name.value === 'light')
-  theme.global.name.value = isLightTheme.value ? 'dark' : 'light'
+  const currentTheme = theme.global.current.value.dark ? 'light' : 'dark'
+  theme.global.name.value = currentTheme
 }
 
 // Função para alternar a exibição das notificações
@@ -124,7 +124,7 @@ function navigateToAccountAdmin() {
 
     <v-divider></v-divider>
 
-    <v-switch @click="toggleTheme">{{ $t('sidebar.toggle_theme') }}</v-switch>
+    <v-switch @click="toggleTheme" :label="$t('sidebar.toggle_theme')"></v-switch>
 
     <div class="notification-icon" @click="toggleNotifications">
       <v-badge :content="notifications.length" color="red" overlap>

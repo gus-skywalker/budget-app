@@ -195,6 +195,8 @@
       "password_label": "Password",
       "login_button": "Login",
       "google_login": "Login with Google",
+      "forgot_password": "Forgot your password?",
+      "invalid_email": "Please enter a valid email address",
       "not_registered": "Don't have an account yet?",
       "create_account_link": "Create an account."
     },

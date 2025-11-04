@@ -242,7 +242,8 @@ export default {
 <style scoped>
 .report-generator-container {
     padding: 20px;
-    background-color: #f5f5f5;
+    background-color: rgb(var(--v-theme-surface));
+    color: rgb(var(--v-theme-on-surface));
     border-radius: 8px;
 }
 </style>

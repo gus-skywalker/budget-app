@@ -14,6 +14,20 @@
         <span class="close-btn">&times;</span>
       </div>
     </transition>
+    <!-- Snackbar de erro do signup -->
+    <transition name="fade">
+      <div v-if="signupError" class="snackbar error-snackbar" @click="closeNotification('signupError')">
+        {{ signupError }}
+        <span class="close-btn">&times;</span>
+      </div>
+    </transition>
+    <!-- Snackbar de sucesso do signup -->
+    <transition name="fade">
+      <div v-if="signupSuccess" class="snackbar success-snackbar" @click="closeNotification('signupSuccess')">
+        {{ signupSuccess }}
+        <span class="close-btn">&times;</span>
+      </div>
+    </transition>
     <div class="container">
       <div v-if="!showSignupForm">
         <form @submit.prevent="userLogin">
@@ -24,16 +38,43 @@
           </div>
           <div class="form-group">
             <label for="email">{{ $t('authentication.login.email_label') }}</label>
-            <input type="email" v-model="userData.email" :placeholder="$t('authentication.login.email_label')"
-              required />
+            <input 
+              type="email" 
+              v-model="userData.email" 
+              :placeholder="$t('authentication.login.email_label')"
+              @input="resetEmailValidation"
+              @blur="validateEmail"
+              :class="{ 'invalid-email': !emailValid }"
+              required 
+            />
+            <span v-if="!emailValid" class="error-message">{{ $t('authentication.login.invalid_email') }}</span>
           </div>
-          <div class="form-group">
+          <div class="form-group password-field">
             <label for="password">{{ $t('authentication.login.password_label') }}</label>
-            <input type="password" v-model="userData.password" :placeholder="$t('authentication.login.password_label')"
-              required />
+            <div class="password-input-wrapper">
+              <input 
+                :type="showPassword ? 'text' : 'password'" 
+                v-model="userData.password" 
+                :placeholder="$t('authentication.login.password_label')"
+                required 
+              />
+              <span class="toggle-password" @click="togglePasswordVisibility" :title="showPassword ? 'Ocultar senha' : 'Mostrar senha'">
+                <svg v-if="!showPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              </span>
+            </div>
           </div>
           <div class="button-container">
-            <button type="submit" class="btn btn-primary">{{ $t('authentication.login.login_button') }}</button>
+            <button type="submit" class="btn btn-primary" :disabled="isLoading">
+              <span v-if="isLoading" class="spinner"></span>
+              <span v-else>{{ $t('authentication.login.login_button') }}</span>
+            </button>
             <div class="oauth-buttons">
               <button class="oauth-button" @click.prevent="loginWithGoogle">
                 <img src="https://cdn-icons-png.flaticon.com/512/281/281764.png" alt="Google" />
@@ -41,6 +82,9 @@
               </button>
             </div>
           </div>
+          <p class="forgot-password-link">
+            <a href="#" @click.prevent="goToForgotPassword">{{ $t('authentication.login.forgot_password') }}</a>
+          </p>
           <p>
             {{ $t('authentication.login.not_registered') }} <a href="#" @click.prevent="toggleForm(true)">{{
               $t('authentication.login.create_account_link') }}</a>
@@ -61,18 +105,53 @@
             <input type="email" v-model="signupData.email" :placeholder="$t('authentication.signup.email_label')"
               required />
           </div>
-          <div class="form-group">
+          <div class="form-group password-field">
             <label for="password">{{ $t('authentication.signup.password_label') }}</label>
-            <input type="password" v-model="signupData.password"
-              :placeholder="$t('authentication.signup.password_label')" required />
+            <div class="password-input-wrapper">
+              <input 
+                :type="showPassword ? 'text' : 'password'" 
+                v-model="signupData.password"
+                :placeholder="$t('authentication.signup.password_label')" 
+                required 
+              />
+              <span class="toggle-password" @click="togglePasswordVisibility" :title="showPassword ? 'Ocultar senha' : 'Mostrar senha'">
+                <svg v-if="!showPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              </span>
+            </div>
           </div>
-          <div class="form-group">
+          <div class="form-group password-field">
             <label for="confirmPassword">{{ $t('authentication.signup.confirm_password_label') }}</label>
-            <input type="password" v-model="signupData.confirmPassword"
-              :placeholder="$t('authentication.signup.confirm_password_label')" required />
+            <div class="password-input-wrapper">
+              <input 
+                :type="showConfirmPassword ? 'text' : 'password'" 
+                v-model="signupData.confirmPassword"
+                :placeholder="$t('authentication.signup.confirm_password_label')" 
+                required 
+              />
+              <span class="toggle-password" @click="toggleConfirmPasswordVisibility" :title="showConfirmPassword ? 'Ocultar senha' : 'Mostrar senha'">
+                <svg v-if="!showConfirmPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              </span>
+            </div>
           </div>
           <div class="button-container">
-            <button type="submit" class="btn btn-primary">{{ $t('authentication.signup.signup_button') }}</button>
+            <button type="submit" class="btn btn-primary" :disabled="isLoading">
+              <span v-if="isLoading" class="spinner"></span>
+              <span v-else>{{ $t('authentication.signup.signup_button') }}</span>
+            </button>
           </div>
           <p>
             {{ $t('authentication.signup.already_registered') }} <a href="#" @click.prevent="toggleForm(false)">{{
@@ -102,6 +181,10 @@ const loginSuccess = ref(null)
 const signupError = ref(null)
 const signupSuccess = ref(null)
 const showSignupForm = ref(false)
+const isLoading = ref(false)
+const showPassword = ref(false)
+const showConfirmPassword = ref(false)
+const emailValid = ref(true)
 const authUrl = import.meta.env.VITE_AUTH_URL
 
 onMounted(() => {
@@ -113,6 +196,7 @@ onMounted(() => {
 
 const userLogin = async () => {
   try {
+    isLoading.value = true
     const store = useUserStore()
     console.log('Store antes do login:', {
       methods: Object.keys(store),
@@ -152,42 +236,68 @@ const userLogin = async () => {
       setTimeout(() => {
         loginSuccess.value = null
         router.push('/dashboard')
-      }, 2000)
+      }, 1500)
     }
   } catch (err) {
     console.error('Login error:', err)
     console.error('Store no momento do erro:', useUserStore())
-    if (err.response) {
-      console.error('Error response:', err.response.data)
+    
+    // Usar mensagem específica do backend se disponível
+    let errorMessage = 'Credenciais inválidas. Tente novamente.'
+    if (err.response && err.response.data) {
+      if (typeof err.response.data === 'string') {
+        errorMessage = err.response.data
+      } else if (err.response.data.message) {
+        errorMessage = err.response.data.message
+      }
     }
-    error.value = 'Credenciais inválidas. Tente novamente.'
+    
+    error.value = errorMessage
     setTimeout(() => {
       error.value = null
     }, 4000)
+  } finally {
+    isLoading.value = false
   }
 }
 
 const userSignup = async () => {
   if (signupData.value.password !== signupData.value.confirmPassword) {
-    signupError.value = 'Passwords do not match. Please try again.';
+    signupError.value = 'As senhas não coincidem. Tente novamente.';
+    setTimeout(() => {
+      signupError.value = null
+    }, 4000)
     return;
   }
   try {
+    isLoading.value = true
     const res = await axios.post(`${authUrl}/auth/signup`, {
       ...signupData.value,
       language: 'PT',
     });
 
     if (res.status === 201) {
-      signupSuccess.value = 'Account created successfully. You can now log in.';
-      clearSignupForm();
-      toggleForm(false);
+      signupSuccess.value = 'Conta criada com sucesso! Você já pode fazer login.';
+      setTimeout(() => {
+        signupSuccess.value = null
+        clearSignupForm();
+        toggleForm(false);
+      }, 3000)
     } else {
-      signupError.value = 'Failed to create account. Please try again.';
+      signupError.value = 'Falha ao criar conta. Tente novamente.';
+      setTimeout(() => {
+        signupError.value = null
+      }, 4000)
     }
 
-  } catch {
-    signupError.value = 'Error creating account. Please try again.';
+  } catch (err) {
+    console.error('Signup error:', err)
+    signupError.value = 'Erro ao criar conta. Tente novamente.';
+    setTimeout(() => {
+      signupError.value = null
+    }, 4000)
+  } finally {
+    isLoading.value = false
   }
 };
 
@@ -209,10 +319,36 @@ const loginWithGitHub = () => {
   window.location.href = `${authUrl}/oauth2/authorization/github`
 }
 
+const goToForgotPassword = () => {
+  router.push('/forgot-password')
+}
+
+// Toggle de visibilidade da senha
+const togglePasswordVisibility = () => {
+  showPassword.value = !showPassword.value
+}
+
+const toggleConfirmPasswordVisibility = () => {
+  showConfirmPassword.value = !showConfirmPassword.value
+}
+
+// Validação de email em tempo real
+const validateEmail = () => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  emailValid.value = emailRegex.test(userData.value.email)
+}
+
+// Reset validação quando usuário começa a digitar
+const resetEmailValidation = () => {
+  emailValid.value = true
+}
+
 // Notificações: fechar manualmente ou sumir automaticamente
 const closeNotification = (type) => {
   if (type === 'error') error.value = null
   if (type === 'success') loginSuccess.value = null
+  if (type === 'signupError') signupError.value = null
+  if (type === 'signupSuccess') signupSuccess.value = null
 }
 </script>
 
@@ -265,14 +401,97 @@ const closeNotification = (type) => {
   cursor: pointer;
 }
 
+.spinner {
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #fff;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.forgot-password-link {
+  text-align: center;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.forgot-password-link a {
+  font-size: 0.9em;
+  color: #4caf50;
+  text-decoration: underline;
+}
+
+.password-field {
+  position: relative;
+}
+
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper input {
+  width: 100%;
+  padding-right: 40px;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 10px;
+  cursor: pointer;
+  user-select: none;
+  color: #666;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 5px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggle-password:hover {
+  color: #333;
+}
+
+.toggle-password svg {
+  display: block;
+}
+
+.invalid-email {
+  border-color: #f44336 !important;
+  background-color: #ffebee !important;
+}
+
+.error-message {
+  color: #f44336;
+  font-size: 0.85em;
+  margin-top: 5px;
+  display: block;
+}
+
 .container {
   flex: 1;
   max-width: 450px;
   padding: 20px;
-  background-color: #f9f9f9;
-  border: 1px solid #ccc;
+  background-color: rgb(var(--v-theme-surface));
+  border: 1px solid rgb(var(--v-theme-surface-variant));
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   margin: auto;
+  color: rgb(var(--v-theme-on-surface));
 }
 
 h2 {
@@ -297,12 +516,13 @@ h2 {
 
 a {
   text-decoration: underline;
-  color: blue;
+  color: rgb(var(--v-theme-primary));
 }
 
 label {
   display: block;
   margin-bottom: 10px;
+  color: rgb(var(--v-theme-on-surface));
 }
 
 input[type='text'],
@@ -311,7 +531,9 @@ input[type='password'] {
   width: 100%;
   padding: 10px;
   margin-bottom: 20px;
-  border: 1px solid #ccc;
+  border: 1px solid rgb(var(--v-theme-surface-variant));
+  background-color: rgb(var(--v-theme-surface));
+  color: rgb(var(--v-theme-on-surface));
 }
 
 .button-container {
@@ -340,11 +562,12 @@ button[type='submit']:hover {
 }
 
 .oauth-button {
-  background-color: #fff;
-  border: none;
+  background-color: rgb(var(--v-theme-surface));
+  border: 1px solid rgb(var(--v-theme-surface-variant));
   padding: 10px 20px;
   font-size: 16px;
   cursor: pointer;
+  color: rgb(var(--v-theme-on-surface));
 }
 
 .oauth-button img {

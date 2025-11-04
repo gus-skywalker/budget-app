@@ -197,6 +197,8 @@
       "password_label": "Senha",
       "login_button": "Entrar",
       "google_login": "Entrar com Google",
+      "forgot_password": "Esqueceu sua senha?",
+      "invalid_email": "Por favor, insira um e-mail válido",
       "not_registered": "Ainda não tem uma conta?",
       "create_account_link": "Crie uma conta."
     },

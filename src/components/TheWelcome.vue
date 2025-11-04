@@ -95,8 +95,8 @@
 }
 
 .header {
-  background-color: #f0f0f0;
-  /* cor de fundo do header */
+  background-color: rgb(var(--v-theme-surface));
+  color: rgb(var(--v-theme-on-surface));
   padding: 20px;
   display: flex;
   align-items: center;
