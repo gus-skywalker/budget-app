@@ -80,7 +80,7 @@ onUnmounted(() => {
   <v-app>
     <SideBar v-if="isAuthenticated" :notifications="notifications" @accept="accept" @decline="decline"
       @toggle-notifications-popup="toggleNotificationsPopup" />
-    <v-main class="main-content">
+    <v-main :class="{ 'main-content': true, 'main-content-authenticated': isAuthenticated }">
       <RouterView />
     </v-main>
     <NotificationPopup :visible="showNotificationsPopup" :notifications="notifications"
@@ -91,7 +91,20 @@ onUnmounted(() => {
 
 <style scoped>
 .main-content {
-  padding: 20px;
+  padding: 0;
+  min-height: 100vh;
+}
+
+.main-content-authenticated {
+  /* Adiciona margem à esquerda quando o sidebar está visível */
+  margin-left: 0;
+}
+
+/* Para telas maiores, o sidebar fica fixo */
+@media (min-width: 1280px) {
+  .main-content-authenticated {
+    margin-left: 56px; /* Largura do sidebar em rail mode */
+  }
 }
 </style>
 
