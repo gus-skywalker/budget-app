@@ -179,7 +179,7 @@
           <a @click.prevent="$router.push('/cookie-policy')">Política de Cookies</a>
         </div>
         <div class="footer-info">
-          <p>&copy; 2024 Wallet Connect. Todos os direitos reservados. Powered by Les Monades</p>
+          <p>&copy; 2024 CoBudget. Todos os direitos reservados. Powered by Les Monades</p>
         </div>
       </div>
     </footer>

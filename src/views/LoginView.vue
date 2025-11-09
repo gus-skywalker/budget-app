@@ -34,9 +34,9 @@
       <div class="hero-section">
         <div class="hero-content">
           <div class="brand-logo">
-            <img src="/logo.jpg" alt="Wallet Connect Logo" class="logo-image" />
+            <img src="/logo.jpg" alt="CoBudget Logo" class="logo-image" />
           </div>
-          <h1 class="hero-title">Wallet Connect</h1>
+          <h1 class="hero-title">CoBudget</h1>
           <p class="hero-subtitle">Sua jornada financeira começa aqui</p>
           <div class="hero-features">
             <div class="feature-item">
@@ -363,10 +363,6 @@ const toggleForm = (isSignup) => {
 
 const loginWithGoogle = () => {
   window.location.href = `${authUrl}/oauth2/authorization/google`
-}
-
-const loginWithGitHub = () => {
-  window.location.href = `${authUrl}/oauth2/authorization/github`
 }
 
 const goToForgotPassword = () => {
