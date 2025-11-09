@@ -483,6 +483,15 @@ const saveAlertSettings = async () => {
 
 .modern-container {
   max-width: 1400px;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+@media (min-width: 600px) {
+  .modern-container {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
 }
 
 /* Header */

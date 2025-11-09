@@ -125,29 +125,70 @@ function navigateToAccountAdmin() {
     <v-divider></v-divider>
 
     <v-list density="compact" nav>
-      <v-list-item prepend-icon="mdi-view-dashboard" :title="$t('sidebar.dashboard')"
-        :to="{ name: 'dashboard' }"></v-list-item>
-      <v-list-item prepend-icon="mdi-currency-usd" :title="$t('sidebar.budget')" :to="{ name: 'budget' }"></v-list-item>
-      <v-list-item prepend-icon="mdi-account-group" :title="$t('sidebar.groups')" :to="{ name: 'group' }"></v-list-item>
-      <v-list-item prepend-icon="mdi-bullseye-arrow" :title="$t('sidebar.goals')"
-        :to="{ name: 'financialgoal' }"></v-list-item>
-      <v-list-item prepend-icon="mdi-file-chart" :title="$t('sidebar.report')" :to="{ name: 'report' }"></v-list-item>
-      <v-list-item prepend-icon="mdi-home" :title="$t('sidebar.home')" :to="{ name: 'home' }"></v-list-item>
+      <v-tooltip text="Dashboard" location="end">
+        <template v-slot:activator="{ props }">
+          <v-list-item v-bind="props" prepend-icon="mdi-view-dashboard" :title="$t('sidebar.dashboard')"
+            :to="{ name: 'dashboard' }"></v-list-item>
+        </template>
+      </v-tooltip>
+
+      <v-tooltip text="Orçamento" location="end">
+        <template v-slot:activator="{ props }">
+          <v-list-item v-bind="props" prepend-icon="mdi-currency-usd" :title="$t('sidebar.budget')" 
+            :to="{ name: 'budget' }"></v-list-item>
+        </template>
+      </v-tooltip>
+
+      <v-tooltip text="Grupos" location="end">
+        <template v-slot:activator="{ props }">
+          <v-list-item v-bind="props" prepend-icon="mdi-account-group" :title="$t('sidebar.groups')" 
+            :to="{ name: 'group' }"></v-list-item>
+        </template>
+      </v-tooltip>
+
+      <v-tooltip text="Metas Financeiras" location="end">
+        <template v-slot:activator="{ props }">
+          <v-list-item v-bind="props" prepend-icon="mdi-bullseye-arrow" :title="$t('sidebar.goals')"
+            :to="{ name: 'financialgoal' }"></v-list-item>
+        </template>
+      </v-tooltip>
+
+      <v-tooltip text="Relatórios" location="end">
+        <template v-slot:activator="{ props }">
+          <v-list-item v-bind="props" prepend-icon="mdi-file-chart" :title="$t('sidebar.report')" 
+            :to="{ name: 'report' }"></v-list-item>
+        </template>
+      </v-tooltip>
+
+      <v-tooltip text="Início" location="end">
+        <template v-slot:activator="{ props }">
+          <v-list-item v-bind="props" prepend-icon="mdi-home" :title="$t('sidebar.home')" 
+            :to="{ name: 'home' }"></v-list-item>
+        </template>
+      </v-tooltip>
     </v-list>
 
     <v-divider></v-divider>
 
-    <v-switch @click="toggleTheme" hide-details class="ml-4 mt-2">
-      <template v-slot:prepend>
-        <v-icon>{{ theme.global.current.value.dark ? 'mdi-weather-night' : 'mdi-weather-sunny' }}</v-icon>
+    <v-tooltip text="Alternar Tema" location="end">
+      <template v-slot:activator="{ props }">
+        <v-switch v-bind="props" @click="toggleTheme" hide-details class="ml-4 mt-2">
+          <template v-slot:prepend>
+            <v-icon>{{ theme.global.current.value.dark ? 'mdi-weather-night' : 'mdi-weather-sunny' }}</v-icon>
+          </template>
+        </v-switch>
       </template>
-    </v-switch>
+    </v-tooltip>
 
-    <div class="notification-icon" @click="toggleNotifications">
-      <v-badge :content="notifications.length" color="red" overlap>
-        <v-icon>mdi-bell</v-icon>
-      </v-badge>
-    </div>
+    <v-tooltip text="Notificações" location="end">
+      <template v-slot:activator="{ props }">
+        <div v-bind="props" class="notification-icon" @click="toggleNotifications">
+          <v-badge :content="notifications.length" color="red" overlap>
+            <v-icon>mdi-bell</v-icon>
+          </v-badge>
+        </div>
+      </template>
+    </v-tooltip>
   </v-navigation-drawer>
 
   <!-- Diálogo de confirmação de logout -->

@@ -347,6 +347,15 @@ export default {
 
 .modern-container {
     max-width: 1200px;
+    padding-left: 16px;
+    padding-right: 16px;
+}
+
+@media (min-width: 600px) {
+    .modern-container {
+        padding-left: 24px;
+        padding-right: 24px;
+    }
 }
 
 /* Modern Card */
