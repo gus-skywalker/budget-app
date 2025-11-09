@@ -2,6 +2,8 @@
   "welcome": "Bem-vindo ao Aplicativo de Orçamento",
   "login": "Entrar",
   "logout": "Sair",
+  "save_changes": "Salvar Mudanças",
+  "language_label": "Idioma",
 
   "sidebar": {
     "logout": "Sair",
@@ -21,6 +23,7 @@
 
   "account_management": {
     "title": "Administração de Conta",
+    "subtitle": "Gerencie suas configurações e preferências",
     "basic_profile_information": "Informações Básicas do Perfil",
     "security": "Segurança",
     "preferences": "Preferências",
@@ -43,11 +46,65 @@
     "bank_login_label": "Login",
     "bank_password_label": "Senha",
     "generate_certificate": "Gerar Novo Certificado",
+    "generate_certificate_description": "Será necessário gerar um novo certificado para conectar esta conta bancária.",
+    "verification_code": "Código de Verificação",
+    "verification_code_description": "Digite o código de 6 dígitos enviado para seu e-mail.",
     "verification_code_label": "Código de Verificação",
+    "verification_code_length": "O código deve ter 6 dígitos",
     "verify_code": "Verificar Código",
     "send_code": "Enviar Código",
     "alert_settings": "Configurações de Alerta",
-    "alert_days_before_label": "Definir antecedência do alerta (dias antes)"
+    "alert_days_before_label": "Definir antecedência do alerta (dias antes)",
+    "tabs": {
+      "profile": "Perfil",
+      "security": "Segurança",
+      "preferences": "Preferências",
+      "connections": "Conexões",
+      "subscription": "Assinatura"
+    },
+    "profile": {
+      "title": "Informações do Perfil",
+      "description": "Atualize suas informações pessoais"
+    },
+    "security_card": {
+      "password_title": "Alterar Senha",
+      "password_description": "Mantenha sua conta segura",
+      "two_factor_title": "Autenticação em Dois Fatores",
+      "two_factor_description": "Adicione uma camada extra de segurança",
+      "two_factor_enable": "Ativar 2FA",
+      "two_factor_hint": "Requer código adicional ao fazer login"
+    },
+    "notifications": {
+      "title": "Notificações",
+      "description": "Configure como deseja receber alertas",
+      "email_label": "Notificações por Email",
+      "email_hint": "Receba alertas importantes no seu email",
+      "push_label": "Notificações Push",
+      "push_hint": "Receba notificações no navegador",
+      "alert_days_label": "Dias de Antecedência",
+      "alert_days_hint": "Quantos dias antes você quer ser alertado sobre despesas"
+    },
+    "appearance": {
+      "title": "Aparência",
+      "description": "Personalize a interface do sistema",
+      "dark_theme_label": "Tema Escuro",
+      "dark_theme_hint": "Ative para reduzir o brilho da tela"
+    },
+    "save_preferences": "Salvar Preferências",
+    "bank_connections": {
+      "title": "Conectar Bancos",
+      "description": "Conecte suas contas bancárias para sincronização automática",
+      "disconnected": "Desconectado",
+      "coming_soon": "Em Breve",
+      "coming_soon_message": "Esta funcionalidade estará disponível em breve"
+    },
+    "integrations": {
+      "title": "Integrações",
+      "description": "Conecte com serviços externos",
+      "google_account": "Google Account",
+      "google_description": "Sincronize com sua conta Google",
+      "connect": "Conectar"
+    }
   },
 
   "subscription_management": {

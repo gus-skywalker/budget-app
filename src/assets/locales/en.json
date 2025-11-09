@@ -2,6 +2,8 @@
   "welcome": "Welcome to the Budget App",
   "login": "Login",
   "logout": "Logout",
+  "save_changes": "Save Changes",
+  "language_label": "Language",
 
   "sidebar": {
     "logout": "Logout",
@@ -20,6 +22,7 @@
   },
   "account_management": {
     "title": "Account Management",
+    "subtitle": "Manage your settings and preferences",
     "basic_profile_information": "Basic Profile Information",
     "security": "Security",
     "preferences": "Preferences",
@@ -46,11 +49,65 @@
     "bank_password_label": "Password",
     "cancel": "Cancel",
     "generate_certificate": "Generate New Certificate",
+    "generate_certificate_description": "A new certificate will be required to connect this bank account.",
+    "verification_code": "Verification Code",
+    "verification_code_description": "Enter the 6-digit code sent to your email.",
     "verification_code_label": "Verification Code",
+    "verification_code_length": "The code must have 6 digits",
     "verify_code": "Verify Code",
     "send_code": "Send Code",
     "alert_settings": "Alert Settings",
-    "alert_days_before_label": "Set Alert Advance (days before)"
+    "alert_days_before_label": "Set Alert Advance (days before)",
+    "tabs": {
+      "profile": "Profile",
+      "security": "Security",
+      "preferences": "Preferences",
+      "connections": "Connections",
+      "subscription": "Subscription"
+    },
+    "profile": {
+      "title": "Profile Information",
+      "description": "Update your personal information"
+    },
+    "security_card": {
+      "password_title": "Change Password",
+      "password_description": "Keep your account secure",
+      "two_factor_title": "Two-Factor Authentication",
+      "two_factor_description": "Add an extra layer of security",
+      "two_factor_enable": "Enable 2FA",
+      "two_factor_hint": "Requires additional code when logging in"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "description": "Configure how you want to receive alerts",
+      "email_label": "Email Notifications",
+      "email_hint": "Receive important alerts via email",
+      "push_label": "Push Notifications",
+      "push_hint": "Receive notifications in your browser",
+      "alert_days_label": "Days in Advance",
+      "alert_days_hint": "How many days before you want to be alerted about expenses"
+    },
+    "appearance": {
+      "title": "Appearance",
+      "description": "Customize the system interface",
+      "dark_theme_label": "Dark Theme",
+      "dark_theme_hint": "Enable to reduce screen brightness"
+    },
+    "save_preferences": "Save Preferences",
+    "bank_connections": {
+      "title": "Connect Banks",
+      "description": "Connect your bank accounts for automatic synchronization",
+      "disconnected": "Disconnected",
+      "coming_soon": "Coming Soon",
+      "coming_soon_message": "This feature will be available soon"
+    },
+    "integrations": {
+      "title": "Integrations",
+      "description": "Connect with external services",
+      "google_account": "Google Account",
+      "google_description": "Sync with your Google account",
+      "connect": "Connect"
+    }
   },
 
   "subscription_management": {
