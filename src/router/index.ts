@@ -125,6 +125,12 @@ const router = createRouter({
       path: '/cookie-policy',
       name: 'cookie-policy',
       component: CookiePolicy
+    },
+    {
+      path: '/checkout',
+      name: 'checkout',
+      component: () => import('@/views/CheckoutView.vue'),
+      meta: { requiresAuth: true }
     }
   ]
 })
@@ -133,13 +139,47 @@ router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
   const isAuthenticated = userStore.isAuthenticated
 
+  // Se requer autenticação e usuário não está autenticado
   if (to.meta.requiresAuth && !isAuthenticated) {
-    next({ name: 'login' })
-  } else if (isAuthenticated && (to.name === 'login' || to.name === 'oauth2redirect')) {
-    next({ name: 'dashboard' })
-  } else {
-    next()
+    // Salva os query params para redirecionamento após login
+    const query = { ...to.query }
+    if (to.path !== '/login') {
+      query.redirect = to.path
+    }
+    next({ 
+      name: 'login',
+      query: query
+    })
+    return
   }
+
+  // Se usuário está autenticado e tenta acessar login/oauth
+  if (isAuthenticated && (to.name === 'login' || to.name === 'oauth2redirect')) {
+    // Se há um redirecionamento especificado, use-o
+    const redirect = to.query.redirect || '/dashboard'
+    const query = { ...to.query }
+    delete query.redirect // Remove redirect da query
+    next({ 
+      path: redirect as string,
+      query: query
+    })
+    return
+  }
+
+  // Se está indo para choose-plan e tem plano no localStorage
+  if (to.name === 'choose-plan' && localStorage.getItem('selectedPlan')) {
+    const plan = localStorage.getItem('selectedPlan')
+    localStorage.removeItem('selectedPlan') // Limpa o storage
+    if (isAuthenticated) {
+      next({
+        name: 'checkout',
+        query: { plan: plan }
+      })
+      return
+    }
+  }
+
+  next()
 })
 
 export default router
