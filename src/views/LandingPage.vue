@@ -119,16 +119,16 @@
       <div class="plans-container">
         <div class="plan-item">
           <h3>Plano Mensal</h3>
-          <p class="price">R$ 29,00 / mês</p>
-          <p>Comece com a nossa plataforma gratuitamente e, após 30 dias, continue com o plano mensal.</p>
+          <p class="price">{{ planDetails.MONTHLY.displayPrice }}</p>
+          <p>Aproveite nossa oferta de lançamento: 30 dias gratuitos e, depois, mantenha o acesso pelo valor promocional de {{ formatAmount(planDetails.MONTHLY.amount) }} por mês.</p>
           <button class="btn btn-primary cta-btn" @click.prevent="redirectToCheckout('MONTHLY')">
             Assine Mensalmente
           </button>
         </div>
         <div class="plan-item">
           <h3>Plano Anual</h3>
-          <p class="price">R$ 299,00 / ano</p>
-          <p>Ao invés de pagar R$ 348,00 (12 x R$ 29,00), aproveite o plano anual com um desconto especial.</p>
+          <p class="price">{{ planDetails.ANNUAL.displayPrice }}</p>
+          <p>Garanta 12 meses com desconto exclusivo: pague uma vez {{ planDetails.ANNUAL.displayPrice }} (equivalente a {{ formatAmount(planDetails.MONTHLY.amount) }} por mês) e mantenha o preço promocional congelado o ano inteiro.</p>
           <button class="btn btn-primary cta-btn" @click.prevent="redirectToCheckout('ANNUAL')">
             Assine Anualmente
           </button>
@@ -191,6 +191,7 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import PrivacyControls from '@/components/compliance/PrivacyControls.vue'
 import PaymentService from '@/services/PaymentService'
+import { PLAN_DETAILS, formatPlanAmount } from '@/constants/plans'
 
 export default {
   components: {
@@ -200,6 +201,7 @@ export default {
   data() {
     return {
       isMenuOpen: false,
+      planDetails: PLAN_DETAILS,
       contactForm: {
         name: '',
         email: '',
@@ -221,7 +223,7 @@ export default {
       alert('Mensagem enviada com sucesso!');
       this.contactForm = { name: '', email: '', message: '' };
     },
-    async redirectToCheckout(plan) {
+  async redirectToCheckout(plan) {
       try {
         // Requisição ao backend para criar a sessão de checkout no Stripe
         const response = await PaymentService.createCheckoutSession(plan);
@@ -236,6 +238,9 @@ export default {
         alert('Erro ao processar o pagamento. Tente novamente mais tarde.');
       }
     },
+    formatAmount(amount) {
+      return formatPlanAmount(amount);
+    }
   },
 };
 </script>

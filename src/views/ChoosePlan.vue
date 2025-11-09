@@ -8,7 +8,7 @@
                 <!-- Plano Mensal -->
                 <div class="plan-item">
                     <h3>Plano Mensal</h3>
-                    <p class="price">R$ 29,00 / mês</p>
+                    <p class="price">{{ planDetails.MONTHLY.displayPrice }}</p>
                     <p>Comece com a nossa plataforma gratuitamente e, após 30 dias, continue com o plano mensal.</p>
                     <ul class="plan-benefits">
                         <li>Acesso ilimitado aos recursos</li>
@@ -23,12 +23,11 @@
                 <!-- Plano Anual -->
                 <div class="plan-item">
                     <h3>Plano Anual</h3>
-                    <p class="price">R$ 299,00 / ano</p>
+                    <p class="price">{{ planDetails.ANNUAL.displayPrice }}</p>
                     <p>Aproveite o plano anual com um desconto especial.</p>
                     <ul class="plan-benefits">
                         <li>Acesso ilimitado aos recursos</li>
                         <li>Suporte premium ao cliente</li>
-                        <li>Economia de R$ 49,00 por ano</li>
                         <li>Atualizações mensais e melhorias exclusivas</li>
                     </ul>
                     <button class="btn btn-primary cta-btn" @click.prevent="redirectToCheckout('ANNUAL')">
@@ -65,6 +64,7 @@
 <script>
 import FAQ from '@/components/FAQ.vue';
 import PaymentService from '@/services/PaymentService'
+import { PLAN_DETAILS } from '@/constants/plans';
 
 export default {
     name: "ChoosePlan",
@@ -95,7 +95,8 @@ export default {
                     answer: "Sim, todos os pagamentos são processados com segurança através do Stripe, utilizando criptografia de última geração.",
                 },
             ],
-            selectedPlan: null
+            selectedPlan: null,
+            planDetails: PLAN_DETAILS,
         };
     },
     computed: {

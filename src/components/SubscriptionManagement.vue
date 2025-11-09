@@ -66,7 +66,7 @@
                       <v-icon class="mr-2">mdi-calendar-month</v-icon>
                       Plano Mensal
                     </div>
-                    <div class="plan-price">R$ 27,50/mês</div>
+                    <div class="plan-price">{{ plans.MONTHLY.displayPrice }}</div>
                     <div class="plan-description">Cobrado mensalmente</div>
                   </div>
                 </template>
@@ -97,8 +97,8 @@
                       Plano Anual
                       <v-chip size="x-small" color="success" class="ml-2">Economize 17%</v-chip>
                     </div>
-                    <div class="plan-price">R$ 330,00/ano</div>
-                    <div class="plan-description">R$ 27,50/mês (cobrado anualmente)</div>
+                    <div class="plan-price">{{ plans.ANNUAL.displayPrice }}</div>
+                    <div class="plan-description">{{ formatAmount(plans.MONTHLY.amount) }}/mês (cobrado anualmente)</div>
                   </div>
                 </template>
               </v-radio>
@@ -191,6 +191,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import PaymentService from '@/services/PaymentService';
+import { PLAN_DETAILS, formatPlanAmount, type PlanId } from '@/constants/plans';
 
 interface User {
     id?: string;
@@ -203,22 +204,34 @@ interface User {
 const props = defineProps<{ user: User }>();
 
 // Estado da assinatura e plano selecionado
-const currentPlan = ref('');
+type MaybePlanId = PlanId | '';
+
+const currentPlan = ref<MaybePlanId>('');
 const subscriptionId = ref('');
 const subscriptionStatus = ref('');
 const customerId = ref('');
-const selectedPlan = ref(''); // Para atualizar o plano
+const selectedPlan = ref<MaybePlanId>(''); // Para atualizar o plano
+
+const plans = PLAN_DETAILS;
+
+const isPlanId = (value: string | null | undefined): value is PlanId => {
+  return value === 'MONTHLY' || value === 'ANNUAL';
+};
+
+const formatAmount = (amount: number) => formatPlanAmount(amount);
 
 // Obter o texto do plano atual
 const currentPlanText = computed(() => {
-    if (currentPlan.value === 'MONTHLY') return 'Mensal - R$27,50/mês';
-    if (currentPlan.value === 'ANNUAL') return 'Anual - R$330,00/ano';
+    if (isPlanId(currentPlan.value)) {
+        return plans[currentPlan.value].planDisplay;
+    }
     return 'Gratuito';
 });
 
 const selectedPlanText = computed(() => {
-    if (selectedPlan.value === 'MONTHLY') return 'Plano Mensal - R$27,50';
-    if (selectedPlan.value === 'ANNUAL') return 'Plano Anual - R$330,00';
+    if (isPlanId(selectedPlan.value)) {
+        return `Plano ${plans[selectedPlan.value].planDisplay}`;
+    }
     return '';
 });
 

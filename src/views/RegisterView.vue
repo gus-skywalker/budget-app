@@ -91,6 +91,7 @@
 import { ref, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useStore } from 'vuex';
+import { PLAN_DETAILS } from '@/constants/plans';
 
 export default {
     name: 'RegisterView',
@@ -115,14 +116,8 @@ export default {
         const selectedPlan = computed(() => route.query.plan);
         
         const planDisplay = computed(() => {
-            switch(selectedPlan.value) {
-                case 'MONTHLY':
-                    return 'Mensal - R$ 29,00/mês';
-                case 'ANNUAL':
-                    return 'Anual - R$ 299,00/ano';
-                default:
-                    return '';
-            }
+            const planId = selectedPlan.value;
+            return planId && PLAN_DETAILS[planId] ? PLAN_DETAILS[planId].planDisplay : '';
         });
 
         const nameRules = [

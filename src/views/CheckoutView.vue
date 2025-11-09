@@ -34,7 +34,7 @@
                                         {{ planDetails.name }}
                                     </v-list-item-title>
                                     <v-list-item-subtitle>
-                                        {{ planDetails.price }}
+                                        {{ planDetails.displayPrice }}
                                     </v-list-item-subtitle>
                                 </v-list-item>
                             </v-list>
@@ -68,6 +68,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useUserStore } from '@/plugins/userStore';
 import PaymentService from '@/services/PaymentService';
+import { PLAN_DETAILS } from '@/constants/plans';
 
 export default {
     name: 'CheckoutView',
@@ -80,19 +81,8 @@ export default {
         const error = ref(null);
         
         const planDetails = computed(() => {
-            const plan = route.query.plan;
-            if (plan === 'MONTHLY') {
-                return {
-                    name: 'Plano Mensal',
-                    price: 'R$ 29,00 / mês'
-                };
-            } else if (plan === 'ANNUAL') {
-                return {
-                    name: 'Plano Anual',
-                    price: 'R$ 299,00 / ano'
-                };
-            }
-            return null;
+            const planId = route.query.plan;
+            return planId && PLAN_DETAILS[planId] ? PLAN_DETAILS[planId] : null;
         });
 
         const initializeCheckout = async () => {

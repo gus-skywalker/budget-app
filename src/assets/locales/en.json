@@ -116,8 +116,8 @@
     "status": "Status",
     "change_plan_instructions": "Select a new plan if you wish to change your subscription. You will be redirected to the portal to complete the change.",
     "plans": {
-      "monthly": "Monthly Plan - $29.90/month",
-      "annual": "Annual Plan - $299.00/year"
+      "monthly": "Monthly Plan - $27.50/month",
+      "annual": "Annual Plan - $330.00/year"
     },
     "change_to": "Change to {plan}",
     "manage_subscription": "Manage Subscription in Portal",
