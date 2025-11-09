@@ -1,11 +1,11 @@
 <template>
     <footer class="app-footer">
         <div class="footer-content">
-            <p>&copy; 2024 Wallet Connect. Todos os direitos reservados. Powered by Les Monades</p>
+            <p>{{ t('footer.copyright') }}</p>
             <div class="footer-links">
-                <a @click.prevent="$router.push('/privacy-policy')">Política de Privacidade</a>
-                <a @click.prevent="$router.push('/terms-of-use')">Termos de Uso</a>
-                <a @click.prevent="$router.push('/cookie-policy')">Política de Cookies</a>
+                <a @click.prevent="$router.push('/privacy-policy')">{{ t('footer.privacy_policy') }}</a>
+                <a @click.prevent="$router.push('/terms-of-use')">{{ t('footer.terms_of_use') }}</a>
+                <a @click.prevent="$router.push('/cookie-policy')">{{ t('footer.cookie_policy') }}</a>
             </div>
             <v-list class="horizontal-list">
                 <v-list-item v-for="lang in availableLanguages" :key="lang.value" @click="$i18n.locale = lang.value"
@@ -18,7 +18,12 @@
 </template>
 
 <script setup>
-// Nenhuma lógica adicional é necessária para o footer
+import { useI18n } from 'vue-i18n';
+
+defineOptions({ name: 'AppFooter' });
+
+const { t } = useI18n();
+
 const availableLanguages = [
     { text: 'English', value: 'en' },
     { text: 'Português', value: 'pt' },

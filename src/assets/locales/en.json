@@ -257,6 +257,9 @@
       "not_registered": "Don't have an account yet?",
       "create_account_link": "Create an account."
     },
+    "forgot_password": {
+      "back_to_login": "Back to login"
+    },
     "signup": {
       "title": "Sign Up",
       "username_label": "Username",
@@ -274,5 +277,11 @@
       "signup_failed": "Error creating account. Please try again.",
       "password_mismatch": "Passwords do not match. Please try again."
     }
+  },
+  "footer": {
+    "privacy_policy": "Privacy Policy",
+    "terms_of_use": "Terms of Use",
+    "cookie_policy": "Cookie Policy",
+    "copyright": "© 2024 Wallet Connect. All rights reserved. Powered by Les Monades"
   }
 }

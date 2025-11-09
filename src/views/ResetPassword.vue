@@ -34,20 +34,16 @@
             </div>
         </section>
 
-        <!-- Footer Simples -->
-        <footer class="footer">
-            <div class="footer-content">
-                <div class="footer-info">
-                    <p>&copy; 2024 Wallet Connect. Todos os direitos reservados.</p>
-                </div>
-            </div>
-        </footer>
+        <AppFooter />
     </v-container>
 </template>
 
 <script>
+import AppFooter from '@/components/Footer.vue';
+
 export default {
     name: 'ResetPasswordPage',
+    components: { AppFooter },
     data() {
         return {
             token: '', // Armazena o token da URL
@@ -74,7 +70,7 @@ export default {
                     token: this.token,        // Token capturado da URL
                     newPassword: this.password,
                 })
-                .then((response) => {
+                .then(() => {
                     this.message = 'Sua senha foi redefinida com sucesso. Você já pode fazer login.';
                 })
                 .catch((error) => {
@@ -168,15 +164,4 @@ export default {
     border-radius: 50%;
 }
 
-/* Footer */
-.footer {
-    background-color: var(--dark-gray);
-    padding: 20px;
-    color: var(--white);
-    text-align: center;
-}
-
-.footer-info {
-    margin-top: 10px;
-}
 </style>

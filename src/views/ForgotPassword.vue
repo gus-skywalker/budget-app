@@ -26,26 +26,23 @@
 
                 <!-- Exibe a mensagem de sucesso ou erro -->
                 <p v-if="message" class="message">{{ message }}</p>
+
+                <p class="back-to-login">
+                    <a href="#" @click.prevent="$router.push({ name: 'login' })">{{ $t('authentication.forgot_password.back_to_login') }}</a>
+                </p>
             </div>
         </section>
 
-        <!-- Footer Simples -->
-        <footer class="footer">
-            <div class="footer-content">
-                <div class="footer-links">
-                    <a href="#" @click.prevent="$router.push({ name: 'login' })">Voltar para o login</a>
-                </div>
-                <div class="footer-info">
-                    <p>&copy; 2024 Wallet Connect. Todos os direitos reservados.</p>
-                </div>
-            </div>
-        </footer>
+        <AppFooter />
     </v-container>
 </template>
 
 <script>
+import AppFooter from '@/components/Footer.vue';
+
 export default {
     name: 'ForgotPasswordPage',
+    components: { AppFooter },
     data() {
         return {
             email: '',
@@ -62,7 +59,7 @@ export default {
             // Chamada à API de recuperação de senha
             this.$http
                 .post('/auth/forgot-password', { email: this.email })
-                .then((response) => {
+                .then(() => {
                     this.message = 'Se o e-mail estiver cadastrado, você receberá um link para redefinir sua senha.';
                 })
                 .catch((error) => {
@@ -154,21 +151,16 @@ export default {
     border-radius: 50%;
 }
 
-/* Footer */
-.footer {
-    background-color: var(--dark-gray);
-    padding: 20px;
-    color: var(--white);
-    text-align: center;
+.back-to-login {
+    margin-top: 20px;
 }
 
-.footer-links a {
-    color: var(--white);
-    margin-right: 20px;
+.back-to-login a {
+    color: var(--dark-gray);
     text-decoration: none;
 }
 
-.footer-info {
-    margin-top: 10px;
+.back-to-login a:hover {
+    text-decoration: underline;
 }
 </style>

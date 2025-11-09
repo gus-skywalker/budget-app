@@ -259,6 +259,9 @@
       "not_registered": "Ainda não tem uma conta?",
       "create_account_link": "Crie uma conta."
     },
+    "forgot_password": {
+      "back_to_login": "Voltar para o login"
+    },
     "signup": {
       "title": "Cadastrar",
       "username_label": "Nome de usuário",
@@ -276,5 +279,11 @@
       "signup_failed": "Erro ao criar a conta. Por favor, tente novamente.",
       "password_mismatch": "As senhas não coincidem. Por favor, tente novamente."
     }
+  },
+  "footer": {
+    "privacy_policy": "Política de Privacidade",
+    "terms_of_use": "Termos de Uso",
+    "cookie_policy": "Política de Cookies",
+    "copyright": "© 2024 Wallet Connect. Todos os direitos reservados. Powered by Les Monades"
   }
 }
