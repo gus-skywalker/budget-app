@@ -412,7 +412,7 @@ export default {
       selectedExpenseMonth: null,
       selectedIncomeYear: new Date().getFullYear(),
       selectedExpenseYear: new Date().getFullYear(),
-      selectedLanguage: 'pt',
+  selectedLanguage: this.$i18n?.locale || 'pt',
       groups: [],
       selectedGroup: null,
       users: [],
@@ -454,17 +454,31 @@ export default {
       if (newGroup !== oldGroup) {
         this.fetchGroupMembers()
       }
+    },
+    '$i18n.locale'(newLocale) {
+      if (newLocale && newLocale !== this.selectedLanguage) {
+        this.selectedLanguage = newLocale
+        this.fetchCategories()
+        this.fetchPaymentMethods()
+      }
     }
   },
   methods: {
     fetchCategories() {
-      DataService.fetchCategories(this.selectedLanguage)
+      const language = this.$i18n?.locale || this.selectedLanguage || 'pt'
+      this.selectedLanguage = language
+      DataService.fetchCategories(language)
         .then((response) => {
-          this.categories = response.data.map((category) => ({
-            id: category.id,
-            code: category.code,
-            name: category.name
-          }))
+          this.categories = response.data.map((category) => {
+            const translationKey = `categories.${category.code}`
+            const translatedName = this.$t(translationKey)
+            const isTranslated = translatedName !== translationKey
+            return {
+              id: category.id,
+              code: category.code,
+              name: isTranslated ? translatedName : category.name
+            }
+          })
           console.log(this.categories);
         })
         .catch((error) => {
@@ -472,7 +486,9 @@ export default {
         })
     },
     fetchPaymentMethods() {
-      DataService.fetchPaymentMethods(this.selectedLanguage)
+      const language = this.$i18n?.locale || this.selectedLanguage || 'pt'
+      this.selectedLanguage = language
+      DataService.fetchPaymentMethods(language)
         .then((response) => {
           this.paymentMethods = response.data.map((method) => ({
             id: method.id,

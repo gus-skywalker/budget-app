@@ -228,6 +228,7 @@ export default {
                 text: "",
             },
             reportService: new ReportService(),
+            selectedLanguage: this.$i18n?.locale || 'pt',
         };
     },
     created() {
@@ -241,7 +242,9 @@ export default {
         async fetchCategories() {
             if (this.reportType === 'expenses') {
                 try {
-                    const response = await DataService.fetchCategories(this.selectedLanguage);
+                    const language = this.$i18n?.locale || this.selectedLanguage || 'pt';
+                    this.selectedLanguage = language;
+                    const response = await DataService.fetchCategories(language);
                     this.availableCategories = response.data.map((category) => ({
                         id: category.id,
                         code: category.code,
@@ -323,11 +326,16 @@ export default {
         reportType() {
             this.fetchCategories();
         },
-        '$i18n.locale'() {
-            this.availableCategories = this.availableCategories.map((cat) => ({
-                ...cat,
-                name: this.$t(`categories.${cat.code}`) || cat.name
-            }));
+        '$i18n.locale'(newLocale) {
+            if (newLocale && newLocale !== this.selectedLanguage) {
+                this.selectedLanguage = newLocale;
+                this.fetchCategories();
+            } else {
+                this.availableCategories = this.availableCategories.map((cat) => ({
+                    ...cat,
+                    name: this.$t(`categories.${cat.code}`) || cat.name
+                }));
+            }
         }
     },
 

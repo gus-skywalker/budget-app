@@ -324,12 +324,20 @@ export default {
       },
       editedGoalId: null,
       categories: [],
-      selectedLanguage: 'pt',
+      selectedLanguage: this.$i18n?.locale || 'pt',
       monthOverview: {
         totalIncome: 0,
         totalExpense: 0
       },
     };
+  },
+  watch: {
+    '$i18n.locale'(newLocale) {
+      if (newLocale && newLocale !== this.selectedLanguage) {
+        this.selectedLanguage = newLocale;
+        this.fetchCategories();
+      }
+    }
   },
   methods: {
     requiredRule(value) {
@@ -473,13 +481,20 @@ export default {
         });
     },
     fetchCategories() {
-      DataService.fetchCategories(this.selectedLanguage)
+      const language = this.$i18n?.locale || this.selectedLanguage || 'pt';
+      this.selectedLanguage = language;
+      DataService.fetchCategories(language)
         .then((response) => {
-          this.categories = response.data.map((category) => ({
-            id: category.id,
-            code: category.code,
-            name: category.name
-          }));
+          this.categories = response.data.map((category) => {
+            const translationKey = `categories.${category.code}`;
+            const translatedName = this.$t(translationKey);
+            const isTranslated = translatedName !== translationKey;
+            return {
+              id: category.id,
+              code: category.code,
+              name: isTranslated ? translatedName : category.name,
+            };
+          });
         })
         .catch((error) => {
           console.error('Erro ao buscar categorias:', error);
