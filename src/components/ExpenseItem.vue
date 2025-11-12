@@ -1,7 +1,7 @@
 <template>
   <v-list-item>
     <v-row align="center" class="w-100 expense-row">
-      <v-col cols="9" md="8">
+  <v-col cols="8" md="8">
         <v-list-item-title>
           {{ expense.description }}
         </v-list-item-title>
@@ -24,7 +24,7 @@
           </v-chip>
         </v-list-item-subtitle>
       </v-col>
-      <v-col cols="3" md="4" class="d-flex align-center justify-end action-buttons">
+  <v-col cols="4" md="4" class="d-flex align-center justify-end action-buttons">
         <v-btn icon size="x-small" density="comfortable" @click="isDialogOpen = true" color="primary" class="expense-action-btn">
           <v-icon size="16">mdi-share-variant</v-icon>
         </v-btn>
