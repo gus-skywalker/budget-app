@@ -1,7 +1,7 @@
 <template>
   <v-list-item>
-    <v-row align="center" class="w-100">
-      <v-col cols="9">
+    <v-row align="center" class="w-100 expense-row">
+      <v-col cols="9" md="8">
         <v-list-item-title>
           {{ expense.description }}
         </v-list-item-title>
@@ -24,15 +24,15 @@
           </v-chip>
         </v-list-item-subtitle>
       </v-col>
-      <v-col cols="3" class="d-flex justify-end">
-        <v-btn icon size="small" @click="isDialogOpen = true" color="primary" class="mr-2">
-          <v-icon size="18">mdi-share-variant</v-icon>
+      <v-col cols="3" md="4" class="d-flex align-center justify-end action-buttons">
+        <v-btn icon size="x-small" density="comfortable" @click="isDialogOpen = true" color="primary" class="expense-action-btn">
+          <v-icon size="16">mdi-share-variant</v-icon>
         </v-btn>
-        <v-btn icon size="small" color="orange" @click="openAlertDialog" class="mr-2">
-          <v-icon size="18">mdi-alarm</v-icon>
+        <v-btn icon size="x-small" density="comfortable" color="orange" @click="openAlertDialog" class="expense-action-btn">
+          <v-icon size="16">mdi-alarm</v-icon>
         </v-btn>
-        <v-btn icon size="small" color="red" @click="$emit('deleteExpense', expense)" class="mr-2">
-          <v-icon size="18">mdi-delete</v-icon>
+        <v-btn icon size="x-small" density="comfortable" color="red" @click="$emit('deleteExpense', expense)" class="expense-action-btn">
+          <v-icon size="16">mdi-delete</v-icon>
         </v-btn>
       </v-col>
     </v-row>
@@ -44,7 +44,7 @@
           <v-text-field v-model="email" label="Email" type="email" :rules="emailRules" required></v-text-field>
           <!-- Lista de arquivos já anexados -->
           <v-list dense>
-            <v-list-item v-for="(file, index) in attachedFiles" :key="file.id">
+            <v-list-item v-for="file in attachedFiles" :key="file.id">
               <v-list-item-title>
                 {{ file.fileName }}
               </v-list-item-title>
@@ -431,5 +431,20 @@ export default {
 .v-icon {
   /* Ajusta o tamanho do ícone */
   line-height: 18px;
+}
+
+.action-buttons {
+  gap: 6px;
+}
+
+.expense-action-btn {
+  min-width: 32px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+}
+
+.expense-action-btn .v-icon {
+  line-height: 32px;
 }
 </style>
