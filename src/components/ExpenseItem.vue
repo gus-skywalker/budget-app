@@ -1,7 +1,7 @@
 <template>
   <v-list-item>
-    <v-row align="center" class="w-100 expense-row">
-      <v-col cols="12" md="8" class="expense-info">
+    <div class="expense-item-layout">
+      <div class="expense-content">
         <v-list-item-title>
           {{ expense.description }}
         </v-list-item-title>
@@ -23,8 +23,8 @@
             Alerta configurado
           </v-chip>
         </v-list-item-subtitle>
-      </v-col>
-      <v-col cols="auto" class="d-flex align-center action-buttons">
+      </div>
+      <div class="expense-actions">
         <v-btn icon size="x-small" density="comfortable" @click="isDialogOpen = true" color="primary" class="expense-action-btn">
           <v-icon size="16">mdi-share-variant</v-icon>
         </v-btn>
@@ -34,8 +34,8 @@
         <v-btn icon size="x-small" density="comfortable" color="red" @click="$emit('deleteExpense', expense)" class="expense-action-btn">
           <v-icon size="16">mdi-delete</v-icon>
         </v-btn>
-      </v-col>
-    </v-row>
+      </div>
+    </div>
     <!-- v-dialog para anexar arquivos -->
     <v-dialog v-model="isDialogOpen" max-width="600px">
       <v-card>
@@ -433,19 +433,22 @@ export default {
   line-height: 18px;
 }
 
-.expense-row {
-  position: relative;
+.expense-item-layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
 }
 
-.expense-info {
-  padding-right: 116px;
+.expense-content {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
-.action-buttons {
-  position: absolute;
-  top: 4px;
-  right: 0;
+.expense-actions {
+  display: flex;
   gap: 6px;
+  margin-left: auto;
 }
 
 .expense-action-btn {
@@ -457,5 +460,17 @@ export default {
 
 .expense-action-btn .v-icon {
   line-height: 32px;
+}
+
+@media (max-width: 420px) {
+  .expense-item-layout {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .expense-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
 }
 </style>
