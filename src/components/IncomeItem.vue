@@ -1,21 +1,44 @@
 <template>
   <v-list-item>
-    <v-row align="center">
-      <v-col>
+    <v-row align="center" class="income-item" @click="$emit('select', income)">
+      <v-col cols="9" md="8">
         <v-list-item-title>
           {{ income.description }}
         </v-list-item-title>
         <v-list-item-subtitle>
           R$ {{ income.amount }} - Data: {{ income.date }}
         </v-list-item-subtitle>
+        <v-chip
+          v-if="income.isRecurring"
+          color="blue"
+          dark
+          size="small"
+          class="mt-1"
+        >
+          Renda Recorrente
+        </v-chip>
       </v-col>
-      <v-col class="d-flex justify-end">
-        <v-chip v-if="income.isRecurring" color="blue" dark>Renda Recorrente</v-chip>
-        <v-btn x-small icon height="35px" width="35px" @click="handleToggleRecurring" color="primary" class="mr-2">
-          <v-icon>{{ income.isRecurring ? 'mdi-star-outline' : 'mdi-star' }}</v-icon>
+      <v-col cols="3" md="4" class="d-flex justify-end align-center income-actions">
+        <v-btn
+          x-small
+          icon
+          height="32px"
+          width="32px"
+          @click.stop="handleToggleRecurring"
+          color="primary"
+          class="mr-2"
+        >
+          <v-icon size="16">{{ income.isRecurring ? 'mdi-star-outline' : 'mdi-star' }}</v-icon>
         </v-btn>
-        <v-btn x-small icon height="35px" width="35px" color="red" @click="$emit('deleteIncome', income)">
-          <v-icon>mdi-delete</v-icon>
+        <v-btn
+          x-small
+          icon
+          height="32px"
+          width="32px"
+          color="red"
+          @click.stop="$emit('deleteIncome', income)"
+        >
+          <v-icon size="16">mdi-delete</v-icon>
         </v-btn>
       </v-col>
     </v-row>
@@ -43,6 +66,7 @@ export default {
   props: {
     income: Object
   },
+  emits: ['toggle-recurring', 'deleteIncome', 'select'],
   data() {
     return {
       recurrenceDialog: false,
@@ -71,8 +95,12 @@ export default {
 }
 </script>
 
-<style>
-.v-btn {
+<style scoped>
+.income-item {
+  cursor: pointer;
+}
+
+.income-actions .v-btn {
   font-size: 0.75rem;
   padding: 0.25rem 0.5rem;
 }

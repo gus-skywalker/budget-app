@@ -1,7 +1,7 @@
 <template>
   <v-list-item>
     <div class="expense-item-layout">
-      <div class="expense-content">
+      <div class="expense-content" @click="$emit('select', expense)">
         <v-list-item-title>
           {{ expense.description }}
         </v-list-item-title>
@@ -25,13 +25,13 @@
         </v-list-item-subtitle>
       </div>
       <div class="expense-actions">
-        <v-btn icon size="x-small" density="comfortable" @click="isDialogOpen = true" color="primary" class="expense-action-btn">
+        <v-btn icon size="x-small" density="comfortable" @click.stop="isDialogOpen = true" color="primary" class="expense-action-btn">
           <v-icon size="16">mdi-share-variant</v-icon>
         </v-btn>
-        <v-btn icon size="x-small" density="comfortable" color="orange" @click="openAlertDialog" class="expense-action-btn">
+        <v-btn icon size="x-small" density="comfortable" color="orange" @click.stop="openAlertDialog" class="expense-action-btn">
           <v-icon size="16">mdi-alarm</v-icon>
         </v-btn>
-        <v-btn icon size="x-small" density="comfortable" color="red" @click="$emit('deleteExpense', expense)" class="expense-action-btn">
+        <v-btn icon size="x-small" density="comfortable" color="red" @click.stop="$emit('deleteExpense', expense)" class="expense-action-btn">
           <v-icon size="16">mdi-delete</v-icon>
         </v-btn>
       </div>
@@ -203,6 +203,7 @@ export default {
   props: {
     expense: Object,
   },
+  emits: ['deleteExpense', 'removeAttachment', 'attachFiles', 'shareExpense', 'sendReminder', 'select'],
   computed: {
     hasAlerts() {
       return this.expense.alerts && this.expense.alerts.length > 0;
@@ -443,12 +444,14 @@ export default {
 .expense-content {
   flex: 1 1 auto;
   min-width: 0;
+  cursor: pointer;
 }
 
 .expense-actions {
   display: flex;
   gap: 6px;
   margin-left: auto;
+  align-items: center;
 }
 
 .expense-action-btn {
@@ -470,7 +473,9 @@ export default {
 
   .expense-actions {
     width: 100%;
-    justify-content: flex-end;
+    justify-content: center;
+    margin-left: 0;
+    margin-top: 4px;
   }
 }
 </style>

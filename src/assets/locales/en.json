@@ -136,19 +136,25 @@
   "income": {
     "title": "Incomes",
     "save": "Save Income",
+    "update": "Update Income",
     "monthly_title": "Monthly Incomes",
     "no_entries": "No entries found for this month.",
     "saved_successfully": "Income saved successfully!",
-    "save_failed": "Failed to save income."
+    "updated_successfully": "Income updated successfully!",
+    "save_failed": "Failed to save income.",
+    "update_failed": "Failed to update income."
   },
   "expense": {
     "title": "Expenses",
     "save": "Save Expense",
+    "update": "Update Expense",
     "monthly_title": "Monthly Expenses",
     "no_entries": "No expenses found for this month.",
     "share_with_group": "Share with Group Users",
     "saved_successfully": "Expense saved successfully!",
-    "save_failed": "Failed to save expense."
+    "updated_successfully": "Expense updated successfully!",
+    "save_failed": "Failed to save expense.",
+    "update_failed": "Failed to update expense."
   },
   "common": {
     "date": "Date",
@@ -160,7 +166,8 @@
     "select_month": "Select Month",
     "year": "Year",
     "close": "Close",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "cancel_edit": "Cancel Editing"
   },
 
   "categories": {

@@ -78,7 +78,19 @@
               block
             >
               <v-icon left>mdi-content-save</v-icon>
-              {{ $t('income.save') }}
+              {{ isEditingIncome ? $t('income.update') : $t('income.save') }}
+            </v-btn>
+            <v-btn
+              v-if="isEditingIncome"
+              class="modern-btn mt-2"
+              variant="tonal"
+              color="grey"
+              size="large"
+              block
+              @click="cancelIncomeEdit"
+            >
+              <v-icon left>mdi-cancel</v-icon>
+              {{ $t('common.cancel_edit') }}
             </v-btn>
           </div>
         </div>
@@ -128,6 +140,7 @@
                   :income="income"
                   @toggle-recurring="toggleRecurring" 
                   @deleteIncome="deleteIncome"
+                  @select="startEditingIncome"
                 ></income-item>
               </v-list>
               <div v-else-if="!isLoadingIncomes" class="empty-state">
@@ -267,7 +280,19 @@
               block
             >
               <v-icon left>mdi-content-save</v-icon>
-              {{ $t('expense.save') }}
+              {{ isEditingExpense ? $t('expense.update') : $t('expense.save') }}
+            </v-btn>
+            <v-btn
+              v-if="isEditingExpense"
+              class="modern-btn mt-2"
+              variant="tonal"
+              color="grey"
+              size="large"
+              block
+              @click="cancelExpenseEdit"
+            >
+              <v-icon left>mdi-cancel</v-icon>
+              {{ $t('common.cancel_edit') }}
             </v-btn>
           </div>
         </div>
@@ -320,6 +345,7 @@
                   @sendReminder="handleSendReminder" 
                   @shareExpense="handleShareExpense"
                   @deleteExpense="deleteExpense"
+                  @select="startEditingExpense"
                 ></expense-item>
               </v-list>
               <div v-else-if="!isLoadingExpenses" class="empty-state">
@@ -436,6 +462,12 @@ export default {
       monthlyIncomes: [],
       isLoadingIncomes: false,
       isLoadingExpenses: false,
+      isEditingIncome: false,
+      editingIncomeId: null,
+      isEditingExpense: false,
+      editingExpenseId: null,
+      editingExpenseOriginal: null,
+      previousSelectedGroup: undefined,
       snackbar: {
         show: false,
         text: '',
@@ -464,6 +496,200 @@ export default {
     }
   },
   methods: {
+    normalizeDate(value) {
+      if (!value) {
+        return null
+      }
+
+      if (value instanceof Date) {
+        return value.toISOString().split('T')[0]
+      }
+
+      if (typeof value === 'string') {
+        const trimmed = value.trim()
+        if (!trimmed) {
+          return null
+        }
+
+        if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+          return trimmed
+        }
+
+        const parsed = new Date(trimmed)
+        if (!Number.isNaN(parsed.getTime())) {
+          return parsed.toISOString().split('T')[0]
+        }
+
+        return null
+      }
+
+      return null
+    },
+    buildIncomePayload({ normalizedDate, paymentMethodId, isEditing }) {
+      const { amount, description, isRecurring } = this.income
+
+      const payload = {
+        date: normalizedDate,
+        amount,
+        description,
+        isRecurring,
+        paymentMethodId,
+        paymentMethod: this.createReferenceObject(paymentMethodId)
+      }
+
+      if (isEditing) {
+        payload.id = this.editingIncomeId
+      }
+
+      return payload
+    },
+    buildExpensePayload({ normalizedDate, categoryId, paymentMethodId, isEditing }) {
+      const {
+        amount,
+        description,
+        selectedUsers = []
+      } = this.expense
+
+      const sanitizedSelectedUsers = Array.isArray(selectedUsers) ? [...selectedUsers] : []
+      const groupId = this.selectedGroup ?? this.editingExpenseOriginal?.groupId ?? null
+
+      if (isEditing) {
+        const payload = {
+          id: this.editingExpenseId,
+          date: normalizedDate,
+          amount,
+          description,
+          category: this.createReferenceObject(categoryId),
+          paymentMethod: this.createReferenceObject(paymentMethodId),
+          selectedUsers: sanitizedSelectedUsers
+        }
+
+        if (groupId) {
+          payload.group = this.createReferenceObject(groupId)
+        }
+
+        return payload
+      }
+
+      const payload = {
+        date: normalizedDate,
+        amount,
+        description,
+        category: categoryId,
+        paymentMethod: paymentMethodId,
+        selectedUsers: sanitizedSelectedUsers
+      }
+
+      if (groupId) {
+        payload.groupId = groupId
+      }
+
+      return payload
+    },
+        resolvePaymentMethodId(value) {
+          const logAndReturn = (resolved) => {
+            console.debug('[BudgetView] resolvePaymentMethodId', { input: value, resolved })
+            return resolved
+          }
+
+          if (value === null || value === undefined) {
+            return logAndReturn(null)
+          }
+
+          if (typeof value === 'number') {
+            return logAndReturn(value)
+          }
+
+          if (typeof value === 'string') {
+            const numericValue = Number(value)
+            if (!Number.isNaN(numericValue)) {
+              const numericMatch = this.paymentMethods.find((method) => method.id === numericValue)
+              if (numericMatch) {
+                return logAndReturn(numericMatch.id)
+              }
+            }
+
+            const stringMatch = this.paymentMethods.find(
+              (method) => method.code === value || method.name === value
+            )
+            return logAndReturn(stringMatch ? stringMatch.id : null)
+          }
+
+          if (typeof value === 'object') {
+            if (value.id !== undefined && value.id !== null) {
+              return logAndReturn(value.id)
+            }
+            if (value.code) {
+              const codeMatch = this.paymentMethods.find((method) => method.code === value.code)
+              if (codeMatch) {
+                return logAndReturn(codeMatch.id)
+              }
+            }
+            if (value.name) {
+              const nameMatch = this.paymentMethods.find((method) => method.name === value.name)
+              if (nameMatch) {
+                return logAndReturn(nameMatch.id)
+              }
+            }
+          }
+
+          return logAndReturn(null)
+        },
+        resolveCategoryId(value) {
+          const logAndReturn = (resolved) => {
+            console.debug('[BudgetView] resolveCategoryId', { input: value, resolved })
+            return resolved
+          }
+
+          if (value === null || value === undefined) {
+            return logAndReturn(null)
+          }
+
+          if (typeof value === 'number') {
+            return logAndReturn(value)
+          }
+
+          if (typeof value === 'string') {
+            const numericValue = Number(value)
+            if (!Number.isNaN(numericValue)) {
+              const numericMatch = this.categories.find((category) => category.id === numericValue)
+              if (numericMatch) {
+                return logAndReturn(numericMatch.id)
+              }
+            }
+
+            const stringMatch = this.categories.find(
+              (category) => category.code === value || category.name === value
+            )
+            return logAndReturn(stringMatch ? stringMatch.id : null)
+          }
+
+          if (typeof value === 'object') {
+            if (value.id !== undefined && value.id !== null) {
+              return logAndReturn(value.id)
+            }
+            if (value.code) {
+              const codeMatch = this.categories.find((category) => category.code === value.code)
+              if (codeMatch) {
+                return logAndReturn(codeMatch.id)
+              }
+            }
+            if (value.name) {
+              const nameMatch = this.categories.find((category) => category.name === value.name)
+              if (nameMatch) {
+                return logAndReturn(nameMatch.id)
+              }
+            }
+          }
+
+          return logAndReturn(null)
+        },
+        createReferenceObject(id) {
+          if (id === null || id === undefined) {
+            return null
+          }
+          return { id }
+        },
     fetchCategories() {
       const language = this.$i18n?.locale || this.selectedLanguage || 'pt'
       this.selectedLanguage = language
@@ -556,28 +782,110 @@ export default {
       }
     },
     saveIncome() {
-      IncomeService.create(this.income)
-        .then((response) => {
-          this.showToast(this.$t('income.saved_successfully'), 'success');
-          this.resetIncomeForm();
-          this.fetchMonthlyIncomes();
+      const normalizedDate = this.normalizeDate(this.income.date)
+      if (!normalizedDate) {
+        this.showToast(this.$t('validation.required', { field: this.$t('common.date') }), 'warning')
+        return
+      }
 
+      const paymentMethodId = this.resolvePaymentMethodId(this.income.paymentMethod)
+      if (!paymentMethodId) {
+        this.showToast(this.$t('validation.required', { field: this.$t('common.payment_method') }), 'warning')
+        return
+      }
+
+      const isEditing = this.isEditingIncome && this.editingIncomeId
+
+      const payload = this.buildIncomePayload({
+        normalizedDate,
+        paymentMethodId,
+        isEditing
+      })
+
+      console.info('[BudgetView] saveIncome', {
+        isEditing,
+        id: this.editingIncomeId,
+        payload
+      })
+
+      const request = isEditing
+        ? IncomeService.update(this.editingIncomeId, payload)
+        : IncomeService.create(payload)
+
+      request
+        .then(() => {
+          if (isEditing) {
+            this.showToast(this.$t('income.updated_successfully'), 'success')
+          } else {
+            this.showToast(this.$t('income.saved_successfully'), 'success')
+          }
+          this.resetIncomeForm()
+          this.fetchMonthlyIncomes()
         })
         .catch((error) => {
           console.error('Error saving income:', error)
-          this.showToast(this.$t('income.save_failed'), 'error');
+          if (error?.response) {
+            console.error('[BudgetView] saveIncome response error', error.response.data)
+          }
+          const message = isEditing ? this.$t('income.update_failed') : this.$t('income.save_failed')
+          this.showToast(message, 'error')
         })
     },
     saveExpense() {
-      ExpenseService.create(this.expense)
-        .then((response) => {
-          this.showToast(this.$t('expense.saved_successfully'), 'success');
-          this.resetExpenseForm();
-          this.fetchMonthlyExpenses();
+      const normalizedDate = this.normalizeDate(this.expense.date)
+      if (!normalizedDate) {
+        this.showToast(this.$t('validation.required', { field: this.$t('common.date') }), 'warning')
+        return
+      }
+
+      const categoryId = this.resolveCategoryId(this.expense.category)
+      if (!categoryId) {
+        this.showToast(this.$t('validation.required', { field: this.$t('common.category') }), 'warning')
+        return
+      }
+
+      const paymentMethodId = this.resolvePaymentMethodId(this.expense.paymentMethod)
+      if (!paymentMethodId) {
+        this.showToast(this.$t('validation.required', { field: this.$t('common.payment_method') }), 'warning')
+        return
+      }
+
+      const isEditing = this.isEditingExpense && this.editingExpenseId
+      const payload = this.buildExpensePayload({
+        normalizedDate,
+        categoryId,
+        paymentMethodId,
+        isEditing
+      })
+
+      console.info('[BudgetView] saveExpense', {
+        isEditing,
+        id: this.editingExpenseId,
+        payload,
+        selectedGroup: this.selectedGroup
+      })
+
+      const request = isEditing
+        ? ExpenseService.update(this.editingExpenseId, payload)
+        : ExpenseService.create(payload)
+
+      request
+        .then(() => {
+          if (isEditing) {
+            this.showToast(this.$t('expense.updated_successfully'), 'success')
+          } else {
+            this.showToast(this.$t('expense.saved_successfully'), 'success')
+          }
+          this.resetExpenseForm()
+          this.fetchMonthlyExpenses()
         })
         .catch((error) => {
           console.error('Error saving expense:', error)
-          this.showToast(this.$t('expense.save_failed'), 'error');
+          if (error?.response) {
+            console.error('[BudgetView] saveExpense response error', error.response.data)
+          }
+          const message = isEditing ? this.$t('expense.update_failed') : this.$t('expense.save_failed')
+          this.showToast(message, 'error')
         })
     },
     notifyUsers(expense) {
@@ -597,23 +905,38 @@ export default {
         date: '',
         amount: 0.0,
         description: '',
-        category: null,
-        paymentMethod: null
+        paymentMethod: null,
+        isRecurring: false
       }
+      this.isEditingIncome = false
+      this.editingIncomeId = null
     },
     resetExpenseForm() {
       this.expense = {
         date: '',
         amount: 0.0,
         description: '',
-        paymentMethod: null
+        category: null,
+        paymentMethod: null,
+        selectedUsers: []
+      }
+      this.isEditingExpense = false
+      this.editingExpenseId = null
+      this.editingExpenseOriginal = null
+      if (this.previousSelectedGroup !== undefined) {
+        const shouldFetchMembers = this.selectedGroup !== this.previousSelectedGroup
+        this.selectedGroup = this.previousSelectedGroup
+        this.previousSelectedGroup = undefined
+        if (!shouldFetchMembers && !this.selectedGroup) {
+          this.users = []
+        }
       }
     },
     toggleRecurring({ income, months }) {
       console.log('Toggled income:', income)
       console.log('Recurrence months:', months)
       IncomeService.toggleRecurring(income.id, months)
-        .then((response) => {
+      .then(() => {
           const incomeIndex = this.monthlyIncomes.findIndex((item) => item.id === income.id)
           if (incomeIndex !== -1) {
             this.monthlyIncomes[incomeIndex].isRecurring =
@@ -627,7 +950,7 @@ export default {
     deleteIncome(income) {
       if (confirm('Are you sure you want to delete this income?')) {
         IncomeService.delete(income.id)
-          .then((response) => {
+          .then(() => {
             const incomeIndex = this.monthlyIncomes.findIndex((item) => item.id === income.id)
             if (incomeIndex !== -1) {
               this.monthlyIncomes.splice(incomeIndex, 1)
@@ -641,7 +964,7 @@ export default {
     deleteExpense(expense) {
       if (confirm('Are you sure you want to delete this expense?')) {
         ExpenseService.delete(expense.id)
-          .then((response) => {
+          .then(() => {
             const expenseIndex = this.monthlyExpenses.findIndex((item) => item.id === expense.id)
             if (expenseIndex !== -1) {
               this.monthlyExpenses.splice(expenseIndex, 1)
@@ -651,6 +974,62 @@ export default {
             console.error('Failed to delete expense:', error)
           })
       }
+    },
+    startEditingIncome(income) {
+      console.debug('[BudgetView] startEditingIncome', income)
+      this.isEditingIncome = true
+      this.editingIncomeId = income.id
+      this.income = {
+        date: this.normalizeDate(income.date),
+        amount: income.amount,
+        description: income.description,
+        paymentMethod: this.resolvePaymentMethodId(
+          income.paymentMethod ?? income.paymentMethodId ?? null
+        ),
+        isRecurring: income.isRecurring ?? false
+      }
+    },
+    cancelIncomeEdit() {
+      this.resetIncomeForm()
+    },
+    startEditingExpense(expense) {
+      console.debug('[BudgetView] startEditingExpense', expense)
+      if (!this.isEditingExpense) {
+        this.previousSelectedGroup = this.selectedGroup
+      }
+
+      try {
+        this.editingExpenseOriginal = JSON.parse(JSON.stringify(expense))
+      } catch (parseError) {
+        console.warn('[BudgetView] Failed to snapshot original expense, falling back to shallow copy.', parseError)
+        this.editingExpenseOriginal = { ...expense }
+      }
+
+      this.isEditingExpense = true
+      this.editingExpenseId = expense.id
+
+      const groupId = expense.group?.id ?? expense.groupId ?? null
+      this.selectedGroup = groupId
+
+      this.expense = {
+        date: this.normalizeDate(expense.date),
+        amount: expense.amount,
+        description: expense.description,
+        category: this.resolveCategoryId(expense.category ?? expense.categoryId ?? null),
+        paymentMethod: this.resolvePaymentMethodId(
+          expense.paymentMethod ?? expense.paymentMethodId ?? null
+        ),
+        selectedUsers: Array.isArray(expense.users)
+          ? expense.users.map((user) => user.userId ?? user.id ?? user)
+          : []
+      }
+
+      if (!groupId) {
+        this.users = []
+      }
+    },
+    cancelExpenseEdit() {
+      this.resetExpenseForm()
     },
     // fetchMonthlyNubankBill() {
     //     const monthNumber = this.selectedExpenseMonth;

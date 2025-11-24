@@ -134,20 +134,26 @@
   "income": {
     "title": "Entradas",
     "save": "Salvar Entrada",
+    "update": "Atualizar Entrada",
     "monthly_title": "Entradas Mensais",
     "no_entries": "Nenhuma entrada encontrada para este mês.",
     "saved_successfully": "Entrada salva com sucesso!",
-    "save_failed": "Falha ao salvar entrada."
+    "updated_successfully": "Entrada atualizada com sucesso!",
+    "save_failed": "Falha ao salvar entrada.",
+    "update_failed": "Falha ao atualizar entrada."
   },
 
   "expense": {
     "title": "Débitos",
     "save": "Salvar Débito",
+    "update": "Atualizar Débito",
     "monthly_title": "Débitos Mensais",
     "no_entries": "Nenhum débito encontrado para este mês.",
     "share_with_group": "Compartilhar com Usuários do Grupo",
     "saved_successfully": "Despesa salva com sucesso!",
-    "save_failed": "Falha ao salvar despesa."
+    "updated_successfully": "Despesa atualizada com sucesso!",
+    "save_failed": "Falha ao salvar despesa.",
+    "update_failed": "Falha ao atualizar despesa."
   },
 
   "common": {
@@ -160,7 +166,8 @@
     "select_month": "Selecione o Mês",
     "year": "Ano",
     "close": "Fechar",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "cancel_edit": "Cancelar Edição"
   },
 
   "categories": {
