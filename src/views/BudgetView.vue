@@ -34,15 +34,17 @@
               <v-col cols="12" sm="6">
                 <v-text-field 
                   :label="$t('common.amount')" 
-                  type="number" 
-                  v-model="income.amount" 
+                  type="text"
+                  inputmode="decimal"
+                  :model-value="income.amount"
+                  @update:model-value="onIncomeAmountInput"
                   variant="outlined"
                   density="comfortable"
                   color="#667eea"
                   class="modern-input"
                   :rules="[
-                    (value) => !!value || $t('validation.required', { field: $t('common.amount') }),
-                    (value) => /^\d+(\.\d{1,2})?$/.test(value) || $t('validation.invalid_currency')
+                    requiredAmount,
+                    validCurrencyFormat
                   ]"
                 ></v-text-field>
               </v-col>
@@ -181,15 +183,17 @@
               <v-col cols="12" sm="6">
                 <v-text-field 
                   :label="$t('common.amount')" 
-                  type="number" 
-                  v-model="expense.amount"
+                  type="text"
+                  inputmode="decimal"
+                  :model-value="expense.amount"
+                  @update:model-value="onExpenseAmountInput"
                   variant="outlined"
                   density="comfortable"
                   color="#667eea"
                   class="modern-input"
                   :rules="[
-                    (value) => !!value || $t('validation.required', { field: $t('common.amount') }),
-                    (value) => /^\d+(\.\d{1,2})?$/.test(value) || $t('validation.invalid_currency')
+                    requiredAmount,
+                    validCurrencyFormat
                   ]"
                 ></v-text-field>
               </v-col>
@@ -391,6 +395,108 @@ import GroupService from '@/services/GroupService'
 import NotificationService from '@/services/NotificationService'
 import { useUserStore } from '@/plugins/userStore'
 
+const toLocalISODate = (date = new Date()) => {
+  const timeOffset = date.getTimezoneOffset() * 60000
+  return new Date(date.getTime() - timeOffset).toISOString().split('T')[0]
+}
+
+const sanitizeCurrencyInput = (rawValue) => {
+  if (rawValue === null || rawValue === undefined) {
+    return ''
+  }
+
+  const stringValue = String(rawValue)
+  if (!stringValue) {
+    return ''
+  }
+
+  const filtered = stringValue.replace(/[^\d.,]/g, '')
+  if (!filtered) {
+    return ''
+  }
+
+  const lastComma = filtered.lastIndexOf(',')
+  const lastDot = filtered.lastIndexOf('.')
+  const decimalIndex = Math.max(lastComma, lastDot)
+  const decimalSeparator = decimalIndex === lastComma ? ',' : '.'
+
+  if (decimalIndex === -1) {
+    const integer = filtered.replace(/\D/g, '')
+    return integer.replace(/^0+(?=\d)/, '')
+  }
+
+  const integerRaw = filtered.slice(0, decimalIndex).replace(/\D/g, '')
+  let integerPart = integerRaw.replace(/^0+(?=\d)/, '')
+  let decimalPart = filtered.slice(decimalIndex + 1).replace(/\D/g, '').slice(0, 2)
+
+  if (!integerPart && decimalPart) {
+    integerPart = '0'
+  }
+
+  if (!integerPart && !decimalPart) {
+    return ''
+  }
+
+  let sanitized = integerPart
+
+  if (decimalPart || filtered.endsWith(decimalSeparator)) {
+    sanitized += decimalSeparator
+    sanitized += decimalPart
+  }
+
+  return sanitized
+}
+
+const parseCurrencyToNumber = (value) => {
+  if (value === null || value === undefined) {
+    return null
+  }
+
+  if (typeof value === 'number') {
+    return Number.isNaN(value) ? null : value
+  }
+
+  const sanitized = sanitizeCurrencyInput(value)
+  if (!sanitized && sanitized !== '0') {
+    return null
+  }
+
+  const lastComma = sanitized.lastIndexOf(',')
+  const lastDot = sanitized.lastIndexOf('.')
+  const decimalIndex = Math.max(lastComma, lastDot)
+
+  if (decimalIndex === -1) {
+    const integerPart = sanitized.replace(/\D/g, '')
+    if (!integerPart) {
+      return null
+    }
+    return Number(integerPart)
+  }
+
+  const integerPart = sanitized.slice(0, decimalIndex).replace(/\D/g, '') || '0'
+  const decimalPart = sanitized.slice(decimalIndex + 1).replace(/\D/g, '').padEnd(2, '0')
+  const numericString = `${integerPart}.${decimalPart}`
+  const parsed = Number(numericString)
+  return Number.isNaN(parsed) ? null : parsed
+}
+
+const formatCurrencyForInput = (value) => {
+  if (value === null || value === undefined || value === '') {
+    return '0'
+  }
+
+  if (typeof value === 'number') {
+    const fixed = value.toFixed(2)
+    const [integerPart, decimalPart] = fixed.split('.')
+    if (decimalPart === '00') {
+      return sanitizeCurrencyInput(integerPart) || '0'
+    }
+    return sanitizeCurrencyInput(`${integerPart}.${decimalPart}`) || '0'
+  }
+
+  return sanitizeCurrencyInput(String(value)) || '0'
+}
+
 export default {
   components: {
     IncomeItem,
@@ -399,18 +505,22 @@ export default {
   data() {
     // const currentYear = new Date().getFullYear();
     const years = Array.from({ length: 2026 - 2020 + 1 }, (v, i) => 2020 + i);
+    const currentDate = new Date()
+    const today = toLocalISODate(currentDate)
+    const currentMonth = currentDate.getMonth() + 1
+    const currentYear = currentDate.getFullYear()
 
     return {
       income: {
-        date: '',
-        amount: 0,
+        date: today,
+        amount: '0',
         description: '',
         paymentMethod: null,
         isRecurring: false
       },
       expense: {
-        date: '',
-        amount: 0,
+        date: today,
+        amount: '0',
         description: '',
         category: null,
         paymentMethod: null,
@@ -434,10 +544,10 @@ export default {
       },
       categories: [],
       paymentMethods: [],
-      selectedIncomeMonth: null,
-      selectedExpenseMonth: null,
-      selectedIncomeYear: new Date().getFullYear(),
-      selectedExpenseYear: new Date().getFullYear(),
+      selectedIncomeMonth: currentMonth,
+      selectedExpenseMonth: currentMonth,
+      selectedIncomeYear: currentYear,
+      selectedExpenseYear: currentYear,
   selectedLanguage: this.$i18n?.locale || 'pt',
       groups: [],
       selectedGroup: null,
@@ -480,6 +590,8 @@ export default {
     this.fetchPaymentMethods();
     // this.fetchUsers();
     this.fetchGroups();
+    this.fetchMonthlyIncomes();
+    this.fetchMonthlyExpenses();
   },
   watch: {
     selectedGroup(newGroup, oldGroup) {
@@ -525,8 +637,8 @@ export default {
 
       return null
     },
-    buildIncomePayload({ normalizedDate, paymentMethodId }) {
-      const { amount, description, isRecurring } = this.income
+    buildIncomePayload({ normalizedDate, paymentMethodId, amount }) {
+      const { description, isRecurring } = this.income
       return {
         date: normalizedDate,
         amount,
@@ -535,9 +647,8 @@ export default {
         isRecurring
       }
     },
-    buildExpensePayload({ normalizedDate, categoryId, paymentMethodId }) {
+    buildExpensePayload({ normalizedDate, categoryId, paymentMethodId, amount }) {
       const {
-        amount,
         description,
         selectedUsers = []
       } = this.expense
@@ -749,6 +860,12 @@ export default {
         return
       }
 
+      const parsedAmount = parseCurrencyToNumber(this.income.amount)
+      if (parsedAmount === null) {
+        this.showToast(this.$t('validation.invalid_currency'), 'warning')
+        return
+      }
+
       const paymentMethodId = this.resolvePaymentMethodId(this.income.paymentMethod)
       if (!paymentMethodId) {
         this.showToast(this.$t('validation.required', { field: this.$t('common.payment_method') }), 'warning')
@@ -759,7 +876,8 @@ export default {
 
       const payload = this.buildIncomePayload({
         normalizedDate,
-        paymentMethodId
+        paymentMethodId,
+        amount: parsedAmount
       })
 
       console.info('[BudgetView] saveIncome', {
@@ -810,11 +928,18 @@ export default {
         return
       }
 
+      const parsedAmount = parseCurrencyToNumber(this.expense.amount)
+      if (parsedAmount === null) {
+        this.showToast(this.$t('validation.invalid_currency'), 'warning')
+        return
+      }
+
       const isEditing = this.isEditingExpense && this.editingExpenseId
       const payload = this.buildExpensePayload({
         normalizedDate,
         categoryId,
-        paymentMethodId
+        paymentMethodId,
+        amount: parsedAmount
       })
 
       console.info('[BudgetView] saveExpense', {
@@ -861,8 +986,8 @@ export default {
     },
     resetIncomeForm() {
       this.income = {
-        date: '',
-        amount: 0.0,
+        date: toLocalISODate(),
+        amount: '0',
         description: '',
         paymentMethod: null,
         isRecurring: false
@@ -872,8 +997,8 @@ export default {
     },
     resetExpenseForm() {
       this.expense = {
-        date: '',
-        amount: 0.0,
+        date: toLocalISODate(),
+        amount: '0',
         description: '',
         category: null,
         paymentMethod: null,
@@ -940,7 +1065,7 @@ export default {
       this.editingIncomeId = income.id
       this.income = {
         date: this.normalizeDate(income.date),
-        amount: income.amount,
+        amount: formatCurrencyForInput(income.amount),
         description: income.description,
         paymentMethod: this.resolvePaymentMethodId(
           income.paymentMethod ?? income.paymentMethodId ?? null
@@ -972,7 +1097,7 @@ export default {
 
       this.expense = {
         date: this.normalizeDate(expense.date),
-        amount: expense.amount,
+        amount: formatCurrencyForInput(expense.amount),
         description: expense.description,
         category: this.resolveCategoryId(expense.category ?? expense.categoryId ?? null),
         paymentMethod: this.resolvePaymentMethodId(
@@ -1129,6 +1254,18 @@ export default {
       this.snackbar.color = color;
       this.snackbar.show = true;
     },
+    onIncomeAmountInput(value) {
+      this.income.amount = sanitizeCurrencyInput(value)
+    },
+    onExpenseAmountInput(value) {
+      this.expense.amount = sanitizeCurrencyInput(value)
+    },
+    requiredAmount(value) {
+      return !!sanitizeCurrencyInput(value) || this.$t('validation.required', { field: this.$t('common.amount') })
+    },
+    validCurrencyFormat(value) {
+      return parseCurrencyToNumber(value) !== null || this.$t('validation.invalid_currency')
+    }
   }
 }
 </script>
