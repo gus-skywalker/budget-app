@@ -1,6 +1,6 @@
 <template>
-  <v-list-item>
-    <v-row align="center" class="income-item" @click="$emit('select', income)">
+  <v-list-item class="income-item" @click="handleSelect">
+    <v-row align="center">
       <v-col cols="9" md="8">
         <v-list-item-title>
           {{ income.description }}
@@ -83,6 +83,12 @@ export default {
         // Se não é recorrente, abre o diálogo para definir a recorrência
         this.recurrenceDialog = true
       }
+    },
+    handleSelect(event) {
+      if (event?.defaultPrevented) {
+        return
+      }
+      this.$emit('select', this.income)
     },
     closeRecurrenceDialog() {
       this.recurrenceDialog = false

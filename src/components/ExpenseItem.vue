@@ -1,7 +1,7 @@
 <template>
-  <v-list-item>
+  <v-list-item class="expense-item" @click="handleSelect">
     <div class="expense-item-layout">
-      <div class="expense-content" @click="$emit('select', expense)">
+      <div class="expense-content">
         <v-list-item-title>
           {{ expense.description }}
         </v-list-item-title>
@@ -189,9 +189,7 @@
         </template>
       </v-snackbar>
     </v-dialog>
-
-
-  </v-list-item>
+</v-list-item>
 </template>
 
 
@@ -272,6 +270,12 @@ export default {
     },
   },
   methods: {
+    handleSelect(event) {
+      if (event?.defaultPrevented) {
+        return
+      }
+      this.$emit('select', this.expense)
+    },
     onNewFilesChange(event) {
       const files = event.target.files;
       if (!files || files.length === 0) {
@@ -441,10 +445,13 @@ export default {
   width: 100%;
 }
 
+.expense-item {
+  cursor: pointer;
+}
+
 .expense-content {
   flex: 1 1 auto;
   min-width: 0;
-  cursor: pointer;
 }
 
 .expense-actions {
