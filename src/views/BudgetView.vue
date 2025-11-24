@@ -344,6 +344,7 @@
                   v-for="(expense, index) in monthlyExpenses" 
                   :key="index" 
                   :expense="expense"
+                  :alert-settings="alertSettings"
                   @attachFiles="handleAttachFiles" 
                   @removeAttachment="handleRemoveAttachment"
                   @sendReminder="handleSendReminder" 
@@ -583,6 +584,7 @@ export default {
         text: '',
         color: 'success',
       },
+      alertSettings: null,
     }
   },
   mounted() {
@@ -590,6 +592,7 @@ export default {
     this.fetchPaymentMethods();
     // this.fetchUsers();
     this.fetchGroups();
+    this.fetchAlertSettings();
     this.fetchMonthlyIncomes();
     this.fetchMonthlyExpenses();
   },
@@ -812,6 +815,15 @@ export default {
         })
         .catch((error) => {
           console.error('Erro ao buscar grupos:', error)
+        })
+    },
+    fetchAlertSettings() {
+      NotificationService.getAlertSettings()
+        .then((response) => {
+          this.alertSettings = response.data || null
+        })
+        .catch((error) => {
+          console.error('Erro ao buscar configurações de alerta:', error)
         })
     },
     fetchGroupMembers() {
