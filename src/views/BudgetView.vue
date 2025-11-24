@@ -525,25 +525,17 @@ export default {
 
       return null
     },
-    buildIncomePayload({ normalizedDate, paymentMethodId, isEditing }) {
+    buildIncomePayload({ normalizedDate, paymentMethodId }) {
       const { amount, description, isRecurring } = this.income
-
-      const payload = {
+      return {
         date: normalizedDate,
         amount,
         description,
-        isRecurring,
-        paymentMethodId,
-        paymentMethod: this.createReferenceObject(paymentMethodId)
+        paymentMethod: paymentMethodId,
+        isRecurring
       }
-
-      if (isEditing) {
-        payload.id = this.editingIncomeId
-      }
-
-      return payload
     },
-    buildExpensePayload({ normalizedDate, categoryId, paymentMethodId, isEditing }) {
+    buildExpensePayload({ normalizedDate, categoryId, paymentMethodId }) {
       const {
         amount,
         description,
@@ -551,27 +543,8 @@ export default {
       } = this.expense
 
       const sanitizedSelectedUsers = Array.isArray(selectedUsers) ? [...selectedUsers] : []
-      const groupId = this.selectedGroup ?? this.editingExpenseOriginal?.groupId ?? null
 
-      if (isEditing) {
-        const payload = {
-          id: this.editingExpenseId,
-          date: normalizedDate,
-          amount,
-          description,
-          category: this.createReferenceObject(categoryId),
-          paymentMethod: this.createReferenceObject(paymentMethodId),
-          selectedUsers: sanitizedSelectedUsers
-        }
-
-        if (groupId) {
-          payload.group = this.createReferenceObject(groupId)
-        }
-
-        return payload
-      }
-
-      const payload = {
+      return {
         date: normalizedDate,
         amount,
         description,
@@ -579,12 +552,6 @@ export default {
         paymentMethod: paymentMethodId,
         selectedUsers: sanitizedSelectedUsers
       }
-
-      if (groupId) {
-        payload.groupId = groupId
-      }
-
-      return payload
     },
         resolvePaymentMethodId(value) {
           const logAndReturn = (resolved) => {
@@ -683,12 +650,6 @@ export default {
           }
 
           return logAndReturn(null)
-        },
-        createReferenceObject(id) {
-          if (id === null || id === undefined) {
-            return null
-          }
-          return { id }
         },
     fetchCategories() {
       const language = this.$i18n?.locale || this.selectedLanguage || 'pt'
@@ -798,8 +759,7 @@ export default {
 
       const payload = this.buildIncomePayload({
         normalizedDate,
-        paymentMethodId,
-        isEditing
+        paymentMethodId
       })
 
       console.info('[BudgetView] saveIncome', {
@@ -854,8 +814,7 @@ export default {
       const payload = this.buildExpensePayload({
         normalizedDate,
         categoryId,
-        paymentMethodId,
-        isEditing
+        paymentMethodId
       })
 
       console.info('[BudgetView] saveExpense', {
@@ -1024,7 +983,13 @@ export default {
           : []
       }
 
-      if (!groupId) {
+      if (Array.isArray(expense.users) && expense.users.length) {
+        this.users = expense.users.map((user) => ({
+          id: user.userId ?? user.id ?? user,
+          name: user.name ?? user.email ?? (user.userId ?? user),
+          email: user.email ?? null
+        }))
+      } else if (!groupId) {
         this.users = []
       }
     },
