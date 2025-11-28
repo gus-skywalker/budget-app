@@ -7,6 +7,7 @@
     </header>
 
     <div class="container">
+
       <!-- Seção 1: Planejamento Financeiro -->
       <section class="section">
         <div class="section-image">
@@ -21,6 +22,32 @@
             Com nossa ferramenta, você pode criar um plano personalizado para alcançar seus
             objetivos financeiros.
           </p>
+        </div>
+      </section>
+
+            <section class="ai-highlight">
+        <p class="tag">IA Financial Copilot</p>
+        <h2>Inteligência que trabalha pelos seus objetivos</h2>
+        <p>
+          O Budget AI Service analisa seu histórico em segundos para entregar previsões confiáveis, alertas proativos e planos de economia mensuráveis. Veja como essa automação reduz o esforço manual e aumenta o controle:
+        </p>
+        <div class="ai-grid">
+          <article>
+            <h3>Previsão de Despesas</h3>
+            <p>Projete meses futuros com faixa de confiança e entenda se o ritmo de gastos está subindo, caindo ou estável.</p>
+          </article>
+          <article>
+            <h3>Detecção de Anomalias</h3>
+            <p>O motor de IA monitora todos os lançamentos e destaca despesas fora do padrão antes que virem um problema.</p>
+          </article>
+          <article>
+            <h3>Planos de Economia</h3>
+            <p>Receba um plano claro com valor mensal recomendado, probabilidade de sucesso e ações sugeridas.</p>
+          </article>
+          <article>
+            <h3>Auto Categorize</h3>
+            <p>Descrições em PT/EN são interpretadas automaticamente, reduzindo até 80% do trabalho de classificação manual.</p>
+          </article>
         </div>
       </section>
 
@@ -115,6 +142,48 @@
   margin-right: 10px;
 }
 
+.ai-highlight {
+  background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+  border-radius: 16px;
+  padding: 40px;
+  margin-bottom: 50px;
+  box-shadow: 0 20px 35px rgba(15, 23, 42, 0.08);
+}
+
+.ai-highlight .tag {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #7c3aed;
+}
+
+.ai-highlight h2 {
+  font-size: 2.2rem;
+  margin: 10px 0 15px;
+  color: #0f172a;
+}
+
+.ai-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  margin-top: 25px;
+}
+
+.ai-grid article {
+  background: #fff;
+  border-radius: 14px;
+  padding: 20px;
+  border: 1px solid rgba(124, 58, 237, 0.15);
+  box-shadow: 0 15px 30px rgba(15, 23, 42, 0.05);
+}
+
+.ai-grid h3 {
+  margin-bottom: 8px;
+  color: #1e1b4b;
+}
+
 .header h1 {
   font-size: 24px;
   font-weight: bold;
@@ -127,28 +196,34 @@
   justify-content: center;
   align-items: center;
   margin-bottom: 40px;
+  gap: 20px;
 }
 
 .section-image {
-  flex-basis: 40%;
-  margin: 20px;
+  flex: 1 1 320px;
+  margin: 10px;
+  display: flex;
+  justify-content: center;
 }
 
 .section-image img {
   width: 100%;
-  height: 100%;
+  max-width: 520px;
+  height: auto;
   object-fit: cover;
-  border-radius: 10px;
+  border-radius: 12px;
+  box-shadow: 0 20px 35px rgba(15, 23, 42, 0.15);
 }
 
 .section-content {
-  flex-basis: 60%;
-  margin: 20px;
+  flex: 1 1 360px;
+  margin: 10px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: center;
-  text-align: justify;
+  align-items: flex-start;
+  text-align: left;
+  gap: 10px;
 }
 
 .section-content h2 {
@@ -157,5 +232,34 @@
 
 .section-content p {
   margin-bottom: 20px;
+}
+
+@media (max-width: 768px) {
+  .section {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .ai-highlight {
+    padding: 30px 20px;
+  }
+
+  .ai-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .section-image,
+  .section-content {
+    width: 100%;
+    align-items: center;
+  }
+
+  .section-content {
+    text-align: center;
+  }
+
+  .section-image img {
+    max-width: 90vw;
+  }
 }
 </style>

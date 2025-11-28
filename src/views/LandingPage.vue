@@ -50,6 +50,51 @@
       </div>
     </section>
 
+    <!-- Seção IA -->
+    <section id="ai" class="section ai-section">
+      <div class="ai-content">
+        <div class="ai-text">
+          <p class="tag">IA Financial Copilot</p>
+          <h2>Insights inteligentes para antecipar cada decisão</h2>
+          <p>
+            O Budget AI Service aprende com o seu histórico em segundos e oferece previsões, alertas e recomendações
+            acionáveis. Você cuida dos planos; nós cuidamos dos números.
+          </p>
+          <ul>
+            <li><strong>Previsão de despesas:</strong> simule até 12 meses com intervalos de confiança.</li>
+            <li><strong>Detecção de anomalias:</strong> receba alertas quando gastos fugirem do padrão.</li>
+            <li><strong>Categorização automática:</strong> descreva a compra e deixe a IA sugerir o melhor destino.</li>
+            <li><strong>Planos de economia:</strong> metas inteligentes com ações sugeridas e probabilidade de sucesso.</li>
+          </ul>
+          <div class="ai-cta">
+            <button class="btn btn-primary" @click.prevent="$router.push({ name: 'dashboard' })">
+              Ver IA em ação
+            </button>
+            <button class="btn btn-secondary" @click.prevent="$router.push({ name: 'choose-plan' })">
+              Começar agora
+            </button>
+          </div>
+        </div>
+        <div class="ai-highlights">
+          <article class="ai-card">
+            <h3>Fluxo de Caixa Preditivo</h3>
+            <p>Simule receitas, despesas e alertas de déficit para evitar surpresas.</p>
+            <span>Insights em tempo real</span>
+          </article>
+          <article class="ai-card">
+            <h3>Assistente de Economia</h3>
+            <p>Receba plano mensal com ações concretas e acompanhe o impacto acumulado.</p>
+            <span>Confiança 75%</span>
+          </article>
+          <article class="ai-card">
+            <h3>Auto Categorize</h3>
+            <p>Heurísticas em PT/EN identificam padrão de gastos e reduzem trabalho manual.</p>
+            <span>Menos 80% de cliques</span>
+          </article>
+        </div>
+      </div>
+    </section>
+
     <!-- Benefícios -->
     <section id="benefits" class="section benefits-section">
       <h2>Por Que Escolher Nossa Ferramenta</h2>
@@ -430,6 +475,7 @@ body {
 
 
 /* Hero Section */
+
 .hero {
   display: flex;
   justify-content: space-between;
@@ -437,6 +483,7 @@ body {
   padding: 80px 40px;
   margin-top: 20px;
   background-color: var(--light-gray);
+  gap: 40px;
 }
 
 .hero-content {
@@ -454,10 +501,89 @@ body {
   color: var(--dark-gray);
 }
 
+.hero-image {
+  width: 50%;
+  display: flex;
+  justify-content: center;
+}
+
 .hero-image img {
   width: 100%;
+  max-width: 520px;
   height: auto;
   border-radius: 10px;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.08);
+}
+
+/* AI Section */
+.ai-section {
+  background: linear-gradient(135deg, #f5f7ff 0%, #eef2ff 100%);
+  padding: 80px 20px;
+}
+
+.ai-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 40px;
+  align-items: center;
+}
+
+.ai-text .tag {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.9rem;
+  color: #7c3aed;
+  font-weight: 600;
+}
+
+.ai-text h2 {
+  font-size: 2.5rem;
+  margin: 12px 0;
+  color: #1f2933;
+}
+
+.ai-text ul {
+  margin: 16px 0 24px;
+  padding-left: 20px;
+  color: #374151;
+}
+
+.ai-text li {
+  margin-bottom: 10px;
+}
+
+.ai-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.ai-highlights {
+  display: grid;
+  gap: 20px;
+}
+
+.ai-card {
+  background: #fff;
+  padding: 24px;
+  border-radius: 16px;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(124, 58, 237, 0.12);
+}
+
+.ai-card h3 {
+  margin-bottom: 10px;
+  color: #111827;
+}
+
+.ai-card span {
+  display: inline-block;
+  margin-top: 12px;
+  font-size: 0.85rem;
+  color: #6d28d9;
+  font-weight: 600;
 }
 
 /* Benefícios */
@@ -776,7 +902,7 @@ body {
   .hero {
     flex-direction: column;
     align-items: center;
-    padding: 40px 20px;
+    padding: 50px 20px;
     text-align: center;
     margin-top: 50px;
   }
@@ -786,8 +912,12 @@ body {
     margin-bottom: 30px; /* Adiciona espaço entre o conteúdo e a imagem */
   }
 
+  .hero-image {
+    width: 100%;
+  }
+
   .hero-content h1 {
-    font-size: 32px;
+    font-size: 34px;
   }
 
   .hero-content p {
@@ -802,7 +932,7 @@ body {
 
   .hero-image img {
     width: 100%;
-    max-width: 400px;
+    max-width: 460px;
     height: auto;
   }
 
@@ -883,6 +1013,22 @@ body {
 
   .footer-info {
     margin-top: 10px;
+  }
+
+  .ai-section {
+    padding: 60px 20px;
+  }
+
+  .ai-content {
+    grid-template-columns: 1fr;
+  }
+
+  .ai-text ul {
+    text-align: left;
+  }
+
+  .ai-cta {
+    justify-content: center;
   }
 }
 </style>
