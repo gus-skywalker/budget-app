@@ -50,6 +50,21 @@
         </v-col>
       </v-row>
 
+      <!-- AI Insights -->
+      <section class="ai-insights">
+        <div class="ai-hero-card">
+          <CashflowDashboard />
+        </div>
+        <div class="ai-grid">
+          <div class="ai-card-wrapper">
+            <MonthlyExpensesPrediction />
+          </div>
+          <div class="ai-card-wrapper">
+            <AnomalyDetectionTable />
+          </div>
+        </div>
+      </section>
+
 
       <!-- Trends Over Time -->
       <div class="modern-card trends-section">
@@ -167,11 +182,19 @@ import { Chart, registerables } from 'chart.js/auto'
 import moment from 'moment'
 import DataService from '@/services/DataService'
 import FinancialGoalService from '@/services/FinancialGoalService';
+import CashflowDashboard from '@/components/ai/CashflowDashboard.vue'
+import MonthlyExpensesPrediction from '@/components/ai/MonthlyExpensesPrediction.vue'
+import AnomalyDetectionTable from '@/components/ai/AnomalyDetectionTable.vue'
 import 'chartjs-adapter-moment'
 
 Chart.register(...registerables)
 
 export default {
+  components: {
+    CashflowDashboard,
+    MonthlyExpensesPrediction,
+    AnomalyDetectionTable
+  },
   data() {
     const today = new Date();
     return {
@@ -570,6 +593,30 @@ export default {
   padding: 28px;
 }
 
+/* AI Insights */
+.ai-insights {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  margin-bottom: 40px;
+}
+
+.ai-grid {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.ai-hero-card,
+.ai-card-wrapper {
+  width: 100%;
+}
+
+.ai-hero-card :deep(.ai-card),
+.ai-card-wrapper :deep(.ai-card) {
+  height: 100%;
+}
+
 /* Filters Row */
 .filters-row {
   margin-bottom: 24px;
@@ -739,6 +786,10 @@ export default {
   .dashboard-header {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .ai-insights {
+    gap: 24px;
   }
 
   .date-badge {
