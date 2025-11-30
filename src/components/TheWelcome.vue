@@ -208,7 +208,7 @@
 
 .section-image img {
   width: 100%;
-  max-width: 520px;
+  max-width: 800px;
   height: auto;
   object-fit: cover;
   border-radius: 12px;

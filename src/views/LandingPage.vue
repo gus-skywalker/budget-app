@@ -487,7 +487,14 @@ body {
 }
 
 .hero-content {
-  width: 50%;
+  flex: 1 1 40%;
+}
+
+.hero-image {
+  flex: 1 1 60%;
+  display: flex;
+  justify-content: center;
+  min-width: 320px;
 }
 
 .hero-content h1 {
@@ -499,12 +506,6 @@ body {
   margin-top: 20px;
   font-size: 18px;
   color: var(--dark-gray);
-}
-
-.hero-image {
-  width: 50%;
-  display: flex;
-  justify-content: center;
 }
 
 .hero-image img {
@@ -608,9 +609,10 @@ body {
 }
 
 .benefit-item img {
-  width: 100px;
-  height: 100px;
+  width: 180px;
+  height: 180px;
   margin-bottom: 20px;
+  object-fit: contain;
 }
 
 .benefit-item h3 {
@@ -932,7 +934,7 @@ body {
 
   .hero-image img {
     width: 100%;
-    max-width: 460px;
+    max-width: 90vw;
     height: auto;
   }
 
@@ -949,8 +951,8 @@ body {
   }
 
   .benefit-item img {
-    width: 80px;
-    height: 80px;
+    width: 180px;
+    height: 180px;
   }
 
   .testimonials-container {
