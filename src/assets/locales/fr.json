@@ -1,0 +1,22 @@
+{
+  "welcome": "Bienvenue",
+  "login": "Connexion",
+  "logout": "Déconnexion",
+  "dashboard": "Tableau de bord",
+  "settings": "Paramètres",
+  "language": "Langue",
+  "company": "Entreprise",
+  "companies": "Entreprises",
+  "select_company": "Sélectionner une entreprise",
+  "create_company": "Créer une entreprise",
+  "user": "Utilisateur",
+  "users": "Utilisateurs",
+  "email": "E-mail",
+  "password": "Mot de passe",
+  "confirm_password": "Confirmer le mot de passe",
+  "submit": "Soumettre",
+  "cancel": "Annuler",
+  "error": "Erreur",
+  "success": "Succès",
+  "loading": "Chargement..."
+}

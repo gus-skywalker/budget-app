@@ -8,6 +8,7 @@ import { useUserStore } from '@/plugins/userStore'
 import { useRouter } from 'vue-router'
 import { jwtDecode } from 'jwt-decode'
 import AuthService from '@/services/AuthService'
+import { updateI18nLocale } from '@/i18n'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -49,7 +50,10 @@ const extractTokenFromUrl = async () => {
         companies: companies
       })
       
+      // Configura idioma e sincroniza i18n
       userStore.setLanguage(userLanguage)
+      await updateI18nLocale(userLanguage)
+      
       userStore.setCompanies(companies)
       
       // Fluxo de decisão (mesmo do login tradicional)

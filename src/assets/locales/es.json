@@ -1,0 +1,22 @@
+{
+  "welcome": "Bienvenido",
+  "login": "Iniciar sesión",
+  "logout": "Cerrar sesión",
+  "dashboard": "Tablero",
+  "settings": "Configuraciones",
+  "language": "Idioma",
+  "company": "Empresa",
+  "companies": "Empresas",
+  "select_company": "Seleccionar empresa",
+  "create_company": "Crear empresa",
+  "user": "Usuario",
+  "users": "Usuarios",
+  "email": "Correo electrónico",
+  "password": "Contraseña",
+  "confirm_password": "Confirmar contraseña",
+  "submit": "Enviar",
+  "cancel": "Cancelar",
+  "error": "Error",
+  "success": "Éxito",
+  "loading": "Cargando..."
+}
