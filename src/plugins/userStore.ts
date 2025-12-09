@@ -69,9 +69,16 @@ export const useUserStore = defineStore({
       this.saveState()
     },
 
-    setCurrentCompany(companyId: string, role: string) {
+    setCurrentCompany(companyId: string, role: string, companyName?: string) {
       this.currentCompanyId = companyId
       this.currentRole = role
+      // Atualiza o nome da empresa no array companies se fornecido
+      if (companyName && this.user.companies) {
+        const company = this.user.companies.find(c => c.companyId === companyId)
+        if (company && !company.companyName) {
+          company.companyName = companyName
+        }
+      }
       this.saveState()
     },
 

@@ -277,6 +277,10 @@ const statusIcon = computed(() => {
 // Função para carregar o plano e status da assinatura do usuário
 const loadSubscriptionDetails = async () => {
     try {
+        if (!props.user.id) {
+            console.error('User ID is required to load subscription details');
+            return;
+        }
         const response = await PaymentService.loadSubscriptionDetails(props.user.id);
         currentPlan.value = response.data.plan;
         subscriptionStatus.value = response.data.status;

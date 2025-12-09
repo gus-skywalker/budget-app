@@ -296,11 +296,11 @@ const userLogin = async () => {
     if (res.data) {
       console.log('Login response:', res.data)
       
-      // Decodifica o JWT para extrair as empresas
-      const decodedToken = jwtDecode(res.data.token)
-      const companies = decodedToken.companies || []
+      // A resposta já contém o array de empresas diretamente
+      const companies = res.data.companies || []
+      const companyId = res.data.companyId || null
       
-      // Define o usuário com as empresas
+      // Define o usuário com as empresas da resposta
       store.$patch({
         user: {
           id: res.data.id,
@@ -320,22 +320,41 @@ const userLogin = async () => {
       // Define as empresas no store
       store.setCompanies(companies)
       
-      // Se o usuário pertence a múltiplas empresas, exibe o seletor
-      if (companies.length > 1) {
-        userCompanies.value = companies
-        showCompanySelector.value = true
+      // Fluxo de decisão conforme contrato da API:
+      // 1. companies.length === 0? → Redirecionar para tela de criar empresa
+      if (companies.length === 0) {
         store.saveState()
-      } else if (companies.length === 1) {
-        // Seleciona automaticamente a única empresa
-        store.setCurrentCompany(companies[0].companyId, companies[0].role, companies[0].companyName)
-        store.saveState()
-        loginSuccess.value = 'Login realizado com sucesso!'
+        loginSuccess.value = 'Login realizado! Configure sua empresa.'
         setTimeout(() => {
           loginSuccess.value = null
-          router.push('/dashboard')
+          router.push('/settings') // Ou rota para criar empresa
         }, 800)
-      } else {
-        // Sem empresas vinculadas (usuário individual)
+      }
+      // 2. companyId === null && companies.length > 0? → Exibir seletor
+      else if (companyId === null && companies.length > 0) {
+        if (companies.length > 1) {
+          userCompanies.value = companies
+          showCompanySelector.value = true
+          store.saveState()
+        } else {
+          // Auto-seleciona se tiver apenas uma empresa
+          store.setCurrentCompany(companies[0].companyId, companies[0].role, companies[0].companyName)
+          store.saveState()
+          loginSuccess.value = 'Login realizado com sucesso!'
+          setTimeout(() => {
+            loginSuccess.value = null
+            router.push('/dashboard')
+          }, 800)
+        }
+      }
+      // 3. companyId !== null? → Empresa já selecionada
+      else if (companyId !== null) {
+        // Decodifica JWT para obter userRole
+        const decodedToken = jwtDecode(res.data.token)
+        const userRole = decodedToken.userRole || decodedToken.role
+        const selectedCompany = companies.find(c => c.companyId === companyId)
+        
+        store.setCurrentCompany(companyId, userRole, selectedCompany?.companyName)
         store.saveState()
         loginSuccess.value = 'Login realizado com sucesso!'
         setTimeout(() => {
@@ -376,15 +395,41 @@ const userLogin = async () => {
   }
 }
 
-const handleCompanySelection = (company) => {
-  const store = useUserStore()
-  store.setCurrentCompany(company.companyId, company.role, company.companyName)
-  showCompanySelector.value = false
-  loginSuccess.value = 'Empresa selecionada com sucesso!'
-  setTimeout(() => {
-    loginSuccess.value = null
-    router.push('/dashboard')
-  }, 800)
+const handleCompanySelection = async (company) => {
+  try {
+    isLoading.value = true
+    const store = useUserStore()
+    
+    // Chama API para selecionar empresa e obter novos tokens
+    const CompanyService = (await import('@/services/CompanyService')).default
+    const res = await CompanyService.selectCompany(company.companyId)
+    
+    // Atualiza tokens com a resposta da API
+    store.setToken(res.data.accessToken)
+    store.setRefreshToken(res.data.refreshToken)
+    
+    // Decodifica novo JWT para obter companyId e userRole
+    const decodedToken = jwtDecode(res.data.accessToken)
+    const userRole = decodedToken.userRole || decodedToken.role
+    
+    // Atualiza empresa atual
+    store.setCurrentCompany(company.companyId, userRole, company.companyName)
+    
+    showCompanySelector.value = false
+    loginSuccess.value = 'Empresa selecionada com sucesso!'
+    setTimeout(() => {
+      loginSuccess.value = null
+      router.push('/dashboard')
+    }, 800)
+  } catch (err) {
+    console.error('Erro ao selecionar empresa:', err)
+    error.value = 'Erro ao selecionar empresa. Tente novamente.'
+    setTimeout(() => {
+      error.value = null
+    }, 4000)
+  } finally {
+    isLoading.value = false
+  }
 }
 
 // Função mock para testar diferentes cenários
