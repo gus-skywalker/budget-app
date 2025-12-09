@@ -8,6 +8,7 @@
 - **i18n:** Vue I18n with locales in `src/assets/locales/` (`en.json`, `pt.json`)
 - **AI/ML:** AI features in `src/components/ai/` + `src/services/aiService.ts`
 - **Architecture:** Multi-tenant B2B with company-scoped data (see B2B section below)
+- **Languages:** Multi-language support with backend sync (see Language section below)
 
 ## Key Workflows
 - **Install:** `npm install`
@@ -90,13 +91,93 @@ Use `jwtDecode()` from `jwt-decode` package to parse (see `LoginView.vue:255`)
    - Token refresh on 401 via `/oauth2/token` with `refresh_token` grant
 
 ### Key Files
-- `src/plugins/userStore.ts`: State management (token, companies, currentCompanyId)
-- `src/views/LoginView.vue`: Login + company selection logic
+- `src/plugins/userStore.ts`: State management (token, companies, currentCompanyId, language)
+- `src/views/LoginView.vue`: Login + company selection logic + language initialization
 - `src/views/redirect_url/OAuth2Redirect.vue`: OAuth2 callback handling
 - `src/components/CompanySelector.vue`: Modal for multi-company users
 - `src/components/CompanySwitcher.vue`: Header dropdown to switch companies
 - `src/services/CompanyService.ts`: Company API endpoints
 - `src/services/axiosInterceptor.ts`: Auto-inject tokens, handle 401 refresh
+
+## Multi-Language Architecture
+
+### Language Model
+- **Supported Languages:**
+  - **Full support:** PT, EN, FR (complete translations)
+  - **Partial support:** ES, DE (fallback to PT for missing translations)
+- Backend returns language in **UPPERCASE** (PT, EN, FR, ES, DE)
+- Frontend stores in **UPPERCASE**, converts to **lowercase** for API calls (pt, en, fr)
+- i18n uses **lowercase** locale codes ('pt', 'en')
+
+### API Contract (Backend Languages)
+
+#### Login Response Structure
+```json
+{
+  "id": "user123",
+  "username": "João Silva",
+  "email": "user@email.com",
+  "language": "PT",  // UPPERCASE from backend
+  "token": "eyJhbG...",
+  "companies": [...]
+}
+```
+
+#### JWT Structure (After Language Selection)
+```json
+{
+  "user_id": "123",
+  "user_language": "EN",  // UPPERCASE in JWT
+  "companyId": "company-456",
+  "userRole": "ADMIN"
+}
+```
+
+### Language Conversion Flow
+1. **Login/OAuth2:**
+   - Backend returns `language: "PT"` (uppercase)
+   - Store in `userStore.language` as is (uppercase)
+   - Call `updateI18nLocale(language)` to sync i18n
+
+2. **API Requests (Categories/Payment Methods):**
+   - `DataService.fetchCategories(userStore.getLanguage)`
+   - Service uses `languageUtils.getApiLanguage()` to convert PT→pt
+   - Sends `/categories/translated?lang=pt` (lowercase)
+
+3. **Language Utilities (`src/utils/languageUtils.ts`):**
+   - `getApiLanguage('PT')` → 'pt'
+   - `getApiLanguage('ES')` → 'pt' (fallback for partial support)
+   - `isFullySupported('FR')` → true
+   - `isPartiallySupported('DE')` → true
+
+### Critical Flows
+1. **Login Language Initialization:**
+   ```typescript
+   // LoginView.vue or OAuth2Redirect.vue
+   const language = response.data.language // "PT"
+   userStore.setLanguage(language)
+   await updateI18nLocale(language) // Converts to 'pt' internally
+   ```
+
+2. **Fetching Translated Data:**
+   ```typescript
+   // Any component needing categories
+   const userLanguage = userStore.getLanguage // "PT"
+   const categories = await DataService.fetchCategories(userLanguage)
+   // Internally calls: GET /categories/translated?lang=pt
+   ```
+
+3. **i18n Locale Mapping:**
+   - `updateI18nLocale('PT')` → sets `i18n.global.locale.value = 'pt'`
+   - `updateI18nLocale('ES')` → sets `i18n.global.locale.value = 'pt'` (fallback)
+   - `updateI18nLocale('EN')` → sets `i18n.global.locale.value = 'en'`
+
+### Key Files (Language)
+- `src/utils/languageUtils.ts`: Language conversion, validation, fallback logic
+- `src/i18n.ts`: i18n configuration with backend sync (`updateI18nLocale`)
+- `src/plugins/userStore.ts`: `language` state, `getLanguage`, `getApiLanguage` getters
+- `src/services/DataService.ts`: Translated categories/payment methods endpoints
+- `src/types/global.d.ts`: `Language` and `ApiLanguage` type definitions
 
 ## Project Conventions
 - **TypeScript-first:** Use `.ts` for logic, `.vue` SFCs with `<script setup lang="ts">`
@@ -139,8 +220,10 @@ export default {
 - `README.md`: PM2 commands, dependencies
 - `B2B_FRONTEND_IMPLEMENTATION.md`: Detailed B2B implementation notes
 - `B2B_SUMMARY.md`: Executive summary of multi-tenant features
+- `LANGUAGE_IMPLEMENTATION.md`: Complete language/i18n implementation guide
 - `src/services/axiosInterceptor.ts`: Auth flow + token refresh logic
-- `src/plugins/userStore.ts`: User state structure
+- `src/plugins/userStore.ts`: User state structure (auth, companies, language)
+- `src/utils/languageUtils.ts`: Language conversion utilities and constants
 
 ---
 **When in doubt:** Check similar files in the same directory for patterns (services, components, views).

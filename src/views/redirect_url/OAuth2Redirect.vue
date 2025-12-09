@@ -3,7 +3,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted } from 'vue'
 import { useUserStore } from '@/plugins/userStore'
 import { useRouter } from 'vue-router'
 import { jwtDecode } from 'jwt-decode'
@@ -11,8 +11,6 @@ import AuthService from '@/services/AuthService'
 
 const router = useRouter()
 const userStore = useUserStore()
-const showCompanySelector = ref(false)
-const userCompanies = ref([])
 
 const extractTokenFromUrl = async () => {
   const urlParams = new URLSearchParams(window.location.search)
@@ -40,16 +38,18 @@ const extractTokenFromUrl = async () => {
 
       // Busca informações completas do usuário
       const res = await AuthService.userTokenInfo()
+      const userLanguage = res.data.language || decodedToken.user_language || 'PT'
       
       // Define usuário com empresas
       userStore.setUser({
         id: res.data.id,
         username: res.data.username,
         email: res.data.email,
-        language: res.data.language,
+        language: userLanguage,
         companies: companies
       })
       
+      userStore.setLanguage(userLanguage)
       userStore.setCompanies(companies)
       
       // Fluxo de decisão (mesmo do login tradicional)

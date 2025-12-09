@@ -12,6 +12,7 @@ interface User {
   username?: string
   email?: string
   avatar?: string
+  language?: string
   companies?: Company[]
 }
 
@@ -22,6 +23,7 @@ type State = {
   user: User
   currentCompanyId: string | null
   currentRole: string | null
+  language: string
 }
 
 export const useUserStore = defineStore({
@@ -33,7 +35,8 @@ export const useUserStore = defineStore({
     auth: false,
     user: {},
     currentCompanyId: null,
-    currentRole: null
+    currentRole: null,
+    language: 'PT'
   }),
 
   getters: {
@@ -45,7 +48,12 @@ export const useUserStore = defineStore({
     getCurrentRole: (state): string | null => state.currentRole,
     getCompanies: (state): Company[] => state.user.companies || [],
     hasMultipleCompanies: (state): boolean => (state.user.companies?.length || 0) > 1,
-    isAdmin: (state): boolean => state.currentRole === 'admin'
+    isAdmin: (state): boolean => state.currentRole === 'admin',
+    getLanguage: (state): string => state.language,
+    getApiLanguage: (state): string => {
+      const lang = state.language.toLowerCase()
+      return ['pt', 'en', 'fr'].includes(lang) ? lang : 'pt'
+    }
   },
 
   actions: {
@@ -66,6 +74,14 @@ export const useUserStore = defineStore({
 
     setUser(user: User) {
       this.user = user
+      if (user.language) {
+        this.language = user.language
+      }
+      this.saveState()
+    },
+
+    setLanguage(language: string) {
+      this.language = language
       this.saveState()
     },
 
@@ -94,6 +110,7 @@ export const useUserStore = defineStore({
       this.user = {}
       this.currentCompanyId = null
       this.currentRole = null
+      this.language = 'PT'
       this.saveState()
     },
 
@@ -104,7 +121,8 @@ export const useUserStore = defineStore({
         auth: this.auth,
         user: this.user,
         currentCompanyId: this.currentCompanyId,
-        currentRole: this.currentRole
+        currentRole: this.currentRole,
+        language: this.language
       }))
     },
 
@@ -118,6 +136,7 @@ export const useUserStore = defineStore({
         this.user = state.user
         this.currentCompanyId = state.currentCompanyId
         this.currentRole = state.currentRole
+        this.language = state.language || 'PT'
       }
     }
   }

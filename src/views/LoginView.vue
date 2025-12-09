@@ -254,6 +254,7 @@ import { useRouter, useRoute } from 'vue-router'
 import axios from 'axios'
 import { jwtDecode } from 'jwt-decode'
 import CompanySelector from '@/components/CompanySelector.vue'
+import { updateI18nLocale } from '@/i18n'
 
 const router = useRouter()
 const route = useRoute()
@@ -299,6 +300,7 @@ const userLogin = async () => {
       // A resposta já contém o array de empresas diretamente
       const companies = res.data.companies || []
       const companyId = res.data.companyId || null
+      const language = res.data.language || 'PT'
       
       // Define o usuário com as empresas da resposta
       store.$patch({
@@ -306,6 +308,7 @@ const userLogin = async () => {
           id: res.data.id,
           username: res.data.username,
           email: res.data.email,
+          language: language,
           companies: companies
         }
       })
@@ -314,11 +317,15 @@ const userLogin = async () => {
       store.$patch({
         token: res.data.token,
         refreshToken: res.data.refreshToken,
-        auth: true
+        auth: true,
+        language: language
       })
       
       // Define as empresas no store
       store.setCompanies(companies)
+      
+      // Atualiza o locale do i18n com base no idioma do usuário
+      updateI18nLocale(language)
       
       // Fluxo de decisão conforme contrato da API:
       // 1. companies.length === 0? → Redirecionar para tela de criar empresa

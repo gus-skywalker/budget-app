@@ -1,12 +1,16 @@
 // src/types/global.d.ts
 
+// Language Types
+export type Language = 'PT' | 'EN' | 'FR' | 'ES' | 'DE'
+export type ApiLanguage = 'pt' | 'en' | 'fr'
+
 // JWT Claims Interface
 export interface JWTClaims {
   sub: string
   user_id: string
   user_email: string
   user_fullname?: string
-  user_language?: string
+  user_language?: Language
   userRoles?: string[]
   companies?: Array<{
     companyId: string
@@ -26,7 +30,7 @@ export interface LoginResponse {
   id: string
   username: string
   email: string
-  language?: string
+  language: Language
   userRole?: string[]
   createdAt?: string
   token: string
