@@ -90,7 +90,7 @@
 <script>
 import { ref, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { useStore } from 'vuex';
+import { useUserStore } from '@/plugins/userStore';
 import { PLAN_DETAILS } from '@/constants/plans';
 
 export default {
@@ -98,7 +98,7 @@ export default {
     setup() {
         const router = useRouter();
         const route = useRoute();
-        const store = useStore();
+        const store = useUserStore();
         
         const form = ref(null);
         const valid = ref(false);

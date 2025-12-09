@@ -1,5 +1,12 @@
 <template>
   <div class="app-container login-page">
+    <!-- Company Selector Modal -->
+    <CompanySelector
+      v-model="showCompanySelector"
+      :companies="userCompanies"
+      @company-selected="handleCompanySelection"
+    />
+    
     <!-- Snackbar de erro -->
     <transition name="fade">
       <div v-if="error" class="snackbar error-snackbar" @click="closeNotification('error')">
@@ -129,6 +136,14 @@
                 <router-link to="/privacy-policy">Política de Privacidade</router-link>
               </p>
             </form>
+            
+            <!-- Botões de teste temporários -->
+            <div class="test-buttons mt-4">
+              <h4>🧪 Testes Multi-tenancy:</h4>
+              <button @click="mockLogin('no-company')" class="btn-test">Login sem empresa</button>
+              <button @click="mockLogin('single-company')" class="btn-test">Login 1 empresa</button>
+              <button @click="mockLogin('multiple-companies')" class="btn-test">Login múltiplas empresas</button>
+            </div>
           </div>
 
           <!-- Signup Form -->
@@ -193,6 +208,22 @@
                 </div>
               </div>
               
+              <div class="form-group">
+                <label>
+                  <input type="checkbox" v-model="signupData.createCompany" /> Criar uma nova empresa
+                </label>
+                <div v-if="signupData.createCompany" class="company-fields mt-3">
+                  <input 
+                    type="text" 
+                    v-model="signupData.companyName" 
+                    placeholder="Nome da Empresa" 
+                    class="form-control"
+                    required 
+                  />
+                  <small class="text-muted mt-1">Ao criar uma empresa, você será o administrador e poderá convidar outros usuários.</small>
+                </div>
+              </div>
+              
               <button type="submit" class="btn btn-primary" :disabled="isLoading">
                 <span v-if="isLoading" class="spinner"></span>
                 <span v-else>{{ $t('authentication.signup.signup_button') }}</span>
@@ -221,11 +252,13 @@ import { ref, onMounted } from 'vue'
 import { useUserStore } from '@/plugins/userStore'
 import { useRouter, useRoute } from 'vue-router'
 import axios from 'axios'
+import { jwtDecode } from 'jwt-decode'
+import CompanySelector from '@/components/CompanySelector.vue'
 
 const router = useRouter()
 const route = useRoute()
 const userData = ref({ email: '', password: '' })
-const signupData = ref({ email: '', password: '', confirmPassword: '', username: '' })
+const signupData = ref({ email: '', password: '', confirmPassword: '', username: '', createCompany: false, companyName: '' })
 const error = ref(null)
 const loginSuccess = ref(null)
 const signupError = ref(null)
@@ -236,6 +269,8 @@ const showPassword = ref(false)
 const showConfirmPassword = ref(false)
 const emailValid = ref(true)
 const authUrl = import.meta.env.VITE_AUTH_URL
+const showCompanySelector = ref(false)
+const userCompanies = ref([])
 
 onMounted(() => {
   console.log(route.query);
@@ -260,33 +295,63 @@ const userLogin = async () => {
     const res = await axios.post(`${authUrl}/auth/signin`, userData.value)
     if (res.data) {
       console.log('Login response:', res.data)
-      // Primeiro, define o usuário
+      
+      // Decodifica o JWT para extrair as empresas
+      const decodedToken = jwtDecode(res.data.token)
+      const companies = decodedToken.companies || []
+      
+      // Define o usuário com as empresas
       store.$patch({
         user: {
           id: res.data.id,
           username: res.data.username,
-          email: res.data.email
+          email: res.data.email,
+          companies: companies
         }
       })
-      // Depois, define os tokens
+      
+      // Define os tokens
       store.$patch({
         token: res.data.token,
         refreshToken: res.data.refreshToken,
         auth: true
       })
-      // Salva o estado
-      store.saveState()
+      
+      // Define as empresas no store
+      store.setCompanies(companies)
+      
+      // Se o usuário pertence a múltiplas empresas, exibe o seletor
+      if (companies.length > 1) {
+        userCompanies.value = companies
+        showCompanySelector.value = true
+        store.saveState()
+      } else if (companies.length === 1) {
+        // Seleciona automaticamente a única empresa
+        store.setCurrentCompany(companies[0].companyId, companies[0].role, companies[0].companyName)
+        store.saveState()
+        loginSuccess.value = 'Login realizado com sucesso!'
+        setTimeout(() => {
+          loginSuccess.value = null
+          router.push('/dashboard')
+        }, 800)
+      } else {
+        // Sem empresas vinculadas (usuário individual)
+        store.saveState()
+        loginSuccess.value = 'Login realizado com sucesso!'
+        setTimeout(() => {
+          loginSuccess.value = null
+          router.push('/dashboard')
+        }, 800)
+      }
+      
       console.log('Estado final do store:', {
         user: store.user,
         token: store.token,
         refreshToken: store.refreshToken,
-        auth: store.auth
+        auth: store.auth,
+        companies: companies,
+        currentCompany: store.currentCompany
       })
-      loginSuccess.value = 'Login realizado com sucesso!'
-      setTimeout(() => {
-        loginSuccess.value = null
-        router.push('/dashboard')
-      }, 800)
     }
   } catch (err) {
     console.error('Login error:', err)
@@ -311,6 +376,113 @@ const userLogin = async () => {
   }
 }
 
+const handleCompanySelection = (company) => {
+  const store = useUserStore()
+  store.setCurrentCompany(company.companyId, company.role, company.companyName)
+  showCompanySelector.value = false
+  loginSuccess.value = 'Empresa selecionada com sucesso!'
+  setTimeout(() => {
+    loginSuccess.value = null
+    router.push('/dashboard')
+  }, 800)
+}
+
+// Função mock para testar diferentes cenários
+const mockLogin = (scenario) => {
+  const store = useUserStore()
+  
+  // Simula dados do usuário
+  const mockUser = {
+    id: 123,
+    username: 'Usuario Teste',
+    email: 'teste@email.com'
+  }
+  
+  // Simula token (não é JWT real, apenas para teste)
+  const mockToken = 'mock.jwt.token'
+  
+  let companies = []
+  
+  // Define cenários diferentes
+  switch (scenario) {
+    case 'no-company':
+      companies = []
+      break
+    case 'single-company':
+      companies = [
+        {
+          companyId: 'company-1',
+          companyName: 'Minha Empresa',
+          role: 'ADMIN'
+        }
+      ]
+      break
+    case 'multiple-companies':
+      companies = [
+        {
+          companyId: 'company-1',
+          companyName: 'Tech Solutions LTDA',
+          role: 'ADMIN'
+        },
+        {
+          companyId: 'company-2',
+          companyName: 'Startup Inovadora',
+          role: 'MANAGER'
+        },
+        {
+          companyId: 'company-3',
+          companyName: 'Consultoria Estratégica',
+          role: 'USER'
+        }
+      ]
+      break
+  }
+  
+  // Simula o fluxo de login
+  store.$patch({
+    user: {
+      ...mockUser,
+      companies: companies
+    },
+    token: mockToken,
+    refreshToken: 'mock.refresh.token',
+    auth: true
+  })
+  
+  store.setCompanies(companies)
+  
+  // Aplica a lógica de seleção de empresa
+  if (companies.length > 1) {
+    userCompanies.value = companies
+    showCompanySelector.value = true
+    store.saveState()
+    console.log('🔄 Exibindo seletor de empresa - múltiplas empresas detectadas')
+  } else if (companies.length === 1) {
+    store.setCurrentCompany(companies[0].companyId, companies[0].role, companies[0].companyName)
+    store.saveState()
+    loginSuccess.value = 'Login realizado com sucesso!'
+    setTimeout(() => {
+      loginSuccess.value = null
+      router.push('/dashboard')
+    }, 800)
+    console.log('✅ Empresa única selecionada automaticamente')
+  } else {
+    store.saveState()
+    loginSuccess.value = 'Login realizado com sucesso!'
+    setTimeout(() => {
+      loginSuccess.value = null
+      router.push('/dashboard')
+    }, 800)
+    console.log('👤 Login como usuário individual (sem empresa)')
+  }
+  
+  console.log('Mock Login executado:', {
+    scenario,
+    companies: companies.length,
+    currentCompany: store.currentCompany
+  })
+}
+
 const userSignup = async () => {
   if (signupData.value.password !== signupData.value.confirmPassword) {
     signupError.value = 'As senhas não coincidem. Tente novamente.';
@@ -321,10 +493,29 @@ const userSignup = async () => {
   }
   try {
     isLoading.value = true
-    const res = await axios.post(`${authUrl}/auth/signup`, {
-      ...signupData.value,
-      language: 'PT',
-    });
+    
+    // Prepara os dados de registro
+    const requestData = {
+      username: signupData.value.username,
+      email: signupData.value.email,
+      password: signupData.value.password,
+      language: 'PT'
+    };
+    
+    // Monta a URL com parâmetros apropriados
+    let signupUrl = `${authUrl}/auth/signup`;
+    const params = new URLSearchParams();
+    
+    if (signupData.value.createCompany) {
+      params.append('createCompany', 'true');
+      params.append('companyName', signupData.value.companyName);
+    }
+    
+    if (params.toString()) {
+      signupUrl += `?${params.toString()}`;
+    }
+    
+    const res = await axios.post(signupUrl, requestData);
 
     if (res.status === 201) {
       signupSuccess.value = 'Conta criada com sucesso! Você já pode fazer login.';
@@ -353,7 +544,7 @@ const userSignup = async () => {
 
 
 const clearSignupForm = () => {
-  signupData.value = { email: '', password: '', confirmPassword: '', username: '' }
+  signupData.value = { email: '', password: '', confirmPassword: '', username: '', createCompany: false, companyName: '' }
 }
 
 const toggleForm = (isSignup) => {
@@ -942,5 +1133,79 @@ input:focus {
     padding: 10px 20px;
     font-size: 0.95rem;
   }
+}
+
+/* Company fields styles */
+.company-fields {
+  margin-top: 12px;
+  padding: 16px;
+  background-color: rgba(102, 126, 234, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(102, 126, 234, 0.2);
+}
+
+.company-fields input.form-control,
+.company-fields input[type='text'] {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #ffffff;
+  color: #1a1a1a;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  margin-bottom: 8px;
+}
+
+.company-fields input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.company-fields small {
+  display: block;
+  font-size: 0.85rem;
+  color: #666;
+  line-height: 1.4;
+}
+
+input[type="checkbox"] {
+  margin-right: 8px;
+  transform: scale(1.1);
+}
+
+/* Test buttons - temporários */
+.test-buttons {
+  padding: 16px;
+  background-color: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  margin-top: 16px;
+}
+
+.test-buttons h4 {
+  margin: 0 0 12px 0;
+  font-size: 0.9rem;
+  color: #856404;
+}
+
+.btn-test {
+  display: block;
+  width: 100%;
+  margin: 6px 0;
+  padding: 8px 12px;
+  background: #fff;
+  border: 1px solid #ffc107;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-test:hover {
+  background: #ffc107;
+  color: #000;
 }
 </style>

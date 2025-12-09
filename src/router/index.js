@@ -19,9 +19,16 @@ import StripeSuccess from '@/views/redirect_url/StripeSuccess.vue';
 import StripeCancel from '@/views/redirect_url/StripeCancel.vue';
 import ChoosePlan from '@/views/ChoosePlan.vue';
 import ReportView from '@/views/ReportView.vue';
+import RegisterView from '@/views/RegisterView.vue';
+
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
     routes: [
+        {
+            path: '/register',
+            name: 'register',
+            component: RegisterView
+        },
         {
             path: '/',
             name: 'landing',
