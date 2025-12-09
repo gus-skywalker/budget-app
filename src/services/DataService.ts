@@ -3,24 +3,24 @@ import axiosInterceptor from './axiosInterceptor'
 const API_URL = `${import.meta.env.VITE_API_BASE_URL}`
 
 export default {
-  getAll() {
+  getAll(): Promise<any> {
     return axiosInterceptor.get(API_URL)
   },
-  fetchCategories(language) {
+  fetchCategories(language: string): Promise<any> {
     return axiosInterceptor.get(`${API_URL}/categories/translated`, {
       params: {
         lang: language
       }
     })
   },
-  fetchPaymentMethods(language) {
+  fetchPaymentMethods(language: string): Promise<any> {
     return axiosInterceptor.get(`${API_URL}/payment-methods/translated`, {
       params: {
         lang: language
       }
     })
   },
-  fetchChartData(timePeriod, category) {
+  fetchChartData(timePeriod: string, category: string): Promise<any> {
     return axiosInterceptor.get(`${API_URL}/dashboard/chart`, {
       params: {
         timePeriod: timePeriod,
@@ -28,7 +28,7 @@ export default {
       }
     })
   },
-  fetchMonthOverview() {
+  fetchMonthOverview(): Promise<any> {
     return axiosInterceptor.get(`${API_URL}/dashboard/overview`)
   }
 }

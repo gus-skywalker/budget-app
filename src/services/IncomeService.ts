@@ -3,25 +3,25 @@ import axiosInterceptor from './axiosInterceptor'
 const API_URL = `${import.meta.env.VITE_API_BASE_URL}/incomes`
 
 export default {
-  getAll() {
+  getAll(): Promise<any> {
     return axiosInterceptor.get(API_URL)
   },
-  get(id) {
+  get(id: string): Promise<any> {
     return axiosInterceptor.get(`${API_URL}/${id}`)
   },
-  create(data) {
+  create(data: any): Promise<any> {
     return axiosInterceptor.post(API_URL, data)
   },
-  update(id, data) {
+  update(id: string, data: any): Promise<any> {
     return axiosInterceptor.put(`${API_URL}/${id}`, data)
   },
-  delete(id) {
+  delete(id: string): Promise<any> {
     return axiosInterceptor.delete(`${API_URL}/${id}`)
   },
-  fetchMonthlyIncomes(month, year) {
+  fetchMonthlyIncomes(month: number, year: number): Promise<any> {
     return axiosInterceptor.get(`${API_URL}/date?month=${month}&year=${year}`)
   },
-  toggleRecurring(id, months) {
+  toggleRecurring(id: string, months: number): Promise<any> {
     return axiosInterceptor.put(`${API_URL}/${id}/${months}/toggle-recurring`)
   }
 }

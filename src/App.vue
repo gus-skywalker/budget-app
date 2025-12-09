@@ -26,15 +26,15 @@ function toggleNotificationsPopup() {
 
 // Função para aceitar a notificação
 function accept(notificationId: number) {
-  NotificationService.accept(notificationId).then(() => {
-    notifications.value = notifications.value.filter((n) => n.id !== notificationId)
+  NotificationService.accept(String(notificationId)).then(() => {
+    notifications.value = notifications.value.filter((n) => n.id !== String(notificationId))
   })
 }
 
 // Função para declinar a notificação
 function decline(notificationId: number) {
-  NotificationService.decline(notificationId).then(() => {
-    notifications.value = notifications.value.filter((n) => n.id !== notificationId)
+  NotificationService.decline(String(notificationId)).then(() => {
+    notifications.value = notifications.value.filter((n) => n.id !== String(notificationId))
   })
 }
 
@@ -44,7 +44,7 @@ function pollNotifications() {
     NotificationService.getNotifications()
       .then((response) => {
         console.log('Response data:', response.data)
-        notifications.value = response.data.map((notification) => ({
+        notifications.value = response.data.map((notification: Notification) => ({
           id: notification.id,
           destinationUser: notification.destinationUser,
           message: notification.message,

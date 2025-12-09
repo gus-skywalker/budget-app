@@ -65,11 +65,11 @@ function close() {
   visible.value = false
 }
 
-function accept(notificationId: number) {
+function accept(notificationId: string) {
   emit('accept', notificationId)
 }
 
-function decline(notificationId: number) {
+function decline(notificationId: string) {
   emit('decline', notificationId)
 }
 </script>
