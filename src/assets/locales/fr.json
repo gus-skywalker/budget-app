@@ -1,22 +1,309 @@
 {
-  "welcome": "Bienvenue",
+  "welcome": "Bienvenue dans l'application Budget",
   "login": "Connexion",
   "logout": "Déconnexion",
-  "dashboard": "Tableau de bord",
-  "settings": "Paramètres",
-  "language": "Langue",
-  "company": "Entreprise",
-  "companies": "Entreprises",
-  "select_company": "Sélectionner une entreprise",
-  "create_company": "Créer une entreprise",
-  "user": "Utilisateur",
-  "users": "Utilisateurs",
-  "email": "E-mail",
-  "password": "Mot de passe",
-  "confirm_password": "Confirmer le mot de passe",
-  "submit": "Soumettre",
-  "cancel": "Annuler",
-  "error": "Erreur",
-  "success": "Succès",
-  "loading": "Chargement..."
-}
+  "save_changes": "Enregistrer les modifications",
+  "language_label": "Langue",
+  "sidebar": {
+    "logout": "Déconnexion",
+    "login_oauth2": "Connexion avec OAuth2",
+    "dashboard": "Tableau de bord",
+    "report": "Rapports",
+    "budget": "Budget",
+    "groups": "Groupes",
+    "goals": "Objectifs",
+    "home": "Accueil",
+    "toggle_theme": "Changer de thème",
+    "logout_confirmation_title": "Confirmer la déconnexion",
+    "logout_confirmation_message": "Êtes-vous sûr de vouloir vous déconnecter de votre compte ?",
+    "cancel": "Annuler",
+    "confirm": "Confirmer"
+  },
+  "account_management": {
+    "title": "Gestion du compte",
+    "subtitle": "Gérez vos paramètres et préférences",
+    "basic_profile_information": "Informations de profil de base",
+    "security": "Sécurité",
+    "preferences": "Préférences",
+      "welcome": "Bienvenue dans l'application Budget",
+      "login": "Connexion",
+      "logout": "Déconnexion",
+      "save_changes": "Enregistrer les modifications",
+      "language_label": "Langue",
+
+      "sidebar": {
+        "logout": "Déconnexion",
+        "login_oauth2": "Connexion avec OAuth2",
+        "dashboard": "Tableau de bord",
+        "report": "Rapports",
+        "budget": "Budget",
+        "groups": "Groupes",
+        "goals": "Objectifs",
+        "home": "Accueil",
+        "toggle_theme": "Changer de thème",
+        "logout_confirmation_title": "Confirmer la déconnexion",
+        "logout_confirmation_message": "Êtes-vous sûr de vouloir vous déconnecter de votre compte ?",
+        "cancel": "Annuler",
+        "confirm": "Confirmer"
+      },
+
+      "account_management": {
+        "title": "Gestion du compte",
+        "subtitle": "Gérez vos paramètres et préférences",
+        "basic_profile_information": "Informations de profil de base",
+        "security": "Sécurité",
+        "preferences": "Préférences",
+        "account_connections": "Connexions de compte",
+        "username_label": "Nom d'utilisateur",
+        "email_label": "E-mail",
+        "profile_picture_label": "Photo de profil",
+        "language_label": "Langue",
+        "save_changes": "Enregistrer les modifications",
+        "current_password_label": "Mot de passe actuel",
+        "new_password_label": "Nouveau mot de passe",
+        "change_password": "Changer le mot de passe",
+        "two_factor_auth_label": "Authentification à deux facteurs",
+        "email_notifications_label": "Notifications par e-mail",
+        "push_notifications_label": "Notifications push",
+        "dark_theme_label": "Thème sombre",
+        "connect_google": "Connecter le compte Google",
+        "disconnect_google": "Déconnecter le compte Google",
+        "connect_to_bank": "Connecter à { bank }",
+        "bank_login_label": "Identifiant",
+        "bank_password_label": "Mot de passe",
+        "generate_certificate": "Générer un nouveau certificat",
+        "generate_certificate_description": "Un nouveau certificat sera requis pour connecter ce compte bancaire.",
+        "verification_code": "Code de vérification",
+        "verification_code_description": "Entrez le code à 6 chiffres envoyé à votre e-mail.",
+        "verification_code_label": "Code de vérification",
+        "verification_code_length": "Le code doit comporter 6 chiffres",
+        "verify_code": "Vérifier le code",
+        "send_code": "Envoyer le code",
+        "alert_settings": "Paramètres d'alerte",
+        "alert_days_before_label": "Définir l'avance d'alerte (jours avant)",
+        "tabs": {
+          "profile": "Profil",
+          "security": "Sécurité",
+          "preferences": "Préférences",
+          "connections": "Connexions",
+          "subscription": "Abonnement"
+        },
+        "profile": {
+          "title": "Informations de profil",
+          "description": "Mettez à jour vos informations personnelles"
+        },
+        "security_card": {
+          "password_title": "Changer le mot de passe",
+          "password_description": "Protégez votre compte",
+          "two_factor_title": "Authentification à deux facteurs",
+          "two_factor_description": "Ajoutez une couche supplémentaire de sécurité",
+          "two_factor_enable": "Activer l'authentification à deux facteurs",
+          "two_factor_hint": "Nécessite un code supplémentaire lors de la connexion"
+        },
+        "notifications": {
+          "title": "Notifications",
+          "description": "Configurez comment vous souhaitez recevoir les alertes",
+          "email_label": "Notifications par e-mail",
+          "email_hint": "Recevez des alertes importantes par e-mail",
+          "push_label": "Notifications push",
+          "push_hint": "Recevez des notifications dans votre navigateur",
+          "alert_days_label": "Jours à l'avance",
+          "alert_days_hint": "Combien de jours avant vous souhaitez être alerté des dépenses"
+        },
+        "appearance": {
+          "title": "Apparence",
+          "description": "Personnalisez l'interface",
+          "dark_theme_label": "Thème sombre",
+          "dark_theme_hint": "Activez pour réduire la luminosité"
+        },
+        "save_preferences": "Enregistrer les préférences",
+        "bank_connections": {
+          "title": "Connecter des banques",
+          "description": "Connectez vos comptes bancaires pour la synchronisation automatique",
+          "disconnected": "Déconnecté",
+          "coming_soon": "Bientôt disponible",
+          "coming_soon_message": "Cette fonctionnalité sera bientôt disponible"
+        },
+        "integrations": {
+          "title": "Intégrations",
+          "description": "Connectez des services externes",
+          "google_account": "Compte Google",
+          "google_description": "Synchronisez avec votre compte Google",
+          "connect": "Connecter"
+        }
+      },
+
+      "subscription_management": {
+        "title": "Gestion des abonnements",
+        "current_plan": "Forfait actuel",
+        "status": "Statut",
+        "change_plan_instructions": "Sélectionnez un nouveau forfait si vous souhaitez modifier votre abonnement. Vous serez redirigé vers le portail pour terminer la modification.",
+        "plans": {
+          "monthly": "Forfait mensuel - 27,50 $/mois",
+          "annual": "Forfait annuel - 330,00 $/an"
+        },
+        "change_to": "Passer à {plan}",
+        "manage_subscription": "Gérer l'abonnement dans le portail",
+        "cancel_subscription": "Annuler l'abonnement",
+        "statuses": {
+          "active": "Actif",
+          "trialing": "Période d'essai",
+          "canceled": "Annulé à la fin de la période",
+          "inactive": "Inactif"
+        }
+      },
+
+      "budget": {
+        "title": "Votre comptabilité"
+      },
+      "income": {
+        "title": "Revenus",
+        "save": "Enregistrer le revenu",
+        "update": "Mettre à jour le revenu",
+        "monthly_title": "Revenus mensuels",
+        "no_entries": "Aucune entrée trouvée pour ce mois.",
+        "saved_successfully": "Revenu enregistré avec succès !",
+        "updated_successfully": "Revenu mis à jour avec succès !",
+        "save_failed": "Échec de l'enregistrement du revenu.",
+        "update_failed": "Échec de la mise à jour du revenu."
+      },
+      "expense": {
+        "title": "Dépenses",
+        "save": "Enregistrer la dépense",
+        "update": "Mettre à jour la dépense",
+        "monthly_title": "Dépenses mensuelles",
+        "no_entries": "Aucune dépense trouvée pour ce mois.",
+        "share_with_group": "Partager avec les utilisateurs du groupe",
+        "saved_successfully": "Dépense enregistrée avec succès !",
+        "updated_successfully": "Dépense mise à jour avec succès !",
+        "save_failed": "Échec de l'enregistrement de la dépense.",
+        "update_failed": "Échec de la mise à jour de la dépense."
+      },
+      "common": {
+        "date": "Date",
+        "amount": "Montant",
+        "description": "Description",
+        "payment_method": "Méthode de paiement",
+        "category": "Catégorie",
+        "select_group": "Sélectionner le groupe",
+        "select_month": "Sélectionner le mois",
+        "year": "Année",
+        "close": "Fermer",
+        "cancel": "Annuler",
+        "cancel_edit": "Annuler la modification"
+      },
+      "categories": {
+        "groceries": "Épicerie",
+        "utilities": "Services publics",
+        "transportation": "Transport",
+        "entertainment": "Divertissement",
+        "healthcare": "Soins de santé",
+        "education": "Éducation",
+        "dining_out": "Restaurants",
+        "travel": "Voyage",
+        "clothing": "Vêtements",
+        "home_maintenance": "Entretien de la maison",
+        "gifts": "Cadeaux",
+        "charity": "Charité",
+        "subscriptions": "Abonnements",
+        "miscellaneous": "Divers"
+      },
+      "validation": {
+        "required": "{field} est requis",
+        "invalid_currency": "Format de devise invalide"
+      },
+      "overview": {
+        "title": "Aperçu",
+        "total_income": "Revenu total",
+        "total_expenses": "Dépenses totales",
+        "savings": "Économies"
+      },
+      "trends": {
+        "title": "Tendances dans le temps",
+        "select_chart_type": "Sélectionner le type de graphique",
+        "select_time_period": "Sélectionner la période",
+        "select_expense_category": "Sélectionner la catégorie de dépense"
+      },
+      "budget_tracker": {
+        "title": "Suivi du budget"
+      },
+      "group_management": {
+        "title": "Gestion des groupes",
+        "create_group": "Créer un groupe",
+        "group_name": "Nom du groupe",
+        "group_description": "Description du groupe",
+        "create_group_button": "Créer un groupe",
+        "manage_members": "Gérer les membres",
+        "select_group": "Sélectionner le groupe",
+        "user_email": "E-mail de l'utilisateur",
+        "invite_member": "Inviter un membre",
+        "group_members": "Membres du groupe",
+        "no_members": "Aucun membre dans le groupe sélectionné.",
+        "success_message": "Opération effectuée avec succès.",
+        "error_message": "Une erreur est survenue. Veuillez réessayer."
+      },
+      "financial_goals": {
+        "title": "Objectifs financiers",
+        "goal_name": "Nom de l'objectif",
+        "category": "Catégorie",
+        "target_amount": "Montant cible",
+        "initial_amount": "Montant initial",
+        "contribution_frequency": "Fréquence de contribution",
+        "periodicity": "Périodicité",
+        "deadline": "Date limite",
+        "update": "Mettre à jour",
+        "add": "Ajouter",
+        "new_goal": "Nouvel objectif",
+        "progress": "Progrès",
+        "contribution_history": "Historique des contributions",
+        "amount": "Montant",
+        "date": "Date",
+        "total_income": "Revenu total",
+        "total_expense": "Dépenses totales",
+        "deadline_label": "Date limite",
+        "not_feasible": "Cet objectif n'est pas réalisable avec la contribution actuelle et le temps restant.",
+        "no_goals": "Aucun objectif financier trouvé.",
+        "suggested_goals_title": "Objectifs suggérés",
+        "get_suggestions": "Obtenir des suggestions",
+        "no_suggestions": "Aucune suggestion d'objectif disponible pour le moment. Essayez d'ajuster vos revenus et dépenses pour obtenir des recommandations."
+      },
+      "authentication": {
+        "login": {
+          "title": "Connexion",
+          "email_label": "E-mail",
+          "password_label": "Mot de passe",
+          "login_button": "Connexion",
+          "google_login": "Se connecter avec Google",
+          "forgot_password": "Mot de passe oublié ?",
+          "invalid_email": "Veuillez entrer une adresse e-mail valide",
+          "not_registered": "Vous n'avez pas encore de compte ?",
+          "create_account_link": "Créer un compte."
+        },
+        "forgot_password": {
+          "back_to_login": "Retour à la connexion"
+        },
+        "signup": {
+          "title": "Inscription",
+          "username_label": "Nom d'utilisateur",
+          "email_label": "E-mail",
+          "password_label": "Mot de passe",
+          "confirm_password_label": "Confirmer le mot de passe",
+          "signup_button": "S'inscrire",
+          "already_registered": "Vous avez déjà un compte ?",
+          "login_here_link": "Connectez-vous ici."
+        },
+        "messages": {
+          "login_success": "Connexion réussie !",
+          "login_failed": "Identifiants invalides. Veuillez réessayer.",
+          "signup_success": "Compte créé avec succès.",
+          "signup_failed": "Erreur lors de la création du compte. Veuillez réessayer.",
+          "password_mismatch": "Les mots de passe ne correspondent pas. Veuillez réessayer."
+        }
+      },
+      "footer": {
+        "privacy_policy": "Politique de confidentialité",
+        "terms_of_use": "Conditions d'utilisation",
+        "cookie_policy": "Politique relative aux cookies",
+        "copyright": "© 2024 CoBudget. Tous droits réservés. Propulsé par Les Monades"
+      }
+    }
