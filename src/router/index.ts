@@ -76,6 +76,12 @@ const router = createRouter({
       component: LoginView
     },
     {
+      path: '/create-company',
+      name: 'create-company',
+      component: () => import('@/views/CreateCompanyView.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/settings',
       name: 'settings',
       component: SettingsView,
@@ -151,6 +157,17 @@ router.beforeEach((to, from, next) => {
       query: query
     })
     return
+  }
+
+  // Check admin role requirement
+  if (to.meta.requiresAdmin && isAuthenticated) {
+    const currentRole = (userStore.getCurrentRole || '').toUpperCase()
+    const adminRoles = ['ROLE_ADMIN', 'ROLE_CLIENT', 'ROLE_OWNER']
+    if (!adminRoles.includes(currentRole)) {
+      // Redirect to dashboard if not admin
+      next({ name: 'dashboard' })
+      return
+    }
   }
 
   // Se usuário está autenticado e tenta acessar login/oauth

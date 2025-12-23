@@ -4,13 +4,16 @@ import { useRouter } from 'vue-router'
 import { useTheme } from 'vuetify'
 import { useUserStore } from '@/plugins/userStore'
 import type { Notification } from '@/services/NotificationService'
+import CompanySwitcher from '@/components/CompanySwitcher.vue'
 
 // Import props and emits
 const props = defineProps<{
   notifications: Notification[]
 }>()
 
-const emit = defineEmits(['accept', 'decline', 'toggle-notifications-popup'])
+const notifications = computed(() => props.notifications)
+
+const emit = defineEmits(['toggle-notifications-popup'])
 
 const router = useRouter()
 const theme = useTheme()
@@ -74,11 +77,6 @@ function redirectToOAuth2LoginPage() {
   window.location.href = authUrl;
 }
 
-const availableLanguages = [
-  { text: 'English', value: 'en' },
-  { text: 'Português', value: 'pt' },
-];
-
 // Função para alternar o tema
 function toggleTheme() {
   const currentTheme = theme.global.current.value.dark ? 'light' : 'dark'
@@ -88,16 +86,6 @@ function toggleTheme() {
 // Função para alternar a exibição das notificações
 function toggleNotifications() {
   emit('toggle-notifications-popup', true)
-}
-
-// Função para aceitar a notificação
-function accept(notificationId: number) {
-  emit('accept', notificationId)
-}
-
-// Função para declinar a notificação
-function decline(notificationId: number) {
-  emit('decline', notificationId)
 }
 
 function navigateToAccountAdmin() {
@@ -123,6 +111,10 @@ function navigateToAccountAdmin() {
     </v-list>
 
     <v-divider></v-divider>
+
+    <div class="company-switcher-wrapper">
+      <CompanySwitcher />
+    </div>
 
     <v-list density="compact" nav>
       <v-tooltip text="Dashboard" location="end">
@@ -224,6 +216,15 @@ function navigateToAccountAdmin() {
   padding: 16px;
   margin: 8px 0;
   width: 56px; /* Largura fixa do rail */
+}
+
+.company-switcher-wrapper {
+  padding: 12px 16px;
+}
+
+.company-switcher-wrapper :deep(.company-switcher-btn) {
+  width: 100%;
+  justify-content: flex-start;
 }
 
 .notification-dropdown {

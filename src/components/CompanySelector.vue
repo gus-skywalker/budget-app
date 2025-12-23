@@ -51,12 +51,23 @@ const selectCompany = (company) => {
 }
 
 const getRoleLabel = (role) => {
+  const normalized = (role || '').toUpperCase()
   const labels = {
+    ROLE_ADMIN: 'Administrador',
+    ROLE_CLIENT: 'Gestor',
+    ROLE_OWNER: 'Proprietário',
+    ROLE_USER: 'Usuário',
+    OAUTH2_USER: 'Usuário OAuth2'
+  }
+  if (labels[normalized]) {
+    return labels[normalized]
+  }
+  const legacyLabels = {
     admin: 'Administrador',
-    member: 'Membro',
+    member: 'Usuário',
     viewer: 'Visualizador'
   }
-  return labels[role] || role
+  return legacyLabels[role] || role
 }
 </script>
 

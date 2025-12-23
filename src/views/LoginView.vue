@@ -208,22 +208,6 @@
                 </div>
               </div>
               
-              <div class="form-group">
-                <label>
-                  <input type="checkbox" v-model="signupData.createCompany" /> Criar uma nova empresa
-                </label>
-                <div v-if="signupData.createCompany" class="company-fields mt-3">
-                  <input 
-                    type="text" 
-                    v-model="signupData.companyName" 
-                    placeholder="Nome da Empresa" 
-                    class="form-control"
-                    required 
-                  />
-                  <small class="text-muted mt-1">Ao criar uma empresa, você será o administrador e poderá convidar outros usuários.</small>
-                </div>
-              </div>
-              
               <button type="submit" class="btn btn-primary" :disabled="isLoading">
                 <span v-if="isLoading" class="spinner"></span>
                 <span v-else>{{ $t('authentication.signup.signup_button') }}</span>
@@ -259,7 +243,7 @@ import { updateI18nLocale } from '@/i18n'
 const router = useRouter()
 const route = useRoute()
 const userData = ref({ email: '', password: '' })
-const signupData = ref({ email: '', password: '', confirmPassword: '', username: '', createCompany: false, companyName: '' })
+const signupData = ref({ email: '', password: '', confirmPassword: '', username: '' })
 const error = ref(null)
 const loginSuccess = ref(null)
 const signupError = ref(null)
@@ -284,100 +268,37 @@ const userLogin = async () => {
   try {
     isLoading.value = true
     const store = useUserStore()
-    console.log('Store antes do login:', {
-      methods: Object.keys(store),
-      state: {
-        token: store.token,
-        refreshToken: store.refreshToken,
-        auth: store.auth
-      }
-    })
 
     const res = await axios.post(`${authUrl}/auth/signin`, userData.value)
     if (res.data) {
       console.log('Login response:', res.data)
       
-      // A resposta já contém o array de empresas diretamente
-      const companies = res.data.companies || []
-      const companyId = res.data.companyId || null
-      const language = res.data.language || 'PT'
+      // Use the new handleSigninResponse method
+      const result = store.handleSigninResponse(res.data)
       
-      // Define o usuário com as empresas da resposta
-      store.$patch({
-        user: {
-          id: res.data.id,
-          username: res.data.username,
-          email: res.data.email,
-          language: language,
-          companies: companies
-        }
-      })
+      // Update i18n locale
+      updateI18nLocale(res.data.language || 'PT')
       
-      // Define os tokens
-      store.$patch({
-        token: res.data.token,
-        refreshToken: res.data.refreshToken,
-        auth: true,
-        language: language
-      })
-      
-      // Define as empresas no store
-      store.setCompanies(companies)
-      
-      // Atualiza o locale do i18n com base no idioma do usuário
-      updateI18nLocale(language)
-      
-      // Fluxo de decisão conforme contrato da API:
-      // 1. companies.length === 0? → Redirecionar para tela de criar empresa
-      if (companies.length === 0) {
-        store.saveState()
-        loginSuccess.value = 'Login realizado! Configure sua empresa.'
+      // Routing logic based on companies
+      if (!result.hasCompanies) {
+        // No companies - go to dashboard (B2C mode)
+        loginSuccess.value = 'Login realizado com sucesso!'
         setTimeout(() => {
           loginSuccess.value = null
-          router.push('/settings') // Ou rota para criar empresa
+          router.push('/dashboard')
         }, 800)
-      }
-      // 2. companyId === null && companies.length > 0? → Exibir seletor
-      else if (companyId === null && companies.length > 0) {
-        if (companies.length > 1) {
-          userCompanies.value = companies
-          showCompanySelector.value = true
-          store.saveState()
-        } else {
-          // Auto-seleciona se tiver apenas uma empresa
-          store.setCurrentCompany(companies[0].companyId, companies[0].role, companies[0].companyName)
-          store.saveState()
-          loginSuccess.value = 'Login realizado com sucesso!'
-          setTimeout(() => {
-            loginSuccess.value = null
-            router.push('/dashboard')
-          }, 800)
-        }
-      }
-      // 3. companyId !== null? → Empresa já selecionada
-      else if (companyId !== null) {
-        // Decodifica JWT para obter userRole
-        const decodedToken = jwtDecode(res.data.token)
-        const userRole = decodedToken.userRole || decodedToken.role
-        const selectedCompany = companies.find(c => c.companyId === companyId)
-        
-        store.setCurrentCompany(companyId, userRole, selectedCompany?.companyName)
-        store.saveState()
+      } else if (result.hasMultipleCompanies && !result.companyPreselected) {
+        // Multiple companies - show selector
+        userCompanies.value = result.companies
+        showCompanySelector.value = true
+      } else if (result.hasCompanies && (result.companies.length === 1 || result.companyPreselected)) {
+        // Single company or preselected - go to dashboard
         loginSuccess.value = 'Login realizado com sucesso!'
         setTimeout(() => {
           loginSuccess.value = null
           router.push('/dashboard')
         }, 800)
       }
-      
-      console.log('Estado final do store:', {
-        user: store.user,
-        token: store.token,
-        refreshToken: store.refreshToken,
-        auth: store.auth,
-        companies: companies,
-        currentCompany: store.currentCompany
-      })
     }
   } catch (err) {
     console.error('Login error:', err)
@@ -465,7 +386,7 @@ const mockLogin = (scenario) => {
         {
           companyId: 'company-1',
           companyName: 'Minha Empresa',
-          role: 'ADMIN'
+          role: 'ROLE_ADMIN'
         }
       ]
       break
@@ -474,17 +395,17 @@ const mockLogin = (scenario) => {
         {
           companyId: 'company-1',
           companyName: 'Tech Solutions LTDA',
-          role: 'ADMIN'
+          role: 'ROLE_ADMIN'
         },
         {
           companyId: 'company-2',
           companyName: 'Startup Inovadora',
-          role: 'MANAGER'
+          role: 'ROLE_CLIENT'
         },
         {
           companyId: 'company-3',
           companyName: 'Consultoria Estratégica',
-          role: 'USER'
+          role: 'ROLE_USER'
         }
       ]
       break
@@ -555,18 +476,7 @@ const userSignup = async () => {
     };
     
     // Monta a URL com parâmetros apropriados
-    let signupUrl = `${authUrl}/auth/signup`;
-    const params = new URLSearchParams();
-    
-    if (signupData.value.createCompany) {
-      params.append('createCompany', 'true');
-      params.append('companyName', signupData.value.companyName);
-    }
-    
-    if (params.toString()) {
-      signupUrl += `?${params.toString()}`;
-    }
-    
+    const signupUrl = `${authUrl}/auth/signup`;
     const res = await axios.post(signupUrl, requestData);
 
     if (res.status === 201) {
@@ -596,7 +506,7 @@ const userSignup = async () => {
 
 
 const clearSignupForm = () => {
-  signupData.value = { email: '', password: '', confirmPassword: '', username: '', createCompany: false, companyName: '' }
+  signupData.value = { email: '', password: '', confirmPassword: '', username: '' }
 }
 
 const toggleForm = (isSignup) => {

@@ -26,6 +26,10 @@
           <v-icon class="tab-icon">mdi-cog</v-icon>
           <span class="tab-text">{{ $t('account_management.tabs.preferences') }}</span>
         </v-tab>
+        <v-tab v-if="hasCompanySelected" value="company" class="settings-tab">
+          <v-icon class="tab-icon">mdi-office-building-cog</v-icon>
+          <span class="tab-text">Configurar empresa</span>
+        </v-tab>
         <v-tab value="connections" class="settings-tab">
           <v-icon class="tab-icon">mdi-link-variant</v-icon>
           <span class="tab-text">{{ $t('account_management.tabs.connections') }}</span>
@@ -281,6 +285,11 @@
           </v-row>
         </v-window-item>
 
+        <!-- Tab: Empresa -->
+        <v-window-item v-if="hasCompanySelected" value="company">
+          <CompanySettings />
+        </v-window-item>
+
         <!-- Tab: Conexões -->
         <v-window-item value="connections">
           <v-row>
@@ -295,7 +304,17 @@
                 </div>
                 <div class="card-content">
                   <div class="bank-cards">
-                    <div class="bank-card-item">
+                    <div
+                      class="bank-card-item"
+                      :class="{ 'bank-card-highlight': highlightedCard === 'Nubank' }"
+                      @mouseenter="highlightCard('Nubank')"
+                      @mouseleave="highlightCard('')"
+                      @focusin="highlightCard('Nubank')"
+                      @focusout="highlightCard('')"
+                      @click="openBankDialog('Nubank')"
+                      tabindex="0"
+                      role="button"
+                    >
                       <div class="bank-logo">
                         <v-img src="banks/nubank-logo.png" aspect-ratio="1"></v-img>
                       </div>
@@ -306,7 +325,17 @@
                       </v-chip>
                     </div>
 
-                    <div class="bank-card-item">
+                    <div
+                      class="bank-card-item"
+                      :class="{ 'bank-card-highlight': highlightedCard === 'BancoDoBrasil' }"
+                      @mouseenter="highlightCard('BancoDoBrasil')"
+                      @mouseleave="highlightCard('')"
+                      @focusin="highlightCard('BancoDoBrasil')"
+                      @focusout="highlightCard('')"
+                      @click="openBankDialog('Banco do Brasil')"
+                      tabindex="0"
+                      role="button"
+                    >
                       <div class="bank-logo">
                         <v-img src="banks/bb-logo.webp" aspect-ratio="1"></v-img>
                       </div>
@@ -317,7 +346,17 @@
                       </v-chip>
                     </div>
 
-                    <div class="bank-card-item">
+                    <div
+                      class="bank-card-item"
+                      :class="{ 'bank-card-highlight': highlightedCard === 'Itau' }"
+                      @mouseenter="highlightCard('Itau')"
+                      @mouseleave="highlightCard('')"
+                      @focusin="highlightCard('Itau')"
+                      @focusout="highlightCard('')"
+                      @click="openBankDialog('Itaú')"
+                      tabindex="0"
+                      role="button"
+                    >
                       <div class="bank-logo">
                         <v-img src="banks/itau-logo.jpg" aspect-ratio="1"></v-img>
                       </div>
@@ -359,6 +398,7 @@
                     </div>
                     <div class="integration-actions">
                       <v-btn 
+                        v-if="!isGoogleConnected"
                         @click="connectGoogle"
                         variant="outlined"
                         color="#667eea"
@@ -366,6 +406,16 @@
                       >
                         <v-icon left>mdi-link-variant</v-icon>
                         {{ $t('account_management.integrations.connect') }}
+                      </v-btn>
+                      <v-btn 
+                        v-else
+                        @click="disconnectGoogle"
+                        variant="tonal"
+                        color="#d14343"
+                        class="modern-btn"
+                      >
+                        <v-icon left>mdi-link-variant-off</v-icon>
+                        {{ $t('account_management.disconnect_google') }}
                       </v-btn>
                     </div>
                   </div>
@@ -483,6 +533,7 @@ import { useTheme } from 'vuetify';
 import { useBankStore } from '@/plugins/bankStore';
 import { useUserStore } from '@/plugins/userStore';
 import SubscriptionManagement from '@/components/SubscriptionManagement.vue';
+import CompanySettings from '@/components/CompanySettings.vue';
 import BankService from '@/services/BankService';
 import NotificationService, { type UserSettings } from '@/services/NotificationService';
 
@@ -513,6 +564,7 @@ onMounted(async () => {
 
 // Cria uma propriedade computada para o objeto `user`
 const user = computed(() => userStore.getUser);
+const hasCompanySelected = computed(() => !!userStore.getCurrentCompanyId);
 
 // Informações Básicas do Perfil
 const username = ref('')
@@ -523,6 +575,7 @@ const avatar = ref(null)
 const currentPassword = ref('')
 const newPassword = ref('')
 const twoFactorAuth = ref(false)
+const isGoogleConnected = ref(false)
 
 // Preferências
 const notificationEmail = ref(true)
@@ -564,11 +617,11 @@ const changePassword = () => {
 }
 
 const connectGoogle = () => {
-  // Lógica para conectar a conta Google
+  isGoogleConnected.value = true
 }
 
 const disconnectGoogle = () => {
-  // Lógica para desconectar a conta Google
+  isGoogleConnected.value = false
 }
 
 const openBankDialog = (bank: string) => {
@@ -607,7 +660,7 @@ const highlightCard = (cardName: string) => {
   }
   timeoutId = setTimeout(() => {
     highlightedCard.value = cardName
-  }, 200) // adjust the delay as needed
+  }, 200)
 }
 
 const authenticateBank = async () => {
@@ -881,14 +934,26 @@ const saveAlertSettings = async () => {
   border-radius: 16px;
   padding: 20px;
   text-align: center;
-  cursor: not-allowed;
+  cursor: pointer;
   transition: all 0.3s ease;
-  opacity: 0.6;
+  opacity: 0.85;
 }
 
 .v-theme--dark .bank-card-item {
   background: #1e1e1e;
   border-color: rgba(102, 126, 234, 0.2);
+}
+
+.bank-card-item.bank-card-highlight {
+  border-color: #667eea;
+  box-shadow: 0 8px 22px rgba(102, 126, 234, 0.2);
+  opacity: 1;
+  transform: translateY(-4px);
+}
+
+.bank-card-item:focus-visible {
+  outline: 2px solid #667eea;
+  outline-offset: 4px;
 }
 
 .bank-logo {

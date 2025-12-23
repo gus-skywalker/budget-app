@@ -71,19 +71,23 @@ axiosInstance.interceptors.response.use(
         return Promise.reject(error)
       }
       try {
-        const response = await axios.post(`${import.meta.env.VITE_AUTH_URL}/oauth2/token`, {
-          grant_type: 'refresh_token',
-          refresh_token: refreshToken
-        }, {
+        // Create form-encoded body
+        const params = new URLSearchParams()
+        params.append('grant_type', 'refresh_token')
+        params.append('refresh_token', userStore.getRefreshToken!)
+        
+        const response = await axios.post(`${import.meta.env.VITE_AUTH_URL}/oauth2/token`, params, {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
           }
         })
-        const { access_token, refresh_token } = response.data
-        userStore.setToken(access_token)
-        userStore.setRefreshToken(refresh_token)
-        originalRequest.headers['Authorization'] = 'Bearer ' + access_token
-        processQueue(null, access_token)
+        const data = response.data
+        const accessToken = data.access_token || data.token || data.accessToken
+        const newRefreshToken = data.refresh_token || data.refreshToken
+        userStore.setToken(accessToken)
+        userStore.setRefreshToken(newRefreshToken)
+        originalRequest.headers['Authorization'] = 'Bearer ' + accessToken
+        processQueue(null, accessToken)
         return axiosInstance(originalRequest)
       } catch (refreshError) {
         processQueue(refreshError, null)

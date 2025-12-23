@@ -105,7 +105,7 @@ const loadingInvites = ref(false)
 const cancellingInvite = ref(null)
 
 const inviteEmail = ref('')
-const inviteRole = ref('member')
+const inviteRole = ref('ROLE_USER')
 const pendingInvites = ref([])
 
 const snackbar = ref(false)
@@ -113,9 +113,9 @@ const snackbarMessage = ref('')
 const snackbarColor = ref('success')
 
 const roleOptions = [
-  { title: 'Membro', value: 'member' },
-  { title: 'Administrador', value: 'admin' },
-  { title: 'Visualizador', value: 'viewer' }
+  { title: 'Administrador', value: 'ROLE_ADMIN' },
+  { title: 'Gestor', value: 'ROLE_CLIENT' },
+  { title: 'Usuário', value: 'ROLE_USER' }
 ]
 
 const emailRules = [
@@ -140,7 +140,7 @@ const sendInvite = async () => {
     
     showSnackbar('Convite enviado com sucesso!', 'success')
     inviteEmail.value = ''
-    inviteRole.value = 'member'
+    inviteRole.value = 'ROLE_USER'
     inviteForm.value.reset()
     loadInvites()
   } catch (error) {
@@ -177,12 +177,23 @@ const cancelInvite = async (inviteId) => {
 }
 
 const getRoleLabel = (role) => {
+  const normalized = (role || '').toUpperCase()
   const labels = {
+    ROLE_ADMIN: 'Administrador',
+    ROLE_CLIENT: 'Gestor',
+    ROLE_OWNER: 'Proprietário',
+    ROLE_USER: 'Usuário',
+    OAUTH2_USER: 'Usuário OAuth2'
+  }
+  if (labels[normalized]) {
+    return labels[normalized]
+  }
+  const legacyLabels = {
     admin: 'Administrador',
-    member: 'Membro',
+    member: 'Usuário',
     viewer: 'Visualizador'
   }
-  return labels[role] || role
+  return legacyLabels[role] || role
 }
 
 const formatDate = (dateString) => {

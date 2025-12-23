@@ -14,6 +14,22 @@
     </template>
     <v-list>
       <v-list-item
+        :class="{ 'active-company': !currentCompanyId }"
+        @click="switchToPersonal"
+        :disabled="isLoading || !canSwitchToPersonal"
+      >
+        <template v-slot:prepend>
+          <v-icon>{{ !currentCompanyId ? 'mdi-check-circle' : 'mdi-account' }}</v-icon>
+        </template>
+        <v-list-item-title>Modo Pessoal</v-list-item-title>
+        <v-list-item-subtitle>
+          {{ canSwitchToPersonal ? 'Usar o app sem empresa' : 'Disponível após login' }}
+        </v-list-item-subtitle>
+      </v-list-item>
+
+      <v-divider class="my-2" v-if="companies.length"></v-divider>
+
+      <v-list-item
         v-for="company in companies"
         :key="company.companyId"
         @click="switchCompany(company)"
@@ -25,6 +41,15 @@
         </template>
         <v-list-item-title>{{ company.companyName || company.companyId }}</v-list-item-title>
         <v-list-item-subtitle>{{ getRoleLabel(company.role) }}</v-list-item-subtitle>
+      </v-list-item>
+
+      <v-divider class="my-2"></v-divider>
+      <v-list-item @click="createCompany" :disabled="isLoading">
+        <template v-slot:prepend>
+          <v-icon>mdi-plus</v-icon>
+        </template>
+        <v-list-item-title>Criar Nova Empresa</v-list-item-title>
+        <v-list-item-subtitle>Adicionar empresa ao seu perfil</v-list-item-subtitle>
       </v-list-item>
     </v-list>
   </v-menu>
@@ -43,11 +68,30 @@ const isLoading = ref(false)
 
 const companies = computed(() => userStore.getCompanies)
 const currentCompanyId = computed(() => userStore.getCurrentCompanyId)
+const canSwitchToPersonal = computed(() => !!userStore.personalToken)
 
 const currentCompanyName = computed(() => {
+  if (!currentCompanyId.value) {
+    return 'Modo Pessoal'
+  }
   const current = companies.value.find(c => c.companyId === currentCompanyId.value)
   return current?.companyName || current?.companyId || 'Selecione uma empresa'
 })
+
+const switchToPersonal = async () => {
+  if (!canSwitchToPersonal.value || !userStore.personalToken || !userStore.personalRefreshToken || isLoading.value) {
+    return
+  }
+  try {
+    isLoading.value = true
+    userStore.setToken(userStore.personalToken)
+    userStore.setRefreshToken(userStore.personalRefreshToken)
+    userStore.clearCurrentCompany()
+    router.go(0)
+  } finally {
+    isLoading.value = false
+  }
+}
 
 const switchCompany = async (company) => {
   if (company.companyId !== currentCompanyId.value && !isLoading.value) {
@@ -78,16 +122,29 @@ const switchCompany = async (company) => {
   }
 }
 
+const createCompany = () => {
+  router.push('/create-company')
+}
+
 const getRoleLabel = (role) => {
+  const normalized = (role || '').toUpperCase()
   const labels = {
-    admin: 'Administrador',
-    member: 'Membro',
-    viewer: 'Visualizador',
-    ADMIN: 'Administrador',
-    USER: 'Membro',
-    VIEWER: 'Visualizador'
+    ROLE_ADMIN: 'Administrador',
+    ROLE_CLIENT: 'Gestor',
+    ROLE_OWNER: 'Proprietário',
+    ROLE_USER: 'Usuário',
+    OAUTH2_USER: 'Usuário OAuth2'
   }
-  return labels[role] || role
+  if (labels[normalized]) {
+    return labels[normalized]
+  }
+  const legacyLabels = {
+    admin: 'Administrador',
+    member: 'Usuário',
+    viewer: 'Visualizador',
+    user: 'Usuário'
+  }
+  return legacyLabels[role] || role
 }
 </script>
 

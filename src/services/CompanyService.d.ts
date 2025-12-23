@@ -20,7 +20,11 @@ export interface SelectCompanyResponse {
 declare const CompanyService: {
   create(companyName: string): Promise<{ data: CreateCompanyResponse }>
   getAll(): Promise<{ data: Company[] }>
+  getDetails(companyId: string): Promise<{ data: any }>
+  update(companyId: string, payload: { companyName?: string; description?: string }): Promise<{ data: any }>
+  listMembers(companyId: string): Promise<{ data: any[] }>
   selectCompany(companyId: string): Promise<{ data: SelectCompanyResponse }>
+  deleteCompany(companyId: string): Promise<{ data: { message: string } }>
 }
 
 export default CompanyService
