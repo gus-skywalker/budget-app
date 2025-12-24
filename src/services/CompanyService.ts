@@ -55,6 +55,14 @@ export default {
   },
 
   /**
+   * Limpar empresa ativa (voltar ao modo pessoal)
+   * POST /auth/clear-company
+   */
+  clearCompany(): Promise<any> {
+    return axiosInterceptor.post(`${AUTH_URL}/clear-company`)
+  },
+
+  /**
    * Remover empresa definitivamente
    */
   deleteCompany(companyId: string): Promise<any> {

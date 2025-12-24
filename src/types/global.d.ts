@@ -11,15 +11,16 @@ export interface JWTClaims {
   user_email: string
   user_fullname?: string
   user_language?: Language
-  userRoles?: string[]
+  userRoles?: string[] | string
   companies?: Array<{
     companyId: string
     companyName?: string
-    role: string
+    role?: string | null
   }>
   companyId?: string  // Só presente após selecionar empresa
-  userRole?: string   // Só presente após selecionar empresa
-  role?: string       // Alternativa para userRole
+  tenantRole?: string // Role canônica do tenant ativo
+  userRole?: string   // Retrocompatibilidade
+  role?: string       // Retrocompatibilidade
   picture?: string    // Em login OAuth2
   exp?: number
   iat?: number
@@ -31,6 +32,7 @@ export interface LoginResponse {
   username: string
   email: string
   language: Language
+  tenantRole?: string | null
   userRole?: string[]
   createdAt?: string
   token: string
@@ -39,7 +41,7 @@ export interface LoginResponse {
   companies: Array<{
     companyId: string
     companyName: string
-    role: string
+    role?: string | null
   }>
 }
 

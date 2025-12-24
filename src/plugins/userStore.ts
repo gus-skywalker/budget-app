@@ -20,10 +20,13 @@ function decodeJWT(token: string): any {
   }
 }
 
+const TENANT_ADMIN_ROLES = ['ROLE_OWNER', 'ROLE_ADMIN']
+const TENANT_WRITE_ROLES = ['ROLE_OWNER', 'ROLE_ADMIN', 'ROLE_MEMBER']
+
 interface Company {
   companyId: string
   companyName?: string
-  role: string
+  role?: string | null
 }
 
 interface User {
@@ -33,17 +36,16 @@ interface User {
   avatar?: string
   language?: string
   companies?: Company[]
+  userRoles?: string[]
 }
 
 type State = {
   token: string | null
   refreshToken: string | null
-  personalToken: string | null
-  personalRefreshToken: string | null
   auth: boolean
   user: User
   currentCompanyId: string | null
-  currentRole: string | null
+  tenantRole: string | null
   language: string
 }
 
@@ -53,12 +55,10 @@ export const useUserStore = defineStore({
   state: (): State => ({
     token: null,
     refreshToken: null,
-    personalToken: null,
-    personalRefreshToken: null,
     auth: false,
     user: {},
     currentCompanyId: null,
-    currentRole: null,
+    tenantRole: null,
     language: 'PT'
   }),
 
@@ -68,13 +68,16 @@ export const useUserStore = defineStore({
     getToken: (state): string | null => state.token,
     getRefreshToken: (state): string | null => state.refreshToken,
     getCurrentCompanyId: (state): string | null => state.currentCompanyId,
-    getCurrentRole: (state): string | null => state.currentRole,
+    getCurrentRole: (state): string | null => state.tenantRole,
+    getTenantRole: (state): string | null => state.tenantRole,
     getCompanies: (state): Company[] => state.user.companies || [],
+    getUserRoles: (state): string[] => state.user.userRoles || [],
     hasMultipleCompanies: (state): boolean => (state.user.companies?.length || 0) > 1,
-    isAdmin: (state): boolean => {
-      const role = (state.currentRole || '').toUpperCase()
-      return ['ROLE_ADMIN', 'ROLE_CLIENT', 'ROLE_OWNER'].includes(role)
-    },
+    isAdmin: (state): boolean => TENANT_ADMIN_ROLES.includes((state.tenantRole || '').toUpperCase()),
+    isPersonalMode: (state): boolean => !state.currentCompanyId,
+    isTenantMode: (state): boolean => Boolean(state.currentCompanyId && state.tenantRole),
+    isTenantAdmin: (state): boolean => TENANT_ADMIN_ROLES.includes((state.tenantRole || '').toUpperCase()),
+    canWrite: (state): boolean => TENANT_WRITE_ROLES.includes((state.tenantRole || '').toUpperCase()),
     getLanguage: (state): string => state.language,
     getApiLanguage: (state): string => {
       const lang = state.language.toLowerCase()
@@ -93,21 +96,20 @@ export const useUserStore = defineStore({
       this.saveState()
     },
 
-    setPersonalTokens(token: string | null, refresh: string | null) {
-      this.personalToken = token
-      this.personalRefreshToken = refresh
-      this.saveState()
-    },
-
     setAuth(value: boolean) {
       this.auth = value
       this.saveState()
     },
 
     setUser(user: User) {
-      this.user = user
-      if (user.language) {
-        this.language = user.language
+      const nextUser: User = {
+        ...this.user,
+        ...user,
+        companies: user.companies ?? this.user.companies
+      }
+      this.user = nextUser
+      if (nextUser.language) {
+        this.language = nextUser.language
       }
       this.saveState()
     },
@@ -117,11 +119,11 @@ export const useUserStore = defineStore({
       this.saveState()
     },
 
-    setCurrentCompany(companyId: string, role: string, companyName?: string) {
+    setCurrentCompany(companyId: string | null, role?: string | null, companyName?: string) {
       this.currentCompanyId = companyId
-      this.currentRole = role
-      // Atualiza o nome da empresa no array companies se fornecido
-      if (companyName && this.user.companies) {
+      this.tenantRole = role || null
+
+      if (companyId && companyName && this.user.companies) {
         const company = this.user.companies.find(c => c.companyId === companyId)
         if (company && !company.companyName) {
           company.companyName = companyName
@@ -137,19 +139,21 @@ export const useUserStore = defineStore({
 
     clearCurrentCompany() {
       this.currentCompanyId = null
-      this.currentRole = null
+      this.tenantRole = null
       this.saveState()
+    },
+
+    clearTenantContext() {
+      this.clearCurrentCompany()
     },
 
     resetUser() {
       this.token = null
       this.refreshToken = null
-      this.personalToken = null
-      this.personalRefreshToken = null
       this.auth = false
       this.user = {}
       this.currentCompanyId = null
-      this.currentRole = null
+      this.tenantRole = null
       this.language = 'PT'
       this.saveState()
     },
@@ -158,12 +162,10 @@ export const useUserStore = defineStore({
       localStorage.setItem('userStore', JSON.stringify({
         token: this.token,
         refreshToken: this.refreshToken,
-        personalToken: this.personalToken,
-        personalRefreshToken: this.personalRefreshToken,
         auth: this.auth,
         user: this.user,
         currentCompanyId: this.currentCompanyId,
-        currentRole: this.currentRole,
+        tenantRole: this.tenantRole,
         language: this.language
       }))
     },
@@ -174,12 +176,10 @@ export const useUserStore = defineStore({
         const state = JSON.parse(saved)
         this.token = state.token
         this.refreshToken = state.refreshToken
-        this.personalToken = state.personalToken
-        this.personalRefreshToken = state.personalRefreshToken
         this.auth = state.auth
         this.user = state.user
         this.currentCompanyId = state.currentCompanyId
-        this.currentRole = state.currentRole
+        this.tenantRole = state.tenantRole
         this.language = state.language || 'PT'
       }
     },
@@ -191,23 +191,50 @@ export const useUserStore = defineStore({
       const decoded = decodeJWT(token)
       if (!decoded) return
 
-      // Extract companies from JWT if present
-      if (decoded.companies && Array.isArray(decoded.companies)) {
-        this.user.companies = decoded.companies
+      if (decoded.user_id) {
+        this.user.id = decoded.user_id
       }
 
-      // Extract companyId and userRole if present (after select-company)
-      if (decoded.companyId) {
-        this.currentCompanyId = decoded.companyId
-      }
-      
-      if (decoded.userRole || decoded.role) {
-        this.currentRole = decoded.userRole || decoded.role
+      if (decoded.user_email) {
+        this.user.email = decoded.user_email
       }
 
-      // Extract language if present
+      if (decoded.user_fullname) {
+        this.user.username = decoded.user_fullname
+      }
+
       if (decoded.user_language) {
         this.language = decoded.user_language
+        this.user.language = decoded.user_language
+      }
+
+      const companiesClaim = Array.isArray(decoded.companies) ? decoded.companies : []
+      if (companiesClaim.length) {
+        this.user.companies = companiesClaim.map((company: Company) => ({
+          companyId: company.companyId,
+          companyName: company.companyName,
+          role: company.role ?? null
+        }))
+      }
+
+      if (decoded.userRoles) {
+        if (Array.isArray(decoded.userRoles)) {
+          this.user.userRoles = decoded.userRoles
+        } else if (typeof decoded.userRoles === 'string') {
+          this.user.userRoles = decoded.userRoles.split(' ').filter(Boolean)
+        }
+      }
+
+      if (decoded.companyId) {
+        this.currentCompanyId = decoded.companyId
+      } else {
+        this.currentCompanyId = null
+      }
+
+      if (decoded.tenantRole || decoded.userRole || decoded.role) {
+        this.tenantRole = decoded.tenantRole || decoded.userRole || decoded.role
+      } else if (!decoded.companyId) {
+        this.tenantRole = null
       }
 
       this.saveState()
@@ -218,48 +245,47 @@ export const useUserStore = defineStore({
      * Implements B2B multi-tenant flow decision logic
      */
     handleSigninResponse(response: any) {
-      const { id, username, email, language, companyId, companies } = response
-      
-      // Handle both OAuth2 and custom token formats
       const accessToken = response.access_token || response.token || response.accessToken
       const refreshToken = response.refresh_token || response.refreshToken
-      
-      // Set user data
-      this.user = {
-        id,
-        username,
-        email,
-        language: language || 'PT',
-        companies: companies || []
+
+      if (accessToken) {
+        this.token = accessToken
+        this.auth = true
       }
-      
-      // Set tokens
-      this.token = accessToken
-      this.refreshToken = refreshToken
-      this.setPersonalTokens(accessToken, refreshToken)
-      this.auth = true
-      this.language = language || 'PT'
-      
-      // Sync from token to extract additional claims
+      if (refreshToken) {
+        this.refreshToken = refreshToken
+      }
+
+      const userLanguage = response.language || this.language || 'PT'
+      this.language = userLanguage
+
+      this.setUser({
+        id: response.id,
+        username: response.username,
+        email: response.email,
+        language: userLanguage,
+        companies: response.companies || this.user.companies || []
+      })
+
       if (accessToken) {
         this.syncFromToken(accessToken)
       }
-      
-      // If companyId is already set in response, update current company
-      if (companyId) {
-        const decoded = decodeJWT(accessToken)
-        const userRole = decoded?.userRole || decoded?.role
-        const selectedCompany = companies?.find((c: Company) => c.companyId === companyId)
-        this.setCurrentCompany(companyId, userRole, selectedCompany?.companyName)
+
+      const companyId = response.companyId || this.currentCompanyId
+      const tenantRole = response.tenantRole || this.tenantRole
+
+      if (companyId && tenantRole) {
+        const selectedCompany = this.user.companies?.find((c: Company) => c.companyId === companyId)
+        this.setCurrentCompany(companyId, tenantRole, selectedCompany?.companyName)
       }
-      
-      this.saveState()
-      
+
+      const companies = this.user.companies || []
+
       return {
-        hasCompanies: (companies?.length || 0) > 0,
-        hasMultipleCompanies: (companies?.length || 0) > 1,
-        companyPreselected: !!companyId,
-        companies: companies || []
+        hasCompanies: companies.length > 0,
+        hasMultipleCompanies: companies.length > 1,
+        companyPreselected: Boolean(companyId && tenantRole),
+        companies
       }
     },
 
@@ -270,26 +296,48 @@ export const useUserStore = defineStore({
     async selectCompany(companyId: string) {
       try {
         const response = await CompanyService.selectCompany(companyId)
-        const { accessToken, refreshToken, userRole } = response.data
-        
-        // Replace tokens with new company-scoped tokens
-        this.token = accessToken
-        this.refreshToken = refreshToken
-        
-        // Decode new token to extract claims
-        const decoded = decodeJWT(accessToken)
-        const role = userRole || decoded?.userRole || decoded?.role
-        const companyName = this.user.companies?.find((c: Company) => c.companyId === companyId)?.companyName
-        
-        // Update current company
-        this.setCurrentCompany(companyId, role, companyName)
-        
-        // Sync any other claims from token
-        this.syncFromToken(accessToken)
-        
+        const { accessToken, refreshToken, tenantRole } = response.data
+
+        if (accessToken) {
+          this.token = accessToken
+          this.syncFromToken(accessToken)
+        }
+
+        if (refreshToken) {
+          this.refreshToken = refreshToken
+        }
+
+        const decoded = accessToken ? decodeJWT(accessToken) : null
+        const resolvedRole = tenantRole || decoded?.tenantRole || decoded?.userRole || decoded?.role
+        const companyName = this.user.companies?.find((c: Company) => c.companyId === (decoded?.companyId || companyId))?.companyName
+
+        this.setCurrentCompany(decoded?.companyId || companyId, resolvedRole, companyName)
+
         return true
       } catch (error) {
         console.error('Error selecting company:', error)
+        throw error
+      }
+    },
+
+    async clearCompanySelection() {
+      try {
+        const response = await CompanyService.clearCompany()
+        const { accessToken, refreshToken } = response.data
+
+        if (accessToken) {
+          this.token = accessToken
+          this.syncFromToken(accessToken)
+        }
+
+        if (refreshToken) {
+          this.refreshToken = refreshToken
+        }
+
+        this.clearCurrentCompany()
+        return true
+      } catch (error) {
+        console.error('Error clearing company selection:', error)
         throw error
       }
     },
@@ -299,24 +347,7 @@ export const useUserStore = defineStore({
      */
     async createCompanyAfterLogin(companyId: string) {
       try {
-        // Call select-company to get company-scoped tokens
-        const response = await CompanyService.selectCompany(companyId)
-        const { accessToken, refreshToken, userRole } = response.data
-        
-        // Replace tokens with new company-scoped tokens
-        this.token = accessToken
-        this.refreshToken = refreshToken
-        
-        // Decode new token to extract claims
-        const decoded = decodeJWT(accessToken)
-        const role = userRole || decoded?.userRole || decoded?.role
-        
-        // Update current company
-        this.setCurrentCompany(companyId, role)
-        
-        // Sync any other claims from token
-        this.syncFromToken(accessToken)
-        
+        await this.selectCompany(companyId)
         return true
       } catch (error) {
         console.error('Error setting up company after creation:', error)

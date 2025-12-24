@@ -22,7 +22,7 @@ describe('UserStore', () => {
       expect(store.refreshToken).toBeNull()
       expect(store.auth).toBe(false)
       expect(store.currentCompanyId).toBeNull()
-      expect(store.currentRole).toBeNull()
+      expect(store.tenantRole).toBeNull()
       expect(store.language).toBe('PT')
     })
   })
@@ -35,7 +35,7 @@ describe('UserStore', () => {
       const payload = {
         user_id: '123',
         companyId: 'company-456',
-        userRole: 'ROLE_ADMIN',
+        tenantRole: 'ROLE_ADMIN',
         user_language: 'EN',
         companies: [
           { companyId: 'company-456', companyName: 'Test Corp', role: 'ROLE_ADMIN' }
@@ -48,7 +48,7 @@ describe('UserStore', () => {
       store.syncFromToken(mockToken)
       
       expect(store.currentCompanyId).toBe('company-456')
-      expect(store.currentRole).toBe('ROLE_ADMIN')
+      expect(store.tenantRole).toBe('ROLE_ADMIN')
       expect(store.language).toBe('EN')
       expect(store.user.companies).toEqual(payload.companies)
     })
@@ -153,7 +153,7 @@ describe('UserStore', () => {
       
       expect(result.companyPreselected).toBe(true)
       expect(store.currentCompanyId).toBe('comp1')
-      expect(store.currentRole).toBe('ROLE_ADMIN')
+      expect(store.tenantRole).toBe('ROLE_ADMIN')
     })
   })
 
@@ -182,7 +182,7 @@ describe('UserStore', () => {
         auth: true,
         user: { id: '123', email: 'test@test.com' },
         currentCompanyId: 'comp-123',
-        currentRole: 'ROLE_ADMIN',
+        tenantRole: 'ROLE_ADMIN',
         language: 'EN'
       }
       
@@ -193,7 +193,7 @@ describe('UserStore', () => {
       
       expect(store.token).toBe('saved-token')
       expect(store.currentCompanyId).toBe('comp-123')
-      expect(store.currentRole).toBe('ROLE_ADMIN')
+      expect(store.tenantRole).toBe('ROLE_ADMIN')
       expect(store.language).toBe('EN')
     })
   })
@@ -205,7 +205,7 @@ describe('UserStore', () => {
       store.setCurrentCompany('comp-456', 'ROLE_USER', 'Test Company')
       
       expect(store.currentCompanyId).toBe('comp-456')
-      expect(store.currentRole).toBe('ROLE_USER')
+      expect(store.tenantRole).toBe('ROLE_USER')
     })
 
     it('should detect multiple companies', () => {
@@ -222,10 +222,10 @@ describe('UserStore', () => {
     it('should identify admin role', () => {
       const store = useUserStore()
       
-      store.currentRole = 'role_admin'
+      store.tenantRole = 'role_admin'
       expect(store.isAdmin).toBe(true)
       
-      store.currentRole = 'ROLE_USER'
+      store.tenantRole = 'ROLE_USER'
       expect(store.isAdmin).toBe(false)
     })
   })
@@ -247,7 +247,7 @@ describe('UserStore', () => {
         data: {
           accessToken: newToken,
           refreshToken: 'new-refresh',
-          userRole: 'ROLE_USER'
+          tenantRole: 'ROLE_USER'
         }
       })
       
@@ -260,7 +260,7 @@ describe('UserStore', () => {
       expect(store.token).toBe(newToken)
       expect(store.refreshToken).toBe('new-refresh')
       expect(store.currentCompanyId).toBe('new-company')
-      expect(store.currentRole).toBe('ROLE_USER')
+      expect(store.tenantRole).toBe('ROLE_USER')
     })
   })
 

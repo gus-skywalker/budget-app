@@ -105,7 +105,7 @@ const loadingInvites = ref(false)
 const cancellingInvite = ref(null)
 
 const inviteEmail = ref('')
-const inviteRole = ref('ROLE_USER')
+const inviteRole = ref('ROLE_MEMBER')
 const pendingInvites = ref([])
 
 const snackbar = ref(false)
@@ -114,8 +114,8 @@ const snackbarColor = ref('success')
 
 const roleOptions = [
   { title: 'Administrador', value: 'ROLE_ADMIN' },
-  { title: 'Gestor', value: 'ROLE_CLIENT' },
-  { title: 'Usuário', value: 'ROLE_USER' }
+  { title: 'Membro (edição)', value: 'ROLE_MEMBER' },
+  { title: 'Somente leitura', value: 'ROLE_VIEWER' }
 ]
 
 const emailRules = [
@@ -129,6 +129,10 @@ onMounted(() => {
 
 const sendInvite = async () => {
   if (!inviteForm.value.validate()) return
+  if (!currentCompanyId.value) {
+    showSnackbar('Selecione uma empresa antes de convidar usuários.', 'error')
+    return
+  }
   
   try {
     loading.value = true
@@ -140,7 +144,7 @@ const sendInvite = async () => {
     
     showSnackbar('Convite enviado com sucesso!', 'success')
     inviteEmail.value = ''
-    inviteRole.value = 'ROLE_USER'
+    inviteRole.value = 'ROLE_MEMBER'
     inviteForm.value.reset()
     loadInvites()
   } catch (error) {
@@ -152,6 +156,7 @@ const sendInvite = async () => {
 }
 
 const loadInvites = async () => {
+  if (!currentCompanyId.value) return
   try {
     loadingInvites.value = true
     pendingInvites.value = await InviteService.listInvites(currentCompanyId.value)
@@ -163,6 +168,7 @@ const loadInvites = async () => {
 }
 
 const cancelInvite = async (inviteId) => {
+  if (!currentCompanyId.value) return
   try {
     cancellingInvite.value = inviteId
     await InviteService.cancelInvite(currentCompanyId.value, inviteId)
@@ -180,9 +186,11 @@ const getRoleLabel = (role) => {
   const normalized = (role || '').toUpperCase()
   const labels = {
     ROLE_ADMIN: 'Administrador',
-    ROLE_CLIENT: 'Gestor',
     ROLE_OWNER: 'Proprietário',
+    ROLE_MEMBER: 'Colaborador',
+    ROLE_VIEWER: 'Visualizador',
     ROLE_USER: 'Usuário',
+    ROLE_CLIENT: 'Gestor',
     OAUTH2_USER: 'Usuário OAuth2'
   }
   if (labels[normalized]) {

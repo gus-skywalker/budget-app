@@ -258,11 +258,7 @@ const userStore = useUserStore()
 const router = useRouter()
 
 const currentCompanyId = computed(() => userStore.getCurrentCompanyId)
-const MANAGEMENT_ROLES = ['ROLE_ADMIN', 'ROLE_CLIENT', 'ROLE_OWNER']
-const canManageCompany = computed(() => {
-  const role = (userStore.getCurrentRole || '').toUpperCase()
-  return MANAGEMENT_ROLES.includes(role)
-})
+const canManageCompany = computed(() => userStore.isTenantAdmin)
 
 const companyFormRef = ref()
 const companyForm = ref({ companyName: '', description: '' })
@@ -270,7 +266,7 @@ const formLoading = ref(false)
 const savingCompany = ref(false)
 
 const inviteFormRef = ref()
-const inviteForm = ref({ email: '', role: 'ROLE_USER' })
+const inviteForm = ref({ email: '', role: 'ROLE_MEMBER' })
 const inviteLoading = ref(false)
 
 const members = ref<any[]>([])
@@ -284,8 +280,8 @@ const snackbar = ref({ show: false, message: '', color: 'success' as 'success' |
 
 const roleOptions = [
   { label: 'Administrador', value: 'ROLE_ADMIN' },
-  { label: 'Gestor', value: 'ROLE_CLIENT' },
-  { label: 'Usuário', value: 'ROLE_USER' }
+  { label: 'Membro (edição)', value: 'ROLE_MEMBER' },
+  { label: 'Somente leitura', value: 'ROLE_VIEWER' }
 ]
 
 const requiredRule = (v: string) => !!v || 'Campo obrigatório'
@@ -341,7 +337,7 @@ const sendInvite = async () => {
   try {
     await InviteService.inviteUser(currentCompanyId.value, inviteForm.value.email, inviteForm.value.role)
     inviteForm.value.email = ''
-    inviteForm.value.role = 'ROLE_USER'
+    inviteForm.value.role = 'ROLE_MEMBER'
     await loadInvites()
     showSnackbar('Convite enviado')
   } catch (error) {
@@ -381,11 +377,7 @@ const deleteCompany = async () => {
   deleteLoading.value = true
   try {
     await CompanyService.deleteCompany(currentCompanyId.value)
-    userStore.clearCurrentCompany()
-    if (userStore.personalToken) {
-      userStore.setToken(userStore.personalToken)
-      userStore.setRefreshToken(userStore.personalRefreshToken)
-    }
+    await userStore.clearCompanySelection()
     closeDeleteDialog()
     showSnackbar('Empresa excluída', 'info')
     router.push('/dashboard')
@@ -400,9 +392,11 @@ const getRoleLabel = (role: string) => {
   const normalized = (role || '').toUpperCase()
   const labels: Record<string, string> = {
     ROLE_ADMIN: 'Administrador',
-    ROLE_CLIENT: 'Gestor',
     ROLE_OWNER: 'Proprietário',
+    ROLE_MEMBER: 'Colaborador',
+    ROLE_VIEWER: 'Visualizador',
     ROLE_USER: 'Usuário',
+    ROLE_CLIENT: 'Gestor',
     OAUTH2_USER: 'Usuário OAuth2'
   }
   if (labels[normalized]) {

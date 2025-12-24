@@ -59,8 +59,6 @@
 import { computed, ref } from 'vue'
 import { useUserStore } from '@/plugins/userStore'
 import { useRouter } from 'vue-router'
-import { jwtDecode } from 'jwt-decode'
-import CompanyService from '@/services/CompanyService'
 
 const userStore = useUserStore()
 const router = useRouter()
@@ -68,7 +66,7 @@ const isLoading = ref(false)
 
 const companies = computed(() => userStore.getCompanies)
 const currentCompanyId = computed(() => userStore.getCurrentCompanyId)
-const canSwitchToPersonal = computed(() => !!userStore.personalToken)
+const canSwitchToPersonal = computed(() => userStore.isTenantMode)
 
 const currentCompanyName = computed(() => {
   if (!currentCompanyId.value) {
@@ -79,14 +77,12 @@ const currentCompanyName = computed(() => {
 })
 
 const switchToPersonal = async () => {
-  if (!canSwitchToPersonal.value || !userStore.personalToken || !userStore.personalRefreshToken || isLoading.value) {
+  if (!canSwitchToPersonal.value || isLoading.value) {
     return
   }
   try {
     isLoading.value = true
-    userStore.setToken(userStore.personalToken)
-    userStore.setRefreshToken(userStore.personalRefreshToken)
-    userStore.clearCurrentCompany()
+    await userStore.clearCompanySelection()
     router.go(0)
   } finally {
     isLoading.value = false
@@ -97,22 +93,7 @@ const switchCompany = async (company) => {
   if (company.companyId !== currentCompanyId.value && !isLoading.value) {
     try {
       isLoading.value = true
-      
-      // Chama API para selecionar empresa e obter novos tokens
-      const res = await CompanyService.selectCompany(company.companyId)
-      
-      // Atualiza tokens com a resposta da API
-      userStore.setToken(res.data.accessToken)
-      userStore.setRefreshToken(res.data.refreshToken)
-      
-      // Decodifica novo JWT para obter companyId e userRole
-      const decodedToken = jwtDecode(res.data.accessToken)
-      const userRole = decodedToken.userRole || decodedToken.role
-      
-      // Atualiza empresa atual
-      userStore.setCurrentCompany(company.companyId, userRole, company.companyName)
-      
-      // Recarrega a página atual para atualizar os dados
+      await userStore.selectCompany(company.companyId)
       router.go(0)
     } catch (err) {
       console.error('Erro ao trocar empresa:', err)
@@ -130,8 +111,10 @@ const getRoleLabel = (role) => {
   const normalized = (role || '').toUpperCase()
   const labels = {
     ROLE_ADMIN: 'Administrador',
-    ROLE_CLIENT: 'Gestor',
     ROLE_OWNER: 'Proprietário',
+    ROLE_MEMBER: 'Colaborador',
+    ROLE_VIEWER: 'Visualizador',
+    ROLE_CLIENT: 'Gestor',
     ROLE_USER: 'Usuário',
     OAUTH2_USER: 'Usuário OAuth2'
   }

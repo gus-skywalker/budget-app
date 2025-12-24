@@ -236,7 +236,6 @@ import { ref, onMounted } from 'vue'
 import { useUserStore } from '@/plugins/userStore'
 import { useRouter, useRoute } from 'vue-router'
 import axios from 'axios'
-import { jwtDecode } from 'jwt-decode'
 import CompanySelector from '@/components/CompanySelector.vue'
 import { updateI18nLocale } from '@/i18n'
 
@@ -273,32 +272,43 @@ const userLogin = async () => {
     if (res.data) {
       console.log('Login response:', res.data)
       
-      // Use the new handleSigninResponse method
       const result = store.handleSigninResponse(res.data)
-      
-      // Update i18n locale
       updateI18nLocale(res.data.language || 'PT')
-      
-      // Routing logic based on companies
-      if (!result.hasCompanies) {
-        // No companies - go to dashboard (B2C mode)
-        loginSuccess.value = 'Login realizado com sucesso!'
-        setTimeout(() => {
-          loginSuccess.value = null
-          router.push('/dashboard')
-        }, 800)
-      } else if (result.hasMultipleCompanies && !result.companyPreselected) {
-        // Multiple companies - show selector
-        userCompanies.value = result.companies
-        showCompanySelector.value = true
-      } else if (result.hasCompanies && (result.companies.length === 1 || result.companyPreselected)) {
-        // Single company or preselected - go to dashboard
+
+      const companies = result.companies || []
+      userCompanies.value = companies
+
+      const goToDashboard = () => {
         loginSuccess.value = 'Login realizado com sucesso!'
         setTimeout(() => {
           loginSuccess.value = null
           router.push('/dashboard')
         }, 800)
       }
+
+      if (!companies.length) {
+        goToDashboard()
+        return
+      }
+
+      if (result.companyPreselected || store.isTenantMode) {
+        goToDashboard()
+        return
+      }
+
+      if (companies.length === 1) {
+        try {
+          await store.selectCompany(companies[0].companyId)
+          goToDashboard()
+        } catch (selectionError) {
+          console.error('Erro ao auto-selecionar empresa:', selectionError)
+          error.value = 'Não foi possível selecionar automaticamente a empresa. Escolha manualmente.'
+          showCompanySelector.value = true
+        }
+        return
+      }
+
+      showCompanySelector.value = true
     }
   } catch (err) {
     console.error('Login error:', err)
@@ -327,22 +337,7 @@ const handleCompanySelection = async (company) => {
   try {
     isLoading.value = true
     const store = useUserStore()
-    
-    // Chama API para selecionar empresa e obter novos tokens
-    const CompanyService = (await import('@/services/CompanyService')).default
-    const res = await CompanyService.selectCompany(company.companyId)
-    
-    // Atualiza tokens com a resposta da API
-    store.setToken(res.data.accessToken)
-    store.setRefreshToken(res.data.refreshToken)
-    
-    // Decodifica novo JWT para obter companyId e userRole
-    const decodedToken = jwtDecode(res.data.accessToken)
-    const userRole = decodedToken.userRole || decodedToken.role
-    
-    // Atualiza empresa atual
-    store.setCurrentCompany(company.companyId, userRole, company.companyName)
-    
+    await store.selectCompany(company.companyId)
     showCompanySelector.value = false
     loginSuccess.value = 'Empresa selecionada com sucesso!'
     setTimeout(() => {

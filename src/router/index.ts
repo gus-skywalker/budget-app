@@ -50,13 +50,13 @@ const router = createRouter({
       path: '/group',
       name: 'group',
       component: GroupView,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, requiresTenant: true }
     },
     {
       path: '/financialgoal',
       name: 'financialgoal',
       component: GoalView,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, requiresTenant: true }
     },
     {
       path: '/dashboard',
@@ -68,7 +68,7 @@ const router = createRouter({
       path: '/report',
       name: 'report',
       component: ReportView,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, requiresTenant: true }
     },
     {
       path: '/login',
@@ -137,6 +137,12 @@ const router = createRouter({
       name: 'checkout',
       component: () => import('@/views/CheckoutView.vue'),
       meta: { requiresAuth: true }
+    },
+    {
+      path: '/select-company',
+      name: 'select-company',
+      component: () => import('@/views/SelectCompanyView.vue'),
+      meta: { requiresAuth: true }
     }
   ]
 })
@@ -161,11 +167,21 @@ router.beforeEach((to, from, next) => {
 
   // Check admin role requirement
   if (to.meta.requiresAdmin && isAuthenticated) {
-    const currentRole = (userStore.getCurrentRole || '').toUpperCase()
-    const adminRoles = ['ROLE_ADMIN', 'ROLE_CLIENT', 'ROLE_OWNER']
-    if (!adminRoles.includes(currentRole)) {
-      // Redirect to dashboard if not admin
+    if (!userStore.isTenantAdmin) {
       next({ name: 'dashboard' })
+      return
+    }
+  }
+
+  // Ensure tenant context where required
+  if (to.meta.requiresTenant && isAuthenticated) {
+    if (!userStore.isTenantMode) {
+      const hasCompanies = (userStore.getCompanies?.length || 0) > 0
+      if (hasCompanies) {
+        next({ name: 'select-company', query: { redirect: to.fullPath } })
+      } else {
+        next({ name: 'create-company', query: { redirect: to.fullPath } })
+      }
       return
     }
   }

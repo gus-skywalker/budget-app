@@ -54,8 +54,10 @@ const getRoleLabel = (role) => {
   const normalized = (role || '').toUpperCase()
   const labels = {
     ROLE_ADMIN: 'Administrador',
-    ROLE_CLIENT: 'Gestor',
     ROLE_OWNER: 'Proprietário',
+    ROLE_MEMBER: 'Colaborador',
+    ROLE_VIEWER: 'Visualizador',
+    ROLE_CLIENT: 'Gestor',
     ROLE_USER: 'Usuário',
     OAUTH2_USER: 'Usuário OAuth2'
   }
