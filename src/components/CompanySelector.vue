@@ -22,6 +22,20 @@
               <v-icon>mdi-chevron-right</v-icon>
             </template>
           </v-list-item>
+          <v-list-item
+            class="company-item"
+            @click="selectPersonal"
+            key="personal-mode"
+          >
+            <template v-slot:prepend>
+              <v-icon color="primary">mdi-account</v-icon>
+            </template>
+            <v-list-item-title>Usar modo pessoal</v-list-item-title>
+            <v-list-item-subtitle>Sem empresa selecionada</v-list-item-subtitle>
+            <template v-slot:append>
+              <v-icon>mdi-chevron-right</v-icon>
+            </template>
+          </v-list-item>
         </v-list>
       </v-card-text>
     </v-card>
@@ -48,6 +62,10 @@ const dialog = computed({
 
 const selectCompany = (company) => {
   emit('company-selected', company)
+}
+
+const selectPersonal = () => {
+  emit('company-selected', null)
 }
 
 const getRoleLabel = (role) => {

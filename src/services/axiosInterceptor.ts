@@ -71,24 +71,18 @@ axiosInstance.interceptors.response.use(
         return Promise.reject(error)
       }
       try {
-        // Create form-encoded body
-        const params = new URLSearchParams()
-        params.append('grant_type', 'refresh_token')
-        params.append('refresh_token', userStore.getRefreshToken!)
-        
-        const response = await axios.post(`${import.meta.env.VITE_AUTH_URL}/oauth2/token`, params, {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-          }
-        })
-        const data = response.data
-        const accessToken = data.access_token || data.token || data.accessToken
-        const newRefreshToken = data.refresh_token || data.refreshToken
-        userStore.setToken(accessToken)
-        userStore.setRefreshToken(newRefreshToken)
-        originalRequest.headers['Authorization'] = 'Bearer ' + accessToken
-        processQueue(null, accessToken)
-        return axiosInstance(originalRequest)
+        // Use the userStore action for refresh logic
+        const success = await userStore.tryRefreshToken()
+        if (success && userStore.token) {
+          originalRequest.headers['Authorization'] = 'Bearer ' + userStore.token
+          processQueue(null, userStore.token)
+          return axiosInstance(originalRequest)
+        } else {
+          processQueue('Refresh failed', null)
+          userStore.resetUser()
+          router.push('/login')
+          return Promise.reject(error)
+        }
       } catch (refreshError) {
         processQueue(refreshError, null)
         userStore.resetUser()

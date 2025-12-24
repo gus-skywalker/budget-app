@@ -1,6 +1,15 @@
+/**
+ * Token Refresh Flow
+ *
+ * - When an API call fails due to expired access token (401), call userStore.tryRefreshToken().
+ * - If tryRefreshToken() succeeds, retry the original request.
+ * - If tryRefreshToken() fails (refresh token expired/invalid), user is logged out automatically.
+ * - This ensures seamless session renewal and only logs out when both tokens are invalid.
+ */
 // src/plugins/userStore.ts
 import { defineStore } from 'pinia'
 import CompanyService from '@/services/CompanyService'
+import AuthService from '@/services/AuthService'
 
 /**
  * Decode JWT token without external libraries
@@ -352,6 +361,31 @@ export const useUserStore = defineStore({
       } catch (error) {
         console.error('Error setting up company after creation:', error)
         throw error
+      }
+    },
+
+    /**
+     * Attempt to refresh access token using refresh token
+     * Returns true if successful, false if refresh fails
+     */
+    async tryRefreshToken() {
+      if (!this.refreshToken) return false
+      try {
+        const response = await AuthService.refreshToken(this.refreshToken)
+        const { accessToken, refreshToken } = response.data
+        if (accessToken) {
+          this.token = accessToken
+          this.syncFromToken(accessToken)
+        }
+        if (refreshToken) {
+          this.refreshToken = refreshToken
+        }
+        this.auth = true
+        this.saveState()
+        return true
+      } catch (error) {
+        this.logout()
+        return false
       }
     },
 

@@ -337,6 +337,17 @@ const handleCompanySelection = async (company) => {
   try {
     isLoading.value = true
     const store = useUserStore()
+    if (!company) {
+      // Usuário escolheu modo pessoal
+      await store.clearCompanySelection()
+      showCompanySelector.value = false
+      loginSuccess.value = 'Entrou no modo pessoal!'
+      setTimeout(() => {
+        loginSuccess.value = null
+        router.push('/dashboard')
+      }, 800)
+      return
+    }
     await store.selectCompany(company.companyId)
     showCompanySelector.value = false
     loginSuccess.value = 'Empresa selecionada com sucesso!'
