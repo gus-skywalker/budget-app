@@ -15,8 +15,9 @@ Reference contract that keeps Auth Service, Budget API and Frontend aligned on t
 | `userRoles` | Global authorities across all memberships | **Auth Service**, consumed by **Gateway** or any global guard | Must be subset of roles on the user account. Never use for tenant-level checks. |
 | `companies[]` | Snapshot of every company the user belongs to | **Auth Service** populates; **Frontend** renders selector | Elements follow `{ companyId, companyName?, role? }`. `companyName` may be empty, `role` may be `null`. Treat as read-only. |
 | `companyId` | Currently selected tenant | **Auth Service** + **Budget API** | Only set after `/auth/select-company` (or auto-selection during signup). Tenant APIs **must** reject requests when absent. |
-| `userRole` | Role inside the `companyId` tenant | **Auth Service** + **Budget API** | Derived from the membership used in `companyId`. Only reliable source for tenant authorization. |
-| `companies[].role` | Role per company entry | **Auth Service** | When select-company runs, the relevant entry is copied into `userRole`. |
+| `tenantRole` | Canonical role inside the active tenant | **Auth Service** + **Budget API** | Emitted whenever `companyId` exists. Expected values: `ROLE_OWNER`, `ROLE_ADMIN`, `ROLE_MEMBER`, `ROLE_VIEWER`. UI gating and backend authorization rely on it. |
+| `userRole` | Legacy alias for tenant role | **Auth Service** (back-compat), **Budget API** | Still duplicated for older clients. Prefer `tenantRole`; treat `userRole` as optional fallback until all services migrate. |
+| `companies[].role` | Role per company entry | **Auth Service** | When select-company runs, the relevant entry is copied into `tenantRole`/`userRole`. |
 | `exp` / `iat` | Expiration / issued-at timestamps | **Auth Service** signs; **Gateway/Budget API** verify | `exp` = `iat + 1h` for access tokens, `iat + 30d` for refresh. Clients may show countdowns but cannot bypass expiry. |
 
 > **Use the claims, not request bodies.** Tenant identifiers must flow exclusively through JWT claims; clients never send `companyId` or roles in payloads or headers.
@@ -29,9 +30,9 @@ Reference contract that keeps Auth Service, Budget API and Frontend aligned on t
 - Reissues tokens whenever company context changes (`/auth/select-company`, `/auth/users/{id}/switch-company`). No revocation store exists; older tokens simply expire.
 
 ### Frontend
-- Reads claims with `userStore.syncFromToken` and persists the original “personal” token pair for fallback.
+- Reads claims with `userStore.syncFromToken` and trusts Auth for personal vs tenant context (no manual token caching required).
 - Uses `companies` to decide whether to auto-select, show the selector, or keep the user in personal mode (absence of `companyId`).
-- Never sends tenant identifiers outside the Authorization header. UI toggles rely on `userRole` but trust backend enforcement.
+- Never sends tenant identifiers outside the Authorization header. UI toggles rely on `tenantRole`/`userRole` but trust backend enforcement.
 
 ### Budget API
 - Requires `companyId` for tenant endpoints. Scope every repository/service call using `companyId` + `userRole` from the token.
@@ -46,8 +47,8 @@ Reference contract that keeps Auth Service, Budget API and Frontend aligned on t
 
 - **Login (POST `/auth/signin`)** → returns access + refresh + `companies`. Access token includes `companyId`/`userRole` only when the user profile already stores a company.
 - **Refresh (POST `/auth/refresh`)** → expects refresh token (`token_type = refresh_token`). Emits a fresh pair mirroring the user profile’s current `companyId`. Previous refresh tokens remain valid until `exp`.
-- **Select company (POST `/auth/select-company` or `/auth/users/{userId}/switch-company`)** → validates membership, persists `companyId`, emits new tokens carrying `companyId` + `userRole`.
-- **Personal mode** → when `user.companyId` is `null`, Auth omits `companyId` and `userRole`. There is no endpoint yet to “clear” the active company; frontend must keep personal tokens cached until backend delivers `/auth/clear-company`.
+- **Select company (POST `/auth/select-company` or `/auth/users/{userId}/switch-company`)** → validates membership, persists `companyId`, emits new tokens carrying `companyId` + `tenantRole` (and legacy `userRole`).
+- **Personal mode** → when `user.companyId` is `null`, Auth omits `companyId` and `tenantRole`. Clients call `POST /auth/clear-company` to exit tenant context and receive tenant-free tokens.
 - **Invites** → only creation/list/cancel exist today (`POST /companies/{companyId}/invite`). Accept flow/endpoints are still pending. Authorization relies on server-side membership checks (`ROLE_ADMIN` or `ROLE_CLIENT`).
 
 ## 4. Role Terminology (Canonical)
@@ -69,22 +70,20 @@ Reference contract that keeps Auth Service, Budget API and Frontend aligned on t
 
 ## 6. Known Gaps & Required Changes
 
-1. **Clear company / personal mode** — Auth must expose `/auth/select-company` accepting `companyId = null` (or provide `/auth/clear-company`) so users can exit tenant context without relying on cached personal tokens.
-2. **Budget API claim usage** — Update `JwtUtils` + guards to read `userRole`/`userRoles` and ROLE_* values; reject requests lacking `companyId` with 403.
-3. **Invite acceptance** — Backend needs the accept endpoint to complete the lifecycle promised by the UI.
-4. **Error semantics** — Standardize 400 vs 403 responses for tenant violations and document them in OpenAPI.
+1. **Budget API claim usage** — Update `JwtUtils` + guards to read `tenantRole`/`userRole` and ROLE_* values; reject requests lacking `companyId` with 403.
+2. **Invite acceptance** — Backend needs the accept endpoint to complete the lifecycle promised by the UI.
+3. **Error semantics** — Standardize 400 vs 403 responses for tenant violations and document them in OpenAPI.
 
 ## 7. Contract: Responsibilities & Deadlines
 
 | Area | Owner | Commitment | Deadline |
 | --- | --- | --- | --- |
-| Token claims | Auth Service | Keep emitting `userRole`, `userRoles`, `companies` as defined; include `companyId` immediately after `/auth/select-company`; omit it in personal mode. | Already in place |
-| Personal mode exit | Auth Service | Add `/auth/select-company` support for `companyId = null` (or new `/auth/clear-company`) returning tenant-free tokens. | Jan 10 2026 |
-| Role naming alignment | Budget API | Read `userRole` / `userRoles` (ROLE_* values) instead of legacy `role`/`roles`. | Jan 05 2026 |
+| Token claims | Auth Service | Keep emitting `tenantRole`, `userRole`, `userRoles`, `companies` as defined; include `companyId` immediately after `/auth/select-company`; omit it in personal mode. | Already in place |
+| Tenant exit endpoint | Auth Service | Maintain `/auth/clear-company` as the supported way to exit tenant context; document payload or behavior shifts. | Already in place |
+| Role naming alignment | Budget API | Read `tenantRole` / `userRole` (ROLE_* values) instead of legacy `role`/`roles`. | Jan 05 2026 |
 | Tenant enforcement | Budget API | Reject tenant-scoped calls missing `companyId`; verify membership with Auth before processing. | Jan 20 2026 |
 | Invite flow | Backend Platform | Ship invite-accept endpoint / status updates while keeping ROLE_ADMIN/ROLE_CLIENT authorization on create/cancel. | Jan 31 2026 |
-| Frontend token handling | Frontend | Use `userRole`/`userRoles` for UI gating, treat missing `companyId` as personal mode, call `/auth/select-company` on tenant switch. | Already in place |
-| Personal token cache | Frontend | Persist personal access/refresh tokens until backend offers official “clear company” endpoint. | Already in place |
+| Frontend token handling | Frontend | Use `tenantRole`/`userRole` for UI gating, treat missing `companyId` as personal mode, call `/auth/select-company` or `/auth/clear-company` as needed. | Already in place |
 | Error semantics | Backend Platform | Publish shared guideline for tenant errors (400 vs 403) and reflect it in Auth + Budget API OpenAPI specs. | Feb 07 2026 |
 
 **Review cadence:** revisit this guide monthly (or after auth changes) and update the contract table whenever scope, claims, or deadlines shift.

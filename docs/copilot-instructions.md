@@ -22,8 +22,8 @@
 ## B2B Multi-Tenant Architecture
 
 ### User-Company Model
-- Users can belong to **multiple companies** with different roles (`ADMIN`, `USER`, `VIEWER`)
-- `userStore` tracks: `currentCompanyId`, `currentRole`, and `companies[]`
+- Users can belong to **multiple companies** with canonical tenant roles (`ROLE_OWNER`, `ROLE_ADMIN`, `ROLE_MEMBER`, `ROLE_VIEWER`)
+- `userStore` tracks: `currentCompanyId`, `tenantRole`, derived helpers (`isTenantMode`, `isPersonalMode`, `isTenantAdmin`, `canWrite`) plus `companies[]`
 - All API requests auto-include `Authorization: Bearer {token}` via `axiosInterceptor.ts`
 
 ### API Contract (Backend B2B)
@@ -36,7 +36,8 @@
   "email": "user@email.com",
   "token": "eyJhbG...",
   "refreshToken": "eyJhbG...",
-  "companyId": null,  // null = not selected, string = selected
+  "companyId": null,  // null = personal mode, string = tenant selected
+  "tenantRole": null, // role emitted only when companyId exists
   "companies": [
     {"companyId": "company-456", "companyName": "Tech Solutions", "role": "ADMIN"}
   ]
@@ -46,45 +47,47 @@
 #### Key Endpoints
 - `POST /auth/signin` - Login (returns structure above)
 - `POST /auth/select-company` - Select company, returns new `accessToken` + `refreshToken`
+- `POST /auth/clear-company` - Exit tenant mode, returns personal `accessToken` + `refreshToken`
 - `POST /companies` - Create company (requires auth)
 - `GET /companies` - List user's companies (requires auth)
 
 ### JWT Structure
-**Before company selection:**
+**Personal mode (no tenant):**
 ```json
 {
   "user_id": "123",
   "companies": [{"companyId": "...", "companyName": "...", "role": "ADMIN"}],
-  // companyId and userRole are ABSENT
+  // companyId and tenantRole are ABSENT
 }
 ```
 
-**After company selection:**
+**Tenant mode (company active):**
 ```json
 {
   "user_id": "123",
   "companyId": "company-456",  // NOW PRESENT
-  "userRole": "ADMIN",         // NOW PRESENT
+  "tenantRole": "ROLE_ADMIN",  // NOW PRESENT
   "companies": [...]
 }
 ```
 
-Use `jwtDecode()` from `jwt-decode` package to parse (see `LoginView.vue:255`)
+All decoding is centralized in `userStore.syncFromToken`, which handles both password and OAuth tokens.
 
 ### Critical Flows
 1. **Login** (`LoginView.vue`):
-   - Get response with `companies[]` and `companyId`
-   - **Decision logic:**
-     - `companies.length === 0` → redirect to create company
-     - `companyId === null && companies.length > 0` → show `CompanySelector.vue`
-     - `companyId !== null` → company already selected, go to dashboard
+  - Handle response via `userStore.handleSigninResponse`
+  - **Decision logic:**
+    - `companies.length === 0` → proceed to dashboard/settings in personal mode
+    - `companyId === null && companies.length === 1` → auto-call `userStore.selectCompany`
+    - `companyId === null && companies.length > 1` → open `CompanySelector.vue` modal
+    - `companyId !== null` → tenant already selected, go to dashboard
+  - Router guards with `meta.requiresTenant` redirect to `/select-company` when a tenant-required page is accessed in personal mode.
 
-2. **Company Selection** (`CompanySelector.vue`, `CompanySwitcher.vue`):
-   - Call `POST /auth/select-company { companyId }` → get new tokens
-   - **CRITICAL:** Replace old token with new `accessToken` and `refreshToken`
-   - Decode new JWT to extract `companyId` and `userRole`
-   - Update `userStore.setCurrentCompany(companyId, role, name)`
-   - Reload app to refresh company-scoped data
+2. **Company Selection** (`CompanySelector.vue`, `CompanySwitcher.vue`, `SelectCompanyView.vue`):
+  - Call `userStore.selectCompany(companyId)` → internally triggers `POST /auth/select-company`
+  - Store swaps tokens with the new pair, syncs claims, and updates `currentCompanyId` + `tenantRole`
+  - `CompanySwitcher` also exposes “Modo pessoal”, which calls `userStore.clearCompanySelection()` → `POST /auth/clear-company`
+  - Critical pages can push users to the dedicated `SelectCompanyView` when tenant context is mandatory.
 
 3. **API Requests**:
    - `axiosInterceptor.ts` auto-adds `Authorization` header
@@ -94,6 +97,7 @@ Use `jwtDecode()` from `jwt-decode` package to parse (see `LoginView.vue:255`)
 - `src/plugins/userStore.ts`: State management (token, companies, currentCompanyId, language)
 - `src/views/LoginView.vue`: Login + company selection logic + language initialization
 - `src/views/redirect_url/OAuth2Redirect.vue`: OAuth2 callback handling
+- `src/views/SelectCompanyView.vue`: Dedicated tenant selector route for guarded flows
 - `src/components/CompanySelector.vue`: Modal for multi-company users
 - `src/components/CompanySwitcher.vue`: Header dropdown to switch companies
 - `src/services/CompanyService.ts`: Company API endpoints
