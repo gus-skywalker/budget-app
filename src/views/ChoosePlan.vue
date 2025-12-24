@@ -19,7 +19,6 @@
                         Assine Mensalmente
                     </button>
                 </div>
-
                 <!-- Plano Anual -->
                 <div class="plan-item">
                     <h3>Plano Anual</h3>
@@ -32,6 +31,34 @@
                     </ul>
                     <button class="btn btn-primary cta-btn" @click.prevent="redirectToCheckout('ANNUAL')">
                         Assine Anualmente
+                    </button>
+                </div>
+                <!-- Plano Empresarial Mensal -->
+                <div class="plan-item">
+                    <h3>Plano Empresarial Mensal</h3>
+                    <p class="price">{{ planDetails.BUSINESS_MONTHLY.displayPrice }}</p>
+                    <p>Ideal para empresas que buscam flexibilidade mensal.</p>
+                    <ul class="plan-benefits">
+                        <li>Gestão multiusuário</li>
+                        <li>Relatórios avançados</li>
+                        <li>Suporte prioritário</li>
+                    </ul>
+                    <button class="btn btn-primary cta-btn" @click.prevent="handleBusinessClick('BUSINESS_MONTHLY')">
+                        Assinar Empresarial Mensal
+                    </button>
+                </div>
+                <!-- Plano Empresarial Anual -->
+                <div class="plan-item">
+                    <h3>Plano Empresarial Anual</h3>
+                    <p class="price">{{ planDetails.BUSINESS_ANNUAL.displayPrice }}</p>
+                    <p>Economize com o plano anual para sua empresa.</p>
+                    <ul class="plan-benefits">
+                        <li>Gestão multiusuário</li>
+                        <li>Relatórios avançados</li>
+                        <li>Suporte prioritário</li>
+                    </ul>
+                    <button class="btn btn-primary cta-btn" @click.prevent="handleBusinessClick('BUSINESS_ANNUAL')">
+                        Assinar Empresarial Anual
                     </button>
                 </div>
             </div>
@@ -65,6 +92,7 @@
 import FAQ from '@/components/FAQ.vue';
 import PaymentService from '@/services/PaymentService'
 import { PLAN_DETAILS } from '@/constants/plans';
+import { useUserStore } from '@/plugins/userStore';
 
 export default {
     name: "ChoosePlan",
@@ -97,6 +125,7 @@ export default {
             ],
             selectedPlan: null,
             planDetails: PLAN_DETAILS,
+            isTenantMode: false,
         };
     },
     computed: {
@@ -104,15 +133,21 @@ export default {
             return this.$store?.state?.auth?.user != null;
         }
     },
+    mounted() {
+        // Detecta modo tenant via Pinia
+        try {
+            const userStore = useUserStore()
+            this.isTenantMode = userStore.isTenantMode
+        } catch (e) {
+            this.isTenantMode = false
+        }
+    },
     methods: {
         async redirectToCheckout(plan) {
             try {
                 this.selectedPlan = plan;
-                
                 if (!this.isAuthenticated) {
-                    // Salva o plano selecionado no localStorage
                     localStorage.setItem('selectedPlan', plan);
-                    // Redireciona para login com query param
                     this.$router.push({
                         name: 'login',
                         query: { 
@@ -122,12 +157,18 @@ export default {
                     });
                     return;
                 }
-
-                // Se já está autenticado, continua com o checkout
                 await this.processCheckout(plan);
             } catch (error) {
                 this.handleError(error);
             }
+        },
+
+        handleBusinessClick(plan) {
+            if (!this.isAuthenticated || !this.isTenantMode) {
+                alert('Para contratar um plano empresarial, cadastre-se e selecione uma empresa.');
+                return;
+            }
+            this.redirectToCheckout(plan);
         },
 
         async processCheckout(plan) {

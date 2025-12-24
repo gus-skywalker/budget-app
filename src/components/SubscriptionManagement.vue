@@ -53,64 +53,122 @@
         </div>
         <div class="card-content">
           <v-radio-group v-model="selectedPlan" class="plan-radio-group">
-            <div class="plan-option" :class="{ 'disabled': currentPlan === 'MONTHLY' }">
-              <v-radio 
-                :label="$t('subscription_management.plans.monthly')" 
-                value="MONTHLY"
-                :disabled="currentPlan === 'MONTHLY'"
-                color="#667eea"
-              >
-                <template v-slot:label>
-                  <div class="plan-label">
-                    <div class="plan-name">
-                      <v-icon class="mr-2">mdi-calendar-month</v-icon>
-                      Plano Mensal
+            <template v-if="isTenantMode">
+              <div class="plan-option" :class="{ 'disabled': currentPlan === 'BUSINESS_MONTHLY' }">
+                <v-radio 
+                  label="Plano Empresarial Mensal" 
+                  value="BUSINESS_MONTHLY"
+                  :disabled="currentPlan === 'BUSINESS_MONTHLY'"
+                  color="#667eea"
+                >
+                  <template v-slot:label>
+                    <div class="plan-label">
+                      <div class="plan-name">
+                        <v-icon class="mr-2">mdi-domain</v-icon>
+                        Empresarial Mensal
+                      </div>
+                      <div class="plan-price">{{ plans.BUSINESS_MONTHLY.displayPrice }}</div>
+                      <div class="plan-description">Cobrado mensalmente</div>
                     </div>
-                    <div class="plan-price">{{ plans.MONTHLY.displayPrice }}</div>
-                    <div class="plan-description">Cobrado mensalmente</div>
-                  </div>
-                </template>
-              </v-radio>
-              <v-chip 
-                v-if="currentPlan === 'MONTHLY'" 
-                size="small" 
-                color="#667eea"
-                class="current-badge"
-              >
-                Atual
-              </v-chip>
-            </div>
-
-            <v-divider class="my-4"></v-divider>
-
-            <div class="plan-option" :class="{ 'disabled': currentPlan === 'ANNUAL' }">
-              <v-radio 
-                :label="$t('subscription_management.plans.annual')" 
-                value="ANNUAL"
-                :disabled="currentPlan === 'ANNUAL'"
-                color="#667eea"
-              >
-                <template v-slot:label>
-                  <div class="plan-label">
-                    <div class="plan-name">
-                      <v-icon class="mr-2">mdi-calendar-check</v-icon>
-                      Plano Anual
-                      <v-chip size="x-small" color="success" class="ml-2">Economize 17%</v-chip>
+                  </template>
+                </v-radio>
+                <v-chip 
+                  v-if="currentPlan === 'BUSINESS_MONTHLY'" 
+                  size="small" 
+                  color="#667eea"
+                  class="current-badge"
+                >
+                  Atual
+                </v-chip>
+              </div>
+              <v-divider class="my-4"></v-divider>
+              <div class="plan-option" :class="{ 'disabled': currentPlan === 'BUSINESS_ANNUAL' }">
+                <v-radio 
+                  label="Plano Empresarial Anual" 
+                  value="BUSINESS_ANNUAL"
+                  :disabled="currentPlan === 'BUSINESS_ANNUAL'"
+                  color="#667eea"
+                >
+                  <template v-slot:label>
+                    <div class="plan-label">
+                      <div class="plan-name">
+                        <v-icon class="mr-2">mdi-domain"</v-icon>
+                        Empresarial Anual
+                        <v-chip size="x-small" color="success" class="ml-2">Economize</v-chip>
+                      </div>
+                      <div class="plan-price">{{ plans.BUSINESS_ANNUAL.displayPrice }}</div>
+                      <div class="plan-description">Cobrado anualmente</div>
                     </div>
-                    <div class="plan-price">{{ plans.ANNUAL.displayPrice }}</div>
-                    <div class="plan-description">{{ formatAmount(plans.MONTHLY.amount) }}/mês (cobrado anualmente)</div>
-                  </div>
-                </template>
-              </v-radio>
-              <v-chip 
-                v-if="currentPlan === 'ANNUAL'" 
-                size="small" 
-                color="#667eea"
-                class="current-badge"
-              >
-                Atual
-              </v-chip>
-            </div>
+                  </template>
+                </v-radio>
+                <v-chip 
+                  v-if="currentPlan === 'BUSINESS_ANNUAL'" 
+                  size="small" 
+                  color="#667eea"
+                  class="current-badge"
+                >
+                  Atual
+                </v-chip>
+              </div>
+            </template>
+            <template v-else>
+              <div class="plan-option" :class="{ 'disabled': currentPlan === 'MONTHLY' }">
+                <v-radio 
+                  :label="$t('subscription_management.plans.monthly')" 
+                  value="MONTHLY"
+                  :disabled="currentPlan === 'MONTHLY'"
+                  color="#667eea"
+                >
+                  <template v-slot:label>
+                    <div class="plan-label">
+                      <div class="plan-name">
+                        <v-icon class="mr-2">mdi-calendar-month</v-icon>
+                        Plano Mensal
+                      </div>
+                      <div class="plan-price">{{ plans.MONTHLY.displayPrice }}</div>
+                      <div class="plan-description">Cobrado mensalmente</div>
+                    </div>
+                  </template>
+                </v-radio>
+                <v-chip 
+                  v-if="currentPlan === 'MONTHLY'" 
+                  size="small" 
+                  color="#667eea"
+                  class="current-badge"
+                >
+                  Atual
+                </v-chip>
+              </div>
+              <v-divider class="my-4"></v-divider>
+              <div class="plan-option" :class="{ 'disabled': currentPlan === 'ANNUAL' }">
+                <v-radio 
+                  :label="$t('subscription_management.plans.annual')" 
+                  value="ANNUAL"
+                  :disabled="currentPlan === 'ANNUAL'"
+                  color="#667eea"
+                >
+                  <template v-slot:label>
+                    <div class="plan-label">
+                      <div class="plan-name">
+                        <v-icon class="mr-2">mdi-calendar-check</v-icon>
+                        Plano Anual
+                        <v-chip size="x-small" color="success" class="ml-2">Economize 17%</v-chip>
+                      </div>
+                      <div class="plan-price">{{ plans.ANNUAL.displayPrice }}</div>
+                      <div class="plan-description">{{ formatAmount(plans.MONTHLY.amount) }}/mês (cobrado anualmente)</div>
+                    </div>
+                  </template>
+                </v-radio>
+                <v-chip 
+                  v-if="currentPlan === 'ANNUAL'" 
+                  size="small" 
+                  color="#667eea"
+                  class="current-badge"
+                >
+                  Atual
+                </v-chip>
+              </div>
+            </template>
           </v-radio-group>
 
           <div class="action-buttons">
@@ -200,8 +258,10 @@ interface User {
     avatar?: string;
 }
 
-// Recebe o objeto `user` como propriedade
+import { useUserStore } from '@/plugins/userStore';
 const props = defineProps<{ user: User }>();
+const userStore = useUserStore();
+const isTenantMode = userStore.isTenantMode;
 
 // Estado da assinatura e plano selecionado
 type MaybePlanId = PlanId | '';
@@ -276,37 +336,53 @@ const statusIcon = computed(() => {
 
 // Função para carregar o plano e status da assinatura do usuário
 const loadSubscriptionDetails = async () => {
-    try {
-        if (!props.user.id) {
-            console.error('User ID is required to load subscription details');
-            return;
-        }
-        const response = await PaymentService.loadSubscriptionDetails(props.user.id);
-        currentPlan.value = response.data.plan;
-        subscriptionStatus.value = response.data.status;
-        customerId.value = response.data.customerId;
-        subscriptionId.value = response.data.subscriptionId;
-
-        // Inicializa selectedPlan com o plano atual
-        selectedPlan.value = response.data.plan;
-    } catch (error) {
-        console.error('Erro ao carregar detalhes da assinatura:', error);
+  try {
+    if (!props.user.id) {
+      console.error('User ID is required to load subscription details');
+      return;
     }
+    let response;
+    if (isTenantMode && userStore.currentCompanyId) {
+      // Carrega assinatura empresarial
+      response = await PaymentService.loadSubscriptionDetails(userStore.currentCompanyId);
+    } else {
+      // Carrega assinatura pessoal
+      response = await PaymentService.loadSubscriptionDetails(props.user.id);
+    }
+    currentPlan.value = response.data.plan;
+    subscriptionStatus.value = response.data.status;
+    customerId.value = response.data.customerId;
+    subscriptionId.value = response.data.subscriptionId;
+    selectedPlan.value = response.data.plan;
+  } catch (error) {
+    console.error('Erro ao carregar detalhes da assinatura:', error);
+  }
 };
 
 const startCheckoutSession = async () => {
-    try {
-        const response = await PaymentService.createCheckoutSession({
-            userId: props.user.id,
-            customerId: customerId.value,
-            subscriptionId: subscriptionId.value,
-            plan: selectedPlan.value,
-        });
-        window.location.href = response.data.checkoutUrl;
-    } catch (error) {
-        console.error('Erro ao iniciar sessão de checkout:', error);
-        alert('Não foi possível iniciar o checkout. Tente novamente mais tarde.');
+  try {
+    let payload;
+    if (isTenantMode && userStore.currentCompanyId) {
+      payload = {
+        companyId: userStore.currentCompanyId,
+        customerId: customerId.value,
+        subscriptionId: subscriptionId.value,
+        plan: selectedPlan.value,
+      };
+    } else {
+      payload = {
+        userId: props.user.id,
+        customerId: customerId.value,
+        subscriptionId: subscriptionId.value,
+        plan: selectedPlan.value,
+      };
     }
+    const response = await PaymentService.createCheckoutSession(payload);
+    window.location.href = response.data.checkoutUrl;
+  } catch (error) {
+    console.error('Erro ao iniciar sessão de checkout:', error);
+    alert('Não foi possível iniciar o checkout. Tente novamente mais tarde.');
+  }
 };
 
 // Função para abrir o portal de faturamento
