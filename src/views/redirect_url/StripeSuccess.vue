@@ -91,16 +91,25 @@ export default {
     async checkSubscriptionStatus() {
       const userStore = useUserStore();
       const userId = userStore.user?.id;
+      const companyId = userStore.currentCompanyId;
+      const isTenantMode = userStore.isTenantMode;
 
-      if (!userId) {
+      if (!userId && !(isTenantMode && companyId)) {
         throw new Error('Usuário não identificado');
       }
 
       // Aguarda alguns segundos para dar tempo do webhook processar
       await new Promise(resolve => setTimeout(resolve, 3000));
 
-      // Verifica o status da assinatura
-      const response = await PaymentService.loadSubscriptionDetails(userId);
+      // Verifica o status da assinatura (pessoal ou empresarial)
+      let response;
+      if (isTenantMode && companyId) {
+        response = await PaymentService.loadCompanySubscriptionDetails(companyId);
+      } else if (userId) {
+        response = await PaymentService.loadSubscriptionDetails(userId);
+      } else {
+        throw new Error('Contexto de assinatura inválido');
+      }
       this.subscriptionDetails = response.data;
 
       if (!this.subscriptionDetails) {

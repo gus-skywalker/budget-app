@@ -275,7 +275,12 @@ const selectedPlan = ref<MaybePlanId>(''); // Para atualizar o plano
 const plans = PLAN_DETAILS;
 
 const isPlanId = (value: string | null | undefined): value is PlanId => {
-  return value === 'MONTHLY' || value === 'ANNUAL';
+  return (
+    value === 'MONTHLY' ||
+    value === 'ANNUAL' ||
+    value === 'BUSINESS_MONTHLY' ||
+    value === 'BUSINESS_ANNUAL'
+  );
 };
 
 const formatAmount = (amount: number) => formatPlanAmount(amount);
@@ -344,7 +349,7 @@ const loadSubscriptionDetails = async () => {
     let response;
     if (isTenantMode && userStore.currentCompanyId) {
       // Carrega assinatura empresarial
-      response = await PaymentService.loadSubscriptionDetails(userStore.currentCompanyId);
+      response = await PaymentService.loadCompanySubscriptionDetails(userStore.currentCompanyId);
     } else {
       // Carrega assinatura pessoal
       response = await PaymentService.loadSubscriptionDetails(props.user.id);
@@ -365,15 +370,17 @@ const startCheckoutSession = async () => {
     if (isTenantMode && userStore.currentCompanyId) {
       payload = {
         companyId: userStore.currentCompanyId,
-        customerId: customerId.value,
-        subscriptionId: subscriptionId.value,
+        userId: props.user.id,
+        userName: props.user.username || props.user.email,
+        email: props.user.email,
         plan: selectedPlan.value,
+        subscriptionTarget: 'COMPANY',
       };
     } else {
       payload = {
         userId: props.user.id,
-        customerId: customerId.value,
-        subscriptionId: subscriptionId.value,
+        userName: props.user.username || props.user.email,
+        email: props.user.email,
         plan: selectedPlan.value,
       };
     }

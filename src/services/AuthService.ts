@@ -1,3 +1,4 @@
+import axios from 'axios'
 import axiosInterceptor from './axiosInterceptor'
 
 const API_URL = `${import.meta.env.VITE_AUTH_URL}/auth`
@@ -8,9 +9,11 @@ export default {
   },
 
   refreshToken(refreshToken: string): Promise<any> {
-    // Adjust payload/endpoint if your backend expects a different format
-    return axiosInterceptor.post(`${API_URL}/refresh`, {
+    // Usa axios direto para não passar pelo interceptor e evitar loops de refresh
+    return axios.post(`${API_URL}/refresh`, {
       refresh_token: refreshToken
+    }, {
+      withCredentials: true
     })
   }
 }

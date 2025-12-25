@@ -50,6 +50,7 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   async (error: AxiosError & { config: any }) => {
     const originalRequest = error.config
+    // Fluxo principal: 401 visível -> tenta refresh
     if (error.response && error.response.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
@@ -92,6 +93,19 @@ axiosInstance.interceptors.response.use(
         isRefreshing = false
       }
     }
+
+    // Fallback: erro de rede (ex.: CORS bloqueando 401) com usuário autenticado
+    // Nesses casos o front não enxerga o status 401, então tratamos como sessão expirada
+    try {
+      const userStore = useUserStore()
+      if (!error.response && error.code === 'ERR_NETWORK' && userStore.isAuthenticated) {
+        userStore.resetUser()
+        router.push('/login')
+      }
+    } catch {
+      // Se algo der errado aqui, apenas segue rejeitando o erro original
+    }
+
     return Promise.reject(error)
   }
 )

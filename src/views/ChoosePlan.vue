@@ -130,7 +130,12 @@ export default {
     },
     computed: {
         isAuthenticated() {
-            return this.$store?.state?.auth?.user != null;
+            try {
+                const userStore = useUserStore();
+                return userStore.isAuthenticated;
+            } catch (e) {
+                return false;
+            }
         }
     },
     mounted() {
@@ -173,17 +178,35 @@ export default {
 
         async processCheckout(plan) {
             try {
-                const user = this.$store.state.auth.user;
-                if (!user?.id || !user?.name || !user?.email) {
+                const userStore = useUserStore();
+                const user = userStore.user;
+
+                if (!user?.id || !user?.email) {
                     throw new Error('Informações do usuário incompletas');
                 }
 
-                const customerRequest = {
-                    userId: user.id,
-                    userName: user.name,
-                    email: user.email,
-                    plan: plan
-                };
+                const isBusinessPlan = String(plan).startsWith('BUSINESS_');
+                const companyId = userStore.currentCompanyId;
+
+                let customerRequest;
+                if (isBusinessPlan && userStore.isTenantMode && companyId) {
+                    // Assinatura empresarial
+                    customerRequest = {
+                        companyId,
+                        subscriptionTarget: 'COMPANY',
+                        userName: user.username || user.email,
+                        email: user.email,
+                        plan: plan
+                    };
+                } else {
+                    // Assinatura pessoal
+                    customerRequest = {
+                        userId: user.id,
+                        userName: user.username || user.email,
+                        email: user.email,
+                        plan: plan
+                    };
+                }
 
                 const response = await PaymentService.createCheckoutSession(customerRequest);
                 
