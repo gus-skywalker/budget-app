@@ -26,7 +26,7 @@ function getInitialLocale(): Locale {
   try {
     const userStore = useUserStore()
     const userLanguage = userStore.getLanguage
-    return languageMap[userLanguage] || 'pt'
+    return languageMap[(userLanguage || 'PT').toUpperCase()] || 'pt'
   } catch {
     // Se userStore não estiver disponível, usa português
     return 'pt'
@@ -46,7 +46,7 @@ const i18n = createI18n({
  * @param userLanguage - Idioma do usuário em UPPERCASE (PT, EN, FR, ES, DE)
  */
 export function updateI18nLocale(userLanguage: string) {
-  const locale: Locale = languageMap[userLanguage] || 'pt'
+  const locale: Locale = languageMap[(userLanguage || 'PT').toUpperCase()] || 'pt'
   i18n.global.locale.value = locale
 }
 

@@ -34,8 +34,9 @@ export interface LoginResponse {
   language: Language
   tenantRole?: string | null
   userRole?: string[]
+  userRoles?: string[]
   createdAt?: string
-  token: string
+  accessToken: string
   refreshToken: string
   companyId: string | null
   companies: Array<{

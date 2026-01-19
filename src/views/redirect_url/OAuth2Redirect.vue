@@ -14,7 +14,7 @@ const userStore = useUserStore()
 
 const extractTokenFromUrl = async () => {
   const urlParams = new URLSearchParams(window.location.search)
-  const token = urlParams.get('token')
+  const token = urlParams.get('accessToken')
   const refreshToken = urlParams.get('refreshToken')
   const email = urlParams.get('email')
 

@@ -10,10 +10,14 @@ export default {
 
   refreshToken(refreshToken: string): Promise<any> {
     // Usa axios direto para não passar pelo interceptor e evitar loops de refresh
-    return axios.post(`${API_URL}/refresh`, {
-      refresh_token: refreshToken
-    }, {
-      withCredentials: true
-    })
+    return axios.post(
+      `${API_URL}/refresh`,
+      {
+        refreshToken
+      },
+      {
+        withCredentials: true
+      }
+    )
   }
 }

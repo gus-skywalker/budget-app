@@ -34,7 +34,7 @@
   "id": "user123",
   "username": "João Silva",
   "email": "user@email.com",
-  "token": "eyJhbG...",
+  "accessToken": "eyJhbG...",
   "refreshToken": "eyJhbG...",
   "companyId": null,  // null = personal mode, string = tenant selected
   "tenantRole": null, // role emitted only when companyId exists
@@ -91,7 +91,7 @@ All decoding is centralized in `userStore.syncFromToken`, which handles both pas
 
 3. **API Requests**:
    - `axiosInterceptor.ts` auto-adds `Authorization` header
-   - Token refresh on 401 via `/oauth2/token` with `refresh_token` grant
+  - Token refresh on 401 via `POST /auth/refresh` com body `{ "refreshToken": "..." }`
 
 ### Key Files
 - `src/plugins/userStore.ts`: State management (token, companies, currentCompanyId, language)
@@ -122,7 +122,7 @@ All decoding is centralized in `userStore.syncFromToken`, which handles both pas
   "username": "João Silva",
   "email": "user@email.com",
   "language": "PT",  // UPPERCASE from backend
-  "token": "eyJhbG...",
+  "accessToken": "eyJhbG...",
   "companies": [...]
 }
 ```

@@ -13,6 +13,7 @@ describe('UserStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     localStorage.clear()
+    sessionStorage.clear()
   })
 
   describe('Initial State', () => {
@@ -73,7 +74,7 @@ describe('UserStore', () => {
         username: 'John Doe',
         email: 'john@example.com',
         language: 'PT',
-        token: 'header.eyJ1c2VyX2lkIjoiMTIzIn0.signature',
+        accessToken: 'header.eyJ1c2VyX2lkIjoiMTIzIn0.signature',
         refreshToken: 'refresh123',
         companyId: null,
         companies: []
@@ -109,7 +110,7 @@ describe('UserStore', () => {
         username: 'John Doe',
         email: 'john@example.com',
         language: 'EN',
-        token: mockToken,
+        accessToken: mockToken,
         refreshToken: 'refresh123',
         companyId: null,
         companies
@@ -143,7 +144,7 @@ describe('UserStore', () => {
         username: 'John Doe',
         email: 'john@example.com',
         language: 'PT',
-        token: mockToken,
+        accessToken: mockToken,
         refreshToken: 'refresh123',
         companyId: 'comp1',
         companies
@@ -168,7 +169,7 @@ describe('UserStore', () => {
       expect(store.refreshToken).toBe('refresh456')
       
       // Check persistence
-      const saved = localStorage.getItem('userStore')
+      const saved = sessionStorage.getItem('userStore')
       expect(saved).toBeTruthy()
       const parsed = JSON.parse(saved!)
       expect(parsed.token).toBe('access123')
@@ -186,7 +187,7 @@ describe('UserStore', () => {
         language: 'EN'
       }
       
-      localStorage.setItem('userStore', JSON.stringify(state))
+      sessionStorage.setItem('userStore', JSON.stringify(state))
       
       const store = useUserStore()
       store.loadState()
@@ -295,7 +296,7 @@ describe('UserStore', () => {
       expect(store.refreshToken).toBeNull()
       expect(store.auth).toBe(false)
       expect(store.currentCompanyId).toBeNull()
-      expect(localStorage.getItem('userStore')).toBeNull()
+      expect(sessionStorage.getItem('userStore')).toBeNull()
     })
   })
 })

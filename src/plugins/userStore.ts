@@ -21,8 +21,22 @@ function decodeJWT(token: string): any {
       throw new Error('Invalid JWT format')
     }
     const payload = parts[1]
-    const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'))
-    return JSON.parse(decoded)
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/')
+    const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=')
+    const decoded = atob(padded)
+
+    // JWT payload is UTF-8 JSON; atob returns a binary string.
+    // Try to decode as UTF-8 safely; fallback to plain JSON parse.
+    try {
+      const utf8 = decodeURIComponent(
+        Array.from(decoded)
+          .map((c) => `%${c.charCodeAt(0).toString(16).padStart(2, '0')}`)
+          .join('')
+      )
+      return JSON.parse(utf8)
+    } catch {
+      return JSON.parse(decoded)
+    }
   } catch (error) {
     console.error('Error decoding JWT:', error)
     return null
@@ -168,7 +182,7 @@ export const useUserStore = defineStore({
     },
 
     saveState() {
-      localStorage.setItem('userStore', JSON.stringify({
+      sessionStorage.setItem('userStore', JSON.stringify({
         token: this.token,
         refreshToken: this.refreshToken,
         auth: this.auth,
@@ -180,7 +194,7 @@ export const useUserStore = defineStore({
     },
 
     loadState() {
-      const saved = localStorage.getItem('userStore')
+      const saved = sessionStorage.getItem('userStore')
       if (saved) {
         const state = JSON.parse(saved)
         this.token = state.token
@@ -254,8 +268,12 @@ export const useUserStore = defineStore({
      * Implements B2B multi-tenant flow decision logic
      */
     handleSigninResponse(response: any) {
-      const accessToken = response.access_token || response.token || response.accessToken
-      const refreshToken = response.refresh_token || response.refreshToken
+      const accessToken = response?.accessToken
+      const refreshToken = response?.refreshToken
+
+      if (!accessToken || !refreshToken) {
+        console.error('Invalid signin response: missing accessToken/refreshToken', response)
+      }
 
       if (accessToken) {
         this.token = accessToken
@@ -268,12 +286,20 @@ export const useUserStore = defineStore({
       const userLanguage = response.language || this.language || 'PT'
       this.language = userLanguage
 
+      const responseUserRoles = response?.userRoles ?? response?.userRole
+      const normalizedUserRoles: string[] | undefined = Array.isArray(responseUserRoles)
+        ? responseUserRoles
+        : typeof responseUserRoles === 'string'
+          ? responseUserRoles.split(' ').filter(Boolean)
+          : undefined
+
       this.setUser({
         id: response.id,
         username: response.username,
         email: response.email,
         language: userLanguage,
-        companies: response.companies || this.user.companies || []
+        companies: response.companies || this.user.companies || [],
+        userRoles: normalizedUserRoles
       })
 
       if (accessToken) {
@@ -305,7 +331,7 @@ export const useUserStore = defineStore({
     async selectCompany(companyId: string) {
       try {
         const response = await CompanyService.selectCompany(companyId)
-        const { accessToken, refreshToken, tenantRole } = response.data
+        const { accessToken, refreshToken, tenantRole, companyId: resolvedCompanyId } = response.data
 
         if (accessToken) {
           this.token = accessToken
@@ -317,10 +343,11 @@ export const useUserStore = defineStore({
         }
 
         const decoded = accessToken ? decodeJWT(accessToken) : null
-        const resolvedRole = tenantRole || decoded?.tenantRole || decoded?.userRole || decoded?.role
-        const companyName = this.user.companies?.find((c: Company) => c.companyId === (decoded?.companyId || companyId))?.companyName
+        const resolvedRole = tenantRole || decoded?.tenantRole
+        const effectiveCompanyId = resolvedCompanyId || decoded?.companyId || companyId
+        const companyName = this.user.companies?.find((c: Company) => c.companyId === effectiveCompanyId)?.companyName
 
-        this.setCurrentCompany(decoded?.companyId || companyId, resolvedRole, companyName)
+        this.setCurrentCompany(effectiveCompanyId, resolvedRole, companyName)
 
         return true
       } catch (error) {
@@ -394,7 +421,7 @@ export const useUserStore = defineStore({
      */
     logout() {
       this.resetUser()
-      localStorage.removeItem('userStore')
+      sessionStorage.removeItem('userStore')
     }
   }
 })
