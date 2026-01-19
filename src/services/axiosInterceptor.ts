@@ -94,18 +94,6 @@ axiosInstance.interceptors.response.use(
       }
     }
 
-    // Fallback: erro de rede (ex.: CORS bloqueando 401) com usuário autenticado
-    // Nesses casos o front não enxerga o status 401, então tratamos como sessão expirada
-    try {
-      const userStore = useUserStore()
-      if (!error.response && error.code === 'ERR_NETWORK' && userStore.isAuthenticated) {
-        userStore.resetUser()
-        router.push('/login')
-      }
-    } catch {
-      // Se algo der errado aqui, apenas segue rejeitando o erro original
-    }
-
     return Promise.reject(error)
   }
 )

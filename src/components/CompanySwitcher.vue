@@ -83,7 +83,7 @@ const switchToPersonal = async () => {
   try {
     isLoading.value = true
     await userStore.clearCompanySelection()
-    router.go(0)
+    router.push('/dashboard')
   } finally {
     isLoading.value = false
   }
@@ -94,10 +94,11 @@ const switchCompany = async (company) => {
     try {
       isLoading.value = true
       await userStore.selectCompany(company.companyId)
-      router.go(0)
+      await router.push('/dashboard')
     } catch (err) {
       console.error('Erro ao trocar empresa:', err)
       alert('Erro ao trocar de empresa. Tente novamente.')
+    } finally {
       isLoading.value = false
     }
   }

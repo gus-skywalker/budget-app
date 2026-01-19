@@ -278,36 +278,76 @@ const userLogin = async () => {
       const companies = result.companies || []
       userCompanies.value = companies
 
-      const goToDashboard = () => {
+      const redirectTarget = (route.query.redirect && String(route.query.redirect)) || '/dashboard'
+      const requiresTenant = router
+        .resolve(redirectTarget)
+        .matched
+        .some(r => Boolean(r.meta?.requiresTenant))
+
+      const goToTarget = () => {
         loginSuccess.value = 'Login realizado com sucesso!'
         setTimeout(() => {
           loginSuccess.value = null
-          router.push('/dashboard')
+          router.push(redirectTarget)
         }, 800)
       }
 
       if (!companies.length) {
-        goToDashboard()
+        goToTarget()
         return
       }
 
       if (result.companyPreselected || store.isTenantMode) {
-        goToDashboard()
+        goToTarget()
         return
       }
 
-      if (companies.length === 1) {
+      // If the user is being redirected to a tenant-required page,
+      // we must enforce tenant selection.
+      if (requiresTenant) {
+        if (companies.length === 1) {
+          try {
+            await store.selectCompany(companies[0].companyId)
+            goToTarget()
+          } catch (selectionError) {
+            console.error('Erro ao auto-selecionar empresa:', selectionError)
+            error.value = 'Não foi possível selecionar automaticamente a empresa. Escolha manualmente.'
+            showCompanySelector.value = true
+          }
+          return
+        }
+        showCompanySelector.value = true
+        return
+      }
+
+      // Preference-based flow (prioritize last context)
+      const preferredMode = store.getPreferredMode
+      const preferredCompanyId = store.getPreferredCompanyId
+      const preferredCompanyExists = preferredCompanyId
+        ? companies.some(c => c.companyId === preferredCompanyId)
+        : false
+
+      if (preferredMode === 'personal') {
+        // Stay in personal mode without prompting
+        goToTarget()
+        return
+      }
+
+      if (preferredMode === 'tenant' && (preferredCompanyExists || companies.length === 1)) {
+        const companyToSelect = preferredCompanyExists
+          ? preferredCompanyId
+          : companies[0].companyId
         try {
-          await store.selectCompany(companies[0].companyId)
-          goToDashboard()
+          await store.selectCompany(companyToSelect)
+          goToTarget()
         } catch (selectionError) {
           console.error('Erro ao auto-selecionar empresa:', selectionError)
-          error.value = 'Não foi possível selecionar automaticamente a empresa. Escolha manualmente.'
           showCompanySelector.value = true
         }
         return
       }
 
+      // No preference (or invalid preference): ask the user.
       showCompanySelector.value = true
     }
   } catch (err) {
@@ -337,6 +377,7 @@ const handleCompanySelection = async (company) => {
   try {
     isLoading.value = true
     const store = useUserStore()
+    const redirectTarget = (route.query.redirect && String(route.query.redirect)) || '/dashboard'
     if (!company) {
       // Usuário escolheu modo pessoal
       await store.clearCompanySelection()
@@ -344,7 +385,7 @@ const handleCompanySelection = async (company) => {
       loginSuccess.value = 'Entrou no modo pessoal!'
       setTimeout(() => {
         loginSuccess.value = null
-        router.push('/dashboard')
+        router.push(redirectTarget)
       }, 800)
       return
     }
@@ -353,7 +394,7 @@ const handleCompanySelection = async (company) => {
     loginSuccess.value = 'Empresa selecionada com sucesso!'
     setTimeout(() => {
       loginSuccess.value = null
-      router.push('/dashboard')
+      router.push(redirectTarget)
     }, 800)
   } catch (err) {
     console.error('Erro ao selecionar empresa:', err)

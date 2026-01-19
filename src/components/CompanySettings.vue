@@ -21,7 +21,7 @@
         Apenas administradores podem alterar dados da empresa, convidar membros ou excluir a organização.
       </v-alert>
 
-      <v-row v-if="canManageCompany" dense>
+      <v-row dense>
         <v-col cols="12" md="6">
           <v-card class="modern-card">
             <div class="card-header">
@@ -41,7 +41,7 @@
                   variant="outlined"
                   density="comfortable"
                   prepend-inner-icon="mdi-office-building"
-                  :disabled="formLoading"
+                  :disabled="formLoading || !canManageCompany"
                   :rules="[requiredRule]"
                   class="mb-4"
                 />
@@ -53,9 +53,10 @@
                   auto-grow
                   rows="3"
                   prepend-inner-icon="mdi-text"
-                  :disabled="formLoading"
+                  :disabled="formLoading || !canManageCompany"
                 />
                 <v-btn
+                  v-if="canManageCompany"
                   type="submit"
                   color="primary"
                   class="mt-4"
@@ -70,7 +71,7 @@
             </v-card-text>
           </v-card>
 
-          <v-card class="modern-card mt-6">
+          <v-card v-if="canManageCompany" class="modern-card mt-6">
             <div class="card-header">
               <h3 class="card-title">
                 <v-icon color="primary" class="mr-2">mdi-account-plus</v-icon>
@@ -118,7 +119,15 @@
 
               <div class="section-title">Convites pendentes</div>
               <v-alert
-                v-if="!invites.length"
+                v-if="!invitesAvailable"
+                type="info"
+                variant="tonal"
+                class="mt-2"
+              >
+                Convites indisponíveis no momento.
+              </v-alert>
+              <v-alert
+                v-else-if="!invites.length"
                 type="info"
                 variant="tonal"
                 class="mt-2"
@@ -144,7 +153,7 @@
         </v-col>
 
         <v-col cols="12" md="6">
-          <v-card class="modern-card">
+          <v-card v-if="canManageCompany" class="modern-card">
             <div class="card-header">
               <h3 class="card-title">
                 <v-icon color="primary" class="mr-2">mdi-account-multiple</v-icon>
@@ -184,7 +193,7 @@
             </v-card-text>
           </v-card>
 
-          <v-card class="modern-card mt-6 danger-card">
+          <v-card v-if="canManageCompany" class="modern-card mt-6 danger-card">
             <div class="card-header">
               <h3 class="card-title danger-title">
                 <v-icon color="error" class="mr-2">mdi-alert</v-icon>
@@ -215,7 +224,7 @@
         <v-card-title class="text-h6">Confirmar exclusão</v-card-title>
         <v-card-text>
           <p class="mb-4">
-            Tem certeza? Digite <strong>{{ companyForm.companyName }}</strong> para confirmar.
+            Tem certeza? Digite <strong>{{ companyNameForDelete }}</strong> para confirmar.
           </p>
           <v-text-field
             v-model="deleteConfirm"
@@ -230,7 +239,7 @@
           <v-btn
             color="error"
             variant="elevated"
-            :disabled="deleteConfirm !== companyForm.companyName"
+            :disabled="deleteConfirm !== companyNameForDelete"
             :loading="deleteLoading"
             @click="deleteCompany"
           >
@@ -265,12 +274,15 @@ const companyForm = ref({ companyName: '', description: '' })
 const formLoading = ref(false)
 const savingCompany = ref(false)
 
+const companyNameForDelete = ref('')
+
 const inviteFormRef = ref()
 const inviteForm = ref({ email: '', role: 'ROLE_MEMBER' })
 const inviteLoading = ref(false)
 
 const members = ref<any[]>([])
 const invites = ref<any[]>([])
+const invitesAvailable = ref(true)
 
 const deleteDialog = ref(false)
 const deleteConfirm = ref('')
@@ -291,19 +303,24 @@ const showSnackbar = (message: string, color: 'success' | 'error' | 'info' = 'su
   snackbar.value = { show: true, message, color }
 }
 
-const loadCompany = async () => {
+const resetCompanyUiState = () => {
+  companyForm.value = { companyName: '', description: '' }
+  companyNameForDelete.value = ''
+  members.value = []
+  invites.value = []
+  closeDeleteDialog()
+}
+
+const loadCompanyDetails = async () => {
   if (!currentCompanyId.value) return
   formLoading.value = true
   try {
-    const [companyRes, membersRes, invitesRes] = await Promise.all([
-      CompanyService.getDetails(currentCompanyId.value),
-      CompanyService.listMembers(currentCompanyId.value),
-      InviteService.listInvites(currentCompanyId.value)
-    ])
-    companyForm.value.companyName = companyRes?.data?.companyName || ''
-    companyForm.value.description = companyRes?.data?.description || ''
-    members.value = membersRes?.data || []
-    invites.value = invitesRes || []
+    const companyRes = await CompanyService.getDetails(currentCompanyId.value)
+    const name = companyRes?.data?.companyName || ''
+    const description = companyRes?.data?.description || ''
+    companyForm.value.companyName = name
+    companyForm.value.description = description
+    companyNameForDelete.value = name
   } catch (error) {
     showSnackbar(parseApiError(error), 'error')
   } finally {
@@ -311,16 +328,49 @@ const loadCompany = async () => {
   }
 }
 
+const loadMembersAndInvites = async () => {
+  if (!currentCompanyId.value) return
+  try {
+    const [membersResult, invitesResult] = await Promise.allSettled([
+      CompanyService.listMembers(currentCompanyId.value),
+      InviteService.listInvites(currentCompanyId.value)
+    ])
+
+    if (membersResult.status === 'fulfilled') {
+      members.value = membersResult.value?.data || []
+    } else {
+      members.value = []
+    }
+
+    if (invitesResult.status === 'fulfilled') {
+      invites.value = invitesResult.value || []
+      invitesAvailable.value = true
+    } else {
+      invites.value = []
+      invitesAvailable.value = false
+    }
+  } catch (error) {
+    showSnackbar(parseApiError(error), 'error')
+  }
+}
+
 const updateCompany = async () => {
   if (!currentCompanyId.value) return
   const form = companyFormRef.value as any
-  if (form && !form.validate()) return
+  if (form) {
+    const result = await form.validate()
+    const valid = typeof result === 'boolean' ? result : result?.valid
+    if (!valid) return
+  }
   savingCompany.value = true
   try {
     await CompanyService.update(currentCompanyId.value, {
       companyName: companyForm.value.companyName,
       description: companyForm.value.description
     })
+
+    companyNameForDelete.value = companyForm.value.companyName
+    userStore.updateCompanyName(currentCompanyId.value, companyForm.value.companyName)
     showSnackbar('Informações atualizadas')
   } catch (error) {
     showSnackbar(parseApiError(error), 'error')
@@ -331,8 +381,16 @@ const updateCompany = async () => {
 
 const sendInvite = async () => {
   if (!currentCompanyId.value) return
+  if (!invitesAvailable.value) {
+    showSnackbar('Convites indisponíveis no momento', 'info')
+    return
+  }
   const form = inviteFormRef.value as any
-  if (form && !form.validate()) return
+  if (form) {
+    const result = await form.validate()
+    const valid = typeof result === 'boolean' ? result : result?.valid
+    if (!valid) return
+  }
   inviteLoading.value = true
   try {
     await InviteService.inviteUser(currentCompanyId.value, inviteForm.value.email, inviteForm.value.role)
@@ -349,15 +407,22 @@ const sendInvite = async () => {
 
 const loadInvites = async () => {
   if (!currentCompanyId.value) return
+  if (!invitesAvailable.value) return
   try {
     invites.value = await InviteService.listInvites(currentCompanyId.value)
   } catch (error) {
-    showSnackbar(parseApiError(error), 'error')
+    invitesAvailable.value = false
+    invites.value = []
+    showSnackbar('Convites indisponíveis no momento', 'info')
   }
 }
 
 const cancelInvite = async (inviteId: string) => {
   if (!currentCompanyId.value) return
+  if (!invitesAvailable.value) {
+    showSnackbar('Convites indisponíveis no momento', 'info')
+    return
+  }
   try {
     await InviteService.cancelInvite(currentCompanyId.value, inviteId)
     await loadInvites()
@@ -374,13 +439,36 @@ const closeDeleteDialog = () => {
 
 const deleteCompany = async () => {
   if (!currentCompanyId.value) return
+  if (deleteConfirm.value !== companyNameForDelete.value) return
+  const deletedCompanyId = currentCompanyId.value
   deleteLoading.value = true
   try {
-    await CompanyService.deleteCompany(currentCompanyId.value)
-    await userStore.clearCompanySelection()
+    await CompanyService.deleteCompany(deletedCompanyId)
+
+    try {
+      await userStore.clearCompanySelection()
+    } catch {
+      userStore.logout()
+      router.push('/login')
+      return
+    }
+
+    let nextCompanies: Array<{ companyId: string; companyName?: string; role?: string | null }> = []
+    try {
+      const companiesRes = await CompanyService.getAll()
+      nextCompanies = (companiesRes?.data || []) as Array<{ companyId: string; companyName?: string; role?: string | null }>
+      userStore.setCompanies(nextCompanies)
+    } catch {
+      // fallback to local state if refresh fails
+      nextCompanies = ((userStore.getCompanies || []) as any[]).filter((c: any) => c?.companyId !== deletedCompanyId)
+      userStore.setCompanies(nextCompanies)
+    }
+
     closeDeleteDialog()
     showSnackbar('Empresa excluída', 'info')
-    router.push('/dashboard')
+
+    const hasOtherCompanies = (nextCompanies?.length || 0) > 0
+    router.push(hasOtherCompanies ? '/select-company' : '/dashboard')
   } catch (error) {
     showSnackbar(parseApiError(error), 'error')
   } finally {
@@ -412,9 +500,13 @@ const getRoleLabel = (role: string) => {
   return legacyLabels[role] || role
 }
 
-watch([currentCompanyId, canManageCompany], ([companyId, canManage]) => {
-  if (companyId && canManage) {
-    loadCompany()
+watch([currentCompanyId, canManageCompany], async ([companyId, canManage]) => {
+  resetCompanyUiState()
+  if (!companyId) return
+
+  await loadCompanyDetails()
+  if (canManage) {
+    await loadMembersAndInvites()
   }
 }, { immediate: true })
 </script>

@@ -70,6 +70,8 @@ type State = {
   currentCompanyId: string | null
   tenantRole: string | null
   language: string
+  preferredMode: 'personal' | 'tenant' | null
+  preferredCompanyId: string | null
 }
 
 export const useUserStore = defineStore({
@@ -82,7 +84,9 @@ export const useUserStore = defineStore({
     user: {},
     currentCompanyId: null,
     tenantRole: null,
-    language: 'PT'
+    language: 'PT',
+    preferredMode: null,
+    preferredCompanyId: null
   }),
 
   getters: {
@@ -102,6 +106,8 @@ export const useUserStore = defineStore({
     isTenantAdmin: (state): boolean => TENANT_ADMIN_ROLES.includes((state.tenantRole || '').toUpperCase()),
     canWrite: (state): boolean => TENANT_WRITE_ROLES.includes((state.tenantRole || '').toUpperCase()),
     getLanguage: (state): string => state.language,
+    getPreferredMode: (state): 'personal' | 'tenant' | null => state.preferredMode,
+    getPreferredCompanyId: (state): string | null => state.preferredCompanyId,
     getApiLanguage: (state): string => {
       const lang = state.language.toLowerCase()
       return ['pt', 'en', 'fr'].includes(lang) ? lang : 'pt'
@@ -109,6 +115,47 @@ export const useUserStore = defineStore({
   },
 
   actions: {
+    savePreference() {
+      localStorage.setItem(
+        'userPreference',
+        JSON.stringify({
+          preferredMode: this.preferredMode,
+          preferredCompanyId: this.preferredCompanyId
+        })
+      )
+    },
+
+    loadPreference() {
+      try {
+        const raw = localStorage.getItem('userPreference')
+        if (!raw) return
+        const parsed = JSON.parse(raw)
+        const mode = parsed?.preferredMode
+        const companyId = parsed?.preferredCompanyId
+
+        if (mode === 'personal' || mode === 'tenant' || mode === null) {
+          this.preferredMode = mode
+        }
+        if (typeof companyId === 'string' || companyId === null) {
+          this.preferredCompanyId = companyId
+        }
+      } catch {
+        // ignore
+      }
+    },
+
+    setPreferredPersonal() {
+      this.preferredMode = 'personal'
+      this.preferredCompanyId = null
+      this.savePreference()
+    },
+
+    setPreferredTenant(companyId: string) {
+      this.preferredMode = 'tenant'
+      this.preferredCompanyId = companyId
+      this.savePreference()
+    },
+
     setToken(token: string | null) {
       this.token = token
       this.saveState()
@@ -160,6 +207,15 @@ export const useUserStore = defineStore({
       this.saveState()
     },
 
+    updateCompanyName(companyId: string, companyName: string) {
+      const companies = this.user.companies
+      if (!companies || !companyId) return
+      const company = companies.find((c) => c.companyId === companyId)
+      if (!company) return
+      company.companyName = companyName
+      this.saveState()
+    },
+
     clearCurrentCompany() {
       this.currentCompanyId = null
       this.tenantRole = null
@@ -205,6 +261,9 @@ export const useUserStore = defineStore({
         this.tenantRole = state.tenantRole
         this.language = state.language || 'PT'
       }
+
+      // Preference is intentionally stored in localStorage (survives sessions)
+      this.loadPreference()
     },
 
     /**
@@ -260,6 +319,11 @@ export const useUserStore = defineStore({
         this.tenantRole = null
       }
 
+      // Only update preference when token is explicitly tenant-scoped.
+      if (this.currentCompanyId) {
+        this.setPreferredTenant(this.currentCompanyId)
+      }
+
       this.saveState()
     },
 
@@ -312,6 +376,7 @@ export const useUserStore = defineStore({
       if (companyId && tenantRole) {
         const selectedCompany = this.user.companies?.find((c: Company) => c.companyId === companyId)
         this.setCurrentCompany(companyId, tenantRole, selectedCompany?.companyName)
+        this.setPreferredTenant(companyId)
       }
 
       const companies = this.user.companies || []
@@ -348,6 +413,7 @@ export const useUserStore = defineStore({
         const companyName = this.user.companies?.find((c: Company) => c.companyId === effectiveCompanyId)?.companyName
 
         this.setCurrentCompany(effectiveCompanyId, resolvedRole, companyName)
+        this.setPreferredTenant(effectiveCompanyId)
 
         return true
       } catch (error) {
@@ -371,6 +437,7 @@ export const useUserStore = defineStore({
         }
 
         this.clearCurrentCompany()
+        this.setPreferredPersonal()
         return true
       } catch (error) {
         console.error('Error clearing company selection:', error)

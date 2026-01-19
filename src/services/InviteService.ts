@@ -8,7 +8,7 @@ export default {
    * POST /companies/:companyId/invite
    */
   inviteUser(companyId: string, email: string, role: string): Promise<any> {
-    return axiosInterceptor.post(`${API_URL}/${companyId}/invite`, { email, role })
+    return axiosInterceptor.post(`${API_URL}/${companyId}/invite`, { email, role }, { timeout: 15000 })
   },
 
   /**
@@ -16,7 +16,7 @@ export default {
    * GET /companies/:companyId/invites
    */
   async listInvites(companyId: string): Promise<any[]> {
-    const response = await axiosInterceptor.get(`${API_URL}/${companyId}/invites`)
+    const response = await axiosInterceptor.get(`${API_URL}/${companyId}/invites`, { timeout: 15000 })
     return response.data
   },
 
@@ -25,7 +25,7 @@ export default {
    * DELETE /companies/:companyId/invites/:inviteId
    */
   cancelInvite(companyId: string, inviteId: string): Promise<any> {
-    return axiosInterceptor.delete(`${API_URL}/${companyId}/invites/${inviteId}`)
+    return axiosInterceptor.delete(`${API_URL}/${companyId}/invites/${inviteId}`, { timeout: 15000 })
   },
 
   /**
@@ -33,7 +33,7 @@ export default {
    * GET /invites/validate/:token
    */
   async validateInvite(token: string): Promise<any> {
-    const response = await axiosInterceptor.get(`${import.meta.env.VITE_API_BASE_URL}/invites/validate/${token}`)
+    const response = await axiosInterceptor.get(`${import.meta.env.VITE_API_BASE_URL}/invites/validate/${token}`, { timeout: 15000 })
     return response.data
   }
 }

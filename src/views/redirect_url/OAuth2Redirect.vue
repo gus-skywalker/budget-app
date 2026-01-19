@@ -54,9 +54,23 @@ const extractTokenFromUrl = async () => {
         return
       }
 
-      if (companies.length === 1) {
+      const preferredMode = userStore.getPreferredMode
+      const preferredCompanyId = userStore.getPreferredCompanyId
+      const preferredCompanyExists = preferredCompanyId
+        ? companies.some(c => c.companyId === preferredCompanyId)
+        : false
+
+      if (preferredMode === 'personal') {
+        router.push('/dashboard')
+        return
+      }
+
+      if (preferredMode === 'tenant' && (preferredCompanyExists || companies.length === 1)) {
+        const companyToSelect = preferredCompanyExists
+          ? preferredCompanyId
+          : companies[0].companyId
         try {
-          await userStore.selectCompany(companies[0].companyId)
+          await userStore.selectCompany(companyToSelect)
           router.push('/dashboard')
         } catch (selectionError) {
           console.error('Erro ao auto-selecionar empresa via OAuth2:', selectionError)

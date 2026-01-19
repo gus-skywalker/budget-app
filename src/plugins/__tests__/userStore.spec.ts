@@ -197,6 +197,19 @@ describe('UserStore', () => {
       expect(store.tenantRole).toBe('ROLE_ADMIN')
       expect(store.language).toBe('EN')
     })
+
+    it('should load preferred context from localStorage', () => {
+      localStorage.setItem('userPreference', JSON.stringify({
+        preferredMode: 'tenant',
+        preferredCompanyId: 'comp-pref'
+      }))
+
+      const store = useUserStore()
+      store.loadState()
+
+      expect(store.getPreferredMode).toBe('tenant')
+      expect(store.getPreferredCompanyId).toBe('comp-pref')
+    })
   })
 
   describe('Company Management', () => {
