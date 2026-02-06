@@ -113,15 +113,21 @@ const createCompany = async () => {
   try {
     loading.value = true
     
-    // Create company
-    const response = await CompanyService.create(companyName.value, description.value)
-    const newCompany = response.data
-    
+    // Create company (budget-api) + enrich token (auth-api)
+    const result = await CompanyService.create(companyName.value, description.value)
+    const tokens = result?.tokens
+
     showSnackbar('Empresa criada com sucesso!', 'success')
-    
-    // Call createCompanyAfterLogin to handle token scoping
-    await userStore.createCompanyAfterLogin(newCompany.companyId || newCompany.id)
-    
+
+    if (tokens?.accessToken) {
+      userStore.setToken(tokens.accessToken)
+      ;(userStore as any).syncFromToken?.(tokens.accessToken)
+      userStore.setAuth(true)
+    }
+    if (tokens?.refreshToken) {
+      userStore.setRefreshToken(tokens.refreshToken)
+    }
+
     // Redirect to dashboard
     setTimeout(() => {
       router.push('/dashboard')
@@ -147,7 +153,7 @@ const createCompany = async () => {
   padding: 20px;
 }
 
-.v-card {
+:deep(.v-card) {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
 }

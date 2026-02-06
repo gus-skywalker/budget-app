@@ -1,18 +1,19 @@
 import axiosInterceptor from './axiosInterceptor'
 
-const API_URL = `${import.meta.env.VITE_API_BASE_URL}/nubank`
+const NUBANK_API_URL = `${import.meta.env.VITE_API_BASE_URL}/nubank`
+const NUBANK_BILLS_API_URL = `${import.meta.env.VITE_API_BASE_URL}/nubank-bills`
 
 export default {
   authenticateNubank(data: any): Promise<any> {
-    return axiosInterceptor.post(`${API_URL}/authenticate`, data)
+    return axiosInterceptor.post(`${NUBANK_API_URL}/authenticate`, data)
   },
   requestCode(data: any): Promise<any> {
-    return axiosInterceptor.post(`${API_URL}/request-code`, data)
+    return axiosInterceptor.post(`${NUBANK_API_URL}/request-code`, data)
   },
   exchangeCertificate(data: any): Promise<any> {
-    return axiosInterceptor.post(`${API_URL}/exchange-cert`, data)
+    return axiosInterceptor.post(`${NUBANK_API_URL}/exchange-cert`, data)
   },
   fetchMonthlyNubankBill(month: number, year: number): Promise<any> {
-    return axiosInterceptor.get(`${API_URL}/nubank-bills/getMonthlyExpenses/${year}/${month}`)
+    return axiosInterceptor.get(`${NUBANK_BILLS_API_URL}/getMonthlyExpenses/${year}/${month}`)
   }
 }

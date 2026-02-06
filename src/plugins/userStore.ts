@@ -18,7 +18,8 @@ function decodeJWT(token: string): any {
   try {
     const parts = token.split('.')
     if (parts.length !== 3) {
-      throw new Error('Invalid JWT format')
+      console.error('Error decoding JWT:', new Error('Invalid JWT format'))
+      return null
     }
     const payload = parts[1]
     const base64 = payload.replace(/-/g, '+').replace(/_/g, '/')
@@ -220,10 +221,6 @@ export const useUserStore = defineStore({
       this.currentCompanyId = null
       this.tenantRole = null
       this.saveState()
-    },
-
-    clearTenantContext() {
-      this.clearCurrentCompany()
     },
 
     resetUser() {
@@ -441,19 +438,6 @@ export const useUserStore = defineStore({
         return true
       } catch (error) {
         console.error('Error clearing company selection:', error)
-        throw error
-      }
-    },
-
-    /**
-     * Create company after login and handle token scoping
-     */
-    async createCompanyAfterLogin(companyId: string) {
-      try {
-        await this.selectCompany(companyId)
-        return true
-      } catch (error) {
-        console.error('Error setting up company after creation:', error)
         throw error
       }
     },

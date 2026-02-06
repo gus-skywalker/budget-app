@@ -5,10 +5,10 @@ const API_URL = `${import.meta.env.VITE_API_BASE_URL}/companies`
 export default {
   /**
    * Enviar convite para usuário
-   * POST /companies/:companyId/invite
+   * POST /companies/:companyId/invites
    */
   inviteUser(companyId: string, email: string, role: string): Promise<any> {
-    return axiosInterceptor.post(`${API_URL}/${companyId}/invite`, { email, role }, { timeout: 15000 })
+    return axiosInterceptor.post(`${API_URL}/${companyId}/invites`, { email, role }, { timeout: 15000 })
   },
 
   /**
@@ -29,11 +29,35 @@ export default {
   },
 
   /**
+   * (Opcional) Associar um group/workspace a um convite
+   * POST /companies/:companyId/invites/:inviteId/attach-group
+   */
+  attachGroup(companyId: string, inviteId: string, groupId: number): Promise<any> {
+    return axiosInterceptor.post(
+      `${API_URL}/${companyId}/invites/${inviteId}/attach-group`,
+      { groupId },
+      { timeout: 15000 }
+    )
+  },
+
+  /**
    * Validar token de convite
    * GET /invites/validate/:token
+   *
+   * Contrato: token inexistente => 404 { valid:false }
    */
   async validateInvite(token: string): Promise<any> {
-    const response = await axiosInterceptor.get(`${import.meta.env.VITE_API_BASE_URL}/invites/validate/${token}`, { timeout: 15000 })
-    return response.data
+    try {
+      const response = await axiosInterceptor.get(
+        `${import.meta.env.VITE_API_BASE_URL}/invites/validate/${token}`,
+        { timeout: 15000 }
+      )
+      return response.data
+    } catch (err: any) {
+      if (err?.response?.status === 404) {
+        return { valid: false }
+      }
+      throw err
+    }
   }
 }
