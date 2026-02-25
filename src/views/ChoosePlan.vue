@@ -90,7 +90,8 @@
 
 <script>
 import FAQ from '@/components/FAQ.vue';
-import PaymentService from '@/services/PaymentService'
+import BillingDecisionService from '@/services/BillingDecisionService'
+import { getOrCreateCorrelationId } from '@/utils/correlation'
 import { PLAN_DETAILS } from '@/constants/plans';
 import { useUserStore } from '@/plugins/userStore';
 
@@ -155,7 +156,7 @@ export default {
                     localStorage.setItem('selectedPlan', plan);
                     this.$router.push({
                         name: 'login',
-                        query: { 
+                        query: {
                             redirect: '/choose-plan',
                             plan: plan
                         }
@@ -181,40 +182,53 @@ export default {
                 const userStore = useUserStore();
                 const user = userStore.user;
 
-                if (!user?.id || !user?.email) {
-                    throw new Error('Informações do usuário incompletas');
+                if (!user?.id) {
+                    throw new Error('Usuário não autenticado');
                 }
+
+                const correlationId = getOrCreateCorrelationId('billingCorrelationId')
 
                 const isBusinessPlan = String(plan).startsWith('BUSINESS_');
                 const companyId = userStore.currentCompanyId;
 
-                let customerRequest;
-                if (isBusinessPlan && userStore.isTenantMode && companyId) {
-                    // Assinatura empresarial
-                    customerRequest = {
-                        companyId,
-                        subscriptionTarget: 'COMPANY',
-                        userName: user.username || user.email,
-                        email: user.email,
-                        plan: plan
-                    };
-                } else {
-                    // Assinatura pessoal
-                    customerRequest = {
-                        userId: user.id,
-                        userName: user.username || user.email,
-                        email: user.email,
-                        plan: plan
-                    };
+                // IMPORTANT (ADR-001/004): FE must NOT call payment-api and must NOT send PII.
+                // Decide subject based on plan + tenant context.
+                const subjectType = (isBusinessPlan && userStore.isTenantMode && companyId) ? 'COMPANY' : 'USER'
+                const subjectId = subjectType === 'COMPANY' ? String(companyId) : String(user.id)
+
+                const decisionResp = await BillingDecisionService.decide(
+                    {
+                        plan: String(plan),
+                        actor: String(user.id),
+                        subjectType,
+                        subjectId,
+                        // backward compatible fields
+                        userId: subjectType === 'USER' ? String(user.id) : null,
+                        companyId: subjectType === 'COMPANY' ? String(companyId) : null
+                    },
+                    correlationId
+                )
+
+                const decision = decisionResp.data
+
+                if (decision.action === 'NOOP_ALREADY_PREMIUM') {
+                    this.$router.push({ name: 'dashboard' })
+                    return
                 }
 
-                const response = await PaymentService.createCheckoutSession(customerRequest);
-                
-                if (!response.data?.checkoutUrl) {
-                    throw new Error('URL de checkout não recebida do servidor');
+                if (decision.action !== 'START_SUBSCRIPTION') {
+                    throw new Error('Ação de billing inesperada');
                 }
-                
-                window.location.href = response.data.checkoutUrl;
+
+                this.$router.push({
+                    name: 'checkout',
+                    query: {
+                        plan: String(plan),
+                        subjectType: decision.subjectType,
+                        subjectId: decision.subjectId,
+                        correlationId: decision.correlationId || correlationId
+                    }
+                })
             } catch (error) {
                 this.handleError(error);
             }

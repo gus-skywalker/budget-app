@@ -65,3 +65,4 @@ O backend valida que o usuário do token é membro do grupo com status **ACCEPTE
 
 - Income/Expense (Fase 4): ver `INCOME_EXPENSE_CONTRACT.md`
 - Financial Goals (Fase 3): contrato via Swagger (ver seção "/api/financial-goals")
+- Billing decision (checkout / upgrade): ver `BILLING_DECISION_INTEGRATION.md`

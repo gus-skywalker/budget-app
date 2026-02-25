@@ -18,6 +18,17 @@
                         </div>
 
                         <v-alert
+                            v-if="accepted && !error"
+                            type="info"
+                            class="mt-4"
+                        >
+                            Solicitação enviada com sucesso.
+                            <div v-if="operationStatus" class="mt-2">
+                                Status: {{ operationStatus.status }}
+                            </div>
+                        </v-alert>
+
+                        <v-alert
                             v-if="error"
                             type="error"
                             class="mt-4"
@@ -67,8 +78,10 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useUserStore } from '@/plugins/userStore';
-import PaymentService from '@/services/PaymentService';
 import { PLAN_DETAILS } from '@/constants/plans';
+import { getOrCreateCorrelationId } from '@/utils/correlation'
+import { createMessageId } from '@/utils/messageId'
+import BillingOrchestrationService from '@/services/BillingOrchestrationService'
 
 export default {
     name: 'CheckoutView',
@@ -76,16 +89,43 @@ export default {
         const route = useRoute();
         const router = useRouter();
         const userStore = useUserStore();
-        
+
         const loading = ref(true);
         const error = ref(null);
-        
+        const accepted = ref(false)
+        const operationStatus = ref(null)
+
         const planDetails = computed(() => {
             const planId = route.query.plan;
             return planId && PLAN_DETAILS[planId] ? PLAN_DETAILS[planId] : null;
         });
 
+        const pollOperation = async (messageId) => {
+            const startedAt = Date.now()
+            const timeoutMs = 30000
+            const intervalMs = 1500
+
+            while (Date.now() - startedAt < timeoutMs) {
+                const resp = await BillingOrchestrationService.getOperationStatus(messageId)
+                operationStatus.value = resp.data
+
+                if (resp.data.status === 'FAILED') {
+                    throw new Error(resp.data.lastError || 'Falha ao processar comando de billing')
+                }
+
+                if (resp.data.status === 'DISPATCHED') {
+                    return
+                }
+
+                await new Promise(resolve => setTimeout(resolve, intervalMs))
+            }
+        }
+
         const initializeCheckout = async () => {
+            loading.value = true
+            error.value = null
+            accepted.value = false
+
             try {
                 const plan = route.query.plan;
                 if (!plan) {
@@ -93,28 +133,43 @@ export default {
                 }
 
                 const user = userStore.user;
-                if (!user) {
+                if (!user?.id) {
                     router.push({ name: 'login' });
                     throw new Error('Usuário não autenticado');
                 }
 
-                const customerRequest = {
-                    userId: user.id,
-                    userName: user.name,
-                    email: user.email,
-                    plan: plan
-                };
+                const correlationId = route.query.correlationId ||
+                    getOrCreateCorrelationId('billingCorrelationId')
 
-                const response = await PaymentService.createCheckoutSession(customerRequest);
-                
-                if (!response.data?.checkoutUrl) {
-                    throw new Error('URL de checkout não recebida do servidor');
+                const subjectType = route.query.subjectType
+                const subjectId = route.query.subjectId
+
+                if (!subjectType || !subjectId) {
+                    throw new Error('Parâmetros de billing ausentes (subjectType/subjectId)');
                 }
 
-                // Redireciona para o Stripe Checkout
-                window.location.href = response.data.checkoutUrl;
+                // Idempotency: keep a stable messageId for retries on this page.
+                const storageKey = `billing.start.messageId:${correlationId}:${subjectType}:${subjectId}:${plan}`
+                const existingMessageId = sessionStorage.getItem(storageKey)
+                const messageId = existingMessageId || createMessageId()
+                if (!existingMessageId) sessionStorage.setItem(storageKey, messageId)
+
+                await BillingOrchestrationService.startSubscription({
+                    plan: String(plan),
+                    actor: String(user.id),
+                    subjectType: String(subjectType),
+                    subjectId: String(subjectId),
+                    correlationId: String(correlationId),
+                    messageId
+                })
+
+                accepted.value = true
+
+                // Best-effort polling for dispatcher progress (doesn't assume checkoutUrl exists yet)
+                await pollOperation(messageId)
+
             } catch (err) {
-                error.value = err.response?.data?.error || err.message;
+                error.value = err?.response?.data?.error || err?.message || String(err);
                 console.error('Erro ao iniciar checkout:', err);
             } finally {
                 loading.value = false;
@@ -128,7 +183,9 @@ export default {
         return {
             loading,
             error,
+            accepted,
             planDetails,
+            operationStatus,
             initializeCheckout
         };
     }

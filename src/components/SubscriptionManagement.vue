@@ -7,9 +7,9 @@
         <div class="card-header">
           <h2 class="card-title">
             <v-icon color="#667eea" class="mr-2">mdi-crown</v-icon>
-            {{ $t('subscription_management.current_plan') }}
+            {{ t('subscription_management.current_plan') }}
           </h2>
-          <p class="card-description">{{ $t('subscription_management.title') }}</p>
+          <p class="card-description">{{ t('subscription_management.title') }}</p>
         </div>
         <div class="card-content">
           <div class="subscription-overview">
@@ -49,7 +49,7 @@
             <v-icon color="#667eea" class="mr-2">mdi-swap-horizontal</v-icon>
             Alterar Plano
           </h2>
-          <p class="card-description">{{ $t('subscription_management.change_plan_instructions') }}</p>
+          <p class="card-description">{{ t('subscription_management.change_plan_instructions') }}</p>
         </div>
         <div class="card-content">
           <v-radio-group v-model="selectedPlan" class="plan-radio-group">
@@ -114,7 +114,7 @@
             <template v-else>
               <div class="plan-option" :class="{ 'disabled': currentPlan === 'MONTHLY' }">
                 <v-radio 
-                  :label="$t('subscription_management.plans.monthly')" 
+                  :label="t('subscription_management.plans.monthly')"
                   value="MONTHLY"
                   :disabled="currentPlan === 'MONTHLY'"
                   color="#667eea"
@@ -142,7 +142,7 @@
               <v-divider class="my-4"></v-divider>
               <div class="plan-option" :class="{ 'disabled': currentPlan === 'ANNUAL' }">
                 <v-radio 
-                  :label="$t('subscription_management.plans.annual')" 
+                  :label="t('subscription_management.plans.annual')"
                   value="ANNUAL"
                   :disabled="currentPlan === 'ANNUAL'"
                   color="#667eea"
@@ -181,7 +181,7 @@
               block
             >
               <v-icon left>mdi-swap-horizontal</v-icon>
-              {{ $t('subscription_management.change_to', { plan: selectedPlanText }) }}
+              {{ t('subscription_management.change_to', { plan: selectedPlanText }) }}
             </v-btn>
 
             <!-- Botão para desselecionar e voltar -->
@@ -209,7 +209,7 @@
               block
             >
               <v-icon left>mdi-cog</v-icon>
-              {{ $t('subscription_management.manage_subscription') }}
+              {{ t('subscription_management.manage_subscription') }}
             </v-btn>
           </div>
         </div>
@@ -237,7 +237,7 @@
               class="modern-btn"
             >
               <v-icon left>mdi-close-circle</v-icon>
-              {{ $t('subscription_management.cancel_subscription') }}
+              {{ t('subscription_management.cancel_subscription') }}
             </v-btn>
           </div>
         </div>
@@ -248,8 +248,15 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import PaymentService from '@/services/PaymentService';
+import { useI18n } from 'vue-i18n'
+import BillingDecisionService from '@/services/BillingDecisionService'
+import BillingOrchestrationService from '@/services/BillingOrchestrationService'
+import { getOrCreateCorrelationId } from '@/utils/correlation'
 import { PLAN_DETAILS, formatPlanAmount, type PlanId } from '@/constants/plans';
+import { createMessageId } from '@/utils/messageId'
+
+// Provide typed translation function for template (instead of relying on this.$t)
+const { t } = useI18n()
 
 interface User {
     id?: string;
@@ -259,6 +266,7 @@ interface User {
 }
 
 import { useUserStore } from '@/plugins/userStore';
+
 const props = defineProps<{ user: User }>();
 const userStore = useUserStore();
 const isTenantMode = userStore.isTenantMode;
@@ -267,9 +275,7 @@ const isTenantMode = userStore.isTenantMode;
 type MaybePlanId = PlanId | '';
 
 const currentPlan = ref<MaybePlanId>('');
-const subscriptionId = ref('');
 const subscriptionStatus = ref('');
-const customerId = ref('');
 const selectedPlan = ref<MaybePlanId>(''); // Para atualizar o plano
 
 const plans = PLAN_DETAILS;
@@ -304,10 +310,13 @@ const statusText = computed(() => {
     switch (subscriptionStatus.value) {
         case 'ACTIVE':
             return 'Ativa';
-        case 'TRIALING':
-            return 'Período de Teste';
+        case 'INCOMPLETE':
+            return 'Pagamento pendente';
+        case 'PAST_DUE':
+            return 'Pagamento em atraso';
         case 'CANCELED':
-            return 'Cancelada ao Final do Período';
+            return 'Cancelada';
+        case 'NONE':
         default:
             return 'Inativa';
     }
@@ -317,10 +326,12 @@ const statusColor = computed(() => {
     switch (subscriptionStatus.value) {
         case 'ACTIVE':
             return 'success';
-        case 'TRIALING':
+        case 'INCOMPLETE':
             return 'info';
-        case 'CANCELED':
+        case 'PAST_DUE':
             return 'warning';
+        case 'CANCELED':
+            return 'grey';
         default:
             return 'grey';
     }
@@ -330,35 +341,24 @@ const statusIcon = computed(() => {
     switch (subscriptionStatus.value) {
         case 'ACTIVE':
             return 'mdi-check-circle';
-        case 'TRIALING':
+        case 'INCOMPLETE':
             return 'mdi-clock-outline';
-        case 'CANCELED':
+        case 'PAST_DUE':
             return 'mdi-alert-circle';
+        case 'CANCELED':
+            return 'mdi-close-circle';
         default:
             return 'mdi-close-circle';
     }
 });
 
-// Função para carregar o plano e status da assinatura do usuário
+// TODO: Replace this with a budget-api endpoint, e.g. GET /access or GET /billing/status.
 const loadSubscriptionDetails = async () => {
   try {
-    if (!props.user.id) {
-      console.error('User ID is required to load subscription details');
-      return;
-    }
-    let response;
-    if (isTenantMode && userStore.currentCompanyId) {
-      // Carrega assinatura empresarial
-      response = await PaymentService.loadCompanySubscriptionDetails(userStore.currentCompanyId);
-    } else {
-      // Carrega assinatura pessoal
-      response = await PaymentService.loadSubscriptionDetails(props.user.id);
-    }
-    currentPlan.value = response.data.plan;
-    subscriptionStatus.value = response.data.status;
-    customerId.value = response.data.customerId;
-    subscriptionId.value = response.data.subscriptionId;
-    selectedPlan.value = response.data.plan;
+    // Placeholder: unknown until budget-api exposes a read model for subscription.
+    // Keep UI usable with defaults.
+    currentPlan.value = currentPlan.value || ''
+    selectedPlan.value = selectedPlan.value || currentPlan.value
   } catch (error) {
     console.error('Erro ao carregar detalhes da assinatura:', error);
   }
@@ -366,26 +366,45 @@ const loadSubscriptionDetails = async () => {
 
 const startCheckoutSession = async () => {
   try {
-    let payload;
-    if (isTenantMode && userStore.currentCompanyId) {
-      payload = {
-        companyId: userStore.currentCompanyId,
-        userId: props.user.id,
-        userName: props.user.username || props.user.email,
-        email: props.user.email,
-        plan: selectedPlan.value,
-        subscriptionTarget: 'COMPANY',
-      };
-    } else {
-      payload = {
-        userId: props.user.id,
-        userName: props.user.username || props.user.email,
-        email: props.user.email,
-        plan: selectedPlan.value,
-      };
+    if (!props.user.id) {
+      throw new Error('Usuário não autenticado')
     }
-    const response = await PaymentService.createCheckoutSession(payload);
-    window.location.href = response.data.checkoutUrl;
+
+    if (!isPlanId(selectedPlan.value)) {
+      throw new Error('Plano inválido')
+    }
+
+    const correlationId = getOrCreateCorrelationId('billingCorrelationId')
+
+    const plan = String(selectedPlan.value)
+    const isBusinessPlan = plan.startsWith('BUSINESS_')
+    const companyId = userStore.currentCompanyId
+
+    const subjectType = (isBusinessPlan && isTenantMode && companyId) ? 'COMPANY' : 'USER'
+    const subjectId = subjectType === 'COMPANY' ? String(companyId) : String(props.user.id)
+
+    // ADR-001/004: do not call payment-api; do not send PII.
+    const decisionResp = await BillingDecisionService.decide(
+      {
+        plan,
+        actor: String(props.user.id),
+        subjectType,
+        subjectId,
+        userId: subjectType === 'USER' ? String(props.user.id) : null,
+        companyId: subjectType === 'COMPANY' ? String(companyId) : null
+      },
+      correlationId
+    )
+
+    const decision = decisionResp.data
+
+    if (decision.action === 'NOOP_ALREADY_PREMIUM') {
+      alert('Você já possui acesso premium.')
+      return
+    }
+
+    // Redirect to CheckoutView to start orchestration via budget-api
+    window.location.href = `${window.location.origin}/#/checkout?plan=${encodeURIComponent(plan)}&subjectType=${encodeURIComponent(decision.subjectType)}&subjectId=${encodeURIComponent(decision.subjectId)}&correlationId=${encodeURIComponent(decision.correlationId || correlationId)}`
   } catch (error) {
     console.error('Erro ao iniciar sessão de checkout:', error);
     alert('Não foi possível iniciar o checkout. Tente novamente mais tarde.');
@@ -394,37 +413,72 @@ const startCheckoutSession = async () => {
 
 // Função para abrir o portal de faturamento
 const openBillingPortal = async () => {
-    try {
-        const response = await PaymentService.openBillingPortal({
-            customerId: customerId.value,
-        });
-        window.open(response.data.portalUrl, '_blank');
-    } catch (error) {
-        console.error('Erro ao abrir o portal de faturamento:', error);
-        alert('Não foi possível acessar o portal de faturamento. Tente novamente mais tarde.');
-    }
+  try {
+    if (!props.user.id) throw new Error('Usuário não autenticado')
+
+    const correlationId = getOrCreateCorrelationId('billingCorrelationId')
+
+    // Prefer company if tenant mode has company selected; else user.
+    const subjectType = (isTenantMode && userStore.currentCompanyId) ? 'COMPANY' : 'USER'
+    const subjectId = subjectType === 'COMPANY' ? String(userStore.currentCompanyId) : String(props.user.id)
+
+    const storageKey = `billing.portal.messageId:${correlationId}:${subjectType}:${subjectId}`
+    const existingMessageId = sessionStorage.getItem(storageKey)
+    const messageId = existingMessageId || createMessageId()
+    if (!existingMessageId) sessionStorage.setItem(storageKey, messageId)
+
+    const returnUrl = `${window.location.origin}/#/settings`
+
+    await BillingOrchestrationService.openPortal({
+      actor: String(props.user.id),
+      subjectType: subjectType as any,
+      subjectId,
+      correlationId,
+      messageId,
+      returnUrl
+    })
+
+    alert('Solicitação enviada. Em breve o portal de billing ficará disponível (fluxo assíncrono).')
+  } catch (error) {
+    console.error('Erro ao solicitar portal de faturamento:', error)
+    alert('Não foi possível solicitar o portal de faturamento. Tente novamente mais tarde.')
+  }
 };
 
 // Função para cancelar a assinatura
 const cancelSubscription = async () => {
-    try {
-        const confirmed = confirm('Tem certeza de que deseja cancelar sua assinatura?');
-        if (!confirmed) {
-            return;
-        }
+  try {
+    if (!props.user.id) throw new Error('Usuário não autenticado')
 
-        await PaymentService.cancelSubscription(subscriptionId.value);
+    const confirmed = confirm('Tem certeza de que deseja cancelar sua assinatura?');
+    if (!confirmed) return;
 
-        alert('Sua assinatura foi cancelada com sucesso. Você continuará a ter acesso até o fim do período já pago.');
-        // Recarrega os detalhes da assinatura para atualizar o status na interface
-        await loadSubscriptionDetails();
-    } catch (error) {
-        console.error('Erro ao cancelar a assinatura:', error);
-        alert('Não foi possível cancelar a assinatura. Tente novamente mais tarde.');
-    }
+    const correlationId = getOrCreateCorrelationId('billingCorrelationId')
+
+    const subjectType = (isTenantMode && userStore.currentCompanyId) ? 'COMPANY' : 'USER'
+    const subjectId = subjectType === 'COMPANY' ? String(userStore.currentCompanyId) : String(props.user.id)
+
+    const storageKey = `billing.cancel.messageId:${correlationId}:${subjectType}:${subjectId}`
+    const existingMessageId = sessionStorage.getItem(storageKey)
+    const messageId = existingMessageId || createMessageId()
+    if (!existingMessageId) sessionStorage.setItem(storageKey, messageId)
+
+    await BillingOrchestrationService.cancelSubscription({
+      actor: String(props.user.id),
+      subjectType: subjectType as any,
+      subjectId,
+      correlationId,
+      messageId
+    })
+
+    alert('Solicitação de cancelamento enviada. Você manterá acesso até o final do período vigente (quando aplicável).')
+    await loadSubscriptionDetails()
+  } catch (error) {
+    console.error('Erro ao solicitar cancelamento:', error)
+    alert('Não foi possível cancelar a assinatura. Tente novamente mais tarde.')
+  }
 };
 
-// Carregar detalhes da assinatura ao montar o componente
 onMounted(() => {
     loadSubscriptionDetails();
 });
