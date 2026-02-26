@@ -16,7 +16,6 @@ Source of truth (backend):
 
 Headers:
 - `Authorization: Bearer <jwt>`
-- `X-Correlation-Id: <id>` (preferred)
 
 Body:
 - JSON (see sections below)

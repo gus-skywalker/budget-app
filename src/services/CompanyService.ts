@@ -1,4 +1,5 @@
 import axiosInterceptor from './axiosInterceptor'
+import type { CompanyCreateRequest } from '@/types/CompanyCreateRequest'
 
 const AUTH_COMPANIES_URL = `${import.meta.env.VITE_AUTH_URL}/companies`
 const AUTH_URL = `${import.meta.env.VITE_AUTH_URL}/auth`
@@ -10,28 +11,24 @@ export default {
    * 1) POST budget-api /companies
    * 2) POST auth-api /auth/select-company (retorna novos tokens)
    */
-  async create(companyName: string, description?: string): Promise<any> {
-    const payload: any = { name: companyName }
-    if (description) {
-      payload.description = description
-    }
-
-    // 1) cria no budget-api (source of truth)
-    const created = await axiosInterceptor.post(BUDGET_COMPANIES_URL, payload)
+  async create(payload: CompanyCreateRequest, correlationId?: string): Promise<any> {
+    // Inclui correlationId no payload, não mais no header
+    const enrichedPayload = { ...payload, correlationId };
+    const created = await axiosInterceptor.post(BUDGET_COMPANIES_URL, enrichedPayload);
 
     // tenta inferir companyId do response (contract: created.data.companyId ou created.data.id)
-    const companyId = created?.data?.companyId ?? created?.data?.id
+    const companyId = created?.data?.companyId ?? created?.data?.id;
     if (!companyId) {
-      return created
+      return created;
     }
 
     // 2) seleciona company no auth-api para enriquecer JWT
-    const tokens = await axiosInterceptor.post(`${AUTH_URL}/select-company`, { companyId })
+    const tokens = await axiosInterceptor.post(`${AUTH_URL}/select-company`, { companyId });
 
     return {
       createdCompany: created.data,
       tokens: tokens.data
-    }
+    };
   },
 
   // --- endpoints abaixo ainda vivem no auth-api (compat). Podemos migrar depois.
