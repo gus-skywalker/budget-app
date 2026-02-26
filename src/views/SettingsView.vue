@@ -56,6 +56,9 @@
                 </div>
                 <div class="card-content">
                   <v-form>
+                    <v-alert v-if="isOAuthUser" type="info" variant="tonal" class="mb-4">
+                      Esta conta está vinculada ao Google. Alterações de nome e e-mail devem ser feitas diretamente na sua conta Google.
+                    </v-alert>
                     <v-text-field 
                       v-model="username" 
                       :label="$t('account_management.username_label')"
@@ -64,6 +67,7 @@
                       color="#667eea"
                       prepend-inner-icon="mdi-account"
                       class="modern-input mb-4"
+                      :disabled="isOAuthUser"
                     ></v-text-field>
                     <v-text-field 
                       v-model="email" 
@@ -74,6 +78,7 @@
                       color="#667eea"
                       prepend-inner-icon="mdi-email"
                       class="modern-input mb-4"
+                      :disabled="isOAuthUser"
                     ></v-text-field>
                     <v-file-input 
                       v-model="avatar" 
@@ -83,6 +88,7 @@
                       color="#667eea"
                       prepend-icon="mdi-camera"
                       class="modern-input mb-4"
+                      :disabled="isOAuthUser"
                     ></v-file-input>
                     <v-select 
                       v-model="$i18n.locale" 
@@ -97,6 +103,7 @@
                       class="modern-input mb-4"
                     ></v-select>
                     <v-btn 
+                      v-if="!isOAuthUser"
                       @click="saveProfile"
                       class="modern-btn gradient-btn"
                       size="large"
@@ -125,37 +132,45 @@
                   <p class="card-description">{{ $t('account_management.security_card.password_description') }}</p>
                 </div>
                 <div class="card-content">
-                  <v-form>
-                    <v-text-field 
-                      v-model="currentPassword" 
-                      :label="$t('account_management.current_password_label')"
-                      type="password"
-                      variant="outlined"
-                      density="comfortable"
-                      color="#667eea"
-                      prepend-inner-icon="mdi-lock"
-                      class="modern-input mb-4"
-                    ></v-text-field>
-                    <v-text-field 
-                      v-model="newPassword" 
-                      :label="$t('account_management.new_password_label')"
-                      type="password"
-                      variant="outlined"
-                      density="comfortable"
-                      color="#667eea"
-                      prepend-inner-icon="mdi-lock-reset"
-                      class="modern-input mb-4"
-                    ></v-text-field>
-                    <v-btn 
-                      @click="changePassword"
-                      class="modern-btn gradient-btn mb-4"
-                      size="large"
-                      block
-                    >
-                      <v-icon left>mdi-shield-check</v-icon>
-                      {{ $t('account_management.change_password') }}
-                    </v-btn>
-                  </v-form>
+                  <template v-if="!isOAuthUser">
+                    <v-form>
+                      <v-text-field 
+                        v-model="currentPassword" 
+                        :label="$t('account_management.current_password_label')"
+                        type="password"
+                        variant="outlined"
+                        density="comfortable"
+                        color="#667eea"
+                        prepend-inner-icon="mdi-lock"
+                        class="modern-input mb-4"
+                      ></v-text-field>
+                      <v-text-field 
+                        v-model="newPassword" 
+                        :label="$t('account_management.new_password_label')"
+                        type="password"
+                        variant="outlined"
+                        density="comfortable"
+                        color="#667eea"
+                        prepend-inner-icon="mdi-lock-reset"
+                        class="modern-input mb-4"
+                      ></v-text-field>
+                      <v-btn 
+                        @click="changePassword"
+                        class="modern-btn gradient-btn mb-4"
+                        size="large"
+                        block
+                      >
+                        <v-icon left>mdi-shield-check</v-icon>
+                        {{ $t('account_management.change_password') }}
+                      </v-btn>
+                    </v-form>
+                  </template>
+                  <template v-else>
+                    <v-alert type="info" variant="tonal">
+                      Você está autenticado via Google.<br>
+                      A senha é gerenciada pelo provedor de login.
+                    </v-alert>
+                  </template>
                 </div>
               </div>
 
@@ -397,26 +412,33 @@
                       <div class="integration-description">{{ $t('account_management.integrations.google_description') }}</div>
                     </div>
                     <div class="integration-actions">
-                      <v-btn 
-                        v-if="!isGoogleConnected"
-                        @click="connectGoogle"
-                        variant="outlined"
-                        color="#667eea"
-                        class="modern-btn"
-                      >
-                        <v-icon left>mdi-link-variant</v-icon>
-                        {{ $t('account_management.integrations.connect') }}
-                      </v-btn>
-                      <v-btn 
-                        v-else
-                        @click="disconnectGoogle"
-                        variant="tonal"
-                        color="#d14343"
-                        class="modern-btn"
-                      >
-                        <v-icon left>mdi-link-variant-off</v-icon>
-                        {{ $t('account_management.disconnect_google') }}
-                      </v-btn>
+                      <template v-if="isOAuthUser">
+                        <v-chip color="green" variant="tonal">
+                          Conectado via Google
+                        </v-chip>
+                      </template>
+                      <template v-else>
+                        <v-btn 
+                          v-if="!isGoogleConnected"
+                          @click="connectGoogle"
+                          variant="outlined"
+                          color="#667eea"
+                          class="modern-btn"
+                        >
+                          <v-icon left>mdi-link-variant</v-icon>
+                          {{ $t('account_management.integrations.connect') }}
+                        </v-btn>
+                        <v-btn 
+                          v-else
+                          @click="disconnectGoogle"
+                          variant="tonal"
+                          color="#d14343"
+                          class="modern-btn"
+                        >
+                          <v-icon left>mdi-link-variant-off</v-icon>
+                          {{ $t('account_management.disconnect_google') }}
+                        </v-btn>
+                      </template>
                     </div>
                   </div>
                 </div>
@@ -565,6 +587,10 @@ onMounted(async () => {
 // Cria uma propriedade computada para o objeto `user`
 const user = computed(() => userStore.getUser);
 const hasCompanySelected = computed(() => !!userStore.getCurrentCompanyId);
+// Usuário autenticado via OAuth2 (Google)
+const isOAuthUser = computed(() => {
+  return user.value?.userRoles?.includes('OAUTH2_USER');
+});
 
 // Informações Básicas do Perfil
 const username = ref('')
@@ -575,7 +601,7 @@ const avatar = ref(null)
 const currentPassword = ref('')
 const newPassword = ref('')
 const twoFactorAuth = ref(false)
-const isGoogleConnected = ref(false)
+const isGoogleConnected = computed(() => isOAuthUser.value)
 
 // Preferências
 const notificationEmail = ref(true)
@@ -616,12 +642,13 @@ const changePassword = () => {
   // Lógica para alterar a senha do usuário
 }
 
+// Funções de conexão Google não alteram mais isGoogleConnected, pois agora é computed
 const connectGoogle = () => {
-  isGoogleConnected.value = true
+  // lógica de conexão, se necessário
 }
 
 const disconnectGoogle = () => {
-  isGoogleConnected.value = false
+  // lógica de desconexão, se necessário
 }
 
 const openBankDialog = (bank: string) => {
