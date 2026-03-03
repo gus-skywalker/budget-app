@@ -3,6 +3,7 @@
 import { RouterView } from 'vue-router'
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import SideBar from './components/SideBar.vue'
+import ContextBadge from '@/components/ContextBadge.vue'
 import NotificationPopup from '@/components/NotificationPopup.vue'
 import PrivacyControls from '@/components/compliance/PrivacyControls.vue'
 import { useUserStore } from '@/plugins/userStore'
@@ -81,6 +82,9 @@ onUnmounted(() => {
     <SideBar v-if="isAuthenticated" :notifications="notifications" @accept="accept" @decline="decline"
       @toggle-notifications-popup="toggleNotificationsPopup" />
     <v-main>
+      <div v-if="isAuthenticated" class="global-context-container">
+        <ContextBadge />
+      </div>
       <RouterView />
     </v-main>
     <NotificationPopup :visible="showNotificationsPopup" :notifications="notifications"
@@ -90,7 +94,14 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-/* Remover estilos customizados, deixar o Vuetify gerenciar o layout */
+.global-context-container {
+  position: sticky;
+  top: 8px;
+  z-index: 5;
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 16px 0 16px;
+}
 </style>
 
 <style>
