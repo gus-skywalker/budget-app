@@ -152,6 +152,7 @@
 
 <script>
 import GroupService from '@/services/GroupService'
+import { useUserStore } from '@/plugins/userStore'
 
 export default {
   data() {
@@ -174,16 +175,55 @@ export default {
     this.fetchGroups()
   },
   methods: {
+    normalizeCollection(payload) {
+      if (Array.isArray(payload)) return payload
+      if (!payload || typeof payload !== 'object') return []
+
+      const candidates = [payload.data, payload.items, payload.content, payload.results, payload.list]
+      for (const candidate of candidates) {
+        if (Array.isArray(candidate)) return candidate
+      }
+
+      return [payload]
+    },
+    mapGroup(group) {
+      return {
+        id: group?.id ?? group?.groupId ?? null,
+        name: group?.name ?? group?.groupName ?? `Grupo ${group?.id ?? group?.groupId ?? ''}`.trim(),
+        description: group?.description ?? '',
+        ownerId: group?.ownerId ?? null,
+        createdDate: group?.createdDate ?? null
+      }
+    },
+    mapGroupMember(member) {
+      if (typeof member === 'string') {
+        return {
+          id: member,
+          name: member,
+          email: ''
+        }
+      }
+
+      const id = member?.userId ?? member?.id ?? member?.email ?? ''
+      const name = member?.name ?? member?.email ?? id
+      return {
+        id,
+        name,
+        email: member?.email ?? ''
+      }
+    },
     fetchGroups() {
-      GroupService.fetchGroups()
+      const userStore = useUserStore()
+      const companyId = userStore.getCurrentCompanyId
+      const isTenantMode = userStore.isTenantMode
+      const request = isTenantMode && companyId
+        ? GroupService.fetchGroupsByCompany(companyId)
+        : GroupService.fetchGroups()
+
+      request
         .then((response) => {
-          this.groups = response.data.map((group) => ({
-            id: group.id,
-            name: group.name,
-            description: group.description,
-            ownerId: group.ownerId,
-            createdDate: group.createdDate
-          }))
+          const groups = this.normalizeCollection(response?.data)
+          this.groups = groups.map((group) => this.mapGroup(group)).filter((group) => Boolean(group.id))
         })
         .catch((error) => {
           const errorMsg = error.response?.data?.message || 'Erro ao buscar grupos.'
@@ -193,13 +233,15 @@ export default {
         })
     },
     fetchGroupMembers() {
+      if (!this.selectedGroup) {
+        this.groupMembers = []
+        return
+      }
+
       GroupService.fetchGroupMembers(this.selectedGroup)
         .then((response) => {
-          this.groupMembers = response.data.map((member) => ({
-            id: member.userId,
-            name: member.name,
-            email: member.email
-          }))
+          const members = this.normalizeCollection(response?.data)
+          this.groupMembers = members.map((member) => this.mapGroupMember(member)).filter((member) => Boolean(member.id))
         })
         .catch((error) => {
           const errorMsg = error.response?.data?.message || 'Erro ao buscar membros do grupo.'
@@ -211,7 +253,10 @@ export default {
     createGroup() {
       GroupService.createGroup(this.newGroup)
         .then((response) => {
-          this.groups.push(response.data)
+          const created = this.mapGroup(response?.data || {})
+          if (created.id) {
+            this.groups.push(created)
+          }
           this.newGroup = { name: '', description: '' }
           this.successMessage = 'Grupo criado com sucesso!'
           this.successSnackbar = true

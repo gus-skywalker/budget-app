@@ -20,8 +20,20 @@ export default {
     return axios.post(`${API_URL}/reset-password`, { token, newPassword })
   },
 
-  userTokenInfo(): Promise<any> {
+  changePassword(currentPassword: string, newPassword: string): Promise<any> {
+    return axiosInterceptor.post(`${API_URL}/change-password`, { currentPassword, newPassword })
+  },
+
+  getUserInfo(): Promise<any> {
     return axiosInterceptor.get(`${API_URL}/userinfo`)
+  },
+
+  updateUser(userId: string, payload: { username?: string; email?: string; language?: string }): Promise<any> {
+    return axiosInterceptor.put(`${API_URL}/${userId}`, payload)
+  },
+
+  userTokenInfo(): Promise<any> {
+    return this.getUserInfo()
   },
 
   refreshToken(refreshToken: string): Promise<any> {

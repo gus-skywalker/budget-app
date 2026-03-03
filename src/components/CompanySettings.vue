@@ -1,14 +1,95 @@
 <template>
   <div class="company-settings">
-    <v-alert
-      v-if="!currentCompanyId"
-      type="info"
-      variant="tonal"
-      border="start"
-      class="mb-4"
-    >
-      Você ainda não selecionou uma empresa. Use o menu lateral para criar ou escolher uma.
-    </v-alert>
+    <template v-if="!currentCompanyId">
+      <v-row dense>
+        <v-col cols="12" md="7" lg="6">
+          <v-card class="modern-card">
+            <div class="card-header">
+              <h3 class="card-title">
+                <v-icon color="primary" class="mr-2">mdi-office-building-plus</v-icon>
+                Criar nova empresa
+              </h3>
+              <p class="card-description">
+                Crie sua empresa para ativar o contexto B2B, convidar membros e gerenciar permissões.
+              </p>
+            </div>
+            <v-card-text>
+              <v-form ref="createCompanyFormRef" @submit.prevent="createCompany">
+                <v-text-field
+                  v-model="createCompanyForm.name"
+                  label="Nome da empresa"
+                  variant="outlined"
+                  density="comfortable"
+                  prepend-inner-icon="mdi-office-building"
+                  :rules="[requiredRule]"
+                  :disabled="creatingCompany"
+                  class="mb-4"
+                />
+                <v-text-field
+                  v-model="createCompanyForm.legalDocument"
+                  label="Documento legal (CNPJ/VAT/EIN)"
+                  variant="outlined"
+                  density="comfortable"
+                  prepend-inner-icon="mdi-card-account-details"
+                  :rules="[requiredRule]"
+                  :disabled="creatingCompany"
+                  class="mb-4"
+                />
+                <v-select
+                  v-model="createCompanyForm.country"
+                  :items="countryOptions"
+                  item-title="label"
+                  item-value="value"
+                  label="País da empresa"
+                  variant="outlined"
+                  density="comfortable"
+                  prepend-inner-icon="mdi-earth"
+                  :rules="[requiredRule]"
+                  :disabled="creatingCompany"
+                  class="mb-4"
+                />
+                <v-textarea
+                  v-model="createCompanyForm.description"
+                  label="Descrição"
+                  variant="outlined"
+                  density="comfortable"
+                  auto-grow
+                  rows="3"
+                  prepend-inner-icon="mdi-text"
+                  :disabled="creatingCompany"
+                />
+                <v-btn
+                  type="submit"
+                  color="primary"
+                  class="mt-4"
+                  block
+                  :loading="creatingCompany"
+                  :disabled="creatingCompany"
+                >
+                  <v-icon left>mdi-check-circle</v-icon>
+                  Criar empresa
+                </v-btn>
+              </v-form>
+            </v-card-text>
+          </v-card>
+        </v-col>
+
+        <v-col cols="12" md="5" lg="4">
+          <v-alert type="info" variant="tonal" border="start" class="mb-4">
+            Você está em modo pessoal. Crie uma empresa ou selecione uma existente para gerenciar dados da organização.
+          </v-alert>
+          <v-btn
+            color="primary"
+            variant="tonal"
+            block
+            @click="goToSelectCompany"
+          >
+            <v-icon left>mdi-swap-horizontal</v-icon>
+            Selecionar empresa existente
+          </v-btn>
+        </v-col>
+      </v-row>
+    </template>
 
     <template v-else>
       <v-alert
@@ -271,6 +352,8 @@ import CompanyService from '@/services/CompanyService'
 import InviteService from '@/services/InviteService'
 import { useUserStore } from '@/plugins/userStore'
 import { getFreePlanLimitType, parseApiError } from '@/utils/errorHandler'
+import { getOrCreateCorrelationId } from '@/utils/correlation'
+import { createMessageId } from '@/utils/messageId'
 
 const userStore = useUserStore()
 const router = useRouter()
@@ -282,6 +365,14 @@ const companyFormRef = ref()
 const companyForm = ref({ companyName: '', description: '' })
 const formLoading = ref(false)
 const savingCompany = ref(false)
+const createCompanyFormRef = ref()
+const createCompanyForm = ref({
+  name: '',
+  legalDocument: '',
+  country: 'BR',
+  description: ''
+})
+const creatingCompany = ref(false)
 
 const companyNameForDelete = ref('')
 
@@ -307,6 +398,14 @@ const roleOptions = [
   { label: 'Somente leitura', value: 'ROLE_VIEWER' }
 ]
 
+const countryOptions = [
+  { label: 'Brasil (BR)', value: 'BR' },
+  { label: 'Estados Unidos (US)', value: 'US' },
+  { label: 'Portugal (PT)', value: 'PT' },
+  { label: 'Espanha (ES)', value: 'ES' },
+  { label: 'França (FR)', value: 'FR' }
+]
+
 const requiredRule = (v: string) => !!v || 'Campo obrigatório'
 const emailRule = (v: string) => /.+@.+\..+/.test(v) || 'E-mail inválido'
 
@@ -319,8 +418,13 @@ const goToUpgrade = () => {
   router.push({ name: 'choose-plan', query: { plan: 'BUSINESS_ANNUAL' } })
 }
 
+const goToSelectCompany = () => {
+  router.push({ name: 'select-company', query: { redirect: '/settings' } })
+}
+
 const resetCompanyUiState = () => {
   companyForm.value = { companyName: '', description: '' }
+  createCompanyForm.value = { name: '', legalDocument: '', country: 'BR', description: '' }
   companyNameForDelete.value = ''
   members.value = []
   invites.value = []
@@ -332,7 +436,7 @@ const loadCompanyDetails = async () => {
   formLoading.value = true
   try {
     const companyRes = await CompanyService.getDetails(currentCompanyId.value)
-    const name = companyRes?.data?.companyName || ''
+    const name = companyRes?.data?.companyName || companyRes?.data?.name || ''
     const description = companyRes?.data?.description || ''
     companyForm.value.companyName = name
     companyForm.value.description = description
@@ -367,6 +471,72 @@ const loadMembersAndInvites = async () => {
     }
   } catch (error) {
     showSnackbar(parseApiError(error), 'error')
+  }
+}
+
+const createCompany = async () => {
+  const form = createCompanyFormRef.value as any
+  if (form) {
+    const result = await form.validate()
+    const valid = typeof result === 'boolean' ? result : result?.valid
+    if (!valid) return
+  }
+
+  creatingCompany.value = true
+  try {
+    const correlationId = getOrCreateCorrelationId('companyCorrelationId')
+    const messageKey = `settings.createCompany.messageId:${createCompanyForm.value.name}:${createCompanyForm.value.country}`
+    let messageId = sessionStorage.getItem(messageKey)
+    if (!messageId) {
+      messageId = createMessageId()
+      sessionStorage.setItem(messageKey, messageId)
+    }
+
+    const payload = {
+      name: createCompanyForm.value.name.trim(),
+      description: createCompanyForm.value.description?.trim() || '',
+      legalDocument: createCompanyForm.value.legalDocument.trim(),
+      country: createCompanyForm.value.country,
+      messageId
+    }
+
+    const result = await CompanyService.create(payload as any, correlationId)
+    const createdCompany = result?.createdCompany
+    const companyId = createdCompany?.companyId ?? createdCompany?.id
+    if (!companyId) {
+      throw new Error('Resposta de criação sem companyId')
+    }
+
+    await userStore.selectCompany(String(companyId))
+
+    try {
+      const companiesRes = await CompanyService.getAll()
+      const companies = Array.isArray(companiesRes?.data) ? companiesRes.data : []
+      userStore.setCompanies(companies)
+      await userStore.hydrateCompanyDetailsFromBudget(
+        companies.map((company: any) => String(company.companyId)).filter(Boolean)
+      )
+    } catch {
+      // best effort: tenant já selecionada
+    }
+
+    sessionStorage.removeItem(messageKey)
+    createCompanyForm.value = {
+      name: '',
+      legalDocument: '',
+      country: 'BR',
+      description: ''
+    }
+    showSnackbar('Empresa criada com sucesso.')
+  } catch (error) {
+    showSnackbar(parseApiError(error), 'error')
+    const limitType = getFreePlanLimitType(error)
+    if (limitType === 'company') {
+      upgradeMessage.value = 'Você atingiu o limite do plano gratuito para empresas.'
+      upgradeSnackbar.value = true
+    }
+  } finally {
+    creatingCompany.value = false
   }
 }
 

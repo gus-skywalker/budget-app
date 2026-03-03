@@ -26,7 +26,7 @@
           <v-icon class="tab-icon">mdi-cog</v-icon>
           <span class="tab-text">{{ $t('account_management.tabs.preferences') }}</span>
         </v-tab>
-        <v-tab v-if="hasCompanySelected" value="company" class="settings-tab">
+        <v-tab value="company" class="settings-tab">
           <v-icon class="tab-icon">mdi-office-building-cog</v-icon>
           <span class="tab-text">Configurar empresa</span>
         </v-tab>
@@ -56,6 +56,14 @@
                 </div>
                 <div class="card-content">
                   <v-form>
+                    <v-alert
+                      v-if="profileFeedback.message"
+                      :type="profileFeedback.type"
+                      variant="tonal"
+                      class="mb-4"
+                    >
+                      {{ profileFeedback.message }}
+                    </v-alert>
                     <v-alert v-if="isOAuthUser" type="info" variant="tonal" class="mb-4">
                       Esta conta está vinculada ao Google. Alterações de nome e e-mail devem ser feitas diretamente na sua conta Google.
                     </v-alert>
@@ -68,6 +76,7 @@
                       prepend-inner-icon="mdi-account"
                       class="modern-input mb-4"
                       :disabled="isOAuthUser"
+                      :loading="isLoadingProfile"
                     ></v-text-field>
                     <v-text-field 
                       v-model="email" 
@@ -79,6 +88,7 @@
                       prepend-inner-icon="mdi-email"
                       class="modern-input mb-4"
                       :disabled="isOAuthUser"
+                      :loading="isLoadingProfile"
                     ></v-text-field>
                     <v-file-input 
                       v-model="avatar" 
@@ -89,9 +99,10 @@
                       prepend-icon="mdi-camera"
                       class="modern-input mb-4"
                       :disabled="isOAuthUser"
+                      :loading="isLoadingProfile"
                     ></v-file-input>
                     <v-select 
-                      v-model="$i18n.locale" 
+                      v-model="locale" 
                       :items="availableLanguages" 
                       item-title="text" 
                       item-value="value"
@@ -101,12 +112,16 @@
                       color="#667eea"
                       prepend-inner-icon="mdi-translate"
                       class="modern-input mb-4"
+                      :disabled="isOAuthUser"
+                      :loading="isLoadingProfile"
                     ></v-select>
                     <v-btn 
                       v-if="!isOAuthUser"
                       @click="saveProfile"
                       class="modern-btn gradient-btn"
                       size="large"
+                      :loading="isSavingProfile"
+                      :disabled="isSavingProfile || isLoadingProfile"
                       block
                     >
                       <v-icon left>mdi-content-save</v-icon>
@@ -134,6 +149,14 @@
                 <div class="card-content">
                   <template v-if="!isOAuthUser">
                     <v-form>
+                      <v-alert
+                        v-if="passwordFeedback.message"
+                        :type="passwordFeedback.type"
+                        variant="tonal"
+                        class="mb-4"
+                      >
+                        {{ passwordFeedback.message }}
+                      </v-alert>
                       <v-text-field 
                         v-model="currentPassword" 
                         :label="$t('account_management.current_password_label')"
@@ -154,11 +177,23 @@
                         prepend-inner-icon="mdi-lock-reset"
                         class="modern-input mb-4"
                       ></v-text-field>
+                      <v-text-field
+                        v-model="confirmNewPassword"
+                        :label="$t('account_management.confirm_new_password_label')"
+                        type="password"
+                        variant="outlined"
+                        density="comfortable"
+                        color="#667eea"
+                        prepend-inner-icon="mdi-lock-check"
+                        class="modern-input mb-4"
+                      ></v-text-field>
                       <v-btn 
                         @click="changePassword"
                         class="modern-btn gradient-btn mb-4"
                         size="large"
                         block
+                        :loading="isChangingPassword"
+                        :disabled="isChangingPassword"
                       >
                         <v-icon left>mdi-shield-check</v-icon>
                         {{ $t('account_management.change_password') }}
@@ -301,7 +336,7 @@
         </v-window-item>
 
         <!-- Tab: Empresa -->
-        <v-window-item v-if="hasCompanySelected" value="company">
+        <v-window-item value="company">
           <CompanySettings />
         </v-window-item>
 
@@ -551,22 +586,25 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useTheme } from 'vuetify';
 import { useBankStore } from '@/plugins/bankStore';
 import { useUserStore } from '@/plugins/userStore';
 import SubscriptionManagement from '@/components/SubscriptionManagement.vue';
 import CompanySettings from '@/components/CompanySettings.vue';
 import BankService from '@/services/BankService';
+import AuthService from '@/services/AuthService';
 import NotificationService, { type UserSettings } from '@/services/NotificationService';
 
 const bankStore = useBankStore();
 const userStore = useUserStore();
 const theme = useTheme();
+const { t, locale } = useI18n();
 
 // Tab ativa
 const activeTab = ref('profile')
 
-onMounted(async () => {
+const loadAlertSettings = async () => {
   try {
     const response = await NotificationService.getAlertSettings();
 
@@ -582,11 +620,10 @@ onMounted(async () => {
   } catch (error) {
     console.error('Erro ao carregar configurações:', error);
   }
-});
+};
 
 // Cria uma propriedade computada para o objeto `user`
 const user = computed(() => userStore.getUser);
-const hasCompanySelected = computed(() => !!userStore.getCurrentCompanyId);
 // Usuário autenticado via OAuth2 (Google)
 const isOAuthUser = computed(() => {
   return user.value?.userRoles?.includes('OAUTH2_USER');
@@ -596,10 +633,23 @@ const isOAuthUser = computed(() => {
 const username = ref('')
 const email = ref('')
 const avatar = ref(null)
+const profileUserId = ref('')
+const isLoadingProfile = ref(false)
+const isSavingProfile = ref(false)
+const profileFeedback = ref<{ type: 'success' | 'error'; message: string }>({
+  type: 'success',
+  message: ''
+})
 
 // Segurança
 const currentPassword = ref('')
 const newPassword = ref('')
+const confirmNewPassword = ref('')
+const isChangingPassword = ref(false)
+const passwordFeedback = ref<{ type: 'success' | 'error'; message: string }>({
+  type: 'success',
+  message: ''
+})
 const twoFactorAuth = ref(false)
 const isGoogleConnected = computed(() => isOAuthUser.value)
 
@@ -631,15 +681,205 @@ const sessionId = ref('')
 const availableLanguages = [
   { text: 'English', value: 'en' },
   { text: 'Português', value: 'pt' },
+  { text: 'Français', value: 'fr' }
 ];
 
-// Funções para manipular as ações do usuário
-const saveProfile = () => {
-  // Lógica para salvar as mudanças do perfil
+const toApiLanguage = (value: string | null | undefined): string => {
+  const normalized = String(value || '').toLowerCase()
+  if (normalized === 'en') return 'EN'
+  if (normalized === 'fr') return 'FR'
+  return 'PT'
 }
 
-const changePassword = () => {
-  // Lógica para alterar a senha do usuário
+const toUiLocale = (value: string | null | undefined): string => {
+  const normalized = String(value || '').toLowerCase()
+  if (['pt', 'en', 'fr'].includes(normalized)) return normalized
+  return 'pt'
+}
+
+const normalizeOptionalText = (value: unknown): string | null => {
+  const raw = String(value ?? '').trim()
+  if (!raw) return null
+  if (raw.toLowerCase() === 'n/a') return null
+  if (raw.toLowerCase() === 'null') return null
+  if (raw.toLowerCase() === 'undefined') return null
+  return raw
+}
+
+const loadUserProfile = async () => {
+  profileFeedback.value.message = ''
+  isLoadingProfile.value = true
+
+  if (userStore.getToken) {
+    userStore.syncFromToken(userStore.getToken)
+  }
+
+  const fallbackUser = userStore.getUser
+  profileUserId.value = normalizeOptionalText(fallbackUser?.id) || ''
+  username.value = normalizeOptionalText(fallbackUser?.username) || ''
+  email.value = normalizeOptionalText(fallbackUser?.email) || ''
+  if (normalizeOptionalText(fallbackUser?.language)) {
+    locale.value = toUiLocale(fallbackUser.language)
+  }
+
+  try {
+    const response = await AuthService.getUserInfo()
+    const payload = response?.data || {}
+
+    profileUserId.value =
+      normalizeOptionalText(payload.id) ||
+      normalizeOptionalText(fallbackUser?.id) ||
+      ''
+    username.value =
+      normalizeOptionalText(payload.username) ||
+      normalizeOptionalText(fallbackUser?.username) ||
+      ''
+    email.value =
+      normalizeOptionalText(payload.email) ||
+      normalizeOptionalText(fallbackUser?.email) ||
+      ''
+
+    const apiLanguage = normalizeOptionalText(payload.language) || normalizeOptionalText(fallbackUser?.language) || 'PT'
+    const uiLocale = toUiLocale(apiLanguage)
+    locale.value = uiLocale
+    userStore.setLanguage(apiLanguage)
+
+    userStore.setUser({
+      id: profileUserId.value,
+      username: username.value,
+      email: email.value,
+      language: apiLanguage,
+      avatar: payload.pictureUrl || fallbackUser?.avatar
+    })
+  } catch (error: any) {
+    const backendMessage =
+      error?.response?.data?.message ||
+      (typeof error?.response?.data === 'string' ? error.response.data : null)
+    profileFeedback.value = {
+      type: 'error',
+      message: backendMessage || t('account_management.profile_load_error')
+    }
+  } finally {
+    isLoadingProfile.value = false
+  }
+}
+
+onMounted(async () => {
+  await Promise.all([
+    loadAlertSettings(),
+    loadUserProfile()
+  ])
+});
+
+// Funções para manipular as ações do usuário
+const saveProfile = async () => {
+  profileFeedback.value.message = ''
+
+  if (!profileUserId.value || !username.value.trim() || !email.value.trim()) {
+    profileFeedback.value = {
+      type: 'error',
+      message: t('account_management.profile_required_fields')
+    }
+    return
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(email.value.trim())) {
+    profileFeedback.value = {
+      type: 'error',
+      message: t('account_management.profile_invalid_email')
+    }
+    return
+  }
+
+  const payload = {
+    username: username.value.trim(),
+    email: email.value.trim(),
+    language: toApiLanguage(locale.value)
+  }
+
+  isSavingProfile.value = true
+  try {
+    const response = await AuthService.updateUser(profileUserId.value, payload)
+    const updated = response?.data || {}
+
+    const updatedLanguage = String(updated.language || payload.language || 'PT')
+    userStore.setLanguage(updatedLanguage)
+    locale.value = toUiLocale(updatedLanguage)
+
+    userStore.setUser({
+      id: profileUserId.value,
+      username: updated.username || payload.username,
+      email: updated.email || payload.email,
+      language: updatedLanguage
+    })
+
+    profileFeedback.value = {
+      type: 'success',
+      message: t('account_management.profile_save_success')
+    }
+  } catch (error: any) {
+    const backendMessage =
+      error?.response?.data?.message ||
+      (typeof error?.response?.data === 'string' ? error.response.data : null)
+    profileFeedback.value = {
+      type: 'error',
+      message: backendMessage || t('account_management.profile_save_error')
+    }
+  } finally {
+    isSavingProfile.value = false
+  }
+}
+
+const changePassword = async () => {
+  passwordFeedback.value.message = ''
+
+  if (!currentPassword.value || !newPassword.value || !confirmNewPassword.value) {
+    passwordFeedback.value = {
+      type: 'error',
+      message: t('account_management.password_required_fields')
+    }
+    return
+  }
+
+  if (newPassword.value !== confirmNewPassword.value) {
+    passwordFeedback.value = {
+      type: 'error',
+      message: t('account_management.password_mismatch')
+    }
+    return
+  }
+
+  if (currentPassword.value === newPassword.value) {
+    passwordFeedback.value = {
+      type: 'error',
+      message: t('account_management.password_same_as_current')
+    }
+    return
+  }
+
+  isChangingPassword.value = true
+  try {
+    await AuthService.changePassword(currentPassword.value, newPassword.value)
+    currentPassword.value = ''
+    newPassword.value = ''
+    confirmNewPassword.value = ''
+    passwordFeedback.value = {
+      type: 'success',
+      message: t('account_management.password_change_success')
+    }
+  } catch (error: any) {
+    const backendMessage =
+      error?.response?.data?.message ||
+      (typeof error?.response?.data === 'string' ? error.response.data : null)
+
+    passwordFeedback.value = {
+      type: 'error',
+      message: backendMessage || t('account_management.password_change_error')
+    }
+  } finally {
+    isChangingPassword.value = false
+  }
 }
 
 // Funções de conexão Google não alteram mais isGoogleConnected, pois agora é computed

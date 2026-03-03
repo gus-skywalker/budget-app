@@ -611,6 +611,17 @@ export default {
     }
   },
   methods: {
+    normalizeCollection(payload) {
+      if (Array.isArray(payload)) return payload
+      if (!payload || typeof payload !== 'object') return []
+
+      const candidates = [payload.data, payload.items, payload.content, payload.results, payload.list]
+      for (const candidate of candidates) {
+        if (Array.isArray(candidate)) return candidate
+      }
+
+      return [payload]
+    },
     normalizeDate(value) {
       if (!value) {
         return null
@@ -802,16 +813,25 @@ export default {
         })
     },
     fetchGroups() {
-      GroupService.fetchGroups()
+      const userStore = useUserStore()
+      const companyId = userStore.getCurrentCompanyId
+      const isTenantMode = userStore.isTenantMode
+      const request = isTenantMode && companyId
+        ? GroupService.fetchGroupsByCompany(companyId)
+        : GroupService.fetchGroups()
+
+      request
         .then((response) => {
-          console.log(response.data)
-          this.groups = response.data.map((group) => ({
-            id: group.id,
-            name: group.name,
-            description: group.description,
-            ownerId: group.ownerId,
-            createdDate: group.createdDate
-          }))
+          const groups = this.normalizeCollection(response?.data)
+          this.groups = groups
+            .map((group) => ({
+              id: group?.id ?? group?.groupId ?? null,
+              name: group?.name ?? group?.groupName ?? `Grupo ${group?.id ?? group?.groupId ?? ''}`.trim(),
+              description: group?.description ?? '',
+              ownerId: group?.ownerId ?? null,
+              createdDate: group?.createdDate ?? null
+            }))
+            .filter((group) => Boolean(group.id))
         })
         .catch((error) => {
           console.error('Erro ao buscar grupos:', error)
@@ -831,12 +851,21 @@ export default {
         this.isLoadingMembers = true
         GroupService.fetchGroupMembers(this.selectedGroup)
           .then((response) => {
-            console.log(response.data)
-            this.users = response.data.map((member) => ({
-              id: member.userId,
-              name: member.name,
-              email: member.email
-            }))
+            const members = this.normalizeCollection(response?.data)
+            this.users = members
+              .map((member) => {
+                if (typeof member === 'string') {
+                  return { id: member, name: member, email: '' }
+                }
+                const id = member?.userId ?? member?.id ?? member?.email ?? null
+                if (!id) return null
+                return {
+                  id,
+                  name: member?.name ?? member?.email ?? id,
+                  email: member?.email ?? ''
+                }
+              })
+              .filter((member) => Boolean(member))
           })
           .catch((error) => {
             console.error('Erro ao buscar membros do grupo:', error)
@@ -855,7 +884,7 @@ export default {
         this.isLoadingIncomes = true;
         IncomeService.fetchMonthlyIncomes(monthNumber, yearNumber)
           .then((response) => {
-            this.monthlyIncomes = response.data;
+            this.monthlyIncomes = this.normalizeCollection(response?.data);
           })
           .catch((error) => {
             console.error('Error fetching monthly incomes:', error);
@@ -1162,7 +1191,7 @@ export default {
         this.isLoadingExpenses = true;
         ExpenseService.fetchMonthlyExpenses(monthNumber, yearNumber)
           .then((response) => {
-            this.monthlyExpenses = response.data;
+            this.monthlyExpenses = this.normalizeCollection(response?.data);
           })
           .catch((error) => {
             console.error('Error fetching monthly expenses:', error);
