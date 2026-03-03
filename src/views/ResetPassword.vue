@@ -40,6 +40,7 @@
 
 <script>
 import AppFooter from '@/components/Footer.vue';
+import AuthService from '@/services/AuthService';
 
 export default {
     name: 'ResetPasswordPage',
@@ -65,11 +66,8 @@ export default {
             }
 
             // Chamada à API para redefinir a senha
-            this.$http
-                .post('/auth/reset-password', {
-                    token: this.token,        // Token capturado da URL
-                    newPassword: this.password,
-                })
+            AuthService
+                .resetPassword(this.token, this.password)
                 .then(() => {
                     this.message = 'Sua senha foi redefinida com sucesso. Você já pode fazer login.';
                 })

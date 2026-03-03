@@ -235,9 +235,9 @@
 import { ref, onMounted } from 'vue'
 import { useUserStore } from '@/plugins/userStore'
 import { useRouter, useRoute } from 'vue-router'
-import axios from 'axios'
 import CompanySelector from '@/components/CompanySelector.vue'
 import { updateI18nLocale } from '@/i18n'
+import AuthService from '@/services/AuthService'
 
 const router = useRouter()
 const route = useRoute()
@@ -252,7 +252,6 @@ const isLoading = ref(false)
 const showPassword = ref(false)
 const showConfirmPassword = ref(false)
 const emailValid = ref(true)
-const authUrl = import.meta.env.VITE_AUTH_URL
 const showCompanySelector = ref(false)
 const userCompanies = ref([])
 
@@ -268,14 +267,20 @@ const userLogin = async () => {
     isLoading.value = true
     const store = useUserStore()
 
-    const res = await axios.post(`${authUrl}/auth/signin`, userData.value)
+    const res = await AuthService.signIn(userData.value)
     if (res.data) {
       console.log('Login response:', res.data)
       
       const result = store.handleSigninResponse(res.data)
       updateI18nLocale(res.data.language || 'PT')
 
-      const companies = result.companies || []
+      try {
+        await store.hydrateCompanyDetailsFromBudget()
+      } catch (hydrateError) {
+        console.warn('Não foi possível hidratar detalhes das empresas no login.', hydrateError)
+      }
+
+      const companies = store.getCompanies || result.companies || []
       userCompanies.value = companies
 
       const redirectTarget = (route.query.redirect && String(route.query.redirect)) || '/dashboard'
@@ -523,8 +528,7 @@ const userSignup = async () => {
     };
     
     // Monta a URL com parâmetros apropriados
-    const signupUrl = `${authUrl}/auth/signup`;
-    const res = await axios.post(signupUrl, requestData);
+    const res = await AuthService.signUp(requestData);
 
     if (res.status === 201) {
       signupSuccess.value = 'Conta criada com sucesso! Você já pode fazer login.';
@@ -562,7 +566,7 @@ const toggleForm = (isSignup) => {
 }
 
 const loginWithGoogle = () => {
-  window.location.href = `${authUrl}/oauth2/authorization/google`
+  window.location.href = AuthService.getOAuthAuthorizationUrl('google')
 }
 
 const goToForgotPassword = () => {

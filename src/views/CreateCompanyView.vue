@@ -93,6 +93,20 @@
     >
       {{ snackbarMessage }}
     </v-snackbar>
+
+    <v-snackbar
+      v-model="upgradeSnackbar"
+      color="warning"
+      :timeout="8000"
+      location="top"
+    >
+      {{ upgradeMessage }}
+      <template #actions>
+        <v-btn variant="text" color="white" @click="goToUpgrade">
+          Ver planos Premium
+        </v-btn>
+      </template>
+    </v-snackbar>
   </div>
 </template>
 
@@ -128,7 +142,7 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '@/plugins/userStore'
 import CompanyService from '@/services/CompanyService'
 import { getOrCreateCorrelationId } from '@/utils/correlation'
-import { parseApiError } from '@/utils/errorHandler'
+import { getFreePlanLimitType, parseApiError } from '@/utils/errorHandler'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -144,6 +158,8 @@ const legalDocument = ref('')
 const snackbar = ref(false)
 const snackbarMessage = ref('')
 const snackbarColor = ref('success')
+const upgradeSnackbar = ref(false)
+const upgradeMessage = ref('')
 
 
 // Validation rules
@@ -238,6 +254,10 @@ const showSnackbar = (message: string, color: string = 'success') => {
   snackbar.value = true
 }
 
+const goToUpgrade = () => {
+  upgradeSnackbar.value = false
+  router.push({ name: 'choose-plan', query: { plan: 'BUSINESS_ANNUAL' } })
+}
 const createCompany = async () => {
   if (!form.value?.validate()) return
 
@@ -262,22 +282,43 @@ const createCompany = async () => {
       messageId
     }
 
-    // Create company (budget-api) + enrich token (auth-api)
+    // 1) Create company in budget-api
     const result = await CompanyService.create(payload, correlationId)
-    const tokens = result?.tokens
+
+    const createdCompany = result?.createdCompany
+    const companyId = createdCompany?.companyId ?? createdCompany?.id
+    if (!companyId) {
+      throw new Error('Resposta de criação sem companyId')
+    }
+
+    // 2) Select tenant in auth-api (with retry/fallback handled by CompanyService.selectCompany)
+    try {
+      await userStore.selectCompany(String(companyId))
+    } catch (selectError) {
+      console.warn('Company criada, mas seleção automática falhou. Redirecionando para select-company.', selectError)
+      showSnackbar('Empresa criada. Selecione a empresa para continuar.', 'warning')
+      sessionStorage.removeItem(messageKey)
+      setTimeout(() => {
+        router.push({ name: 'select-company', query: { redirect: '/dashboard' } })
+      }, 1200)
+      return
+    }
+
+    // 3) Refresh company list in store immediately (avoids requiring logout/login)
+    try {
+      const companiesRes = await CompanyService.getAll()
+      const companies = Array.isArray(companiesRes?.data) ? companiesRes.data : []
+      if (companies.length) {
+        userStore.setCompanies(companies)
+        await userStore.hydrateCompanyDetailsFromBudget(companies.map((company: any) => String(company.companyId)).filter(Boolean))
+      }
+    } catch (e) {
+      console.warn('Não foi possível atualizar lista de empresas imediatamente.', e)
+    }
 
     showSnackbar('Empresa criada com sucesso!', 'success')
     // Limpa o messageId da sessão após sucesso
     sessionStorage.removeItem(messageKey)
-
-    if (tokens?.accessToken) {
-      userStore.setToken(tokens.accessToken)
-      ;(userStore as any).syncFromToken?.(tokens.accessToken)
-      userStore.setAuth(true)
-    }
-    if (tokens?.refreshToken) {
-      userStore.setRefreshToken(tokens.refreshToken)
-    }
 
     // Redirect to dashboard
     setTimeout(() => {
@@ -288,6 +329,11 @@ const createCompany = async () => {
     console.error('Error creating company:', error)
     const errorMessage = parseApiError(error)
     showSnackbar(errorMessage, 'error')
+    const limitType = getFreePlanLimitType(error)
+    if (limitType === 'company') {
+      upgradeMessage.value = 'Você atingiu o limite do plano gratuito para empresas.'
+      upgradeSnackbar.value = true
+    }
   } finally {
     loading.value = false
   }

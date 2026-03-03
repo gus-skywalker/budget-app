@@ -235,8 +235,8 @@
 <script>
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import PrivacyControls from '@/components/compliance/PrivacyControls.vue'
-import PaymentService from '@/services/PaymentService'
 import { PLAN_DETAILS, formatPlanAmount } from '@/constants/plans'
+import { useUserStore } from '@/plugins/userStore'
 
 export default {
   components: {
@@ -269,19 +269,13 @@ export default {
       this.contactForm = { name: '', email: '', message: '' };
     },
   async redirectToCheckout(plan) {
-      try {
-        // Requisição ao backend para criar a sessão de checkout no Stripe
-        const response = await PaymentService.createCheckoutSession(plan);
-
-        // Carrega o Stripe.js com sua chave pública
-        const stripe = await loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
-
-        // Redireciona o usuário para o Stripe Checkout
-        await stripe.redirectToCheckout({ sessionId: response.data.sessionId });
-      } catch (error) {
-        console.error('Erro ao redirecionar para o checkout:', error);
-        alert('Erro ao processar o pagamento. Tente novamente mais tarde.');
+      const userStore = useUserStore()
+      if (!userStore.isAuthenticated) {
+        localStorage.setItem('selectedPlan', plan)
+        this.$router.push({ name: 'login', query: { redirect: '/choose-plan', plan } })
+        return
       }
+      this.$router.push({ name: 'choose-plan', query: { plan } })
     },
     formatAmount(amount) {
       return formatPlanAmount(amount);

@@ -8,7 +8,11 @@ export default {
    * POST /companies/:companyId/invites
    */
   inviteUser(companyId: string, email: string, role: string): Promise<any> {
-    return axiosInterceptor.post(`${API_URL}/${companyId}/invites`, { email, role }, { timeout: 15000 })
+    return axiosInterceptor.post(
+      `${API_URL}/${companyId}/invites`,
+      { email, tenantRole: role },
+      { timeout: 15000 }
+    )
   },
 
   /**
@@ -17,7 +21,12 @@ export default {
    */
   async listInvites(companyId: string): Promise<any[]> {
     const response = await axiosInterceptor.get(`${API_URL}/${companyId}/invites`, { timeout: 15000 })
-    return response.data
+    const invites = Array.isArray(response.data) ? response.data : []
+    return invites.map((invite: any) => ({
+      ...invite,
+      role: invite?.role || invite?.tenantRole || invite?.invitedTenantRole,
+      createdAt: invite?.createdAt || invite?.created_at
+    }))
   },
 
   /**

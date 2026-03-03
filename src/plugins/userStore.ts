@@ -46,6 +46,7 @@ function decodeJWT(token: string): any {
 
 const TENANT_ADMIN_ROLES = ['ROLE_OWNER', 'ROLE_ADMIN']
 const TENANT_WRITE_ROLES = ['ROLE_OWNER', 'ROLE_ADMIN', 'ROLE_MEMBER']
+const hasCompanyName = (value?: string) => Boolean(value && value.trim().length > 0)
 
 interface Company {
   companyId: string
@@ -61,6 +62,24 @@ interface User {
   language?: string
   companies?: Company[]
   userRoles?: string[]
+}
+
+function mergeCompanies(incoming: Company[], existing: Company[] = []): Company[] {
+  const existingById = new Map(existing.map((company) => [company.companyId, company]))
+  return incoming.map((company) => {
+    const previous = existingById.get(company.companyId)
+    return {
+      companyId: company.companyId,
+      role: company.role ?? previous?.role ?? null,
+      companyName: hasCompanyName(company.companyName) ? company.companyName : previous?.companyName
+    }
+  })
+}
+
+function getMissingCompanyNameIds(companies: Company[] = []): string[] {
+  return companies
+    .filter((company) => Boolean(company.companyId) && !hasCompanyName(company.companyName))
+    .map((company) => company.companyId)
 }
 
 type State = {
@@ -204,8 +223,13 @@ export const useUserStore = defineStore({
     },
 
     setCompanies(companies: Company[]) {
-      this.user.companies = companies
+      const merged = mergeCompanies(companies || [], this.user.companies || [])
+      this.user.companies = merged
       this.saveState()
+      const missingNames = getMissingCompanyNameIds(merged)
+      if (missingNames.length && this.token) {
+        void this.hydrateCompanyDetailsFromBudget(missingNames)
+      }
     },
 
     updateCompanyName(companyId: string, companyName: string) {
@@ -289,11 +313,11 @@ export const useUserStore = defineStore({
 
       const companiesClaim = Array.isArray(decoded.companies) ? decoded.companies : []
       if (companiesClaim.length) {
-        this.user.companies = companiesClaim.map((company: Company) => ({
+        this.setCompanies(companiesClaim.map((company: Company) => ({
           companyId: company.companyId,
           companyName: company.companyName,
           role: company.role ?? null
-        }))
+        })))
       }
 
       if (decoded.userRoles) {

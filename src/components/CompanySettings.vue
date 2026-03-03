@@ -252,6 +252,15 @@
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="4000">
       {{ snackbar.message }}
     </v-snackbar>
+
+    <v-snackbar v-model="upgradeSnackbar" color="warning" timeout="8000">
+      {{ upgradeMessage }}
+      <template #actions>
+        <v-btn variant="text" color="white" @click="goToUpgrade">
+          Ver planos Premium
+        </v-btn>
+      </template>
+    </v-snackbar>
   </div>
 </template>
 
@@ -261,7 +270,7 @@ import { useRouter } from 'vue-router'
 import CompanyService from '@/services/CompanyService'
 import InviteService from '@/services/InviteService'
 import { useUserStore } from '@/plugins/userStore'
-import { parseApiError } from '@/utils/errorHandler'
+import { getFreePlanLimitType, parseApiError } from '@/utils/errorHandler'
 
 const userStore = useUserStore()
 const router = useRouter()
@@ -289,6 +298,8 @@ const deleteConfirm = ref('')
 const deleteLoading = ref(false)
 
 const snackbar = ref({ show: false, message: '', color: 'success' as 'success' | 'error' | 'info' })
+const upgradeSnackbar = ref(false)
+const upgradeMessage = ref('')
 
 const roleOptions = [
   { label: 'Administrador', value: 'ROLE_ADMIN' },
@@ -301,6 +312,11 @@ const emailRule = (v: string) => /.+@.+\..+/.test(v) || 'E-mail inválido'
 
 const showSnackbar = (message: string, color: 'success' | 'error' | 'info' = 'success') => {
   snackbar.value = { show: true, message, color }
+}
+
+const goToUpgrade = () => {
+  upgradeSnackbar.value = false
+  router.push({ name: 'choose-plan', query: { plan: 'BUSINESS_ANNUAL' } })
 }
 
 const resetCompanyUiState = () => {
@@ -400,6 +416,11 @@ const sendInvite = async () => {
     showSnackbar('Convite enviado')
   } catch (error) {
     showSnackbar(parseApiError(error), 'error')
+    const limitType = getFreePlanLimitType(error)
+    if (limitType === 'member') {
+      upgradeMessage.value = 'Você atingiu o limite do plano gratuito para membros.'
+      upgradeSnackbar.value = true
+    }
   } finally {
     inviteLoading.value = false
   }

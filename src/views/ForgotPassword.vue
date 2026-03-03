@@ -39,6 +39,7 @@
 
 <script>
 import AppFooter from '@/components/Footer.vue';
+import AuthService from '@/services/AuthService';
 
 export default {
     name: 'ForgotPasswordPage',
@@ -57,8 +58,8 @@ export default {
             }
 
             // Chamada à API de recuperação de senha
-            this.$http
-                .post('/auth/forgot-password', { email: this.email })
+            AuthService
+                .forgotPassword(this.email)
                 .then(() => {
                     this.message = 'Se o e-mail estiver cadastrado, você receberá um link para redefinir sua senha.';
                 })

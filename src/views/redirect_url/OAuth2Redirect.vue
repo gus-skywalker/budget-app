@@ -41,6 +41,7 @@ const extractTokenFromUrl = async () => {
       })
 
       await updateI18nLocale(userLanguage)
+      await userStore.hydrateCompanyDetailsFromBudget()
 
       const companies = userStore.getCompanies || []
 

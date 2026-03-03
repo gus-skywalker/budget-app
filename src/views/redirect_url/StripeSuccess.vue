@@ -58,7 +58,7 @@
 
 <script>
 import { useUserStore } from '@/plugins/userStore';
-import PaymentService from '@/services/PaymentService';
+import BillingOrchestrationService from '@/services/BillingOrchestrationService';
 
 export default {
   name: 'StripeSuccess',
@@ -98,23 +98,24 @@ export default {
         throw new Error('Usuário não identificado');
       }
 
-      // Aguarda alguns segundos para dar tempo do webhook processar
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      const subjectType = (isTenantMode && companyId) ? 'COMPANY' : 'USER';
+      const subjectId = subjectType === 'COMPANY' ? String(companyId) : String(userId);
 
-      // Verifica o status da assinatura (pessoal ou empresarial)
-      let response;
-      if (isTenantMode && companyId) {
-        response = await PaymentService.loadCompanySubscriptionDetails(companyId);
-      } else if (userId) {
-        response = await PaymentService.loadSubscriptionDetails(userId);
-      } else {
-        throw new Error('Contexto de assinatura inválido');
-      }
-      this.subscriptionDetails = response.data;
+      // Poll budget-api until webhook projection becomes premium=true.
+      const startedAt = Date.now();
+      const timeoutMs = 45000;
+      const intervalMs = 2000;
 
-      if (!this.subscriptionDetails) {
-        throw new Error('Não foi possível encontrar os detalhes da assinatura');
+      while (Date.now() - startedAt < timeoutMs) {
+        const response = await BillingOrchestrationService.getPremiumAccess(subjectType, subjectId);
+        if (response.data?.hasPremiumAccess) {
+          this.subscriptionDetails = response.data;
+          return;
+        }
+        await new Promise(resolve => setTimeout(resolve, intervalMs));
       }
+
+      throw new Error('Assinatura ainda não foi ativada. Tente novamente em instantes.');
     },
 
     goToDashboard() {

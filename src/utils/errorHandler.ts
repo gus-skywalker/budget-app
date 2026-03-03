@@ -24,27 +24,70 @@ export function parseApiError(error: any): string {
     
     // If data is a string, return it
     if (typeof data === 'string') {
-      return data
+      return normalizeFreePlanLimitMessage(data)
     }
     
     // If data follows the standard format
     if (data.message) {
-      return data.message
+      return normalizeFreePlanLimitMessage(data.message)
     }
     
     // If data has error field
     if (data.error) {
-      return typeof data.error === 'string' ? data.error : 'An error occurred'
+      return typeof data.error === 'string' ? normalizeFreePlanLimitMessage(data.error) : 'An error occurred'
     }
   }
 
   // Check for error message property
   if (error.message) {
-    return error.message
+    return normalizeFreePlanLimitMessage(error.message)
   }
 
   // Default fallback
   return 'An unexpected error occurred. Please try again.'
+}
+
+export type FreePlanLimitType = 'company' | 'member'
+
+export function getFreePlanLimitType(error: any): FreePlanLimitType | null {
+  const message = extractErrorMessage(error)
+  if (!message) return null
+
+  const normalized = message.toLowerCase()
+  if (normalized.includes('free plan limit reached') && normalized.includes('company')) {
+    return 'company'
+  }
+  if (normalized.includes('free plan member limit reached') || normalized.includes('member limit')) {
+    return 'member'
+  }
+  return null
+}
+
+function normalizeFreePlanLimitMessage(message: string): string {
+  if (!message) return message
+
+  const normalized = message.toLowerCase()
+  if (normalized.includes('free plan limit reached') && normalized.includes('company')) {
+    return 'Limite do plano gratuito: 1 empresa. Faça upgrade para Premium para criar mais empresas.'
+  }
+  if (normalized.includes('free plan member limit reached') || normalized.includes('member limit')) {
+    return 'Limite do plano gratuito: 20 membros por empresa. Faça upgrade para Premium para adicionar mais membros.'
+  }
+
+  return message
+}
+
+function extractErrorMessage(error: any): string | null {
+  if (!error) return null
+  if (typeof error === 'string') return error
+  if (error.response?.data) {
+    const data = error.response.data
+    if (typeof data === 'string') return data
+    if (data.message) return data.message
+    if (typeof data.error === 'string') return data.error
+  }
+  if (error.message) return error.message
+  return null
 }
 
 /**

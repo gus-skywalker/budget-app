@@ -50,7 +50,7 @@ const router = createRouter({
       path: '/group',
       name: 'group',
       component: GroupView,
-      meta: { requiresAuth: true, requiresTenant: true }
+      meta: { requiresAuth: true }
     },
     {
       path: '/financialgoal',

@@ -1,3 +1,5 @@
+import type { CompanyCreateRequest } from '@/types/CompanyCreateRequest'
+
 // src/services/CompanyService.d.ts
 export interface Company {
   companyId: string
@@ -20,7 +22,7 @@ export interface SelectCompanyResponse {
 }
 
 declare const CompanyService: {
-  create(companyName: string, description?: string): Promise<{ data: CreateCompanyResponse }>
+  create(payload: CompanyCreateRequest, correlationId?: string): Promise<{ createdCompany: any }>
   getAll(): Promise<{ data: Company[] }>
   getDetails(companyId: string): Promise<{ data: any }>
   update(companyId: string, payload: { companyName?: string; description?: string }): Promise<{ data: any }>

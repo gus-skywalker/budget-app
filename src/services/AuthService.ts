@@ -1,9 +1,25 @@
 import axios from 'axios'
 import axiosInterceptor from './axiosInterceptor'
-
-const API_URL = `${import.meta.env.VITE_AUTH_URL}/auth`
+const AUTH_BASE_URL = String(import.meta.env.VITE_AUTH_URL || '').replace(/\/+$/, '')
+const API_URL = `${AUTH_BASE_URL}/api/auth`
 
 export default {
+  signIn(payload: { email: string; password: string }): Promise<any> {
+    return axios.post(`${API_URL}/signin`, payload)
+  },
+
+  signUp(payload: { username: string; email: string; password: string; language?: string }): Promise<any> {
+    return axios.post(`${API_URL}/signup`, payload)
+  },
+
+  forgotPassword(email: string): Promise<any> {
+    return axios.post(`${API_URL}/forgot-password`, { email })
+  },
+
+  resetPassword(token: string, newPassword: string): Promise<any> {
+    return axios.post(`${API_URL}/reset-password`, { token, newPassword })
+  },
+
   userTokenInfo(): Promise<any> {
     return axiosInterceptor.get(`${API_URL}/userinfo`)
   },
@@ -19,5 +35,9 @@ export default {
         withCredentials: true
       }
     )
+  },
+
+  getOAuthAuthorizationUrl(provider: 'google' | 'github'): string {
+    return `${AUTH_BASE_URL}/oauth2/authorization/${provider}`
   }
 }
