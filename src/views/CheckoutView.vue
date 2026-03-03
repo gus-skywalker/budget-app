@@ -82,6 +82,7 @@ import { PLAN_DETAILS } from '@/constants/plans';
 import { getOrCreateCorrelationId } from '@/utils/correlation'
 import { createMessageId } from '@/utils/messageId'
 import BillingOrchestrationService from '@/services/BillingOrchestrationService'
+import BillingDecisionService from '@/services/BillingDecisionService'
 
 export default {
     name: 'CheckoutView',
@@ -108,6 +109,11 @@ export default {
             while (Date.now() - startedAt < timeoutMs) {
                 const resp = await BillingOrchestrationService.getOperationStatus(messageId)
                 operationStatus.value = resp.data
+
+                if (resp.data.checkoutUrl) {
+                    window.location.href = resp.data.checkoutUrl
+                    return
+                }
 
                 if (resp.data.status === 'FAILED') {
                     throw new Error(resp.data.lastError || 'Falha ao processar comando de billing')
@@ -141,11 +147,40 @@ export default {
                 const correlationId = route.query.correlationId ||
                     getOrCreateCorrelationId('billingCorrelationId')
 
-                const subjectType = route.query.subjectType
-                const subjectId = route.query.subjectId
+                let subjectType = route.query.subjectType
+                let subjectId = route.query.subjectId
 
                 if (!subjectType || !subjectId) {
-                    throw new Error('Parâmetros de billing ausentes (subjectType/subjectId)');
+                    const isBusinessPlan = String(plan).startsWith('BUSINESS_')
+                    const companyId = userStore.currentCompanyId
+                    if (isBusinessPlan && !companyId) {
+                        router.push({ name: 'select-company', query: { redirect: `/checkout?plan=${encodeURIComponent(String(plan))}` } })
+                        throw new Error('Selecione uma empresa para continuar com plano BUSINESS.')
+                    }
+
+                    const preferredSubjectType = (isBusinessPlan && companyId) ? 'COMPANY' : 'USER'
+                    const preferredSubjectId = preferredSubjectType === 'COMPANY' ? String(companyId) : String(user.id)
+
+                    const decisionResp = await BillingDecisionService.decide(
+                        {
+                            plan: String(plan),
+                            actor: String(user.id),
+                            subjectType: preferredSubjectType,
+                            subjectId: preferredSubjectId,
+                            userId: preferredSubjectType === 'USER' ? String(user.id) : null,
+                            companyId: preferredSubjectType === 'COMPANY' ? String(companyId) : null
+                        },
+                        String(correlationId)
+                    )
+
+                    const decision = decisionResp.data
+                    if (decision.action === 'NOOP_ALREADY_PREMIUM') {
+                        router.push({ name: 'dashboard' })
+                        return
+                    }
+
+                    subjectType = decision.subjectType
+                    subjectId = decision.subjectId
                 }
 
                 // Idempotency: keep a stable messageId for retries on this page.

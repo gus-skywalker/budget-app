@@ -21,5 +21,10 @@ app.use(vuetify)
 // Initialize user store
 const userStore = useUserStore()
 userStore.loadState()
+if (userStore.isAuthenticated) {
+  userStore.hydrateCompanyDetailsFromBudget().catch(() => {
+    // Best-effort hydration; app should continue even if company details fail.
+  })
+}
 
 app.mount('#app')

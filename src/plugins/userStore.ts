@@ -324,6 +324,52 @@ export const useUserStore = defineStore({
       this.saveState()
     },
 
+    async hydrateCompanyDetailsFromBudget(companyIds?: string[]) {
+      const targetIds = (companyIds && companyIds.length
+        ? companyIds
+        : [
+            ...(this.user.companies || []).map((c) => c.companyId),
+            ...(this.currentCompanyId ? [this.currentCompanyId] : [])
+          ]).filter(Boolean) as string[]
+
+      const uniqueIds = Array.from(new Set(targetIds))
+      if (!uniqueIds.length) return
+
+      const byId = new Map((this.user.companies || []).map((c) => [c.companyId, { ...c }]))
+
+      await Promise.all(
+        uniqueIds.map(async (companyId) => {
+          const existing = byId.get(companyId)
+          if (existing?.companyName && existing.companyName.trim().length > 0) {
+            return
+          }
+
+          try {
+            const response = await CompanyService.getDetails(companyId)
+            const companyName =
+              response?.data?.companyName ||
+              response?.data?.name ||
+              response?.data?.title ||
+              null
+
+            if (!companyName) return
+
+            byId.set(companyId, {
+              companyId,
+              role: existing?.role ?? null,
+              companyName: String(companyName)
+            })
+          } catch {
+            // Best effort only: company details may be unavailable for some IDs.
+            console.warn('Could not hydrate company details from budget-api for companyId=', companyId)
+          }
+        })
+      )
+
+      this.user.companies = Array.from(byId.values())
+      this.saveState()
+    },
+
     /**
      * Handle signin response from backend
      * Implements B2B multi-tenant flow decision logic
@@ -411,6 +457,7 @@ export const useUserStore = defineStore({
 
         this.setCurrentCompany(effectiveCompanyId, resolvedRole, companyName)
         this.setPreferredTenant(effectiveCompanyId)
+        await this.hydrateCompanyDetailsFromBudget([effectiveCompanyId])
 
         return true
       } catch (error) {
@@ -454,6 +501,7 @@ export const useUserStore = defineStore({
         if (accessToken) {
           this.token = accessToken
           this.syncFromToken(accessToken)
+          await this.hydrateCompanyDetailsFromBudget()
         }
         if (refreshToken) {
           this.refreshToken = refreshToken

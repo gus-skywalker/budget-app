@@ -270,6 +270,7 @@ import { useUserStore } from '@/plugins/userStore';
 const props = defineProps<{ user: User }>();
 const userStore = useUserStore();
 const isTenantMode = userStore.isTenantMode;
+const actorUserId = computed(() => String(props.user.id || userStore.user?.id || ''))
 
 // Estado da assinatura e plano selecionado
 type MaybePlanId = PlanId | '';
@@ -352,12 +353,17 @@ const statusIcon = computed(() => {
     }
 });
 
-// TODO: Replace this with a budget-api endpoint, e.g. GET /access or GET /billing/status.
 const loadSubscriptionDetails = async () => {
   try {
-    // Placeholder: unknown until budget-api exposes a read model for subscription.
-    // Keep UI usable with defaults.
-    currentPlan.value = currentPlan.value || ''
+    if (!actorUserId.value) {
+      return
+    }
+
+    const subjectType = (isTenantMode && userStore.currentCompanyId) ? 'COMPANY' : 'USER'
+    const subjectId = subjectType === 'COMPANY' ? String(userStore.currentCompanyId) : actorUserId.value
+
+    const access = await BillingOrchestrationService.getPremiumAccess(subjectType as any, subjectId)
+    subscriptionStatus.value = access.data?.hasPremiumAccess ? 'ACTIVE' : 'NONE'
     selectedPlan.value = selectedPlan.value || currentPlan.value
   } catch (error) {
     console.error('Erro ao carregar detalhes da assinatura:', error);
@@ -366,7 +372,7 @@ const loadSubscriptionDetails = async () => {
 
 const startCheckoutSession = async () => {
   try {
-    if (!props.user.id) {
+    if (!actorUserId.value) {
       throw new Error('Usuário não autenticado')
     }
 
@@ -381,16 +387,16 @@ const startCheckoutSession = async () => {
     const companyId = userStore.currentCompanyId
 
     const subjectType = (isBusinessPlan && isTenantMode && companyId) ? 'COMPANY' : 'USER'
-    const subjectId = subjectType === 'COMPANY' ? String(companyId) : String(props.user.id)
+    const subjectId = subjectType === 'COMPANY' ? String(companyId) : actorUserId.value
 
     // ADR-001/004: do not call payment-api; do not send PII.
     const decisionResp = await BillingDecisionService.decide(
       {
         plan,
-        actor: String(props.user.id),
+        actor: actorUserId.value,
         subjectType,
         subjectId,
-        userId: subjectType === 'USER' ? String(props.user.id) : null,
+        userId: subjectType === 'USER' ? actorUserId.value : null,
         companyId: subjectType === 'COMPANY' ? String(companyId) : null
       },
       correlationId
@@ -414,13 +420,13 @@ const startCheckoutSession = async () => {
 // Função para abrir o portal de faturamento
 const openBillingPortal = async () => {
   try {
-    if (!props.user.id) throw new Error('Usuário não autenticado')
+    if (!actorUserId.value) throw new Error('Usuário não autenticado')
 
     const correlationId = getOrCreateCorrelationId('billingCorrelationId')
 
     // Prefer company if tenant mode has company selected; else user.
     const subjectType = (isTenantMode && userStore.currentCompanyId) ? 'COMPANY' : 'USER'
-    const subjectId = subjectType === 'COMPANY' ? String(userStore.currentCompanyId) : String(props.user.id)
+    const subjectId = subjectType === 'COMPANY' ? String(userStore.currentCompanyId) : actorUserId.value
 
     const storageKey = `billing.portal.messageId:${correlationId}:${subjectType}:${subjectId}`
     const existingMessageId = sessionStorage.getItem(storageKey)
@@ -430,7 +436,7 @@ const openBillingPortal = async () => {
     const returnUrl = `${window.location.origin}/#/settings`
 
     await BillingOrchestrationService.openPortal({
-      actor: String(props.user.id),
+      actor: actorUserId.value,
       subjectType: subjectType as any,
       subjectId,
       correlationId,
@@ -448,7 +454,7 @@ const openBillingPortal = async () => {
 // Função para cancelar a assinatura
 const cancelSubscription = async () => {
   try {
-    if (!props.user.id) throw new Error('Usuário não autenticado')
+    if (!actorUserId.value) throw new Error('Usuário não autenticado')
 
     const confirmed = confirm('Tem certeza de que deseja cancelar sua assinatura?');
     if (!confirmed) return;
@@ -456,7 +462,7 @@ const cancelSubscription = async () => {
     const correlationId = getOrCreateCorrelationId('billingCorrelationId')
 
     const subjectType = (isTenantMode && userStore.currentCompanyId) ? 'COMPANY' : 'USER'
-    const subjectId = subjectType === 'COMPANY' ? String(userStore.currentCompanyId) : String(props.user.id)
+    const subjectId = subjectType === 'COMPANY' ? String(userStore.currentCompanyId) : actorUserId.value
 
     const storageKey = `billing.cancel.messageId:${correlationId}:${subjectType}:${subjectId}`
     const existingMessageId = sessionStorage.getItem(storageKey)
@@ -464,7 +470,7 @@ const cancelSubscription = async () => {
     if (!existingMessageId) sessionStorage.setItem(storageKey, messageId)
 
     await BillingOrchestrationService.cancelSubscription({
-      actor: String(props.user.id),
+      actor: actorUserId.value,
       subjectType: subjectType as any,
       subjectId,
       correlationId,

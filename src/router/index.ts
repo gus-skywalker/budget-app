@@ -205,7 +205,7 @@ router.beforeEach((to, from, next) => {
     localStorage.removeItem('selectedPlan') // Limpa o storage
     if (isAuthenticated) {
       next({
-        name: 'checkout',
+        name: 'choose-plan',
         query: { plan: plan }
       })
       return

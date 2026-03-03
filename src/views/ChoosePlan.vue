@@ -144,6 +144,10 @@ export default {
         try {
             const userStore = useUserStore()
             this.isTenantMode = userStore.isTenantMode
+            const preselectedPlan = this.$route?.query?.plan
+            if (typeof preselectedPlan === 'string' && preselectedPlan.trim()) {
+                this.redirectToCheckout(preselectedPlan.trim())
+            }
         } catch (e) {
             this.isTenantMode = false
         }
@@ -170,8 +174,15 @@ export default {
         },
 
         handleBusinessClick(plan) {
-            if (!this.isAuthenticated || !this.isTenantMode) {
-                alert('Para contratar um plano empresarial, cadastre-se e selecione uma empresa.');
+            const userStore = useUserStore()
+            if (!this.isAuthenticated) {
+                alert('Faça login para contratar um plano empresarial.');
+                this.$router.push({ name: 'login', query: { redirect: '/choose-plan', plan } })
+                return
+            }
+            if (!userStore.currentCompanyId) {
+                alert('Selecione ou crie uma empresa antes de contratar um plano empresarial.');
+                this.$router.push({ name: 'select-company', query: { redirect: '/choose-plan', plan } })
                 return;
             }
             this.redirectToCheckout(plan);
@@ -190,6 +201,9 @@ export default {
 
                 const isBusinessPlan = String(plan).startsWith('BUSINESS_');
                 const companyId = userStore.currentCompanyId;
+                if (isBusinessPlan && !companyId) {
+                    throw new Error('Selecione uma empresa para contratar um plano BUSINESS.');
+                }
 
                 // IMPORTANT (ADR-001/004): FE must NOT call payment-api and must NOT send PII.
                 // Decide subject based on plan + tenant context.

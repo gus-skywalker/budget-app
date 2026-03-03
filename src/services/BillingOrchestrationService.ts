@@ -42,6 +42,14 @@ export interface OperationStatusResponse {
   status: 'PENDING' | 'SENDING' | 'DISPATCHED' | 'FAILED'
   attempts: number
   lastError?: string | null
+  checkoutUrl?: string | null
+}
+
+export interface BillingAccessResponse {
+  subjectType: BillingSubjectType
+  subjectId: string
+  hasPremiumAccess: boolean
+  checkedAt: string
 }
 
 export default {
@@ -59,5 +67,14 @@ export default {
 
   getOperationStatus(messageId: string) {
     return axiosInterceptor.get<OperationStatusResponse>(`/billing/operations/${encodeURIComponent(messageId)}`)
+  },
+
+  getPremiumAccess(subjectType: BillingSubjectType, subjectId: string) {
+    return axiosInterceptor.get<BillingAccessResponse>('/billing/access', {
+      params: {
+        subjectType,
+        subjectId
+      }
+    })
   }
 }
