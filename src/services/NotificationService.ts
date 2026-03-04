@@ -43,6 +43,9 @@ const NotificationService = {
   },
   updateExpenseAlert(expenseRequest: any): Promise<any> {
     return axiosInterceptor.put(`${API_URL}/alerts/update`, expenseRequest)
+  },
+  sendContactForm(contactData: { name: string; email: string; message: string }): Promise<any> {
+    return axiosInterceptor.post(`${API_URL}/contact`, contactData)
   }
 }
 

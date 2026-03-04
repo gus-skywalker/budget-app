@@ -36,14 +36,18 @@
     <!-- Hero Section -->
     <section class="hero">
       <div class="hero-content">
-        <h1>Tome o Controle do Seu Futuro Financeiro</h1>
+        <h1>Dinheiro compartilhado não precisa gerar conflito.</h1>
         <p>
-          Planeje, gerencie e cresça suas finanças com nossa carteira de fintechs personalizada.
+          O CoBudget é uma Collaborative Budget Platform criada para organizar decisões financeiras em grupo — seja na sua família ou no seu time.<br>
+          Clareza, alinhamento e inteligência para construir liberdade financeira com propósito.
         </p>
         <button class="btn btn-primary cta-btn"
           @click.prevent="$router.push({ name: 'login', query: { signup: 'true' } })">
-          Experimente Gratuitamente
+          Começar gratuitamente
         </button>
+        <p class="micro-proof" style="margin-top:8px; font-size:13px; color:#888;">
+          Sem cartão de crédito • Cancelamento simples • Seus dados protegidos
+        </p>
       </div>
       <div class="hero-image">
         <img src="/hero_image.jpg" alt="Planejamento Financeiro" />
@@ -51,20 +55,67 @@
     </section>
 
     <!-- Seção IA -->
+    <!-- Seção de Dor -->
+    <section class="section" style="background:#fff; padding:60px 20px;">
+      <h2 style="text-align:center; color:var(--purple);">Quando o dinheiro é compartilhado, o problema raramente é o dinheiro.</h2>
+      <ul style="max-width:600px; margin:32px auto 0; color:var(--dark-gray); font-size:18px;">
+        <li>Falta de visão completa sobre receitas e despesas</li>
+        <li>Decisões tomadas no improviso</li>
+        <li>Metas que nunca saem do papel</li>
+        <li>Conflitos por falta de transparência</li>
+        <li>Gastos invisíveis que corroem o planejamento</li>
+      </ul>
+      <p style="text-align:center; margin-top:24px; color:#666; font-size:17px;">Seja em casa ou na empresa, a ausência de clareza gera tensão.</p>
+    </section>
+
+    <!-- Virada -->
+    <section class="section" style="background:linear-gradient(135deg,#f5f7ff 0%,#eef2ff 100%); padding:60px 20px;">
+      <h2 style="text-align:center; color:var(--purple);">O CoBudget transforma confusão em clareza.</h2>
+      <p style="text-align:center; max-width:600px; margin:24px auto 0; color:var(--dark-gray); font-size:18px;">
+        Todos enxergam o mesmo plano.<br>
+        Todos entendem o impacto das decisões.<br>
+        Todos caminham na mesma direção.
+      </p>
+    </section>
+
+    <!-- Para Famílias -->
+    <section class="section benefits-section">
+      <h3 style="text-align:center; color:var(--purple);">Para famílias que querem paz financeira</h3>
+      <div class="benefits-container" style="margin-top:24px;">
+        <div class="benefit-item"><h4>Divisão clara de contas</h4></div>
+        <div class="benefit-item"><h4>Metas visíveis para todos</h4></div>
+        <div class="benefit-item"><h4>Planejamento de viagens, casa e investimentos</h4></div>
+        <div class="benefit-item"><h4>Redução de conflitos por dinheiro</h4></div>
+      </div>
+      <p style="text-align:center; margin-top:24px; color:#666; font-size:17px;">Dinheiro deixa de ser tabu e passa a ser estratégia.</p>
+    </section>
+
+    <!-- Para Times e Startups -->
+    <section class="section benefits-section">
+      <h3 style="text-align:center; color:var(--purple);">Para times que precisam de alinhamento financeiro</h3>
+      <div class="benefits-container" style="margin-top:24px;">
+        <div class="benefit-item"><h4>Orçamento compartilhado por área</h4></div>
+        <div class="benefit-item"><h4>Visão de fluxo de caixa e runway</h4></div>
+        <div class="benefit-item"><h4>Simulação de cenários antes de decidir</h4></div>
+        <div class="benefit-item"><h4>Responsabilidade distribuída com transparência</h4></div>
+      </div>
+      <p style="text-align:center; margin-top:24px; color:#666; font-size:17px;">Crescimento sustentável começa com clareza.</p>
+    </section>
+
+    <!-- Inteligência (Reposicionada) -->
     <section id="ai" class="section ai-section">
       <div class="ai-content">
         <div class="ai-text">
-          <p class="tag">IA Financial Copilot</p>
-          <h2>Insights inteligentes para antecipar cada decisão</h2>
+          <h2>Antes que o problema apareça, você já sabe.</h2>
           <p>
-            O Budget AI Service aprende com o seu histórico em segundos e oferece previsões, alertas e recomendações
-            acionáveis. Você cuida dos planos; nós cuidamos dos números.
+            O CoBudget analisa padrões de receitas e despesas e entrega recomendações claras.<br>
+            Não é apenas registro. É orientação estratégica.
           </p>
           <ul>
-            <li><strong>Previsão de despesas:</strong> simule até 12 meses com intervalos de confiança.</li>
-            <li><strong>Detecção de anomalias:</strong> receba alertas quando gastos fugirem do padrão.</li>
-            <li><strong>Categorização automática:</strong> descreva a compra e deixe a IA sugerir o melhor destino.</li>
-            <li><strong>Planos de economia:</strong> metas inteligentes com ações sugeridas e probabilidade de sucesso.</li>
+            <li>Alertas de gastos fora do padrão</li>
+            <li>Previsão de fluxo de caixa</li>
+            <li>Simulação de impacto antes de uma decisão</li>
+            <li>Sugestões inteligentes de economia</li>
           </ul>
           <div class="ai-cta">
             <button class="btn btn-primary" @click.prevent="$router.push({ name: 'dashboard' })">
@@ -82,100 +133,81 @@
             <span>Insights em tempo real</span>
           </article>
           <article class="ai-card">
-            <h3>Assistente de Economia</h3>
-            <p>Receba plano mensal com ações concretas e acompanhe o impacto acumulado.</p>
-            <span>Confiança 75%</span>
+            <h3>Simulação de Impacto</h3>
+            <p>Veja o efeito de cada decisão antes de executá-la.</p>
+            <span>Decida com confiança</span>
           </article>
           <article class="ai-card">
-            <h3>Auto Categorize</h3>
-            <p>Heurísticas em PT/EN identificam padrão de gastos e reduzem trabalho manual.</p>
-            <span>Menos 80% de cliques</span>
+            <h3>Sugestões Inteligentes</h3>
+            <p>Receba recomendações automáticas para economizar e investir melhor.</p>
+            <span>Economia estratégica</span>
           </article>
         </div>
       </div>
     </section>
 
     <!-- Benefícios -->
+    <!-- Diferenciação -->
     <section id="benefits" class="section benefits-section">
-      <h2>Por Que Escolher Nossa Ferramenta</h2>
-      <div class="benefits-container">
-        <div class="benefit-item">
-          <img src="/monitoring.jpg" alt="Planejamento" />
-          <h3>Planejamento Personalizado</h3>
-          <p>Crie planos financeiros sob medida para atingir seus objetivos.</p>
-        </div>
-        <div class="benefit-item">
-          <img src="/support.jpg" alt="Controle" />
-          <h3>Controle Total</h3>
-          <p>Monitore suas despesas, receitas e investimentos em uma plataforma intuitiva.</p>
-        </div>
-        <div class="benefit-item">
-          <img src="/security.jpg" alt="Segurança" />
-          <h3>Segurança de Dados</h3>
-          <p>Seus dados estão protegidos com as mais avançadas tecnologias de segurança.</p>
-        </div>
-        <div class="benefit-item">
-          <img src="/growth.jpg" alt="Crescimento" />
-          <h3>Crescimento Financeiro</h3>
-          <p>Receba recomendações de investimento para maximizar seu retorno.</p>
-        </div>
-      </div>
+      <h2 style="text-align:center; color:var(--purple);">Não é ERP. Não é planilha. Não é app individual.</h2>
+      <p style="text-align:center; max-width:600px; margin:24px auto 0; color:var(--dark-gray); font-size:18px;">
+        É uma plataforma criada especificamente para decisões financeiras compartilhadas.<br>
+        Leve, colaborativa e estratégica.<br>
+        Isso cria categoria.
+      </p>
     </section>
 
     <!-- Testemunhos -->
+    <!-- Prova Social -->
     <section id="testimonials" class="section testimonials-section">
-      <h2>O Que Nossos Clientes Dizem</h2>
+      <h2 style="text-align:center; color:var(--purple);">O que nossos usuários dizem</h2>
       <div class="testimonials-container">
         <div class="testimonial-item">
-          <!-- <img src="/customer1.jpg" alt="Cliente 1" /> -->
-          <p>"Excelente ferramenta! Meu controle financeiro nunca foi tão fácil e eficiente."</p>
-          <h4>Maria Silva</h4>
+          <p>"Finalmente conseguimos visualizar todo o orçamento da casa sem discussões. Em poucas semanas, já sabíamos onde economizar."</p>
+          <h4>Casal usuário</h4>
         </div>
         <div class="testimonial-item">
-          <!-- <img src="/customer2.jpg" alt="Cliente 2" /> -->
-          <p>"A interface é intuitiva e as recomendações de investimento são ótimas."</p>
-          <h4>João Santos</h4>
-        </div>
-        <div class="testimonial-item">
-          <!-- <img src="/customer3.jpg" alt="Cliente 3" /> -->
-          <p>"Segurança e suporte de primeira linha. Recomendo a todos!"</p>
-          <h4>Ana Oliveira</h4>
+          <p>"Nossa startup ganhou previsibilidade de caixa. O time inteiro entende o impacto de cada decisão."</p>
+          <h4>Founder SaaS</h4>
         </div>
       </div>
     </section>
 
     <!-- Segurança -->
+    <!-- Segurança -->
     <section id="security" class="section security-section">
-      <h2>Segurança de Dados</h2>
+      <h2>Segurança no nível que decisões financeiras exigem</h2>
       <div class="security-content">
-        <p>Na nossa plataforma, a segurança dos seus dados é nossa prioridade. Utilizamos criptografia de ponta a ponta
-          e proteções avançadas para garantir que suas informações financeiras estejam sempre seguras.</p>
         <ul>
-          <li>Criptografia SSL de alta segurança</li>
-          <li>Autenticação de dois fatores</li>
-          <li>Monitoramento contínuo de ameaças</li>
+          <li>Criptografia avançada</li>
+          <li>Autenticação em dois fatores</li>
+          <li>Arquitetura segura</li>
+          <li>Controle de acesso por perfil</li>
         </ul>
       </div>
     </section>
 
     <!-- Seção de Planos -->
+    <!-- Planos (Conversão Direta) -->
     <section id="plans" class="section plans-section">
-      <h2>Escolha o Seu Plano</h2>
+      <h2>Comece com clareza hoje.</h2>
+      <p style="text-align:center; max-width:600px; margin:24px auto 0; color:var(--dark-gray); font-size:18px;">
+        Experimente gratuitamente.<br>
+        Evolua conforme sua família ou seu time cresce.
+      </p>
       <div class="plans-container">
         <div class="plan-item">
           <h3>Plano Mensal</h3>
           <p class="price">{{ planDetails.MONTHLY.displayPrice }}</p>
-          <p>Aproveite nossa oferta de lançamento: 30 dias gratuitos e, depois, mantenha o acesso pelo valor promocional de {{ formatAmount(planDetails.MONTHLY.amount) }} por mês.</p>
           <button class="btn btn-primary cta-btn" @click.prevent="redirectToCheckout('MONTHLY')">
-            Assine Mensalmente
+            Começar grátis
           </button>
         </div>
         <div class="plan-item">
           <h3>Plano Anual</h3>
           <p class="price">{{ planDetails.ANNUAL.displayPrice }}</p>
-          <p>Garanta 12 meses com desconto exclusivo: pague uma vez {{ planDetails.ANNUAL.displayPrice }} (equivalente a {{ formatAmount(planDetails.MONTHLY.amount) }} por mês) e mantenha o preço promocional congelado o ano inteiro.</p>
           <button class="btn btn-primary cta-btn" @click.prevent="redirectToCheckout('ANNUAL')">
-            Assine Anualmente
+            Ver planos
           </button>
         </div>
       </div>
@@ -185,6 +217,9 @@
     <section id="contact" class="section contact-section">
       <div class="contact-container">
         <h2>Entre em Contato Conosco</h2>
+        <p style="margin-bottom:18px; color:var(--purple); font-size:16px; font-weight:500;">
+          E-mail: <a href="mailto:help@cobudget.app" style="color:var(--dark-purple); font-weight:600; text-decoration:underline;">help@cobudget.app</a> ou <a href="mailto:contact@cobudget.app" style="color:var(--dark-purple); font-weight:600; text-decoration:underline;">contact@cobudget.app</a>
+        </p>
         <form class="contact-form" @submit.prevent="handleSubmit">
           <div class="form-group">
             <label for="name">Nome:</label>
@@ -198,25 +233,30 @@
             <label for="message">Mensagem:</label>
             <textarea id="message" v-model="contactForm.message" required></textarea>
           </div>
-          <button type="submit" class="btn btn-primary">Enviar</button>
+          <button type="submit" class="btn btn-primary" :disabled="isSubmitting">
+            {{ isSubmitting ? 'Enviando...' : 'Enviar' }}
+          </button>
         </form>
       </div>
     </section>
 
     <!-- Footer -->
+    <!-- CTA Final Forte -->
     <footer class="footer">
       <div class="footer-content">
+        <h2 style="color:var(--yellow); margin-bottom:16px;">Decidir juntos muda tudo.</h2>
+        <p style="color:var(--white); font-size:18px; margin-bottom:24px;">Organize o presente. Planeje o futuro.<br>Construa liberdade financeira com clareza.</p>
+        <div class="footer-cta">
+          <button class="btn btn-primary cta-btn" @click.prevent="$router.push({ name: 'choose-plan' })">
+            Começar gratuitamente agora
+          </button>
+        </div>
         <div class="footer-links">
           <a href="#">Sobre</a>
           <a href="#benefits">Benefícios</a>
           <a href="#testimonials">Depoimentos</a>
           <a href="#security">Segurança</a>
           <a href="#contact">Contato</a>
-        </div>
-        <div class="footer-cta">
-          <button class="btn btn-primary cta-btn" @click.prevent="$router.push({ name: 'choose-plan' })">
-            Inscreva-se Agora!
-          </button>
         </div>
         <div class="footer-links footer-info">
           <a @click.prevent="$router.push('/privacy-policy')">Política de Privacidade</a>
@@ -237,6 +277,7 @@
 import PrivacyControls from '@/components/compliance/PrivacyControls.vue'
 import { PLAN_DETAILS, formatPlanAmount } from '@/constants/plans'
 import { useUserStore } from '@/plugins/userStore'
+import NotificationService from '@/services/NotificationService'
 
 export default {
   components: {
@@ -251,7 +292,8 @@ export default {
         name: '',
         email: '',
         message: ''
-      }
+      },
+      isSubmitting: false
     };
   },
   methods: {
@@ -259,14 +301,27 @@ export default {
       this.isMenuOpen = !this.isMenuOpen;
       event.currentTarget.classList.toggle('active');
     },
-    handleSubmit() {
+    async handleSubmit() {
       if (!this.contactForm.email.includes('@')) {
         alert('Por favor, insira um e-mail válido.');
         return;
       }
-      console.log('Formulário enviado:', this.contactForm);
-      alert('Mensagem enviada com sucesso!');
-      this.contactForm = { name: '', email: '', message: '' };
+
+      if (this.isSubmitting) return;
+
+      this.isSubmitting = true;
+
+      try {
+        await NotificationService.sendContactForm(this.contactForm);
+        alert('Mensagem enviada com sucesso! Entraremos em contato em breve.');
+        this.contactForm = { name: '', email: '', message: '' };
+      } catch (error) {
+        console.error('Erro ao enviar mensagem:', error);
+        const errorMessage = error.response?.data?.error || 'Erro ao enviar mensagem. Por favor, tente novamente ou entre em contato diretamente em help@cobudget.app';
+        alert(errorMessage);
+      } finally {
+        this.isSubmitting = false;
+      }
     },
   async redirectToCheckout(plan) {
       const userStore = useUserStore()
@@ -285,7 +340,9 @@ export default {
 </script>
 
 <style scoped>
-/* Configuração de cores */
+/* Importa fonte moderna para títulos e destaques */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Roboto:wght@400;500;700&display=swap');
+
 #color-setup {
   --orange: #f39c12;
   --dark-orange: #e67e22;
@@ -297,7 +354,6 @@ export default {
   --dark-gray: #2c3e50;
 }
 
-/* Reset básico */
 * {
   margin: 0;
   padding: 0;
@@ -310,9 +366,130 @@ export default {
 }
 
 body {
-  font-family: 'Roboto', sans-serif;
+  font-family: 'Inter', 'Roboto', Arial, sans-serif;
   overflow-x: hidden;
-  /* Evita o vazamento lateral */
+  color: var(--dark-gray);
+  background: #fafbfc;
+  letter-spacing: 0.01em;
+}
+
+/* Títulos principais */
+h1, .hero-content h1 {
+  font-family: 'Inter', 'Roboto', Arial, sans-serif;
+  font-weight: 900;
+  font-size: 2.8rem;
+  color: var(--purple);
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+  margin-bottom: 12px;
+  text-shadow: 0 2px 12px rgba(142,68,173,0.07);
+}
+
+h2, .section h2 {
+  font-family: 'Inter', 'Roboto', Arial, sans-serif;
+  font-weight: 700;
+  font-size: 2.1rem;
+  color: var(--dark-purple);
+  letter-spacing: -0.2px;
+  margin-bottom: 10px;
+  line-height: 1.18;
+}
+
+h3, .section h3 {
+  font-family: 'Inter', 'Roboto', Arial, sans-serif;
+  font-weight: 600;
+  font-size: 1.35rem;
+  color: var(--purple);
+  margin-bottom: 8px;
+  letter-spacing: 0.01em;
+}
+
+h4, .benefit-item h4, .testimonial-item h4 {
+  font-family: 'Inter', 'Roboto', Arial, sans-serif;
+  font-weight: 600;
+  font-size: 1.08rem;
+  color: var(--dark-purple);
+  margin-bottom: 2px;
+}
+
+p, .section p, .benefit-item p, .testimonial-item p, .ai-text p {
+  font-family: 'Roboto', 'Inter', Arial, sans-serif;
+  font-size: 1.08rem;
+  color: var(--dark-gray);
+  line-height: 1.7;
+  margin-bottom: 8px;
+}
+
+ul, .section ul {
+  font-size: 1.08rem;
+  line-height: 1.7;
+  color: var(--dark-gray);
+  margin-bottom: 8px;
+}
+
+li {
+  margin-bottom: 6px;
+}
+
+.micro-proof {
+  font-size: 0.95rem !important;
+  color: #888 !important;
+  font-family: 'Inter', 'Roboto', Arial, sans-serif;
+  letter-spacing: 0.02em;
+}
+
+/* Destaques visuais para listas de dor e diferenciais */
+.section ul {
+  background: #f5f0fa;
+  border-radius: 10px;
+  padding: 18px 28px;
+  margin-top: 18px;
+  margin-bottom: 18px;
+  box-shadow: 0 2px 12px rgba(142,68,173,0.04);
+}
+
+.section ul li {
+  padding-left: 8px;
+  position: relative;
+}
+.section ul li:before {
+  content: '•';
+  color: var(--purple);
+  font-weight: bold;
+  margin-right: 8px;
+  font-size: 1.1em;
+}
+
+/* Suaviza o visual dos botões */
+.btn, .cta-btn {
+  font-family: 'Inter', 'Roboto', Arial, sans-serif;
+  font-weight: 600;
+  font-size: 1.08rem;
+  letter-spacing: 0.01em;
+  border-radius: 7px;
+  box-shadow: 0 2px 8px rgba(243,156,18,0.07);
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+
+.btn-primary {
+  background: var(--orange);
+  color: #fff;
+  border: none;
+  transition: background 0.2s;
+}
+.btn-primary:hover {
+  background: var(--dark-orange);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(243,156,18,0.13);
+}
+.btn-secondary {
+  background: #fff;
+  color: var(--purple);
+  border: 2px solid var(--purple);
+}
+.btn-secondary:hover {
+  background: var(--purple);
+  color: #fff;
 }
 
 .header {

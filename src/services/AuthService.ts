@@ -32,6 +32,10 @@ export default {
     return axiosInterceptor.put(`${API_URL}/${userId}`, payload)
   },
 
+  deleteUser(userId: string): Promise<any> {
+    return axiosInterceptor.delete(`${API_URL}/${userId}`)
+  },
+
   userTokenInfo(): Promise<any> {
     return this.getUserInfo()
   },

@@ -18,6 +18,7 @@ declare namespace _default {
         email?: string;
         language?: string;
     }): Promise<import("axios").AxiosResponse<any, any>>;
+    function deleteUser(userId: string): Promise<import("axios").AxiosResponse<any, any>>;
     function userTokenInfo(): Promise<import("axios").AxiosResponse<any, any>>;
     function refreshToken(refreshToken: string): Promise<import("axios").AxiosResponse<any, any>>;
     function getOAuthAuthorizationUrl(provider: "google" | "github"): string;

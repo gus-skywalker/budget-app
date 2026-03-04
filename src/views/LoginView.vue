@@ -262,6 +262,33 @@ onMounted(() => {
   }
 });
 
+const getLoginErrorMessage = (err) => {
+  const status = err?.response?.status
+  const data = err?.response?.data
+
+  if (err?.code === 'ERR_NETWORK' || !err?.response) {
+    return 'Não foi possível conectar ao servidor. Verifique se ele está no ar e tente novamente.'
+  }
+
+  if (status === 401 || status === 403) {
+    return 'Credenciais inválidas. Tente novamente.'
+  }
+
+  if (status >= 500) {
+    return 'Servidor indisponível no momento. Tente novamente em instantes.'
+  }
+
+  if (typeof data === 'string' && data.trim()) {
+    return data
+  }
+
+  if (data?.message) {
+    return data.message
+  }
+
+  return 'Não foi possível realizar o login agora. Tente novamente.'
+}
+
 const userLogin = async () => {
   try {
     isLoading.value = true
@@ -358,18 +385,8 @@ const userLogin = async () => {
   } catch (err) {
     console.error('Login error:', err)
     console.error('Store no momento do erro:', useUserStore())
-    
-    // Usar mensagem específica do backend se disponível
-    let errorMessage = 'Credenciais inválidas. Tente novamente.'
-    if (err.response && err.response.data) {
-      if (typeof err.response.data === 'string') {
-        errorMessage = err.response.data
-      } else if (err.response.data.message) {
-        errorMessage = err.response.data.message
-      }
-    }
-    
-    error.value = errorMessage
+
+    error.value = getLoginErrorMessage(err)
     setTimeout(() => {
       error.value = null
     }, 4000)

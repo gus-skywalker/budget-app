@@ -130,6 +130,29 @@
                   </v-form>
                 </div>
               </div>
+
+              <div class="modern-card mt-6 danger-zone-card">
+                <div class="card-header">
+                  <h2 class="card-title danger-title">
+                    <v-icon color="error" class="mr-2">mdi-alert-octagon</v-icon>
+                    {{ $t('account_management.danger_zone_title') }}
+                  </h2>
+                  <p class="card-description">
+                    {{ $t('account_management.delete_account_description') }}
+                  </p>
+                </div>
+                <div class="card-content">
+                  <v-btn
+                    color="error"
+                    variant="outlined"
+                    block
+                    @click="deleteAccountDialog = true"
+                  >
+                    <v-icon left>mdi-delete-forever</v-icon>
+                    {{ $t('account_management.delete_account_button') }}
+                  </v-btn>
+                </div>
+              </div>
             </v-col>
           </v-row>
         </v-window-item>
@@ -581,12 +604,47 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <v-dialog v-model="deleteAccountDialog" max-width="520">
+      <v-card class="modern-dialog-card">
+        <v-card-title class="dialog-header">
+          <v-icon color="#eb3349" class="mr-2">mdi-alert-octagon</v-icon>
+          <span class="headline">{{ $t('account_management.delete_account_confirm_title') }}</span>
+        </v-card-title>
+        <v-card-text class="dialog-content">
+          <p class="mb-4">
+            {{ $t('account_management.delete_account_confirm_hint', { phrase: deleteAccountPhrase }) }}
+          </p>
+          <v-text-field
+            v-model="deleteAccountConfirm"
+            :label="$t('account_management.delete_account_confirm_label')"
+            variant="outlined"
+            density="comfortable"
+            color="#eb3349"
+          />
+        </v-card-text>
+        <v-card-actions class="dialog-actions">
+          <v-spacer></v-spacer>
+          <v-btn @click="closeDeleteAccountDialog" variant="text">{{ $t('common.cancel') }}</v-btn>
+          <v-btn
+            color="error"
+            variant="elevated"
+            :loading="deletingAccount"
+            :disabled="deleteAccountConfirm.trim() !== deleteAccountPhrase"
+            @click="deleteAccount"
+          >
+            {{ $t('account_management.delete_account_button') }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
 import { useTheme } from 'vuetify';
 import { useBankStore } from '@/plugins/bankStore';
 import { useUserStore } from '@/plugins/userStore';
@@ -599,6 +657,7 @@ import NotificationService, { type UserSettings } from '@/services/NotificationS
 const bankStore = useBankStore();
 const userStore = useUserStore();
 const theme = useTheme();
+const router = useRouter();
 const { t, locale } = useI18n();
 
 // Tab ativa
@@ -640,6 +699,10 @@ const profileFeedback = ref<{ type: 'success' | 'error'; message: string }>({
   type: 'success',
   message: ''
 })
+const deleteAccountDialog = ref(false)
+const deleteAccountConfirm = ref('')
+const deletingAccount = ref(false)
+const deleteAccountPhrase = 'EXCLUIR'
 
 // Segurança
 const currentPassword = ref('')
@@ -828,6 +891,45 @@ const saveProfile = async () => {
     }
   } finally {
     isSavingProfile.value = false
+  }
+}
+
+const closeDeleteAccountDialog = () => {
+  deleteAccountDialog.value = false
+  deleteAccountConfirm.value = ''
+}
+
+const deleteAccount = async () => {
+  profileFeedback.value.message = ''
+  const userId = profileUserId.value || userStore.getUser?.id
+  if (!userId) {
+    profileFeedback.value = {
+      type: 'error',
+      message: t('account_management.delete_account_error')
+    }
+    return
+  }
+
+  if (deleteAccountConfirm.value.trim() !== deleteAccountPhrase) {
+    return
+  }
+
+  deletingAccount.value = true
+  try {
+    await AuthService.deleteUser(String(userId))
+    closeDeleteAccountDialog()
+    userStore.logout()
+    await router.push('/login')
+  } catch (error: any) {
+    const backendMessage =
+      error?.response?.data?.message ||
+      (typeof error?.response?.data === 'string' ? error.response.data : null)
+    profileFeedback.value = {
+      type: 'error',
+      message: backendMessage || t('account_management.delete_account_error')
+    }
+  } finally {
+    deletingAccount.value = false
   }
 }
 
@@ -1069,6 +1171,14 @@ const saveAlertSettings = async () => {
 
 .v-theme--dark .modern-card:hover {
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+}
+
+.danger-zone-card {
+  border-color: rgba(235, 51, 73, 0.28);
+}
+
+.danger-title {
+  color: #c62828;
 }
 
 .card-header {
