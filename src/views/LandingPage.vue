@@ -55,17 +55,37 @@
     </section>
 
     <!-- Seção IA -->
-    <!-- Seção de Dor -->
-    <section class="section" style="background:#fff; padding:60px 20px;">
-      <h2 style="text-align:center; color:var(--purple);">Quando o dinheiro é compartilhado, o problema raramente é o dinheiro.</h2>
-      <ul style="max-width:600px; margin:32px auto 0; color:var(--dark-gray); font-size:18px;">
-        <li>Falta de visão completa sobre receitas e despesas</li>
-        <li>Decisões tomadas no improviso</li>
-        <li>Metas que nunca saem do papel</li>
-        <li>Conflitos por falta de transparência</li>
-        <li>Gastos invisíveis que corroem o planejamento</li>
-      </ul>
-      <p style="text-align:center; margin-top:24px; color:#666; font-size:17px;">Seja em casa ou na empresa, a ausência de clareza gera tensão.</p>
+    <!-- Seção de Dor (Cards) -->
+    <section class="section pain-section">
+      <h2 class="pain-title">Quando o dinheiro é compartilhado, o problema raramente é o dinheiro.</h2>
+      <div class="pain-list">
+        <div class="pain-card">
+          <span class="pain-icon">👁️</span>
+          <strong>Falta de visão completa</strong>
+          <p>Sobre receitas e despesas</p>
+        </div>
+        <div class="pain-card">
+          <span class="pain-icon">🎲</span>
+          <strong>Decisões no improviso</strong>
+          <p>Sem planejamento claro</p>
+        </div>
+        <div class="pain-card">
+          <span class="pain-icon">🎯</span>
+          <strong>Metas que não saem do papel</strong>
+          <p>Falta de acompanhamento real</p>
+        </div>
+        <div class="pain-card">
+          <span class="pain-icon">🔒</span>
+          <strong>Conflitos por falta de transparência</strong>
+          <p>Informação restrita ou confusa</p>
+        </div>
+        <div class="pain-card">
+          <span class="pain-icon">💸</span>
+          <strong>Gastos invisíveis</strong>
+          <p>Corroem o planejamento</p>
+        </div>
+      </div>
+      <p class="pain-bottom">Seja em casa ou na empresa, a ausência de clareza gera tensão.</p>
     </section>
 
     <!-- Virada -->
@@ -81,11 +101,27 @@
     <!-- Para Famílias -->
     <section class="section benefits-section">
       <h3 style="text-align:center; color:var(--purple);">Para famílias que querem paz financeira</h3>
-      <div class="benefits-container" style="margin-top:24px;">
-        <div class="benefit-item"><h4>Divisão clara de contas</h4></div>
-        <div class="benefit-item"><h4>Metas visíveis para todos</h4></div>
-        <div class="benefit-item"><h4>Planejamento de viagens, casa e investimentos</h4></div>
-        <div class="benefit-item"><h4>Redução de conflitos por dinheiro</h4></div>
+      <div class="benefits-list">
+        <div class="benefit-card">
+          <span class="benefit-icon">🧾</span>
+          <strong>Divisão clara de contas</strong>
+          <p>Transparência para todos os membros</p>
+        </div>
+        <div class="benefit-card">
+          <span class="benefit-icon">👨‍👩‍👧‍👦</span>
+          <strong>Metas visíveis para todos</strong>
+          <p>Todos acompanham o progresso</p>
+        </div>
+        <div class="benefit-card">
+          <span class="benefit-icon">✈️</span>
+          <strong>Planejamento de viagens, casa e investimentos</strong>
+          <p>Organize sonhos e conquistas</p>
+        </div>
+        <div class="benefit-card">
+          <span class="benefit-icon">🤝</span>
+          <strong>Redução de conflitos por dinheiro</strong>
+          <p>Mais harmonia e menos tensão</p>
+        </div>
       </div>
       <p style="text-align:center; margin-top:24px; color:#666; font-size:17px;">Dinheiro deixa de ser tabu e passa a ser estratégia.</p>
     </section>
@@ -93,11 +129,27 @@
     <!-- Para Times e Startups -->
     <section class="section benefits-section">
       <h3 style="text-align:center; color:var(--purple);">Para times que precisam de alinhamento financeiro</h3>
-      <div class="benefits-container" style="margin-top:24px;">
-        <div class="benefit-item"><h4>Orçamento compartilhado por área</h4></div>
-        <div class="benefit-item"><h4>Visão de fluxo de caixa e runway</h4></div>
-        <div class="benefit-item"><h4>Simulação de cenários antes de decidir</h4></div>
-        <div class="benefit-item"><h4>Responsabilidade distribuída com transparência</h4></div>
+      <div class="benefits-list">
+        <div class="benefit-card">
+          <span class="benefit-icon">🏢</span>
+          <strong>Orçamento compartilhado por área</strong>
+          <p>Todos sabem o que está disponível</p>
+        </div>
+        <div class="benefit-card">
+          <span class="benefit-icon">💹</span>
+          <strong>Visão de fluxo de caixa e runway</strong>
+          <p>Previsibilidade para decisões estratégicas</p>
+        </div>
+        <div class="benefit-card">
+          <span class="benefit-icon">🧮</span>
+          <strong>Simulação de cenários antes de decidir</strong>
+          <p>Menos risco, mais confiança</p>
+        </div>
+        <div class="benefit-card">
+          <span class="benefit-icon">🔍</span>
+          <strong>Responsabilidade distribuída com transparência</strong>
+          <p>Todos participam, todos entendem</p>
+        </div>
       </div>
       <p style="text-align:center; margin-top:24px; color:#666; font-size:17px;">Crescimento sustentável começa com clareza.</p>
     </section>
@@ -438,26 +490,57 @@ li {
   letter-spacing: 0.02em;
 }
 
-/* Destaques visuais para listas de dor e diferenciais */
-.section ul {
-  background: #f5f0fa;
-  border-radius: 10px;
-  padding: 18px 28px;
-  margin-top: 18px;
-  margin-bottom: 18px;
-  box-shadow: 0 2px 12px rgba(142,68,173,0.04);
+/* Dor - Cards */
+.pain-section {
+  background: #fff;
+  padding: 60px 20px;
 }
-
-.section ul li {
-  padding-left: 8px;
-  position: relative;
-}
-.section ul li:before {
-  content: '•';
+.pain-title {
+  text-align: center;
   color: var(--purple);
-  font-weight: bold;
-  margin-right: 8px;
-  font-size: 1.1em;
+  margin-bottom: 32px;
+}
+.pain-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px;
+  justify-content: center;
+  max-width: 900px;
+  margin: 0 auto;
+}
+.pain-card {
+  background: #f8f9f9;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(142,68,173,0.06);
+  padding: 32px 24px 22px 24px;
+  flex: 1 1 200px;
+  min-width: 200px;
+  max-width: 240px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.pain-icon {
+  font-size: 2.1rem;
+  margin-bottom: 12px;
+  display: block;
+}
+.pain-card strong {
+  color: var(--purple);
+  font-size: 1.13rem;
+  margin-bottom: 6px;
+}
+.pain-card p {
+  color: var(--dark-gray);
+  font-size: 1.01rem;
+  margin-bottom: 0;
+}
+.pain-bottom {
+  text-align: center;
+  margin-top: 32px;
+  color: #666;
+  font-size: 17px;
 }
 
 /* Suaviza o visual dos botões */
@@ -758,42 +841,43 @@ body {
   font-weight: 600;
 }
 
-/* Benefícios */
-.benefits-section {
-  background-color: var(--white);
-  padding: 60px 40px;
-  text-align: center;
-}
 
-.benefits-container {
+/* Benefícios - Cards */
+.benefits-list {
   display: flex;
-  justify-content: space-between;
   flex-wrap: wrap;
+  gap: 28px;
+  justify-content: center;
+  max-width: 900px;
+  margin: 0 auto;
 }
-
-.benefit-item {
-  width: 22%;
-  background-color: var(--light-gray);
-  padding: 20px;
-  border-radius: 10px;
+.benefit-card {
+  background: #f8f9f9;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(142,68,173,0.06);
+  padding: 32px 24px 22px 24px;
+  flex: 1 1 200px;
+  min-width: 200px;
+  max-width: 240px;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
-
-.benefit-item img {
-  width: 180px;
-  height: 180px;
-  margin-bottom: 20px;
-  object-fit: contain;
+.benefit-icon {
+  font-size: 2.1rem;
+  margin-bottom: 12px;
+  display: block;
 }
-
-.benefit-item h3 {
-  margin-bottom: 10px;
-  font-size: 20px;
+.benefit-card strong {
+  color: var(--purple);
+  font-size: 1.13rem;
+  margin-bottom: 6px;
+}
+.benefit-card p {
   color: var(--dark-gray);
-}
-
-.benefit-item p {
-  color: var(--dark-gray);
+  font-size: 1.01rem;
+  margin-bottom: 0;
 }
 
 /* Testemunhos */
