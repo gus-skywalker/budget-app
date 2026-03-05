@@ -36,10 +36,9 @@
     <!-- Hero Section -->
     <section class="hero">
       <div class="hero-content">
-        <h1>Dinheiro compartilhado não precisa gerar conflito.</h1>
+        <h1>Decisões financeiras melhores começam com clareza compartilhada.</h1>
         <p>
-          O CoBudget é uma Collaborative Budget Platform criada para organizar decisões financeiras em grupo — seja na sua família ou no seu time.<br>
-          Clareza, alinhamento e inteligência para construir liberdade financeira com propósito.
+          O CoBudget é uma plataforma de decisão financeira colaborativa criada para famílias e times que levam planejamento a sério.
         </p>
         <button class="btn btn-primary cta-btn"
           @click.prevent="$router.push({ name: 'login', query: { signup: 'true' } })">
@@ -57,117 +56,117 @@
     <!-- Seção IA -->
     <!-- Seção de Dor (Cards) -->
     <section class="section pain-section">
-      <h2 class="pain-title">Quando o dinheiro é compartilhado, o problema raramente é o dinheiro.</h2>
+      <h2 class="pain-title">Decisões financeiras compartilhadas carregam riscos invisíveis.</h2>
       <div class="pain-list">
         <div class="pain-card">
           <span class="pain-icon">👁️</span>
-          <strong>Falta de visão completa</strong>
-          <p>Sobre receitas e despesas</p>
+          <strong>Informações descentralizadas</strong>
+          <p>Dados dispersos dificultam a análise estratégica</p>
         </div>
         <div class="pain-card">
-          <span class="pain-icon">🎲</span>
-          <strong>Decisões no improviso</strong>
-          <p>Sem planejamento claro</p>
+          <span class="pain-icon">📉</span>
+          <strong>Falta de visão consolidada</strong>
+          <p>Ausência de panorama financeiro integrado</p>
         </div>
         <div class="pain-card">
-          <span class="pain-icon">🎯</span>
-          <strong>Metas que não saem do papel</strong>
-          <p>Falta de acompanhamento real</p>
+          <span class="pain-icon">🧮</span>
+          <strong>Impactos não simulados</strong>
+          <p>Decisões tomadas sem antecipar consequências</p>
         </div>
         <div class="pain-card">
-          <span class="pain-icon">🔒</span>
-          <strong>Conflitos por falta de transparência</strong>
-          <p>Informação restrita ou confusa</p>
+          <span class="pain-icon">📅</span>
+          <strong>Planejamento desconectado da execução</strong>
+          <p>Metas e ações não se conversam</p>
         </div>
         <div class="pain-card">
-          <span class="pain-icon">💸</span>
-          <strong>Gastos invisíveis</strong>
-          <p>Corroem o planejamento</p>
+          <span class="pain-icon">🔗</span>
+          <strong>Responsabilidades pouco claras</strong>
+          <p>Falta de definição sobre papéis e entregas</p>
         </div>
       </div>
-      <p class="pain-bottom">Seja em casa ou na empresa, a ausência de clareza gera tensão.</p>
+      <p class="pain-bottom"></p>
     </section>
 
     <!-- Virada -->
     <section class="section" style="background:linear-gradient(135deg,#f5f7ff 0%,#eef2ff 100%); padding:60px 20px;">
-      <h2 style="text-align:center; color:var(--purple);">O CoBudget transforma confusão em clareza.</h2>
+      <h2 style="text-align:center; color:var(--purple);">O CoBudget organiza, projeta e antecipa.</h2>
       <p style="text-align:center; max-width:600px; margin:24px auto 0; color:var(--dark-gray); font-size:18px;">
-        Todos enxergam o mesmo plano.<br>
-        Todos entendem o impacto das decisões.<br>
-        Todos caminham na mesma direção.
+        Centralize receitas, despesas e metas em um único ambiente.<br>
+        Visualize o impacto antes de agir.<br>
+        Tome decisões com base em dados — não em suposições.
       </p>
     </section>
 
     <!-- Para Famílias -->
     <section class="section benefits-section">
-      <h3 style="text-align:center; color:var(--purple);">Para famílias que querem paz financeira</h3>
+      <h3 style="text-align:center; color:var(--purple);">Estrutura financeira para decisões familiares conscientes.</h3>
       <div class="benefits-list">
         <div class="benefit-card">
           <span class="benefit-icon">🧾</span>
-          <strong>Divisão clara de contas</strong>
-          <p>Transparência para todos os membros</p>
+          <strong>Contas centralizadas</strong>
+          <p>Gestão integrada de receitas e despesas familiares</p>
         </div>
         <div class="benefit-card">
           <span class="benefit-icon">👨‍👩‍👧‍👦</span>
-          <strong>Metas visíveis para todos</strong>
-          <p>Todos acompanham o progresso</p>
+          <strong>Metas compartilhadas</strong>
+          <p>Todos acompanham objetivos e avanços</p>
         </div>
         <div class="benefit-card">
           <span class="benefit-icon">✈️</span>
-          <strong>Planejamento de viagens, casa e investimentos</strong>
-          <p>Organize sonhos e conquistas</p>
+          <strong>Planejamento de conquistas</strong>
+          <p>Viagens, casa e investimentos sob controle</p>
         </div>
         <div class="benefit-card">
           <span class="benefit-icon">🤝</span>
-          <strong>Redução de conflitos por dinheiro</strong>
-          <p>Mais harmonia e menos tensão</p>
+          <strong>Responsabilidade distribuída</strong>
+          <p>Transparência e clareza para todos os membros</p>
         </div>
       </div>
-      <p style="text-align:center; margin-top:24px; color:#666; font-size:17px;">Dinheiro deixa de ser tabu e passa a ser estratégia.</p>
+      <p style="text-align:center; margin-top:24px; color:#666; font-size:17px;"></p>
     </section>
 
     <!-- Para Times e Startups -->
     <section class="section benefits-section">
-      <h3 style="text-align:center; color:var(--purple);">Para times que precisam de alinhamento financeiro</h3>
+      <h3 style="text-align:center; color:var(--purple);">Inteligência financeira para times que crescem com responsabilidade.</h3>
       <div class="benefits-list">
         <div class="benefit-card">
           <span class="benefit-icon">🏢</span>
-          <strong>Orçamento compartilhado por área</strong>
-          <p>Todos sabem o que está disponível</p>
+          <strong>Orçamento por área</strong>
+          <p>Gestão segmentada e transparente de recursos</p>
         </div>
         <div class="benefit-card">
           <span class="benefit-icon">💹</span>
-          <strong>Visão de fluxo de caixa e runway</strong>
-          <p>Previsibilidade para decisões estratégicas</p>
+          <strong>Fluxo de caixa consolidado</strong>
+          <p>Visão estratégica para decisões de crescimento</p>
         </div>
         <div class="benefit-card">
           <span class="benefit-icon">🧮</span>
-          <strong>Simulação de cenários antes de decidir</strong>
-          <p>Menos risco, mais confiança</p>
+          <strong>Simulação de cenários</strong>
+          <p>Antecipe impactos antes de agir</p>
         </div>
         <div class="benefit-card">
           <span class="benefit-icon">🔍</span>
-          <strong>Responsabilidade distribuída com transparência</strong>
-          <p>Todos participam, todos entendem</p>
+          <strong>Responsabilidade clara</strong>
+          <p>Participação e entendimento de todos</p>
         </div>
       </div>
-      <p style="text-align:center; margin-top:24px; color:#666; font-size:17px;">Crescimento sustentável começa com clareza.</p>
+      <p style="text-align:center; margin-top:24px; color:#666; font-size:17px;"></p>
     </section>
 
     <!-- Inteligência (Reposicionada) -->
     <section id="ai" class="section ai-section">
       <div class="ai-content">
         <div class="ai-text">
-          <h2>Antes que o problema apareça, você já sabe.</h2>
+          <h2>Inteligência aplicada à decisão.</h2>
           <p>
-            O CoBudget analisa padrões de receitas e despesas e entrega recomendações claras.<br>
-            Não é apenas registro. É orientação estratégica.
+            O CoBudget utiliza análise de dados para antecipar tendências, recomendar ações e fortalecer a tomada de decisão.<br>
+            Não é apenas registro. É orientação estratégica contínua.
           </p>
           <ul>
-            <li>Alertas de gastos fora do padrão</li>
-            <li>Previsão de fluxo de caixa</li>
-            <li>Simulação de impacto antes de uma decisão</li>
-            <li>Sugestões inteligentes de economia</li>
+            <li>Alertas sobre desvios e padrões atípicos</li>
+            <li>Projeção de fluxo de caixa</li>
+            <li>Simulação de impacto antes de decidir</li>
+            <li>Recomendações automáticas para otimização</li>
           </ul>
           <div class="ai-cta">
             <button class="btn btn-primary" @click.prevent="$router.push({ name: 'dashboard' })">
@@ -181,18 +180,18 @@
         <div class="ai-highlights">
           <article class="ai-card">
             <h3>Fluxo de Caixa Preditivo</h3>
-            <p>Simule receitas, despesas e alertas de déficit para evitar surpresas.</p>
+            <p>Antecipe receitas, despesas e riscos de déficit.</p>
             <span>Insights em tempo real</span>
           </article>
           <article class="ai-card">
             <h3>Simulação de Impacto</h3>
-            <p>Veja o efeito de cada decisão antes de executá-la.</p>
+            <p>Visualize o efeito de cada decisão antes de executar.</p>
             <span>Decida com confiança</span>
           </article>
           <article class="ai-card">
-            <h3>Sugestões Inteligentes</h3>
-            <p>Receba recomendações automáticas para economizar e investir melhor.</p>
-            <span>Economia estratégica</span>
+            <h3>Recomendações Inteligentes</h3>
+            <p>Receba sugestões automáticas para otimizar recursos.</p>
+            <span>Otimização contínua</span>
           </article>
         </div>
       </div>
@@ -201,11 +200,9 @@
     <!-- Benefícios -->
     <!-- Diferenciação -->
     <section id="benefits" class="section benefits-section">
-      <h2 style="text-align:center; color:var(--purple);">Não é ERP. Não é planilha. Não é app individual.</h2>
+      <h2 style="text-align:center; color:var(--purple);">Não é ERP corporativo. Não é planilha improvisada. Não é aplicativo individual.</h2>
       <p style="text-align:center; max-width:600px; margin:24px auto 0; color:var(--dark-gray); font-size:18px;">
-        É uma plataforma criada especificamente para decisões financeiras compartilhadas.<br>
-        Leve, colaborativa e estratégica.<br>
-        Isso cria categoria.
+        É uma plataforma estruturada para decisões financeiras compartilhadas.
       </p>
     </section>
 
@@ -296,8 +293,8 @@
     <!-- CTA Final Forte -->
     <footer class="footer">
       <div class="footer-content">
-        <h2 style="color:var(--yellow); margin-bottom:16px;">Decidir juntos muda tudo.</h2>
-        <p style="color:var(--white); font-size:18px; margin-bottom:24px;">Organize o presente. Planeje o futuro.<br>Construa liberdade financeira com clareza.</p>
+        <h2 style="color:var(--yellow); margin-bottom:16px;">Clareza não é luxo. É responsabilidade.</h2>
+        <p style="color:var(--white); font-size:18px; margin-bottom:24px;">Organize, projete e decida com confiança.<br>CoBudget — Plataforma de decisão financeira colaborativa.</p>
         <div class="footer-cta">
           <button class="btn btn-primary cta-btn" @click.prevent="$router.push({ name: 'choose-plan' })">
             Começar gratuitamente agora
@@ -812,12 +809,44 @@ body {
 .ai-cta {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 20px;
+  justify-content: center;
+  margin-top: 28px;
 }
 
 .ai-highlights {
   display: grid;
   gap: 20px;
+}
+.ai-cta .btn-primary {
+  box-shadow: 0 4px 18px rgba(243,156,18,0.13), 0 1.5px 0 var(--orange);
+  font-size: 1.13rem;
+  padding: 14px 32px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  border-radius: 8px;
+  transition: box-shadow 0.2s, background 0.2s;
+}
+.ai-cta .btn-primary:hover {
+  box-shadow: 0 8px 28px rgba(243,156,18,0.18), 0 2px 0 var(--dark-orange);
+  background: var(--dark-orange);
+}
+.ai-cta .btn-secondary {
+  font-size: 1.13rem;
+  padding: 14px 32px;
+  font-weight: 700;
+  border-radius: 8px;
+  border-width: 2px;
+  border-style: solid;
+  border-color: var(--purple);
+  color: var(--purple);
+  background: #fff;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+.ai-cta .btn-secondary:hover {
+  background: var(--purple);
+  color: #fff;
+  border-color: var(--dark-purple);
 }
 
 .ai-card {
