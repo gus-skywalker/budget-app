@@ -56,7 +56,7 @@ const router = createRouter({
       path: '/financialgoal',
       name: 'financialgoal',
       component: GoalView,
-      meta: { requiresAuth: true, requiresTenant: true }
+      meta: { requiresAuth: true }
     },
     {
       path: '/dashboard',
@@ -68,7 +68,7 @@ const router = createRouter({
       path: '/report',
       name: 'report',
       component: ReportView,
-      meta: { requiresAuth: true, requiresTenant: true }
+      meta: { requiresAuth: true }
     },
     {
       path: '/login',

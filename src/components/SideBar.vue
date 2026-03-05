@@ -117,47 +117,83 @@ function navigateToAccountAdmin() {
     </div>
 
     <v-list density="compact" nav>
-      <v-tooltip text="Dashboard" location="end">
-        <template v-slot:activator="{ props }">
-          <v-list-item v-bind="props" prepend-icon="mdi-view-dashboard" :title="$t('sidebar.dashboard')"
-            :to="{ name: 'dashboard' }"></v-list-item>
-        </template>
-      </v-tooltip>
+      <template v-if="isMobile">
+        <v-tooltip text="Dashboard" location="end">
+          <template v-slot:activator="{ props }">
+            <v-list-item v-bind="props" prepend-icon="mdi-view-dashboard" :title="$t('sidebar.dashboard')"
+              :to="{ name: 'dashboard' }"></v-list-item>
+          </template>
+        </v-tooltip>
+      </template>
+      <template v-else>
+        <v-list-item prepend-icon="mdi-view-dashboard" :title="$t('sidebar.dashboard')"
+          :to="{ name: 'dashboard' }"></v-list-item>
+      </template>
 
-      <v-tooltip text="Orçamento" location="end">
-        <template v-slot:activator="{ props }">
-          <v-list-item v-bind="props" prepend-icon="mdi-currency-usd" :title="$t('sidebar.budget')" 
-            :to="{ name: 'budget' }"></v-list-item>
-        </template>
-      </v-tooltip>
+      <template v-if="isMobile">
+        <v-tooltip text="Orçamento" location="end">
+          <template v-slot:activator="{ props }">
+            <v-list-item v-bind="props" prepend-icon="mdi-currency-usd" :title="$t('sidebar.budget')" 
+              :to="{ name: 'budget' }"></v-list-item>
+          </template>
+        </v-tooltip>
+      </template>
+      <template v-else>
+        <v-list-item prepend-icon="mdi-currency-usd" :title="$t('sidebar.budget')" 
+          :to="{ name: 'budget' }"></v-list-item>
+      </template>
 
-      <v-tooltip text="Grupos" location="end">
-        <template v-slot:activator="{ props }">
-          <v-list-item v-bind="props" prepend-icon="mdi-account-group" :title="$t('sidebar.groups')" 
-            :to="{ name: 'group' }"></v-list-item>
-        </template>
-      </v-tooltip>
+      <template v-if="isMobile">
+        <v-tooltip text="Grupos" location="end">
+          <template v-slot:activator="{ props }">
+            <v-list-item v-bind="props" prepend-icon="mdi-account-group" :title="$t('sidebar.groups')" 
+              :to="{ name: 'group' }"></v-list-item>
+          </template>
+        </v-tooltip>
+      </template>
+      <template v-else>
+        <v-list-item prepend-icon="mdi-account-group" :title="$t('sidebar.groups')" 
+          :to="{ name: 'group' }"></v-list-item>
+      </template>
 
-      <v-tooltip text="Metas Financeiras" location="end">
-        <template v-slot:activator="{ props }">
-          <v-list-item v-bind="props" prepend-icon="mdi-bullseye-arrow" :title="$t('sidebar.goals')"
-            :to="{ name: 'financialgoal' }"></v-list-item>
-        </template>
-      </v-tooltip>
+      <template v-if="isMobile">
+        <v-tooltip text="Metas Financeiras" location="end">
+          <template v-slot:activator="{ props }">
+            <v-list-item v-bind="props" prepend-icon="mdi-bullseye-arrow" :title="$t('sidebar.goals')"
+              :to="{ name: 'financialgoal' }"></v-list-item>
+          </template>
+        </v-tooltip>
+      </template>
+      <template v-else>
+        <v-list-item prepend-icon="mdi-bullseye-arrow" :title="$t('sidebar.goals')"
+          :to="{ name: 'financialgoal' }"></v-list-item>
+      </template>
 
-      <v-tooltip text="Relatórios" location="end">
-        <template v-slot:activator="{ props }">
-          <v-list-item v-bind="props" prepend-icon="mdi-file-chart" :title="$t('sidebar.report')" 
-            :to="{ name: 'report' }"></v-list-item>
-        </template>
-      </v-tooltip>
+      <template v-if="isMobile">
+        <v-tooltip text="Relatórios" location="end">
+          <template v-slot:activator="{ props }">
+            <v-list-item v-bind="props" prepend-icon="mdi-file-chart" :title="$t('sidebar.report')" 
+              :to="{ name: 'report' }"></v-list-item>
+          </template>
+        </v-tooltip>
+      </template>
+      <template v-else>
+        <v-list-item prepend-icon="mdi-file-chart" :title="$t('sidebar.report')" 
+          :to="{ name: 'report' }"></v-list-item>
+      </template>
 
-      <v-tooltip text="Início" location="end">
-        <template v-slot:activator="{ props }">
-          <v-list-item v-bind="props" prepend-icon="mdi-home" :title="$t('sidebar.home')" 
-            :to="{ name: 'home' }"></v-list-item>
-        </template>
-      </v-tooltip>
+      <template v-if="isMobile">
+        <v-tooltip text="Início" location="end">
+          <template v-slot:activator="{ props }">
+            <v-list-item v-bind="props" prepend-icon="mdi-home" :title="$t('sidebar.home')" 
+              :to="{ name: 'home' }"></v-list-item>
+          </template>
+        </v-tooltip>
+      </template>
+      <template v-else>
+        <v-list-item prepend-icon="mdi-home" :title="$t('sidebar.home')" 
+          :to="{ name: 'home' }"></v-list-item>
+      </template>
     </v-list>
 
     <v-divider></v-divider>

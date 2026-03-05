@@ -267,7 +267,7 @@
       <div class="contact-container">
         <h2>Entre em Contato Conosco</h2>
         <p style="margin-bottom:18px; color:var(--purple); font-size:16px; font-weight:500;">
-          E-mail: <a href="mailto:help@cobudget.app" style="color:var(--dark-purple); font-weight:600; text-decoration:underline;">help@cobudget.app</a> ou <a href="mailto:contact@cobudget.app" style="color:var(--dark-purple); font-weight:600; text-decoration:underline;">contact@cobudget.app</a>
+          E-mail: <a href="mailto:contact@cobudget.app" style="color:var(--dark-purple); font-weight:600; text-decoration:underline;">contact@cobudget.app</a>
         </p>
         <form class="contact-form" @submit.prevent="handleSubmit">
           <div class="form-group">
