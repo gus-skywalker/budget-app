@@ -3,7 +3,7 @@
     <v-container id="color-setup">
         <!-- Seção de Planos -->
                 <section id="plans" class="section plans-section">
-                        <h2>Escolha o nível de inteligência financeira que você precisa.</h2>
+                        <h2>Escolha o plano ideal para o seu time.</h2>
                         <p style="text-align:center; max-width:600px; margin:16px auto 32px; color:var(--dark-gray); font-size:18px;">
                             Comece organizando suas finanças e evolua para decisões assistidas por inteligência artificial.
                         </p>
@@ -22,68 +22,44 @@
                         </section>
 
                                                 <div class="plans-container">
-                                <!-- Planos Individuais -->
-                                <div class="plan-item individual-plan" style="border-top: 4px solid #f39c12;">
-                                    <span class="plan-label" style="background:#f39c12; color:#fff; padding:2px 10px; border-radius:6px; font-size:13px; font-weight:600; margin-bottom:8px; display:inline-block;">Individual</span>
-                                    <h3>Plano Mensal</h3>
-                                    <p class="price">{{ planDetails.MONTHLY.displayPrice }}</p>
-                                    <p>Comece com a nossa plataforma gratuitamente e, após 30 dias, continue com o plano mensal.</p>
+                                <!-- Plano Starter -->
+                                <div class="plan-item starter-plan" style="border-top: 4px solid #f39c12;">
+                                    <span class="plan-label" style="background:#f39c12; color:#fff; padding:2px 10px; border-radius:6px; font-size:13px; font-weight:600; margin-bottom:8px; display:inline-block;">Starter</span>
+                                    <h3>Starter</h3>
+                                    <p class="price">R$29 / mês</p>
+                                    <p class="price">R$297 / ano</p>
+                                    <p>Para pequenos times começando o planejamento financeiro colaborativo.</p>
                                     <ul class="plan-benefits">
-                                        <li>Orçamento compartilhado</li>
-                                        <li>Metas financeiras</li>
-                                        <li>Simulação de cenários</li>
-                                        <li>IA Financial Copilot <span style="color:var(--purple); font-weight:600;">(planos Premium)</span></li>
+                                        <li>até 4 membros</li>
+                                        <li>workspace financeiro compartilhado</li>
+                                        <li>planejamento de orçamento</li>
+                                        <li>metas financeiras</li>
+                                        <li>simulação básica de cenários</li>
                                     </ul>
                                     <button class="btn btn-primary cta-btn" @click.prevent="redirectToCheckout('MONTHLY')">
-                                        Assine Mensalmente
+                                        Começar com Starter
                                     </button>
                                 </div>
-                                <div class="plan-item individual-plan" style="border-top: 4px solid #f39c12;">
-                                    <span class="plan-label" style="background:#f39c12; color:#fff; padding:2px 10px; border-radius:6px; font-size:13px; font-weight:600; margin-bottom:8px; display:inline-block;">Individual</span>
-                                    <h3>Plano Anual</h3>
-                                    <p class="price">{{ planDetails.ANNUAL.displayPrice }}</p>
-                                    <p>Aproveite o plano anual com um desconto especial.</p>
+                                <!-- Plano Team -->
+                                <div class="plan-item team-plan" style="border-top: 4px solid var(--purple); background: #f7f3fa; box-shadow: 0 4px 24px rgba(142,68,173,0.13); width: 50%; position:relative;">
+                                    <div style="position:absolute;top:-32px;left:50%;transform:translateX(-50%);">
+                                        <span style="background:var(--yellow);color:var(--dark-purple);padding:6px 18px;border-radius:16px;font-size:15px;font-weight:700;box-shadow:0 2px 8px rgba(241,196,15,0.13);">⭐ Mais popular</span>
+                                    </div>
+                                    <span class="plan-label" style="background:var(--purple); color:#fff; padding:2px 10px; border-radius:6px; font-size:13px; font-weight:600; margin-bottom:8px; display:inline-block;">Team</span>
+                                    <h3 style="font-size:28px;">Team</h3>
+                                    <p class="price" style="color:var(--purple); font-weight:700;">R$59 / mês</p>
+                                    <p class="price" style="color:var(--purple); font-weight:700;">R$597 / ano</p>
+                                    <p>Para startups que precisam tomar decisões financeiras com mais inteligência.</p>
                                     <ul class="plan-benefits">
-                                        <li>Orçamento compartilhado</li>
-                                        <li>Metas financeiras</li>
-                                        <li>Simulação de cenários</li>
-                                        <li>IA Financial Copilot <span style="color:var(--purple); font-weight:600;">(planos Premium)</span></li>
+                                        <li>até 10 membros</li>
+                                        <li>IA Financial Copilot</li>
+                                        <li>simulação de cenários</li>
+                                        <li>previsão financeira</li>
+                                        <li>decisões financeiras colaborativas</li>
+                                        <li>colaboração entre membros</li>
                                     </ul>
-                                    <button class="btn btn-primary cta-btn" @click.prevent="redirectToCheckout('ANNUAL')">
-                                        Assine Anualmente
-                                    </button>
-                                </div>
-                                <!-- Planos Empresariais -->
-                                <div class="plan-item business-plan" style="border-top: 4px solid var(--purple); background: #f7f3fa;">
-                                    <span class="plan-label" style="background:var(--purple); color:#fff; padding:2px 10px; border-radius:6px; font-size:13px; font-weight:600; margin-bottom:8px; display:inline-block;">Empresarial</span>
-                                    <h3>Plano Empresarial Mensal</h3>
-                                    <p class="price" style="color:var(--purple); font-weight:700;">{{ planDetails.BUSINESS_MONTHLY.displayPrice }}</p>
-                                    <p>Ideal para empresas que buscam flexibilidade mensal.</p>
-                                    <ul class="plan-benefits">
-                                        <li>Gestão multiusuário</li>
-                                        <li>Relatórios avançados</li>
-                                        <li>Simulação estratégica</li>
-                                        <li><span style="color:var(--purple); font-weight:600;">IA Financial Copilot avançada</span></li>
-                                        <li>Suporte prioritário</li>
-                                    </ul>
-                                    <button class="btn btn-primary cta-btn" style="background:var(--purple); border:none;" @click.prevent="handleBusinessClick('BUSINESS_MONTHLY')">
-                                        Assinar Empresarial Mensal
-                                    </button>
-                                </div>
-                                <div class="plan-item business-plan" style="border-top: 4px solid var(--purple); background: #f7f3fa;">
-                                    <span class="plan-label" style="background:var(--purple); color:#fff; padding:2px 10px; border-radius:6px; font-size:13px; font-weight:600; margin-bottom:8px; display:inline-block;">Empresarial</span>
-                                    <h3>Plano Empresarial Anual</h3>
-                                    <p class="price" style="color:var(--purple); font-weight:700;">{{ planDetails.BUSINESS_ANNUAL.displayPrice }}</p>
-                                    <p>Economize com o plano anual para sua empresa.</p>
-                                    <ul class="plan-benefits">
-                                        <li>Gestão multiusuário</li>
-                                        <li>Relatórios avançados</li>
-                                        <li>Simulação estratégica</li>
-                                        <li><span style="color:var(--purple); font-weight:600;">IA Financial Copilot avançada</span></li>
-                                        <li>Suporte prioritário</li>
-                                    </ul>
-                                    <button class="btn btn-primary cta-btn" style="background:var(--purple); border:none;" @click.prevent="handleBusinessClick('BUSINESS_ANNUAL')">
-                                        Assinar Empresarial Anual
+                                    <button class="btn btn-primary cta-btn" style="background:var(--purple); border:none; font-size:1.15rem; padding:16px 32px;" @click.prevent="handleBusinessClick('BUSINESS_MONTHLY')">
+                                        Começar com Team
                                     </button>
                                 </div>
                         </div>

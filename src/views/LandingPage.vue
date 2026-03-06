@@ -33,19 +33,22 @@
       </div>
     </header>
 
-    <!-- Hero Section -->
+    <!-- HERO SECTION -->
     <section class="hero">
       <div class="hero-content">
-        <h1>Decisões financeiras melhores começam com clareza — e inteligência.</h1>
+        <h1>O workspace financeiro para decisões colaborativas.</h1>
         <p>
-          O CoBudget é uma plataforma de decisão financeira colaborativa criada para famílias e times que levam planejamento a sério.
+          Planeje orçamentos, simule cenários e alinhe seu time em torno de decisões financeiras.
+        </p>
+        <p style="font-size:15px; color:#888; margin-bottom:8px;">
+          Feito para founders, startups e pequenos times.
         </p>
         <button class="btn btn-primary cta-btn"
           @click.prevent="$router.push({ name: 'login', query: { signup: 'true' } })">
-          Começar gratuitamente
+          Começar a planejar
         </button>
         <p class="micro-proof" style="margin-top:8px; font-size:13px; color:#888;">
-          Sem cartão de crédito • Cancelamento simples • Seus dados protegidos
+          Sem cartão de crédito • Cancelamento simples
         </p>
       </div>
       <div class="hero-image">
@@ -53,48 +56,57 @@
       </div>
     </section>
 
-    <!-- Seção IA -->
-    <!-- Seção de Dor (Cards) -->
+    <!-- PROBLEM SECTION -->
     <section class="section pain-section">
-      <h2 class="pain-title">Decisões financeiras compartilhadas carregam riscos invisíveis.</h2>
+      <h2 class="pain-title">Decisões financeiras raramente são individuais.</h2>
+      <p style="text-align:center; max-width:600px; margin:0 auto 32px; color:var(--dark-gray); font-size:18px;">
+        Founders, sócios e equipes tomam decisões financeiras juntos todos os dias — mas a maioria das ferramentas foi criada para controle individual, não para planejamento colaborativo.
+      </p>
       <div class="pain-list">
         <div class="pain-card">
           <span class="pain-icon">👁️</span>
-          <strong>Informações descentralizadas</strong>
-          <p>Dados dispersos dificultam a análise estratégica</p>
+          <strong>Informações financeiras descentralizadas</strong>
         </div>
         <div class="pain-card">
           <span class="pain-icon">📉</span>
-          <strong>Falta de visão consolidada</strong>
-          <p>Ausência de panorama financeiro integrado</p>
+          <strong>Falta de visibilidade financeira compartilhada</strong>
         </div>
         <div class="pain-card">
           <span class="pain-icon">🧮</span>
-          <strong>Impactos não simulados</strong>
-          <p>Decisões tomadas sem antecipar consequências</p>
+          <strong>Decisões tomadas sem simulação de cenários</strong>
         </div>
         <div class="pain-card">
           <span class="pain-icon">📅</span>
-          <strong>Planejamento desconectado da execução</strong>
-          <p>Metas e ações não se conversam</p>
+          <strong>Planejamento financeiro desconectado da execução</strong>
         </div>
         <div class="pain-card">
           <span class="pain-icon">🔗</span>
-          <strong>Responsabilidades pouco claras</strong>
-          <p>Falta de definição sobre papéis e entregas</p>
+          <strong>Responsabilidades financeiras pouco claras</strong>
         </div>
       </div>
-      <p class="pain-bottom"></p>
     </section>
 
-    <!-- Virada -->
-    <section class="section" style="background:linear-gradient(135deg,#f5f7ff 0%,#eef2ff 100%); padding:60px 20px;">
-      <h2 style="text-align:center; color:var(--purple);">O CoBudget organiza, projeta e antecipa.</h2>
-      <p style="text-align:center; max-width:600px; margin:24px auto 0; color:var(--dark-gray); font-size:18px;">
-        Centralize receitas, despesas e metas em um único ambiente.<br>
-        Visualize o impacto antes de agir.<br>
-        Tome decisões com base em dados — não em suposições.
-      </p>
+    <!-- SOLUTION SECTION -->
+    <section id="solution" class="section benefits-section">
+      <h2 style="text-align:center; color:var(--purple);">Um workspace para planejamento financeiro.</h2>
+      <div class="benefits-list">
+        <div class="benefit-card">
+          <span class="benefit-icon">🤝</span>
+          <strong>Orçamentos compartilhados</strong>
+        </div>
+        <div class="benefit-card">
+          <span class="benefit-icon">🧮</span>
+          <strong>Simulação de cenários</strong>
+        </div>
+        <div class="benefit-card">
+          <span class="benefit-icon">📈</span>
+          <strong>Previsão financeira</strong>
+        </div>
+        <div class="benefit-card">
+          <span class="benefit-icon">👥</span>
+          <strong>Decisões financeiras colaborativas</strong>
+        </div>
+      </div>
     </section>
 
     <!-- Como Funciona -->
@@ -109,7 +121,7 @@
         <div class="benefit-card">
           <span class="benefit-icon">2️⃣</span>
           <strong>Compartilhe</strong>
-          <p>Convide membros da família ou do time para acompanhar decisões.</p>
+          <p>Convide membros do seu time ou parceiros de decisão.</p>
         </div>
         <div class="benefit-card">
           <span class="benefit-icon">3️⃣</span>
@@ -119,76 +131,55 @@
       </div>
     </section>
 
-    <!-- Para Famílias -->
-    <section class="section benefits-section">
-      <h3 style="text-align:center; color:var(--purple);">Estrutura financeira para decisões familiares conscientes.</h3>
+    <!-- FAMILY USE CASE (SECONDARY) -->
+    <section id="families" class="section benefits-section">
+      <h3 style="text-align:center; color:var(--purple);">Também ideal para famílias.</h3>
+      <p style="text-align:center; max-width:600px; margin:0 auto 24px; color:var(--dark-gray); font-size:17px;">
+        Decisões financeiras também são compartilhadas em casa. O CoBudget traz clareza e alinhamento para o planejamento familiar.
+      </p>
       <div class="benefits-list">
         <div class="benefit-card">
           <span class="benefit-icon">🧾</span>
           <strong>Contas centralizadas</strong>
-          <p>Gestão integrada de receitas e despesas familiares</p>
         </div>
         <div class="benefit-card">
           <span class="benefit-icon">👨‍👩‍👧‍👦</span>
           <strong>Metas compartilhadas</strong>
-          <p>Todos acompanham objetivos e avanços</p>
         </div>
         <div class="benefit-card">
           <span class="benefit-icon">✈️</span>
           <strong>Planejamento de conquistas</strong>
-          <p>Viagens, casa e investimentos sob controle</p>
         </div>
         <div class="benefit-card">
           <span class="benefit-icon">🤝</span>
           <strong>Responsabilidade distribuída</strong>
-          <p>Transparência e clareza para todos os membros</p>
         </div>
       </div>
-      <p style="text-align:center; margin-top:24px; color:#666; font-size:17px;"></p>
     </section>
 
-    <!-- Para Times e Startups -->
-    <section class="section benefits-section">
-      <h3 style="text-align:center; color:var(--purple);">Inteligência financeira para times que crescem com responsabilidade.</h3>
-      <div class="benefits-list">
-        <div class="benefit-card">
-          <span class="benefit-icon">🏢</span>
-          <strong>Orçamento por área</strong>
-          <p>Gestão segmentada e transparente de recursos</p>
-        </div>
-        <div class="benefit-card">
-          <span class="benefit-icon">💹</span>
-          <strong>Fluxo de caixa consolidado</strong>
-          <p>Visão estratégica para decisões de crescimento</p>
-        </div>
-        <div class="benefit-card">
-          <span class="benefit-icon">🧮</span>
-          <strong>Simulação de cenários</strong>
-          <p>Antecipe impactos antes de agir</p>
-        </div>
-        <div class="benefit-card">
-          <span class="benefit-icon">🔍</span>
-          <strong>Responsabilidade clara</strong>
-          <p>Participação e entendimento de todos</p>
-        </div>
+    <!-- FINAL CTA -->
+    <section class="section" style="background:linear-gradient(135deg,#f5f7ff 0%,#eef2ff 100%); padding:60px 20px;">
+      <h2 style="text-align:center; color:var(--purple);">Decisões financeiras melhores começam com clareza compartilhada.</h2>
+      <div style="text-align:center; margin-top:32px;">
+        <button class="btn btn-primary cta-btn" style="font-size:1.25rem; padding:18px 40px;" @click.prevent="$router.push({ name: 'choose-plan' })">
+          Começar agora
+        </button>
       </div>
-      <p style="text-align:center; margin-top:24px; color:#666; font-size:17px;"></p>
     </section>
 
-    <!-- Inteligência (Reposicionada) -->
+    <!-- AI SECTION -->
     <section id="ai" class="section ai-section">
       <div class="ai-content">
         <div class="ai-text">
-          <h2>IA Financial Copilot</h2>
+          <h2>Seu copiloto financeiro.</h2>
           <p>
-            A inteligência do CoBudget trabalha continuamente para transformar dados financeiros em decisões melhores.<br><br>
-            O Budget AI Service analisa padrões de receitas, despesas e comportamento financeiro para antecipar riscos, identificar oportunidades e reduzir o esforço manual da gestão.
+            O CoBudget analisa padrões financeiros e ajuda seu time a antecipar riscos antes que eles aconteçam.
           </p>
           <ul style="margin-bottom:24px;">
-            <li><b>Previsão de Despesas</b><br>Projete meses futuros com intervalos de confiança e acompanhe tendências.</li>
-            <li><b>Detecção de Anomalias</b><br>O sistema identifica automaticamente gastos fora do padrão.</li>
-            <li><b>Planos de Economia</b><br>Receba recomendações mensais com probabilidade de sucesso.</li>
-            <li><b>Auto Categorize</b><br>Descrições em português ou inglês são classificadas automaticamente, reduzindo até 80% do trabalho manual.</li>
+            <li>Previsão de despesas</li>
+            <li>Detecção de anomalias</li>
+            <li>Categorização automática</li>
+            <li>Insights financeiros</li>
           </ul>
           <div class="ai-cta">
             <button class="btn btn-primary" @click.prevent="$router.push({ name: 'dashboard' })">
@@ -261,7 +252,7 @@
     <!-- Seção de Planos -->
     <!-- Planos (Conversão Direta) -->
     <section id="plans" class="section plans-section">
-      <h2>Escolha o nível de inteligência financeira que você precisa.</h2>
+      <h2>Escolha o plano ideal para o seu time.</h2>
       <p style="text-align:center; max-width:600px; margin:16px auto 32px; color:var(--dark-gray); font-size:18px;">
         Comece organizando suas finanças e evolua para decisões assistidas por inteligência artificial.
       </p>
@@ -274,68 +265,44 @@
       </section>
 
       <div class="plans-container">
-        <!-- Planos Individuais -->
-        <div class="plan-item individual-plan" style="border-top: 4px solid #f39c12;">
-          <span class="plan-label" style="background:#f39c12; color:#fff; padding:2px 10px; border-radius:6px; font-size:13px; font-weight:600; margin-bottom:8px; display:inline-block;">Individual</span>
-          <h3>Plano Mensal</h3>
-          <p class="price">{{ planDetails.MONTHLY.displayPrice }}</p>
-          <p>Comece com a nossa plataforma gratuitamente e, após 30 dias, continue com o plano mensal.</p>
+        <!-- Plano Starter -->
+        <div class="plan-item starter-plan" style="border-top: 4px solid #f39c12;">
+          <span class="plan-label" style="background:#f39c12; color:#fff; padding:2px 10px; border-radius:6px; font-size:13px; font-weight:600; margin-bottom:8px; display:inline-block;">Starter</span>
+          <h3>Starter</h3>
+          <p class="price">R$29 / mês</p>
+          <p class="price">R$297 / ano</p>
+          <p>Para pequenos times começando o planejamento financeiro colaborativo.</p>
           <ul class="plan-benefits">
-            <li>Orçamento compartilhado</li>
-            <li>Metas financeiras</li>
-            <li>Simulação de cenários</li>
-            <li>IA Financial Copilot <span style="color:var(--purple); font-weight:600;">(planos Premium)</span></li>
+            <li>até 4 membros</li>
+            <li>workspace financeiro compartilhado</li>
+            <li>planejamento de orçamento</li>
+            <li>metas financeiras</li>
+            <li>simulação básica de cenários</li>
           </ul>
           <button class="btn btn-primary cta-btn" @click.prevent="redirectToCheckout('MONTHLY')">
-            Assine Mensalmente
+            Começar com Starter
           </button>
         </div>
-        <div class="plan-item individual-plan" style="border-top: 4px solid #f39c12;">
-          <span class="plan-label" style="background:#f39c12; color:#fff; padding:2px 10px; border-radius:6px; font-size:13px; font-weight:600; margin-bottom:8px; display:inline-block;">Individual</span>
-          <h3>Plano Anual</h3>
-          <p class="price">{{ planDetails.ANNUAL.displayPrice }}</p>
-          <p>Aproveite o plano anual com um desconto especial.</p>
+        <!-- Plano Team -->
+        <div class="plan-item team-plan" style="border-top: 4px solid var(--purple); background: #f7f3fa; box-shadow: 0 4px 24px rgba(142,68,173,0.13); width: 50%; position:relative;">
+          <div style="position:absolute;top:-32px;left:50%;transform:translateX(-50%);">
+            <span style="background:var(--yellow);color:var(--dark-purple);padding:6px 18px;border-radius:16px;font-size:15px;font-weight:700;box-shadow:0 2px 8px rgba(241,196,15,0.13);">⭐ Mais popular</span>
+          </div>
+          <span class="plan-label" style="background:var(--purple); color:#fff; padding:2px 10px; border-radius:6px; font-size:13px; font-weight:600; margin-bottom:8px; display:inline-block;">Team</span>
+          <h3 style="font-size:28px;">Team</h3>
+          <p class="price" style="color:var(--purple); font-weight:700;">R$59 / mês</p>
+          <p class="price" style="color:var(--purple); font-weight:700;">R$597 / ano</p>
+          <p>Para startups que precisam tomar decisões financeiras com mais inteligência.</p>
           <ul class="plan-benefits">
-            <li>Orçamento compartilhado</li>
-            <li>Metas financeiras</li>
-            <li>Simulação de cenários</li>
-            <li>IA Financial Copilot <span style="color:var(--purple); font-weight:600;">(planos Premium)</span></li>
+            <li>até 10 membros</li>
+            <li>IA Financial Copilot</li>
+            <li>simulação de cenários</li>
+            <li>previsão financeira</li>
+            <li>decisões financeiras colaborativas</li>
+            <li>colaboração entre membros</li>
           </ul>
-          <button class="btn btn-primary cta-btn" @click.prevent="redirectToCheckout('ANNUAL')">
-            Assine Anualmente
-          </button>
-        </div>
-        <!-- Planos Empresariais -->
-        <div class="plan-item business-plan" style="border-top: 4px solid var(--purple); background: #f7f3fa;">
-          <span class="plan-label" style="background:var(--purple); color:#fff; padding:2px 10px; border-radius:6px; font-size:13px; font-weight:600; margin-bottom:8px; display:inline-block;">Empresarial</span>
-          <h3>Plano Empresarial Mensal</h3>
-          <p class="price" style="color:var(--purple); font-weight:700;">{{ planDetails.BUSINESS_MONTHLY.displayPrice }}</p>
-          <p>Ideal para empresas que buscam flexibilidade mensal.</p>
-          <ul class="plan-benefits">
-            <li>Gestão multiusuário</li>
-            <li>Relatórios avançados</li>
-            <li>Simulação estratégica</li>
-            <li><span style="color:var(--purple); font-weight:600;">IA Financial Copilot avançada</span></li>
-            <li>Suporte prioritário</li>
-          </ul>
-          <button class="btn btn-primary cta-btn" style="background:var(--purple); border:none;" @click.prevent="redirectToCheckout('BUSINESS_MONTHLY')">
-            Assinar Empresarial Mensal
-          </button>
-        </div>
-        <div class="plan-item business-plan" style="border-top: 4px solid var(--purple); background: #f7f3fa;">
-          <span class="plan-label" style="background:var(--purple); color:#fff; padding:2px 10px; border-radius:6px; font-size:13px; font-weight:600; margin-bottom:8px; display:inline-block;">Empresarial</span>
-          <h3>Plano Empresarial Anual</h3>
-          <p class="price" style="color:var(--purple); font-weight:700;">{{ planDetails.BUSINESS_ANNUAL.displayPrice }}</p>
-          <p>Economize com o plano anual para sua empresa.</p>
-          <ul class="plan-benefits">
-            <li>Gestão multiusuário</li>
-            <li>Relatórios avançados</li>
-            <li>Simulação estratégica</li>
-            <li><span style="color:var(--purple); font-weight:600;">IA Financial Copilot avançada</span></li>
-            <li>Suporte prioritário</li>
-          </ul>
-          <button class="btn btn-primary cta-btn" style="background:var(--purple); border:none;" @click.prevent="redirectToCheckout('BUSINESS_ANNUAL')">
-            Assinar Empresarial Anual
+          <button class="btn btn-primary cta-btn" style="background:var(--purple); border:none; font-size:1.15rem; padding:16px 32px;" @click.prevent="redirectToCheckout('BUSINESS_MONTHLY')">
+            Começar com Team
           </button>
         </div>
       </div>
@@ -620,6 +587,18 @@ li {
 }
 
 /* Suaviza o visual dos botões */
+
+.plan-benefits {
+  list-style-type: none;
+  padding: 0;
+  margin: 20px 0;
+  color: var(--dark-gray);
+  font-size: 14px;
+}
+
+.plan-benefits li {
+  margin: 5px 0;
+}
 .btn, .cta-btn {
   font-family: 'Inter', 'Roboto', Arial, sans-serif;
   font-weight: 600;
