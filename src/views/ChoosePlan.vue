@@ -2,66 +2,91 @@
 <template>
     <v-container id="color-setup">
         <!-- Seção de Planos -->
-        <section id="plans" class="section plans-section">
-            <h2>Escolha o Seu Plano</h2>
-            <div class="plans-container">
-                <!-- Plano Mensal -->
-                <div class="plan-item">
-                    <h3>Plano Mensal</h3>
-                    <p class="price">{{ planDetails.MONTHLY.displayPrice }}</p>
-                    <p>Comece com a nossa plataforma gratuitamente e, após 30 dias, continue com o plano mensal.</p>
-                    <ul class="plan-benefits">
-                        <li>Acesso ilimitado aos recursos</li>
-                        <li>Suporte ao cliente padrão</li>
-                        <li>Atualizações mensais</li>
-                    </ul>
-                    <button class="btn btn-primary cta-btn" @click.prevent="redirectToCheckout('MONTHLY')">
-                        Assine Mensalmente
-                    </button>
-                </div>
-                <!-- Plano Anual -->
-                <div class="plan-item">
-                    <h3>Plano Anual</h3>
-                    <p class="price">{{ planDetails.ANNUAL.displayPrice }}</p>
-                    <p>Aproveite o plano anual com um desconto especial.</p>
-                    <ul class="plan-benefits">
-                        <li>Acesso ilimitado aos recursos</li>
-                        <li>Suporte premium ao cliente</li>
-                        <li>Atualizações mensais e melhorias exclusivas</li>
-                    </ul>
-                    <button class="btn btn-primary cta-btn" @click.prevent="redirectToCheckout('ANNUAL')">
-                        Assine Anualmente
-                    </button>
-                </div>
-                <!-- Plano Empresarial Mensal -->
-                <div class="plan-item">
-                    <h3>Plano Empresarial Mensal</h3>
-                    <p class="price">{{ planDetails.BUSINESS_MONTHLY.displayPrice }}</p>
-                    <p>Ideal para empresas que buscam flexibilidade mensal.</p>
-                    <ul class="plan-benefits">
-                        <li>Gestão multiusuário</li>
-                        <li>Relatórios avançados</li>
-                        <li>Suporte prioritário</li>
-                    </ul>
-                    <button class="btn btn-primary cta-btn" @click.prevent="handleBusinessClick('BUSINESS_MONTHLY')">
-                        Assinar Empresarial Mensal
-                    </button>
-                </div>
-                <!-- Plano Empresarial Anual -->
-                <div class="plan-item">
-                    <h3>Plano Empresarial Anual</h3>
-                    <p class="price">{{ planDetails.BUSINESS_ANNUAL.displayPrice }}</p>
-                    <p>Economize com o plano anual para sua empresa.</p>
-                    <ul class="plan-benefits">
-                        <li>Gestão multiusuário</li>
-                        <li>Relatórios avançados</li>
-                        <li>Suporte prioritário</li>
-                    </ul>
-                    <button class="btn btn-primary cta-btn" @click.prevent="handleBusinessClick('BUSINESS_ANNUAL')">
-                        Assinar Empresarial Anual
-                    </button>
-                </div>
-            </div>
+                <section id="plans" class="section plans-section">
+                        <h2>Escolha o nível de inteligência financeira que você precisa.</h2>
+                        <p style="text-align:center; max-width:600px; margin:16px auto 32px; color:var(--dark-gray); font-size:18px;">
+                            Comece organizando suas finanças e evolua para decisões assistidas por inteligência artificial.
+                        </p>
+
+                        <section class="section ai-value" style="background: #f7f7ff; border-radius: 12px; padding: 24px 16px; margin-bottom: 32px;">
+                            <h3 style="text-align:center; color:var(--purple); margin-bottom:8px;">IA Financial Copilot incluída nos planos Premium</h3>
+                            <p style="text-align:center; max-width:600px; margin:0 auto 0; color:var(--dark-gray); font-size:16px;">
+                                O CoBudget Premium desbloqueia recursos avançados de inteligência financeira:<br>
+                                <span style="display:block; margin-top:12px; text-align:left; max-width:400px; margin-left:auto; margin-right:auto;">
+                                    • Previsão de despesas futuras<br>
+                                    • Detecção automática de gastos anormais<br>
+                                    • Recomendações inteligentes de economia<br>
+                                    • Categorização automática de transações
+                                </span>
+                            </p>
+                        </section>
+
+                                                <div class="plans-container">
+                                <!-- Planos Individuais -->
+                                <div class="plan-item individual-plan" style="border-top: 4px solid #f39c12;">
+                                    <span class="plan-label" style="background:#f39c12; color:#fff; padding:2px 10px; border-radius:6px; font-size:13px; font-weight:600; margin-bottom:8px; display:inline-block;">Individual</span>
+                                    <h3>Plano Mensal</h3>
+                                    <p class="price">{{ planDetails.MONTHLY.displayPrice }}</p>
+                                    <p>Comece com a nossa plataforma gratuitamente e, após 30 dias, continue com o plano mensal.</p>
+                                    <ul class="plan-benefits">
+                                        <li>Orçamento compartilhado</li>
+                                        <li>Metas financeiras</li>
+                                        <li>Simulação de cenários</li>
+                                        <li>IA Financial Copilot <span style="color:var(--purple); font-weight:600;">(planos Premium)</span></li>
+                                    </ul>
+                                    <button class="btn btn-primary cta-btn" @click.prevent="redirectToCheckout('MONTHLY')">
+                                        Assine Mensalmente
+                                    </button>
+                                </div>
+                                <div class="plan-item individual-plan" style="border-top: 4px solid #f39c12;">
+                                    <span class="plan-label" style="background:#f39c12; color:#fff; padding:2px 10px; border-radius:6px; font-size:13px; font-weight:600; margin-bottom:8px; display:inline-block;">Individual</span>
+                                    <h3>Plano Anual</h3>
+                                    <p class="price">{{ planDetails.ANNUAL.displayPrice }}</p>
+                                    <p>Aproveite o plano anual com um desconto especial.</p>
+                                    <ul class="plan-benefits">
+                                        <li>Orçamento compartilhado</li>
+                                        <li>Metas financeiras</li>
+                                        <li>Simulação de cenários</li>
+                                        <li>IA Financial Copilot <span style="color:var(--purple); font-weight:600;">(planos Premium)</span></li>
+                                    </ul>
+                                    <button class="btn btn-primary cta-btn" @click.prevent="redirectToCheckout('ANNUAL')">
+                                        Assine Anualmente
+                                    </button>
+                                </div>
+                                <!-- Planos Empresariais -->
+                                <div class="plan-item business-plan" style="border-top: 4px solid var(--purple); background: #f7f3fa;">
+                                    <span class="plan-label" style="background:var(--purple); color:#fff; padding:2px 10px; border-radius:6px; font-size:13px; font-weight:600; margin-bottom:8px; display:inline-block;">Empresarial</span>
+                                    <h3>Plano Empresarial Mensal</h3>
+                                    <p class="price" style="color:var(--purple); font-weight:700;">{{ planDetails.BUSINESS_MONTHLY.displayPrice }}</p>
+                                    <p>Ideal para empresas que buscam flexibilidade mensal.</p>
+                                    <ul class="plan-benefits">
+                                        <li>Gestão multiusuário</li>
+                                        <li>Relatórios avançados</li>
+                                        <li>Simulação estratégica</li>
+                                        <li><span style="color:var(--purple); font-weight:600;">IA Financial Copilot avançada</span></li>
+                                        <li>Suporte prioritário</li>
+                                    </ul>
+                                    <button class="btn btn-primary cta-btn" style="background:var(--purple); border:none;" @click.prevent="handleBusinessClick('BUSINESS_MONTHLY')">
+                                        Assinar Empresarial Mensal
+                                    </button>
+                                </div>
+                                <div class="plan-item business-plan" style="border-top: 4px solid var(--purple); background: #f7f3fa;">
+                                    <span class="plan-label" style="background:var(--purple); color:#fff; padding:2px 10px; border-radius:6px; font-size:13px; font-weight:600; margin-bottom:8px; display:inline-block;">Empresarial</span>
+                                    <h3>Plano Empresarial Anual</h3>
+                                    <p class="price" style="color:var(--purple); font-weight:700;">{{ planDetails.BUSINESS_ANNUAL.displayPrice }}</p>
+                                    <p>Economize com o plano anual para sua empresa.</p>
+                                    <ul class="plan-benefits">
+                                        <li>Gestão multiusuário</li>
+                                        <li>Relatórios avançados</li>
+                                        <li>Simulação estratégica</li>
+                                        <li><span style="color:var(--purple); font-weight:600;">IA Financial Copilot avançada</span></li>
+                                        <li>Suporte prioritário</li>
+                                    </ul>
+                                    <button class="btn btn-primary cta-btn" style="background:var(--purple); border:none;" @click.prevent="handleBusinessClick('BUSINESS_ANNUAL')">
+                                        Assinar Empresarial Anual
+                                    </button>
+                                </div>
+                        </div>
         </section>
 
         <!-- FAQ reutilizável -->

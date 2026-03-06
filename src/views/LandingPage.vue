@@ -36,7 +36,7 @@
     <!-- Hero Section -->
     <section class="hero">
       <div class="hero-content">
-        <h1>Decisões financeiras melhores começam com clareza compartilhada.</h1>
+        <h1>Decisões financeiras melhores começam com clareza — e inteligência.</h1>
         <p>
           O CoBudget é uma plataforma de decisão financeira colaborativa criada para famílias e times que levam planejamento a sério.
         </p>
@@ -95,6 +95,28 @@
         Visualize o impacto antes de agir.<br>
         Tome decisões com base em dados — não em suposições.
       </p>
+    </section>
+
+    <!-- Como Funciona -->
+    <section class="section how-it-works">
+      <h2 style="text-align:center; color:var(--purple);">Como funciona</h2>
+      <div class="benefits-list" style="margin-top:32px;">
+        <div class="benefit-card">
+          <span class="benefit-icon">1️⃣</span>
+          <strong>Centralize</strong>
+          <p>Reúna receitas, despesas e metas em um único ambiente.</p>
+        </div>
+        <div class="benefit-card">
+          <span class="benefit-icon">2️⃣</span>
+          <strong>Compartilhe</strong>
+          <p>Convide membros da família ou do time para acompanhar decisões.</p>
+        </div>
+        <div class="benefit-card">
+          <span class="benefit-icon">3️⃣</span>
+          <strong>Decida com Inteligência</strong>
+          <p>A IA do CoBudget analisa dados e sugere ações estratégicas.</p>
+        </div>
+      </div>
     </section>
 
     <!-- Para Famílias -->
@@ -157,16 +179,16 @@
     <section id="ai" class="section ai-section">
       <div class="ai-content">
         <div class="ai-text">
-          <h2>Inteligência aplicada à decisão.</h2>
+          <h2>IA Financial Copilot</h2>
           <p>
-            O CoBudget utiliza análise de dados para antecipar tendências, recomendar ações e fortalecer a tomada de decisão.<br>
-            Não é apenas registro. É orientação estratégica contínua.
+            A inteligência do CoBudget trabalha continuamente para transformar dados financeiros em decisões melhores.<br><br>
+            O Budget AI Service analisa padrões de receitas, despesas e comportamento financeiro para antecipar riscos, identificar oportunidades e reduzir o esforço manual da gestão.
           </p>
-          <ul>
-            <li>Alertas sobre desvios e padrões atípicos</li>
-            <li>Projeção de fluxo de caixa</li>
-            <li>Simulação de impacto antes de decidir</li>
-            <li>Recomendações automáticas para otimização</li>
+          <ul style="margin-bottom:24px;">
+            <li><b>Previsão de Despesas</b><br>Projete meses futuros com intervalos de confiança e acompanhe tendências.</li>
+            <li><b>Detecção de Anomalias</b><br>O sistema identifica automaticamente gastos fora do padrão.</li>
+            <li><b>Planos de Economia</b><br>Receba recomendações mensais com probabilidade de sucesso.</li>
+            <li><b>Auto Categorize</b><br>Descrições em português ou inglês são classificadas automaticamente, reduzindo até 80% do trabalho manual.</li>
           </ul>
           <div class="ai-cta">
             <button class="btn btn-primary" @click.prevent="$router.push({ name: 'dashboard' })">
@@ -179,19 +201,19 @@
         </div>
         <div class="ai-highlights">
           <article class="ai-card">
-            <h3>Fluxo de Caixa Preditivo</h3>
-            <p>Antecipe receitas, despesas e riscos de déficit.</p>
-            <span>Insights em tempo real</span>
+            <h3>Previsão Financeira</h3>
+            <p>Projete despesas e receitas futuras com intervalos de confiança.</p>
+            <span>Visão até 12 meses</span>
           </article>
           <article class="ai-card">
-            <h3>Simulação de Impacto</h3>
-            <p>Visualize o efeito de cada decisão antes de executar.</p>
-            <span>Decida com confiança</span>
+            <h3>Detecção de Anomalias</h3>
+            <p>Identifique automaticamente gastos fora do comportamento normal.</p>
+            <span>Alertas proativos</span>
           </article>
           <article class="ai-card">
-            <h3>Recomendações Inteligentes</h3>
-            <p>Receba sugestões automáticas para otimizar recursos.</p>
-            <span>Otimização contínua</span>
+            <h3>Automação Inteligente</h3>
+            <p>Categorização automática reduz até 80% do trabalho manual.</p>
+            <span>Mais eficiência</span>
           </article>
         </div>
       </div>
@@ -239,24 +261,81 @@
     <!-- Seção de Planos -->
     <!-- Planos (Conversão Direta) -->
     <section id="plans" class="section plans-section">
-      <h2>Comece com clareza hoje.</h2>
-      <p style="text-align:center; max-width:600px; margin:24px auto 0; color:var(--dark-gray); font-size:18px;">
-        Experimente gratuitamente.<br>
-        Evolua conforme sua família ou seu time cresce.
+      <h2>Escolha o nível de inteligência financeira que você precisa.</h2>
+      <p style="text-align:center; max-width:600px; margin:16px auto 32px; color:var(--dark-gray); font-size:18px;">
+        Comece organizando suas finanças e evolua para decisões assistidas por inteligência artificial.
       </p>
+
+      <section class="section ai-value" style="background: #f7f7ff; border-radius: 12px; padding: 24px 16px; margin-bottom: 32px;">
+        <h3 style="text-align:center; color:var(--purple); margin-bottom:8px;">IA Financial Copilot incluída nos planos Premium</h3>
+        <p style="text-align:center; max-width:600px; margin:0 auto 0; color:var(--dark-gray); font-size:16px;">
+          O CoBudget Premium desbloqueia recursos avançados de inteligência financeira para você ou sua empresa.
+        </p>
+      </section>
+
       <div class="plans-container">
-        <div class="plan-item">
+        <!-- Planos Individuais -->
+        <div class="plan-item individual-plan" style="border-top: 4px solid #f39c12;">
+          <span class="plan-label" style="background:#f39c12; color:#fff; padding:2px 10px; border-radius:6px; font-size:13px; font-weight:600; margin-bottom:8px; display:inline-block;">Individual</span>
           <h3>Plano Mensal</h3>
           <p class="price">{{ planDetails.MONTHLY.displayPrice }}</p>
+          <p>Comece com a nossa plataforma gratuitamente e, após 30 dias, continue com o plano mensal.</p>
+          <ul class="plan-benefits">
+            <li>Orçamento compartilhado</li>
+            <li>Metas financeiras</li>
+            <li>Simulação de cenários</li>
+            <li>IA Financial Copilot <span style="color:var(--purple); font-weight:600;">(planos Premium)</span></li>
+          </ul>
           <button class="btn btn-primary cta-btn" @click.prevent="redirectToCheckout('MONTHLY')">
-            Começar grátis
+            Assine Mensalmente
           </button>
         </div>
-        <div class="plan-item">
+        <div class="plan-item individual-plan" style="border-top: 4px solid #f39c12;">
+          <span class="plan-label" style="background:#f39c12; color:#fff; padding:2px 10px; border-radius:6px; font-size:13px; font-weight:600; margin-bottom:8px; display:inline-block;">Individual</span>
           <h3>Plano Anual</h3>
           <p class="price">{{ planDetails.ANNUAL.displayPrice }}</p>
+          <p>Aproveite o plano anual com um desconto especial.</p>
+          <ul class="plan-benefits">
+            <li>Orçamento compartilhado</li>
+            <li>Metas financeiras</li>
+            <li>Simulação de cenários</li>
+            <li>IA Financial Copilot <span style="color:var(--purple); font-weight:600;">(planos Premium)</span></li>
+          </ul>
           <button class="btn btn-primary cta-btn" @click.prevent="redirectToCheckout('ANNUAL')">
-            Ver planos
+            Assine Anualmente
+          </button>
+        </div>
+        <!-- Planos Empresariais -->
+        <div class="plan-item business-plan" style="border-top: 4px solid var(--purple); background: #f7f3fa;">
+          <span class="plan-label" style="background:var(--purple); color:#fff; padding:2px 10px; border-radius:6px; font-size:13px; font-weight:600; margin-bottom:8px; display:inline-block;">Empresarial</span>
+          <h3>Plano Empresarial Mensal</h3>
+          <p class="price" style="color:var(--purple); font-weight:700;">{{ planDetails.BUSINESS_MONTHLY.displayPrice }}</p>
+          <p>Ideal para empresas que buscam flexibilidade mensal.</p>
+          <ul class="plan-benefits">
+            <li>Gestão multiusuário</li>
+            <li>Relatórios avançados</li>
+            <li>Simulação estratégica</li>
+            <li><span style="color:var(--purple); font-weight:600;">IA Financial Copilot avançada</span></li>
+            <li>Suporte prioritário</li>
+          </ul>
+          <button class="btn btn-primary cta-btn" style="background:var(--purple); border:none;" @click.prevent="redirectToCheckout('BUSINESS_MONTHLY')">
+            Assinar Empresarial Mensal
+          </button>
+        </div>
+        <div class="plan-item business-plan" style="border-top: 4px solid var(--purple); background: #f7f3fa;">
+          <span class="plan-label" style="background:var(--purple); color:#fff; padding:2px 10px; border-radius:6px; font-size:13px; font-weight:600; margin-bottom:8px; display:inline-block;">Empresarial</span>
+          <h3>Plano Empresarial Anual</h3>
+          <p class="price" style="color:var(--purple); font-weight:700;">{{ planDetails.BUSINESS_ANNUAL.displayPrice }}</p>
+          <p>Economize com o plano anual para sua empresa.</p>
+          <ul class="plan-benefits">
+            <li>Gestão multiusuário</li>
+            <li>Relatórios avançados</li>
+            <li>Simulação estratégica</li>
+            <li><span style="color:var(--purple); font-weight:600;">IA Financial Copilot avançada</span></li>
+            <li>Suporte prioritário</li>
+          </ul>
+          <button class="btn btn-primary cta-btn" style="background:var(--purple); border:none;" @click.prevent="redirectToCheckout('BUSINESS_ANNUAL')">
+            Assinar Empresarial Anual
           </button>
         </div>
       </div>
