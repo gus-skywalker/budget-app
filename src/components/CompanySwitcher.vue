@@ -14,22 +14,6 @@
     </template>
     <v-list>
       <v-list-item
-        :class="{ 'active-company': !currentCompanyId }"
-        @click="switchToPersonal"
-        :disabled="isLoading || !canSwitchToPersonal"
-      >
-        <template v-slot:prepend>
-          <v-icon>{{ !currentCompanyId ? 'mdi-check-circle' : 'mdi-account' }}</v-icon>
-        </template>
-        <v-list-item-title>Modo Pessoal</v-list-item-title>
-        <v-list-item-subtitle>
-          {{ canSwitchToPersonal ? 'Usar o app sem empresa' : 'Disponível após login' }}
-        </v-list-item-subtitle>
-      </v-list-item>
-
-      <v-divider class="my-2" v-if="companies.length"></v-divider>
-
-      <v-list-item
         v-for="company in companies"
         :key="company.companyId"
         @click="switchCompany(company)"
@@ -48,8 +32,8 @@
         <template v-slot:prepend>
           <v-icon>mdi-plus</v-icon>
         </template>
-        <v-list-item-title>Criar Nova Empresa</v-list-item-title>
-        <v-list-item-subtitle>Adicionar empresa ao seu perfil</v-list-item-subtitle>
+        <v-list-item-title>Criar Novo Workspace</v-list-item-title>
+        <v-list-item-subtitle>Adicionar workspace ao seu perfil</v-list-item-subtitle>
       </v-list-item>
     </v-list>
   </v-menu>
@@ -66,28 +50,11 @@ const isLoading = ref(false)
 
 const companies = computed(() => userStore.getCompanies)
 const currentCompanyId = computed(() => userStore.getCurrentCompanyId)
-const canSwitchToPersonal = computed(() => userStore.isTenantMode)
 
 const currentCompanyName = computed(() => {
-  if (!currentCompanyId.value) {
-    return 'Modo Pessoal'
-  }
   const current = companies.value.find(c => c.companyId === currentCompanyId.value)
-  return current?.companyName || current?.companyId || 'Selecione uma empresa'
+  return current?.companyName || current?.companyId || 'Selecione um workspace'
 })
-
-const switchToPersonal = async () => {
-  if (!canSwitchToPersonal.value || isLoading.value) {
-    return
-  }
-  try {
-    isLoading.value = true
-    await userStore.clearCompanySelection()
-    router.push('/dashboard')
-  } finally {
-    isLoading.value = false
-  }
-}
 
 const switchCompany = async (company) => {
   if (company.companyId !== currentCompanyId.value && !isLoading.value) {
@@ -96,8 +63,8 @@ const switchCompany = async (company) => {
       await userStore.selectCompany(company.companyId)
       await router.push('/dashboard')
     } catch (err) {
-      console.error('Erro ao trocar empresa:', err)
-      alert('Erro ao trocar de empresa. Tente novamente.')
+      console.error('Erro ao trocar workspace:', err)
+      alert('Erro ao trocar de workspace. Tente novamente.')
     } finally {
       isLoading.value = false
     }
@@ -112,21 +79,21 @@ const getRoleLabel = (role) => {
   const normalized = (role || '').toUpperCase()
   const labels = {
     ROLE_ADMIN: 'Administrador',
-    ROLE_OWNER: 'Proprietário',
+    ROLE_OWNER: 'Proprietario',
     ROLE_MEMBER: 'Colaborador',
     ROLE_VIEWER: 'Visualizador',
     ROLE_CLIENT: 'Gestor',
-    ROLE_USER: 'Usuário',
-    OAUTH2_USER: 'Usuário OAuth2'
+    ROLE_USER: 'Usuario',
+    OAUTH2_USER: 'Usuario OAuth2'
   }
   if (labels[normalized]) {
     return labels[normalized]
   }
   const legacyLabels = {
     admin: 'Administrador',
-    member: 'Usuário',
+    member: 'Usuario',
     viewer: 'Visualizador',
-    user: 'Usuário'
+    user: 'Usuario'
   }
   return legacyLabels[role] || role
 }

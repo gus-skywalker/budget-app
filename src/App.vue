@@ -79,7 +79,7 @@ onUnmounted(() => {
 
 <template>
   <v-app>
-    <SideBar v-if="isAuthenticated" :notifications="notifications" @accept="accept" @decline="decline"
+    <SideBar v-if="isAuthenticated" :notifications="notifications"
       @toggle-notifications-popup="toggleNotificationsPopup" />
     <v-main>
       <div v-if="isAuthenticated" class="global-context-container">

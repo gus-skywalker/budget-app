@@ -179,6 +179,8 @@
     "date": "Date",
     "amount": "Amount",
     "description": "Description",
+    "account": "Financial account",
+    "account_hint": "Select the account used for this entry.",
     "payment_method": "Payment Method",
     "category": "Category",
     "select_group": "Select Group",
@@ -208,14 +210,22 @@
 
   "validation": {
     "required": "{field} is required",
-    "invalid_currency": "Invalid currency format"
+    "invalid_currency": "Invalid currency format",
+    "account_required": "Create or select a financial account before saving the entry."
   },
 
   "overview": {
     "title": "Overview",
     "total_income": "Total Income",
     "total_expenses": "Total Expenses",
-    "savings": "Savings"
+    "savings": "Savings",
+    "total_balance": "Total Balance",
+    "accounts": "Accounts",
+    "recent_transactions": "Recent Transactions",
+    "top_categories": "Top Categories",
+    "no_accounts": "No financial accounts found.",
+    "no_recent_transactions": "No recent transactions found.",
+    "no_top_categories": "No highlighted categories right now."
   },
 
   "trends": {

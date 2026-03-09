@@ -88,6 +88,8 @@ declare const i18n: import("vue-i18n").I18n<{
             date: string;
             amount: string;
             description: string;
+            account: string;
+            account_hint: string;
             payment_method: string;
             category: string;
             select_group: string;
@@ -99,12 +101,20 @@ declare const i18n: import("vue-i18n").I18n<{
         validation: {
             required: string;
             invalid_currency: string;
+            account_required: string;
         };
         overview: {
             title: string;
             total_income: string;
             total_expenses: string;
             savings: string;
+            total_balance: string;
+            accounts: string;
+            recent_transactions: string;
+            top_categories: string;
+            no_accounts: string;
+            no_recent_transactions: string;
+            no_top_categories: string;
         };
         trends: {
             title: string;
@@ -250,6 +260,8 @@ declare const i18n: import("vue-i18n").I18n<{
             date: string;
             amount: string;
             description: string;
+            account: string;
+            account_hint: string;
             payment_method: string;
             category: string;
             select_group: string;
@@ -262,6 +274,7 @@ declare const i18n: import("vue-i18n").I18n<{
             required: string;
             positive_number: string;
             invalid_currency: string;
+            account_required: string;
             future_date: string;
         };
         overview: {
@@ -269,6 +282,13 @@ declare const i18n: import("vue-i18n").I18n<{
             total_income: string;
             total_expenses: string;
             savings: string;
+            total_balance: string;
+            accounts: string;
+            recent_transactions: string;
+            top_categories: string;
+            no_accounts: string;
+            no_recent_transactions: string;
+            no_top_categories: string;
         };
         financial_goals: {
             title: string;

@@ -343,7 +343,7 @@ const userLogin = async () => {
             goToTarget()
           } catch (selectionError) {
             console.error('Erro ao auto-selecionar empresa:', selectionError)
-            error.value = 'Não foi possível selecionar automaticamente a empresa. Escolha manualmente.'
+            error.value = 'Nao foi possivel selecionar automaticamente o workspace. Escolha manualmente.'
             showCompanySelector.value = true
           }
           return
@@ -352,20 +352,13 @@ const userLogin = async () => {
         return
       }
 
-      // Preference-based flow (prioritize last context)
-      const preferredMode = store.getPreferredMode
+      // Preference-based flow (workspace-first)
       const preferredCompanyId = store.getPreferredCompanyId
       const preferredCompanyExists = preferredCompanyId
         ? companies.some(c => c.companyId === preferredCompanyId)
         : false
 
-      if (preferredMode === 'personal') {
-        // Stay in personal mode without prompting
-        goToTarget()
-        return
-      }
-
-      if (preferredMode === 'tenant' && (preferredCompanyExists || companies.length === 1)) {
+      if (preferredCompanyExists || companies.length === 1) {
         const companyToSelect = preferredCompanyExists
           ? preferredCompanyId
           : companies[0].companyId
@@ -373,13 +366,13 @@ const userLogin = async () => {
           await store.selectCompany(companyToSelect)
           goToTarget()
         } catch (selectionError) {
-          console.error('Erro ao auto-selecionar empresa:', selectionError)
+          console.error('Erro ao auto-selecionar workspace:', selectionError)
           showCompanySelector.value = true
         }
         return
       }
 
-      // No preference (or invalid preference): ask the user.
+      // No preferred workspace: ask user to choose one.
       showCompanySelector.value = true
     }
   } catch (err) {
@@ -400,20 +393,16 @@ const handleCompanySelection = async (company) => {
     isLoading.value = true
     const store = useUserStore()
     const redirectTarget = (route.query.redirect && String(route.query.redirect)) || '/dashboard'
-    if (!company) {
-      // Usuário escolheu modo pessoal
-      await store.clearCompanySelection()
-      showCompanySelector.value = false
-      loginSuccess.value = 'Entrou no modo pessoal!'
+    if (!company || !company.companyId) {
+      error.value = 'Selecione um workspace valido para continuar.'
       setTimeout(() => {
-        loginSuccess.value = null
-        router.push(redirectTarget)
-      }, 800)
+        error.value = null
+      }, 4000)
       return
     }
     await store.selectCompany(company.companyId)
     showCompanySelector.value = false
-    loginSuccess.value = 'Empresa selecionada com sucesso!'
+    loginSuccess.value = 'Workspace selecionado com sucesso!'
     setTimeout(() => {
       loginSuccess.value = null
       router.push(redirectTarget)
@@ -513,9 +502,9 @@ const mockLogin = (scenario) => {
     loginSuccess.value = 'Login realizado com sucesso!'
     setTimeout(() => {
       loginSuccess.value = null
-      router.push('/dashboard')
+      router.push('/create-company')
     }, 800)
-    console.log('👤 Login como usuário individual (sem empresa)')
+    console.log('Workspace obrigatorio: redirecionando para criacao')
   }
   
   console.log('Mock Login executado:', {

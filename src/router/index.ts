@@ -32,43 +32,43 @@ const router = createRouter({
       path: '/home',
       name: 'home',
       component: HomeView,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, requiresWorkspace: true }
     },
     {
       path: '/about',
       name: 'about',
       component: AboutView,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, requiresWorkspace: true }
     },
     {
       path: '/budget',
       name: 'budget',
       component: BudgetView,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, requiresWorkspace: true }
     },
     {
       path: '/group',
       name: 'group',
       component: GroupView,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, requiresWorkspace: true }
     },
     {
       path: '/financialgoal',
       name: 'financialgoal',
       component: GoalView,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, requiresWorkspace: true }
     },
     {
       path: '/dashboard',
       name: 'dashboard',
       component: DashboardView,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, requiresWorkspace: true }
     },
     {
       path: '/report',
       name: 'report',
       component: ReportView,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, requiresWorkspace: true }
     },
     {
       path: '/login',
@@ -85,7 +85,7 @@ const router = createRouter({
       path: '/settings',
       name: 'settings',
       component: SettingsView,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, requiresWorkspace: true }
     },
     {
       path: '/forgot-password',
@@ -136,7 +136,7 @@ const router = createRouter({
       path: '/checkout',
       name: 'checkout',
       component: () => import('@/views/CheckoutView.vue'),
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, requiresWorkspace: true }
     },
     {
       path: '/select-company',
@@ -163,6 +163,26 @@ router.beforeEach((to, from, next) => {
       query: query
     })
     return
+  }
+
+  const companies = userStore.getCompanies || []
+  const hasCompanies = companies.length > 0
+
+  if (isAuthenticated && to.name === 'select-company' && !hasCompanies) {
+    next({ name: 'create-company', query: { redirect: (to.query.redirect as string) || '/dashboard' } })
+    return
+  }
+
+  // Workspace context is mandatory for main app flows.
+  if (to.meta.requiresWorkspace && isAuthenticated) {
+    if (!hasCompanies) {
+      next({ name: 'create-company', query: { redirect: to.fullPath } })
+      return
+    }
+    if (!userStore.isTenantMode) {
+      next({ name: 'select-company', query: { redirect: to.fullPath } })
+      return
+    }
   }
 
   // Check admin role requirement

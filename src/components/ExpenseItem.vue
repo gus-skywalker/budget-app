@@ -14,7 +14,11 @@
         </v-list-item-subtitle>
         <v-list-item-subtitle v-if="expense.users && expense.users.length">
           Compartilhado com:
-          <v-chip v-for="user in expense.users" :key="user.userId" class="mr-2">
+          <v-chip
+            v-for="user in expense.users"
+            :key="user.userId ?? user.id ?? user.email ?? user.name"
+            class="mr-2"
+          >
             {{ user.name }}
           </v-chip>
         </v-list-item-subtitle>
@@ -75,10 +79,10 @@
                 {{ file.fileName }}
               </v-list-item-title>
               <v-list-item-action>
-                <v-btn icon size="x-small" @click="downloadFile(file)">
+                <v-btn icon size="x-small" @click.stop="downloadFile(file)">
                   <v-icon size="18">mdi-download</v-icon>
                 </v-btn>
-                <v-btn icon size="x-small" color="red" @click="removeAttachedFile(file)">
+                <v-btn icon size="x-small" color="red" @click.stop="removeAttachedFile(file)">
                   <v-icon size="18">mdi-delete</v-icon>
                 </v-btn>
               </v-list-item-action>
@@ -89,7 +93,7 @@
             label="Adicionar novos anexos"
             accept="image/*,.pdf"
             multiple
-            @change="onNewFilesChange"
+            @update:model-value="onNewFilesChange"
           ></v-file-input>
           <v-list dense>
             <v-list-item v-for="(file, index) in newFiles" :key="index">
@@ -249,7 +253,7 @@ export default {
       default: () => null,
     },
   },
-  emits: ['deleteExpense', 'removeAttachment', 'attachFiles', 'shareExpense', 'sendReminder', 'select'],
+  emits: ['deleteExpense', 'removeAttachment', 'attachFiles', 'shareExpense', 'sendReminder', 'select', 'downloadAttachment'],
   computed: {
     hasAlerts() {
       return Array.isArray(this.expense.alerts) && this.expense.alerts.length > 0;
@@ -365,23 +369,37 @@ export default {
         this.recurrenceEndDate = null;
       }
     },
-    onNewFilesChange(event) {
-      const files = event?.target?.files;
-      if (!files || !files.length) {
-        console.warn('Nenhum arquivo selecionado.');
-        return;
+    onNewFilesChange(value) {
+      const rawFiles = Array.isArray(value)
+        ? value
+        : value instanceof File
+          ? [value]
+          : value && typeof value === 'object' && 'length' in value && typeof value.length === 'number'
+            ? Array.from(value)
+            : value?.target?.files
+              ? Array.from(value.target.files)
+              : []
+
+      if (!rawFiles.length) {
+        return
       }
 
-      const filesArray = Array.from(files);
-      const uniqueFiles = filesArray.filter((newFile) => {
-        const isDuplicate = this.attachedFiles.some((existingFile) => existingFile.name === newFile.name);
-        if (isDuplicate) {
-          console.warn(`O arquivo "${newFile.name}" já foi adicionado.`);
-        }
-        return !isDuplicate;
-      });
+      const existingNames = new Set([
+        ...this.attachedFiles.map((file) => file.fileName || file.name),
+        ...this.newFiles.map((file) => file.name),
+      ])
 
-      this.newFiles = [...this.newFiles, ...uniqueFiles];
+      const uniqueFiles = rawFiles.filter((newFile) => {
+        const isDuplicate = existingNames.has(newFile.name)
+        if (isDuplicate) {
+          console.warn(`O arquivo "${newFile.name}" ja foi adicionado.`)
+          return false
+        }
+        existingNames.add(newFile.name)
+        return true
+      })
+
+      this.newFiles = [...this.newFiles, ...uniqueFiles]
     },
     removeFile(index) {
       this.newFiles.splice(index, 1);
@@ -404,14 +422,11 @@ export default {
       this.confirmDeleteDialog = false;
     },
     downloadFile(file) {
-      const byteCharacters = atob(file.fileData);
-      const byteNumbers = Array.from(byteCharacters).map((char) => char.charCodeAt(0));
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: file.fileType });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = file.fileName;
-      link.click();
+      this.$emit('downloadAttachment', {
+        expenseId: this.expense.id,
+        attachmentId: file.id,
+        fileName: file.fileName || file.name || 'attachment',
+      })
     },
     attachFiles() {
       if (!this.newFiles.length) {
@@ -496,9 +511,6 @@ export default {
   width: 100%;
 }
 
-.expense-item {
-  cursor: pointer;
-}
 
 .expense-content {
   flex: 1 1 auto;

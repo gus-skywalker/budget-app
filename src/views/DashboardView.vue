@@ -22,7 +22,7 @@
             </div>
             <div class="stat-content">
               <div class="stat-label">{{ $t('overview.total_income') }}</div>
-              <div class="stat-value">{{ overview.totalIncome }}</div>
+              <div class="stat-value">{{ formatCurrency(dashboardSummary.monthlyIncome) }}</div>
             </div>
           </div>
         </v-col>
@@ -33,7 +33,7 @@
             </div>
             <div class="stat-content">
               <div class="stat-label">{{ $t('overview.total_expenses') }}</div>
-              <div class="stat-value">{{ overview.totalExpense }}</div>
+              <div class="stat-value">{{ formatCurrency(dashboardSummary.monthlyExpenses) }}</div>
             </div>
           </div>
         </v-col>
@@ -43,8 +43,108 @@
               <v-icon size="40" color="white">mdi-piggy-bank</v-icon>
             </div>
             <div class="stat-content">
-              <div class="stat-label">{{ $t('overview.savings') }}</div>
-              <div class="stat-value">{{ overview.savings }}</div>
+              <div class="stat-label">{{ $t('overview.total_balance') }}</div>
+              <div class="stat-value">{{ formatCurrency(dashboardSummary.totalBalance) }}</div>
+            </div>
+          </div>
+        </v-col>
+      </v-row>
+
+      <v-row class="finance-read-grid">
+        <v-col cols="12" lg="5">
+          <div class="modern-card accounts-section">
+            <div class="card-header">
+              <h2 class="card-title">
+                <v-icon color="#667eea" class="mr-2">mdi-bank-outline</v-icon>
+                {{ $t('overview.accounts') }}
+              </h2>
+            </div>
+            <div class="card-content">
+              <div v-if="accountsLoading" class="loading-state compact-loading-state">
+                <v-progress-circular indeterminate color="#667eea" size="40"></v-progress-circular>
+              </div>
+              <div v-else-if="accounts.length" class="accounts-grid">
+                <div v-for="account in accounts" :key="account.id" class="account-card">
+                  <div class="account-card__header">
+                    <div>
+                      <h3 class="account-card__title">{{ account.name }}</h3>
+                      <p class="account-card__subtitle">{{ account.provider }} • {{ account.accountType }}</p>
+                    </div>
+                    <v-chip size="small" variant="tonal" color="#667eea">{{ account.currency }}</v-chip>
+                  </div>
+                  <div class="account-card__balance">{{ formatCurrency(account.balance, account.currency) }}</div>
+                </div>
+              </div>
+              <div v-else class="empty-state compact-empty-state">
+                <v-icon size="48" color="#667eea" class="mb-3">mdi-bank-off-outline</v-icon>
+                <p class="empty-message">{{ $t('overview.no_accounts') }}</p>
+              </div>
+            </div>
+          </div>
+        </v-col>
+
+        <v-col cols="12" lg="7">
+          <div class="modern-card transactions-section">
+            <div class="card-header">
+              <h2 class="card-title">
+                <v-icon color="#667eea" class="mr-2">mdi-swap-horizontal</v-icon>
+                {{ $t('overview.recent_transactions') }}
+              </h2>
+            </div>
+            <div class="card-content">
+              <div v-if="dashboardLoading" class="loading-state compact-loading-state">
+                <v-progress-circular indeterminate color="#667eea" size="40"></v-progress-circular>
+              </div>
+              <div v-else-if="dashboardSummary.recentTransactions.length" class="transactions-list">
+                <div
+                  v-for="transaction in dashboardSummary.recentTransactions"
+                  :key="transaction.id"
+                  class="transaction-row"
+                >
+                  <div class="transaction-row__main">
+                    <div class="transaction-row__title">{{ transaction.description }}</div>
+                    <div class="transaction-row__meta">
+                      <span>{{ formatDisplayDate(transaction.date) }}</span>
+                      <span>{{ transaction.accountName || '—' }}</span>
+                      <span>{{ transaction.category || '—' }}</span>
+                      <v-chip size="x-small" variant="outlined">{{ transaction.status }}</v-chip>
+                    </div>
+                  </div>
+                  <div :class="['transaction-row__amount', transaction.direction === 'INFLOW' ? 'is-positive' : 'is-negative']">
+                    {{ formatCurrency(transaction.amount, resolveTransactionCurrency(transaction.accountId)) }}
+                  </div>
+                </div>
+              </div>
+              <div v-else class="empty-state compact-empty-state">
+                <v-icon size="48" color="#667eea" class="mb-3">mdi-swap-horizontal-off</v-icon>
+                <p class="empty-message">{{ $t('overview.no_recent_transactions') }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="modern-card top-categories-section">
+            <div class="card-header">
+              <h2 class="card-title">
+                <v-icon color="#667eea" class="mr-2">mdi-shape-outline</v-icon>
+                {{ $t('overview.top_categories') }}
+              </h2>
+            </div>
+            <div class="card-content">
+              <div v-if="dashboardSummary.topCategories.length" class="top-categories-list">
+                <v-chip
+                  v-for="category in dashboardSummary.topCategories"
+                  :key="category"
+                  color="#667eea"
+                  variant="tonal"
+                  class="top-category-chip"
+                >
+                  {{ category }}
+                </v-chip>
+              </div>
+              <div v-else class="empty-state compact-empty-state">
+                <v-icon size="48" color="#667eea" class="mb-3">mdi-shape-off</v-icon>
+                <p class="empty-message">{{ $t('overview.no_top_categories') }}</p>
+              </div>
             </div>
           </div>
         </v-col>
@@ -181,6 +281,7 @@
 import { Chart, registerables } from 'chart.js/auto'
 import moment from 'moment'
 import DataService from '@/services/DataService'
+import FinancialReadService from '@/services/FinancialReadService'
 import FinancialGoalService from '@/services/FinancialGoalService';
 import CashflowDashboard from '@/components/ai/CashflowDashboard.vue'
 import MonthlyExpensesPrediction from '@/components/ai/MonthlyExpensesPrediction.vue'
@@ -199,11 +300,16 @@ export default {
     const today = new Date();
     return {
       chart: null,
-      overview: {
-        totalIncome: 0.0,
-        totalExpense: 0.0,
-        savings: 0.0,
+      dashboardLoading: false,
+      accountsLoading: false,
+      dashboardSummary: {
+        totalBalance: 0,
+        monthlyIncome: 0,
+        monthlyExpenses: 0,
+        recentTransactions: [],
+        topCategories: [],
       },
+      accounts: [],
       selectedTimePeriod: '3m',
       selectedCategory: null,
       isYearly: false,
@@ -253,7 +359,8 @@ export default {
   },
   mounted() {
     this.fetchCategories()
-    this.fetchMonthOverview()
+    this.fetchDashboardSummary()
+    this.fetchAccounts()
     this.createChart()
     this.fetchFinancialGoals()
   },
@@ -266,6 +373,30 @@ export default {
     }
   },
   methods: {
+    getLocaleForFormatting() {
+      const locale = this.$i18n?.locale || 'pt'
+      if (locale === 'en') return 'en-US'
+      if (locale === 'fr') return 'fr-FR'
+      return 'pt-BR'
+    },
+    formatCurrency(value, currency = null) {
+      const resolvedCurrency = currency || this.accounts[0]?.currency || 'BRL'
+      return Number(value || 0).toLocaleString(this.getLocaleForFormatting(), {
+        style: 'currency',
+        currency: resolvedCurrency,
+      })
+    },
+    formatDisplayDate(value) {
+      if (!value) {
+        return '—'
+      }
+
+      return new Date(`${value}T00:00:00`).toLocaleDateString(this.getLocaleForFormatting())
+    },
+    resolveTransactionCurrency(accountId) {
+      const account = this.accounts.find((item) => item.id === accountId)
+      return account?.currency || this.accounts[0]?.currency || 'BRL'
+    },
     getMonthName(monthIndex) {
       const monthNames = [
         'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -308,6 +439,32 @@ export default {
       }
       this.fetchChartData()
     },
+    fetchDashboardSummary() {
+      this.dashboardLoading = true
+      FinancialReadService.fetchDashboard()
+        .then((response) => {
+          this.dashboardSummary = response.data
+        })
+        .catch((error) => {
+          console.error('Error fetching dashboard summary:', error)
+        })
+        .finally(() => {
+          this.dashboardLoading = false
+        })
+    },
+    fetchAccounts() {
+      this.accountsLoading = true
+      FinancialReadService.fetchAccounts()
+        .then((response) => {
+          this.accounts = response.data
+        })
+        .catch((error) => {
+          console.error('Error fetching accounts:', error)
+        })
+        .finally(() => {
+          this.accountsLoading = false
+        })
+    },
     fetchCategories() {
       const language = this.$i18n?.locale || this.selectedLanguage || 'en'
       this.selectedLanguage = language
@@ -327,15 +484,6 @@ export default {
         .catch((error) => {
           console.error('Error fetching categories:', error)
         });
-    },
-    fetchMonthOverview() {
-      DataService.fetchMonthOverview()
-        .then(response => {
-          this.overview = response.data;
-        })
-        .catch((error) => {
-          console.error('Error fetching month overview:', error)
-        });;
     },
     fetchFinancialGoals() {
       FinancialGoalService.fetchFinancialGoals()
@@ -463,6 +611,10 @@ export default {
   margin-bottom: 40px;
 }
 
+.finance-read-grid {
+  margin-bottom: 40px;
+}
+
 .stat-card {
   background: white;
   border-radius: 16px;
@@ -522,6 +674,134 @@ export default {
   color: #666;
   margin-bottom: 8px;
   font-weight: 500;
+
+.accounts-grid,
+.transactions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.account-card {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 14px;
+  padding: 18px;
+  background: rgba(102, 126, 234, 0.04);
+}
+
+.v-theme--dark .account-card {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(102, 126, 234, 0.08);
+}
+
+.account-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.account-card__title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+  color: #1a1a1a;
+}
+
+.v-theme--dark .account-card__title {
+  color: #ffffff;
+}
+
+.account-card__subtitle {
+  margin: 4px 0 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.v-theme--dark .account-card__subtitle {
+  color: #b0b0b0;
+}
+
+.account-card__balance {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #667eea;
+}
+
+.transaction-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.v-theme--dark .transaction-row {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.transaction-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.transaction-row__main {
+  min-width: 0;
+}
+
+.transaction-row__title {
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 6px;
+}
+
+.v-theme--dark .transaction-row__title {
+  color: #ffffff;
+}
+
+.transaction-row__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: #666;
+  font-size: 0.88rem;
+}
+
+.v-theme--dark .transaction-row__meta {
+  color: #b0b0b0;
+}
+
+.transaction-row__amount {
+  font-size: 1rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.transaction-row__amount.is-positive {
+  color: #11998e;
+}
+
+.transaction-row__amount.is-negative {
+  color: #eb3349;
+}
+
+.top-categories-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.top-category-chip {
+  font-weight: 600;
+}
+
+.compact-empty-state,
+.compact-loading-state {
+  min-height: 180px;
+}
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }

@@ -71,6 +71,22 @@
                   class="modern-input"
                 ></v-select>
               </v-col>
+              <v-col cols="12">
+                <v-select
+                  :label="$t('common.account')"
+                  v-model="income.accountId"
+                  :items="financialAccounts"
+                  item-title="displayName"
+                  item-value="id"
+                  variant="outlined"
+                  density="comfortable"
+                  color="#667eea"
+                  class="modern-input"
+                  :disabled="isLoadingFinancialAccounts || !financialAccounts.length"
+                  :hint="financialAccountsHint"
+                  persistent-hint
+                ></v-select>
+              </v-col>
             </v-row>
             <v-btn 
               color="primary" 
@@ -111,7 +127,7 @@
                 <v-select 
                   :label="$t('common.select_month')" 
                   v-model="selectedIncomeMonth"
-                  @update:model-value="fetchMonthlyIncomes" 
+                  @update:model-value="resetIncomePaginationAndFetch" 
                   :items="months" 
                   item-title="name"
                   item-value="value"
@@ -125,7 +141,7 @@
                 <v-select 
                   :label="$t('common.year')" 
                   v-model="selectedIncomeYear"
-                  @update:model-value="fetchMonthlyIncomes" 
+                  @update:model-value="resetIncomePaginationAndFetch" 
                   :items="years"
                   variant="outlined"
                   density="comfortable"
@@ -151,6 +167,29 @@
               </div>
               <div v-else class="loading-state">
                 <v-progress-circular indeterminate color="#667eea" size="48"></v-progress-circular>
+              </div>
+            </div>
+            <div v-if="incomePagination.total > incomePagination.limit" class="pagination-row">
+              <span class="pagination-label">{{ incomeRangeLabel }}</span>
+              <div class="pagination-actions">
+                <v-btn
+                  icon
+                  size="small"
+                  variant="text"
+                  :disabled="!canGoToPreviousIncomePage"
+                  @click="goToPreviousIncomePage"
+                >
+                  <v-icon>mdi-chevron-left</v-icon>
+                </v-btn>
+                <v-btn
+                  icon
+                  size="small"
+                  variant="text"
+                  :disabled="!canGoToNextIncomePage"
+                  @click="goToNextIncomePage"
+                >
+                  <v-icon>mdi-chevron-right</v-icon>
+                </v-btn>
               </div>
             </div>
           </div>
@@ -247,6 +286,22 @@
                   class="modern-input"
                 ></v-select>
               </v-col>
+              <v-col cols="12" sm="6">
+                <v-select
+                  :label="$t('common.account')"
+                  v-model="expense.accountId"
+                  :items="financialAccounts"
+                  item-title="displayName"
+                  item-value="id"
+                  variant="outlined"
+                  density="comfortable"
+                  color="#667eea"
+                  class="modern-input"
+                  :disabled="isLoadingFinancialAccounts || !financialAccounts.length"
+                  :hint="financialAccountsHint"
+                  persistent-hint
+                ></v-select>
+              </v-col>
               <v-col cols="12">
                 <v-select 
                   :label="$t('common.select_group')" 
@@ -315,7 +370,7 @@
                 <v-select 
                   :label="$t('common.select_month')" 
                   v-model="selectedExpenseMonth"
-                  @update:model-value="fetchMonthlyExpenses" 
+                  @update:model-value="resetExpensePaginationAndFetch" 
                   :items="months" 
                   item-title="name"
                   item-value="value"
@@ -329,7 +384,7 @@
                 <v-select 
                   :label="$t('common.year')" 
                   v-model="selectedExpenseYear"
-                  @update:model-value="fetchMonthlyExpenses" 
+                  @update:model-value="resetExpensePaginationAndFetch" 
                   :items="years"
                   variant="outlined"
                   density="comfortable"
@@ -347,7 +402,8 @@
                   :alert-settings="alertSettings"
                   @attachFiles="handleAttachFiles" 
                   @removeAttachment="handleRemoveAttachment"
-                  @sendReminder="handleSendReminder" 
+                  @downloadAttachment="handleDownloadAttachment"
+                  @sendReminder="handleSendReminder"
                   @shareExpense="handleShareExpense"
                   @deleteExpense="deleteExpense"
                   @select="startEditingExpense"
@@ -359,6 +415,29 @@
               </div>
               <div v-else class="loading-state">
                 <v-progress-circular indeterminate color="#667eea" size="48"></v-progress-circular>
+              </div>
+            </div>
+            <div v-if="expensePagination.total > expensePagination.limit" class="pagination-row">
+              <span class="pagination-label">{{ expenseRangeLabel }}</span>
+              <div class="pagination-actions">
+                <v-btn
+                  icon
+                  size="small"
+                  variant="text"
+                  :disabled="!canGoToPreviousExpensePage"
+                  @click="goToPreviousExpensePage"
+                >
+                  <v-icon>mdi-chevron-left</v-icon>
+                </v-btn>
+                <v-btn
+                  icon
+                  size="small"
+                  variant="text"
+                  :disabled="!canGoToNextExpensePage"
+                  @click="goToNextExpensePage"
+                >
+                  <v-icon>mdi-chevron-right</v-icon>
+                </v-btn>
               </div>
             </div>
           </div>
@@ -391,6 +470,7 @@ import ExpenseItem from '../components/ExpenseItem.vue'
 import IncomeService from '@/services/IncomeService'
 import ExpenseService from '@/services/ExpenseService'
 import DataService from '@/services/DataService'
+import FinancialReadService, { NO_FINANCIAL_ACCOUNT_ERROR_MESSAGE } from '@/services/FinancialReadService'
 import UsersService from '@/services/UsersService'
 import GroupService from '@/services/GroupService'
 import NotificationService from '@/services/NotificationService'
@@ -517,7 +597,8 @@ export default {
         amount: '0',
         description: '',
         paymentMethod: null,
-        isRecurring: false
+        isRecurring: false,
+        accountId: null,
       },
       expense: {
         date: today,
@@ -525,7 +606,8 @@ export default {
         description: '',
         category: null,
         paymentMethod: null,
-        selectedUsers: []
+        selectedUsers: [],
+        accountId: null,
       },
       categoryIcons: {
         groceries: 'mdi-cart',
@@ -545,6 +627,8 @@ export default {
       },
       categories: [],
       paymentMethods: [],
+      financialAccounts: [],
+      isLoadingFinancialAccounts: false,
       selectedIncomeMonth: currentMonth,
       selectedExpenseMonth: currentMonth,
       selectedIncomeYear: currentYear,
@@ -571,6 +655,16 @@ export default {
       years,
       monthlyExpenses: [],
       monthlyIncomes: [],
+      incomePagination: {
+        limit: 20,
+        offset: 0,
+        total: 0,
+      },
+      expensePagination: {
+        limit: 20,
+        offset: 0,
+        total: 0,
+      },
       isLoadingIncomes: false,
       isLoadingExpenses: false,
       isEditingIncome: false,
@@ -587,9 +681,47 @@ export default {
       alertSettings: null,
     }
   },
+  computed: {
+    financialAccountsHint() {
+      return this.financialAccounts.length
+        ? this.$t('common.account_hint')
+        : this.$t('validation.account_required')
+    },
+    canGoToPreviousIncomePage() {
+      return this.incomePagination.offset > 0
+    },
+    canGoToNextIncomePage() {
+      return this.incomePagination.offset + this.incomePagination.limit < this.incomePagination.total
+    },
+    canGoToPreviousExpensePage() {
+      return this.expensePagination.offset > 0
+    },
+    canGoToNextExpensePage() {
+      return this.expensePagination.offset + this.expensePagination.limit < this.expensePagination.total
+    },
+    incomeRangeLabel() {
+      if (!this.incomePagination.total) {
+        return '0 / 0'
+      }
+
+      const start = this.incomePagination.offset + 1
+      const end = Math.min(this.incomePagination.offset + this.incomePagination.limit, this.incomePagination.total)
+      return `${start}-${end} / ${this.incomePagination.total}`
+    },
+    expenseRangeLabel() {
+      if (!this.expensePagination.total) {
+        return '0 / 0'
+      }
+
+      const start = this.expensePagination.offset + 1
+      const end = Math.min(this.expensePagination.offset + this.expensePagination.limit, this.expensePagination.total)
+      return `${start}-${end} / ${this.expensePagination.total}`
+    },
+  },
   mounted() {
     this.fetchCategories();
     this.fetchPaymentMethods();
+    this.fetchFinancialAccounts();
     // this.fetchUsers();
     this.fetchGroups();
     this.fetchAlertSettings();
@@ -652,19 +784,21 @@ export default {
       return null
     },
     buildIncomePayload({ normalizedDate, paymentMethodId, amount }) {
-      const { description, isRecurring } = this.income
+      const { description, isRecurring, accountId } = this.income
       return {
         date: normalizedDate,
         amount,
         description,
         paymentMethod: paymentMethodId,
-        isRecurring
+        isRecurring,
+        accountId,
       }
     },
     buildExpensePayload({ normalizedDate, categoryId, paymentMethodId, amount }) {
       const {
         description,
-        selectedUsers = []
+        selectedUsers = [],
+        accountId,
       } = this.expense
 
       const sanitizedSelectedUsers = Array.isArray(selectedUsers) ? [...selectedUsers] : []
@@ -675,7 +809,8 @@ export default {
         description,
         category: categoryId,
         paymentMethod: paymentMethodId,
-        selectedUsers: sanitizedSelectedUsers
+        selectedUsers: sanitizedSelectedUsers,
+        accountId,
       }
     },
         resolvePaymentMethodId(value) {
@@ -812,6 +947,53 @@ export default {
           console.error('Error fetching payment methods:', error)
         })
     },
+    getDefaultFinancialAccountId() {
+      return this.financialAccounts[0]?.id ?? null
+    },
+    applyDefaultFinancialAccount() {
+      const defaultAccountId = this.getDefaultFinancialAccountId()
+      if (!defaultAccountId) {
+        return
+      }
+
+      if (!this.income.accountId) {
+        this.income.accountId = defaultAccountId
+      }
+
+      if (!this.expense.accountId) {
+        this.expense.accountId = defaultAccountId
+      }
+    },
+    fetchFinancialAccounts() {
+      this.isLoadingFinancialAccounts = true
+      FinancialReadService.fetchAccounts()
+        .then((response) => {
+          this.financialAccounts = (response.data || []).map((account) => ({
+            ...account,
+            displayName: `${account.name} • ${account.provider} • ${account.currency}`
+          }))
+          this.applyDefaultFinancialAccount()
+        })
+        .catch((error) => {
+          console.error('Error fetching financial accounts:', error)
+          this.financialAccounts = []
+        })
+        .finally(() => {
+          this.isLoadingFinancialAccounts = false
+        })
+    },
+    ensureAccountSelected(target) {
+      const defaultAccountId = this.getDefaultFinancialAccountId()
+      const selectedAccountId = target.accountId || defaultAccountId
+
+      if (!selectedAccountId) {
+        this.showToast(this.$t('validation.account_required'), 'warning')
+        return false
+      }
+
+      target.accountId = selectedAccountId
+      return true
+    },
     fetchGroups() {
       const userStore = useUserStore()
       const companyId = userStore.getCurrentCompanyId
@@ -877,14 +1059,58 @@ export default {
         this.users = []
       }
     },
+    resetIncomePaginationAndFetch() {
+      this.incomePagination.offset = 0
+      this.fetchMonthlyIncomes()
+    },
+    resetExpensePaginationAndFetch() {
+      this.expensePagination.offset = 0
+      this.fetchMonthlyExpenses()
+    },
+    goToPreviousIncomePage() {
+      if (!this.canGoToPreviousIncomePage) {
+        return
+      }
+
+      this.incomePagination.offset = Math.max(this.incomePagination.offset - this.incomePagination.limit, 0)
+      this.fetchMonthlyIncomes()
+    },
+    goToNextIncomePage() {
+      if (!this.canGoToNextIncomePage) {
+        return
+      }
+
+      this.incomePagination.offset += this.incomePagination.limit
+      this.fetchMonthlyIncomes()
+    },
+    goToPreviousExpensePage() {
+      if (!this.canGoToPreviousExpensePage) {
+        return
+      }
+
+      this.expensePagination.offset = Math.max(this.expensePagination.offset - this.expensePagination.limit, 0)
+      this.fetchMonthlyExpenses()
+    },
+    goToNextExpensePage() {
+      if (!this.canGoToNextExpensePage) {
+        return
+      }
+
+      this.expensePagination.offset += this.expensePagination.limit
+      this.fetchMonthlyExpenses()
+    },
     fetchMonthlyIncomes() {
       const monthNumber = this.selectedIncomeMonth;
       const yearNumber = this.selectedIncomeYear;
       if (monthNumber !== null) {
         this.isLoadingIncomes = true;
-        IncomeService.fetchMonthlyIncomes(monthNumber, yearNumber)
+        IncomeService.fetchMonthlyIncomes(monthNumber, yearNumber, this.incomePagination)
           .then((response) => {
-            this.monthlyIncomes = this.normalizeCollection(response?.data);
+            const page = response?.data || {}
+            this.monthlyIncomes = this.normalizeCollection(page);
+            this.incomePagination.total = Number(page.total ?? this.monthlyIncomes.length)
+            this.incomePagination.limit = Number(page.limit ?? this.incomePagination.limit)
+            this.incomePagination.offset = Number(page.offset ?? this.incomePagination.offset)
           })
           .catch((error) => {
             console.error('Error fetching monthly incomes:', error);
@@ -910,6 +1136,10 @@ export default {
       const paymentMethodId = this.resolvePaymentMethodId(this.income.paymentMethod)
       if (!paymentMethodId) {
         this.showToast(this.$t('validation.required', { field: this.$t('common.payment_method') }), 'warning')
+        return
+      }
+
+      if (!this.ensureAccountSelected(this.income)) {
         return
       }
 
@@ -946,6 +1176,10 @@ export default {
           if (error?.response) {
             console.error('[BudgetView] saveIncome response error', error.response.data)
           }
+          if (error?.message === NO_FINANCIAL_ACCOUNT_ERROR_MESSAGE) {
+            this.showToast(this.$t('validation.account_required'), 'warning')
+            return
+          }
           const message = isEditing ? this.$t('income.update_failed') : this.$t('income.save_failed')
           this.showToast(message, 'error')
         })
@@ -972,6 +1206,10 @@ export default {
       const parsedAmount = parseCurrencyToNumber(this.expense.amount)
       if (parsedAmount === null) {
         this.showToast(this.$t('validation.invalid_currency'), 'warning')
+        return
+      }
+
+      if (!this.ensureAccountSelected(this.expense)) {
         return
       }
 
@@ -1009,6 +1247,10 @@ export default {
           if (error?.response) {
             console.error('[BudgetView] saveExpense response error', error.response.data)
           }
+          if (error?.message === NO_FINANCIAL_ACCOUNT_ERROR_MESSAGE) {
+            this.showToast(this.$t('validation.account_required'), 'warning')
+            return
+          }
           const message = isEditing ? this.$t('expense.update_failed') : this.$t('expense.save_failed')
           this.showToast(message, 'error')
         })
@@ -1031,7 +1273,8 @@ export default {
         amount: '0',
         description: '',
         paymentMethod: null,
-        isRecurring: false
+        isRecurring: false,
+        accountId: this.getDefaultFinancialAccountId(),
       }
       this.isEditingIncome = false
       this.editingIncomeId = null
@@ -1043,7 +1286,8 @@ export default {
         description: '',
         category: null,
         paymentMethod: null,
-        selectedUsers: []
+        selectedUsers: [],
+        accountId: this.getDefaultFinancialAccountId(),
       }
       this.isEditingExpense = false
       this.editingExpenseId = null
@@ -1111,7 +1355,8 @@ export default {
         paymentMethod: this.resolvePaymentMethodId(
           income.paymentMethod ?? income.paymentMethodId ?? null
         ),
-        isRecurring: income.isRecurring ?? false
+        isRecurring: income.isRecurring ?? false,
+        accountId: income.accountId ?? null,
       }
     },
     cancelIncomeEdit() {
@@ -1146,7 +1391,8 @@ export default {
         ),
         selectedUsers: Array.isArray(expense.users)
           ? expense.users.map((user) => user.userId ?? user.id ?? user)
-          : []
+          : [],
+        accountId: expense.accountId ?? null,
       }
 
       if (Array.isArray(expense.users) && expense.users.length) {
@@ -1189,9 +1435,13 @@ export default {
       const yearNumber = this.selectedExpenseYear;
       if (monthNumber !== null) {
         this.isLoadingExpenses = true;
-        ExpenseService.fetchMonthlyExpenses(monthNumber, yearNumber)
+        ExpenseService.fetchMonthlyExpenses(monthNumber, yearNumber, this.expensePagination)
           .then((response) => {
-            this.monthlyExpenses = this.normalizeCollection(response?.data);
+            const page = response?.data || {}
+            this.monthlyExpenses = this.normalizeCollection(page);
+            this.expensePagination.total = Number(page.total ?? this.monthlyExpenses.length)
+            this.expensePagination.limit = Number(page.limit ?? this.expensePagination.limit)
+            this.expensePagination.offset = Number(page.offset ?? this.expensePagination.offset)
           })
           .catch((error) => {
             console.error('Error fetching monthly expenses:', error);
@@ -1202,27 +1452,31 @@ export default {
       }
     },
     handleAttachFiles({ expense, files }) {
-      // Faça a chamada à API para salvar os arquivos
-      const expenseId = expense.id;
+      const expenseId = expense.id
       ExpenseService.uploadAttachment(expenseId, files, {
         headers: {
-          "Content-Type": "multipart/form-data",
+          'Content-Type': 'multipart/form-data',
         },
         onUploadProgress: (progressEvent) => {
-          let progress = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total,
-          );
-          console.log("Upload Progress: " + progress + "%");
+          const total = progressEvent.total || 1
+          const progress = Math.round((progressEvent.loaded * 100) / total)
+          console.log('Upload Progress: ' + progress + '%')
         },
       })
-        .then(() => {
-          console.log('Arquivos anexados com sucesso');
-          // Atualize a lista de anexos da despesa, se necessário
-          // Por exemplo, você pode recarregar a despesa ou atualizar o estado local
+        .then((response) => {
+          console.log('Arquivos anexados com sucesso')
+          const updatedAttachments = Array.isArray(response?.data) ? response.data : []
+          const expenseIndex = this.monthlyExpenses.findIndex((item) => item.id === expenseId)
+          if (expenseIndex !== -1) {
+            this.monthlyExpenses[expenseIndex] = {
+              ...this.monthlyExpenses[expenseIndex],
+              attachments: updatedAttachments,
+            }
+          }
         })
         .catch((error) => {
-          console.error('Erro ao anexar arquivos:', error);
-        });
+          console.error('Erro ao anexar arquivos:', error)
+        })
     },
     handleShareExpense({ expense, email }) {
       const userStore = useUserStore();
@@ -1254,12 +1508,52 @@ export default {
     handleRemoveAttachment({ expenseId, attachmentId }) {
       ExpenseService.removeAttachment(expenseId, attachmentId)
         .then(() => {
-          console.log('Anexo removido com sucesso.');
-          // Atualize a lista de despesas ou faça outras ações necessárias
+          console.log('Anexo removido com sucesso.')
+          const expenseIndex = this.monthlyExpenses.findIndex((item) => item.id === expenseId)
+          if (expenseIndex !== -1) {
+            const currentAttachments = Array.isArray(this.monthlyExpenses[expenseIndex].attachments)
+              ? this.monthlyExpenses[expenseIndex].attachments
+              : []
+            this.monthlyExpenses[expenseIndex] = {
+              ...this.monthlyExpenses[expenseIndex],
+              attachments: currentAttachments.filter((attachment) => attachment.id !== attachmentId),
+            }
+          }
         })
         .catch(error => {
-          console.error('Erro ao remover o anexo:', error);
-        });
+          console.error('Erro ao remover o anexo:', error)
+        })
+    },
+    handleDownloadAttachment({ expenseId, attachmentId, fileName }) {
+      ExpenseService.downloadAttachment(expenseId, attachmentId)
+        .then((response) => {
+          const blob = response?.data
+          if (!blob) {
+            throw new Error('Arquivo nao encontrado no download')
+          }
+
+          const disposition = response?.headers?.['content-disposition'] || ''
+          const fileNameFromHeader = disposition
+            .split(';')
+            .map((part) => part.trim())
+            .find((part) => part.toLowerCase().startsWith('filename='))
+            ?.split('=')[1]
+            ?.replace(/^"|"$/g, '')
+
+          const resolvedFileName = fileNameFromHeader || fileName || 'attachment'
+          const url = window.URL.createObjectURL(blob)
+          const anchor = document.createElement('a')
+          anchor.href = url
+          anchor.download = resolvedFileName
+          document.body.appendChild(anchor)
+          anchor.click()
+          anchor.remove()
+          window.URL.revokeObjectURL(url)
+        })
+        .catch((error) => {
+          console.error('Erro ao baixar o anexo:', error)
+          this.showToast('Falha ao baixar anexo', 'error')
+        })
     },
     async handleSendReminder(alertData) {
       const userStore = useUserStore();
@@ -1480,6 +1774,29 @@ export default {
 .modern-list {
   background: transparent;
   padding: 0;
+}
+
+.pagination-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 16px;
+}
+
+.pagination-label {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.v-theme--dark .pagination-label {
+  color: #b0b0b0;
+}
+
+.pagination-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 /* Empty State */

@@ -202,6 +202,8 @@
         "date": "Date",
         "amount": "Montant",
         "description": "Description",
+        "account": "Compte financier",
+        "account_hint": "Sélectionnez le compte utilisé pour cette écriture.",
         "payment_method": "Méthode de paiement",
         "category": "Catégorie",
         "select_group": "Sélectionner le groupe",
@@ -229,13 +231,21 @@
       },
       "validation": {
         "required": "{field} est requis",
-        "invalid_currency": "Format de devise invalide"
+        "invalid_currency": "Format de devise invalide",
+        "account_required": "Créez ou sélectionnez un compte financier avant d'enregistrer l'écriture."
       },
       "overview": {
         "title": "Aperçu",
         "total_income": "Revenu total",
         "total_expenses": "Dépenses totales",
-        "savings": "Économies"
+        "savings": "Économies",
+        "total_balance": "Solde total",
+        "accounts": "Comptes",
+        "recent_transactions": "Transactions récentes",
+        "top_categories": "Catégories principales",
+        "no_accounts": "Aucun compte financier trouvé.",
+        "no_recent_transactions": "Aucune transaction récente trouvée.",
+        "no_top_categories": "Aucune catégorie mise en avant pour le moment."
       },
       "trends": {
         "title": "Tendances dans le temps",

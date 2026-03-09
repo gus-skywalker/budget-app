@@ -179,6 +179,8 @@
     "date": "Data",
     "amount": "Valor",
     "description": "Descrição",
+    "account": "Conta financeira",
+    "account_hint": "Selecione a conta usada no lançamento.",
     "payment_method": "Método de Pagamento",
     "category": "Categoria",
     "select_group": "Selecione o Grupo",
@@ -210,6 +212,7 @@
     "required": "{field} é obrigatório.",
     "positive_number": "{field} deve ser um número positivo.",
     "invalid_currency": "Formato de moeda inválido.",
+    "account_required": "Cadastre ou selecione uma conta financeira antes de salvar o lançamento.",
     "future_date": "{field} deve ser uma data futura."
   },
 
@@ -217,7 +220,14 @@
     "title": "Visão Geral",
     "total_income": "Total de Entradas",
     "total_expenses": "Total de Débitos",
-    "savings": "Economias"
+    "savings": "Economias",
+    "total_balance": "Saldo Total",
+    "accounts": "Contas",
+    "recent_transactions": "Transações Recentes",
+    "top_categories": "Principais Categorias",
+    "no_accounts": "Nenhuma conta financeira encontrada.",
+    "no_recent_transactions": "Nenhuma transação recente encontrada.",
+    "no_top_categories": "Nenhuma categoria em destaque no momento."
   },
 
   "trends": {

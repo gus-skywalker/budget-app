@@ -6,21 +6,21 @@
           <v-card class="elevation-12 pa-6">
             <v-card-title class="headline text-center mb-6">
               <v-icon large color="primary" class="mr-2">mdi-office-building</v-icon>
-              Criar sua Empresa
+              Criar seu Workspace
             </v-card-title>
-            
+
             <v-card-text>
               <p class="text-body-1 mb-6 text-center">
-                Para começar a usar o CoBudget, você precisa criar uma empresa. 
-                Como administrador, você poderá convidar outros usuários para colaborar.
+                Para comecar a usar o CoBudget, voce precisa criar um workspace.
+                Como administrador, voce podera convidar outros usuarios para colaborar.
               </p>
-              
+
               <v-form ref="form" v-model="valid" @submit.prevent="createCompany">
                 <v-text-field
                   v-model="companyName"
                   :rules="companyNameRules"
-                  label="Nome da Empresa"
-                  placeholder="Ex: Minha Empresa Ltda"
+                  label="Nome do Workspace"
+                  placeholder="Ex: Operacao Principal"
                   outlined
                   required
                   :loading="loading"
@@ -65,7 +65,7 @@
                 />
               </v-form>
             </v-card-text>
-            
+
             <v-card-actions class="justify-center">
               <v-btn
                 color="primary"
@@ -76,14 +76,14 @@
                 class="px-8"
               >
                 <v-icon left>mdi-plus</v-icon>
-                Criar Empresa
+                Criar Workspace
               </v-btn>
             </v-card-actions>
           </v-card>
         </v-col>
       </v-row>
     </v-container>
-    
+
     <!-- Success/Error Snackbar -->
     <v-snackbar
       v-model="snackbar"

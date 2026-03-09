@@ -19,7 +19,7 @@ const extractTokenFromUrl = async () => {
   const email = urlParams.get('email')
 
   console.log('OAuth2 callback - token:', token ? 'presente' : 'ausente')
-  
+
   if (token && email) {
     try {
       userStore.setToken(token)
@@ -46,7 +46,7 @@ const extractTokenFromUrl = async () => {
       const companies = userStore.getCompanies || []
 
       if (!companies.length) {
-        router.push('/settings')
+        router.push('/create-company')
         return
       }
 
@@ -55,18 +55,12 @@ const extractTokenFromUrl = async () => {
         return
       }
 
-      const preferredMode = userStore.getPreferredMode
       const preferredCompanyId = userStore.getPreferredCompanyId
       const preferredCompanyExists = preferredCompanyId
         ? companies.some(c => c.companyId === preferredCompanyId)
         : false
 
-      if (preferredMode === 'personal') {
-        router.push('/dashboard')
-        return
-      }
-
-      if (preferredMode === 'tenant' && (preferredCompanyExists || companies.length === 1)) {
+      if (preferredCompanyExists || companies.length === 1) {
         const companyToSelect = preferredCompanyExists
           ? preferredCompanyId
           : companies[0].companyId
@@ -74,7 +68,7 @@ const extractTokenFromUrl = async () => {
           await userStore.selectCompany(companyToSelect)
           router.push('/dashboard')
         } catch (selectionError) {
-          console.error('Erro ao auto-selecionar empresa via OAuth2:', selectionError)
+          console.error('Erro ao auto-selecionar workspace via OAuth2:', selectionError)
           router.push({ name: 'select-company', query: { redirect: '/dashboard' } })
         }
         return

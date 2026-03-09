@@ -6,11 +6,11 @@
           <v-card class="elevation-12 gradient-card">
             <v-card-title class="d-flex align-center justify-space-between">
               <div>
-                <h2 class="title mb-1">Escolha uma empresa</h2>
-                <p class="subtitle">Defina o tenant ativo para continuar</p>
+                <h2 class="title mb-1">Escolha um workspace</h2>
+                <p class="subtitle">Defina o workspace ativo para continuar</p>
               </div>
               <v-chip color="primary" variant="flat" size="small">
-                {{ companies.length }} empresas
+                {{ companies.length }} workspaces
               </v-chip>
             </v-card-title>
 
@@ -21,7 +21,7 @@
                 variant="tonal"
                 class="mb-4"
               >
-                Não encontramos nenhuma empresa no seu perfil. Você pode criar uma agora mesmo.
+                Nao encontramos nenhum workspace no seu perfil. Voce pode criar um agora mesmo.
               </v-alert>
 
               <v-list v-else density="comfortable" nav>
@@ -57,15 +57,6 @@
             <v-divider></v-divider>
 
             <v-card-actions class="action-area">
-              <v-btn
-                color="primary"
-                variant="tonal"
-                prepend-icon="mdi-account"
-                :disabled="switchingToPersonal"
-                @click="switchToPersonal"
-              >
-                Usar modo pessoal
-              </v-btn>
               <v-spacer />
               <v-btn
                 color="primary"
@@ -73,7 +64,7 @@
                 prepend-icon="mdi-plus"
                 @click="router.push({ name: 'create-company' })"
               >
-                Criar empresa
+                Criar workspace
               </v-btn>
             </v-card-actions>
           </v-card>
@@ -95,17 +86,16 @@ const userStore = useUserStore()
 const companies = computed(() => userStore.getCompanies)
 const redirectTarget = computed(() => (route.query.redirect as string) || '/dashboard')
 const loadingCompany = ref<string | null>(null)
-const switchingToPersonal = ref(false)
 
 const getRoleLabel = (role?: string | null) => {
   const normalized = (role || '').toUpperCase()
   const labels: Record<string, string> = {
-    ROLE_OWNER: 'Proprietário',
+    ROLE_OWNER: 'Proprietario',
     ROLE_ADMIN: 'Administrador',
     ROLE_MEMBER: 'Colaborador',
     ROLE_VIEWER: 'Visualizador'
   }
-  return labels[normalized] || 'Sem permissão definida'
+  return labels[normalized] || 'Sem permissao definida'
 }
 
 const selectCompany = async (companyId: string) => {
@@ -115,26 +105,9 @@ const selectCompany = async (companyId: string) => {
     await userStore.selectCompany(companyId)
     router.push(redirectTarget.value)
   } catch (error) {
-    console.error('Erro ao selecionar empresa pela tela dedicada:', error)
+    console.error('Erro ao selecionar workspace pela tela dedicada:', error)
   } finally {
     loadingCompany.value = null
-  }
-}
-
-const switchToPersonal = async () => {
-  if (switchingToPersonal.value) return
-  if (!userStore.isTenantMode) {
-    router.push(redirectTarget.value)
-    return
-  }
-  try {
-    switchingToPersonal.value = true
-    await userStore.clearCompanySelection()
-    router.push(redirectTarget.value)
-  } catch (error) {
-    console.error('Erro ao voltar para o modo pessoal:', error)
-  } finally {
-    switchingToPersonal.value = false
   }
 }
 </script>

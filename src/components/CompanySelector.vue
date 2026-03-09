@@ -2,10 +2,10 @@
   <v-dialog v-model="dialog" persistent max-width="500">
     <v-card>
       <v-card-title class="headline">
-        Selecione a Empresa
+        Selecione o Workspace
       </v-card-title>
       <v-card-text>
-        <p class="mb-4">Você tem acesso a múltiplas empresas. Selecione a empresa com a qual deseja trabalhar:</p>
+        <p class="mb-4">Voce tem acesso a multiplos workspaces. Selecione o workspace com o qual deseja trabalhar:</p>
         <v-list>
           <v-list-item
             v-for="company in companies"
@@ -18,20 +18,6 @@
             </template>
             <v-list-item-title>{{ company.companyName || company.companyId }}</v-list-item-title>
             <v-list-item-subtitle>{{ getRoleLabel(company.role) }}</v-list-item-subtitle>
-            <template v-slot:append>
-              <v-icon>mdi-chevron-right</v-icon>
-            </template>
-          </v-list-item>
-          <v-list-item
-            class="company-item"
-            @click="selectPersonal"
-            key="personal-mode"
-          >
-            <template v-slot:prepend>
-              <v-icon color="primary">mdi-account</v-icon>
-            </template>
-            <v-list-item-title>Usar modo pessoal</v-list-item-title>
-            <v-list-item-subtitle>Sem empresa selecionada</v-list-item-subtitle>
             <template v-slot:append>
               <v-icon>mdi-chevron-right</v-icon>
             </template>
@@ -64,27 +50,23 @@ const selectCompany = (company) => {
   emit('company-selected', company)
 }
 
-const selectPersonal = () => {
-  emit('company-selected', null)
-}
-
 const getRoleLabel = (role) => {
   const normalized = (role || '').toUpperCase()
   const labels = {
     ROLE_ADMIN: 'Administrador',
-    ROLE_OWNER: 'Proprietário',
+    ROLE_OWNER: 'Proprietario',
     ROLE_MEMBER: 'Colaborador',
     ROLE_VIEWER: 'Visualizador',
     ROLE_CLIENT: 'Gestor',
-    ROLE_USER: 'Usuário',
-    OAUTH2_USER: 'Usuário OAuth2'
+    ROLE_USER: 'Usuario',
+    OAUTH2_USER: 'Usuario OAuth2'
   }
   if (labels[normalized]) {
     return labels[normalized]
   }
   const legacyLabels = {
     admin: 'Administrador',
-    member: 'Usuário',
+    member: 'Usuario',
     viewer: 'Visualizador'
   }
   return legacyLabels[role] || role

@@ -659,7 +659,7 @@ const deleteCompany = async () => {
     showSnackbar('Empresa excluída', 'info')
 
     const hasOtherCompanies = (nextCompanies?.length || 0) > 0
-    router.push(hasOtherCompanies ? '/select-company' : '/dashboard')
+    router.push(hasOtherCompanies ? '/select-company' : '/create-company')
   } catch (error) {
     showSnackbar(parseApiError(error), 'error')
   } finally {
