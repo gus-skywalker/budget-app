@@ -636,8 +636,12 @@ const deleteCompany = async () => {
   try {
     await CompanyService.deleteCompany(deletedCompanyId)
 
+    // Limpa seleção de empresa e força atualização do usuário
     try {
       await userStore.clearCompanySelection()
+      // Após limpar, força reload do usuário para garantir que companyId foi limpo
+      await userStore.tryRefreshToken()
+      // Alternativa: pode-se chamar um endpoint /users/me para garantir contexto atualizado
     } catch {
       userStore.logout()
       router.push('/login')
@@ -659,7 +663,15 @@ const deleteCompany = async () => {
     showSnackbar('Empresa excluída', 'info')
 
     const hasOtherCompanies = (nextCompanies?.length || 0) > 0
-    router.push(hasOtherCompanies ? '/select-company' : '/create-company')
+    // Força reload do contexto do usuário para garantir que companyId não está mais presente
+    if (!hasOtherCompanies) {
+      // Se não há mais empresas, redireciona para onboarding/criação
+      userStore.setCurrentCompany(null)
+      router.push('/create-company')
+    } else {
+      // Se há outras empresas, força seleção
+      router.push('/select-company')
+    }
   } catch (error) {
     showSnackbar(parseApiError(error), 'error')
   } finally {
