@@ -53,10 +53,70 @@
         </div>
         <div class="card-content">
           <v-radio-group v-model="selectedPlan" class="plan-radio-group">
+            <div v-if="isTenantMode" class="plan-group-label">STARTER</div>
+            <div class="plan-option" :class="{ 'disabled': currentPlan === 'MONTHLY' }">
+              <v-radio 
+                label="STARTER Mensal"
+                value="MONTHLY"
+                :disabled="currentPlan === 'MONTHLY'"
+                color="#667eea"
+              >
+                <template v-slot:label>
+                  <div class="plan-label">
+                    <div class="plan-name">
+                      <v-icon class="mr-2">mdi-calendar-month</v-icon>
+                      STARTER Mensal
+                    </div>
+                    <div class="plan-price">{{ plans.MONTHLY.displayPrice }}</div>
+                    <div class="plan-description">Cobrado mensalmente</div>
+                  </div>
+                </template>
+              </v-radio>
+              <v-chip 
+                v-if="currentPlan === 'MONTHLY'" 
+                size="small" 
+                color="#667eea"
+                class="current-badge"
+              >
+                Atual
+              </v-chip>
+            </div>
+            <v-divider class="my-4"></v-divider>
+            <div class="plan-option" :class="{ 'disabled': currentPlan === 'ANNUAL' }">
+              <v-radio 
+                label="STARTER Anual"
+                value="ANNUAL"
+                :disabled="currentPlan === 'ANNUAL'"
+                color="#667eea"
+              >
+                <template v-slot:label>
+                  <div class="plan-label">
+                    <div class="plan-name">
+                      <v-icon class="mr-2">mdi-calendar-check</v-icon>
+                      STARTER Anual
+                      <v-chip size="x-small" color="success" class="ml-2">Economize 17%</v-chip>
+                    </div>
+                    <div class="plan-price">{{ plans.ANNUAL.displayPrice }}</div>
+                    <div class="plan-description">{{ formatAmount(plans.MONTHLY.amount) }}/mês (cobrado anualmente)</div>
+                  </div>
+                </template>
+              </v-radio>
+              <v-chip 
+                v-if="currentPlan === 'ANNUAL'" 
+                size="small" 
+                color="#667eea"
+                class="current-badge"
+              >
+                Atual
+              </v-chip>
+            </div>
+
             <template v-if="isTenantMode">
+              <v-divider class="my-6"></v-divider>
+              <div class="plan-group-label">TEAM</div>
               <div class="plan-option" :class="{ 'disabled': currentPlan === 'BUSINESS_MONTHLY' }">
                 <v-radio 
-                  label="Plano Empresarial Mensal" 
+                  label="TEAM Mensal" 
                   value="BUSINESS_MONTHLY"
                   :disabled="currentPlan === 'BUSINESS_MONTHLY'"
                   color="#667eea"
@@ -65,7 +125,7 @@
                     <div class="plan-label">
                       <div class="plan-name">
                         <v-icon class="mr-2">mdi-domain</v-icon>
-                        Empresarial Mensal
+                        TEAM Mensal
                       </div>
                       <div class="plan-price">{{ plans.BUSINESS_MONTHLY.displayPrice }}</div>
                       <div class="plan-description">Cobrado mensalmente</div>
@@ -84,7 +144,7 @@
               <v-divider class="my-4"></v-divider>
               <div class="plan-option" :class="{ 'disabled': currentPlan === 'BUSINESS_ANNUAL' }">
                 <v-radio 
-                  label="Plano Empresarial Anual" 
+                  label="TEAM Anual" 
                   value="BUSINESS_ANNUAL"
                   :disabled="currentPlan === 'BUSINESS_ANNUAL'"
                   color="#667eea"
@@ -92,8 +152,8 @@
                   <template v-slot:label>
                     <div class="plan-label">
                       <div class="plan-name">
-                        <v-icon class="mr-2">mdi-domain"</v-icon>
-                        Empresarial Anual
+                        <v-icon class="mr-2">mdi-domain</v-icon>
+                        TEAM Anual
                         <v-chip size="x-small" color="success" class="ml-2">Economize</v-chip>
                       </div>
                       <div class="plan-price">{{ plans.BUSINESS_ANNUAL.displayPrice }}</div>
@@ -111,77 +171,19 @@
                 </v-chip>
               </div>
             </template>
-            <template v-else>
-              <div class="plan-option" :class="{ 'disabled': currentPlan === 'MONTHLY' }">
-                <v-radio 
-                  :label="t('subscription_management.plans.monthly')"
-                  value="MONTHLY"
-                  :disabled="currentPlan === 'MONTHLY'"
-                  color="#667eea"
-                >
-                  <template v-slot:label>
-                    <div class="plan-label">
-                      <div class="plan-name">
-                        <v-icon class="mr-2">mdi-calendar-month</v-icon>
-                        Plano Mensal
-                      </div>
-                      <div class="plan-price">{{ plans.MONTHLY.displayPrice }}</div>
-                      <div class="plan-description">Cobrado mensalmente</div>
-                    </div>
-                  </template>
-                </v-radio>
-                <v-chip 
-                  v-if="currentPlan === 'MONTHLY'" 
-                  size="small" 
-                  color="#667eea"
-                  class="current-badge"
-                >
-                  Atual
-                </v-chip>
-              </div>
-              <v-divider class="my-4"></v-divider>
-              <div class="plan-option" :class="{ 'disabled': currentPlan === 'ANNUAL' }">
-                <v-radio 
-                  :label="t('subscription_management.plans.annual')"
-                  value="ANNUAL"
-                  :disabled="currentPlan === 'ANNUAL'"
-                  color="#667eea"
-                >
-                  <template v-slot:label>
-                    <div class="plan-label">
-                      <div class="plan-name">
-                        <v-icon class="mr-2">mdi-calendar-check</v-icon>
-                        Plano Anual
-                        <v-chip size="x-small" color="success" class="ml-2">Economize 17%</v-chip>
-                      </div>
-                      <div class="plan-price">{{ plans.ANNUAL.displayPrice }}</div>
-                      <div class="plan-description">{{ formatAmount(plans.MONTHLY.amount) }}/mês (cobrado anualmente)</div>
-                    </div>
-                  </template>
-                </v-radio>
-                <v-chip 
-                  v-if="currentPlan === 'ANNUAL'" 
-                  size="small" 
-                  color="#667eea"
-                  class="current-badge"
-                >
-                  Atual
-                </v-chip>
-              </div>
-            </template>
           </v-radio-group>
 
           <div class="action-buttons">
             <!-- Botão de mudança de plano -->
             <v-btn 
               v-if="selectedPlan && currentPlan !== selectedPlan" 
-              @click="startCheckoutSession"
+              @click="handlePlanChange"
               class="modern-btn gradient-btn mb-3"
               size="large"
               block
             >
               <v-icon left>mdi-swap-horizontal</v-icon>
-              {{ t('subscription_management.change_to', { plan: selectedPlanText }) }}
+              {{ changePlanActionText }}
             </v-btn>
 
             <!-- Botão para desselecionar e voltar -->
@@ -216,7 +218,7 @@
       </div>
 
       <!-- Card de Cancelamento -->
-      <div v-if="subscriptionStatus === 'active'" class="modern-card cancel-card">
+      <div v-if="subscriptionStatus === 'ACTIVE'" class="modern-card cancel-card">
         <div class="card-header">
           <h2 class="card-title">
             <v-icon color="#f44336" class="mr-2">mdi-alert-circle</v-icon>
@@ -247,11 +249,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
+import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import BillingDecisionService from '@/services/BillingDecisionService'
 import BillingOrchestrationService from '@/services/BillingOrchestrationService'
-import { getOrCreateCorrelationId } from '@/utils/correlation'
+import { createCorrelationId } from '@/utils/correlation'
 import { PLAN_DETAILS, formatPlanAmount, type PlanId } from '@/constants/plans';
 import { createMessageId } from '@/utils/messageId'
 
@@ -269,15 +272,22 @@ import { useUserStore } from '@/plugins/userStore';
 
 const props = defineProps<{ user: User }>();
 const userStore = useUserStore();
-const isTenantMode = userStore.isTenantMode;
+const router = useRouter()
+const isTenantMode = computed(() => userStore.isTenantMode);
 const actorUserId = computed(() => String(props.user.id || userStore.user?.id || ''))
 
 // Estado da assinatura e plano selecionado
 type MaybePlanId = PlanId | '';
+type PlanTier = 'FREE' | 'STARTER' | 'TEAM' | '';
+type BillingCycleUi = 'MONTHLY' | 'ANNUAL' | '';
 
 const currentPlan = ref<MaybePlanId>('');
+const currentPlanTier = ref<PlanTier>('');
+const currentBillingCycle = ref<BillingCycleUi>('');
 const subscriptionStatus = ref('');
 const selectedPlan = ref<MaybePlanId>(''); // Para atualizar o plano
+const hasPremiumAccess = ref(false);
+const lastLoadedPlan = ref<MaybePlanId>('');
 
 const plans = PLAN_DETAILS;
 
@@ -290,19 +300,59 @@ const isPlanId = (value: string | null | undefined): value is PlanId => {
   );
 };
 
+const isPlanTier = (value: string | null | undefined): value is Exclude<PlanTier, ''> => {
+  return value === 'FREE' || value === 'STARTER' || value === 'TEAM';
+};
+
+const isBillingCycle = (value: string | null | undefined): value is Exclude<BillingCycleUi, ''> => {
+  return value === 'MONTHLY' || value === 'ANNUAL';
+};
+
 const formatAmount = (amount: number) => formatPlanAmount(amount);
+
+const mapPlanIdToTier = (planId: PlanId): Exclude<PlanTier, ''> => {
+  return planId === 'BUSINESS_MONTHLY' || planId === 'BUSINESS_ANNUAL' ? 'TEAM' : 'STARTER';
+};
+
+const mapPlanIdToCycle = (planId: PlanId): Exclude<BillingCycleUi, ''> => {
+  return planId === 'BUSINESS_ANNUAL' || planId === 'ANNUAL' ? 'ANNUAL' : 'MONTHLY';
+};
+
+const mapTierCycleToPlanId = (tier: Exclude<PlanTier, ''>, cycle: Exclude<BillingCycleUi, ''>): PlanId => {
+  if (tier === 'TEAM') {
+    return cycle === 'ANNUAL' ? 'BUSINESS_ANNUAL' : 'BUSINESS_MONTHLY';
+  }
+  return cycle === 'ANNUAL' ? 'ANNUAL' : 'MONTHLY';
+};
+
+const mapTierCycleToLabel = (tier: Exclude<PlanTier, ''>, cycle: Exclude<BillingCycleUi, ''>) => {
+  return `${tier} ${cycle === 'ANNUAL' ? 'Anual' : 'Mensal'}`;
+};
+
+const mapTierToLabel = (tier: Exclude<PlanTier, ''>) => {
+  if (tier === 'FREE') {
+    return 'Gratuito';
+  }
+  return tier;
+};
 
 // Obter o texto do plano atual
 const currentPlanText = computed(() => {
     if (isPlanId(currentPlan.value)) {
-        return plans[currentPlan.value].planDisplay;
+        return mapTierCycleToLabel(mapPlanIdToTier(currentPlan.value), mapPlanIdToCycle(currentPlan.value));
+    }
+    if (isPlanTier(currentPlanTier.value) && isBillingCycle(currentBillingCycle.value)) {
+      return mapTierCycleToLabel(currentPlanTier.value, currentBillingCycle.value);
+    }
+    if (isPlanTier(currentPlanTier.value)) {
+      return mapTierToLabel(currentPlanTier.value);
     }
     return 'Gratuito';
 });
 
 const selectedPlanText = computed(() => {
     if (isPlanId(selectedPlan.value)) {
-        return `Plano ${plans[selectedPlan.value].planDisplay}`;
+        return plans[selectedPlan.value].name;
     }
     return '';
 });
@@ -353,21 +403,81 @@ const statusIcon = computed(() => {
     }
 });
 
+const isPremium = computed(() => {
+  return hasPremiumAccess.value || subscriptionStatus.value === 'ACTIVE';
+});
+
+const changePlanActionText = computed(() => {
+  const base = t('subscription_management.change_to', { plan: selectedPlanText.value });
+  if (!isPremium.value) {
+    return base;
+  }
+  return `${base} (Portal)`;
+});
+
 const loadSubscriptionDetails = async () => {
   try {
     if (!actorUserId.value) {
       return
     }
 
-    const subjectType = (isTenantMode && userStore.currentCompanyId) ? 'COMPANY' : 'USER'
+    const subjectType = (isTenantMode.value && userStore.currentCompanyId) ? 'COMPANY' : 'USER'
     const subjectId = subjectType === 'COMPANY' ? String(userStore.currentCompanyId) : actorUserId.value
 
     const access = await BillingOrchestrationService.getPremiumAccess(subjectType as any, subjectId)
-    subscriptionStatus.value = access.data?.hasPremiumAccess ? 'ACTIVE' : 'NONE'
-    selectedPlan.value = selectedPlan.value || currentPlan.value
+    hasPremiumAccess.value = Boolean(access.data?.hasPremiumAccess)
+    const resolvedStatus = access.data?.subscriptionStatus || (access.data?.hasPremiumAccess ? 'ACTIVE' : 'NONE')
+    subscriptionStatus.value = String(resolvedStatus).toUpperCase()
+
+    const rawPlanId = (access.data as any)?.currentPlanId
+      || (access.data as any)?.planId
+      || (access.data as any)?.plan
+      || (access.data as any)?.planType
+    if (isPlanId(rawPlanId)) {
+      currentPlan.value = rawPlanId
+      currentPlanTier.value = mapPlanIdToTier(rawPlanId)
+      currentBillingCycle.value = mapPlanIdToCycle(rawPlanId)
+      const shouldResetSelection = selectedPlan.value === '' || selectedPlan.value === lastLoadedPlan.value
+      if (shouldResetSelection) {
+        selectedPlan.value = currentPlan.value
+      }
+      lastLoadedPlan.value = currentPlan.value
+      return
+    }
+
+    currentPlanTier.value = isPlanTier(access.data?.currentPlanTier)
+      ? access.data.currentPlanTier
+      : ''
+    currentBillingCycle.value = isBillingCycle(access.data?.currentBillingCycle)
+      ? access.data.currentBillingCycle
+      : ''
+
+    if (isPlanTier(currentPlanTier.value) && currentPlanTier.value !== 'FREE' && isBillingCycle(currentBillingCycle.value)) {
+      currentPlan.value = mapTierCycleToPlanId(currentPlanTier.value, currentBillingCycle.value)
+    } else {
+      currentPlan.value = ''
+    }
+
+    const shouldResetSelection = selectedPlan.value === '' || selectedPlan.value === lastLoadedPlan.value
+    if (shouldResetSelection) {
+      selectedPlan.value = currentPlan.value
+    }
+    lastLoadedPlan.value = currentPlan.value
   } catch (error) {
     console.error('Erro ao carregar detalhes da assinatura:', error);
   }
+};
+
+const handlePlanChange = async () => {
+  if (!isPlanId(selectedPlan.value)) {
+    alert('Plano inválido');
+    return;
+  }
+  if (isPremium.value) {
+    await openBillingPortal(selectedPlan.value);
+    return;
+  }
+  await startCheckoutSession();
 };
 
 const startCheckoutSession = async () => {
@@ -380,13 +490,13 @@ const startCheckoutSession = async () => {
       throw new Error('Plano inválido')
     }
 
-    const correlationId = getOrCreateCorrelationId('billingCorrelationId')
+    const correlationId = createCorrelationId()
 
     const plan = String(selectedPlan.value)
     const isBusinessPlan = plan.startsWith('BUSINESS_')
     const companyId = userStore.currentCompanyId
 
-    const subjectType = (isBusinessPlan && isTenantMode && companyId) ? 'COMPANY' : 'USER'
+    const subjectType = (isTenantMode.value && companyId) ? 'COMPANY' : 'USER'
     const subjectId = subjectType === 'COMPANY' ? String(companyId) : actorUserId.value
 
     // ADR-001/004: do not call payment-api; do not send PII.
@@ -409,8 +519,15 @@ const startCheckoutSession = async () => {
       return
     }
 
-    // Redirect to CheckoutView to start orchestration via budget-api
-    window.location.href = `${window.location.origin}/#/checkout?plan=${encodeURIComponent(plan)}&subjectType=${encodeURIComponent(decision.subjectType)}&subjectId=${encodeURIComponent(decision.subjectId)}&correlationId=${encodeURIComponent(decision.correlationId || correlationId)}`
+    await router.push({
+      name: 'checkout',
+      query: {
+        plan,
+        subjectType: decision.subjectType,
+        subjectId: decision.subjectId,
+        correlationId: decision.correlationId || correlationId
+      }
+    })
   } catch (error) {
     console.error('Erro ao iniciar sessão de checkout:', error);
     alert('Não foi possível iniciar o checkout. Tente novamente mais tarde.');
@@ -418,14 +535,14 @@ const startCheckoutSession = async () => {
 };
 
 // Função para abrir o portal de faturamento
-const openBillingPortal = async () => {
+const openBillingPortal = async (targetPlan?: PlanId) => {
   try {
     if (!actorUserId.value) throw new Error('Usuário não autenticado')
 
-    const correlationId = getOrCreateCorrelationId('billingCorrelationId')
+    const correlationId = createCorrelationId()
 
     // Prefer company if tenant mode has company selected; else user.
-    const subjectType = (isTenantMode && userStore.currentCompanyId) ? 'COMPANY' : 'USER'
+    const subjectType = (isTenantMode.value && userStore.currentCompanyId) ? 'COMPANY' : 'USER'
     const subjectId = subjectType === 'COMPANY' ? String(userStore.currentCompanyId) : actorUserId.value
 
     const storageKey = `billing.portal.messageId:${correlationId}:${subjectType}:${subjectId}`
@@ -435,21 +552,48 @@ const openBillingPortal = async () => {
 
     const returnUrl = `${window.location.origin}/#/settings`
 
-    await BillingOrchestrationService.openPortal({
+    const accepted = await BillingOrchestrationService.openPortal({
       actor: actorUserId.value,
       subjectType: subjectType as any,
       subjectId,
       correlationId,
       messageId,
-      returnUrl
+      returnUrl,
+      targetPlan
     })
 
-    alert('Solicitação enviada. Em breve o portal de billing ficará disponível (fluxo assíncrono).')
+    const opMessageId = accepted.data?.messageId || messageId
+    const portalUrl = await pollPortalUrl(opMessageId)
+    if (portalUrl) {
+      window.location.href = portalUrl
+      return
+    }
+
+    alert('Solicitação enviada. O portal de billing ainda está sendo preparado.')
   } catch (error) {
     console.error('Erro ao solicitar portal de faturamento:', error)
     alert('Não foi possível solicitar o portal de faturamento. Tente novamente mais tarde.')
   }
 };
+
+const pollPortalUrl = async (messageId: string, maxAttempts = 20, delayMs = 1000): Promise<string | null> => {
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    try {
+      const statusResp = await BillingOrchestrationService.getOperationStatus(messageId)
+      const url = statusResp.data?.checkoutUrl
+      if (url) {
+        return url
+      }
+      if (statusResp.data?.status === 'FAILED') {
+        return null
+      }
+    } catch (error) {
+      // ignore transient errors while polling
+    }
+    await new Promise((resolve) => setTimeout(resolve, delayMs))
+  }
+  return null
+}
 
 // Função para cancelar a assinatura
 const cancelSubscription = async () => {
@@ -459,9 +603,9 @@ const cancelSubscription = async () => {
     const confirmed = confirm('Tem certeza de que deseja cancelar sua assinatura?');
     if (!confirmed) return;
 
-    const correlationId = getOrCreateCorrelationId('billingCorrelationId')
+    const correlationId = createCorrelationId()
 
-    const subjectType = (isTenantMode && userStore.currentCompanyId) ? 'COMPANY' : 'USER'
+    const subjectType = (isTenantMode.value && userStore.currentCompanyId) ? 'COMPANY' : 'USER'
     const subjectId = subjectType === 'COMPANY' ? String(userStore.currentCompanyId) : actorUserId.value
 
     const storageKey = `billing.cancel.messageId:${correlationId}:${subjectType}:${subjectId}`
@@ -485,9 +629,30 @@ const cancelSubscription = async () => {
   }
 };
 
-onMounted(() => {
-    loadSubscriptionDetails();
+const shouldLoad = computed(() => {
+  if (!actorUserId.value) {
+    return false;
+  }
+  if (isTenantMode.value && !userStore.currentCompanyId) {
+    return false;
+  }
+  return true;
 });
+
+onMounted(() => {
+  if (shouldLoad.value) {
+    loadSubscriptionDetails();
+  }
+});
+
+watch(
+  () => [actorUserId.value, userStore.currentCompanyId, isTenantMode.value],
+  () => {
+    if (shouldLoad.value) {
+      loadSubscriptionDetails();
+    }
+  }
+);
 </script>
 
 <style scoped>
@@ -665,6 +830,19 @@ onMounted(() => {
 
 .v-theme--dark .plan-description {
   color: #b0b0b0;
+}
+
+.plan-group-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7a7a7a;
+  margin: 8px 0 12px;
+}
+
+.v-theme--dark .plan-group-label {
+  color: #b9b9b9;
 }
 
 .current-badge {

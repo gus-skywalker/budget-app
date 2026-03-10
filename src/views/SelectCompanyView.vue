@@ -62,7 +62,7 @@
                 color="primary"
                 variant="elevated"
                 prepend-icon="mdi-plus"
-                @click="router.push({ name: 'create-company' })"
+                @click="router.push({ name: 'create-company', query: { redirect: redirectTarget } })"
               >
                 Criar workspace
               </v-btn>
@@ -78,13 +78,20 @@
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/plugins/userStore'
+import OnboardingOrchestrator from '@/services/OnboardingOrchestrator'
 
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
 
 const companies = computed(() => userStore.getCompanies)
-const redirectTarget = computed(() => (route.query.redirect as string) || '/dashboard')
+const redirectTarget = computed(() =>
+  OnboardingOrchestrator.resolveOnboardingTargetPath({
+    redirect: route.query.redirect,
+    plan: route.query.plan,
+    defaultRedirect: '/dashboard'
+  })
+)
 const loadingCompany = ref<string | null>(null)
 
 const getRoleLabel = (role?: string | null) => {

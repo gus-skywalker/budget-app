@@ -79,7 +79,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useUserStore } from '@/plugins/userStore';
 import { PLAN_DETAILS } from '@/constants/plans';
-import { getOrCreateCorrelationId } from '@/utils/correlation'
+import { createCorrelationId } from '@/utils/correlation'
 import { createMessageId } from '@/utils/messageId'
 import BillingOrchestrationService from '@/services/BillingOrchestrationService'
 import BillingDecisionService from '@/services/BillingDecisionService'
@@ -144,50 +144,41 @@ export default {
                     throw new Error('Usuário não autenticado');
                 }
 
-                const correlationId = route.query.correlationId ||
-                    getOrCreateCorrelationId('billingCorrelationId')
-
-                let subjectType = route.query.subjectType
-                let subjectId = route.query.subjectId
-
-                if (!subjectType || !subjectId) {
-                    const isBusinessPlan = String(plan).startsWith('BUSINESS_')
-                    const companyId = userStore.currentCompanyId
-                    if (isBusinessPlan && !companyId) {
-                        router.push({ name: 'select-company', query: { redirect: `/checkout?plan=${encodeURIComponent(String(plan))}` } })
-                        throw new Error('Selecione uma empresa para continuar com plano BUSINESS.')
-                    }
-
-                    const preferredSubjectType = (isBusinessPlan && companyId) ? 'COMPANY' : 'USER'
-                    const preferredSubjectId = preferredSubjectType === 'COMPANY' ? String(companyId) : String(user.id)
-
-                    const decisionResp = await BillingDecisionService.decide(
-                        {
-                            plan: String(plan),
-                            actor: String(user.id),
-                            subjectType: preferredSubjectType,
-                            subjectId: preferredSubjectId,
-                            userId: preferredSubjectType === 'USER' ? String(user.id) : null,
-                            companyId: preferredSubjectType === 'COMPANY' ? String(companyId) : null
-                        },
-                        String(correlationId)
-                    )
-
-                    const decision = decisionResp.data
-                    if (decision.action === 'NOOP_ALREADY_PREMIUM') {
-                        router.push({ name: 'dashboard' })
-                        return
-                    }
-
-                    subjectType = decision.subjectType
-                    subjectId = decision.subjectId
+                const correlationId = createCorrelationId()
+                const isTeamPlan = String(plan).startsWith('BUSINESS_')
+                const companyId = userStore.currentCompanyId
+                if (isTeamPlan && !companyId) {
+                    router.push({ name: 'select-company', query: { redirect: `/checkout?plan=${encodeURIComponent(String(plan))}` } })
+                    throw new Error('Selecione uma empresa para continuar com plano TEAM.')
                 }
 
-                // Idempotency: keep a stable messageId for retries on this page.
-                const storageKey = `billing.start.messageId:${correlationId}:${subjectType}:${subjectId}:${plan}`
-                const existingMessageId = sessionStorage.getItem(storageKey)
-                const messageId = existingMessageId || createMessageId()
-                if (!existingMessageId) sessionStorage.setItem(storageKey, messageId)
+                const preferredSubjectType = (isTeamPlan && companyId) ? 'COMPANY' : 'USER'
+                const preferredSubjectId = preferredSubjectType === 'COMPANY' ? String(companyId) : String(user.id)
+
+                const decisionResp = await BillingDecisionService.decide(
+                    {
+                        plan: String(plan),
+                        actor: String(user.id),
+                        subjectType: preferredSubjectType,
+                        subjectId: preferredSubjectId,
+                        userId: preferredSubjectType === 'USER' ? String(user.id) : null,
+                        companyId: preferredSubjectType === 'COMPANY' ? String(companyId) : null
+                    },
+                    correlationId
+                )
+
+                const decision = decisionResp.data
+                if (decision.action === 'NOOP_ALREADY_PREMIUM') {
+                    router.push({ name: 'dashboard' })
+                    return
+                }
+
+                const subjectType = decision.subjectType
+                const subjectId = decision.subjectId
+
+                // New checkout attempt must use a fresh command id.
+                // Reusing messageId can return stale/expired checkout URLs from old operations.
+                const messageId = createMessageId()
 
                 await BillingOrchestrationService.startSubscription({
                     plan: String(plan),

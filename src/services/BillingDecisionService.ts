@@ -28,6 +28,8 @@ export interface BillingDecisionResponse {
   action: BillingDecisionAction
   trialDays?: number
   plan: string
+  planTier?: 'STARTER' | 'TEAM'
+  billingCycle?: 'MONTHLY' | 'ANNUAL'
   userId?: string | null
   companyId?: string | null
   correlationId: string

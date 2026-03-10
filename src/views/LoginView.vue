@@ -1,12 +1,5 @@
 <template>
   <div class="app-container login-page">
-    <!-- Company Selector Modal -->
-    <CompanySelector
-      v-model="showCompanySelector"
-      :companies="userCompanies"
-      @company-selected="handleCompanySelection"
-    />
-    
     <!-- Snackbar de erro -->
     <transition name="fade">
       <div v-if="error" class="snackbar error-snackbar" @click="closeNotification('error')">
@@ -235,9 +228,9 @@
 import { ref, onMounted } from 'vue'
 import { useUserStore } from '@/plugins/userStore'
 import { useRouter, useRoute } from 'vue-router'
-import CompanySelector from '@/components/CompanySelector.vue'
 import { updateI18nLocale } from '@/i18n'
 import AuthService from '@/services/AuthService'
+import OnboardingOrchestrator from '@/services/OnboardingOrchestrator'
 
 const router = useRouter()
 const route = useRoute()
@@ -252,8 +245,6 @@ const isLoading = ref(false)
 const showPassword = ref(false)
 const showConfirmPassword = ref(false)
 const emailValid = ref(true)
-const showCompanySelector = ref(false)
-const userCompanies = ref([])
 
 onMounted(() => {
   console.log(route.query);
@@ -298,7 +289,7 @@ const userLogin = async () => {
     if (res.data) {
       console.log('Login response:', res.data)
       
-      const result = store.handleSigninResponse(res.data)
+      store.handleSigninResponse(res.data)
       updateI18nLocale(res.data.language || 'PT')
 
       try {
@@ -307,109 +298,25 @@ const userLogin = async () => {
         console.warn('Não foi possível hidratar detalhes das empresas no login.', hydrateError)
       }
 
-      const companies = store.getCompanies || result.companies || []
-      userCompanies.value = companies
+      const onboarding = await OnboardingOrchestrator.resolvePostAuthRoute({
+        router,
+        userStore: store,
+        redirect: route.query.redirect,
+        plan: route.query.plan,
+        defaultRedirect: '/dashboard'
+      })
 
-      const redirectTarget = (route.query.redirect && String(route.query.redirect)) || '/dashboard'
-      const requiresTenant = router
-        .resolve(redirectTarget)
-        .matched
-        .some(r => Boolean(r.meta?.requiresTenant))
-
-      const goToTarget = () => {
-        loginSuccess.value = 'Login realizado com sucesso!'
-        setTimeout(() => {
-          loginSuccess.value = null
-          router.push(redirectTarget)
-        }, 800)
-      }
-
-      if (!companies.length) {
-        goToTarget()
-        return
-      }
-
-      if (result.companyPreselected || store.isTenantMode) {
-        goToTarget()
-        return
-      }
-
-      // If the user is being redirected to a tenant-required page,
-      // we must enforce tenant selection.
-      if (requiresTenant) {
-        if (companies.length === 1) {
-          try {
-            await store.selectCompany(companies[0].companyId)
-            goToTarget()
-          } catch (selectionError) {
-            console.error('Erro ao auto-selecionar empresa:', selectionError)
-            error.value = 'Nao foi possivel selecionar automaticamente o workspace. Escolha manualmente.'
-            showCompanySelector.value = true
-          }
-          return
-        }
-        showCompanySelector.value = true
-        return
-      }
-
-      // Preference-based flow (workspace-first)
-      const preferredCompanyId = store.getPreferredCompanyId
-      const preferredCompanyExists = preferredCompanyId
-        ? companies.some(c => c.companyId === preferredCompanyId)
-        : false
-
-      if (preferredCompanyExists || companies.length === 1) {
-        const companyToSelect = preferredCompanyExists
-          ? preferredCompanyId
-          : companies[0].companyId
-        try {
-          await store.selectCompany(companyToSelect)
-          goToTarget()
-        } catch (selectionError) {
-          console.error('Erro ao auto-selecionar workspace:', selectionError)
-          showCompanySelector.value = true
-        }
-        return
-      }
-
-      // No preferred workspace: ask user to choose one.
-      showCompanySelector.value = true
+      loginSuccess.value = 'Login realizado com sucesso!'
+      setTimeout(() => {
+        loginSuccess.value = null
+        router.push(onboarding.route)
+      }, 800)
     }
   } catch (err) {
     console.error('Login error:', err)
     console.error('Store no momento do erro:', useUserStore())
 
     error.value = getLoginErrorMessage(err)
-    setTimeout(() => {
-      error.value = null
-    }, 4000)
-  } finally {
-    isLoading.value = false
-  }
-}
-
-const handleCompanySelection = async (company) => {
-  try {
-    isLoading.value = true
-    const store = useUserStore()
-    const redirectTarget = (route.query.redirect && String(route.query.redirect)) || '/dashboard'
-    if (!company || !company.companyId) {
-      error.value = 'Selecione um workspace valido para continuar.'
-      setTimeout(() => {
-        error.value = null
-      }, 4000)
-      return
-    }
-    await store.selectCompany(company.companyId)
-    showCompanySelector.value = false
-    loginSuccess.value = 'Workspace selecionado com sucesso!'
-    setTimeout(() => {
-      loginSuccess.value = null
-      router.push(redirectTarget)
-    }, 800)
-  } catch (err) {
-    console.error('Erro ao selecionar empresa:', err)
-    error.value = 'Erro ao selecionar empresa. Tente novamente.'
     setTimeout(() => {
       error.value = null
     }, 4000)
@@ -484,10 +391,9 @@ const mockLogin = (scenario) => {
   
   // Aplica a lógica de seleção de empresa
   if (companies.length > 1) {
-    userCompanies.value = companies
-    showCompanySelector.value = true
     store.saveState()
-    console.log('🔄 Exibindo seletor de empresa - múltiplas empresas detectadas')
+    console.log('🔄 Redirecionando para seletor de empresa - múltiplas empresas detectadas')
+    router.push({ name: 'select-company', query: { redirect: '/dashboard' } })
   } else if (companies.length === 1) {
     store.setCurrentCompany(companies[0].companyId, companies[0].role, companies[0].companyName)
     store.saveState()
@@ -510,7 +416,7 @@ const mockLogin = (scenario) => {
   console.log('Mock Login executado:', {
     scenario,
     companies: companies.length,
-    currentCompany: store.currentCompany
+    currentCompany: store.currentCompanyId
   })
 }
 

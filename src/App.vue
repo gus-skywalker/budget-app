@@ -4,6 +4,7 @@ import { RouterView } from 'vue-router'
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import SideBar from './components/SideBar.vue'
 import ContextBadge from '@/components/ContextBadge.vue'
+import OnboardingStatusBanner from '@/components/OnboardingStatusBanner.vue'
 import NotificationPopup from '@/components/NotificationPopup.vue'
 import PrivacyControls from '@/components/compliance/PrivacyControls.vue'
 import { useUserStore } from '@/plugins/userStore'
@@ -85,6 +86,7 @@ onUnmounted(() => {
       <div v-if="isAuthenticated" class="global-context-container">
         <ContextBadge />
       </div>
+      <OnboardingStatusBanner v-if="isAuthenticated" />
       <RouterView />
     </v-main>
     <NotificationPopup :visible="showNotificationsPopup" :notifications="notifications"

@@ -22,12 +22,12 @@
                         </section>
 
                                                 <div class="plans-container">
-                                <!-- Plano Starter -->
+                                <!-- Plano STARTER -->
                                 <div class="plan-item starter-plan" style="border-top: 4px solid #f39c12;">
-                                    <span class="plan-label" style="background:#f39c12; color:#fff; padding:2px 10px; border-radius:6px; font-size:13px; font-weight:600; margin-bottom:8px; display:inline-block;">Starter</span>
-                                    <h3>Starter</h3>
-                                    <p class="price">R$29 / mês</p>
-                                    <p class="price">R$297 / ano</p>
+                                    <span class="plan-label" style="background:#f39c12; color:#fff; padding:2px 10px; border-radius:6px; font-size:13px; font-weight:600; margin-bottom:8px; display:inline-block;">STARTER</span>
+                                    <h3>STARTER</h3>
+                                    <p class="price">{{ planDetails.MONTHLY.displayPrice }}</p>
+                                    <p class="price">{{ planDetails.ANNUAL.displayPrice }}</p>
                                     <p>Para pequenos times começando o planejamento financeiro colaborativo.</p>
                                     <ul class="plan-benefits">
                                         <li>até 4 membros</li>
@@ -37,18 +37,21 @@
                                         <li>simulação básica de cenários</li>
                                     </ul>
                                     <button class="btn btn-primary cta-btn" @click.prevent="redirectToCheckout('MONTHLY')">
-                                        Começar com Starter
+                                        Começar STARTER Mensal
+                                    </button>
+                                    <button class="btn btn-primary cta-btn" style="margin-top: 10px; background: transparent; color: #f39c12; border: 2px solid #f39c12;" @click.prevent="redirectToCheckout('ANNUAL')">
+                                        Escolher STARTER Anual
                                     </button>
                                 </div>
-                                <!-- Plano Team -->
+                                <!-- Plano TEAM -->
                                 <div class="plan-item team-plan" style="border-top: 4px solid var(--purple); background: #f7f3fa; box-shadow: 0 4px 24px rgba(142,68,173,0.13); width: 50%; position:relative;">
                                     <div style="position:absolute;top:-32px;left:50%;transform:translateX(-50%);">
                                         <span style="background:var(--yellow);color:var(--dark-purple);padding:6px 18px;border-radius:16px;font-size:15px;font-weight:700;box-shadow:0 2px 8px rgba(241,196,15,0.13);">⭐ Mais popular</span>
                                     </div>
-                                    <span class="plan-label" style="background:var(--purple); color:#fff; padding:2px 10px; border-radius:6px; font-size:13px; font-weight:600; margin-bottom:8px; display:inline-block;">Team</span>
-                                    <h3 style="font-size:28px;">Team</h3>
-                                    <p class="price" style="color:var(--purple); font-weight:700;">R$59 / mês</p>
-                                    <p class="price" style="color:var(--purple); font-weight:700;">R$597 / ano</p>
+                                    <span class="plan-label" style="background:var(--purple); color:#fff; padding:2px 10px; border-radius:6px; font-size:13px; font-weight:600; margin-bottom:8px; display:inline-block;">TEAM</span>
+                                    <h3 style="font-size:28px;">TEAM</h3>
+                                    <p class="price" style="color:var(--purple); font-weight:700;">{{ planDetails.BUSINESS_MONTHLY.displayPrice }}</p>
+                                    <p class="price" style="color:var(--purple); font-weight:700;">{{ planDetails.BUSINESS_ANNUAL.displayPrice }}</p>
                                     <p>Para startups que precisam tomar decisões financeiras com mais inteligência.</p>
                                     <ul class="plan-benefits">
                                         <li>até 10 membros</li>
@@ -58,8 +61,11 @@
                                         <li>decisões financeiras colaborativas</li>
                                         <li>colaboração entre membros</li>
                                     </ul>
-                                    <button class="btn btn-primary cta-btn" style="background:var(--purple); border:none; font-size:1.15rem; padding:16px 32px;" @click.prevent="handleBusinessClick('BUSINESS_MONTHLY')">
-                                        Começar com Team
+                                    <button class="btn btn-primary cta-btn" style="background:var(--purple); border:none; font-size:1.15rem; padding:16px 32px;" @click.prevent="handleTeamClick('BUSINESS_MONTHLY')">
+                                        Começar TEAM Mensal
+                                    </button>
+                                    <button class="btn btn-primary cta-btn" style="margin-top: 10px; background: transparent; color: var(--purple); border: 2px solid var(--purple);" @click.prevent="handleTeamClick('BUSINESS_ANNUAL')">
+                                        Escolher TEAM Anual
                                     </button>
                                 </div>
                         </div>
@@ -92,7 +98,8 @@
 <script>
 import FAQ from '@/components/FAQ.vue';
 import BillingDecisionService from '@/services/BillingDecisionService'
-import { getOrCreateCorrelationId } from '@/utils/correlation'
+import OnboardingOrchestrator from '@/services/OnboardingOrchestrator'
+import { createCorrelationId } from '@/utils/correlation'
 import { PLAN_DETAILS } from '@/constants/plans';
 import { useUserStore } from '@/plugins/userStore';
 
@@ -159,11 +166,11 @@ export default {
                 this.selectedPlan = plan;
                 if (!this.isAuthenticated) {
                     localStorage.setItem('selectedPlan', plan);
+                    const redirect = OnboardingOrchestrator.buildRedirectPath('/choose-plan', { plan })
                     this.$router.push({
                         name: 'login',
                         query: {
-                            redirect: '/choose-plan',
-                            plan: plan
+                            redirect
                         }
                     });
                     return;
@@ -174,16 +181,18 @@ export default {
             }
         },
 
-        handleBusinessClick(plan) {
+        handleTeamClick(plan) {
             const userStore = useUserStore()
             if (!this.isAuthenticated) {
-                alert('Faça login para contratar um plano empresarial.');
-                this.$router.push({ name: 'login', query: { redirect: '/choose-plan', plan } })
+                alert('Faça login para contratar um plano TEAM.');
+                const redirect = OnboardingOrchestrator.buildRedirectPath('/choose-plan', { plan })
+                this.$router.push({ name: 'login', query: { redirect } })
                 return
             }
             if (!userStore.currentCompanyId) {
-                alert('Selecione ou crie uma empresa antes de contratar um plano empresarial.');
-                this.$router.push({ name: 'select-company', query: { redirect: '/choose-plan', plan } })
+                alert('Selecione ou crie uma empresa antes de contratar um plano TEAM.');
+                const redirect = OnboardingOrchestrator.buildRedirectPath('/choose-plan', { plan })
+                this.$router.push({ name: 'select-company', query: { redirect } })
                 return;
             }
             this.redirectToCheckout(plan);
@@ -198,17 +207,17 @@ export default {
                     throw new Error('Usuário não autenticado');
                 }
 
-                const correlationId = getOrCreateCorrelationId('billingCorrelationId')
+                const correlationId = createCorrelationId()
 
-                const isBusinessPlan = String(plan).startsWith('BUSINESS_');
+                const isTeamPlan = String(plan).startsWith('BUSINESS_');
                 const companyId = userStore.currentCompanyId;
-                if (isBusinessPlan && !companyId) {
-                    throw new Error('Selecione uma empresa para contratar um plano BUSINESS.');
+                if (isTeamPlan && !companyId) {
+                    throw new Error('Selecione uma empresa para contratar um plano TEAM.');
                 }
 
                 // IMPORTANT (ADR-001/004): FE must NOT call payment-api and must NOT send PII.
                 // Decide subject based on plan + tenant context.
-                const subjectType = (isBusinessPlan && userStore.isTenantMode && companyId) ? 'COMPANY' : 'USER'
+                const subjectType = (isTeamPlan && userStore.isTenantMode && companyId) ? 'COMPANY' : 'USER'
                 const subjectId = subjectType === 'COMPANY' ? String(companyId) : String(user.id)
 
                 const decisionResp = await BillingDecisionService.decide(

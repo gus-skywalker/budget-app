@@ -6,9 +6,13 @@ export function getOrCreateCorrelationId(storageKey = 'correlationId'): string {
   const existing = sessionStorage.getItem(storageKey)
   if (existing) return existing
 
-  const id = (globalThis.crypto?.randomUUID?.() ?? fallbackUUIDv4())
+  const id = createCorrelationId()
   sessionStorage.setItem(storageKey, id)
   return id
+}
+
+export function createCorrelationId(): string {
+  return (globalThis.crypto?.randomUUID?.() ?? fallbackUUIDv4())
 }
 
 export function clearCorrelationId(storageKey = 'correlationId') {
@@ -23,4 +27,3 @@ function fallbackUUIDv4(): string {
     return v.toString(16)
   })
 }
-

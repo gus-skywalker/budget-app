@@ -132,8 +132,8 @@
     "status": "Status",
     "change_plan_instructions": "Selecione um novo plano caso deseje alterar sua assinatura. Você será redirecionado ao portal para concluir a mudança.",
     "plans": {
-      "monthly": "Plano Mensal - R$27,50/mês",
-      "annual": "Plano Anual - R$330,00/ano"
+      "monthly": "STARTER Mensal - R$27,50/mês",
+      "annual": "STARTER Anual - R$330,00/ano"
     },
     "change_to": "Alterar para {plan}",
     "manage_subscription": "Gerenciar Assinatura no Portal",

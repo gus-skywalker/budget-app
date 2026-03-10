@@ -26,6 +26,7 @@ export interface OpenPortalRequest {
   correlationId: string
   messageId: string
   returnUrl?: string
+  targetPlan?: 'MONTHLY' | 'ANNUAL' | 'BUSINESS_MONTHLY' | 'BUSINESS_ANNUAL'
 }
 
 export interface CommandAcceptedResponse {
@@ -49,6 +50,11 @@ export interface BillingAccessResponse {
   subjectType: BillingSubjectType
   subjectId: string
   hasPremiumAccess: boolean
+  hasPlanAccess?: boolean
+  subscriptionStatus?: 'NONE' | 'INCOMPLETE' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED'
+  currentPlanTier?: 'FREE' | 'STARTER' | 'TEAM'
+  currentBillingCycle?: 'MONTHLY' | 'ANNUAL'
+  currentPlanId?: 'MONTHLY' | 'ANNUAL' | 'BUSINESS_MONTHLY' | 'BUSINESS_ANNUAL'
   checkedAt: string
 }
 

@@ -532,7 +532,7 @@ const createCompany = async () => {
     showSnackbar(parseApiError(error), 'error')
     const limitType = getFreePlanLimitType(error)
     if (limitType === 'company') {
-      upgradeMessage.value = 'Você atingiu o limite do plano gratuito para empresas.'
+      upgradeMessage.value = 'Você atingiu o limite do plano STARTER para empresas. Faça upgrade para TEAM.'
       upgradeSnackbar.value = true
     }
   } finally {
@@ -588,7 +588,7 @@ const sendInvite = async () => {
     showSnackbar(parseApiError(error), 'error')
     const limitType = getFreePlanLimitType(error)
     if (limitType === 'member') {
-      upgradeMessage.value = 'Você atingiu o limite do plano gratuito para membros.'
+      upgradeMessage.value = 'Você atingiu o limite de membros do plano STARTER. Faça upgrade para TEAM.'
       upgradeSnackbar.value = true
     }
   } finally {

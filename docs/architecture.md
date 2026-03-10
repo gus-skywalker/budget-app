@@ -12,6 +12,24 @@
 - `401` handling triggers centralized refresh logic (`userStore.tryRefreshToken`).
 - Tenant context switching rehydrates tokens and company state.
 - Billing checkout uses decision + async orchestration endpoints in `budget-api`.
+- Post-auth onboarding routing is centralized in `OnboardingOrchestrator`.
+
+## Onboarding Orchestrator
+- Canonical module: `src/services/OnboardingOrchestrator.ts`.
+- Centralizes post-auth decisions for:
+  - company required (`create-company`)
+  - company selection required (`select-company`)
+  - direct continuation to target flow (`redirect` route)
+- Supports redirect canonicalization (`/path?plan=...`) to preserve business-plan intent across login and workspace selection flows.
+- Also exposes `resolveOnboardingBannerState(...)` consumed by global onboarding status UI.
+
+## Onboarding Status Banner
+- Component: `src/components/OnboardingStatusBanner.vue`.
+- Rendered globally for authenticated users in `App.vue`.
+- Shows current onboarding progress (`Autenticacao`, `Workspace`, `Assinatura`) and contextual CTA:
+  - create workspace
+  - select workspace
+  - choose plan
 
 ## Billing Client Policy
 - Canonical billing frontend path is:

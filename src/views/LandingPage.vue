@@ -265,12 +265,12 @@
       </section>
 
       <div class="plans-container">
-        <!-- Plano Starter -->
+        <!-- Plano STARTER -->
         <div class="plan-item starter-plan" style="border-top: 4px solid #f39c12;">
-          <span class="plan-label" style="background:#f39c12; color:#fff; padding:2px 10px; border-radius:6px; font-size:13px; font-weight:600; margin-bottom:8px; display:inline-block;">Starter</span>
-          <h3>Starter</h3>
-          <p class="price">R$29 / mês</p>
-          <p class="price">R$297 / ano</p>
+          <span class="plan-label" style="background:#f39c12; color:#fff; padding:2px 10px; border-radius:6px; font-size:13px; font-weight:600; margin-bottom:8px; display:inline-block;">STARTER</span>
+          <h3>STARTER</h3>
+          <p class="price">{{ planDetails.MONTHLY.displayPrice }}</p>
+          <p class="price">{{ planDetails.ANNUAL.displayPrice }}</p>
           <p>Para pequenos times começando o planejamento financeiro colaborativo.</p>
           <ul class="plan-benefits">
             <li>até 4 membros</li>
@@ -280,18 +280,21 @@
             <li>simulação básica de cenários</li>
           </ul>
           <button class="btn btn-primary cta-btn" @click.prevent="redirectToCheckout('MONTHLY')">
-            Começar com Starter
+            Começar STARTER Mensal
+          </button>
+          <button class="btn btn-primary cta-btn" style="margin-top:10px; background:transparent; color:#f39c12; border:2px solid #f39c12;" @click.prevent="redirectToCheckout('ANNUAL')">
+            Escolher STARTER Anual
           </button>
         </div>
-        <!-- Plano Team -->
+        <!-- Plano TEAM -->
         <div class="plan-item team-plan" style="border-top: 4px solid var(--purple); background: #f7f3fa; box-shadow: 0 4px 24px rgba(142,68,173,0.13); width: 50%; position:relative;">
           <div style="position:absolute;top:-32px;left:50%;transform:translateX(-50%);">
             <span style="background:var(--yellow);color:var(--dark-purple);padding:6px 18px;border-radius:16px;font-size:15px;font-weight:700;box-shadow:0 2px 8px rgba(241,196,15,0.13);">⭐ Mais popular</span>
           </div>
-          <span class="plan-label" style="background:var(--purple); color:#fff; padding:2px 10px; border-radius:6px; font-size:13px; font-weight:600; margin-bottom:8px; display:inline-block;">Team</span>
-          <h3 style="font-size:28px;">Team</h3>
-          <p class="price" style="color:var(--purple); font-weight:700;">R$59 / mês</p>
-          <p class="price" style="color:var(--purple); font-weight:700;">R$597 / ano</p>
+          <span class="plan-label" style="background:var(--purple); color:#fff; padding:2px 10px; border-radius:6px; font-size:13px; font-weight:600; margin-bottom:8px; display:inline-block;">TEAM</span>
+          <h3 style="font-size:28px;">TEAM</h3>
+          <p class="price" style="color:var(--purple); font-weight:700;">{{ planDetails.BUSINESS_MONTHLY.displayPrice }}</p>
+          <p class="price" style="color:var(--purple); font-weight:700;">{{ planDetails.BUSINESS_ANNUAL.displayPrice }}</p>
           <p>Para startups que precisam tomar decisões financeiras com mais inteligência.</p>
           <ul class="plan-benefits">
             <li>até 10 membros</li>
@@ -302,7 +305,10 @@
             <li>colaboração entre membros</li>
           </ul>
           <button class="btn btn-primary cta-btn" style="background:var(--purple); border:none; font-size:1.15rem; padding:16px 32px;" @click.prevent="redirectToCheckout('BUSINESS_MONTHLY')">
-            Começar com Team
+            Começar TEAM Mensal
+          </button>
+          <button class="btn btn-primary cta-btn" style="margin-top:10px; background:transparent; color:var(--purple); border:2px solid var(--purple);" @click.prevent="redirectToCheckout('BUSINESS_ANNUAL')">
+            Escolher TEAM Anual
           </button>
         </div>
       </div>
@@ -373,6 +379,7 @@ import PrivacyControls from '@/components/compliance/PrivacyControls.vue'
 import { PLAN_DETAILS, formatPlanAmount } from '@/constants/plans'
 import { useUserStore } from '@/plugins/userStore'
 import NotificationService from '@/services/NotificationService'
+import OnboardingOrchestrator from '@/services/OnboardingOrchestrator'
 
 export default {
   components: {
@@ -422,7 +429,8 @@ export default {
       const userStore = useUserStore()
       if (!userStore.isAuthenticated) {
         localStorage.setItem('selectedPlan', plan)
-        this.$router.push({ name: 'login', query: { redirect: '/choose-plan', plan } })
+        const redirect = OnboardingOrchestrator.buildRedirectPath('/choose-plan', { plan })
+        this.$router.push({ name: 'login', query: { redirect } })
         return
       }
       this.$router.push({ name: 'choose-plan', query: { plan } })

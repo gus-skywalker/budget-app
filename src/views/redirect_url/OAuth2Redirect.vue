@@ -8,6 +8,7 @@ import { useUserStore } from '@/plugins/userStore'
 import { useRouter } from 'vue-router'
 import AuthService from '@/services/AuthService'
 import { updateI18nLocale } from '@/i18n'
+import OnboardingOrchestrator from '@/services/OnboardingOrchestrator'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -17,6 +18,8 @@ const extractTokenFromUrl = async () => {
   const token = urlParams.get('accessToken')
   const refreshToken = urlParams.get('refreshToken')
   const email = urlParams.get('email')
+  const redirect = urlParams.get('redirect')
+  const plan = urlParams.get('plan')
 
   console.log('OAuth2 callback - token:', token ? 'presente' : 'ausente')
 
@@ -43,38 +46,14 @@ const extractTokenFromUrl = async () => {
       await updateI18nLocale(userLanguage)
       await userStore.hydrateCompanyDetailsFromBudget()
 
-      const companies = userStore.getCompanies || []
-
-      if (!companies.length) {
-        router.push('/create-company')
-        return
-      }
-
-      if (userStore.isTenantMode) {
-        router.push('/dashboard')
-        return
-      }
-
-      const preferredCompanyId = userStore.getPreferredCompanyId
-      const preferredCompanyExists = preferredCompanyId
-        ? companies.some(c => c.companyId === preferredCompanyId)
-        : false
-
-      if (preferredCompanyExists || companies.length === 1) {
-        const companyToSelect = preferredCompanyExists
-          ? preferredCompanyId
-          : companies[0].companyId
-        try {
-          await userStore.selectCompany(companyToSelect)
-          router.push('/dashboard')
-        } catch (selectionError) {
-          console.error('Erro ao auto-selecionar workspace via OAuth2:', selectionError)
-          router.push({ name: 'select-company', query: { redirect: '/dashboard' } })
-        }
-        return
-      }
-
-      router.push({ name: 'select-company', query: { redirect: '/dashboard' } })
+      const onboarding = await OnboardingOrchestrator.resolvePostAuthRoute({
+        router,
+        userStore,
+        redirect,
+        plan,
+        defaultRedirect: '/dashboard'
+      })
+      router.push(onboarding.route)
     } catch (error) {
       console.error('Erro no OAuth2 redirect:', error)
       router.push('/login')

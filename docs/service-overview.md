@@ -9,6 +9,8 @@
 - Tenant context management in client state
 - API consumption of `auth`, `budget-api`, and billing-related endpoints
 - Checkout and subscription UX orchestration
+- Post-auth onboarding routing orchestration (`OnboardingOrchestrator`)
+- Global onboarding progress/status feedback (`OnboardingStatusBanner`)
 
 ## Frontend Scope Limits
 - No ownership of business domain invariants

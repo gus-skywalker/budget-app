@@ -112,7 +112,13 @@
 
 <script setup lang="ts">
 import { createMessageId } from '@/utils/messageId'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useUserStore } from '@/plugins/userStore'
+import CompanyService from '@/services/CompanyService'
+import OnboardingOrchestrator from '@/services/OnboardingOrchestrator'
+import { getOrCreateCorrelationId } from '@/utils/correlation'
+import { getFreePlanLimitType, parseApiError } from '@/utils/errorHandler'
 // Lista simplificada de países (pode ser expandida ou internacionalizada)
 const countryOptions = [
   { code: 'BR', label: 'Brasil' },
@@ -137,15 +143,17 @@ const country = ref('BR')
 const countryRules = [
   (v: string) => !!v || 'Selecione o país de registro'
 ]
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { useUserStore } from '@/plugins/userStore'
-import CompanyService from '@/services/CompanyService'
-import { getOrCreateCorrelationId } from '@/utils/correlation'
-import { getFreePlanLimitType, parseApiError } from '@/utils/errorHandler'
 
 const router = useRouter()
+const route = useRoute()
 const userStore = useUserStore()
+const redirectTarget = computed(() =>
+  OnboardingOrchestrator.resolveOnboardingTargetPath({
+    redirect: route.query.redirect,
+    plan: route.query.plan,
+    defaultRedirect: '/dashboard'
+  })
+)
 
 const form = ref<any>(null)
 const valid = ref(false)
@@ -299,7 +307,7 @@ const createCompany = async () => {
       showSnackbar('Empresa criada. Selecione a empresa para continuar.', 'warning')
       sessionStorage.removeItem(messageKey)
       setTimeout(() => {
-        router.push({ name: 'select-company', query: { redirect: '/dashboard' } })
+        router.push({ name: 'select-company', query: { redirect: redirectTarget.value } })
       }, 1200)
       return
     }
@@ -322,7 +330,7 @@ const createCompany = async () => {
 
     // Redirect to dashboard
     setTimeout(() => {
-      router.push('/dashboard')
+      router.push({ path: redirectTarget.value })
     }, 1500)
 
   } catch (error) {
@@ -331,7 +339,7 @@ const createCompany = async () => {
     showSnackbar(errorMessage, 'error')
     const limitType = getFreePlanLimitType(error)
     if (limitType === 'company') {
-      upgradeMessage.value = 'Você atingiu o limite do plano gratuito para empresas.'
+      upgradeMessage.value = 'Você atingiu o limite do plano STARTER para empresas. Faça upgrade para TEAM.'
       upgradeSnackbar.value = true
     }
   } finally {
