@@ -304,21 +304,7 @@
               </v-col>
               <v-col cols="12">
                 <v-select 
-                  :label="$t('common.select_group')" 
-                  v-model="selectedGroup" 
-                  :items="groups" 
-                  item-title="name"
-                  item-value="id" 
-                  @update:model-value="fetchGroupMembers"
-                  variant="outlined"
-                  density="comfortable"
-                  color="#667eea"
-                  class="modern-input"
-                ></v-select>
-              </v-col>
-              <v-col cols="12">
-                <v-select 
-                  :label="$t('expense.share_with_group')" 
+                  :label="$t('expense.share_with_members')" 
                   v-model="expense.selectedUsers" 
                   :items="users"
                   item-title="name" 
@@ -328,6 +314,7 @@
                   density="comfortable"
                   color="#667eea"
                   class="modern-input"
+                  :disabled="!users.length"
                 ></v-select>
               </v-col>
             </v-row>
@@ -472,7 +459,7 @@ import ExpenseService from '@/services/ExpenseService'
 import DataService from '@/services/DataService'
 import FinancialReadService, { NO_FINANCIAL_ACCOUNT_ERROR_MESSAGE } from '@/services/FinancialReadService'
 import UsersService from '@/services/UsersService'
-import GroupService from '@/services/GroupService'
+import CompanyService from '@/services/CompanyService'
 import NotificationService from '@/services/NotificationService'
 import { useUserStore } from '@/plugins/userStore'
 
@@ -480,7 +467,6 @@ const toLocalISODate = (date = new Date()) => {
   const timeOffset = date.getTimezoneOffset() * 60000
   return new Date(date.getTime() - timeOffset).toISOString().split('T')[0]
 }
-
 const sanitizeCurrencyInput = (rawValue) => {
   if (rawValue === null || rawValue === undefined) {
     return ''
@@ -633,11 +619,8 @@ export default {
       selectedExpenseMonth: currentMonth,
       selectedIncomeYear: currentYear,
       selectedExpenseYear: currentYear,
-  selectedLanguage: this.$i18n?.locale || 'pt',
-      groups: [],
-      selectedGroup: null,
+        selectedLanguage: this.$i18n?.locale || 'pt',
       users: [],
-      isLoadingMembers: false,
       months: [
         { name: 'Janeiro', value: 1 },
         { name: 'Fevereiro', value: 2 },
@@ -672,7 +655,6 @@ export default {
       isEditingExpense: false,
       editingExpenseId: null,
       editingExpenseOriginal: null,
-      previousSelectedGroup: undefined,
       snackbar: {
         show: false,
         text: '',
@@ -722,18 +704,12 @@ export default {
     this.fetchCategories();
     this.fetchPaymentMethods();
     this.fetchFinancialAccounts();
-    // this.fetchUsers();
-    this.fetchGroups();
+    this.fetchShareableUsers();
     this.fetchAlertSettings();
     this.fetchMonthlyIncomes();
     this.fetchMonthlyExpenses();
   },
   watch: {
-    selectedGroup(newGroup, oldGroup) {
-      if (newGroup !== oldGroup) {
-        this.fetchGroupMembers()
-      }
-    },
     '$i18n.locale'(newLocale) {
       if (newLocale && newLocale !== this.selectedLanguage) {
         this.selectedLanguage = newLocale
@@ -916,16 +892,25 @@ export default {
       this.selectedLanguage = language
       DataService.fetchCategories(language)
         .then((response) => {
-          this.categories = response.data.map((category) => {
-            const translationKey = `categories.${category.code}`
+          const categories = this.normalizeCollection(response?.data)
+          this.categories = categories
+            .map((category) => {
+              const code = String(category?.code || '').trim()
+              const id = category?.id ?? null
+              if (!code || id === null || id === undefined) {
+                return null
+              }
+
+              const translationKey = `categories.${code}`
             const translatedName = this.$t(translationKey)
             const isTranslated = translatedName !== translationKey
-            return {
-              id: category.id,
-              code: category.code,
-              name: isTranslated ? translatedName : category.name
-            }
-          })
+              return {
+                id,
+                code,
+                name: isTranslated ? translatedName : (category?.name || code)
+              }
+            })
+            .filter((category) => Boolean(category))
           console.log(this.categories);
         })
         .catch((error) => {
@@ -937,11 +922,24 @@ export default {
       this.selectedLanguage = language
       DataService.fetchPaymentMethods(language)
         .then((response) => {
-          this.paymentMethods = response.data.map((method) => ({
-            id: method.id,
-            code: method.code,
-            name: method.name
-          }))
+          const paymentMethods = this.normalizeCollection(response?.data)
+          this.paymentMethods = paymentMethods
+            .map((method) => {
+              const id = method?.id ?? null
+              const code = String(method?.code || '').trim()
+              const name = String(method?.name || code || '').trim()
+
+              if (id === null || id === undefined || !code || !name) {
+                return null
+              }
+
+              return {
+                id,
+                code,
+                name
+              }
+            })
+            .filter((method) => Boolean(method))
         })
         .catch((error) => {
           console.error('Error fetching payment methods:', error)
@@ -994,29 +992,34 @@ export default {
       target.accountId = selectedAccountId
       return true
     },
-    fetchGroups() {
+    fetchShareableUsers() {
       const userStore = useUserStore()
       const companyId = userStore.getCurrentCompanyId
       const isTenantMode = userStore.isTenantMode
-      const request = isTenantMode && companyId
-        ? GroupService.fetchGroupsByCompany(companyId)
-        : GroupService.fetchGroups()
 
-      request
+      if (!(isTenantMode && companyId)) {
+        this.users = []
+        return
+      }
+
+      CompanyService.listMembers(companyId)
         .then((response) => {
-          const groups = this.normalizeCollection(response?.data)
-          this.groups = groups
-            .map((group) => ({
-              id: group?.id ?? group?.groupId ?? null,
-              name: group?.name ?? group?.groupName ?? `Grupo ${group?.id ?? group?.groupId ?? ''}`.trim(),
-              description: group?.description ?? '',
-              ownerId: group?.ownerId ?? null,
-              createdDate: group?.createdDate ?? null
-            }))
-            .filter((group) => Boolean(group.id))
+          const members = this.normalizeCollection(response?.data)
+          this.users = members
+            .map((member) => {
+              const id = member?.userId ?? member?.id ?? member?.email ?? null
+              if (!id) return null
+              return {
+                id,
+                name: member?.name ?? member?.fullName ?? member?.email ?? String(id),
+                email: member?.email ?? ''
+              }
+            })
+            .filter((member) => Boolean(member))
         })
         .catch((error) => {
-          console.error('Erro ao buscar grupos:', error)
+          console.error('Erro ao buscar membros da empresa:', error)
+          this.users = []
         })
     },
     fetchAlertSettings() {
@@ -1027,37 +1030,6 @@ export default {
         .catch((error) => {
           console.error('Erro ao buscar configurações de alerta:', error)
         })
-    },
-    fetchGroupMembers() {
-      if (this.selectedGroup) {
-        this.isLoadingMembers = true
-        GroupService.fetchGroupMembers(this.selectedGroup)
-          .then((response) => {
-            const members = this.normalizeCollection(response?.data)
-            this.users = members
-              .map((member) => {
-                if (typeof member === 'string') {
-                  return { id: member, name: member, email: '' }
-                }
-                const id = member?.userId ?? member?.id ?? member?.email ?? null
-                if (!id) return null
-                return {
-                  id,
-                  name: member?.name ?? member?.email ?? id,
-                  email: member?.email ?? ''
-                }
-              })
-              .filter((member) => Boolean(member))
-          })
-          .catch((error) => {
-            console.error('Erro ao buscar membros do grupo:', error)
-          })
-          .finally(() => {
-            this.isLoadingMembers = false
-          })
-      } else {
-        this.users = []
-      }
     },
     resetIncomePaginationAndFetch() {
       this.incomePagination.offset = 0
@@ -1224,8 +1196,7 @@ export default {
       console.info('[BudgetView] saveExpense', {
         isEditing,
         id: this.editingExpenseId,
-        payload,
-        selectedGroup: this.selectedGroup
+        payload
       })
 
       const request = isEditing
@@ -1292,14 +1263,6 @@ export default {
       this.isEditingExpense = false
       this.editingExpenseId = null
       this.editingExpenseOriginal = null
-      if (this.previousSelectedGroup !== undefined) {
-        const shouldFetchMembers = this.selectedGroup !== this.previousSelectedGroup
-        this.selectedGroup = this.previousSelectedGroup
-        this.previousSelectedGroup = undefined
-        if (!shouldFetchMembers && !this.selectedGroup) {
-          this.users = []
-        }
-      }
     },
     toggleRecurring({ income, months }) {
       console.log('Toggled income:', income)
@@ -1364,10 +1327,6 @@ export default {
     },
     startEditingExpense(expense) {
       console.debug('[BudgetView] startEditingExpense', expense)
-      if (!this.isEditingExpense) {
-        this.previousSelectedGroup = this.selectedGroup
-      }
-
       try {
         this.editingExpenseOriginal = JSON.parse(JSON.stringify(expense))
       } catch (parseError) {
@@ -1377,9 +1336,6 @@ export default {
 
       this.isEditingExpense = true
       this.editingExpenseId = expense.id
-
-      const groupId = expense.group?.id ?? expense.groupId ?? null
-      this.selectedGroup = groupId
 
       this.expense = {
         date: this.normalizeDate(expense.date),
@@ -1401,7 +1357,7 @@ export default {
           name: user.name ?? user.email ?? (user.userId ?? user),
           email: user.email ?? null
         }))
-      } else if (!groupId) {
+      } else {
         this.users = []
       }
     },

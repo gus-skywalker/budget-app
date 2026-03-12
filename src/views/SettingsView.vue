@@ -653,6 +653,7 @@ import CompanySettings from '@/components/CompanySettings.vue';
 import BankService from '@/services/BankService';
 import AuthService from '@/services/AuthService';
 import NotificationService, { type UserSettings } from '@/services/NotificationService';
+import { toUiLocale, toUserLanguageCode } from '@/utils/languageUtils';
 
 const bankStore = useBankStore();
 const userStore = useUserStore();
@@ -747,19 +748,6 @@ const availableLanguages = [
   { text: 'Français', value: 'fr' },
   { text: 'Español', value: 'es' }
 ];
-
-const toApiLanguage = (value: string | null | undefined): string => {
-  const normalized = String(value || '').toLowerCase()
-  if (normalized === 'en') return 'EN'
-  if (normalized === 'fr') return 'FR'
-  return 'PT'
-}
-
-const toUiLocale = (value: string | null | undefined): string => {
-  const normalized = String(value || '').toLowerCase()
-  if (['pt', 'en', 'fr', 'es'].includes(normalized)) return normalized
-  return 'pt'
-}
 
 const normalizeOptionalText = (value: unknown): string | null => {
   const raw = String(value ?? '').trim()
@@ -859,7 +847,7 @@ const saveProfile = async () => {
   const payload = {
     username: username.value.trim(),
     email: email.value.trim(),
-    language: toApiLanguage(locale.value)
+    language: toUserLanguageCode(locale.value)
   }
 
   isSavingProfile.value = true

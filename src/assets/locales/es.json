@@ -249,7 +249,7 @@
     "update": "Actualizar gasto",
     "monthly_title": "Gastos mensuales",
     "no_entries": "No se encontraron gastos para este mes.",
-    "share_with_group": "Compartir con usuarios del grupo",
+    "share_with_members": "Compartir con miembros de la empresa",
     "saved_successfully": "¡Gasto guardado con éxito!",
     "updated_successfully": "¡Gasto actualizado con éxito!",
     "save_failed": "No se pudo guardar el gasto.",

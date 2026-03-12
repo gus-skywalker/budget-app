@@ -5,6 +5,7 @@
 
 export type Language = 'PT' | 'EN' | 'FR' | 'ES' | 'DE'
 export type ApiLanguage = 'pt' | 'en' | 'fr'
+export type UiLocale = 'pt' | 'en' | 'fr' | 'es'
 
 /**
  * Idiomas com suporte completo no backend (Auth + Budget API)
@@ -102,4 +103,43 @@ export function getLanguageName(language: string): string {
 export function isValidLanguage(language: string): boolean {
   const lang = language.toUpperCase() as Language
   return ALL_LANGUAGES.includes(lang)
+}
+
+/**
+ * Converte locale da UI para código de idioma do usuário persistido no backend.
+ *
+ * @example
+ * toUserLanguageCode('es') // 'ES'
+ * toUserLanguageCode('en-US') // 'EN'
+ */
+export function toUserLanguageCode(value: string | null | undefined): Language {
+  const normalized = String(value || '').trim()
+  if (!normalized) return 'PT'
+
+  const base = normalized.split(/[-_]/)[0]?.toUpperCase()
+  if (!base) return 'PT'
+
+  if (base === 'EN') return 'EN'
+  if (base === 'FR') return 'FR'
+  if (base === 'ES') return 'ES'
+  if (base === 'DE') return 'DE'
+  return 'PT'
+}
+
+/**
+ * Normaliza qualquer entrada de idioma para locale suportado na UI.
+ *
+ * @example
+ * toUiLocale('ES') // 'es'
+ * toUiLocale('pt-BR') // 'pt'
+ */
+export function toUiLocale(value: string | null | undefined): UiLocale {
+  const normalized = String(value || '').trim()
+  if (!normalized) return 'pt'
+
+  const base = normalized.split(/[-_]/)[0]?.toLowerCase()
+  if (base === 'en') return 'en'
+  if (base === 'fr') return 'fr'
+  if (base === 'es') return 'es'
+  return 'pt'
 }

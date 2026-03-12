@@ -45,24 +45,43 @@ interface CategoryItem {
   name: string
 }
 
+interface ApiCategoryItem {
+  code?: string
+  name?: string
+}
+
 const { locale, t } = useI18n()
 
 const categories = ref<CategoryItem[]>([])
 const loading = ref(false)
 
+const normalizeCategoriesPayload = (payload: unknown): ApiCategoryItem[] => {
+  if (Array.isArray(payload)) return payload as ApiCategoryItem[]
+  if (payload && typeof payload === 'object') {
+    const candidate = (payload as { data?: unknown }).data
+    if (Array.isArray(candidate)) return candidate as ApiCategoryItem[]
+  }
+  return []
+}
+
 const fetchCategories = async () => {
   loading.value = true
   try {
     const response = await DataService.fetchCategories(locale.value || 'pt')
-    categories.value = (response.data || []).map((category) => {
-      const translationKey = `categories.${category.code}`
+    categories.value = normalizeCategoriesPayload(response.data).map((category: ApiCategoryItem) => {
+      const code = String(category.code || '').trim()
+      const fallbackName = String(category.name || code).trim()
+      if (!code) {
+        return null
+      }
+      const translationKey = `categories.${code}`
       const translatedName = t(translationKey)
       const isTranslated = translatedName !== translationKey
       return {
-        code: category.code,
-        name: isTranslated ? translatedName : category.name,
+        code,
+        name: isTranslated ? translatedName : fallbackName,
       }
-    })
+    }).filter((category): category is CategoryItem => Boolean(category))
   } catch (error) {
     console.error('Erro ao carregar categorias:', error)
   } finally {

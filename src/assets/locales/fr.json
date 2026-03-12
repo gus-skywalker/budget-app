@@ -249,7 +249,7 @@
     "update": "Mettre à jour la dépense",
     "monthly_title": "Dépenses mensuelles",
     "no_entries": "Aucune dépense trouvée pour ce mois.",
-    "share_with_group": "Partager avec les utilisateurs du groupe",
+    "share_with_members": "Partager avec les membres de l'entreprise",
     "saved_successfully": "Dépense enregistrée avec succès !",
     "updated_successfully": "Dépense mise à jour avec succès !",
     "save_failed": "Échec de l'enregistrement de la dépense.",

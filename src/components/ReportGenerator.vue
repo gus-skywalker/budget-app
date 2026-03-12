@@ -239,17 +239,41 @@ export default {
             if (!date) return '';
             return new Intl.DateTimeFormat('pt-BR').format(new Date(date));
         },
+        normalizeTranslatedCollection(payload) {
+            if (Array.isArray(payload)) return payload;
+            if (!payload || typeof payload !== 'object') return [];
+
+            const candidates = [payload.data, payload.items, payload.content, payload.results, payload.list];
+            for (const candidate of candidates) {
+                if (Array.isArray(candidate)) return candidate;
+            }
+
+            return [];
+        },
         async fetchCategories() {
             if (this.reportType === 'expenses') {
                 try {
                     const language = this.$i18n?.locale || this.selectedLanguage || 'pt';
                     this.selectedLanguage = language;
                     const response = await DataService.fetchCategories(language);
-                    this.availableCategories = response.data.map((category) => ({
-                        id: category.id,
-                        code: category.code,
-                        name: this.$t(`categories.${category.code}`) || category.name
-                    }));
+                    const categories = this.normalizeTranslatedCollection(response?.data);
+                    this.availableCategories = categories
+                        .map((category) => {
+                            const code = String(category?.code || '').trim();
+                            const id = category?.id ?? null;
+                            if (!code || id === null || id === undefined) {
+                                return null;
+                            }
+                            const translationKey = `categories.${code}`;
+                            const translatedName = this.$t(translationKey);
+                            const isTranslated = translatedName !== translationKey;
+                            return {
+                                id,
+                                code,
+                                name: isTranslated ? translatedName : (category?.name || code)
+                            };
+                        })
+                        .filter((category) => Boolean(category));
 
                 } catch (error) {
                     console.error('Erro ao buscar categorias:', error);

@@ -5,8 +5,9 @@ import fr from './assets/locales/fr.json'
 import es from './assets/locales/es.json'
 import landingPageMessages from './assets/locales/modules/landingPage'
 import { useUserStore } from './plugins/userStore'
+import { toUiLocale, type UiLocale } from './utils/languageUtils'
 
-type Locale = 'pt' | 'en' | 'fr' | 'es'
+type Locale = UiLocale
 
 const messages: Record<Locale, any> = {
   en: { ...en, ...landingPageMessages.en },
@@ -16,51 +17,20 @@ const messages: Record<Locale, any> = {
 }
 
 /**
- * Mapeamento de códigos de idioma do backend (UPPERCASE) para i18n (lowercase)
- */
-const languageMap: Record<string, Locale> = {
-  'PT': 'pt',
-  'EN': 'en',
-  'FR': 'fr',
-  'ES': 'es',  // Español agora com suporte completo
-  'DE': 'pt'   // Fallback para português (suporte parcial)
-}
-
-const resolveLocale = (raw?: string | null): Locale | null => {
-  if (!raw) {
-    return null
-  }
-
-  const normalized = String(raw).trim()
-  if (!normalized) {
-    return null
-  }
-
-  const base = normalized.split(/[-_]/)[0]?.toUpperCase()
-  if (!base) {
-    return null
-  }
-
-  return languageMap[base] || null
-}
-
-/**
  * Obtém o locale inicial baseado no userStore ou navegador
  */
 function getInitialLocale(): Locale {
   try {
     const userStore = useUserStore()
     const userLanguage = userStore.getLanguage
-    const resolvedUserLocale = resolveLocale(userLanguage)
-    if (resolvedUserLocale) {
-      return resolvedUserLocale
+    if (userLanguage) {
+      return toUiLocale(userLanguage)
     }
   } catch {
     // Ignore store errors and fallback to browser below.
   }
 
-  const browserLocale = resolveLocale(typeof navigator !== 'undefined' ? navigator.language : null)
-  return browserLocale || 'pt'
+  return toUiLocale(typeof navigator !== 'undefined' ? navigator.language : null)
 }
 
 const i18n = createI18n({
@@ -76,7 +46,7 @@ const i18n = createI18n({
  * @param userLanguage - Idioma do usuário em UPPERCASE (PT, EN, FR, ES, DE)
  */
 export function updateI18nLocale(userLanguage: string) {
-  const locale: Locale = resolveLocale(userLanguage) || 'pt'
+  const locale: Locale = toUiLocale(userLanguage)
   i18n.global.locale.value = locale
 }
 

@@ -252,7 +252,7 @@
     "update": "Update Expense",
     "monthly_title": "Monthly Expenses",
     "no_entries": "No expenses found for this month.",
-    "share_with_group": "Share with Group Users",
+    "share_with_members": "Share with company members",
     "saved_successfully": "Expense saved successfully!",
     "updated_successfully": "Expense updated successfully!",
     "save_failed": "Failed to save expense.",

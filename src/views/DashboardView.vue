@@ -570,21 +570,40 @@ export default {
       }
       this.fetchChartData()
     },
+    normalizeTranslatedCollection(payload) {
+      if (Array.isArray(payload)) return payload
+      if (!payload || typeof payload !== 'object') return []
+
+      const candidates = [payload.data, payload.items, payload.content, payload.results, payload.list]
+      for (const candidate of candidates) {
+        if (Array.isArray(candidate)) return candidate
+      }
+
+      return []
+    },
     fetchCategories() {
       const language = this.$i18n?.locale || this.selectedLanguage || 'en'
       this.selectedLanguage = language
       DataService.fetchCategories(language)
         .then((response) => {
-          this.expenseCategories = response.data.map((category) => {
-            const translationKey = `categories.${category.code}`
+          const categories = this.normalizeTranslatedCollection(response?.data)
+          this.expenseCategories = categories
+            .map((category) => {
+            const code = String(category?.code || '').trim()
+            const id = category?.id ?? null
+            if (!code || id === null || id === undefined) {
+              return null
+            }
+            const translationKey = `categories.${code}`
             const translatedName = this.$t(translationKey)
             const isTranslated = translatedName !== translationKey
             return {
-              id: category.id,
-              code: category.code,
-              name: isTranslated ? translatedName : category.name
+              id,
+              code,
+              name: isTranslated ? translatedName : (category?.name || code)
             }
           })
+            .filter((category) => Boolean(category))
         })
         .catch((error) => {
           console.error('Error fetching categories:', error)

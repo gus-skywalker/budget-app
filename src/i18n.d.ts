@@ -82,7 +82,7 @@ declare const i18n: import("vue-i18n").I18n<{
             save: string;
             monthly_title: string;
             no_entries: string;
-            share_with_group: string;
+            share_with_members: string;
         };
         common: {
             date: string;
@@ -245,7 +245,7 @@ declare const i18n: import("vue-i18n").I18n<{
             save: string;
             monthly_title: string;
             no_entries: string;
-            share_with_group: string;
+            share_with_members: string;
         };
         trends: {
             title: string;
