@@ -9,16 +9,39 @@
     "logout": "Logout",
     "login_oauth2": "Login with OAuth2",
     "dashboard": "Dashboard",
+    "overview": "Overview",
+    "cashflow": "Cashflow",
     "report": "Reports",
     "budget": "Budget",
     "groups": "Groups",
     "goals": "Goals",
     "home": "Home",
+    "transactions": "Transactions",
+    "accounts": "Accounts",
+    "categories": "Categories",
+    "planning_budget": "Budget",
+    "planning_scenarios": "Scenarios",
+    "planning_goals": "Goals",
+    "decisions": "Decisions",
+    "insights": "Insights",
+    "settings": "Settings",
     "toggle_theme": "Toggle Theme",
     "logout_confirmation_title": "Confirm Logout",
     "logout_confirmation_message": "Are you sure you want to log out of your account?",
     "cancel": "Cancel",
-    "confirm": "Confirm"
+    "confirm": "Confirm",
+    "sections": {
+      "workspace": "Workspace",
+      "overview": "Overview",
+      "control": "Financial Control",
+      "planning": "Planning",
+      "decisions": "Decisions",
+      "analytics": "Analytics",
+      "system": "System"
+    },
+    "workspace": {
+      "personal_finance": "Personal Finance"
+    }
   },
   "account_management": {
     "title": "Account Management",
@@ -216,10 +239,66 @@
 
   "overview": {
     "title": "Overview",
+    "subtitle": "Where you are, where you're going, and what to decide next.",
+    "headline_placeholder": "💡 Update your financial data to generate personalized insights.",
+    "headline_positive": "💡 You closed the month positive with {amount}.",
+    "headline_negative": "⚠️ Your month result is negative by {amount}.",
+    "snapshot_title": "Financial Snapshot",
+    "snapshot_balance": "Current Balance",
+    "snapshot_income": "Monthly Income",
+    "snapshot_expenses": "Monthly Expenses",
+    "snapshot_net": "Net Result",
+    "momentum_title": "Spending Momentum",
+    "momentum_current": "This month",
+    "momentum_previous": "Last month",
+    "momentum_placeholder": "Not enough data to compare the last two months.",
+    "momentum_down": "Your spending pace is lower than last month.",
+    "momentum_up": "Your spending is accelerating this month.",
+    "momentum_flat": "Your spending pace is steady.",
+    "money_flow_title": "Money Flow",
+    "money_flow_income": "Income",
+    "money_flow_expenses": "Expenses",
+    "money_flow_placeholder": "Not enough data to calculate the flow.",
+    "money_flow_positive": "Your cashflow is positive this month.",
+    "money_flow_negative": "Your cashflow is negative this month.",
+    "top_categories_title": "Top Categories",
+    "upcoming_title": "Upcoming Expenses",
+    "upcoming_placeholder": "No upcoming bills available yet.",
     "total_income": "Total Income",
     "total_expenses": "Total Expenses",
     "savings": "Savings",
     "total_balance": "Total Balance",
+    "monthly_cashflow": "Monthly Cashflow",
+    "burn_rate": "Burn Rate",
+    "runway": "Runway",
+    "months": "months",
+    "runway_positive": "On track",
+    "runway_unknown": "—",
+    "health_title": "Financial Health",
+    "projection_title": "Projection",
+    "projection_3m": "3 months",
+    "projection_6m": "6 months",
+    "projection_12m": "12 months",
+    "projection_placeholder": "🔮 Our finance wizards are still calculating your future.",
+    "insights_title": "Insights",
+    "decisions_title": "Decisions",
+    "insights_placeholder": "🧠 Our AI accountants are still learning about your finances.",
+    "decisions_placeholder": "🛠 The decision engine is still being built by our finance elves.",
+    "insight_1": "Your restaurant spending increased 18% this month.",
+    "insight_2": "You could save $200/month by adjusting subscriptions.",
+    "insight_3": "Your burn rate increased compared to last quarter.",
+    "decision_1_title": "Hire a developer",
+    "decision_1_desc": "Accelerate critical initiatives this quarter.",
+    "decision_1_impact": "Impact: - $8,000/month",
+    "decision_2_title": "Move to a smaller office",
+    "decision_2_desc": "Reduce fixed operating costs.",
+    "decision_2_impact": "Impact: + $2,500/month",
+    "decision_3_title": "Cancel underused subscriptions",
+    "decision_3_desc": "Cut recurring expenses with low usage.",
+    "decision_3_impact": "Impact: + $1,200/month",
+    "decision_status_pending": "Pending",
+    "decision_status_review": "Reviewing",
+    "decision_status_suggested": "Suggested",
     "accounts": "Accounts",
     "recent_transactions": "Recent Transactions",
     "top_categories": "Top Categories",
@@ -233,6 +312,81 @@
     "select_chart_type": "Select Chart Type",
     "select_time_period": "Select Time Period",
     "select_expense_category": "Select Expense Category"
+  },
+
+  "cashflow": {
+    "title": "Cashflow",
+    "subtitle": "Track inflows, outflows, and cash trends.",
+    "flow_title": "Real-Time Cashflow",
+    "insights_title": "Predictive Insights"
+  },
+
+  "accounts": {
+    "title": "Accounts",
+    "subtitle": "Consolidated view of connected accounts.",
+    "list_title": "Financial Accounts",
+    "empty": "No accounts available yet."
+  },
+
+  "categories_page": {
+    "title": "Categories",
+    "subtitle": "Organize entries by category.",
+    "list_title": "Tracked Categories",
+    "empty": "No categories found."
+  },
+
+  "planning": {
+    "budget": {
+      "title": "Budget",
+      "subtitle": "Set limits and goals per category.",
+      "table_title": "Category Planning"
+    },
+    "scenarios": {
+      "title": "Scenarios",
+      "subtitle": "Simulate decisions and cash impact.",
+      "card_title": "Strategic Simulations"
+    }
+  },
+
+  "decisions": {
+    "title": "Decisions",
+    "subtitle": "Prioritize and assess decision impact.",
+    "list_title": "Recent Decisions",
+    "sample_1_title": "Hire a developer",
+    "sample_1_desc": "Accelerate quarterly initiatives.",
+    "sample_1_impact": "Impact: - $8,000/month",
+    "sample_1_scenario": "Scenario: Product team",
+    "sample_2_title": "Move to a smaller office",
+    "sample_2_desc": "Reduce fixed costs over the next 6 months.",
+    "sample_2_impact": "Impact: + $2,500/month",
+    "sample_2_scenario": "Scenario: Cost optimization",
+    "sample_3_title": "Cancel underused subscriptions",
+    "sample_3_desc": "Cut recurring expenses with low usage.",
+    "sample_3_impact": "Impact: + $1,200/month",
+    "sample_3_scenario": "Scenario: Operational efficiency",
+    "status_pending": "Pending",
+    "status_review": "Reviewing",
+    "status_suggested": "Suggested"
+  },
+
+  "insights": {
+    "title": "Insights",
+    "subtitle": "Smart alerts to guide action.",
+    "list_title": "Alerts & Opportunities",
+    "sample_1_title": "Unusual spending detected",
+    "sample_1_desc": "Restaurants spending increased 18% this month.",
+    "sample_2_title": "Savings opportunity",
+    "sample_2_desc": "You could save $200/month by adjusting subscriptions.",
+    "sample_3_title": "Burn rate alert",
+    "sample_3_desc": "Burn rate is higher compared to last quarter."
+  },
+
+  "placeholders": {
+    "title": "Still brewing",
+    "ai_accountants": "🧠 Our AI accountants are still learning this trick.",
+    "finance_elves": "🛠 Our finance elves are still building this feature.",
+    "superpower": "🚧 This financial superpower is under construction.",
+    "coffee": "☕ The engineers are still drinking coffee for this one."
   },
 
   "budget_tracker": {

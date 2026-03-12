@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTheme } from 'vuetify'
+import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/plugins/userStore'
 import type { Notification } from '@/services/NotificationService'
 import CompanySwitcher from '@/components/CompanySwitcher.vue'
@@ -17,6 +18,7 @@ const emit = defineEmits(['toggle-notifications-popup'])
 
 const router = useRouter()
 const theme = useTheme()
+const { t } = useI18n()
 const userStore = useUserStore()
 const showLogoutDialog = ref(false)
 const expandOnHover = ref(true)
@@ -91,6 +93,135 @@ function toggleNotifications() {
 function navigateToAccountAdmin() {
   router.push({ name: 'settings' })
 }
+
+const navSections = computed(() => [
+  {
+    key: 'workspace',
+    title: t('sidebar.sections.workspace'),
+    items: [
+      {
+        key: 'workspace-personal',
+        title: t('sidebar.workspace.personal_finance'),
+        icon: 'mdi-briefcase-outline',
+        disabled: true,
+      },
+    ],
+  },
+  {
+    key: 'overview',
+    title: t('sidebar.sections.overview'),
+    items: [
+      {
+        key: 'overview',
+        title: t('sidebar.overview'),
+        icon: 'mdi-view-dashboard',
+        to: { name: 'dashboard' },
+      },
+      {
+        key: 'cashflow',
+        title: t('sidebar.cashflow'),
+        icon: 'mdi-chart-areaspline',
+        to: { name: 'cashflow' },
+      },
+      {
+        key: 'home',
+        title: t('sidebar.home'),
+        icon: 'mdi-home',
+        to: { name: 'home' },
+      },
+    ],
+  },
+  {
+    key: 'control',
+    title: t('sidebar.sections.control'),
+    items: [
+      {
+        key: 'transactions',
+        title: t('sidebar.transactions'),
+        icon: 'mdi-swap-horizontal',
+        to: { name: 'budget' },
+      },
+      {
+        key: 'accounts',
+        title: t('sidebar.accounts'),
+        icon: 'mdi-bank-outline',
+        to: { name: 'accounts' },
+      },
+      {
+        key: 'categories',
+        title: t('sidebar.categories'),
+        icon: 'mdi-shape-outline',
+        to: { name: 'categories' },
+      },
+    ],
+  },
+  {
+    key: 'planning',
+    title: t('sidebar.sections.planning'),
+    items: [
+      {
+        key: 'planning-budget',
+        title: t('sidebar.planning_budget'),
+        icon: 'mdi-wallet-outline',
+        to: { name: 'planning-budget' },
+      },
+      {
+        key: 'planning-scenarios',
+        title: t('sidebar.planning_scenarios'),
+        icon: 'mdi-layers-triple-outline',
+        to: { name: 'planning-scenarios' },
+      },
+      {
+        key: 'planning-goals',
+        title: t('sidebar.planning_goals'),
+        icon: 'mdi-bullseye-arrow',
+        to: { name: 'planning-goals' },
+      },
+    ],
+  },
+  {
+    key: 'decisions',
+    title: t('sidebar.sections.decisions'),
+    items: [
+      {
+        key: 'decisions',
+        title: t('sidebar.decisions'),
+        icon: 'mdi-lightbulb-outline',
+        to: { name: 'decisions' },
+      },
+      {
+        key: 'insights',
+        title: t('sidebar.insights'),
+        icon: 'mdi-brain',
+        to: { name: 'insights' },
+      },
+    ],
+  },
+  {
+    key: 'analytics',
+    title: t('sidebar.sections.analytics'),
+    items: [
+      {
+        key: 'report',
+        title: t('sidebar.report'),
+        icon: 'mdi-file-chart',
+        to: { name: 'report' },
+      },
+    ],
+  },
+  {
+    key: 'system',
+    title: t('sidebar.sections.system'),
+    items: [
+      {
+        key: 'settings',
+        title: t('sidebar.settings'),
+        icon: 'mdi-cog-outline',
+        to: { name: 'settings' },
+      },
+    ],
+  },
+])
 </script>
 
 <template>
@@ -117,82 +248,31 @@ function navigateToAccountAdmin() {
     </div>
 
     <v-list density="compact" nav>
-      <template v-if="isMobile">
-        <v-tooltip text="Dashboard" location="end">
-          <template v-slot:activator="{ props }">
-            <v-list-item v-bind="props" prepend-icon="mdi-view-dashboard" :title="$t('sidebar.dashboard')"
-              :to="{ name: 'dashboard' }"></v-list-item>
+      <template v-for="section in navSections" :key="section.key">
+        <v-list-subheader class="sidebar-section">{{ section.title }}</v-list-subheader>
+        <template v-for="item in section.items" :key="item.key">
+          <template v-if="isMobile">
+            <v-tooltip :text="item.title" location="end">
+              <template v-slot:activator="{ props }">
+                <v-list-item
+                  v-bind="props"
+                  :prepend-icon="item.icon"
+                  :title="item.title"
+                  :to="item.to"
+                  :disabled="item.disabled"
+                ></v-list-item>
+              </template>
+            </v-tooltip>
           </template>
-        </v-tooltip>
-      </template>
-      <template v-else>
-        <v-list-item prepend-icon="mdi-view-dashboard" :title="$t('sidebar.dashboard')"
-          :to="{ name: 'dashboard' }"></v-list-item>
-      </template>
-
-      <template v-if="isMobile">
-        <v-tooltip text="Orçamento" location="end">
-          <template v-slot:activator="{ props }">
-            <v-list-item v-bind="props" prepend-icon="mdi-currency-usd" :title="$t('sidebar.budget')" 
-              :to="{ name: 'budget' }"></v-list-item>
+          <template v-else>
+            <v-list-item
+              :prepend-icon="item.icon"
+              :title="item.title"
+              :to="item.to"
+              :disabled="item.disabled"
+            ></v-list-item>
           </template>
-        </v-tooltip>
-      </template>
-      <template v-else>
-        <v-list-item prepend-icon="mdi-currency-usd" :title="$t('sidebar.budget')" 
-          :to="{ name: 'budget' }"></v-list-item>
-      </template>
-
-      <template v-if="isMobile">
-        <v-tooltip text="Grupos" location="end">
-          <template v-slot:activator="{ props }">
-            <v-list-item v-bind="props" prepend-icon="mdi-account-group" :title="$t('sidebar.groups')" 
-              :to="{ name: 'group' }"></v-list-item>
-          </template>
-        </v-tooltip>
-      </template>
-      <template v-else>
-        <v-list-item prepend-icon="mdi-account-group" :title="$t('sidebar.groups')" 
-          :to="{ name: 'group' }"></v-list-item>
-      </template>
-
-      <template v-if="isMobile">
-        <v-tooltip text="Metas Financeiras" location="end">
-          <template v-slot:activator="{ props }">
-            <v-list-item v-bind="props" prepend-icon="mdi-bullseye-arrow" :title="$t('sidebar.goals')"
-              :to="{ name: 'financialgoal' }"></v-list-item>
-          </template>
-        </v-tooltip>
-      </template>
-      <template v-else>
-        <v-list-item prepend-icon="mdi-bullseye-arrow" :title="$t('sidebar.goals')"
-          :to="{ name: 'financialgoal' }"></v-list-item>
-      </template>
-
-      <template v-if="isMobile">
-        <v-tooltip text="Relatórios" location="end">
-          <template v-slot:activator="{ props }">
-            <v-list-item v-bind="props" prepend-icon="mdi-file-chart" :title="$t('sidebar.report')" 
-              :to="{ name: 'report' }"></v-list-item>
-          </template>
-        </v-tooltip>
-      </template>
-      <template v-else>
-        <v-list-item prepend-icon="mdi-file-chart" :title="$t('sidebar.report')" 
-          :to="{ name: 'report' }"></v-list-item>
-      </template>
-
-      <template v-if="isMobile">
-        <v-tooltip text="Início" location="end">
-          <template v-slot:activator="{ props }">
-            <v-list-item v-bind="props" prepend-icon="mdi-home" :title="$t('sidebar.home')" 
-              :to="{ name: 'home' }"></v-list-item>
-          </template>
-        </v-tooltip>
-      </template>
-      <template v-else>
-        <v-list-item prepend-icon="mdi-home" :title="$t('sidebar.home')" 
-          :to="{ name: 'home' }"></v-list-item>
+        </template>
       </template>
     </v-list>
 
@@ -240,6 +320,21 @@ function navigateToAccountAdmin() {
     </v-card>
   </v-dialog>
 </template>
+
+<style scoped>
+.sidebar-section {
+  margin-top: 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.v-theme--dark .sidebar-section {
+  color: rgba(255, 255, 255, 0.5);
+}
+</style>
 
 
 <style scoped>

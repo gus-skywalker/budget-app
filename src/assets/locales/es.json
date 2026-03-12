@@ -62,7 +62,14 @@
     "connect_to_bank": "Conectar a { bank }",
     "bank_login_label": "Usuario",
     "bank_password_label": "Contraseña",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "tabs": {
+      "profile": "Perfil",
+      "security": "Seguridad",
+      "preferences": "Preferencias",
+      "connections": "Conexiones",
+      "subscription": "Suscripción"
+    }
   },
   "validation": {
     "required": "{field} es obligatorio",

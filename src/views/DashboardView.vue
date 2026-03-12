@@ -1,11 +1,10 @@
 <template>
   <div class="dashboard-container">
     <v-container class="modern-container">
-      <!-- Header com Boas-vindas -->
       <div class="dashboard-header">
         <div class="welcome-section">
           <h1 class="page-title">{{ $t('overview.title') }}</h1>
-          <p class="page-subtitle">Visão geral das suas finanças</p>
+          <p class="page-subtitle">{{ $t('overview.subtitle') }}</p>
         </div>
         <div class="date-badge">
           <div class="month-name">{{ monthName }}</div>
@@ -13,158 +12,10 @@
         </div>
       </div>
 
-      <!-- Overview Section - Cards Modernos -->
-      <v-row class="overview-cards">
-        <v-col cols="12" md="4">
-          <div class="stat-card income-card">
-            <div class="stat-icon">
-              <v-icon size="40" color="white">mdi-trending-up</v-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-label">{{ $t('overview.total_income') }}</div>
-              <div class="stat-value">{{ formatCurrency(dashboardSummary.monthlyIncome) }}</div>
-            </div>
-          </div>
-        </v-col>
-        <v-col cols="12" md="4">
-          <div class="stat-card expense-card">
-            <div class="stat-icon">
-              <v-icon size="40" color="white">mdi-trending-down</v-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-label">{{ $t('overview.total_expenses') }}</div>
-              <div class="stat-value">{{ formatCurrency(dashboardSummary.monthlyExpenses) }}</div>
-            </div>
-          </div>
-        </v-col>
-        <v-col cols="12" md="4">
-          <div class="stat-card savings-card">
-            <div class="stat-icon">
-              <v-icon size="40" color="white">mdi-piggy-bank</v-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-label">{{ $t('overview.total_balance') }}</div>
-              <div class="stat-value">{{ formatCurrency(dashboardSummary.totalBalance) }}</div>
-            </div>
-          </div>
-        </v-col>
-      </v-row>
-
-      <v-row class="finance-read-grid">
-        <v-col cols="12" lg="5">
-          <div class="modern-card accounts-section">
-            <div class="card-header">
-              <h2 class="card-title">
-                <v-icon color="#667eea" class="mr-2">mdi-bank-outline</v-icon>
-                {{ $t('overview.accounts') }}
-              </h2>
-            </div>
-            <div class="card-content">
-              <div v-if="accountsLoading" class="loading-state compact-loading-state">
-                <v-progress-circular indeterminate color="#667eea" size="40"></v-progress-circular>
-              </div>
-              <div v-else-if="accounts.length" class="accounts-grid">
-                <div v-for="account in accounts" :key="account.id" class="account-card">
-                  <div class="account-card__header">
-                    <div>
-                      <h3 class="account-card__title">{{ account.name }}</h3>
-                      <p class="account-card__subtitle">{{ account.provider }} • {{ account.accountType }}</p>
-                    </div>
-                    <v-chip size="small" variant="tonal" color="#667eea">{{ account.currency }}</v-chip>
-                  </div>
-                  <div class="account-card__balance">{{ formatCurrency(account.balance, account.currency) }}</div>
-                </div>
-              </div>
-              <div v-else class="empty-state compact-empty-state">
-                <v-icon size="48" color="#667eea" class="mb-3">mdi-bank-off-outline</v-icon>
-                <p class="empty-message">{{ $t('overview.no_accounts') }}</p>
-              </div>
-            </div>
-          </div>
-        </v-col>
-
-        <v-col cols="12" lg="7">
-          <div class="modern-card transactions-section">
-            <div class="card-header">
-              <h2 class="card-title">
-                <v-icon color="#667eea" class="mr-2">mdi-swap-horizontal</v-icon>
-                {{ $t('overview.recent_transactions') }}
-              </h2>
-            </div>
-            <div class="card-content">
-              <div v-if="dashboardLoading" class="loading-state compact-loading-state">
-                <v-progress-circular indeterminate color="#667eea" size="40"></v-progress-circular>
-              </div>
-              <div v-else-if="dashboardSummary.recentTransactions.length" class="transactions-list">
-                <div
-                  v-for="transaction in dashboardSummary.recentTransactions"
-                  :key="transaction.id"
-                  class="transaction-row"
-                >
-                  <div class="transaction-row__main">
-                    <div class="transaction-row__title">{{ transaction.description }}</div>
-                    <div class="transaction-row__meta">
-                      <span>{{ formatDisplayDate(transaction.date) }}</span>
-                      <span>{{ transaction.accountName || '—' }}</span>
-                      <span>{{ transaction.category || '—' }}</span>
-                      <v-chip size="x-small" variant="outlined">{{ transaction.status }}</v-chip>
-                    </div>
-                  </div>
-                  <div :class="['transaction-row__amount', transaction.direction === 'INFLOW' ? 'is-positive' : 'is-negative']">
-                    {{ formatCurrency(transaction.amount, resolveTransactionCurrency(transaction.accountId)) }}
-                  </div>
-                </div>
-              </div>
-              <div v-else class="empty-state compact-empty-state">
-                <v-icon size="48" color="#667eea" class="mb-3">mdi-swap-horizontal-off</v-icon>
-                <p class="empty-message">{{ $t('overview.no_recent_transactions') }}</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="modern-card top-categories-section">
-            <div class="card-header">
-              <h2 class="card-title">
-                <v-icon color="#667eea" class="mr-2">mdi-shape-outline</v-icon>
-                {{ $t('overview.top_categories') }}
-              </h2>
-            </div>
-            <div class="card-content">
-              <div v-if="dashboardSummary.topCategories.length" class="top-categories-list">
-                <v-chip
-                  v-for="category in dashboardSummary.topCategories"
-                  :key="category"
-                  color="#667eea"
-                  variant="tonal"
-                  class="top-category-chip"
-                >
-                  {{ category }}
-                </v-chip>
-              </div>
-              <div v-else class="empty-state compact-empty-state">
-                <v-icon size="48" color="#667eea" class="mb-3">mdi-shape-off</v-icon>
-                <p class="empty-message">{{ $t('overview.no_top_categories') }}</p>
-              </div>
-            </div>
-          </div>
-        </v-col>
-      </v-row>
-
-      <!-- AI Insights -->
-      <section class="ai-insights">
-        <div class="ai-hero-card">
-          <CashflowDashboard />
-        </div>
-        <div class="ai-grid">
-          <div class="ai-card-wrapper">
-            <MonthlyExpensesPrediction />
-          </div>
-          <div class="ai-card-wrapper">
-            <AnomalyDetectionTable />
-          </div>
-        </div>
-      </section>
-
+      <div class="headline-card">
+        <v-icon color="#667eea">mdi-lightbulb-outline</v-icon>
+        <span>{{ headlineMessage }}</span>
+      </div>
 
       <!-- Trends Over Time -->
       <div class="modern-card trends-section">
@@ -177,10 +28,10 @@
         <div class="card-content">
           <v-row align="center" class="filters-row">
             <v-col cols="12" md="6" lg="4">
-              <v-select 
-                :label="$t('trends.select_chart_type')" 
+              <v-select
+                :label="$t('trends.select_chart_type')"
                 variant="outlined"
-                v-model="chartType" 
+                v-model="chartType"
                 :items="chartTypes"
                 @update:modelValue="updateCharts"
                 class="modern-select"
@@ -188,23 +39,23 @@
               ></v-select>
             </v-col>
             <v-col cols="12" md="6" lg="4">
-              <v-select 
-                :label="$t('trends.select_time_period')" 
+              <v-select
+                :label="$t('trends.select_time_period')"
                 variant="outlined"
                 v-model="selectedTimePeriod"
-                :items="timePeriods" 
+                :items="timePeriods"
                 @update:modelValue="updateCharts"
                 class="modern-select"
                 color="#667eea"
               ></v-select>
             </v-col>
             <v-col cols="12" md="6" lg="4">
-              <v-select 
-                :label="$t('trends.select_expense_category')" 
+              <v-select
+                :label="$t('trends.select_expense_category')"
                 variant="outlined"
                 v-model="selectedCategory"
-                :items="expenseCategories" 
-                item-title="name" 
+                :items="expenseCategories"
+                item-title="name"
                 item-value="code"
                 @update:modelValue="updateCharts"
                 class="modern-select"
@@ -218,60 +69,227 @@
         </div>
       </div>
 
-      <!-- Budget Tracker -->
-      <div class="modern-card budget-tracker-section">
-        <div class="card-header">
-          <h2 class="card-title">
-            <v-icon color="#667eea" class="mr-2">mdi-wallet</v-icon>
-            {{ $t('budget_tracker.title') }}
-          </h2>
+      <section class="section-block">
+        <div class="section-header">
+          <h2 class="section-title">{{ $t('overview.snapshot_title') }}</h2>
         </div>
-        <!-- Display budget for different expense categories -->
-      </div>
+        <v-row class="overview-cards">
+          <v-col cols="12" md="3">
+            <div class="stat-card savings-card">
+              <div class="stat-icon">
+                <v-icon size="40" color="white">mdi-piggy-bank</v-icon>
+              </div>
+              <div class="stat-content">
+                <div class="stat-label">{{ $t('overview.snapshot_balance') }}</div>
+                <div class="stat-value">{{ formatCurrency(dashboardSummary.totalBalance) }}</div>
+              </div>
+            </div>
+          </v-col>
+          <v-col cols="12" md="3">
+            <div class="stat-card income-card">
+              <div class="stat-icon">
+                <v-icon size="40" color="white">mdi-trending-up</v-icon>
+              </div>
+              <div class="stat-content">
+                <div class="stat-label">{{ $t('overview.snapshot_income') }}</div>
+                <div class="stat-value">{{ formatCurrency(dashboardSummary.monthlyIncome) }}</div>
+              </div>
+            </div>
+          </v-col>
+          <v-col cols="12" md="3">
+            <div class="stat-card expense-card">
+              <div class="stat-icon">
+                <v-icon size="40" color="white">mdi-trending-down</v-icon>
+              </div>
+              <div class="stat-content">
+                <div class="stat-label">{{ $t('overview.snapshot_expenses') }}</div>
+                <div class="stat-value">{{ formatCurrency(dashboardSummary.monthlyExpenses) }}</div>
+              </div>
+            </div>
+          </v-col>
+          <v-col cols="12" md="3">
+            <div class="stat-card cashflow-card">
+              <div class="stat-icon">
+                <v-icon size="40" color="white">mdi-chart-areaspline</v-icon>
+              </div>
+              <div class="stat-content">
+                <div class="stat-label">{{ $t('overview.snapshot_net') }}</div>
+                <div class="stat-value">{{ formatCurrency(netMonthlyCashflow) }}</div>
+              </div>
+            </div>
+          </v-col>
+        </v-row>
+      </section>
 
-      <!-- Financial Goals -->
-      <div class="modern-card goals-section">
-        <div class="card-header">
-          <h2 class="card-title">
-            <v-icon color="#667eea" class="mr-2">mdi-bullseye-arrow</v-icon>
-            {{ $t('financial_goals.title') }}
-          </h2>
-        </div>
-        <div class="card-content">
-          <v-row v-if="financialGoals.length">
-            <v-col cols="12" md="6" lg="4" v-for="goal in financialGoals" :key="goal.id">
-              <div class="goal-card">
-                <div class="goal-header">
-                  <h3 class="goal-name">{{ goal.name }}</h3>
+      <v-row class="two-column-grid">
+        <v-col cols="12" lg="6">
+          <div class="modern-card">
+            <div class="card-header">
+              <h2 class="card-title">
+                <v-icon color="#667eea" class="mr-2">mdi-speedometer</v-icon>
+                {{ $t('overview.momentum_title') }}
+              </h2>
+            </div>
+            <div class="card-content">
+              <div v-if="hasMomentumData" class="bar-compare">
+                <div class="bar-row">
+                  <span>{{ $t('overview.momentum_current') }}</span>
+                  <div class="bar-track">
+                    <div class="bar-fill negative" :style="{ width: momentumCurrentWidth }"></div>
+                  </div>
+                  <span>{{ formatCurrency(dashboardSummary.monthlyExpenses) }}</span>
                 </div>
-                <div class="goal-details">
-                  <div class="goal-info">
-                    <span class="info-label">{{ $t('financial_goals.target_amount') }}</span>
-                    <span class="info-value">${{ goal.targetAmount }}</span>
+                <div class="bar-row">
+                  <span>{{ $t('overview.momentum_previous') }}</span>
+                  <div class="bar-track">
+                    <div class="bar-fill neutral" :style="{ width: momentumPreviousWidth }"></div>
                   </div>
-                  <div class="goal-info">
-                    <span class="info-label">{{ $t('financial_goals.deadline') }}</span>
-                    <span class="info-value">{{ goal.deadline }}</span>
+                  <span>{{ formatCurrency(previousMonthExpenses) }}</span>
+                </div>
+                <p class="context-message">{{ momentumMessage }}</p>
+              </div>
+              <div v-else class="empty-state">
+                <p class="empty-message">{{ $t('overview.momentum_placeholder') }}</p>
+              </div>
+            </div>
+          </div>
+        </v-col>
+        <v-col cols="12" lg="6">
+          <div class="modern-card">
+            <div class="card-header">
+              <h2 class="card-title">
+                <v-icon color="#667eea" class="mr-2">mdi-scale-balance</v-icon>
+                {{ $t('overview.money_flow_title') }}
+              </h2>
+            </div>
+            <div class="card-content">
+              <div class="bar-compare">
+                <div class="bar-row">
+                  <span>{{ $t('overview.money_flow_income') }}</span>
+                  <div class="bar-track">
+                    <div class="bar-fill positive" :style="{ width: incomeBarWidth }"></div>
                   </div>
-                  <div class="progress-section">
-                    <div class="progress-header">
-                      <span class="progress-label">{{ $t('financial_goals.progress') }}</span>
-                      <span class="progress-percentage">{{ goal.progress }}%</span>
-                    </div>
-                    <div class="progress-bar-container">
-                      <div class="progress-bar" :style="{ width: goal.progress + '%' }"></div>
-                    </div>
+                  <span>{{ formatCurrency(dashboardSummary.monthlyIncome) }}</span>
+                </div>
+                <div class="bar-row">
+                  <span>{{ $t('overview.money_flow_expenses') }}</span>
+                  <div class="bar-track">
+                    <div class="bar-fill negative" :style="{ width: expenseBarWidth }"></div>
                   </div>
+                  <span>{{ formatCurrency(dashboardSummary.monthlyExpenses) }}</span>
                 </div>
               </div>
-            </v-col>
-          </v-row>
-          <div v-else class="empty-state">
-            <v-icon size="64" color="#667eea" class="mb-4">mdi-bullseye-arrow</v-icon>
-            <p class="empty-message">{{ $t('financial_goals.no_goals') }}</p>
+              <p class="context-message">{{ moneyFlowMessage }}</p>
+            </div>
+          </div>
+        </v-col>
+      </v-row>
+
+      <v-row class="two-column-grid">
+        <v-col cols="12" lg="6">
+          <div class="modern-card">
+            <div class="card-header">
+              <h2 class="card-title">
+                <v-icon color="#667eea" class="mr-2">mdi-shape-outline</v-icon>
+                {{ $t('overview.top_categories_title') }}
+              </h2>
+            </div>
+            <div class="card-content">
+              <div v-if="dashboardSummary.topCategories.length" class="categories-list">
+                <div v-for="category in dashboardSummary.topCategories" :key="category" class="category-row">
+                  <v-icon size="18" color="#667eea">mdi-tag-outline</v-icon>
+                  <span>{{ category }}</span>
+                  <v-icon size="18" color="#9e9e9e">mdi-trending-neutral</v-icon>
+                </div>
+              </div>
+              <div v-else class="empty-state">
+                <p class="empty-message">{{ $t('overview.no_top_categories') }}</p>
+              </div>
+            </div>
+          </div>
+        </v-col>
+        <v-col cols="12" lg="6">
+          <div class="modern-card">
+            <div class="card-header">
+              <h2 class="card-title">
+                <v-icon color="#667eea" class="mr-2">mdi-calendar-alert</v-icon>
+                {{ $t('overview.upcoming_title') }}
+              </h2>
+            </div>
+            <div class="card-content">
+              <div v-if="upcomingExpenses.length" class="upcoming-list">
+                <div v-for="expense in upcomingExpenses" :key="expense.title" class="upcoming-row">
+                  <div>
+                    <div class="upcoming-title">{{ expense.title }}</div>
+                    <div class="upcoming-date">{{ expense.dueDate }}</div>
+                  </div>
+                  <div class="upcoming-amount">{{ formatCurrency(expense.amount) }}</div>
+                </div>
+              </div>
+              <div v-else class="empty-state">
+                <p class="empty-message">{{ $t('overview.upcoming_placeholder') }}</p>
+              </div>
+            </div>
+          </div>
+        </v-col>
+      </v-row>
+
+      <section class="section-block">
+        <div class="section-header">
+          <h2 class="section-title">{{ $t('overview.projection_title') }}</h2>
+        </div>
+        <div v-if="hasProjectionData" class="projection-grid">
+          <div class="projection-card">
+            <div class="projection-label">{{ $t('overview.projection_3m') }}</div>
+            <div class="projection-value">{{ formatCurrency(projectBalance(3)) }}</div>
+          </div>
+          <div class="projection-card">
+            <div class="projection-label">{{ $t('overview.projection_6m') }}</div>
+            <div class="projection-value">{{ formatCurrency(projectBalance(6)) }}</div>
+          </div>
+          <div class="projection-card">
+            <div class="projection-label">{{ $t('overview.projection_12m') }}</div>
+            <div class="projection-value">{{ formatCurrency(projectBalance(12)) }}</div>
           </div>
         </div>
-      </div>
+        <div v-else class="projection-placeholder">
+          <p>{{ $t('overview.projection_placeholder') }}</p>
+        </div>
+      </section>
+
+      <section class="section-block">
+        <div class="section-header">
+          <h2 class="section-title">{{ $t('overview.insights_title') }}</h2>
+        </div>
+        <div v-if="hasInsights" class="insights-grid">
+          <div v-for="insight in overviewInsights" :key="insight" class="insight-pill">
+            <v-icon size="18" color="#667eea">mdi-lightbulb-outline</v-icon>
+            <span>{{ insight }}</span>
+          </div>
+        </div>
+        <div v-else class="projection-placeholder">
+          <p>{{ $t('overview.insights_placeholder') }}</p>
+        </div>
+      </section>
+
+      <section class="section-block">
+        <div class="section-header">
+          <h2 class="section-title">{{ $t('overview.decisions_title') }}</h2>
+        </div>
+        <div v-if="hasDecisions" class="decisions-grid">
+          <div v-for="decision in overviewDecisions" :key="decision.title" class="decision-card">
+            <div class="decision-card__header">
+              <h3 class="decision-card__title">{{ decision.title }}</h3>
+              <v-chip size="x-small" variant="tonal" color="#667eea">{{ decision.status }}</v-chip>
+            </div>
+            <p class="decision-card__description">{{ decision.description }}</p>
+            <div class="decision-card__meta">{{ decision.impact }}</div>
+          </div>
+        </div>
+        <div v-else class="projection-placeholder">
+          <p>{{ $t('overview.decisions_placeholder') }}</p>
+        </div>
+      </section>
     </v-container>
   </div>
 </template>
@@ -282,46 +300,154 @@ import { Chart, registerables } from 'chart.js/auto'
 import moment from 'moment'
 import DataService from '@/services/DataService'
 import FinancialReadService from '@/services/FinancialReadService'
-import FinancialGoalService from '@/services/FinancialGoalService';
-import CashflowDashboard from '@/components/ai/CashflowDashboard.vue'
-import MonthlyExpensesPrediction from '@/components/ai/MonthlyExpensesPrediction.vue'
-import AnomalyDetectionTable from '@/components/ai/AnomalyDetectionTable.vue'
 import 'chartjs-adapter-moment'
 
 Chart.register(...registerables)
 
 export default {
-  components: {
-    CashflowDashboard,
-    MonthlyExpensesPrediction,
-    AnomalyDetectionTable
+  computed: {
+    netMonthlyCashflow() {
+      return Number(this.dashboardSummary.monthlyIncome || 0) - Number(this.dashboardSummary.monthlyExpenses || 0)
+    },
+    hasData() {
+      return (
+        Number(this.dashboardSummary.totalBalance || 0) !== 0 ||
+        Number(this.dashboardSummary.monthlyIncome || 0) !== 0 ||
+        Number(this.dashboardSummary.monthlyExpenses || 0) !== 0
+      )
+    },
+    headlineMessage() {
+      if (!this.hasData) {
+        return this.$t('overview.headline_placeholder')
+      }
+
+      if (this.netMonthlyCashflow >= 0) {
+        return this.$t('overview.headline_positive', {
+          amount: this.formatCurrency(this.netMonthlyCashflow),
+        })
+      }
+
+      return this.$t('overview.headline_negative', {
+        amount: this.formatCurrency(Math.abs(this.netMonthlyCashflow)),
+      })
+    },
+    previousMonthExpenses() {
+      const value = this.dashboardSummary.previousMonthExpenses
+      const numeric = Number(value)
+      return Number.isFinite(numeric) ? numeric : null
+    },
+    hasMomentumData() {
+      return Number.isFinite(this.previousMonthExpenses) && this.previousMonthExpenses !== null
+    },
+    momentumMessage() {
+      if (!this.hasMomentumData) {
+        return ''
+      }
+      const current = Number(this.dashboardSummary.monthlyExpenses || 0)
+      const previous = Number(this.previousMonthExpenses || 0)
+      if (current === previous) {
+        return this.$t('overview.momentum_flat')
+      }
+      if (current < previous) {
+        return this.$t('overview.momentum_down')
+      }
+      return this.$t('overview.momentum_up')
+    },
+    momentumCurrentWidth() {
+      if (!this.hasMomentumData) return '0%'
+      const current = Number(this.dashboardSummary.monthlyExpenses || 0)
+      const previous = Number(this.previousMonthExpenses || 0)
+      const max = Math.max(current, previous, 1)
+      return `${(current / max) * 100}%`
+    },
+    momentumPreviousWidth() {
+      if (!this.hasMomentumData) return '0%'
+      const current = Number(this.dashboardSummary.monthlyExpenses || 0)
+      const previous = Number(this.previousMonthExpenses || 0)
+      const max = Math.max(current, previous, 1)
+      return `${(previous / max) * 100}%`
+    },
+    incomeBarWidth() {
+      const income = Number(this.dashboardSummary.monthlyIncome || 0)
+      const expenses = Number(this.dashboardSummary.monthlyExpenses || 0)
+      const max = Math.max(income, expenses, 1)
+      return `${(income / max) * 100}%`
+    },
+    expenseBarWidth() {
+      const income = Number(this.dashboardSummary.monthlyIncome || 0)
+      const expenses = Number(this.dashboardSummary.monthlyExpenses || 0)
+      const max = Math.max(income, expenses, 1)
+      return `${(expenses / max) * 100}%`
+    },
+    moneyFlowMessage() {
+      if (!this.hasData) {
+        return this.$t('overview.money_flow_placeholder')
+      }
+      if (this.netMonthlyCashflow >= 0) {
+        return this.$t('overview.money_flow_positive')
+      }
+      return this.$t('overview.money_flow_negative')
+    },
+    hasProjectionData() {
+      return this.hasData
+    },
+    hasInsights() {
+      return this.hasData
+    },
+    hasDecisions() {
+      return this.hasData
+    },
+    overviewInsights() {
+      return [
+        this.$t('overview.insight_1'),
+        this.$t('overview.insight_2'),
+        this.$t('overview.insight_3'),
+      ]
+    },
+    overviewDecisions() {
+      return [
+        {
+          title: this.$t('overview.decision_1_title'),
+          description: this.$t('overview.decision_1_desc'),
+          impact: this.$t('overview.decision_1_impact'),
+          status: this.$t('overview.decision_status_pending'),
+        },
+        {
+          title: this.$t('overview.decision_2_title'),
+          description: this.$t('overview.decision_2_desc'),
+          impact: this.$t('overview.decision_2_impact'),
+          status: this.$t('overview.decision_status_review'),
+        },
+        {
+          title: this.$t('overview.decision_3_title'),
+          description: this.$t('overview.decision_3_desc'),
+          impact: this.$t('overview.decision_3_impact'),
+          status: this.$t('overview.decision_status_suggested'),
+        },
+      ]
+    },
   },
   data() {
     const today = new Date();
     return {
       chart: null,
       dashboardLoading: false,
-      accountsLoading: false,
       dashboardSummary: {
         totalBalance: 0,
         monthlyIncome: 0,
         monthlyExpenses: 0,
-        recentTransactions: [],
         topCategories: [],
       },
-      accounts: [],
+      upcomingExpenses: [],
       selectedTimePeriod: '3m',
       selectedCategory: null,
       isYearly: false,
       expenseCategories: [],
       selectedLanguage: this.i18n$?.locale || 'en',
-      financialGoals: [],
-
       day: today.getDate(),
       month: today.getMonth() + 1,
       year: today.getFullYear(),
       monthName: this.getMonthName(today.getMonth()),
-
       chartType: 'line',
       chartTypes: [
         { title: 'Line Chart', value: 'line' },
@@ -358,11 +484,10 @@ export default {
     }
   },
   mounted() {
-    this.fetchCategories()
     this.fetchDashboardSummary()
-    this.fetchAccounts()
+    this.fetchCategories()
     this.createChart()
-    this.fetchFinancialGoals()
+    this.fetchChartData()
   },
   watch: {
     '$i18n.locale'(newLocale) {
@@ -380,22 +505,11 @@ export default {
       return 'pt-BR'
     },
     formatCurrency(value, currency = null) {
-      const resolvedCurrency = currency || this.accounts[0]?.currency || 'BRL'
+      const resolvedCurrency = currency || 'BRL'
       return Number(value || 0).toLocaleString(this.getLocaleForFormatting(), {
         style: 'currency',
         currency: resolvedCurrency,
       })
-    },
-    formatDisplayDate(value) {
-      if (!value) {
-        return '—'
-      }
-
-      return new Date(`${value}T00:00:00`).toLocaleDateString(this.getLocaleForFormatting())
-    },
-    resolveTransactionCurrency(accountId) {
-      const account = this.accounts.find((item) => item.id === accountId)
-      return account?.currency || this.accounts[0]?.currency || 'BRL'
     },
     getMonthName(monthIndex) {
       const monthNames = [
@@ -404,8 +518,24 @@ export default {
       ];
       return monthNames[monthIndex];
     },
+    fetchDashboardSummary() {
+      this.dashboardLoading = true
+      FinancialReadService.fetchDashboard()
+        .then((response) => {
+          this.dashboardSummary = response.data
+        })
+        .catch((error) => {
+          console.error('Error fetching dashboard summary:', error)
+        })
+        .finally(() => {
+          this.dashboardLoading = false
+        })
+    },
     createChart() {
-      const trendsCtx = this.$refs.trendsChart.getContext('2d')
+      const trendsCtx = this.$refs.trendsChart?.getContext?.('2d')
+      if (!trendsCtx) {
+        return
+      }
       this.chart = new Chart(trendsCtx, {
         type: this.chartType,
         data: this.chartData,
@@ -423,7 +553,7 @@ export default {
                 tooltipFormat: 'DD/MM/YYYY'
               },
               ticks: {
-                source: 'labels' // Usar as labels fornecidas para escalas
+                source: 'labels'
               }
             },
             y: {
@@ -438,32 +568,6 @@ export default {
         this.chart.destroy()
       }
       this.fetchChartData()
-    },
-    fetchDashboardSummary() {
-      this.dashboardLoading = true
-      FinancialReadService.fetchDashboard()
-        .then((response) => {
-          this.dashboardSummary = response.data
-        })
-        .catch((error) => {
-          console.error('Error fetching dashboard summary:', error)
-        })
-        .finally(() => {
-          this.dashboardLoading = false
-        })
-    },
-    fetchAccounts() {
-      this.accountsLoading = true
-      FinancialReadService.fetchAccounts()
-        .then((response) => {
-          this.accounts = response.data
-        })
-        .catch((error) => {
-          console.error('Error fetching accounts:', error)
-        })
-        .finally(() => {
-          this.accountsLoading = false
-        })
     },
     fetchCategories() {
       const language = this.$i18n?.locale || this.selectedLanguage || 'en'
@@ -485,24 +589,13 @@ export default {
           console.error('Error fetching categories:', error)
         });
     },
-    fetchFinancialGoals() {
-      FinancialGoalService.fetchFinancialGoals()
-        .then((response) => {
-          this.financialGoals = response.data;
-        })
-        .catch((error) => {
-          console.error('Erro ao buscar metas financeiras:', error);
-        });
-    },
     fetchChartData() {
       DataService.fetchChartData(this.selectedTimePeriod, this.selectedCategory)
         .then((response) => {
           const rawData = response.data
-          console.log(rawData)
 
           if (this.selectedTimePeriod.includes('m')) {
             this.isYearly = false
-            // Lógica para períodos flexíveis
             this.chartData.labels = rawData.labels.map((label) =>
               moment(label, 'MM-YYYY').toISOString()
             )
@@ -510,7 +603,6 @@ export default {
             this.chartData.datasets[1].data = rawData.datasets[1].data
           } else {
             this.isYearly = true
-            // Lógica para períodos anuais
             this.chartData.labels = rawData.labels
             this.chartData.datasets[0].data = rawData.datasets[0].data
             this.chartData.datasets[1].data = rawData.datasets[1].data
@@ -521,6 +613,10 @@ export default {
         .catch((error) => {
           console.error('Error fetching chart data:', error)
         })
+    },
+    projectBalance(months) {
+      const net = this.netMonthlyCashflow
+      return Number(this.dashboardSummary.totalBalance || 0) + net * months
     }
   }
 }
@@ -606,13 +702,26 @@ export default {
   opacity: 0.95;
 }
 
-/* Overview Cards */
-.overview-cards {
-  margin-bottom: 40px;
+.headline-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  margin-bottom: 32px;
+  border-radius: 14px;
+  background: rgba(102, 126, 234, 0.12);
+  color: #1a1a1a;
+  font-weight: 600;
 }
 
-.finance-read-grid {
-  margin-bottom: 40px;
+.v-theme--dark .headline-card {
+  background: rgba(102, 126, 234, 0.2);
+  color: #ffffff;
+}
+
+/* Overview Cards */
+.overview-cards {
+  margin-bottom: 24px;
 }
 
 .stat-card {
@@ -674,6 +783,279 @@ export default {
   color: #666;
   margin-bottom: 8px;
   font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cashflow-card .stat-icon {
+  background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
+}
+
+.runway-card .stat-icon {
+  background: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%);
+}
+
+.two-column-grid {
+  margin-bottom: 32px;
+}
+
+.bar-compare {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.bar-row {
+  display: grid;
+  grid-template-columns: 140px 1fr 120px;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.v-theme--dark .bar-row {
+  color: #b0b0b0;
+}
+
+.bar-track {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.v-theme--dark .bar-track {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 999px;
+}
+
+.bar-fill.positive {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.bar-fill.negative {
+  background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+}
+
+.bar-fill.neutral {
+  background: linear-gradient(135deg, #9e9e9e 0%, #bdbdbd 100%);
+}
+
+.context-message {
+  margin: 8px 0 0;
+  font-size: 0.9rem;
+  color: #4a4a4a;
+}
+
+.v-theme--dark .context-message {
+  color: #c2c2c2;
+}
+
+.categories-list,
+.upcoming-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.category-row,
+.upcoming-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(102, 126, 234, 0.06);
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.v-theme--dark .category-row,
+.v-theme--dark .upcoming-row {
+  background: rgba(102, 126, 234, 0.18);
+  color: #ffffff;
+}
+
+.category-row span {
+  flex: 1;
+  margin-left: 8px;
+}
+
+.upcoming-title {
+  font-weight: 600;
+}
+
+.upcoming-date {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.v-theme--dark .upcoming-date {
+  color: #b0b0b0;
+}
+
+.upcoming-amount {
+  font-weight: 700;
+  color: #667eea;
+}
+
+.projection-placeholder {
+  padding: 18px;
+  border-radius: 12px;
+  background: rgba(102, 126, 234, 0.08);
+  color: #4a4a4a;
+  font-weight: 600;
+}
+
+.v-theme--dark .projection-placeholder {
+  background: rgba(102, 126, 234, 0.2);
+  color: #ffffff;
+}
+
+.section-block {
+  margin-bottom: 40px;
+}
+
+.section-header {
+  margin-bottom: 16px;
+}
+
+.section-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.v-theme--dark .section-title {
+  color: #ffffff;
+}
+
+.projection-grid {
+  margin-top: 8px;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.projection-card {
+  background: white;
+  border-radius: 14px;
+  padding: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.v-theme--dark .projection-card {
+  background: #2a2a2a;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.projection-label {
+  font-size: 0.9rem;
+  color: #666;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.v-theme--dark .projection-label {
+  color: #b0b0b0;
+}
+
+.projection-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #667eea;
+}
+
+.insights-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.insight-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(102, 126, 234, 0.12);
+  color: #1a1a1a;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.v-theme--dark .insight-pill {
+  background: rgba(102, 126, 234, 0.2);
+  color: #ffffff;
+}
+
+.decisions-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.decision-card {
+  border-radius: 14px;
+  padding: 18px;
+  background: rgba(102, 126, 234, 0.05);
+  border: 1px solid rgba(102, 126, 234, 0.12);
+}
+
+.v-theme--dark .decision-card {
+  background: rgba(102, 126, 234, 0.14);
+  border-color: rgba(102, 126, 234, 0.2);
+}
+
+.decision-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.decision-card__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.v-theme--dark .decision-card__title {
+  color: #ffffff;
+}
+
+.decision-card__description {
+  margin: 0 0 10px;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.v-theme--dark .decision-card__description {
+  color: #b0b0b0;
+}
+
+.decision-card__meta {
+  font-size: 0.9rem;
+  color: #4a4a4a;
+}
+
+.v-theme--dark .decision-card__meta {
+  color: #c2c2c2;
+}
 
 .accounts-grid,
 .transactions-list {
@@ -801,9 +1183,6 @@ export default {
 .compact-empty-state,
 .compact-loading-state {
   min-height: 180px;
-}
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 .v-theme--dark .stat-label {
@@ -1088,6 +1467,15 @@ export default {
 @media (max-width: 600px) {
   .dashboard-container {
     padding: 20px 0;
+  }
+
+  .bar-row {
+    grid-template-columns: 1fr;
+    text-align: left;
+  }
+
+  .bar-row span:last-child {
+    justify-self: flex-start;
   }
 
   .welcome-section .page-title {

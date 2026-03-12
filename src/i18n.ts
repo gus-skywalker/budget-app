@@ -19,6 +19,24 @@ const languageMap: Record<string, Locale> = {
   'DE': 'pt'  // Fallback para português (suporte parcial)
 }
 
+const resolveLocale = (raw?: string | null): Locale | null => {
+  if (!raw) {
+    return null
+  }
+
+  const normalized = String(raw).trim()
+  if (!normalized) {
+    return null
+  }
+
+  const base = normalized.split(/[-_]/)[0]?.toUpperCase()
+  if (!base) {
+    return null
+  }
+
+  return languageMap[base] || null
+}
+
 /**
  * Obtém o locale inicial baseado no userStore ou navegador
  */
@@ -26,11 +44,16 @@ function getInitialLocale(): Locale {
   try {
     const userStore = useUserStore()
     const userLanguage = userStore.getLanguage
-    return languageMap[(userLanguage || 'PT').toUpperCase()] || 'pt'
+    const resolvedUserLocale = resolveLocale(userLanguage)
+    if (resolvedUserLocale) {
+      return resolvedUserLocale
+    }
   } catch {
-    // Se userStore não estiver disponível, usa português
-    return 'pt'
+    // Ignore store errors and fallback to browser below.
   }
+
+  const browserLocale = resolveLocale(typeof navigator !== 'undefined' ? navigator.language : null)
+  return browserLocale || 'pt'
 }
 
 const i18n = createI18n({
@@ -46,7 +69,7 @@ const i18n = createI18n({
  * @param userLanguage - Idioma do usuário em UPPERCASE (PT, EN, FR, ES, DE)
  */
 export function updateI18nLocale(userLanguage: string) {
-  const locale: Locale = languageMap[(userLanguage || 'PT').toUpperCase()] || 'pt'
+  const locale: Locale = resolveLocale(userLanguage) || 'pt'
   i18n.global.locale.value = locale
 }
 

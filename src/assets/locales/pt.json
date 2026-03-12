@@ -9,16 +9,39 @@
     "logout": "Sair",
     "login_oauth2": "Entrar com OAuth2",
     "dashboard": "Painel de Controle",
+    "overview": "Visão Geral",
+    "cashflow": "Cashflow",
     "report": "Relatórios",
     "budget": "Orçamento",
     "groups": "Grupos",
     "goals": "Metas",
     "home": "Início",
+    "transactions": "Transações",
+    "accounts": "Contas",
+    "categories": "Categorias",
+    "planning_budget": "Orçamento",
+    "planning_scenarios": "Cenários",
+    "planning_goals": "Metas",
+    "decisions": "Decisões",
+    "insights": "Insights",
+    "settings": "Configurações",
     "toggle_theme": "Alternar Tema",
     "logout_confirmation_title": "Confirmar Saída",
     "logout_confirmation_message": "Tem certeza de que deseja sair da sua conta?",
     "cancel": "Cancelar",
-    "confirm": "Confirmar"
+    "confirm": "Confirmar",
+    "sections": {
+      "workspace": "Workspace",
+      "overview": "Visão Geral",
+      "control": "Controle Financeiro",
+      "planning": "Planejamento",
+      "decisions": "Decisões",
+      "analytics": "Analytics",
+      "system": "Sistema"
+    },
+    "workspace": {
+      "personal_finance": "Finanças Pessoais"
+    }
   },
 
   "account_management": {
@@ -218,10 +241,66 @@
 
   "overview": {
     "title": "Visão Geral",
+    "subtitle": "Onde você está, para onde vai e o que decidir em seguida.",
+    "headline_placeholder": "💡 Atualize seus dados financeiros para gerar insights personalizados.",
+    "headline_positive": "💡 Você fechou o mês no positivo com {amount}.",
+    "headline_negative": "⚠️ Seu resultado do mês está negativo em {amount}.",
+    "snapshot_title": "Snapshot Financeiro",
+    "snapshot_balance": "Saldo Atual",
+    "snapshot_income": "Receitas do Mês",
+    "snapshot_expenses": "Despesas do Mês",
+    "snapshot_net": "Resultado Líquido",
+    "momentum_title": "Ritmo de Gastos",
+    "momentum_current": "Mês atual",
+    "momentum_previous": "Mês anterior",
+    "momentum_placeholder": "Sem dados suficientes para comparar os dois últimos meses.",
+    "momentum_down": "Seu ritmo de gastos está menor que o mês anterior.",
+    "momentum_up": "Seu ritmo de gastos está acelerando neste mês.",
+    "momentum_flat": "Seu ritmo de gastos está estável.",
+    "money_flow_title": "Fluxo de Caixa",
+    "money_flow_income": "Receitas",
+    "money_flow_expenses": "Despesas",
+    "money_flow_placeholder": "Sem dados suficientes para calcular o fluxo.",
+    "money_flow_positive": "Você está com fluxo positivo neste mês.",
+    "money_flow_negative": "O fluxo está negativo neste mês.",
+    "top_categories_title": "Top Categorias",
+    "upcoming_title": "Despesas Próximas",
+    "upcoming_placeholder": "Nenhuma conta futura disponível no momento.",
     "total_income": "Total de Entradas",
     "total_expenses": "Total de Débitos",
     "savings": "Economias",
     "total_balance": "Saldo Total",
+    "monthly_cashflow": "Cashflow Mensal",
+    "burn_rate": "Burn Rate",
+    "runway": "Runway",
+    "months": "meses",
+    "runway_positive": "Em alta",
+    "runway_unknown": "—",
+    "health_title": "Saúde Financeira",
+    "projection_title": "Projeção",
+    "projection_3m": "3 meses",
+    "projection_6m": "6 meses",
+    "projection_12m": "12 meses",
+    "projection_placeholder": "🔮 Nossos magos financeiros ainda estão calculando seu futuro.",
+    "insights_title": "Insights",
+    "decisions_title": "Decisões",
+    "insights_placeholder": "🧠 Nossos contadores de IA ainda estão aprendendo sobre suas finanças.",
+    "decisions_placeholder": "🛠 O motor de decisões ainda está sendo construído pelos elfos financeiros.",
+    "insight_1": "Seus gastos com restaurantes subiram 18% neste mês.",
+    "insight_2": "Você pode economizar R$ 200/mês ajustando assinaturas.",
+    "insight_3": "O burn rate aumentou em relação ao último trimestre.",
+    "decision_1_title": "Contratar desenvolvedor",
+    "decision_1_desc": "Acelerar iniciativas críticas do trimestre.",
+    "decision_1_impact": "Impacto: - R$ 8.000/mês",
+    "decision_2_title": "Migrar para escritório menor",
+    "decision_2_desc": "Reduzir custos fixos de operação.",
+    "decision_2_impact": "Impacto: + R$ 2.500/mês",
+    "decision_3_title": "Cancelar assinaturas subutilizadas",
+    "decision_3_desc": "Cortar despesas recorrentes com baixa utilização.",
+    "decision_3_impact": "Impacto: + R$ 1.200/mês",
+    "decision_status_pending": "Pendente",
+    "decision_status_review": "Em análise",
+    "decision_status_suggested": "Sugestão",
     "accounts": "Contas",
     "recent_transactions": "Transações Recentes",
     "top_categories": "Principais Categorias",
@@ -235,6 +314,81 @@
     "select_chart_type": "Selecione o Tipo de Gráfico",
     "select_time_period": "Selecione o Período de Tempo",
     "select_expense_category": "Selecione a Categoria de Débito"
+  },
+
+  "cashflow": {
+    "title": "Cashflow",
+    "subtitle": "Acompanhe entradas, saídas e tendências do fluxo de caixa.",
+    "flow_title": "Fluxo de Caixa em Tempo Real",
+    "insights_title": "Insights Preditivos"
+  },
+
+  "accounts": {
+    "title": "Contas",
+    "subtitle": "Visão consolidada das contas conectadas.",
+    "list_title": "Contas Financeiras",
+    "empty": "Nenhuma conta disponível ainda."
+  },
+
+  "categories_page": {
+    "title": "Categorias",
+    "subtitle": "Organize os lançamentos por categoria.",
+    "list_title": "Categorias Monitoradas",
+    "empty": "Nenhuma categoria encontrada."
+  },
+
+  "planning": {
+    "budget": {
+      "title": "Orçamento",
+      "subtitle": "Planeje limites e metas por categoria.",
+      "table_title": "Planejamento por Categoria"
+    },
+    "scenarios": {
+      "title": "Cenários",
+      "subtitle": "Simule decisões e impacto no caixa.",
+      "card_title": "Simulações Estratégicas"
+    }
+  },
+
+  "decisions": {
+    "title": "Decisões",
+    "subtitle": "Priorização e impacto financeiro das decisões.",
+    "list_title": "Decisões Recentes",
+    "sample_1_title": "Contratar desenvolvedor",
+    "sample_1_desc": "Acelerar a entrega das iniciativas do trimestre.",
+    "sample_1_impact": "Impacto: - R$ 8.000/mês",
+    "sample_1_scenario": "Cenário: Time de Produto",
+    "sample_2_title": "Migrar para um escritório menor",
+    "sample_2_desc": "Reduzir custos fixos nos próximos 6 meses.",
+    "sample_2_impact": "Impacto: + R$ 2.500/mês",
+    "sample_2_scenario": "Cenário: Otimização de despesas",
+    "sample_3_title": "Cancelar assinaturas subutilizadas",
+    "sample_3_desc": "Cortar despesas recorrentes com baixa utilização.",
+    "sample_3_impact": "Impacto: + R$ 1.200/mês",
+    "sample_3_scenario": "Cenário: Eficiência operacional",
+    "status_pending": "Pendente",
+    "status_review": "Em análise",
+    "status_suggested": "Sugestão"
+  },
+
+  "insights": {
+    "title": "Insights",
+    "subtitle": "Alertas inteligentes para orientar ações.",
+    "list_title": "Alertas e Oportunidades",
+    "sample_1_title": "Gastos incomuns detectados",
+    "sample_1_desc": "Restaurantes tiveram aumento de 18% neste mês.",
+    "sample_2_title": "Oportunidade de economia",
+    "sample_2_desc": "Você poderia economizar R$ 200/mês ajustando assinaturas.",
+    "sample_3_title": "Burn rate em alta",
+    "sample_3_desc": "O burn rate subiu em comparação ao último trimestre."
+  },
+
+  "placeholders": {
+    "title": "Ainda estamos preparando",
+    "ai_accountants": "🧠 Nossos contadores de IA ainda estão aprendendo este truque.",
+    "finance_elves": "🛠 Nossos elfos financeiros ainda estão construindo esta funcionalidade.",
+    "superpower": "🚧 Este superpoder financeiro ainda está em construção.",
+    "coffee": "☕ Os engenheiros ainda estão tomando café para esta parte."
   },
 
   "budget_tracker": {

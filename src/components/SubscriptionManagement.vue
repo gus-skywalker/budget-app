@@ -45,11 +45,25 @@
       <!-- Card de Mudança de Plano -->
       <div class="modern-card mb-6">
         <div class="card-header">
-          <h2 class="card-title">
-            <v-icon color="#667eea" class="mr-2">mdi-swap-horizontal</v-icon>
-            Alterar Plano
-          </h2>
-          <p class="card-description">{{ t('subscription_management.change_plan_instructions') }}</p>
+          <div class="card-header-row">
+            <div>
+              <h2 class="card-title">
+                <v-icon color="#667eea" class="mr-2">mdi-swap-horizontal</v-icon>
+                Alterar Plano
+              </h2>
+              <p class="card-description">{{ t('subscription_management.change_plan_instructions') }}</p>
+            </div>
+            <v-btn
+              variant="text"
+              size="small"
+              color="#667eea"
+              class="details-btn"
+              @click="openPlanDetails"
+            >
+              <v-icon start size="small">mdi-information-outline</v-icon>
+              Detalhes
+            </v-btn>
+          </div>
         </div>
         <div class="card-content">
           <v-radio-group v-model="selectedPlan" class="plan-radio-group">
@@ -91,13 +105,17 @@
               >
                 <template v-slot:label>
                   <div class="plan-label">
-                    <div class="plan-name">
-                      <v-icon class="mr-2">mdi-calendar-check</v-icon>
-                      STARTER Anual
-                      <v-chip size="x-small" color="success" class="ml-2">Economize 17%</v-chip>
-                    </div>
+                      <div class="plan-name">
+                        <v-icon class="mr-2">mdi-calendar-check</v-icon>
+                        STARTER Anual
+                      <v-chip size="x-small" color="success" class="ml-2">Economize</v-chip>
+                      </div>
                     <div class="plan-price">{{ plans.ANNUAL.displayPrice }}</div>
-                    <div class="plan-description">{{ formatAmount(plans.MONTHLY.amount) }}/mês (cobrado anualmente)</div>
+                    <div class="plan-description">
+                      <span class="plan-strike">De {{ formatAmount(annualOriginal(plans.MONTHLY.amount)) }}/ano</span>
+                      <span class="plan-badge">Economize {{ discountPercent(plans.MONTHLY.amount, plans.ANNUAL.amount) }}</span>
+                    </div>
+                    <div class="plan-description">{{ formatAmount(plans.ANNUAL.amount / 12) }}/mês (cobrado anualmente)</div>
                   </div>
                 </template>
               </v-radio>
@@ -157,7 +175,11 @@
                         <v-chip size="x-small" color="success" class="ml-2">Economize</v-chip>
                       </div>
                       <div class="plan-price">{{ plans.BUSINESS_ANNUAL.displayPrice }}</div>
-                      <div class="plan-description">Cobrado anualmente</div>
+                      <div class="plan-description">
+                        <span class="plan-strike">De {{ formatAmount(annualOriginal(plans.BUSINESS_MONTHLY.amount)) }}/ano</span>
+                        <span class="plan-badge">Economize {{ discountPercent(plans.BUSINESS_MONTHLY.amount, plans.BUSINESS_ANNUAL.amount) }}</span>
+                      </div>
+                      <div class="plan-description">{{ formatAmount(plans.BUSINESS_ANNUAL.amount / 12) }}/mês (cobrado anualmente)</div>
                     </div>
                   </template>
                 </v-radio>
@@ -216,6 +238,60 @@
           </div>
         </div>
       </div>
+
+      <v-dialog v-model="showPlanDetails" max-width="720">
+        <v-card class="details-card">
+          <v-card-title class="details-title">
+            Detalhes dos Planos
+          </v-card-title>
+          <v-card-text>
+            <div class="details-grid">
+              <div class="details-col">
+                <div class="details-tag starter-tag">Starter</div>
+                <div class="details-price">
+                  <div class="details-price-row">Mensal: {{ plans.MONTHLY.displayPrice }}</div>
+                  <div class="details-price-row">
+                    Anual: {{ plans.ANNUAL.displayPrice }}
+                    <span class="plan-strike ml-1">De {{ formatAmount(annualOriginal(plans.MONTHLY.amount)) }}/ano</span>
+                    <span class="plan-badge ml-2">Economize {{ discountPercent(plans.MONTHLY.amount, plans.ANNUAL.amount) }}</span>
+                  </div>
+                </div>
+                <ul class="details-list">
+                  <li>até 4 membros</li>
+                  <li>workspace financeiro compartilhado</li>
+                  <li>planejamento de orçamento</li>
+                  <li>metas financeiras</li>
+                  <li>simulação básica de cenários</li>
+                </ul>
+              </div>
+              <div class="details-col">
+                <div class="details-tag team-tag">Team</div>
+                <div class="details-price">
+                  <div class="details-price-row">Mensal: {{ plans.BUSINESS_MONTHLY.displayPrice }}</div>
+                  <div class="details-price-row">
+                    Anual: {{ plans.BUSINESS_ANNUAL.displayPrice }}
+                    <span class="plan-strike ml-1">De {{ formatAmount(annualOriginal(plans.BUSINESS_MONTHLY.amount)) }}/ano</span>
+                    <span class="plan-badge ml-2">Economize {{ discountPercent(plans.BUSINESS_MONTHLY.amount, plans.BUSINESS_ANNUAL.amount) }}</span>
+                  </div>
+                </div>
+                <ul class="details-list">
+                  <li>até 10 membros</li>
+                  <li>IA Financial Copilot</li>
+                  <li>simulação de cenários</li>
+                  <li>previsão financeira</li>
+                  <li>decisões financeiras colaborativas</li>
+                  <li>colaboração entre membros</li>
+                </ul>
+              </div>
+            </div>
+          </v-card-text>
+          <v-card-actions class="justify-end">
+            <v-btn variant="text" color="#667eea" @click="showPlanDetails = false">
+              Fechar
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
 
       <!-- Card de Cancelamento -->
       <div v-if="subscriptionStatus === 'ACTIVE'" class="modern-card cancel-card">
@@ -288,6 +364,7 @@ const subscriptionStatus = ref('');
 const selectedPlan = ref<MaybePlanId>(''); // Para atualizar o plano
 const hasPremiumAccess = ref(false);
 const lastLoadedPlan = ref<MaybePlanId>('');
+const showPlanDetails = ref(false);
 
 const plans = PLAN_DETAILS;
 
@@ -309,6 +386,13 @@ const isBillingCycle = (value: string | null | undefined): value is Exclude<Bill
 };
 
 const formatAmount = (amount: number) => formatPlanAmount(amount);
+const annualOriginal = (monthlyAmount: number) => monthlyAmount * 12;
+const discountPercent = (monthlyAmount: number, annualAmount: number) => {
+  if (!monthlyAmount || !annualAmount) return '0%';
+  const full = monthlyAmount * 12;
+  const pct = Math.round(((full - annualAmount) / full) * 100);
+  return `${pct}%`;
+};
 
 const mapPlanIdToTier = (planId: PlanId): Exclude<PlanTier, ''> => {
   return planId === 'BUSINESS_MONTHLY' || planId === 'BUSINESS_ANNUAL' ? 'TEAM' : 'STARTER';
@@ -544,6 +628,10 @@ const openBillingPortal = async (targetPlan?: PlanId) => {
     // Prefer company if tenant mode has company selected; else user.
     const subjectType = (isTenantMode.value && userStore.currentCompanyId) ? 'COMPANY' : 'USER'
     const subjectId = subjectType === 'COMPANY' ? String(userStore.currentCompanyId) : actorUserId.value
+    if (subjectType === 'COMPANY' && !userStore.isTenantAdmin) {
+      alert('Apenas o owner/admin da empresa pode gerenciar a assinatura.');
+      return;
+    }
 
     const storageKey = `billing.portal.messageId:${correlationId}:${subjectType}:${subjectId}`
     const existingMessageId = sessionStorage.getItem(storageKey)
@@ -552,47 +640,81 @@ const openBillingPortal = async (targetPlan?: PlanId) => {
 
     const returnUrl = `${window.location.origin}/#/settings`
 
-    const accepted = await BillingOrchestrationService.openPortal({
+    const payload: any = {
       actor: actorUserId.value,
       subjectType: subjectType as any,
       subjectId,
       correlationId,
       messageId,
-      returnUrl,
-      targetPlan
-    })
+      returnUrl
+    }
+    if (targetPlan && isPlanId(targetPlan)) {
+      payload.targetPlan = targetPlan
+    }
+
+    const accepted = await BillingOrchestrationService.openPortal(payload)
 
     const opMessageId = accepted.data?.messageId || messageId
-    const portalUrl = await pollPortalUrl(opMessageId)
-    if (portalUrl) {
-      window.location.href = portalUrl
+    const portalResult = await pollPortalUrl(opMessageId)
+    if (portalResult.url) {
+      window.location.href = portalResult.url
       return
     }
 
-    alert('Solicitação enviada. O portal de billing ainda está sendo preparado.')
+    const errorMsg = portalResult.lastError
+      ? `Portal indisponível: ${portalResult.lastError}`
+      : 'Solicitação enviada. O portal de billing ainda está sendo preparado.'
+    alert(errorMsg)
   } catch (error) {
     console.error('Erro ao solicitar portal de faturamento:', error)
-    alert('Não foi possível solicitar o portal de faturamento. Tente novamente mais tarde.')
+    const apiError = (error as any)?.response?.data?.error
+    alert(apiError ? `Erro ao abrir portal: ${apiError}` : 'Não foi possível solicitar o portal de faturamento. Tente novamente mais tarde.')
   }
 };
 
-const pollPortalUrl = async (messageId: string, maxAttempts = 20, delayMs = 1000): Promise<string | null> => {
+const openPlanDetails = () => {
+  showPlanDetails.value = true;
+  try {
+    window.dispatchEvent(
+      new CustomEvent('billing:plan-details-opened', {
+        detail: {
+          subjectType: isTenantMode.value && userStore.currentCompanyId ? 'COMPANY' : 'USER',
+          subjectId: isTenantMode.value && userStore.currentCompanyId ? String(userStore.currentCompanyId) : actorUserId.value,
+          currentPlan: currentPlan.value || currentPlanTier.value || 'FREE'
+        }
+      })
+    );
+  } catch (e) {
+    // no-op
+  }
+};
+
+const pollPortalUrl = async (
+  messageId: string,
+  maxAttempts = 20,
+  delayMs = 1000
+): Promise<{ url: string | null; lastError: string | null }> => {
+  let lastError: string | null = null
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     try {
       const statusResp = await BillingOrchestrationService.getOperationStatus(messageId)
       const url = statusResp.data?.checkoutUrl
       if (url) {
-        return url
+        return { url, lastError: null }
       }
       if (statusResp.data?.status === 'FAILED') {
-        return null
+        lastError = statusResp.data?.lastError || lastError
+        return { url: null, lastError }
       }
     } catch (error) {
-      // ignore transient errors while polling
+      const apiError = (error as any)?.response?.data?.error
+      if (apiError) {
+        lastError = apiError
+      }
     }
     await new Promise((resolve) => setTimeout(resolve, delayMs))
   }
-  return null
+  return { url: null, lastError }
 }
 
 // Função para cancelar a assinatura
@@ -683,6 +805,13 @@ watch(
 .card-header {
   padding: 24px 24px 16px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.card-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }
 
 .v-theme--dark .card-header {
@@ -832,6 +961,23 @@ watch(
   color: #b0b0b0;
 }
 
+.plan-strike {
+  text-decoration: line-through;
+  color: #9aa5b1;
+  margin-right: 6px;
+}
+
+.plan-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #0f6b3f;
+  background: rgba(34, 197, 94, 0.16);
+}
+
 .plan-group-label {
   font-size: 0.85rem;
   font-weight: 700;
@@ -849,6 +995,74 @@ watch(
   position: absolute;
   top: 16px;
   right: 16px;
+}
+
+.details-card {
+  border-radius: 16px;
+}
+
+.details-title {
+  font-weight: 600;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.details-col {
+  background: #f8f9fb;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.details-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.starter-tag {
+  background: rgba(243, 156, 18, 0.15);
+  color: #b06a0c;
+}
+
+.team-tag {
+  background: rgba(142, 68, 173, 0.15);
+  color: #5b2c6f;
+}
+
+.details-price {
+  font-size: 0.95rem;
+  color: #334155;
+  margin-bottom: 10px;
+}
+
+.details-price-row + .details-price-row {
+  margin-top: 6px;
+}
+
+.details-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  color: #475569;
+  font-size: 0.9rem;
+}
+
+.details-list li + li {
+  margin-top: 6px;
+}
+
+.details-btn {
+  white-space: nowrap;
 }
 
 /* Action Buttons */

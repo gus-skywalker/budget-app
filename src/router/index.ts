@@ -5,6 +5,13 @@ import BudgetView from '@/views/BudgetView.vue'
 import DashboardView from '@/views/DashboardView.vue'
 import LoginView from '@/views/LoginView.vue'
 import SettingsView from '@/views/SettingsView.vue'
+import AccountsView from '@/views/AccountsView.vue'
+import CategoriesView from '@/views/CategoriesView.vue'
+import CashflowView from '@/views/CashflowView.vue'
+import PlanningBudgetView from '@/views/PlanningBudgetView.vue'
+import PlanningScenariosView from '@/views/PlanningScenariosView.vue'
+import DecisionsView from '@/views/DecisionsView.vue'
+import InsightsView from '@/views/InsightsView.vue'
 import OAuth2Redirect from '@/views/redirect_url/OAuth2Redirect.vue'
 import PrivacyPolicy from '@/components/compliance/PrivacyPolicy.vue'
 import TermsOfUse from '@/components/compliance/TermsOfUse.vue'
@@ -34,9 +41,63 @@ const router = createRouter({
       meta: { requiresAuth: true, requiresWorkspace: true }
     },
     {
+      path: '/overview',
+      name: 'overview',
+      component: DashboardView,
+      meta: { requiresAuth: true, requiresWorkspace: true }
+    },
+    {
       path: '/budget',
       name: 'budget',
       component: BudgetView,
+      meta: { requiresAuth: true, requiresWorkspace: true }
+    },
+    {
+      path: '/accounts',
+      name: 'accounts',
+      component: AccountsView,
+      meta: { requiresAuth: true, requiresWorkspace: true }
+    },
+    {
+      path: '/categories',
+      name: 'categories',
+      component: CategoriesView,
+      meta: { requiresAuth: true, requiresWorkspace: true }
+    },
+    {
+      path: '/cashflow',
+      name: 'cashflow',
+      component: CashflowView,
+      meta: { requiresAuth: true, requiresWorkspace: true }
+    },
+    {
+      path: '/planning/budget',
+      name: 'planning-budget',
+      component: PlanningBudgetView,
+      meta: { requiresAuth: true, requiresWorkspace: true }
+    },
+    {
+      path: '/planning/scenarios',
+      name: 'planning-scenarios',
+      component: PlanningScenariosView,
+      meta: { requiresAuth: true, requiresWorkspace: true }
+    },
+    {
+      path: '/planning/goals',
+      name: 'planning-goals',
+      component: GoalView,
+      meta: { requiresAuth: true, requiresWorkspace: true }
+    },
+    {
+      path: '/decisions',
+      name: 'decisions',
+      component: DecisionsView,
+      meta: { requiresAuth: true, requiresWorkspace: true }
+    },
+    {
+      path: '/insights',
+      name: 'insights',
+      component: InsightsView,
       meta: { requiresAuth: true, requiresWorkspace: true }
     },
     {

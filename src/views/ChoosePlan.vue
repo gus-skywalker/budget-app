@@ -2,11 +2,11 @@
 <template>
     <v-container id="color-setup">
         <!-- Seção de Planos -->
-                <section id="plans" class="section plans-section">
-                        <h2>Escolha o plano ideal para o seu time.</h2>
-                        <p style="text-align:center; max-width:600px; margin:16px auto 32px; color:var(--dark-gray); font-size:18px;">
-                            Comece organizando suas finanças e evolua para decisões assistidas por inteligência artificial.
-                        </p>
+                        <section id="plans" class="section plans-section">
+                                <h2>Escolha o plano ideal para o seu time.</h2>
+                                <p class="plans-subtitle">
+                                    Comece organizando suas finanças e evolua para decisões assistidas por inteligência artificial.
+                                </p>
 
                         <section class="section ai-value" style="background: #f7f7ff; border-radius: 12px; padding: 24px 16px; margin-bottom: 32px;">
                             <h3 style="text-align:center; color:var(--purple); margin-bottom:8px;">IA Financial Copilot incluída nos planos Premium</h3>
@@ -21,53 +21,88 @@
                             </p>
                         </section>
 
-                                                <div class="plans-container">
+                                                <div class="plans-grid">
                                 <!-- Plano STARTER -->
-                                <div class="plan-item starter-plan" style="border-top: 4px solid #f39c12;">
-                                    <span class="plan-label" style="background:#f39c12; color:#fff; padding:2px 10px; border-radius:6px; font-size:13px; font-weight:600; margin-bottom:8px; display:inline-block;">STARTER</span>
-                                    <h3>STARTER</h3>
-                                    <p class="price">{{ planDetails.MONTHLY.displayPrice }}</p>
-                                    <p class="price">{{ planDetails.ANNUAL.displayPrice }}</p>
-                                    <p>Para pequenos times começando o planejamento financeiro colaborativo.</p>
-                                    <ul class="plan-benefits">
-                                        <li>até 4 membros</li>
-                                        <li>workspace financeiro compartilhado</li>
-                                        <li>planejamento de orçamento</li>
-                                        <li>metas financeiras</li>
-                                        <li>simulação básica de cenários</li>
-                                    </ul>
-                                    <button class="btn btn-primary cta-btn" @click.prevent="redirectToCheckout('MONTHLY')">
-                                        Começar STARTER Mensal
-                                    </button>
-                                    <button class="btn btn-primary cta-btn" style="margin-top: 10px; background: transparent; color: #f39c12; border: 2px solid #f39c12;" @click.prevent="redirectToCheckout('ANNUAL')">
-                                        Escolher STARTER Anual
-                                    </button>
-                                </div>
-                                <!-- Plano TEAM -->
-                                <div class="plan-item team-plan" style="border-top: 4px solid var(--purple); background: #f7f3fa; box-shadow: 0 4px 24px rgba(142,68,173,0.13); width: 50%; position:relative;">
-                                    <div style="position:absolute;top:-32px;left:50%;transform:translateX(-50%);">
-                                        <span style="background:var(--yellow);color:var(--dark-purple);padding:6px 18px;border-radius:16px;font-size:15px;font-weight:700;box-shadow:0 2px 8px rgba(241,196,15,0.13);">⭐ Mais popular</span>
+                                <article class="plan-card starter">
+                                    <div class="plan-head">
+                                        <span class="plan-tag starter-tag">Starter</span>
+                                        <h3>Starter</h3>
+                                        <p class="plan-subtitle">Para pequenos times começando o planejamento financeiro colaborativo.</p>
                                     </div>
-                                    <span class="plan-label" style="background:var(--purple); color:#fff; padding:2px 10px; border-radius:6px; font-size:13px; font-weight:600; margin-bottom:8px; display:inline-block;">TEAM</span>
-                                    <h3 style="font-size:28px;">TEAM</h3>
-                                    <p class="price" style="color:var(--purple); font-weight:700;">{{ planDetails.BUSINESS_MONTHLY.displayPrice }}</p>
-                                    <p class="price" style="color:var(--purple); font-weight:700;">{{ planDetails.BUSINESS_ANNUAL.displayPrice }}</p>
-                                    <p>Para startups que precisam tomar decisões financeiras com mais inteligência.</p>
+
+                                    <div class="price-stack">
+                                        <div class="price-row">
+                                            <span class="price-label">Mensal</span>
+                                            <span class="price-amount">{{ planDetails.MONTHLY.displayPrice }}</span>
+                                        </div>
+                                        <div class="price-row annual">
+                                            <span class="price-label">Anual</span>
+                                            <span class="price-strike">De {{ formatAmount(annualOriginal(planDetails.MONTHLY.amount)) }}</span>
+                                            <span class="price-amount">{{ planDetails.ANNUAL.displayPrice }}</span>
+                                            <span class="price-badge">Economize {{ discountPercent(planDetails.MONTHLY.amount, planDetails.ANNUAL.amount) }}</span>
+                                            <span class="price-note">Equivale a {{ formatAmount(planDetails.ANNUAL.amount / 12) }}/mês</span>
+                                        </div>
+                                    </div>
+
                                     <ul class="plan-benefits">
-                                        <li>até 10 membros</li>
-                                        <li>IA Financial Copilot</li>
-                                        <li>simulação de cenários</li>
-                                        <li>previsão financeira</li>
-                                        <li>decisões financeiras colaborativas</li>
-                                        <li>colaboração entre membros</li>
+                                        <li><span class="check">✓</span> até 4 membros</li>
+                                        <li><span class="check">✓</span> workspace financeiro compartilhado</li>
+                                        <li><span class="check">✓</span> planejamento de orçamento</li>
+                                        <li><span class="check">✓</span> metas financeiras</li>
+                                        <li><span class="check">✓</span> simulação básica de cenários</li>
                                     </ul>
-                                    <button class="btn btn-primary cta-btn" style="background:var(--purple); border:none; font-size:1.15rem; padding:16px 32px;" @click.prevent="handleTeamClick('BUSINESS_MONTHLY')">
-                                        Começar TEAM Mensal
-                                    </button>
-                                    <button class="btn btn-primary cta-btn" style="margin-top: 10px; background: transparent; color: var(--purple); border: 2px solid var(--purple);" @click.prevent="handleTeamClick('BUSINESS_ANNUAL')">
-                                        Escolher TEAM Anual
-                                    </button>
-                                </div>
+
+                                    <div class="plan-cta">
+                                        <button class="btn btn-outline starter-outline" @click.prevent="redirectToCheckout('MONTHLY')">
+                                            Mensal
+                                        </button>
+                                        <button class="btn btn-solid starter-solid" @click.prevent="redirectToCheckout('ANNUAL')">
+                                            Anual -20%
+                                        </button>
+                                    </div>
+                                </article>
+
+                                <!-- Plano TEAM -->
+                                <article class="plan-card team">
+                                    <div class="plan-ribbon">Melhor oferta</div>
+                                    <div class="plan-head">
+                                        <span class="plan-tag team-tag">Team</span>
+                                        <h3>Team</h3>
+                                        <p class="plan-subtitle">Para startups que precisam tomar decisões financeiras com mais inteligência.</p>
+                                    </div>
+
+                                    <div class="price-stack">
+                                        <div class="price-row">
+                                            <span class="price-label">Mensal</span>
+                                            <span class="price-amount">{{ planDetails.BUSINESS_MONTHLY.displayPrice }}</span>
+                                        </div>
+                                        <div class="price-row annual">
+                                            <span class="price-label">Anual</span>
+                                            <span class="price-strike">De {{ formatAmount(annualOriginal(planDetails.BUSINESS_MONTHLY.amount)) }}</span>
+                                            <span class="price-amount">{{ planDetails.BUSINESS_ANNUAL.displayPrice }}</span>
+                                            <span class="price-badge">Economize {{ discountPercent(planDetails.BUSINESS_MONTHLY.amount, planDetails.BUSINESS_ANNUAL.amount) }}</span>
+                                            <span class="price-note">Equivale a {{ formatAmount(planDetails.BUSINESS_ANNUAL.amount / 12) }}/mês</span>
+                                        </div>
+                                    </div>
+
+                                    <ul class="plan-benefits">
+                                        <li><span class="check">✓</span> até 10 membros</li>
+                                        <li><span class="check">✓</span> IA Financial Copilot</li>
+                                        <li><span class="check">✓</span> simulação de cenários</li>
+                                        <li><span class="check">✓</span> previsão financeira</li>
+                                        <li><span class="check">✓</span> decisões financeiras colaborativas</li>
+                                        <li><span class="check">✓</span> colaboração entre membros</li>
+                                    </ul>
+
+                                    <div class="plan-cta">
+                                        <button class="btn btn-outline team-outline" @click.prevent="handleTeamClick('BUSINESS_MONTHLY')">
+                                            Mensal
+                                        </button>
+                                        <button class="btn btn-solid team-solid" @click.prevent="handleTeamClick('BUSINESS_ANNUAL')">
+                                            Anual -20%
+                                        </button>
+                                    </div>
+                                </article>
                         </div>
         </section>
 
@@ -100,7 +135,7 @@ import FAQ from '@/components/FAQ.vue';
 import BillingDecisionService from '@/services/BillingDecisionService'
 import OnboardingOrchestrator from '@/services/OnboardingOrchestrator'
 import { createCorrelationId } from '@/utils/correlation'
-import { PLAN_DETAILS } from '@/constants/plans';
+import { PLAN_DETAILS, formatPlanAmount } from '@/constants/plans';
 import { useUserStore } from '@/plugins/userStore';
 
 export default {
@@ -273,6 +308,18 @@ export default {
                 alert(errorMessage);
             }
         },
+        formatAmount(amount) {
+            return formatPlanAmount(amount);
+        },
+        annualOriginal(monthlyAmount) {
+            return monthlyAmount * 12;
+        },
+        discountPercent(monthlyAmount, annualAmount) {
+            if (!monthlyAmount || !annualAmount) return '0%';
+            const full = monthlyAmount * 12;
+            const pct = Math.round(((full - annualAmount) / full) * 100);
+            return `${pct}%`;
+        }
     },
 };
 </script>
@@ -296,35 +343,135 @@ export default {
     text-align: center;
 }
 
-.plans-container {
+.plans-subtitle {
+    text-align: center;
+    max-width: 600px;
+    margin: 16px auto 32px;
+    color: var(--dark-gray);
+    font-size: 18px;
+}
+
+.plans-grid {
     display: flex;
     justify-content: center;
     gap: 20px;
     flex-wrap: wrap;
 }
 
-.plan-item {
-    width: 45%;
-    background-color: var(--light-gray);
-    padding: 20px;
-    border-radius: 10px;
-    text-align: center;
+.plan-card {
+    width: min(520px, 100%);
+    background-color: #ffffff;
+    padding: 28px 24px;
+    border-radius: 16px;
+    text-align: left;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 8px 28px rgba(15, 23, 42, 0.06);
+    position: relative;
 }
 
-.plan-item h3 {
-    font-size: 24px;
+.plan-card.team {
+    border: 2px solid rgba(142, 68, 173, 0.35);
+    background: linear-gradient(180deg, #f8f4ff 0%, #ffffff 80%);
+}
+
+.plan-head h3 {
+    font-size: 28px;
+    color: var(--dark-gray);
+    margin: 8px 0 6px;
+}
+
+.plan-subtitle {
+    font-size: 15px;
+    color: #54616f;
+}
+
+.plan-tag {
+    display: inline-flex;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 6px 10px;
+    border-radius: 8px;
+}
+
+.starter-tag {
+    background: rgba(243, 156, 18, 0.15);
+    color: #b06a0c;
+}
+
+.team-tag {
+    background: rgba(142, 68, 173, 0.15);
+    color: #5b2c6f;
+}
+
+.plan-ribbon {
+    position: absolute;
+    top: -16px;
+    right: 20px;
+    background: var(--yellow);
+    color: var(--dark-purple);
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    box-shadow: 0 6px 16px rgba(241, 196, 15, 0.25);
+}
+
+.price-stack {
+    margin: 18px 0 20px;
+    display: grid;
+    gap: 14px;
+}
+
+.price-row {
+    display: grid;
+    gap: 6px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: #f7f8fb;
+}
+
+.price-row.annual {
+    background: #ffffff;
+    border: 1px dashed rgba(0, 0, 0, 0.08);
+}
+
+.price-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #7b8794;
+}
+
+.price-amount {
+    font-size: 26px;
+    font-weight: 700;
     color: var(--dark-gray);
 }
 
-.plan-item .price {
-    font-size: 32px;
-    color: var(--orange);
-    margin: 10px 0;
+.price-strike {
+    font-size: 13px;
+    color: #9aa5b1;
+    text-decoration: line-through;
 }
 
-.plan-item p {
-    font-size: 16px;
-    color: var(--dark-gray);
+.price-badge {
+    display: inline-flex;
+    width: fit-content;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #0f6b3f;
+    background: rgba(34, 197, 94, 0.16);
+}
+
+.price-note {
+    font-size: 12px;
+    color: #7b8794;
 }
 
 .plan-benefits {
@@ -337,18 +484,61 @@ export default {
 
 .plan-benefits li {
     margin: 5px 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
 }
 
-.cta-btn {
-    background-color: var(--orange);
-    color: var(--white);
-    padding: 12px 24px;
-    border-radius: 5px;
-    margin-top: 20px;
+.check {
+    color: #22c55e;
+    font-weight: 700;
 }
 
-.cta-btn:hover {
-    background-color: var(--dark-orange);
+.plan-cta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.btn {
+    padding: 12px 18px;
+    border-radius: 10px;
+    font-weight: 700;
+    border: 2px solid transparent;
+    cursor: pointer;
+}
+
+.btn-outline {
+    background: transparent;
+}
+
+.btn-solid {
+    color: #ffffff;
+}
+
+.starter-outline {
+    border-color: #f39c12;
+    color: #b06a0c;
+}
+
+.starter-solid {
+    background: #f39c12;
+}
+
+.team-outline {
+    border-color: var(--purple);
+    color: var(--purple);
+}
+
+.team-solid {
+    background: var(--purple);
+}
+
+.btn-solid:hover,
+.btn-outline:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12);
 }
 
 /* Estilos das Informações de Avaliação, FAQ e Cancelamento */
