@@ -1,7 +1,7 @@
 <template>
   <v-dialog v-model="visible" width="400">
     <v-card>
-      <v-card-title class="headline">Notificações</v-card-title>
+      <v-card-title class="headline">{{ $t('notification_popup.title') }}</v-card-title>
       <v-card-text>
         <v-list>
           <v-list-item v-for="notification in notifications" :key="notification.id">
@@ -19,7 +19,7 @@
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn color="blue darken-1" @click="close">Fechar</v-btn>
+        <v-btn color="blue darken-1" @click="close">{{ $t('notification_popup.close') }}</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -61,7 +61,6 @@ watch(
 )
 
 function close() {
-  console.log(notifications)
   visible.value = false
 }
 

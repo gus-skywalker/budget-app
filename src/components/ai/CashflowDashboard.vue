@@ -1,28 +1,28 @@
 <template>
   <section class="ai-card">
     <header>
-      <h2>Fluxo de Caixa</h2>
-      <p>Visualize o saldo atual e a projeção dos próximos meses.</p>
+      <h2>{{ t('ai.cashflow.title') }}</h2>
+      <p>{{ t('ai.cashflow.description') }}</p>
     </header>
 
     <form class="ai-form" @submit.prevent="handleSubmit">
       <label>
-        Meses
+        {{ t('ai.cashflow.months') }}
         <input v-model.number="months" type="number" min="1" max="12" />
       </label>
 
-      <button type="submit" :disabled="isLoading">{{ isLoading ? 'Consultando...' : 'Atualizar' }}</button>
+      <button type="submit" :disabled="isLoading">{{ isLoading ? t('ai.common.loading') : t('ai.cashflow.update') }}</button>
       <p v-if="error" class="error">{{ error }}</p>
     </form>
 
     <section v-if="insights" class="results">
       <div class="metrics">
         <article>
-          <h4>Saldo atual</h4>
+          <h4>{{ t('ai.cashflow.current_balance') }}</h4>
           <strong>{{ formatCurrency(insights.currentBalance) }}</strong>
         </article>
         <article>
-          <h4>Média mensal</h4>
+          <h4>{{ t('ai.cashflow.monthly_average') }}</h4>
           <strong>{{ formatCurrency(insights.averageMonthlyBalance) }}</strong>
         </article>
       </div>
@@ -32,12 +32,12 @@
       <table>
         <thead>
           <tr>
-            <th>Mês</th>
-            <th>Receita</th>
-            <th>Despesas</th>
-            <th>Saldo projetado</th>
-            <th>Status</th>
-            <th>Alertas</th>
+            <th>{{ t('ai.cashflow.month') }}</th>
+            <th>{{ t('ai.cashflow.income') }}</th>
+            <th>{{ t('ai.cashflow.expenses') }}</th>
+            <th>{{ t('ai.cashflow.projected_balance') }}</th>
+            <th>{{ t('ai.cashflow.status') }}</th>
+            <th>{{ t('ai.cashflow.alerts') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -65,8 +65,11 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import AiService from '../../services/aiService'
 import type { CashflowInsightsResponse } from '../../services/aiService'
+
+const { t } = useI18n()
 
 const months = ref(6)
 const isLoading = ref(false)
@@ -86,7 +89,7 @@ const handleSubmit = async () => {
     })
     insights.value = data
   } catch (err) {
-    error.value = 'Falha ao buscar fluxo de caixa.'
+    error.value = t('ai.cashflow.error_fetch')
     console.error(err)
   } finally {
     isLoading.value = false

@@ -8,27 +8,27 @@
         <img src="/logo.jpg" alt="Logo" />
       </div>
       <nav class="nav">
-        <div class="menu-toggle" aria-label="Fazer login" @click="toggleMenu">
+        <div class="menu-toggle" :aria-label="$t('landingPage.auth.login')" @click="toggleMenu">
           <span class=" menu-icon"></span>
           <span class="menu-icon"></span>
           <span class="menu-icon"></span>
         </div>
         <ul :class="{ 'active': isMenuOpen }">
-          <li><a href="#">Sobre</a></li>
-          <li><a href="#benefits">Benefícios</a></li>
-          <li><a href="#testimonials">Depoimentos</a></li>
-          <li><a href="#security">Segurança</a></li>
-          <li><a href="#contact">Contato</a></li>
+          <li><a href="#">{{ $t('landingPage.nav.about') }}</a></li>
+          <li><a href="#benefits">{{ $t('landingPage.nav.benefits') }}</a></li>
+          <li><a href="#testimonials">{{ $t('landingPage.nav.testimonials') }}</a></li>
+          <li><a href="#security">{{ $t('landingPage.nav.security') }}</a></li>
+          <li><a href="#contact">{{ $t('landingPage.nav.contact') }}</a></li>
         </ul>
       </nav>
       <div class="auth-buttons">
-        <button class="btn btn-primary login-btn" aria-label="Fazer login"
+        <button class="btn btn-primary login-btn" :aria-label="$t('landingPage.auth.login')"
           @click.prevent="$router.push({ name: 'login' })">
-          Login
+          {{ $t('landingPage.auth.login') }}
         </button>
-        <button class="btn btn-secondary signup-btn" aria-label="Fazer login"
+        <button class="btn btn-secondary signup-btn" :aria-label="$t('landingPage.auth.signupNow')"
           @click.prevent="$router.push({ name: 'choose-plan' })">
-          Assine Agora
+          {{ $t('landingPage.auth.signupNow') }}
         </button>
       </div>
     </header>
@@ -36,133 +36,131 @@
     <!-- HERO SECTION -->
     <section class="hero">
       <div class="hero-content">
-        <h1>O workspace financeiro para decisões colaborativas.</h1>
-        <p>
-          Planeje orçamentos, simule cenários e alinhe seu time em torno de decisões financeiras.
-        </p>
+        <h1>{{ $t('landingPage.hero.title') }}</h1>
+        <p>{{ $t('landingPage.hero.subtitle') }}</p>
         <p style="font-size:15px; color:#888; margin-bottom:8px;">
-          Feito para founders, startups e pequenos times.
+          {{ $t('landingPage.hero.micro') }}
         </p>
         <button class="btn btn-primary cta-btn"
           @click.prevent="$router.push({ name: 'login', query: { signup: 'true' } })">
-          Começar a planejar
+          {{ $t('landingPage.hero.cta') }}
         </button>
         <p class="micro-proof" style="margin-top:8px; font-size:13px; color:#888;">
-          Sem cartão de crédito • Cancelamento simples
+          {{ $t('landingPage.hero.proof') }}
         </p>
       </div>
       <div class="hero-image">
-        <img src="/hero_image.jpg" alt="Planejamento Financeiro" />
+        <img src="/hero_image.jpg" :alt="$t('landingPage.hero.imageAlt')" />
       </div>
     </section>
 
     <!-- PROBLEM SECTION -->
     <section class="section pain-section">
-      <h2 class="pain-title">Decisões financeiras raramente são individuais.</h2>
+      <h2 class="pain-title">{{ $t('landingPage.pain.title') }}</h2>
       <p style="text-align:center; max-width:600px; margin:0 auto 32px; color:var(--dark-gray); font-size:18px;">
-        Founders, sócios e equipes tomam decisões financeiras juntos todos os dias — mas a maioria das ferramentas foi criada para controle individual, não para planejamento colaborativo.
+        {{ $t('landingPage.pain.subtitle') }}
       </p>
       <div class="pain-list">
         <div class="pain-card">
           <span class="pain-icon">👁️</span>
-          <strong>Informações financeiras descentralizadas</strong>
+          <strong>{{ $t('landingPage.pain.card1') }}</strong>
         </div>
         <div class="pain-card">
           <span class="pain-icon">📉</span>
-          <strong>Falta de visibilidade financeira compartilhada</strong>
+          <strong>{{ $t('landingPage.pain.card2') }}</strong>
         </div>
         <div class="pain-card">
           <span class="pain-icon">🧮</span>
-          <strong>Decisões tomadas sem simulação de cenários</strong>
+          <strong>{{ $t('landingPage.pain.card3') }}</strong>
         </div>
         <div class="pain-card">
           <span class="pain-icon">📅</span>
-          <strong>Planejamento financeiro desconectado da execução</strong>
+          <strong>{{ $t('landingPage.pain.card4') }}</strong>
         </div>
         <div class="pain-card">
           <span class="pain-icon">🔗</span>
-          <strong>Responsabilidades financeiras pouco claras</strong>
+          <strong>{{ $t('landingPage.pain.card5') }}</strong>
         </div>
       </div>
     </section>
 
     <!-- SOLUTION SECTION -->
     <section id="solution" class="section benefits-section">
-      <h2 style="text-align:center; color:var(--purple);">Um workspace para planejamento financeiro.</h2>
+      <h2 style="text-align:center; color:var(--purple);">{{ $t('landingPage.solution.title') }}</h2>
       <div class="benefits-list">
         <div class="benefit-card">
           <span class="benefit-icon">🤝</span>
-          <strong>Orçamentos compartilhados</strong>
+          <strong>{{ $t('landingPage.solution.card1') }}</strong>
         </div>
         <div class="benefit-card">
           <span class="benefit-icon">🧮</span>
-          <strong>Simulação de cenários</strong>
+          <strong>{{ $t('landingPage.solution.card2') }}</strong>
         </div>
         <div class="benefit-card">
           <span class="benefit-icon">📈</span>
-          <strong>Previsão financeira</strong>
+          <strong>{{ $t('landingPage.solution.card3') }}</strong>
         </div>
         <div class="benefit-card">
           <span class="benefit-icon">👥</span>
-          <strong>Decisões financeiras colaborativas</strong>
+          <strong>{{ $t('landingPage.solution.card4') }}</strong>
         </div>
       </div>
     </section>
 
     <!-- Como Funciona -->
     <section class="section how-it-works">
-      <h2 style="text-align:center; color:var(--purple);">Como funciona</h2>
+      <h2 style="text-align:center; color:var(--purple);">{{ $t('landingPage.how.title') }}</h2>
       <div class="benefits-list" style="margin-top:32px;">
         <div class="benefit-card">
           <span class="benefit-icon">1️⃣</span>
-          <strong>Centralize</strong>
-          <p>Reúna receitas, despesas e metas em um único ambiente.</p>
+          <strong>{{ $t('landingPage.how.step1Title') }}</strong>
+          <p>{{ $t('landingPage.how.step1Desc') }}</p>
         </div>
         <div class="benefit-card">
           <span class="benefit-icon">2️⃣</span>
-          <strong>Compartilhe</strong>
-          <p>Convide membros do seu time ou parceiros de decisão.</p>
+          <strong>{{ $t('landingPage.how.step2Title') }}</strong>
+          <p>{{ $t('landingPage.how.step2Desc') }}</p>
         </div>
         <div class="benefit-card">
           <span class="benefit-icon">3️⃣</span>
-          <strong>Decida com Inteligência</strong>
-          <p>A IA do CoBudget analisa dados e sugere ações estratégicas.</p>
+          <strong>{{ $t('landingPage.how.step3Title') }}</strong>
+          <p>{{ $t('landingPage.how.step3Desc') }}</p>
         </div>
       </div>
     </section>
 
     <!-- FAMILY USE CASE (SECONDARY) -->
     <section id="families" class="section benefits-section">
-      <h3 style="text-align:center; color:var(--purple);">Também ideal para famílias.</h3>
+      <h3 style="text-align:center; color:var(--purple);">{{ $t('landingPage.family.title') }}</h3>
       <p style="text-align:center; max-width:600px; margin:0 auto 24px; color:var(--dark-gray); font-size:17px;">
-        Decisões financeiras também são compartilhadas em casa. O CoBudget traz clareza e alinhamento para o planejamento familiar.
+        {{ $t('landingPage.family.subtitle') }}
       </p>
       <div class="benefits-list">
         <div class="benefit-card">
           <span class="benefit-icon">🧾</span>
-          <strong>Contas centralizadas</strong>
+          <strong>{{ $t('landingPage.family.card1') }}</strong>
         </div>
         <div class="benefit-card">
           <span class="benefit-icon">👨‍👩‍👧‍👦</span>
-          <strong>Metas compartilhadas</strong>
+          <strong>{{ $t('landingPage.family.card2') }}</strong>
         </div>
         <div class="benefit-card">
           <span class="benefit-icon">✈️</span>
-          <strong>Planejamento de conquistas</strong>
+          <strong>{{ $t('landingPage.family.card3') }}</strong>
         </div>
         <div class="benefit-card">
           <span class="benefit-icon">🤝</span>
-          <strong>Responsabilidade distribuída</strong>
+          <strong>{{ $t('landingPage.family.card4') }}</strong>
         </div>
       </div>
     </section>
 
     <!-- FINAL CTA -->
     <section class="section" style="background:linear-gradient(135deg,#f5f7ff 0%,#eef2ff 100%); padding:60px 20px;">
-      <h2 style="text-align:center; color:var(--purple);">Decisões financeiras melhores começam com clareza compartilhada.</h2>
+      <h2 style="text-align:center; color:var(--purple);">{{ $t('landingPage.finalCta.title') }}</h2>
       <div style="text-align:center; margin-top:32px;">
         <button class="btn btn-primary cta-btn" style="font-size:1.25rem; padding:18px 40px;" @click.prevent="$router.push({ name: 'choose-plan' })">
-          Começar agora
+          {{ $t('landingPage.finalCta.button') }}
         </button>
       </div>
     </section>
@@ -171,40 +169,38 @@
     <section id="ai" class="section ai-section">
       <div class="ai-content">
         <div class="ai-text">
-          <h2>Seu copiloto financeiro.</h2>
-          <p>
-            O CoBudget analisa padrões financeiros e ajuda seu time a antecipar riscos antes que eles aconteçam.
-          </p>
+          <h2>{{ $t('landingPage.ai.title') }}</h2>
+          <p>{{ $t('landingPage.ai.subtitle') }}</p>
           <ul style="margin-bottom:24px;">
-            <li>Previsão de despesas</li>
-            <li>Detecção de anomalias</li>
-            <li>Categorização automática</li>
-            <li>Insights financeiros</li>
+            <li>{{ $t('landingPage.ai.bullet1') }}</li>
+            <li>{{ $t('landingPage.ai.bullet2') }}</li>
+            <li>{{ $t('landingPage.ai.bullet3') }}</li>
+            <li>{{ $t('landingPage.ai.bullet4') }}</li>
           </ul>
           <div class="ai-cta">
             <button class="btn btn-primary" @click.prevent="$router.push({ name: 'dashboard' })">
-              Ver IA em ação
+              {{ $t('landingPage.ai.ctaPrimary') }}
             </button>
             <button class="btn btn-secondary" @click.prevent="$router.push({ name: 'choose-plan' })">
-              Começar agora
+              {{ $t('landingPage.ai.ctaSecondary') }}
             </button>
           </div>
         </div>
         <div class="ai-highlights">
           <article class="ai-card">
-            <h3>Previsão Financeira</h3>
-            <p>Projete despesas e receitas futuras com intervalos de confiança.</p>
-            <span>Visão até 12 meses</span>
+            <h3>{{ $t('landingPage.ai.card1Title') }}</h3>
+            <p>{{ $t('landingPage.ai.card1Desc') }}</p>
+            <span>{{ $t('landingPage.ai.card1Tag') }}</span>
           </article>
           <article class="ai-card">
-            <h3>Detecção de Anomalias</h3>
-            <p>Identifique automaticamente gastos fora do comportamento normal.</p>
-            <span>Alertas proativos</span>
+            <h3>{{ $t('landingPage.ai.card2Title') }}</h3>
+            <p>{{ $t('landingPage.ai.card2Desc') }}</p>
+            <span>{{ $t('landingPage.ai.card2Tag') }}</span>
           </article>
           <article class="ai-card">
-            <h3>Automação Inteligente</h3>
-            <p>Categorização automática reduz até 80% do trabalho manual.</p>
-            <span>Mais eficiência</span>
+            <h3>{{ $t('landingPage.ai.card3Title') }}</h3>
+            <p>{{ $t('landingPage.ai.card3Desc') }}</p>
+            <span>{{ $t('landingPage.ai.card3Tag') }}</span>
           </article>
         </div>
       </div>
@@ -213,24 +209,24 @@
     <!-- Benefícios -->
     <!-- Diferenciação -->
     <section id="benefits" class="section benefits-section">
-      <h2 style="text-align:center; color:var(--purple);">Não é ERP corporativo. Não é planilha improvisada. Não é aplicativo individual.</h2>
+      <h2 style="text-align:center; color:var(--purple);">{{ $t('landingPage.diff.title') }}</h2>
       <p style="text-align:center; max-width:600px; margin:24px auto 0; color:var(--dark-gray); font-size:18px;">
-        É uma plataforma estruturada para decisões financeiras compartilhadas.
+        {{ $t('landingPage.diff.subtitle') }}
       </p>
     </section>
 
     <!-- Testemunhos -->
     <!-- Prova Social -->
     <section id="testimonials" class="section testimonials-section">
-      <h2 style="text-align:center; color:var(--purple);">O que nossos usuários dizem</h2>
+      <h2 style="text-align:center; color:var(--purple);">{{ $t('landingPage.testimonials.title') }}</h2>
       <div class="testimonials-container">
         <div class="testimonial-item">
-          <p>"Finalmente conseguimos visualizar todo o orçamento da casa sem discussões. Em poucas semanas, já sabíamos onde economizar."</p>
-          <h4>Casal usuário</h4>
+          <p>{{ $t('landingPage.testimonials.quote1') }}</p>
+          <h4>{{ $t('landingPage.testimonials.author1') }}</h4>
         </div>
         <div class="testimonial-item">
-          <p>"Nossa startup ganhou previsibilidade de caixa. O time inteiro entende o impacto de cada decisão."</p>
-          <h4>Founder SaaS</h4>
+          <p>{{ $t('landingPage.testimonials.quote2') }}</p>
+          <h4>{{ $t('landingPage.testimonials.author2') }}</h4>
         </div>
       </div>
     </section>
@@ -238,13 +234,13 @@
     <!-- Segurança -->
     <!-- Segurança -->
     <section id="security" class="section security-section">
-      <h2>Segurança no nível que decisões financeiras exigem</h2>
+      <h2>{{ $t('landingPage.security.title') }}</h2>
       <div class="security-content">
         <ul>
-          <li>Criptografia avançada</li>
-          <li>Autenticação em dois fatores</li>
-          <li>Arquitetura segura</li>
-          <li>Controle de acesso por perfil</li>
+          <li>{{ $t('landingPage.security.item1') }}</li>
+          <li>{{ $t('landingPage.security.item2') }}</li>
+          <li>{{ $t('landingPage.security.item3') }}</li>
+          <li>{{ $t('landingPage.security.item4') }}</li>
         </ul>
       </div>
     </section>
@@ -252,63 +248,63 @@
     <!-- Seção de Planos -->
     <!-- Planos (Conversão Direta) -->
     <section id="plans" class="section plans-section">
-      <h2>Escolha o plano ideal para o seu time.</h2>
+      <h2>{{ $t('landingPage.plans.title') }}</h2>
       <p style="text-align:center; max-width:600px; margin:16px auto 32px; color:var(--dark-gray); font-size:18px;">
-        Comece organizando suas finanças e evolua para decisões assistidas por inteligência artificial.
+        {{ $t('landingPage.plans.subtitle') }}
       </p>
 
       <section class="section ai-value" style="background: #f7f7ff; border-radius: 12px; padding: 24px 16px; margin-bottom: 32px;">
-        <h3 style="text-align:center; color:var(--purple); margin-bottom:8px;">IA Financial Copilot incluída nos planos Premium</h3>
+        <h3 style="text-align:center; color:var(--purple); margin-bottom:8px;">{{ $t('landingPage.plans.aiValueTitle') }}</h3>
         <p style="text-align:center; max-width:600px; margin:0 auto 0; color:var(--dark-gray); font-size:16px;">
-          O CoBudget Premium desbloqueia recursos avançados de inteligência financeira para você ou sua empresa.
+          {{ $t('landingPage.plans.aiValueSubtitle') }}
         </p>
       </section>
 
       <div class="plans-container">
         <!-- Plano STARTER -->
         <div class="plan-item starter-plan" style="border-top: 4px solid #f39c12;">
-          <span class="plan-label" style="background:#f39c12; color:#fff; padding:2px 10px; border-radius:6px; font-size:13px; font-weight:600; margin-bottom:8px; display:inline-block;">STARTER</span>
-          <h3>STARTER</h3>
-          <p class="price">{{ planDetails.MONTHLY.displayPrice }}</p>
-          <p class="price">{{ planDetails.ANNUAL.displayPrice }}</p>
-          <p>Para pequenos times começando o planejamento financeiro colaborativo.</p>
+          <span class="plan-label" style="background:#f39c12; color:#fff; padding:2px 10px; border-radius:6px; font-size:13px; font-weight:600; margin-bottom:8px; display:inline-block;">{{ $t('landingPage.plans.starterTag') }}</span>
+          <h3>{{ $t('landingPage.plans.starterName') }}</h3>
+          <p class="price">{{ formatPlanDisplay(planDetails.MONTHLY) }}</p>
+          <p class="price">{{ formatPlanDisplay(planDetails.ANNUAL) }}</p>
+          <p>{{ $t('landingPage.plans.starterSubtitle') }}</p>
           <ul class="plan-benefits">
-            <li>até 4 membros</li>
-            <li>workspace financeiro compartilhado</li>
-            <li>planejamento de orçamento</li>
-            <li>metas financeiras</li>
-            <li>simulação básica de cenários</li>
+            <li>{{ $t('landingPage.plans.starterFeature1') }}</li>
+            <li>{{ $t('landingPage.plans.starterFeature2') }}</li>
+            <li>{{ $t('landingPage.plans.starterFeature3') }}</li>
+            <li>{{ $t('landingPage.plans.starterFeature4') }}</li>
+            <li>{{ $t('landingPage.plans.starterFeature5') }}</li>
           </ul>
           <button class="btn btn-primary cta-btn" @click.prevent="redirectToCheckout('MONTHLY')">
-            Começar STARTER Mensal
+            {{ $t('landingPage.plans.starterMonthly') }}
           </button>
           <button class="btn btn-primary cta-btn" style="margin-top:10px; background:transparent; color:#f39c12; border:2px solid #f39c12;" @click.prevent="redirectToCheckout('ANNUAL')">
-            Escolher STARTER Anual
+            {{ $t('landingPage.plans.starterAnnual') }}
           </button>
         </div>
         <!-- Plano TEAM -->
         <div class="plan-item team-plan" style="border-top: 4px solid var(--purple); background: #f7f3fa; box-shadow: 0 4px 24px rgba(142,68,173,0.13); width: 50%; position:relative;">
           <div style="position:absolute;top:-32px;left:50%;transform:translateX(-50%);">
-            <span style="background:var(--yellow);color:var(--dark-purple);padding:6px 18px;border-radius:16px;font-size:15px;font-weight:700;box-shadow:0 2px 8px rgba(241,196,15,0.13);">⭐ Mais popular</span>
+            <span style="background:var(--yellow);color:var(--dark-purple);padding:6px 18px;border-radius:16px;font-size:15px;font-weight:700;box-shadow:0 2px 8px rgba(241,196,15,0.13);">{{ $t('landingPage.plans.teamPopular') }}</span>
           </div>
-          <span class="plan-label" style="background:var(--purple); color:#fff; padding:2px 10px; border-radius:6px; font-size:13px; font-weight:600; margin-bottom:8px; display:inline-block;">TEAM</span>
-          <h3 style="font-size:28px;">TEAM</h3>
-          <p class="price" style="color:var(--purple); font-weight:700;">{{ planDetails.BUSINESS_MONTHLY.displayPrice }}</p>
-          <p class="price" style="color:var(--purple); font-weight:700;">{{ planDetails.BUSINESS_ANNUAL.displayPrice }}</p>
-          <p>Para startups que precisam tomar decisões financeiras com mais inteligência.</p>
+          <span class="plan-label" style="background:var(--purple); color:#fff; padding:2px 10px; border-radius:6px; font-size:13px; font-weight:600; margin-bottom:8px; display:inline-block;">{{ $t('landingPage.plans.teamTag') }}</span>
+          <h3 style="font-size:28px;">{{ $t('landingPage.plans.teamName') }}</h3>
+          <p class="price" style="color:var(--purple); font-weight:700;">{{ formatPlanDisplay(planDetails.BUSINESS_MONTHLY) }}</p>
+          <p class="price" style="color:var(--purple); font-weight:700;">{{ formatPlanDisplay(planDetails.BUSINESS_ANNUAL) }}</p>
+          <p>{{ $t('landingPage.plans.teamSubtitle') }}</p>
           <ul class="plan-benefits">
-            <li>até 10 membros</li>
-            <li>IA Financial Copilot</li>
-            <li>simulação de cenários</li>
-            <li>previsão financeira</li>
-            <li>decisões financeiras colaborativas</li>
-            <li>colaboração entre membros</li>
+            <li>{{ $t('landingPage.plans.teamFeature1') }}</li>
+            <li>{{ $t('landingPage.plans.teamFeature2') }}</li>
+            <li>{{ $t('landingPage.plans.teamFeature3') }}</li>
+            <li>{{ $t('landingPage.plans.teamFeature4') }}</li>
+            <li>{{ $t('landingPage.plans.teamFeature5') }}</li>
+            <li>{{ $t('landingPage.plans.teamFeature6') }}</li>
           </ul>
           <button class="btn btn-primary cta-btn" style="background:var(--purple); border:none; font-size:1.15rem; padding:16px 32px;" @click.prevent="redirectToCheckout('BUSINESS_MONTHLY')">
-            Começar TEAM Mensal
+            {{ $t('landingPage.plans.teamMonthly') }}
           </button>
           <button class="btn btn-primary cta-btn" style="margin-top:10px; background:transparent; color:var(--purple); border:2px solid var(--purple);" @click.prevent="redirectToCheckout('BUSINESS_ANNUAL')">
-            Escolher TEAM Anual
+            {{ $t('landingPage.plans.teamAnnual') }}
           </button>
         </div>
       </div>
@@ -317,25 +313,25 @@
     <!-- Contato -->
     <section id="contact" class="section contact-section">
       <div class="contact-container">
-        <h2>Entre em Contato Conosco</h2>
+        <h2>{{ $t('landingPage.contact.title') }}</h2>
         <p style="margin-bottom:18px; color:var(--purple); font-size:16px; font-weight:500;">
-          E-mail: <a href="mailto:contact@cobudget.app" style="color:var(--dark-purple); font-weight:600; text-decoration:underline;">contact@cobudget.app</a>
+          {{ $t('landingPage.contact.emailLabel') }} <a href="mailto:contact@cobudget.app" style="color:var(--dark-purple); font-weight:600; text-decoration:underline;">contact@cobudget.app</a>
         </p>
         <form class="contact-form" @submit.prevent="handleSubmit">
           <div class="form-group">
-            <label for="name">Nome:</label>
+            <label for="name">{{ $t('landingPage.contact.nameLabel') }}</label>
             <input type="text" id="name" v-model="contactForm.name" required />
           </div>
           <div class="form-group">
-            <label for="email">E-mail:</label>
+            <label for="email">{{ $t('landingPage.contact.emailLabel') }}</label>
             <input type="email" id="email" v-model="contactForm.email" required />
           </div>
           <div class="form-group">
-            <label for="message">Mensagem:</label>
+            <label for="message">{{ $t('landingPage.contact.messageLabel') }}</label>
             <textarea id="message" v-model="contactForm.message" required></textarea>
           </div>
           <button type="submit" class="btn btn-primary" :disabled="isSubmitting">
-            {{ isSubmitting ? 'Enviando...' : 'Enviar' }}
+            {{ isSubmitting ? $t('landingPage.contact.sending') : $t('landingPage.contact.send') }}
           </button>
         </form>
       </div>
@@ -345,27 +341,27 @@
     <!-- CTA Final Forte -->
     <footer class="footer">
       <div class="footer-content">
-        <h2 style="color:var(--yellow); margin-bottom:16px;">Clareza não é luxo. É responsabilidade.</h2>
-        <p style="color:var(--white); font-size:18px; margin-bottom:24px;">Organize, projete e decida com confiança.<br>CoBudget — Plataforma de decisão financeira colaborativa.</p>
+        <h2 style="color:var(--yellow); margin-bottom:16px;">{{ $t('landingPage.footer.title') }}</h2>
+        <p style="color:var(--white); font-size:18px; margin-bottom:24px; white-space: pre-line;">{{ $t('landingPage.footer.subtitle') }}</p>
         <div class="footer-cta">
           <button class="btn btn-primary cta-btn" @click.prevent="$router.push({ name: 'choose-plan' })">
-            Começar gratuitamente agora
+            {{ $t('landingPage.footer.cta') }}
           </button>
         </div>
         <div class="footer-links">
-          <a href="#">Sobre</a>
-          <a href="#benefits">Benefícios</a>
-          <a href="#testimonials">Depoimentos</a>
-          <a href="#security">Segurança</a>
-          <a href="#contact">Contato</a>
+          <a href="#">{{ $t('landingPage.nav.about') }}</a>
+          <a href="#benefits">{{ $t('landingPage.nav.benefits') }}</a>
+          <a href="#testimonials">{{ $t('landingPage.nav.testimonials') }}</a>
+          <a href="#security">{{ $t('landingPage.nav.security') }}</a>
+          <a href="#contact">{{ $t('landingPage.nav.contact') }}</a>
         </div>
         <div class="footer-links footer-info">
-          <a @click.prevent="$router.push('/privacy-policy')">Política de Privacidade</a>
-          <a @click.prevent="$router.push('/terms-of-use')">Termos de Uso</a>
-          <a @click.prevent="$router.push('/cookie-policy')">Política de Cookies</a>
+          <a @click.prevent="$router.push('/privacy-policy')">{{ $t('footer.privacy_policy') }}</a>
+          <a @click.prevent="$router.push('/terms-of-use')">{{ $t('footer.terms_of_use') }}</a>
+          <a @click.prevent="$router.push('/cookie-policy')">{{ $t('footer.cookie_policy') }}</a>
         </div>
         <div class="footer-info">
-          <p>&copy; 2024 CoBudget. Todos os direitos reservados. Powered by Les Monades</p>
+          <p>{{ $t('landingPage.footer.copyright') }}</p>
         </div>
       </div>
     </footer>
@@ -376,10 +372,11 @@
 <script>
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import PrivacyControls from '@/components/compliance/PrivacyControls.vue'
-import { PLAN_DETAILS, formatPlanAmount } from '@/constants/plans'
+import { PLAN_DETAILS } from '@/constants/plans'
 import { useUserStore } from '@/plugins/userStore'
 import NotificationService from '@/services/NotificationService'
 import OnboardingOrchestrator from '@/services/OnboardingOrchestrator'
+import { formatConvertedPriceFromBRL, resolvePricingCurrency } from '@/utils/pricing'
 
 export default {
   components: {
@@ -405,7 +402,7 @@ export default {
     },
     async handleSubmit() {
       if (!this.contactForm.email.includes('@')) {
-        alert('Por favor, insira um e-mail válido.');
+        alert(this.$t('landingPage.contact.invalidEmail'));
         return;
       }
 
@@ -415,17 +412,42 @@ export default {
 
       try {
         await NotificationService.sendContactForm(this.contactForm);
-        alert('Mensagem enviada com sucesso! Entraremos em contato em breve.');
+        alert(this.$t('landingPage.contact.success'));
         this.contactForm = { name: '', email: '', message: '' };
       } catch (error) {
         console.error('Erro ao enviar mensagem:', error);
-        const errorMessage = error.response?.data?.error || 'Erro ao enviar mensagem. Por favor, tente novamente ou entre em contato diretamente em help@cobudget.app';
+        const errorMessage = error.response?.data?.error || this.$t('landingPage.contact.errorDefault');
         alert(errorMessage);
       } finally {
         this.isSubmitting = false;
       }
     },
-  async redirectToCheckout(plan) {
+    getFormattingLocale() {
+      const uiLocale = this.$i18n?.locale || 'pt'
+      const localeMap = {
+        pt: 'pt-BR',
+        en: 'en-US',
+        es: 'es-ES',
+        fr: 'fr-FR'
+      }
+      return localeMap[uiLocale] || 'pt-BR'
+    },
+    formatPlanDisplay(plan) {
+      const amount = Number(plan?.amount || 0)
+      const browserLocale = typeof navigator !== 'undefined' ? navigator.language : null
+      const currency = resolvePricingCurrency({
+        locale: this.$i18n?.locale,
+        browserLocale
+      })
+      const periodKey = plan?.billingPeriod === 'year' ? 'landingPage.plans.perYear' : 'landingPage.plans.perMonth'
+      const formattedAmount = formatConvertedPriceFromBRL({
+        amountInBRL: amount,
+        targetCurrency: currency,
+        uiLocale: this.getFormattingLocale()
+      })
+      return `${formattedAmount} / ${this.$t(periodKey)}`
+    },
+    async redirectToCheckout(plan) {
       const userStore = useUserStore()
       if (!userStore.isAuthenticated) {
         localStorage.setItem('selectedPlan', plan)
@@ -434,9 +456,6 @@ export default {
         return
       }
       this.$router.push({ name: 'choose-plan', query: { plan } })
-    },
-    formatAmount(amount) {
-      return formatPlanAmount(amount);
     }
   },
 };

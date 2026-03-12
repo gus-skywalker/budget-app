@@ -14,19 +14,19 @@
 
     <div class="steps">
       <v-chip size="small" :color="banner.steps.auth ? 'success' : 'default'" variant="tonal">
-        Autenticacao
+        {{ $t('onboarding.auth') }}
       </v-chip>
       <v-chip size="small" :color="banner.steps.workspace ? 'success' : 'default'" variant="tonal">
-        Workspace
+        {{ $t('onboarding.workspace') }}
       </v-chip>
       <v-chip size="small" :color="banner.steps.billing ? 'success' : 'default'" variant="tonal">
-        Assinatura
+        {{ $t('onboarding.billing') }}
       </v-chip>
     </div>
 
     <div v-if="banner.ctaRoute" class="cta-row">
       <v-btn color="primary" size="small" @click="goToCta">
-        {{ banner.ctaLabel || 'Continuar' }}
+        {{ banner.ctaLabel || $t('onboarding.continue') }}
       </v-btn>
     </div>
   </v-alert>

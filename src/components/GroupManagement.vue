@@ -4,7 +4,7 @@
       <!-- Header -->
       <div class="group-header">
         <h1 class="page-title">{{ $t('group_management.title') }}</h1>
-        <p class="page-subtitle">Crie e gerencie grupos financeiros</p>
+        <p class="page-subtitle">{{ $t('group_management.subtitle') }}</p>
       </div>
 
       <v-row>
@@ -128,7 +128,7 @@
 
       <!-- Snackbar para mensagens de sucesso -->
       <v-snackbar v-model="successSnackbar" color="success" class="modern-snackbar">
-        {{ $t('group_management.success_message') }}
+        {{ successMessage || $t('group_management.success_message') }}
         <template #actions>
           <v-btn color="white" variant="text" @click="successSnackbar = false">
             {{ $t('common.close') }}
@@ -138,7 +138,7 @@
 
       <!-- Snackbar para mensagens de erro -->
       <v-snackbar v-model="errorSnackbar" color="error" class="modern-snackbar">
-        {{ $t('group_management.error_message') }}
+        {{ errorMessage || $t('group_management.error_message') }}
         <template #actions>
           <v-btn color="white" variant="text" @click="errorSnackbar = false">
             {{ $t('common.close') }}
@@ -189,7 +189,7 @@ export default {
     mapGroup(group) {
       return {
         id: group?.id ?? group?.groupId ?? null,
-        name: group?.name ?? group?.groupName ?? `Grupo ${group?.id ?? group?.groupId ?? ''}`.trim(),
+        name: group?.name ?? group?.groupName ?? `${this.$t('group_management.group_fallback')} ${group?.id ?? group?.groupId ?? ''}`.trim(),
         description: group?.description ?? '',
         ownerId: group?.ownerId ?? null,
         createdDate: group?.createdDate ?? null
@@ -226,8 +226,8 @@ export default {
           this.groups = groups.map((group) => this.mapGroup(group)).filter((group) => Boolean(group.id))
         })
         .catch((error) => {
-          const errorMsg = error.response?.data?.message || 'Erro ao buscar grupos.'
-          console.error('Erro ao buscar grupos:', error)
+          const errorMsg = error.response?.data?.message || this.$t('group_management.error_fetch_groups')
+          console.error(this.$t('group_management.error_fetch_groups'), error)
           this.errorMessage = errorMsg
           this.errorSnackbar = true
         })
@@ -244,8 +244,8 @@ export default {
           this.groupMembers = members.map((member) => this.mapGroupMember(member)).filter((member) => Boolean(member.id))
         })
         .catch((error) => {
-          const errorMsg = error.response?.data?.message || 'Erro ao buscar membros do grupo.'
-          console.error('Erro ao buscar membros do grupo:', error)
+          const errorMsg = error.response?.data?.message || this.$t('group_management.error_fetch_members')
+          console.error(this.$t('group_management.error_fetch_members'), error)
           this.errorMessage = errorMsg
           this.errorSnackbar = true
         })
@@ -258,33 +258,33 @@ export default {
             this.groups.push(created)
           }
           this.newGroup = { name: '', description: '' }
-          this.successMessage = 'Grupo criado com sucesso!'
+          this.successMessage = this.$t('group_management.success_group_created')
           this.successSnackbar = true
         })
         .catch((error) => {
-          const errorMsg = error.response?.data?.message || 'Erro ao criar grupo.'
-          console.error('Erro ao criar grupo:', error)
+          const errorMsg = error.response?.data?.message || this.$t('group_management.error_create_group')
+          console.error(this.$t('group_management.error_create_group'), error)
           this.errorMessage = errorMsg
           this.errorSnackbar = true
         })
     },
     inviteMember() {
       if (this.inviteEmail === '') {
-        this.errorMessage = 'Por favor, insira um email válido.'
+        this.errorMessage = this.$t('group_management.error_invalid_email')
         this.errorSnackbar = true
         return
       }
 
       GroupService.inviteMember(this.selectedGroup, this.inviteEmail)
         .then(() => {
-          this.successMessage = `Convite enviado para ${this.inviteEmail}`
+          this.successMessage = this.$t('group_management.success_invite_sent', { email: this.inviteEmail })
           this.successSnackbar = true
           this.inviteEmail = ''
         })
         .catch((error) => {
           const errorMsg =
-            error.response?.data?.message || `Erro ao convidar usuário ${this.inviteEmail}.`
-          console.error(`Erro ao convidar usuário ${this.inviteEmail}:`, error)
+            error.response?.data?.message || this.$t('group_management.error_invite_user', { email: this.inviteEmail })
+          console.error(this.$t('group_management.error_invite_user', { email: this.inviteEmail }), error)
           this.errorMessage = errorMsg
           this.errorSnackbar = true
         })

@@ -25,8 +25,10 @@ defineOptions({ name: 'AppFooter' });
 const { t } = useI18n();
 
 const availableLanguages = [
-    { text: 'English', value: 'en' },
-    { text: 'Português', value: 'pt' },
+    { text: t('footer.language_en'), value: 'en' },
+    { text: t('footer.language_pt'), value: 'pt' },
+    { text: t('footer.language_fr'), value: 'fr' },
+    { text: t('footer.language_es'), value: 'es' }
 ];
 </script>
 

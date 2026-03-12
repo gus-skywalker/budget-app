@@ -5,7 +5,7 @@
                 <div class="card-header">
                     <h2 class="card-title">
                         <v-icon color="#667eea" class="mr-2">mdi-file-chart</v-icon>
-                        Gerar Relatórios
+                        {{ $t('reportGenerator.title') }}
                     </h2>
                 </div>
                 <div class="card-content">
@@ -17,7 +17,7 @@
                                 :items="reportTypes" 
                                 item-title="text" 
                                 item-value="value"
-                                label="Tipo de Relatório" 
+                                :label="$t('reportGenerator.report_type')" 
                                 variant="outlined"
                                 density="comfortable"
                                 color="#667eea"
@@ -32,7 +32,7 @@
                                 :items="viewTypes" 
                                 item-title="text" 
                                 item-value="value"
-                                label="Visualização" 
+                                :label="$t('reportGenerator.view_type')" 
                                 variant="outlined"
                                 density="comfortable"
                                 color="#667eea"
@@ -85,7 +85,7 @@
                                 <template v-slot:activator="{ props }">
                                     <v-text-field 
                                         v-model="formattedStartDate" 
-                                        label="Data Inicial" 
+                                        :label="$t('reportGenerator.start_date')" 
                                         prepend-inner-icon="mdi-calendar"
                                         readonly 
                                         v-bind="props" 
@@ -110,7 +110,7 @@
                                 <template v-slot:activator="{ props }">
                                     <v-text-field 
                                         v-model="formattedEndDate" 
-                                        label="Data Final" 
+                                        :label="$t('reportGenerator.end_date')" 
                                         prepend-inner-icon="mdi-calendar" 
                                         readonly
                                         v-bind="props" 
@@ -128,7 +128,7 @@
                         <v-col cols="12" md="4" class="d-flex align-center">
                             <v-checkbox 
                                 v-model="includeProportions" 
-                                label="Incluir proporções (%)" 
+                                :label="$t('reportGenerator.include_proportions')" 
                                 density="comfortable"
                                 color="#667eea"
                                 hide-details 
@@ -147,7 +147,7 @@
                                 size="large"
                             >
                                 <v-icon left>mdi-file-pdf-box</v-icon>
-                                Gerar PDF
+                                {{ $t('reportGenerator.generate_pdf') }}
                             </v-btn>
                             <v-btn 
                                 @click="generateReport('xlsx')" 
@@ -157,7 +157,7 @@
                                 size="large"
                             >
                                 <v-icon left>mdi-file-excel-box</v-icon>
-                                Gerar XLSX
+                                {{ $t('reportGenerator.generate_xlsx') }}
                             </v-btn>
                         </v-col>
                     </v-row>
@@ -188,13 +188,13 @@ export default {
             reportType: 'expenses',
             viewType: 'grouped',
             reportTypes: [
-                { text: 'Despesas', value: 'expenses' },
-                { text: 'Entradas', value: 'incomes' },
+                { text: this.$t('reportGenerator.report_types.expenses'), value: 'expenses' },
+                { text: this.$t('reportGenerator.report_types.incomes'), value: 'incomes' },
             ],
             viewTypes: [
-                { text: 'Normal (linha a linha)', value: 'normal' },
-                { text: 'Agrupado por mês', value: 'grouped' },
-                { text: 'Detalhado por mês', value: 'detailed' },
+                { text: this.$t('reportGenerator.view_types.normal'), value: 'normal' },
+                { text: this.$t('reportGenerator.view_types.grouped'), value: 'grouped' },
+                { text: this.$t('reportGenerator.view_types.detailed'), value: 'detailed' },
             ],
             categoryIcons: {
                 groceries: 'mdi-cart',
@@ -282,7 +282,7 @@ export default {
 
             } catch (error) {
                 console.error('Erro ao gerar relatório:', error);
-                this.showSnackbar('Erro ao gerar relatório.', 'error');
+                this.showSnackbar(this.$t('reportGenerator.error_generate'), 'error');
             } finally {
                 this.loading = false;
             }
@@ -304,11 +304,11 @@ export default {
         },
         validateInputs() {
             if (!this.startDate || !this.endDate) {
-                this.showSnackbar("Selecione o intervalo de datas.", "warning");
+                this.showSnackbar(this.$t('reportGenerator.select_date_range'), "warning");
                 return false;
             }
             if (this.startDate > this.endDate) {
-                this.showSnackbar("A data inicial não pode ser maior que a data final.", "warning");
+                this.showSnackbar(this.$t('reportGenerator.start_after_end'), "warning");
                 return false;
             }
             return true;

@@ -55,6 +55,7 @@ const loading = ref(false)
 const getLocaleForFormatting = () => {
   if (locale.value === 'en') return 'en-US'
   if (locale.value === 'fr') return 'fr-FR'
+  if (locale.value === 'es') return 'es-ES'
   return 'pt-BR'
 }
 

@@ -1,59 +1,59 @@
 <template>
   <section class="ai-card">
     <header>
-      <h2>Detecção de Anomalias</h2>
-      <p>Envie as despesas recentes para identificar gastos fora do padrão.</p>
+      <h2>{{ t('ai.anomaly.title') }}</h2>
+      <p>{{ t('ai.anomaly.description') }}</p>
     </header>
 
     <form class="ai-form" @submit.prevent="handleSubmit">
       <label>
-        Sensibilidade
+        {{ t('ai.anomaly.sensitivity') }}
         <input v-model.number="sensitivity" type="number" min="0.5" max="3" step="0.1" />
       </label>
 
       <div class="transactions">
         <div class="transactions__header">
-          <h3>Despesas</h3>
-          <button type="button" class="ghost" @click="addTransaction">+ Adicionar</button>
+          <h3>{{ t('ai.anomaly.expenses') }}</h3>
+          <button type="button" class="ghost" @click="addTransaction">+ {{ t('ai.common.add') }}</button>
         </div>
-        <div v-if="!transactions.length" class="empty">Inclua despesas para análise.</div>
+        <div v-if="!transactions.length" class="empty">{{ t('ai.anomaly.empty_transactions') }}</div>
         <div v-for="(tx, index) in transactions" :key="tx.localId" class="transaction-row">
-          <input v-model="tx.description" placeholder="Descrição" required />
-          <input v-model.number="tx.amount" type="number" min="0" step="0.01" placeholder="Valor" required />
+          <input v-model="tx.description" :placeholder="t('common.description')" required />
+          <input v-model.number="tx.amount" type="number" min="0" step="0.01" :placeholder="t('common.amount')" required />
           <input v-model="tx.date" type="date" required />
           <button type="button" class="danger" @click="removeTransaction(index)">x</button>
         </div>
       </div>
 
       <button type="submit" :disabled="isLoading">
-        {{ isLoading ? 'Processando...' : 'Detectar anomalias' }}
+        {{ isLoading ? t('ai.common.processing') : t('ai.anomaly.submit') }}
       </button>
       <p v-if="error" class="error">{{ error }}</p>
     </form>
 
     <section v-if="response" class="results">
-      <h3>Resumo</h3>
+      <h3>{{ t('ai.anomaly.summary') }}</h3>
       <ul>
-        <li>Total analisado: {{ response.summary.totalTransactionsAnalyzed }}</li>
-        <li>Anomalias: {{ response.summary.anomaliesCount }}</li>
-        <li>Valor anômalo: {{ formatCurrency(response.summary.totalAnomalousAmount) }}</li>
+        <li>{{ t('ai.anomaly.total_analyzed') }}: {{ response.summary.totalTransactionsAnalyzed }}</li>
+        <li>{{ t('ai.anomaly.anomalies') }}: {{ response.summary.anomaliesCount }}</li>
+        <li>{{ t('ai.anomaly.anomalous_amount') }}: {{ formatCurrency(response.summary.totalAnomalousAmount) }}</li>
       </ul>
 
       <table v-if="response.anomalies.length">
         <thead>
           <tr>
-            <th>Data</th>
-            <th>Descrição</th>
-            <th>Valor</th>
-            <th>Desvio</th>
-            <th>Severidade</th>
-            <th>Sugestão</th>
+            <th>{{ t('common.date') }}</th>
+            <th>{{ t('common.description') }}</th>
+            <th>{{ t('common.amount') }}</th>
+            <th>{{ t('ai.anomaly.deviation') }}</th>
+            <th>{{ t('ai.anomaly.severity') }}</th>
+            <th>{{ t('ai.anomaly.suggestion') }}</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="item in response.anomalies" :key="item.expense.id || item.expense.description">
             <td>{{ item.expense.date || '—' }}</td>
-            <td>{{ item.expense.description || 'Sem descrição' }}</td>
+            <td>{{ item.expense.description || t('ai.common.no_description') }}</td>
             <td>{{ formatCurrency(item.expense.amount) }}</td>
             <td>{{ item.deviation.toFixed(2) }}</td>
             <td>
@@ -63,15 +63,18 @@
           </tr>
         </tbody>
       </table>
-      <p v-else class="empty">Sem dados suficientes ou sem anomalias.</p>
+      <p v-else class="empty">{{ t('ai.anomaly.no_data') }}</p>
     </section>
   </section>
 </template>
 
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import AiService from '../../services/aiService'
 import type { AiTransaction, AnomalyDetectionResponse } from '../../services/aiService'
+
+const { t } = useI18n()
 
 interface UiTransaction extends AiTransaction {
   localId: string
@@ -103,7 +106,7 @@ const formatCurrency = (value: number) =>
 
 const handleSubmit = async () => {
   if (!transactions.length) {
-    error.value = 'Adicione despesas para análise.'
+    error.value = t('ai.anomaly.error_add_expenses')
     return
   }
 
@@ -124,7 +127,7 @@ const handleSubmit = async () => {
     const { data } = await AiService.detectAnomalies(payload)
     response.value = data
   } catch (err) {
-    error.value = 'Não foi possível detectar anomalias agora.'
+    error.value = t('ai.anomaly.error_detect')
     console.error(err)
   } finally {
     isLoading.value = false

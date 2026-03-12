@@ -3,111 +3,91 @@
     <!-- Header -->
     <header class="header">
       <img src="/logo.jpg" alt="Logo" class="logo" />
-  <h1>CoBudget by Les Monades</h1>
+      <h1>{{ $t('theWelcome.header.title') }}</h1>
     </header>
 
     <div class="container">
-
-      <!-- Seção 1: Planejamento Financeiro -->
+      <!-- Section 1: Financial Planning -->
       <section class="section">
         <div class="section-image">
-          <img src="/actress.jpg" alt="Planejamento Financeiro" />
+          <img src="/actress.jpg" :alt="$t('theWelcome.section1.imageAlt')" />
         </div>
         <div class="section-content">
-          <h2>Planejamento Financeiro</h2>
-          <p>
-            Nossa aplicação financeira ajuda você a planejar seu futuro financeiro com confiança.
-          </p>
-          <p>
-            Com nossa ferramenta, você pode criar um plano personalizado para alcançar seus
-            objetivos financeiros.
-          </p>
+          <h2>{{ $t('theWelcome.section1.title') }}</h2>
+          <p>{{ $t('theWelcome.section1.p1') }}</p>
+          <p>{{ $t('theWelcome.section1.p2') }}</p>
         </div>
       </section>
 
-            <section class="ai-highlight">
-        <p class="tag">IA Financial Copilot</p>
-        <h2>Inteligência que trabalha pelos seus objetivos</h2>
-        <p>
-          O Budget AI Service analisa seu histórico em segundos para entregar previsões confiáveis, alertas proativos e planos de economia mensuráveis. Veja como essa automação reduz o esforço manual e aumenta o controle:
-        </p>
+      <section class="ai-highlight">
+        <p class="tag">{{ $t('theWelcome.ai.tag') }}</p>
+        <h2>{{ $t('theWelcome.ai.title') }}</h2>
+        <p>{{ $t('theWelcome.ai.desc') }}</p>
         <div class="ai-grid">
           <article>
-            <h3>Previsão de Despesas</h3>
-            <p>Projete meses futuros com faixa de confiança e entenda se o ritmo de gastos está subindo, caindo ou estável.</p>
+            <h3>{{ $t('theWelcome.ai.features.forecast.title') }}</h3>
+            <p>{{ $t('theWelcome.ai.features.forecast.desc') }}</p>
           </article>
           <article>
-            <h3>Detecção de Anomalias</h3>
-            <p>O motor de IA monitora todos os lançamentos e destaca despesas fora do padrão antes que virem um problema.</p>
+            <h3>{{ $t('theWelcome.ai.features.anomaly.title') }}</h3>
+            <p>{{ $t('theWelcome.ai.features.anomaly.desc') }}</p>
           </article>
           <article>
-            <h3>Planos de Economia</h3>
-            <p>Receba um plano claro com valor mensal recomendado, probabilidade de sucesso e ações sugeridas.</p>
+            <h3>{{ $t('theWelcome.ai.features.savings.title') }}</h3>
+            <p>{{ $t('theWelcome.ai.features.savings.desc') }}</p>
           </article>
           <article>
-            <h3>Auto Categorize</h3>
-            <p>Descrições em PT/EN são interpretadas automaticamente, reduzindo até 80% do trabalho de classificação manual.</p>
+            <h3>{{ $t('theWelcome.ai.features.autocategorize.title') }}</h3>
+            <p>{{ $t('theWelcome.ai.features.autocategorize.desc') }}</p>
           </article>
         </div>
       </section>
 
-      <!-- Seção 2: Controle e Gestão -->
+      <!-- Section 2: Control and Management -->
       <section class="section">
         <div class="section-image">
-          <img src="/controle_gestao.jpg" alt="Controle e Gestão" />
+          <img src="/controle_gestao.jpg" :alt="$t('theWelcome.section2.imageAlt')" />
         </div>
         <div class="section-content">
-          <h2>Controle e Gestão</h2>
-          <p>
-            Nossa aplicação financeira oferece recursos avançados de controle e gestão para ajudá-lo
-            a gerenciar suas finanças de forma eficaz.
-          </p>
-          <p>Você pode acompanhar suas despesas, receitas e investimentos em um só lugar.</p>
+          <h2>{{ $t('theWelcome.section2.title') }}</h2>
+          <p>{{ $t('theWelcome.section2.p1') }}</p>
+          <p>{{ $t('theWelcome.section2.p2') }}</p>
         </div>
       </section>
 
-      <!-- Seção 3: Segurança e Proteção -->
+      <!-- Section 3: Security and Protection -->
       <section class="section">
         <div class="section-image">
-          <img src="/seguranca.jpg" alt="Segurança e Proteção" />
+          <img src="/seguranca.jpg" :alt="$t('theWelcome.section3.imageAlt')" />
         </div>
         <div class="section-content">
-          <h2>Segurança e Proteção</h2>
-          <p>Nossa aplicação financeira é projetada com segurança em mente.</p>
-          <p>
-            Nós usamos tecnologias de ponta para proteger suas informações financeiras e garantir
-            que seus dados sejam seguros.
-          </p>
+          <h2>{{ $t('theWelcome.section3.title') }}</h2>
+          <p>{{ $t('theWelcome.section3.p1') }}</p>
+          <p>{{ $t('theWelcome.section3.p2') }}</p>
         </div>
       </section>
 
-      <!-- Seção 4: Vantagens -->
+      <!-- Section 4: Advantages -->
       <section class="section">
         <div class="section-image">
-          <img src="/vantagens.jpg" alt="Vantagens" />
+          <img src="/vantagens.jpg" :alt="$t('theWelcome.section4.imageAlt')" />
         </div>
         <div class="section-content">
-          <h2>Vantagens</h2>
-          <p>
-            Nossa aplicação financeira oferece uma série de vantagens, incluindo relatórios
-            personalizados, alertas de gastos e recomendações de investimento.
-          </p>
-          <p>Você pode aproveitar ao máximo suas finanças com nossa ferramenta.</p>
+          <h2>{{ $t('theWelcome.section4.title') }}</h2>
+          <p>{{ $t('theWelcome.section4.p1') }}</p>
+          <p>{{ $t('theWelcome.section4.p2') }}</p>
         </div>
       </section>
 
-      <!-- Seção 5: Suporte e Ajuda -->
+      <!-- Section 5: Support and Help -->
       <section class="section">
         <div class="section-image">
-          <img src="/suporte.jpg" alt="Suporte e Ajuda" />
+          <img src="/suporte.jpg" :alt="$t('theWelcome.section5.imageAlt')" />
         </div>
         <div class="section-content">
-          <h2>Suporte e Ajuda</h2>
-          <p>
-            Nossa equipe de suporte está sempre pronta para ajudá-lo com qualquer dúvida ou problema
-            que você possa ter.
-          </p>
-          <p>Você pode contar conosco para obter ajuda em qualquer momento.</p>
+          <h2>{{ $t('theWelcome.section5.title') }}</h2>
+          <p>{{ $t('theWelcome.section5.p1') }}</p>
+          <p>{{ $t('theWelcome.section5.p2') }}</p>
         </div>
       </section>
     </div>

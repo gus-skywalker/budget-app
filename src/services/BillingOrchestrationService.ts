@@ -1,7 +1,15 @@
 import axiosInterceptor from './axiosInterceptor'
 import type { BillingSubjectType } from './BillingDecisionService'
+import type { SupportedCurrency } from '@/utils/pricing'
 
-export interface StartSubscriptionRequest {
+interface PricingContextPayload {
+  preferredCurrency?: SupportedCurrency
+  countryCode?: string | null
+  browserLocale?: string | null
+  uiLocale?: string | null
+}
+
+export interface StartSubscriptionRequest extends PricingContextPayload {
   plan: string
   actor: string
   subjectType: BillingSubjectType
@@ -19,7 +27,7 @@ export interface CancelSubscriptionRequest {
   messageId: string
 }
 
-export interface OpenPortalRequest {
+export interface OpenPortalRequest extends PricingContextPayload {
   actor: string
   subjectType: BillingSubjectType
   subjectId: string
@@ -44,6 +52,8 @@ export interface OperationStatusResponse {
   attempts: number
   lastError?: string | null
   checkoutUrl?: string | null
+  resolvedCurrency?: SupportedCurrency
+  resolvedPriceId?: string | null
 }
 
 export interface BillingAccessResponse {

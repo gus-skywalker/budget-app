@@ -7,17 +7,17 @@
             <div class="card-header">
               <h3 class="card-title">
                 <v-icon color="primary" class="mr-2">mdi-office-building-plus</v-icon>
-                Criar nova empresa
+                {{ $t('companySettings.create_new_company') }}
               </h3>
               <p class="card-description">
-                Crie sua empresa para ativar o contexto B2B, convidar membros e gerenciar permissões.
+                {{ $t('companySettings.create_new_company_desc') }}
               </p>
             </div>
             <v-card-text>
               <v-form ref="createCompanyFormRef" @submit.prevent="createCompany">
                 <v-text-field
                   v-model="createCompanyForm.name"
-                  label="Nome da empresa"
+                  :label="$t('companySettings.company_name')"
                   variant="outlined"
                   density="comfortable"
                   prepend-inner-icon="mdi-office-building"
@@ -27,7 +27,7 @@
                 />
                 <v-text-field
                   v-model="createCompanyForm.legalDocument"
-                  label="Documento legal (CNPJ/VAT/EIN)"
+                  :label="$t('companySettings.legal_document')"
                   variant="outlined"
                   density="comfortable"
                   prepend-inner-icon="mdi-card-account-details"
@@ -40,7 +40,7 @@
                   :items="countryOptions"
                   item-title="label"
                   item-value="value"
-                  label="País da empresa"
+                  :label="$t('companySettings.country')"
                   variant="outlined"
                   density="comfortable"
                   prepend-inner-icon="mdi-earth"
@@ -50,7 +50,7 @@
                 />
                 <v-textarea
                   v-model="createCompanyForm.description"
-                  label="Descrição"
+                  :label="$t('companySettings.description')"
                   variant="outlined"
                   density="comfortable"
                   auto-grow
@@ -67,7 +67,7 @@
                   :disabled="creatingCompany"
                 >
                   <v-icon left>mdi-check-circle</v-icon>
-                  Criar empresa
+                  {{ $t('companySettings.create_company') }}
                 </v-btn>
               </v-form>
             </v-card-text>
@@ -76,7 +76,7 @@
 
         <v-col cols="12" md="5" lg="4">
           <v-alert type="info" variant="tonal" border="start" class="mb-4">
-            Você está em modo pessoal. Crie uma empresa ou selecione uma existente para gerenciar dados da organização.
+            {{ $t('companySettings.personal_mode_alert') }}
           </v-alert>
           <v-btn
             color="primary"
@@ -85,7 +85,7 @@
             @click="goToSelectCompany"
           >
             <v-icon left>mdi-swap-horizontal</v-icon>
-            Selecionar empresa existente
+            {{ $t('companySettings.select_existing_company') }}
           </v-btn>
         </v-col>
       </v-row>
@@ -99,7 +99,7 @@
         border="start"
         class="mb-4"
       >
-        Apenas administradores podem alterar dados da empresa, convidar membros ou excluir a organização.
+        {{ $t('companySettings.only_admin_alert') }}
       </v-alert>
 
       <v-row dense>
@@ -108,17 +108,17 @@
             <div class="card-header">
               <h3 class="card-title">
                 <v-icon color="primary" class="mr-2">mdi-office-building-cog</v-icon>
-                Informações da Empresa
+                {{ $t('companySettings.company_info') }}
               </h3>
               <p class="card-description">
-                Atualize nome e descrição que serão exibidos para todos os membros.
+                {{ $t('companySettings.company_info_desc') }}
               </p>
             </div>
             <v-card-text>
               <v-form ref="companyFormRef" @submit.prevent="updateCompany">
                 <v-text-field
                   v-model="companyForm.companyName"
-                  label="Nome da empresa"
+                  :label="$t('companySettings.company_name')"
                   variant="outlined"
                   density="comfortable"
                   prepend-inner-icon="mdi-office-building"
@@ -128,7 +128,7 @@
                 />
                 <v-textarea
                   v-model="companyForm.description"
-                  label="Descrição"
+                  :label="$t('companySettings.description')"
                   variant="outlined"
                   density="comfortable"
                   auto-grow
@@ -146,7 +146,7 @@
                   block
                 >
                   <v-icon left>mdi-content-save</v-icon>
-                  Salvar alterações
+                  {{ $t('companySettings.save_changes') }}
                 </v-btn>
               </v-form>
             </v-card-text>
@@ -156,17 +156,17 @@
             <div class="card-header">
               <h3 class="card-title">
                 <v-icon color="primary" class="mr-2">mdi-account-plus</v-icon>
-                Convidar membros
+                {{ $t('companySettings.invite_members') }}
               </h3>
               <p class="card-description">
-                Envie convites por e-mail para adicionar novos usuários com a role adequada.
+                {{ $t('companySettings.invite_members_desc') }}
               </p>
             </div>
             <v-card-text>
               <v-form ref="inviteFormRef" @submit.prevent="sendInvite">
                 <v-text-field
                   v-model="inviteForm.email"
-                  label="E-mail do convidado"
+                  :label="$t('companySettings.invite_email')"
                   prepend-inner-icon="mdi-email"
                   type="email"
                   variant="outlined"
@@ -177,7 +177,7 @@
                 <v-select
                   v-model="inviteForm.role"
                   :items="roleOptions"
-                  label="Permissão"
+                  :label="$t('companySettings.permission')"
                   item-title="label"
                   item-value="value"
                   prepend-inner-icon="mdi-shield-account"
@@ -192,20 +192,20 @@
                   :loading="inviteLoading"
                 >
                   <v-icon left>mdi-send</v-icon>
-                  Enviar convite
+                  {{ $t('companySettings.send_invite') }}
                 </v-btn>
               </v-form>
 
               <v-divider class="my-4" />
 
-              <div class="section-title">Convites pendentes</div>
+              <div class="section-title">{{ $t('companySettings.pending_invites') }}</div>
               <v-alert
                 v-if="!invitesAvailable"
                 type="info"
                 variant="tonal"
                 class="mt-2"
               >
-                Convites indisponíveis no momento.
+                {{ $t('companySettings.invites_unavailable') }}
               </v-alert>
               <v-alert
                 v-else-if="!invites.length"
@@ -213,7 +213,7 @@
                 variant="tonal"
                 class="mt-2"
               >
-                Nenhum convite pendente.
+                {{ $t('companySettings.no_pending_invites') }}
               </v-alert>
               <v-list v-else density="comfortable">
                 <v-list-item
@@ -238,10 +238,10 @@
             <div class="card-header">
               <h3 class="card-title">
                 <v-icon color="primary" class="mr-2">mdi-account-multiple</v-icon>
-                Membros atuais
+                {{ $t('companySettings.current_members') }}
               </h3>
               <p class="card-description">
-                Lista de usuários associados à empresa e suas permissões.
+                {{ $t('companySettings.current_members_desc') }}
               </p>
             </div>
             <v-card-text>
@@ -250,7 +250,7 @@
                 type="info"
                 variant="tonal"
               >
-                Nenhum membro encontrado.
+                {{ $t('companySettings.no_members') }}
               </v-alert>
               <v-list v-else density="compact">
                 <v-list-item
@@ -278,10 +278,10 @@
             <div class="card-header">
               <h3 class="card-title danger-title">
                 <v-icon color="error" class="mr-2">mdi-alert</v-icon>
-                Zona de perigo
+                {{ $t('companySettings.danger_zone') }}
               </h3>
               <p class="card-description">
-                Excluir a empresa remove todas as informações associadas. Esta ação não pode ser desfeita.
+                {{ $t('companySettings.danger_zone_desc') }}
               </p>
             </div>
             <v-card-text>
@@ -292,7 +292,7 @@
                 @click="deleteDialog = true"
               >
                 <v-icon left>mdi-delete</v-icon>
-                Excluir empresa
+                {{ $t('companySettings.delete_company') }}
               </v-btn>
             </v-card-text>
           </v-card>
@@ -302,21 +302,19 @@
 
     <v-dialog v-model="deleteDialog" max-width="520">
       <v-card>
-        <v-card-title class="text-h6">Confirmar exclusão</v-card-title>
+        <v-card-title class="text-h6">{{ $t('companySettings.confirm_delete_title') }}</v-card-title>
         <v-card-text>
-          <p class="mb-4">
-            Tem certeza? Digite <strong>{{ companyNameForDelete }}</strong> para confirmar.
-          </p>
+          <p class="mb-4" v-html="$t('companySettings.confirm_delete_desc', { company: companyNameForDelete })"></p>
           <v-text-field
             v-model="deleteConfirm"
-            label="Nome da empresa"
+            :label="$t('companySettings.company_name')"
             variant="outlined"
             density="comfortable"
           />
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn variant="text" @click="closeDeleteDialog">Cancelar</v-btn>
+          <v-btn variant="text" @click="closeDeleteDialog">{{ $t('companySettings.cancel') }}</v-btn>
           <v-btn
             color="error"
             variant="elevated"
@@ -324,7 +322,7 @@
             :loading="deleteLoading"
             @click="deleteCompany"
           >
-            Excluir
+            {{ $t('companySettings.confirm') }}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -338,7 +336,7 @@
       {{ upgradeMessage }}
       <template #actions>
         <v-btn variant="text" color="white" @click="goToUpgrade">
-          Ver planos Premium
+          {{ $t('companySettings.view_premium_plans') }}
         </v-btn>
       </template>
     </v-snackbar>
@@ -346,6 +344,8 @@
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import CompanyService from '@/services/CompanyService'
@@ -393,21 +393,21 @@ const upgradeSnackbar = ref(false)
 const upgradeMessage = ref('')
 
 const roleOptions = [
-  { label: 'Administrador', value: 'ROLE_ADMIN' },
-  { label: 'Membro (edição)', value: 'ROLE_MEMBER' },
-  { label: 'Somente leitura', value: 'ROLE_VIEWER' }
+  { label: t('companySettings.roles.ROLE_ADMIN'), value: 'ROLE_ADMIN' },
+  { label: t('companySettings.roles.ROLE_MEMBER'), value: 'ROLE_MEMBER' },
+  { label: t('companySettings.roles.ROLE_VIEWER'), value: 'ROLE_VIEWER' }
 ]
 
 const countryOptions = [
-  { label: 'Brasil (BR)', value: 'BR' },
-  { label: 'Estados Unidos (US)', value: 'US' },
-  { label: 'Portugal (PT)', value: 'PT' },
-  { label: 'Espanha (ES)', value: 'ES' },
-  { label: 'França (FR)', value: 'FR' }
+  { label: t('companySettings.countries.br'), value: 'BR' },
+  { label: t('companySettings.countries.us'), value: 'US' },
+  { label: t('companySettings.countries.pt'), value: 'PT' },
+  { label: t('companySettings.countries.es'), value: 'ES' },
+  { label: t('companySettings.countries.fr'), value: 'FR' }
 ]
 
-const requiredRule = (v: string) => !!v || 'Campo obrigatório'
-const emailRule = (v: string) => /.+@.+\..+/.test(v) || 'E-mail inválido'
+const requiredRule = (v: string) => !!v || t('companySettings.required_field')
+const emailRule = (v: string) => /.+@.+\..+/.test(v) || t('companySettings.invalid_email')
 
 const showSnackbar = (message: string, color: 'success' | 'error' | 'info' = 'success') => {
   snackbar.value = { show: true, message, color }
@@ -527,12 +527,12 @@ const createCompany = async () => {
       country: 'BR',
       description: ''
     }
-    showSnackbar('Empresa criada com sucesso.')
+    showSnackbar(t('companySettings.success_company_created'))
   } catch (error) {
     showSnackbar(parseApiError(error), 'error')
     const limitType = getFreePlanLimitType(error)
     if (limitType === 'company') {
-      upgradeMessage.value = 'Você atingiu o limite do plano STARTER para empresas. Faça upgrade para TEAM.'
+      upgradeMessage.value = t('companySettings.upgrade_limit_company')
       upgradeSnackbar.value = true
     }
   } finally {
@@ -557,7 +557,7 @@ const updateCompany = async () => {
 
     companyNameForDelete.value = companyForm.value.companyName
     userStore.updateCompanyName(currentCompanyId.value, companyForm.value.companyName)
-    showSnackbar('Informações atualizadas')
+    showSnackbar(t('companySettings.success_company_updated'))
   } catch (error) {
     showSnackbar(parseApiError(error), 'error')
   } finally {
@@ -568,7 +568,7 @@ const updateCompany = async () => {
 const sendInvite = async () => {
   if (!currentCompanyId.value) return
   if (!invitesAvailable.value) {
-    showSnackbar('Convites indisponíveis no momento', 'info')
+    showSnackbar(t('companySettings.invites_unavailable'), 'info')
     return
   }
   const form = inviteFormRef.value as any
@@ -583,12 +583,12 @@ const sendInvite = async () => {
     inviteForm.value.email = ''
     inviteForm.value.role = 'ROLE_MEMBER'
     await loadInvites()
-    showSnackbar('Convite enviado')
+    showSnackbar(t('companySettings.success_invite_sent_generic'))
   } catch (error) {
     showSnackbar(parseApiError(error), 'error')
     const limitType = getFreePlanLimitType(error)
     if (limitType === 'member') {
-      upgradeMessage.value = 'Você atingiu o limite de membros do plano STARTER. Faça upgrade para TEAM.'
+      upgradeMessage.value = t('companySettings.upgrade_limit_member')
       upgradeSnackbar.value = true
     }
   } finally {
@@ -604,20 +604,20 @@ const loadInvites = async () => {
   } catch (error) {
     invitesAvailable.value = false
     invites.value = []
-    showSnackbar('Convites indisponíveis no momento', 'info')
+    showSnackbar(t('companySettings.invites_unavailable'), 'info')
   }
 }
 
 const cancelInvite = async (inviteId: string) => {
   if (!currentCompanyId.value) return
   if (!invitesAvailable.value) {
-    showSnackbar('Convites indisponíveis no momento', 'info')
+    showSnackbar(t('companySettings.invites_unavailable'), 'info')
     return
   }
   try {
     await InviteService.cancelInvite(currentCompanyId.value, inviteId)
     await loadInvites()
-    showSnackbar('Convite cancelado', 'info')
+    showSnackbar(t('companySettings.success_cancel_invite'), 'info')
   } catch (error) {
     showSnackbar(parseApiError(error), 'error')
   }
@@ -660,7 +660,7 @@ const deleteCompany = async () => {
     }
 
     closeDeleteDialog()
-    showSnackbar('Empresa excluída', 'info')
+    showSnackbar(t('companySettings.success_delete'), 'info')
 
     const hasOtherCompanies = (nextCompanies?.length || 0) > 0
     // Força reload do contexto do usuário para garantir que companyId não está mais presente
@@ -681,26 +681,13 @@ const deleteCompany = async () => {
 
 const getRoleLabel = (role: string) => {
   const normalized = (role || '').toUpperCase()
-  const labels: Record<string, string> = {
-    ROLE_ADMIN: 'Administrador',
-    ROLE_OWNER: 'Proprietário',
-    ROLE_MEMBER: 'Colaborador',
-    ROLE_VIEWER: 'Visualizador',
-    ROLE_USER: 'Usuário',
-    ROLE_CLIENT: 'Gestor',
-    OAUTH2_USER: 'Usuário OAuth2'
+  if (t(`companySettings.roles.${normalized}`) !== `companySettings.roles.${normalized}`) {
+    return t(`companySettings.roles.${normalized}`)
   }
-  if (labels[normalized]) {
-    return labels[normalized]
+  if (t(`companySettings.roles.${role}`) !== `companySettings.roles.${role}`) {
+    return t(`companySettings.roles.${role}`)
   }
-  // Retrocompatibilidade com dados antigos
-  const legacyLabels: Record<string, string> = {
-    admin: 'Administrador',
-    member: 'Usuário',
-    viewer: 'Visualizador',
-    user: 'Usuário'
-  }
-  return legacyLabels[role] || role
+  return role
 }
 
 watch([currentCompanyId, canManageCompany], async ([companyId, canManage]) => {

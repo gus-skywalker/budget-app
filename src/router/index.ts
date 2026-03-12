@@ -29,20 +29,10 @@ import ReportView from '@/views/ReportView.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
+    // PRINCIPAIS DO DOMÍNIO
     {
-      path: '/',
-      name: 'landing',
-      component: LandingPage
-    },
-    {
-      path: '/home',
-      name: 'home',
-      component: HomeView,
-      meta: { requiresAuth: true, requiresWorkspace: true }
-    },
-    {
-      path: '/overview',
-      name: 'overview',
+      path: '/dashboard',
+      name: 'dashboard',
       component: DashboardView,
       meta: { requiresAuth: true, requiresWorkspace: true }
     },
@@ -59,17 +49,24 @@ const router = createRouter({
       meta: { requiresAuth: true, requiresWorkspace: true }
     },
     {
-      path: '/categories',
-      name: 'categories',
-      component: CategoriesView,
-      meta: { requiresAuth: true, requiresWorkspace: true }
-    },
-    {
       path: '/cashflow',
       name: 'cashflow',
       component: CashflowView,
       meta: { requiresAuth: true, requiresWorkspace: true }
     },
+    {
+      path: '/report',
+      name: 'report',
+      component: ReportView,
+      meta: { requiresAuth: true, requiresWorkspace: true }
+    },
+    {
+      path: '/financialgoal',
+      name: 'financialgoal',
+      component: GoalView,
+      meta: { requiresAuth: true, requiresWorkspace: true }
+    },
+    // PLANEJAMENTO E ANÁLISE
     {
       path: '/planning/budget',
       name: 'planning-budget',
@@ -100,6 +97,7 @@ const router = createRouter({
       component: InsightsView,
       meta: { requiresAuth: true, requiresWorkspace: true }
     },
+    // GRUPOS E CATEGORIAS
     {
       path: '/group',
       name: 'group',
@@ -107,21 +105,21 @@ const router = createRouter({
       meta: { requiresAuth: true, requiresWorkspace: true }
     },
     {
-      path: '/financialgoal',
-      name: 'financialgoal',
-      component: GoalView,
+      path: '/categories',
+      name: 'categories',
+      component: CategoriesView,
       meta: { requiresAuth: true, requiresWorkspace: true }
     },
+    // SECUNDÁRIAS E AUTENTICAÇÃO
     {
-      path: '/dashboard',
-      name: 'dashboard',
-      component: DashboardView,
-      meta: { requiresAuth: true, requiresWorkspace: true }
+      path: '/',
+      name: 'landing',
+      component: LandingPage
     },
     {
-      path: '/report',
-      name: 'report',
-      component: ReportView,
+      path: '/home',
+      name: 'home',
+      component: HomeView,
       meta: { requiresAuth: true, requiresWorkspace: true }
     },
     {

@@ -1,4 +1,5 @@
 import axiosInterceptor from './axiosInterceptor'
+import type { SupportedCurrency } from '@/utils/pricing'
 
 export type BillingSubjectType = 'USER' | 'COMPANY'
 export type BillingDecisionAction = 'START_SUBSCRIPTION' | 'NOOP_ALREADY_PREMIUM'
@@ -17,6 +18,12 @@ export interface BillingDecisionRequest {
 
   /** Tracing (backend expects/accepts correlationId in body) */
   correlationId?: string
+
+  /** Preferred billing context for backend currency resolution */
+  preferredCurrency?: SupportedCurrency
+  countryCode?: string | null
+  browserLocale?: string | null
+  uiLocale?: string | null
 }
 
 export interface BillingDecisionResponse {
@@ -32,6 +39,9 @@ export interface BillingDecisionResponse {
   billingCycle?: 'MONTHLY' | 'ANNUAL'
   userId?: string | null
   companyId?: string | null
+  resolvedCurrency?: SupportedCurrency
+  resolvedPriceId?: string | null
+  catalogVersion?: string | null
   correlationId: string
   actor: string
   decidedAt: string

@@ -2,11 +2,18 @@ import { createI18n } from 'vue-i18n'
 import en from './assets/locales/en.json'
 import pt from './assets/locales/pt.json'
 import fr from './assets/locales/fr.json'
+import es from './assets/locales/es.json'
+import landingPageMessages from './assets/locales/modules/landingPage'
 import { useUserStore } from './plugins/userStore'
 
-type Locale = 'pt' | 'en' | 'fr'
+type Locale = 'pt' | 'en' | 'fr' | 'es'
 
-const messages: Record<Locale, any> = { en, pt, fr }
+const messages: Record<Locale, any> = {
+  en: { ...en, ...landingPageMessages.en },
+  pt: { ...pt, ...landingPageMessages.pt },
+  fr: { ...fr, ...landingPageMessages.fr },
+  es: { ...es, ...landingPageMessages.es }
+}
 
 /**
  * Mapeamento de códigos de idioma do backend (UPPERCASE) para i18n (lowercase)
@@ -15,8 +22,8 @@ const languageMap: Record<string, Locale> = {
   'PT': 'pt',
   'EN': 'en',
   'FR': 'fr',
-  'ES': 'pt', // Fallback para português (suporte parcial)
-  'DE': 'pt'  // Fallback para português (suporte parcial)
+  'ES': 'es',  // Español agora com suporte completo
+  'DE': 'pt'   // Fallback para português (suporte parcial)
 }
 
 const resolveLocale = (raw?: string | null): Locale | null => {

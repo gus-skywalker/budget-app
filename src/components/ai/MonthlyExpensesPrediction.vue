@@ -1,56 +1,56 @@
 <template>
   <section class="ai-card">
     <header>
-      <h2>Previsão Mensal de Despesas</h2>
-      <p>Envie suas transações para obter uma projeção dos próximos meses.</p>
+      <h2>{{ t('ai.monthly_prediction.title') }}</h2>
+      <p>{{ t('ai.monthly_prediction.description') }}</p>
     </header>
 
     <form class="ai-form" @submit.prevent="handleSubmit">
       <label>
-        Meses para prever
+        {{ t('ai.monthly_prediction.months_to_forecast') }}
         <input v-model.number="forecastMonths" type="number" min="1" max="12" />
       </label>
 
       <label>
-        Categoria (opcional)
+        {{ t('ai.monthly_prediction.category_optional') }}
         <input v-model.number="categoryId" type="number" min="1" placeholder="123" />
       </label>
 
       <div class="transactions">
         <div class="transactions__header">
-          <h3>Transações (apenas despesas)</h3>
-          <button type="button" class="ghost" @click="addTransaction">+ Adicionar</button>
+          <h3>{{ t('ai.monthly_prediction.transactions_expenses') }}</h3>
+          <button type="button" class="ghost" @click="addTransaction">+ {{ t('ai.common.add') }}</button>
         </div>
-        <div v-if="!transactions.length" class="empty">Adicione ao menos uma despesa.</div>
+        <div v-if="!transactions.length" class="empty">{{ t('ai.monthly_prediction.empty_transactions') }}</div>
         <div v-for="(tx, index) in transactions" :key="tx.localId" class="transaction-row">
-          <input v-model="tx.description" placeholder="Descrição" required />
-          <input v-model.number="tx.amount" type="number" min="0" step="0.01" placeholder="Valor" required />
+          <input v-model="tx.description" :placeholder="t('common.description')" required />
+          <input v-model.number="tx.amount" type="number" min="0" step="0.01" :placeholder="t('common.amount')" required />
           <input v-model="tx.date" type="date" required />
           <select v-model="tx.currency">
             <option value="BRL">BRL</option>
             <option value="USD">USD</option>
           </select>
-          <button type="button" class="danger" @click="removeTransaction(index)">remover</button>
+          <button type="button" class="danger" @click="removeTransaction(index)">{{ t('ai.common.remove') }}</button>
         </div>
       </div>
 
       <button type="submit" :disabled="isLoading">
-        {{ isLoading ? 'Calculando...' : 'Gerar Previsão' }}
+        {{ isLoading ? t('ai.common.calculating') : t('ai.monthly_prediction.submit') }}
       </button>
       <p v-if="error" class="error">{{ error }}</p>
     </form>
 
     <section v-if="prediction" class="results">
-      <h3>Resultado</h3>
-      <p>Total previsto: <strong>{{ formatCurrency(prediction.totalPredicted) }}</strong></p>
-      <p v-if="prediction.modelAccuracy">Acurácia estimada: {{ (prediction.modelAccuracy * 100).toFixed(1) }}%</p>
+      <h3>{{ t('ai.monthly_prediction.result') }}</h3>
+      <p>{{ t('ai.monthly_prediction.total_predicted') }}: <strong>{{ formatCurrency(prediction.totalPredicted) }}</strong></p>
+      <p v-if="prediction.modelAccuracy">{{ t('ai.monthly_prediction.estimated_accuracy') }}: {{ (prediction.modelAccuracy * 100).toFixed(1) }}%</p>
       <table>
         <thead>
           <tr>
-            <th>Mês</th>
-            <th>Valor previsto</th>
-            <th>Confiança</th>
-            <th>Intervalo</th>
+            <th>{{ t('ai.monthly_prediction.month') }}</th>
+            <th>{{ t('ai.monthly_prediction.predicted_amount') }}</th>
+            <th>{{ t('ai.monthly_prediction.confidence') }}</th>
+            <th>{{ t('ai.monthly_prediction.range') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -68,8 +68,11 @@
 
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import AiService from '../../services/aiService'
 import type { AiTransaction, MonthlyExpensesPredictionResponse } from '../../services/aiService'
+
+const { t } = useI18n()
 
 interface UiTransaction extends AiTransaction {
   localId: string
@@ -102,7 +105,7 @@ const formatCurrency = (value: number) =>
 
 const handleSubmit = async () => {
   if (!transactions.length) {
-    error.value = 'Adicione ao menos uma despesa.'
+    error.value = t('ai.monthly_prediction.error_add_expense')
     return
   }
 
@@ -124,7 +127,7 @@ const handleSubmit = async () => {
     const { data } = await AiService.predictMonthlyExpenses(payload)
     prediction.value = data
   } catch (err) {
-    error.value = 'Não foi possível gerar a previsão. Tente novamente.'
+    error.value = t('ai.monthly_prediction.error_forecast')
     console.error(err)
   } finally {
     isLoading.value = false

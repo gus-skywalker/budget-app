@@ -502,6 +502,7 @@ export default {
       const locale = this.$i18n?.locale || 'pt'
       if (locale === 'en') return 'en-US'
       if (locale === 'fr') return 'fr-FR'
+      if (locale === 'es') return 'es-ES'
       return 'pt-BR'
     },
     formatCurrency(value, currency = null) {

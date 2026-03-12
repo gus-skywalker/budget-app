@@ -45,7 +45,7 @@
                                         {{ planDetails.name }}
                                     </v-list-item-title>
                                     <v-list-item-subtitle>
-                                        {{ planDetails.displayPrice }}
+                                        {{ formattedPlanPrice }}
                                     </v-list-item-subtitle>
                                 </v-list-item>
                             </v-list>
@@ -81,6 +81,7 @@ import { useUserStore } from '@/plugins/userStore';
 import { PLAN_DETAILS } from '@/constants/plans';
 import { createCorrelationId } from '@/utils/correlation'
 import { createMessageId } from '@/utils/messageId'
+import { buildBillingPricingContext, formatConvertedPriceFromBRL } from '@/utils/pricing'
 import BillingOrchestrationService from '@/services/BillingOrchestrationService'
 import BillingDecisionService from '@/services/BillingDecisionService'
 
@@ -96,10 +97,28 @@ export default {
         const accepted = ref(false)
         const operationStatus = ref(null)
 
+        const getBillingContext = () => buildBillingPricingContext({
+            uiLocale: String(route.query.uiLocale || userStore.language || '').toLowerCase() || null,
+            browserLocale: typeof navigator !== 'undefined' ? navigator.language : null,
+            countryCode: typeof route.query.countryCode === 'string' ? route.query.countryCode : null
+        })
+
         const planDetails = computed(() => {
             const planId = route.query.plan;
             return planId && PLAN_DETAILS[planId] ? PLAN_DETAILS[planId] : null;
         });
+
+        const formattedPlanPrice = computed(() => {
+            if (!planDetails.value) return null
+            const billing = getBillingContext()
+            const amount = formatConvertedPriceFromBRL({
+                amountInBRL: planDetails.value.amount,
+                targetCurrency: billing.preferredCurrency,
+                uiLocale: billing.uiLocale
+            })
+            const suffix = planDetails.value.billingPeriod === 'year' ? 'year' : 'month'
+            return `${amount} / ${suffix}`
+        })
 
         const pollOperation = async (messageId) => {
             const startedAt = Date.now()
@@ -162,7 +181,8 @@ export default {
                         subjectType: preferredSubjectType,
                         subjectId: preferredSubjectId,
                         userId: preferredSubjectType === 'USER' ? String(user.id) : null,
-                        companyId: preferredSubjectType === 'COMPANY' ? String(companyId) : null
+                        companyId: preferredSubjectType === 'COMPANY' ? String(companyId) : null,
+                        ...getBillingContext()
                     },
                     correlationId
                 )
@@ -186,7 +206,8 @@ export default {
                     subjectType: String(subjectType),
                     subjectId: String(subjectId),
                     correlationId: String(correlationId),
-                    messageId
+                    messageId,
+                    ...getBillingContext()
                 })
 
                 accepted.value = true
@@ -211,6 +232,7 @@ export default {
             error,
             accepted,
             planDetails,
+            formattedPlanPrice,
             operationStatus,
             initializeCheckout
         };

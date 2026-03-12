@@ -2,10 +2,10 @@
   <v-dialog v-model="dialog" persistent max-width="500">
     <v-card>
       <v-card-title class="headline">
-        Selecione o Workspace
+        {{ $t('companySelector.title') }}
       </v-card-title>
       <v-card-text>
-        <p class="mb-4">Voce tem acesso a multiplos workspaces. Selecione o workspace com o qual deseja trabalhar:</p>
+        <p class="mb-4">{{ $t('companySelector.desc') }}</p>
         <v-list>
           <v-list-item
             v-for="company in companies"
@@ -29,6 +29,8 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
 import { computed } from 'vue'
 
 const props = defineProps({
@@ -52,24 +54,13 @@ const selectCompany = (company) => {
 
 const getRoleLabel = (role) => {
   const normalized = (role || '').toUpperCase()
-  const labels = {
-    ROLE_ADMIN: 'Administrador',
-    ROLE_OWNER: 'Proprietario',
-    ROLE_MEMBER: 'Colaborador',
-    ROLE_VIEWER: 'Visualizador',
-    ROLE_CLIENT: 'Gestor',
-    ROLE_USER: 'Usuario',
-    OAUTH2_USER: 'Usuario OAuth2'
+  if (t(`companySelector.roles.${normalized}`) !== `companySelector.roles.${normalized}`) {
+    return t(`companySelector.roles.${normalized}`)
   }
-  if (labels[normalized]) {
-    return labels[normalized]
+  if (t(`companySelector.roles.${role}`) !== `companySelector.roles.${role}`) {
+    return t(`companySelector.roles.${role}`)
   }
-  const legacyLabels = {
-    admin: 'Administrador',
-    member: 'Usuario',
-    viewer: 'Visualizador'
-  }
-  return legacyLabels[role] || role
+  return role
 }
 </script>
 

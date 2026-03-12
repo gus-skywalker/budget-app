@@ -1,9 +1,9 @@
 <template>
     <section class="faq-section">
-        <h2>Perguntas Frequentes</h2>
+        <h2>{{ $t('faq.title') }}</h2>
         <div v-for="(faq, index) in faqs" :key="index" class="faq-item" @click="toggleAnswer(index)">
-            <h3 :class="{ active: isAnswerVisible(index) }">{{ faq.question }}</h3>
-            <p v-if="isAnswerVisible(index)">{{ faq.answer }}</p>
+            <h3 :class="{ active: isAnswerVisible(index) }">{{ $t(faq.question) }}</h3>
+            <p v-if="isAnswerVisible(index)">{{ $t(faq.answer) }}</p>
         </div>
     </section>
 </template>

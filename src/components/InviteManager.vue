@@ -2,7 +2,7 @@
   <v-card class="invite-manager">
     <v-card-title>
       <v-icon left>mdi-account-plus</v-icon>
-      Gerenciar Convites
+      {{ $t('inviteManager.title') }}
     </v-card-title>
     
     <v-card-text>
@@ -13,8 +13,8 @@
             <v-text-field
               v-model="inviteEmail"
               :rules="emailRules"
-              label="E-mail do usuário"
-              placeholder="usuario@exemplo.com"
+              :label="$t('inviteManager.email_label')"
+              :placeholder="$t('inviteManager.email_placeholder')"
               type="email"
               required
             ></v-text-field>
@@ -22,8 +22,8 @@
           <v-col cols="12" md="4">
             <v-select
               v-model="inviteRole"
-              :items="roleOptions"
-              label="Papel"
+              :items="roleOptionsI18n"
+              :label="$t('inviteManager.role_label')"
               required
             ></v-select>
           </v-col>
@@ -35,7 +35,7 @@
           @click="sendInvite"
         >
           <v-icon left>mdi-email-send</v-icon>
-          Enviar Convite
+          {{ $t('inviteManager.send_invite') }}
         </v-btn>
       </v-form>
 
@@ -43,9 +43,8 @@
 
       <!-- Lista de convites pendentes -->
       <div class="invites-list">
-        <h3 class="mb-3">Convites Pendentes</h3>
+        <h3 class="mb-3">{{ $t('inviteManager.pending_title') }}</h3>
         <v-progress-linear v-if="loadingInvites" indeterminate></v-progress-linear>
-        
         <v-list v-else-if="pendingInvites.length > 0">
           <v-list-item
             v-for="invite in pendingInvites"
@@ -57,12 +56,10 @@
                 <v-icon>mdi-email-outline</v-icon>
               </v-avatar>
             </template>
-            
             <v-list-item-title>{{ invite.email }}</v-list-item-title>
             <v-list-item-subtitle>
-              {{ getRoleLabel(invite.role) }} • Enviado em {{ formatDate(invite.createdAt) }}
+              {{ getRoleLabel(invite.role) }} • {{ formatDate(invite.createdAt) }}
             </v-list-item-subtitle>
-
             <template v-slot:append>
               <v-btn
                 icon
@@ -76,9 +73,8 @@
             </template>
           </v-list-item>
         </v-list>
-
         <v-alert v-else type="info" variant="tonal">
-          Nenhum convite pendente no momento.
+          {{ $t('inviteManager.no_pending') }}
         </v-alert>
       </div>
     </v-card-text>
@@ -92,8 +88,11 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/plugins/userStore'
 import InviteService from '@/services/InviteService'
+
+const { t } = useI18n()
 
 const userStore = useUserStore()
 const currentCompanyId = computed(() => userStore.getCurrentCompanyId)
@@ -112,15 +111,19 @@ const snackbar = ref(false)
 const snackbarMessage = ref('')
 const snackbarColor = ref('success')
 
-const roleOptions = [
-  { title: 'Administrador', value: 'ROLE_ADMIN' },
-  { title: 'Membro (edição)', value: 'ROLE_MEMBER' },
-  { title: 'Somente leitura', value: 'ROLE_VIEWER' }
+const roleOptionsI18n = [
+  { title: t('inviteManager.admin'), value: 'ROLE_ADMIN' },
+  { title: t('inviteManager.member'), value: 'ROLE_MEMBER' },
+  { title: t('inviteManager.viewer'), value: 'ROLE_VIEWER' },
+  { title: t('inviteManager.owner'), value: 'ROLE_OWNER' },
+  { title: t('inviteManager.user'), value: 'ROLE_USER' },
+  { title: t('inviteManager.client'), value: 'ROLE_CLIENT' },
+  { title: t('inviteManager.oauth2_user'), value: 'OAUTH2_USER' }
 ]
 
 const emailRules = [
-  v => !!v || 'E-mail é obrigatório',
-  v => /.+@.+\..+/.test(v) || 'E-mail deve ser válido'
+  v => !!v || t('inviteManager.email_label') + ' ' + t('validation.required'),
+  v => /.+@.+\..+/.test(v) || t('authentication.login.invalid_email')
 ]
 
 onMounted(() => {
@@ -130,7 +133,7 @@ onMounted(() => {
 const sendInvite = async () => {
   if (!inviteForm.value.validate()) return
   if (!currentCompanyId.value) {
-    showSnackbar('Selecione uma empresa antes de convidar usuários.', 'error')
+    showSnackbar(t('inviteManager.select_company'), 'error')
     return
   }
   
@@ -142,13 +145,13 @@ const sendInvite = async () => {
       inviteRole.value
     )
     
-    showSnackbar('Convite enviado com sucesso!', 'success')
+    showSnackbar(t('inviteManager.invite_success'), 'success')
     inviteEmail.value = ''
     inviteRole.value = 'ROLE_MEMBER'
     inviteForm.value.reset()
     loadInvites()
   } catch (error) {
-    const message = error.response?.data?.message || 'Erro ao enviar convite'
+    const message = error.response?.data?.message || t('inviteManager.invite_error')
     showSnackbar(message, 'error')
   } finally {
     loading.value = false
@@ -172,10 +175,10 @@ const cancelInvite = async (inviteId) => {
   try {
     cancellingInvite.value = inviteId
     await InviteService.cancelInvite(currentCompanyId.value, inviteId)
-    showSnackbar('Convite cancelado', 'info')
+    showSnackbar(t('inviteManager.cancel_success'), 'info')
     loadInvites()
   } catch (error) {
-    const message = error.response?.data?.message || 'Erro ao cancelar convite'
+    const message = error.response?.data?.message || t('inviteManager.cancel_error')
     showSnackbar(message, 'error')
   } finally {
     cancellingInvite.value = null
@@ -184,24 +187,16 @@ const cancelInvite = async (inviteId) => {
 
 const getRoleLabel = (role) => {
   const normalized = (role || '').toUpperCase()
-  const labels = {
-    ROLE_ADMIN: 'Administrador',
-    ROLE_OWNER: 'Proprietário',
-    ROLE_MEMBER: 'Colaborador',
-    ROLE_VIEWER: 'Visualizador',
-    ROLE_USER: 'Usuário',
-    ROLE_CLIENT: 'Gestor',
-    OAUTH2_USER: 'Usuário OAuth2'
+  switch (normalized) {
+    case 'ROLE_ADMIN': return t('inviteManager.admin')
+    case 'ROLE_OWNER': return t('inviteManager.owner')
+    case 'ROLE_MEMBER': return t('inviteManager.member')
+    case 'ROLE_VIEWER': return t('inviteManager.viewer')
+    case 'ROLE_USER': return t('inviteManager.user')
+    case 'ROLE_CLIENT': return t('inviteManager.client')
+    case 'OAUTH2_USER': return t('inviteManager.oauth2_user')
+    default: return role
   }
-  if (labels[normalized]) {
-    return labels[normalized]
-  }
-  const legacyLabels = {
-    admin: 'Administrador',
-    member: 'Usuário',
-    viewer: 'Visualizador'
-  }
-  return legacyLabels[role] || role
 }
 
 const formatDate = (dateString) => {

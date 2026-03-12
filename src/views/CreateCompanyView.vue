@@ -6,21 +6,20 @@
           <v-card class="elevation-12 pa-6">
             <v-card-title class="headline text-center mb-6">
               <v-icon large color="primary" class="mr-2">mdi-office-building</v-icon>
-              Criar seu Workspace
+              {{ t('create_company.title') }}
             </v-card-title>
 
             <v-card-text>
               <p class="text-body-1 mb-6 text-center">
-                Para comecar a usar o CoBudget, voce precisa criar um workspace.
-                Como administrador, voce podera convidar outros usuarios para colaborar.
+                {{ t('create_company.description') }}
               </p>
 
               <v-form ref="form" v-model="valid" @submit.prevent="createCompany">
                 <v-text-field
                   v-model="companyName"
                   :rules="companyNameRules"
-                  label="Nome do Workspace"
-                  placeholder="Ex: Operacao Principal"
+                  :label="t('create_company.workspace_name')"
+                  :placeholder="t('create_company.workspace_placeholder')"
                   outlined
                   required
                   :loading="loading"
@@ -32,7 +31,7 @@
                   v-model="country"
                   :items="countryOptions"
                   :rules="countryRules"
-                  label="País de registro"
+                  :label="t('create_company.country_label')"
                   item-title="label"
                   item-value="code"
                   outlined
@@ -56,8 +55,8 @@
 
                 <v-textarea
                   v-model="description"
-                  label="Descrição (Opcional)"
-                  placeholder="Descreva brevemente sua empresa..."
+                  :label="t('create_company.description_optional')"
+                  :placeholder="t('create_company.description_placeholder')"
                   outlined
                   rows="3"
                   counter="200"
@@ -76,7 +75,7 @@
                 class="px-8"
               >
                 <v-icon left>mdi-plus</v-icon>
-                Criar Workspace
+                {{ t('create_company.create_button') }}
               </v-btn>
             </v-card-actions>
           </v-card>
@@ -103,7 +102,7 @@
       {{ upgradeMessage }}
       <template #actions>
         <v-btn variant="text" color="white" @click="goToUpgrade">
-          Ver planos Premium
+          {{ t('create_company.view_premium_plans') }}
         </v-btn>
       </template>
     </v-snackbar>
@@ -113,35 +112,38 @@
 <script setup lang="ts">
 import { createMessageId } from '@/utils/messageId'
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/plugins/userStore'
 import CompanyService from '@/services/CompanyService'
 import OnboardingOrchestrator from '@/services/OnboardingOrchestrator'
 import { getOrCreateCorrelationId } from '@/utils/correlation'
 import { getFreePlanLimitType, parseApiError } from '@/utils/errorHandler'
+
+const { t } = useI18n()
 // Lista simplificada de países (pode ser expandida ou internacionalizada)
-const countryOptions = [
-  { code: 'BR', label: 'Brasil' },
-  { code: 'US', label: 'Estados Unidos' },
-  { code: 'AR', label: 'Argentina' },
-  { code: 'PT', label: 'Portugal' },
-  { code: 'ES', label: 'Espanha' },
-  { code: 'MX', label: 'México' },
-  { code: 'DE', label: 'Alemanha' },
-  { code: 'FR', label: 'França' },
-  { code: 'CL', label: 'Chile' },
-  { code: 'CO', label: 'Colômbia' },
-  { code: 'PE', label: 'Peru' },
-  { code: 'UK', label: 'Reino Unido' },
-  { code: 'IT', label: 'Itália' },
-  { code: 'CA', label: 'Canadá' },
-  { code: 'OTHER', label: 'Outro' }
-]
+const countryOptions = computed(() => [
+  { code: 'BR', label: t('create_company.countries.br') },
+  { code: 'US', label: t('create_company.countries.us') },
+  { code: 'AR', label: t('create_company.countries.ar') },
+  { code: 'PT', label: t('create_company.countries.pt') },
+  { code: 'ES', label: t('create_company.countries.es') },
+  { code: 'MX', label: t('create_company.countries.mx') },
+  { code: 'DE', label: t('create_company.countries.de') },
+  { code: 'FR', label: t('create_company.countries.fr') },
+  { code: 'CL', label: t('create_company.countries.cl') },
+  { code: 'CO', label: t('create_company.countries.co') },
+  { code: 'PE', label: t('create_company.countries.pe') },
+  { code: 'UK', label: t('create_company.countries.uk') },
+  { code: 'IT', label: t('create_company.countries.it') },
+  { code: 'CA', label: t('create_company.countries.ca') },
+  { code: 'OTHER', label: t('create_company.countries.other') }
+])
 
 const country = ref('BR')
 
 const countryRules = [
-  (v: string) => !!v || 'Selecione o país de registro'
+  (v: string) => !!v || t('create_company.country_required')
 ]
 
 const router = useRouter()
@@ -172,9 +174,9 @@ const upgradeMessage = ref('')
 
 // Validation rules
 const companyNameRules = [
-  (v: string) => !!v || 'Nome da empresa é obrigatório',
-  (v: string) => (v && v.length >= 2) || 'Nome deve ter pelo menos 2 caracteres',
-  (v: string) => (v && v.length <= 100) || 'Nome deve ter no máximo 100 caracteres'
+  (v: string) => !!v || t('create_company.workspace_name_required'),
+  (v: string) => (v && v.length >= 2) || t('create_company.workspace_name_min'),
+  (v: string) => (v && v.length <= 100) || t('create_company.workspace_name_max')
 ]
 
 
@@ -194,7 +196,7 @@ const legalDocumentLabel = computed(() => {
     case 'UK': return 'VAT';
     case 'IT': return 'VAT';
     case 'CA': return 'BN';
-    default: return 'Número de identificação fiscal';
+    default: return t('create_company.tax_id_generic');
   }
 })
 
@@ -214,46 +216,46 @@ const legalDocumentPlaceholder = computed(() => {
     case 'UK': return 'Digite o VAT';
     case 'IT': return 'Digite o VAT';
     case 'CA': return 'Digite o BN';
-    default: return 'Digite o número fiscal';
+    default: return t('create_company.tax_id_placeholder_generic');
   }
 })
 
 const legalDocumentRules = [
-  (v: string) => !!v || `${legalDocumentLabel.value} é obrigatório`,
+  (v: string) => !!v || t('create_company.legal_document_required', { label: legalDocumentLabel.value }),
   (v: string) => {
     switch (country.value) {
       case 'BR':
-        return /^\d{14}$/.test(v) || 'CNPJ deve ter 14 dígitos';
+        return /^\d{14}$/.test(v) || t('create_company.legal_document_cnpj');
       case 'US':
-        return /^\d{9}$/.test(v) || 'EIN deve ter 9 dígitos';
+        return /^\d{9}$/.test(v) || t('create_company.legal_document_ein');
       case 'AR':
-        return /^\d{11}$/.test(v) || 'CUIT deve ter 11 dígitos';
+        return /^\d{11}$/.test(v) || t('create_company.legal_document_cuit');
       case 'PT':
       case 'ES':
-        return /^\d{9}$/.test(v) || 'NIF deve ter 9 dígitos';
+        return /^\d{9}$/.test(v) || t('create_company.legal_document_nif');
       case 'MX':
-        return /^[A-Z0-9]{12,13}$/.test(v) || 'RFC deve ter 12 ou 13 caracteres';
+        return /^[A-Z0-9]{12,13}$/.test(v) || t('create_company.legal_document_rfc');
       case 'DE':
       case 'FR':
       case 'UK':
       case 'IT':
-        return v.length >= 8 && v.length <= 15 || 'VAT deve ter entre 8 e 15 caracteres';
+        return v.length >= 8 && v.length <= 15 || t('create_company.legal_document_vat');
       case 'CL':
-        return /^\d{7,8}-[\dkK]$/.test(v) || 'RUT deve ter formato 12345678-9';
+        return /^\d{7,8}-[\dkK]$/.test(v) || t('create_company.legal_document_rut');
       case 'CO':
-        return /^\d{9,10}$/.test(v) || 'NIT deve ter 9 ou 10 dígitos';
+        return /^\d{9,10}$/.test(v) || t('create_company.legal_document_nit');
       case 'PE':
-        return /^\d{11}$/.test(v) || 'RUC deve ter 11 dígitos';
+        return /^\d{11}$/.test(v) || t('create_company.legal_document_ruc');
       case 'CA':
-        return /^\d{9}$/.test(v) || 'BN deve ter 9 dígitos';
+        return /^\d{9}$/.test(v) || t('create_company.legal_document_bn');
       default:
-        return v.length >= 4 || 'Número fiscal inválido';
+        return v.length >= 4 || t('create_company.legal_document_invalid');
     }
   }
 ]
 
 const descriptionRules = [
-  (v: string) => !v || v.length <= 200 || 'Descrição deve ter no máximo 200 caracteres'
+  (v: string) => !v || v.length <= 200 || t('create_company.description_max')
 ]
 
 const showSnackbar = (message: string, color: string = 'success') => {
@@ -304,7 +306,7 @@ const createCompany = async () => {
       await userStore.selectCompany(String(companyId))
     } catch (selectError) {
       console.warn('Company criada, mas seleção automática falhou. Redirecionando para select-company.', selectError)
-      showSnackbar('Empresa criada. Selecione a empresa para continuar.', 'warning')
+      showSnackbar(t('create_company.created_select_company'), 'warning')
       sessionStorage.removeItem(messageKey)
       setTimeout(() => {
         router.push({ name: 'select-company', query: { redirect: redirectTarget.value } })
@@ -324,7 +326,7 @@ const createCompany = async () => {
       console.warn('Não foi possível atualizar lista de empresas imediatamente.', e)
     }
 
-    showSnackbar('Empresa criada com sucesso!', 'success')
+    showSnackbar(t('create_company.created_success'), 'success')
     // Limpa o messageId da sessão após sucesso
     sessionStorage.removeItem(messageKey)
 
@@ -339,7 +341,7 @@ const createCompany = async () => {
     showSnackbar(errorMessage, 'error')
     const limitType = getFreePlanLimitType(error)
     if (limitType === 'company') {
-      upgradeMessage.value = 'Você atingiu o limite do plano STARTER para empresas. Faça upgrade para TEAM.'
+      upgradeMessage.value = t('create_company.upgrade_limit_company')
       upgradeSnackbar.value = true
     }
   } finally {

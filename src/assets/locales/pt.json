@@ -4,7 +4,6 @@
   "logout": "Sair",
   "save_changes": "Salvar Mudanças",
   "language_label": "Idioma",
-
   "sidebar": {
     "logout": "Sair",
     "login_oauth2": "Entrar com OAuth2",
@@ -43,7 +42,6 @@
       "personal_finance": "Finanças Pessoais"
     }
   },
-
   "account_management": {
     "title": "Administração de Conta",
     "subtitle": "Gerencie suas configurações e preferências",
@@ -84,9 +82,13 @@
     "dark_theme_label": "Tema Escuro",
     "connect_google": "Conectar Conta Google",
     "disconnect_google": "Desconectar Conta Google",
+    "nubank": "Nubank",
+    "banco_do_brasil": "Bank of Brazil",
+    "itau": "Itaú",
     "connect_to_bank": "Conectar a { bank }",
     "bank_login_label": "Login",
     "bank_password_label": "Senha",
+    "cancel": "Cancel",
     "generate_certificate": "Gerar Novo Certificado",
     "generate_certificate_description": "Será necessário gerar um novo certificado para conectar esta conta bancária.",
     "verification_code": "Código de Verificação",
@@ -148,11 +150,44 @@
       "connect": "Conectar"
     }
   },
-
   "subscription_management": {
     "title": "Gerenciamento de Assinatura",
     "current_plan": "Plano Atual",
+    "plan_label": "Plano",
     "status": "Status",
+    "change_plan_title": "Alterar plano",
+    "details": "Detalhes",
+    "starter_group": "Starter",
+    "team_group": "Team",
+    "starter_monthly_name": "STARTER Mensal",
+    "starter_annual_name": "STARTER Anual",
+    "team_monthly_name": "TEAM Mensal",
+    "team_annual_name": "TEAM Anual",
+    "billed_monthly": "Cobrado mensalmente",
+    "save_badge": "Economize",
+    "from_year": "A partir de {amount}/ano",
+    "save_percent": "Economize {percent}",
+    "per_month_billed_annually": "{amount}/mês (cobrado anualmente)",
+    "current": "Atual",
+    "cancel_change": "Cancelar alteração",
+    "plan_details_title": "Detalhes do plano",
+    "monthly_label": "Mensal",
+    "annual_label": "Anual",
+    "starter_feature_1": "até 4 membros",
+    "starter_feature_2": "workspace financeiro compartilhado",
+    "starter_feature_3": "planejamento de orçamento",
+    "starter_feature_4": "metas financeiras",
+    "starter_feature_5": "simulação básica de cenários",
+    "team_feature_1": "até 10 membros",
+    "team_feature_2": "Copiloto Financeiro com IA",
+    "team_feature_3": "simulação de cenários",
+    "team_feature_4": "previsão financeira",
+    "team_feature_5": "decisões financeiras colaborativas",
+    "team_feature_6": "colaboração entre membros",
+    "danger_zone_title": "Zona de risco",
+    "danger_zone_desc": "Ações irreversíveis de assinatura",
+    "cancel_subscription_label": "Cancelar assinatura",
+    "cancel_subscription_hint": "Você perderá acesso aos recursos premium no fim do período atual",
     "change_plan_instructions": "Selecione um novo plano caso deseje alterar sua assinatura. Você será redirecionado ao portal para concluir a mudança.",
     "plans": {
       "monthly": "STARTER Mensal - R$27,50/mês",
@@ -163,16 +198,40 @@
     "cancel_subscription": "Cancelar Assinatura",
     "statuses": {
       "active": "Ativa",
+      "incomplete": "Pagamento pendente",
+      "past_due": "Pagamento em atraso",
       "trialing": "Período de Teste",
       "canceled": "Cancelada ao Final do Período",
       "inactive": "Inativa"
-    }
+    },
+    "tiers": {
+      "free": "Gratuito",
+      "starter": "Starter",
+      "team": "Team"
+    },
+    "cycles": {
+      "monthly": "Mensal",
+      "annual": "Anual"
+    },
+    "error_load_details": "Erro ao carregar detalhes da assinatura:",
+    "error_invalid_plan": "Plano inválido",
+    "already_premium": "Você já possui acesso premium.",
+    "error_start_checkout": "Erro ao iniciar sessão de checkout:",
+    "error_checkout_later": "Não foi possível iniciar o checkout. Tente novamente mais tarde.",
+    "admin_only_manage": "Somente o proprietário/admin da empresa pode gerenciar a assinatura.",
+    "portal_unavailable": "Portal indisponível: {error}",
+    "portal_preparing": "Solicitação enviada. O portal de cobrança ainda está sendo preparado.",
+    "error_request_portal": "Erro ao solicitar portal de cobrança:",
+    "error_open_portal": "Erro ao abrir portal: {error}",
+    "error_portal_later": "Não foi possível solicitar o portal de cobrança. Tente novamente mais tarde.",
+    "cancel_confirm": "Tem certeza de que deseja cancelar sua assinatura?",
+    "cancel_requested": "Cancelamento solicitado. Você manterá o acesso até o fim do período atual (quando aplicável).",
+    "error_cancel_request": "Erro ao solicitar cancelamento:",
+    "error_cancel_later": "Não foi possível cancelar a assinatura. Tente novamente mais tarde."
   },
-
   "budget": {
     "title": "Sua Contabilidade"
   },
-
   "income": {
     "title": "Entradas",
     "save": "Salvar Entrada",
@@ -184,7 +243,6 @@
     "save_failed": "Falha ao salvar entrada.",
     "update_failed": "Falha ao atualizar entrada."
   },
-
   "expense": {
     "title": "Débitos",
     "save": "Salvar Débito",
@@ -197,7 +255,6 @@
     "save_failed": "Falha ao salvar despesa.",
     "update_failed": "Falha ao atualizar despesa."
   },
-
   "common": {
     "date": "Data",
     "amount": "Valor",
@@ -213,7 +270,6 @@
     "cancel": "Cancelar",
     "cancel_edit": "Cancelar Edição"
   },
-
   "categories": {
     "groceries": "Mercado",
     "utilities": "Contas",
@@ -230,15 +286,11 @@
     "subscriptions": "Assinaturas",
     "miscellaneous": "Outros"
   },
-
   "validation": {
     "required": "{field} é obrigatório.",
-    "positive_number": "{field} deve ser um número positivo.",
     "invalid_currency": "Formato de moeda inválido.",
-    "account_required": "Cadastre ou selecione uma conta financeira antes de salvar o lançamento.",
-    "future_date": "{field} deve ser uma data futura."
+    "account_required": "Cadastre ou selecione uma conta financeira antes de salvar o lançamento."
   },
-
   "overview": {
     "title": "Visão Geral",
     "subtitle": "Onde você está, para onde vai e o que decidir em seguida.",
@@ -308,35 +360,30 @@
     "no_recent_transactions": "Nenhuma transação recente encontrada.",
     "no_top_categories": "Nenhuma categoria em destaque no momento."
   },
-
   "trends": {
     "title": "Tendências ao Longo do Tempo",
     "select_chart_type": "Selecione o Tipo de Gráfico",
     "select_time_period": "Selecione o Período de Tempo",
     "select_expense_category": "Selecione a Categoria de Débito"
   },
-
   "cashflow": {
     "title": "Cashflow",
     "subtitle": "Acompanhe entradas, saídas e tendências do fluxo de caixa.",
     "flow_title": "Fluxo de Caixa em Tempo Real",
     "insights_title": "Insights Preditivos"
   },
-
   "accounts": {
     "title": "Contas",
     "subtitle": "Visão consolidada das contas conectadas.",
     "list_title": "Contas Financeiras",
     "empty": "Nenhuma conta disponível ainda."
   },
-
   "categories_page": {
     "title": "Categorias",
     "subtitle": "Organize os lançamentos por categoria.",
     "list_title": "Categorias Monitoradas",
     "empty": "Nenhuma categoria encontrada."
   },
-
   "planning": {
     "budget": {
       "title": "Orçamento",
@@ -349,7 +396,6 @@
       "card_title": "Simulações Estratégicas"
     }
   },
-
   "decisions": {
     "title": "Decisões",
     "subtitle": "Priorização e impacto financeiro das decisões.",
@@ -370,7 +416,6 @@
     "status_review": "Em análise",
     "status_suggested": "Sugestão"
   },
-
   "insights": {
     "title": "Insights",
     "subtitle": "Alertas inteligentes para orientar ações.",
@@ -382,7 +427,6 @@
     "sample_3_title": "Burn rate em alta",
     "sample_3_desc": "O burn rate subiu em comparação ao último trimestre."
   },
-
   "placeholders": {
     "title": "Ainda estamos preparando",
     "ai_accountants": "🧠 Nossos contadores de IA ainda estão aprendendo este truque.",
@@ -390,13 +434,12 @@
     "superpower": "🚧 Este superpoder financeiro ainda está em construção.",
     "coffee": "☕ Os engenheiros ainda estão tomando café para esta parte."
   },
-
   "budget_tracker": {
     "title": "Rastreador de Orçamento"
   },
-
   "group_management": {
     "title": "Administração de Grupos",
+    "subtitle": "Crie e gerencie grupos financeiros",
     "create_group": "Criar Grupo",
     "group_name": "Nome do Grupo",
     "group_description": "Descrição do Grupo",
@@ -407,10 +450,67 @@
     "invite_member": "Convidar Membro",
     "group_members": "Membros do Grupo",
     "no_members": "Nenhum membro no grupo selecionado.",
+    "group_fallback": "Grupo",
+    "error_fetch_groups": "Erro ao buscar grupos.",
+    "error_fetch_members": "Erro ao buscar membros do grupo.",
+    "success_group_created": "Grupo criado com sucesso!",
+    "error_create_group": "Erro ao criar grupo.",
+    "error_invalid_email": "Digite um e-mail válido.",
+    "success_invite_sent": "Convite enviado para {email}",
+    "error_invite_user": "Erro ao convidar o usuário {email}.",
     "success_message": "Operação concluída com sucesso.",
     "error_message": "Ocorreu um erro. Tente novamente."
   },
-
+  "create_company": {
+    "title": "Crie seu Workspace",
+    "description": "Para começar a usar o CoBudget, você precisa criar um workspace. Como administrador, você pode convidar outros usuários para colaborar.",
+    "workspace_name": "Nome do Workspace",
+    "workspace_placeholder": "Ex.: Operação Principal",
+    "country_label": "País de registro",
+    "description_optional": "Descrição (Opcional)",
+    "description_placeholder": "Descreva brevemente sua empresa...",
+    "create_button": "Criar Workspace",
+    "view_premium_plans": "Ver planos Premium",
+    "country_required": "Selecione o país de registro",
+    "workspace_name_required": "Nome da empresa é obrigatório",
+    "workspace_name_min": "Nome deve ter pelo menos 2 caracteres",
+    "workspace_name_max": "Nome deve ter no máximo 100 caracteres",
+    "tax_id_generic": "Número de identificação fiscal",
+    "tax_id_placeholder_generic": "Digite o número fiscal",
+    "legal_document_required": "{label} é obrigatório",
+    "legal_document_cnpj": "CNPJ deve ter 14 dígitos",
+    "legal_document_ein": "EIN deve ter 9 dígitos",
+    "legal_document_cuit": "CUIT deve ter 11 dígitos",
+    "legal_document_nif": "NIF deve ter 9 dígitos",
+    "legal_document_rfc": "RFC deve ter 12 ou 13 caracteres",
+    "legal_document_vat": "VAT deve ter entre 8 e 15 caracteres",
+    "legal_document_rut": "Formato do RUT deve ser 12345678-9",
+    "legal_document_nit": "NIT deve ter 9 ou 10 dígitos",
+    "legal_document_ruc": "RUC deve ter 11 dígitos",
+    "legal_document_bn": "BN deve ter 9 dígitos",
+    "legal_document_invalid": "Número fiscal inválido",
+    "description_max": "Descrição deve ter no máximo 200 caracteres",
+    "created_select_company": "Empresa criada. Selecione a empresa para continuar.",
+    "created_success": "Empresa criada com sucesso!",
+    "upgrade_limit_company": "Você atingiu o limite de empresas do STARTER. Faça upgrade para TEAM.",
+    "countries": {
+      "br": "Brasil",
+      "us": "Estados Unidos",
+      "ar": "Argentina",
+      "pt": "Portugal",
+      "es": "Espanha",
+      "mx": "México",
+      "de": "Alemanha",
+      "fr": "França",
+      "cl": "Chile",
+      "co": "Colômbia",
+      "pe": "Peru",
+      "uk": "Reino Unido",
+      "it": "Itália",
+      "ca": "Canadá",
+      "other": "Outro"
+    }
+  },
   "financial_goals": {
     "title": "Metas Financeiras",
     "goal_name": "Nome da Meta",
@@ -436,7 +536,6 @@
     "get_suggestions": "Obter Sugestões",
     "no_suggestions": "Nenhuma sugestão de meta disponível no momento. Tente ajustar os valores de entrada e despesas para obter recomendações."
   },
-
   "authentication": {
     "login": {
       "title": "Entrar",
@@ -470,10 +569,330 @@
       "password_mismatch": "As senhas não coincidem. Por favor, tente novamente."
     }
   },
+  "companySettings": {
+    "create_new_company": "Criar nova empresa",
+    "create_new_company_desc": "Crie sua empresa para ativar o contexto B2B, convidar membros e gerenciar permissões.",
+    "company_name": "Nome da empresa",
+    "legal_document": "Documento legal",
+    "country": "País da empresa",
+    "description": "Descrição",
+    "create_company": "Criar empresa",
+    "personal_mode_alert": "Você está em modo pessoal. Crie uma empresa ou selecione uma existente para gerenciar dados da organização.",
+    "select_existing_company": "Selecionar empresa existente",
+    "only_admin_alert": "Apenas administradores podem alterar dados da empresa, convidar membros ou excluir a organização.",
+    "company_info": "Informações da Empresa",
+    "company_info_desc": "Atualize nome e descrição que serão exibidos para todos os membros.",
+    "save_changes": "Salvar alterações",
+    "invite_members": "Convidar membros",
+    "invite_members_desc": "Envie convites por e-mail para adicionar novos usuários com a role adequada.",
+    "invite_email": "E-mail do convidado",
+    "permission": "Permissão",
+    "send_invite": "Enviar convite",
+    "pending_invites": "Convites pendentes",
+    "invites_unavailable": "Convites indisponíveis no momento.",
+    "no_pending_invites": "Nenhum convite pendente.",
+    "current_members": "Membros atuais",
+    "current_members_desc": "Lista de usuários associados à empresa e suas permissões.",
+    "no_members": "Nenhum membro encontrado.",
+    "danger_zone": "Zona de perigo",
+    "danger_zone_desc": "Excluir a empresa remove todas as informações associadas. Esta ação não pode ser desfeita.",
+    "delete_company": "Excluir empresa",
+    "confirm_delete_title": "Confirmar exclusão",
+    "confirm_delete_desc": "Tem certeza? Digite <strong>{company}</strong> para confirmar.",
+    "cancel": "Cancelar",
+    "confirm": "Excluir",
+    "view_premium_plans": "Ver planos Premium",
+    "required_field": "Campo obrigatório",
+    "invalid_email": "E-mail inválido",
+    "success_company_created": "Empresa criada com sucesso.",
+    "success_company_updated": "Informações atualizadas.",
+    "success_invite_sent_generic": "Convite enviado.",
+    "success_cancel_invite": "Convite cancelado.",
+    "success_delete": "Empresa excluída.",
+    "upgrade_limit_company": "Você atingiu o limite de empresas do STARTER. Faça upgrade para TEAM.",
+    "upgrade_limit_member": "Você atingiu o limite de membros do STARTER. Faça upgrade para TEAM.",
+    "roles": {
+      "ROLE_ADMIN": "Administrador",
+      "ROLE_OWNER": "Proprietário",
+      "ROLE_MEMBER": "Colaborador",
+      "ROLE_VIEWER": "Visualizador",
+      "ROLE_USER": "Usuário",
+      "ROLE_CLIENT": "Gestor",
+      "OAUTH2_USER": "Usuário OAuth2"
+    },
+    "countries": {
+      "br": "Brasil (BR)",
+      "us": "Estados Unidos (US)",
+      "pt": "Portugal (PT)",
+      "es": "Espanha (ES)",
+      "fr": "França (FR)"
+    }
+  },
+  "companySwitcher": {
+    "create_new_workspace": "Criar Novo Workspace",
+    "add_workspace": "Adicionar workspace ao seu perfil",
+    "select_workspace": "Selecione um workspace",
+    "error_switch": "Erro ao trocar de workspace. Tente novamente.",
+    "roles": {
+      "ROLE_ADMIN": "Administrador",
+      "ROLE_OWNER": "Proprietário",
+      "ROLE_MEMBER": "Colaborador",
+      "ROLE_VIEWER": "Visualizador",
+      "ROLE_USER": "Usuário",
+      "ROLE_CLIENT": "Gestor",
+      "OAUTH2_USER": "Usuário OAuth2"
+    }
+  },
+  "inviteManager": {
+    "title": "Gerenciar Convites",
+    "email_label": "E-mail do usuário",
+    "email_placeholder": "usuario@exemplo.com",
+    "role_label": "Papel",
+    "send_invite": "Enviar Convite",
+    "pending_title": "Convites Pendentes",
+    "no_pending": "Nenhum convite pendente no momento.",
+    "select_company": "Selecione uma empresa antes de convidar usuários.",
+    "invite_success": "Convite enviado com sucesso!",
+    "invite_error": "Erro ao enviar convite",
+    "cancel_success": "Convite cancelado",
+    "cancel_error": "Erro ao cancelar convite",
+    "admin": "Administrador",
+    "owner": "Proprietário",
+    "member": "Colaborador",
+    "viewer": "Visualizador",
+    "user": "Usuário",
+    "client": "Gestor",
+    "oauth2_user": "Usuário OAuth2"
+  },
+  "companySelector": {
+    "title": "Selecione o Workspace",
+    "desc": "Você tem acesso a múltiplos workspaces. Selecione o workspace com o qual deseja trabalhar:",
+    "roles": {
+      "ROLE_ADMIN": "Administrador",
+      "ROLE_OWNER": "Proprietário",
+      "ROLE_MEMBER": "Colaborador",
+      "ROLE_VIEWER": "Visualizador",
+      "ROLE_CLIENT": "Gestor",
+      "ROLE_USER": "Usuário",
+      "OAUTH2_USER": "Usuário OAuth2"
+    }
+  },
+  "choosePlan": {
+    "title": "Escolha o plano ideal para o seu time.",
+    "subtitle": "Comece organizando suas finanças e evolua para decisões assistidas por inteligência artificial.",
+    "ai_title": "IA Financial Copilot incluída nos planos Premium",
+    "ai_desc": "O CoBudget Premium desbloqueia recursos avançados de inteligência financeira:",
+    "ai_feature_1": "Previsão de despesas futuras",
+    "ai_feature_2": "Detecção automática de gastos anormais",
+    "ai_feature_3": "Recomendações inteligentes de economia",
+    "ai_feature_4": "Categorização automática de transações",
+    "starter_tag": "Starter",
+    "starter_name": "Starter",
+    "starter_subtitle": "Para pequenos times começando o planejamento financeiro colaborativo.",
+    "team_tag": "Team",
+    "team_name": "Team",
+    "team_subtitle": "Para startups que precisam tomar decisões financeiras com mais inteligência.",
+    "monthly_label": "Mensal",
+    "annual_label": "Anual",
+    "from_price": "De {amount}",
+    "save_percent": "Economize {percent}",
+    "equals_month": "Equivale a {amount}/mês",
+    "monthly_short": "Mensal",
+    "annual_short_discount": "Anual -20%",
+    "best_offer": "Melhor oferta",
+    "starter_feature_1": "até 4 membros",
+    "starter_feature_2": "workspace financeiro compartilhado",
+    "starter_feature_3": "planejamento de orçamento",
+    "starter_feature_4": "metas financeiras",
+    "starter_feature_5": "simulação básica de cenários",
+    "team_feature_1": "até 10 membros",
+    "team_feature_2": "IA Financial Copilot",
+    "team_feature_3": "simulação de cenários",
+    "team_feature_4": "previsão financeira",
+    "team_feature_5": "decisões financeiras colaborativas",
+    "team_feature_6": "colaboração entre membros",
+    "cancellation_title": "Política de Cancelamento",
+    "cancellation_text": "Cancelar sua assinatura é simples. Durante o período de avaliação, você pode cancelar sem custos. Após a cobrança, você pode cancelar para evitar futuras renovações, mas o valor pago não será reembolsado.",
+    "payment_security_title": "Segurança e Privacidade no Pagamento",
+    "payment_security_text": "Seus pagamentos são processados com segurança através do Stripe. Não armazenamos suas informações de pagamento e garantimos uma experiência segura com a mais alta tecnologia de criptografia.",
+    "error_login_team": "Faça login para contratar um plano TEAM.",
+    "error_select_company_team": "Selecione ou crie uma empresa antes de contratar um plano TEAM.",
+    "error_user_not_authenticated": "Usuário não autenticado",
+    "error_unexpected_billing_action": "Ação de billing inesperada",
+    "error_continue_process": "Não foi possível continuar com o processo"
+  },
+  "choosePlanFaq": {
+    "q1": "Como funciona o período de avaliação gratuita?",
+    "a1": "O período de avaliação é de 30 dias, durante o qual você pode acessar todos os recursos da plataforma sem custo. Ao final, você poderá escolher um plano de assinatura para continuar.",
+    "q2": "Posso cancelar a assinatura antes do fim da avaliação?",
+    "a2": "Sim, você pode cancelar a qualquer momento durante o período de avaliação sem custos.",
+    "q3": "O que acontece se eu não escolher um plano após a avaliação gratuita?",
+    "a3": "Se você não escolher um plano ao final da avaliação gratuita, seu acesso aos recursos premium será suspenso. Você poderá continuar com o plano gratuito ou optar por um plano pago a qualquer momento.",
+    "q4": "Como posso mudar meu plano depois de escolher?",
+    "a4": "Você pode atualizar ou reduzir seu plano a qualquer momento através da página de configurações da sua conta.",
+    "q5": "Meu pagamento é seguro?",
+    "a5": "Sim, todos os pagamentos são processados com segurança através do Stripe, utilizando criptografia de última geração."
+  },
+  "faq": {
+    "title": "Perguntas Frequentes",
+    "q1": "O que é o CoBudget?",
+    "a1": "O CoBudget é uma plataforma colaborativa de gestão financeira para planejamento, acompanhamento e suporte à decisão.",
+    "q2": "Posso convidar minha equipe?",
+    "a2": "Sim. Você pode convidar membros e definir permissões conforme o seu plano.",
+    "q3": "O CoBudget suporta múltiplos workspaces?",
+    "a3": "Sim. Você pode criar e alternar entre workspaces conforme seu acesso.",
+    "q4": "Posso fazer upgrade depois?",
+    "a4": "Sim. Você pode fazer upgrade para um plano superior a qualquer momento."
+  },
+  "theWelcome": {
+    "header": {
+      "title": "CoBudget by Les Monades"
+    },
+    "section1": {
+      "imageAlt": "Planejamento Financeiro",
+      "title": "Planejamento Financeiro",
+      "p1": "Nossa aplicação financeira ajuda você a planejar seu futuro financeiro com confiança.",
+      "p2": "Com nossa ferramenta, você pode criar um plano personalizado para alcançar seus objetivos financeiros."
+    },
+    "ai": {
+      "tag": "IA Financial Copilot",
+      "title": "Inteligência que trabalha pelos seus objetivos",
+      "desc": "O Budget AI Service analisa seu histórico em segundos para entregar previsões confiáveis, alertas proativos e planos de economia mensuráveis.",
+      "features": {
+        "forecast": {
+          "title": "Previsão de Despesas",
+          "desc": "Projete meses futuros com faixa de confiança e entenda se o ritmo de gastos está subindo, caindo ou estável."
+        },
+        "anomaly": {
+          "title": "Detecção de Anomalias",
+          "desc": "O motor de IA monitora todos os lançamentos e destaca despesas fora do padrão antes que virem um problema."
+        },
+        "savings": {
+          "title": "Planos de Economia",
+          "desc": "Receba um plano claro com valor mensal recomendado, probabilidade de sucesso e ações sugeridas."
+        },
+        "autocategorize": {
+          "title": "Auto Categorize",
+          "desc": "Descrições em PT/EN são interpretadas automaticamente, reduzindo até 80% do trabalho de classificação manual."
+        }
+      }
+    },
+    "section2": {
+      "imageAlt": "Controle e Gestão",
+      "title": "Controle e Gestão",
+      "p1": "Nossa aplicação financeira oferece recursos avançados de controle e gestão para ajudá-lo a gerenciar suas finanças de forma eficaz.",
+      "p2": "Você pode acompanhar suas despesas, receitas e investimentos em um só lugar."
+    },
+    "section3": {
+      "imageAlt": "Segurança e Proteção",
+      "title": "Segurança e Proteção",
+      "p1": "Nossa aplicação financeira é projetada com segurança em mente.",
+      "p2": "Usamos tecnologias de ponta para proteger suas informações financeiras e garantir que seus dados estejam seguros."
+    },
+    "section4": {
+      "imageAlt": "Vantagens",
+      "title": "Vantagens",
+      "p1": "Nossa aplicação financeira oferece uma série de vantagens, incluindo relatórios personalizados, alertas de gastos e recomendações de investimento.",
+      "p2": "Você pode aproveitar ao máximo suas finanças com nossa ferramenta."
+    },
+    "section5": {
+      "imageAlt": "Suporte e Ajuda",
+      "title": "Suporte e Ajuda",
+      "p1": "Nossa equipe de suporte está sempre pronta para ajudar com qualquer dúvida ou problema.",
+      "p2": "Você pode contar conosco para obter ajuda em qualquer momento."
+    }
+  },
+  "notification_popup": {
+    "title": "Notificações",
+    "close": "Fechar"
+  },
+  "context_badge": {
+    "personal": "Contexto: Pessoal",
+    "company": "Contexto: Empresa - {company}{role}"
+  },
+  "ai": {
+    "common": {
+      "add": "Adicionar",
+      "remove": "Remover",
+      "loading": "Carregando...",
+      "processing": "Processando...",
+      "calculating": "Calculando...",
+      "no_description": "Sem descrição"
+    },
+    "anomaly": {
+      "title": "Detecção de Anomalias",
+      "description": "Envie as despesas recentes para identificar gastos fora do padrão.",
+      "sensitivity": "Sensibilidade",
+      "expenses": "Despesas",
+      "empty_transactions": "Inclua despesas para análise.",
+      "submit": "Detectar anomalias",
+      "summary": "Resumo",
+      "total_analyzed": "Total analisado",
+      "anomalies": "Anomalias",
+      "anomalous_amount": "Valor anômalo",
+      "deviation": "Desvio",
+      "severity": "Severidade",
+      "suggestion": "Sugestão",
+      "no_data": "Sem dados suficientes ou sem anomalias.",
+      "error_add_expenses": "Adicione despesas para análise.",
+      "error_detect": "Não foi possível detectar anomalias agora."
+    },
+    "cashflow": {
+      "title": "Fluxo de Caixa",
+      "description": "Visualize o saldo atual e a projeção dos próximos meses.",
+      "months": "Meses",
+      "update": "Atualizar",
+      "current_balance": "Saldo atual",
+      "monthly_average": "Média mensal",
+      "month": "Mês",
+      "income": "Receita",
+      "expenses": "Despesas",
+      "projected_balance": "Saldo projetado",
+      "status": "Status",
+      "alerts": "Alertas",
+      "error_fetch": "Falha ao buscar fluxo de caixa."
+    },
+    "auto_categorize": {
+      "title": "Classificação Automática",
+      "description": "Descreva as despesas e receba sugestões de categoria com confiança.",
+      "expenses_to_suggest": "Despesas para sugerir",
+      "empty_expenses": "Informe ao menos uma despesa.",
+      "submit": "Obter sugestões",
+      "suggestions": "Sugestões",
+      "expense": "Despesa",
+      "suggested_category": "Categoria sugerida",
+      "alternatives": "Alternativas",
+      "error_add_expense": "Inclua pelo menos uma despesa.",
+      "error_fill_expenses": "Descreva e informe o valor de todas as despesas.",
+      "error_suggestions": "Falha ao obter sugestões."
+    },
+    "monthly_prediction": {
+      "title": "Previsão Mensal de Despesas",
+      "description": "Envie suas transações para obter uma projeção dos próximos meses.",
+      "months_to_forecast": "Meses para prever",
+      "category_optional": "Categoria (opcional)",
+      "transactions_expenses": "Transações (apenas despesas)",
+      "empty_transactions": "Adicione ao menos uma despesa.",
+      "submit": "Gerar Previsão",
+      "result": "Resultado",
+      "total_predicted": "Total previsto",
+      "estimated_accuracy": "Acurácia estimada",
+      "month": "Mês",
+      "predicted_amount": "Valor previsto",
+      "confidence": "Confiança",
+      "range": "Intervalo",
+      "error_add_expense": "Adicione ao menos uma despesa.",
+      "error_forecast": "Não foi possível gerar a previsão. Tente novamente."
+    }
+  },
   "footer": {
     "privacy_policy": "Política de Privacidade",
     "terms_of_use": "Termos de Uso",
     "cookie_policy": "Política de Cookies",
-    "copyright": "© 2024 CoBudget. Todos os direitos reservados. Powered by Les Monades"
+    "copyright": "© 2024 CoBudget. Todos os direitos reservados. Desenvolvido por Les Monades",
+    "language_en": "English",
+    "language_pt": "Português",
+    "language_fr": "Français",
+    "language_es": "Español"
   }
 }

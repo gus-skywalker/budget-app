@@ -744,7 +744,8 @@ const sessionId = ref('')
 const availableLanguages = [
   { text: 'English', value: 'en' },
   { text: 'Português', value: 'pt' },
-  { text: 'Français', value: 'fr' }
+  { text: 'Français', value: 'fr' },
+  { text: 'Español', value: 'es' }
 ];
 
 const toApiLanguage = (value: string | null | undefined): string => {
@@ -756,7 +757,7 @@ const toApiLanguage = (value: string | null | undefined): string => {
 
 const toUiLocale = (value: string | null | undefined): string => {
   const normalized = String(value || '').toLowerCase()
-  if (['pt', 'en', 'fr'].includes(normalized)) return normalized
+  if (['pt', 'en', 'fr', 'es'].includes(normalized)) return normalized
   return 'pt'
 }
 

@@ -6,14 +6,14 @@
           {{ expense.description }}
         </v-list-item-title>
         <v-list-item-subtitle>
-          R$ {{ expense.amount }} - Data: {{ expense.date }}
+          {{ $t('expenseItem.amount') }} {{ expense.amount }} - {{ $t('expenseItem.date') }}: {{ expense.date }}
         </v-list-item-subtitle>
         <v-list-item-subtitle v-if="expense.category">
-          Categoria: {{ expense.category.name }}
+          {{ $t('expenseItem.category') }}: {{ expense.category.name }}
           <v-icon :icon="categoryIcons[expense.category.code]" class="mr-2"></v-icon>
         </v-list-item-subtitle>
         <v-list-item-subtitle v-if="expense.users && expense.users.length">
-          Compartilhado com:
+          {{ $t('expenseItem.sharedWith') }}
           <v-chip
             v-for="user in expense.users"
             :key="user.userId ?? user.id ?? user.email ?? user.name"
@@ -24,7 +24,7 @@
         </v-list-item-subtitle>
         <v-list-item-subtitle v-if="hasAlerts">
           <v-chip color="orange" dark class="ma-2">
-            Alerta configurado
+            {{ $t('expenseItem.alertConfigured') }}
           </v-chip>
         </v-list-item-subtitle>
       </div>
@@ -64,11 +64,11 @@
 
     <v-dialog v-model="isDialogOpen" max-width="600px">
       <v-card>
-        <v-card-title>Gerenciar Anexos e Compartilhar</v-card-title>
+        <v-card-title>{{ $t('expenseItem.manageAttachments') }}</v-card-title>
         <v-card-text>
           <v-text-field
             v-model="email"
-            label="Email"
+            :label="$t('expenseItem.email')"
             type="email"
             :rules="emailRules"
             required
@@ -90,7 +90,7 @@
           </v-list>
           <v-file-input
             ref="fileInput"
-            label="Adicionar novos anexos"
+            :label="$t('expenseItem.addAttachments')"
             accept="image/*,.pdf"
             multiple
             @update:model-value="onNewFilesChange"
@@ -106,9 +106,9 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="green" text @click="attachFiles">Anexar</v-btn>
-          <v-btn color="blue darken-1" text @click="isDialogOpen = false">Cancelar</v-btn>
-          <v-btn color="blue darken-1" text @click="shareExpense" :disabled="!email">Compartilhar</v-btn>
+          <v-btn color="green" text @click="attachFiles">{{ $t('expenseItem.attach') }}</v-btn>
+          <v-btn color="blue darken-1" text @click="isDialogOpen = false">{{ $t('common.cancel') }}</v-btn>
+          <v-btn color="blue darken-1" text @click="shareExpense" :disabled="!email">{{ $t('expenseItem.share') }}</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -116,59 +116,59 @@
     <v-dialog v-model="confirmDeleteDialog" max-width="500">
       <v-card>
         <v-card-title class="headline">
-          Confirmar Exclusão
+          {{ $t('expenseItem.confirmDeleteTitle') }}
         </v-card-title>
         <v-card-text>
-          Tem certeza de que deseja excluir o arquivo "{{ fileToDelete?.fileName }}"?
+          {{ $t('expenseItem.confirmDeleteText', { file: fileToDelete?.fileName }) }}
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" text @click="confirmDeleteDialog = false">Cancelar</v-btn>
-          <v-btn color="red" text @click="confirmDeleteAttachment">Excluir</v-btn>
+          <v-btn color="blue darken-1" text @click="confirmDeleteDialog = false">{{ $t('common.cancel') }}</v-btn>
+          <v-btn color="red" text @click="confirmDeleteAttachment">{{ $t('expenseItem.delete') }}</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
     <v-dialog v-model="isAlertDialogOpen" max-width="600px">
       <v-card>
-        <v-card-title>Configurar Alerta</v-card-title>
+        <v-card-title>{{ $t('expenseItem.configureAlert') }}</v-card-title>
         <v-divider></v-divider>
 
         <v-card-text>
-          <v-list-subheader>Alertas Configurados</v-list-subheader>
+          <v-list-subheader>{{ $t('expenseItem.configuredAlerts') }}</v-list-subheader>
           <v-list dense v-if="expense.alerts && expense.alerts.length">
             <v-list-item v-for="(alert, index) in expense.alerts" :key="index">
               <v-list-item-title>
-                <v-chip color="blue" dark>
-                  Data do Alerta: {{ formatAlertDate(alert.alertDate) }}
-                </v-chip>
+                  <v-chip color="blue" dark>
+                    {{ $t('expenseItem.alertDate') }}: {{ formatAlertDate(alert.alertDate) }}
+                  </v-chip>
               </v-list-item-title>
               <v-list-item-subtitle>
-                <v-chip color="green" dark>
-                  Status: {{ alert.status }}
-                </v-chip>
+                  <v-chip color="green" dark>
+                    {{ $t('expenseItem.status') }}: {{ alert.status }}
+                  </v-chip>
               </v-list-item-subtitle>
               <v-list-item-subtitle>
-                <strong>Métodos:</strong> {{ formatMethods(alert.methods) }}
+                <strong>{{ $t('expenseItem.methods') }}:</strong> {{ formatMethods(alert.methods) }}
               </v-list-item-subtitle>
               <v-list-item-subtitle>
-                <strong>Recorrência:</strong>
+                <strong>{{ $t('expenseItem.recurrence') }}:</strong>
                 <span v-if="alert.recurrenceInterval">{{ formatRecurrence(alert.recurrenceInterval) }}</span>
-                <span v-else>Não recorrente</span>
+                <span v-else>{{ $t('expenseItem.notRecurring') }}</span>
               </v-list-item-subtitle>
             </v-list-item>
           </v-list>
           <v-list v-else>
             <v-list-item>
-              <v-list-item-title>Nenhum alerta configurado.</v-list-item-title>
+              <v-list-item-title>{{ $t('expenseItem.noAlerts') }}</v-list-item-title>
             </v-list-item>
           </v-list>
 
           <v-divider class="my-4"></v-divider>
-          <v-list-subheader>Configurar Novo Alerta</v-list-subheader>
+          <v-list-subheader>{{ $t('expenseItem.configureNewAlert') }}</v-list-subheader>
           <v-radio-group v-model="useDefaultAlertDays" row>
-            <v-radio :label="`Usar configuração padrão (${defaultAlertDays} dias)`" :value="true"></v-radio>
-            <v-radio label="Definir um valor personalizado" :value="false"></v-radio>
+            <v-radio :label="$t('expenseItem.useDefaultAlertDays', { days: defaultAlertDays })" :value="true"></v-radio>
+            <v-radio :label="$t('expenseItem.customAlertDays')" :value="false"></v-radio>
           </v-radio-group>
 
           <v-text-field
@@ -177,8 +177,8 @@
             type="number"
             min="1"
             max="30"
-            label="Dias antes do alerta"
-            placeholder="Ex.: 5 dias"
+            :label="$t('expenseItem.daysBeforeAlert')"
+            :placeholder="$t('expenseItem.daysBeforeAlertPlaceholder')"
             :rules="customAlertDaysRules"
             dense
             outlined
@@ -188,7 +188,7 @@
             </template>
           </v-text-field>
 
-          <v-switch v-model="isRecurring" label="Definir como recorrente">
+          <v-switch v-model="isRecurring" :label="$t('expenseItem.setAsRecurring')">
             <template #prepend>
               <v-icon>mdi-repeat</v-icon>
             </template>
@@ -198,8 +198,8 @@
             v-if="isRecurring"
             v-model="recurrenceInterval"
             :items="['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY']"
-            label="Intervalo de Recorrência"
-            placeholder="Selecione a frequência"
+            :label="$t('expenseItem.recurrenceInterval')"
+            :placeholder="$t('expenseItem.selectFrequency')"
             dense
             outlined
           >
@@ -212,7 +212,7 @@
             v-if="isRecurring"
             v-model="recurrenceEndDate"
             type="date"
-            label="Data de Término da Recorrência"
+            :label="$t('expenseItem.recurrenceEndDate')"
             dense
             outlined
           >
@@ -224,16 +224,16 @@
 
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn text @click="isAlertDialogOpen = false">Cancelar</v-btn>
-          <v-btn color="red" text @click="resetAlertForm">Resetar</v-btn>
-          <v-btn color="green" dark text @click="saveAlert">Salvar</v-btn>
+          <v-btn text @click="isAlertDialogOpen = false">{{ $t('common.cancel') }}</v-btn>
+          <v-btn color="red" text @click="resetAlertForm">{{ $t('expenseItem.reset') }}</v-btn>
+          <v-btn color="green" dark text @click="saveAlert">{{ $t('expenseItem.save') }}</v-btn>
         </v-card-actions>
       </v-card>
 
       <v-snackbar v-model="snackbar" color="green" top>
         {{ snackbarMessage }}
         <template #action="{ attrs }">
-          <v-btn text v-bind="attrs" @click="snackbar = false">Fechar</v-btn>
+          <v-btn text v-bind="attrs" @click="snackbar = false">{{ $t('expenseItem.close') }}</v-btn>
         </template>
       </v-snackbar>
     </v-dialog>

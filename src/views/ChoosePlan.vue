@@ -3,20 +3,20 @@
     <v-container id="color-setup">
         <!-- Seção de Planos -->
                         <section id="plans" class="section plans-section">
-                                <h2>Escolha o plano ideal para o seu time.</h2>
+                                <h2>{{ $t('choosePlan.title') }}</h2>
                                 <p class="plans-subtitle">
-                                    Comece organizando suas finanças e evolua para decisões assistidas por inteligência artificial.
+                                    {{ $t('choosePlan.subtitle') }}
                                 </p>
 
                         <section class="section ai-value" style="background: #f7f7ff; border-radius: 12px; padding: 24px 16px; margin-bottom: 32px;">
-                            <h3 style="text-align:center; color:var(--purple); margin-bottom:8px;">IA Financial Copilot incluída nos planos Premium</h3>
+                            <h3 style="text-align:center; color:var(--purple); margin-bottom:8px;">{{ $t('choosePlan.ai_title') }}</h3>
                             <p style="text-align:center; max-width:600px; margin:0 auto 0; color:var(--dark-gray); font-size:16px;">
-                                O CoBudget Premium desbloqueia recursos avançados de inteligência financeira:<br>
+                                {{ $t('choosePlan.ai_desc') }}<br>
                                 <span style="display:block; margin-top:12px; text-align:left; max-width:400px; margin-left:auto; margin-right:auto;">
-                                    • Previsão de despesas futuras<br>
-                                    • Detecção automática de gastos anormais<br>
-                                    • Recomendações inteligentes de economia<br>
-                                    • Categorização automática de transações
+                                    • {{ $t('choosePlan.ai_feature_1') }}<br>
+                                    • {{ $t('choosePlan.ai_feature_2') }}<br>
+                                    • {{ $t('choosePlan.ai_feature_3') }}<br>
+                                    • {{ $t('choosePlan.ai_feature_4') }}
                                 </span>
                             </p>
                         </section>
@@ -25,81 +25,81 @@
                                 <!-- Plano STARTER -->
                                 <article class="plan-card starter">
                                     <div class="plan-head">
-                                        <span class="plan-tag starter-tag">Starter</span>
-                                        <h3>Starter</h3>
-                                        <p class="plan-subtitle">Para pequenos times começando o planejamento financeiro colaborativo.</p>
+                                        <span class="plan-tag starter-tag">{{ $t('choosePlan.starter_tag') }}</span>
+                                        <h3>{{ $t('choosePlan.starter_name') }}</h3>
+                                        <p class="plan-subtitle">{{ $t('choosePlan.starter_subtitle') }}</p>
                                     </div>
 
                                     <div class="price-stack">
                                         <div class="price-row">
-                                            <span class="price-label">Mensal</span>
-                                            <span class="price-amount">{{ planDetails.MONTHLY.displayPrice }}</span>
+                                            <span class="price-label">{{ $t('choosePlan.monthly_label') }}</span>
+                                            <span class="price-amount">{{ formatPlanPrice(planDetails.MONTHLY) }}</span>
                                         </div>
                                         <div class="price-row annual">
-                                            <span class="price-label">Anual</span>
-                                            <span class="price-strike">De {{ formatAmount(annualOriginal(planDetails.MONTHLY.amount)) }}</span>
-                                            <span class="price-amount">{{ planDetails.ANNUAL.displayPrice }}</span>
-                                            <span class="price-badge">Economize {{ discountPercent(planDetails.MONTHLY.amount, planDetails.ANNUAL.amount) }}</span>
-                                            <span class="price-note">Equivale a {{ formatAmount(planDetails.ANNUAL.amount / 12) }}/mês</span>
+                                            <span class="price-label">{{ $t('choosePlan.annual_label') }}</span>
+                                            <span class="price-strike">{{ $t('choosePlan.from_price', { amount: formatAmount(annualOriginal(planDetails.MONTHLY.amount)) }) }}</span>
+                                            <span class="price-amount">{{ formatPlanPrice(planDetails.ANNUAL) }}</span>
+                                            <span class="price-badge">{{ $t('choosePlan.save_percent', { percent: discountPercent(planDetails.MONTHLY.amount, planDetails.ANNUAL.amount) }) }}</span>
+                                            <span class="price-note">{{ $t('choosePlan.equals_month', { amount: formatAmount(planDetails.ANNUAL.amount / 12) }) }}</span>
                                         </div>
                                     </div>
 
                                     <ul class="plan-benefits">
-                                        <li><span class="check">✓</span> até 4 membros</li>
-                                        <li><span class="check">✓</span> workspace financeiro compartilhado</li>
-                                        <li><span class="check">✓</span> planejamento de orçamento</li>
-                                        <li><span class="check">✓</span> metas financeiras</li>
-                                        <li><span class="check">✓</span> simulação básica de cenários</li>
+                                        <li><span class="check">✓</span> {{ $t('choosePlan.starter_feature_1') }}</li>
+                                        <li><span class="check">✓</span> {{ $t('choosePlan.starter_feature_2') }}</li>
+                                        <li><span class="check">✓</span> {{ $t('choosePlan.starter_feature_3') }}</li>
+                                        <li><span class="check">✓</span> {{ $t('choosePlan.starter_feature_4') }}</li>
+                                        <li><span class="check">✓</span> {{ $t('choosePlan.starter_feature_5') }}</li>
                                     </ul>
 
                                     <div class="plan-cta">
                                         <button class="btn btn-outline starter-outline" @click.prevent="redirectToCheckout('MONTHLY')">
-                                            Mensal
+                                            {{ $t('choosePlan.monthly_short') }}
                                         </button>
                                         <button class="btn btn-solid starter-solid" @click.prevent="redirectToCheckout('ANNUAL')">
-                                            Anual -20%
+                                            {{ $t('choosePlan.annual_short_discount') }}
                                         </button>
                                     </div>
                                 </article>
 
                                 <!-- Plano TEAM -->
                                 <article class="plan-card team">
-                                    <div class="plan-ribbon">Melhor oferta</div>
+                                    <div class="plan-ribbon">{{ $t('choosePlan.best_offer') }}</div>
                                     <div class="plan-head">
-                                        <span class="plan-tag team-tag">Team</span>
-                                        <h3>Team</h3>
-                                        <p class="plan-subtitle">Para startups que precisam tomar decisões financeiras com mais inteligência.</p>
+                                        <span class="plan-tag team-tag">{{ $t('choosePlan.team_tag') }}</span>
+                                        <h3>{{ $t('choosePlan.team_name') }}</h3>
+                                        <p class="plan-subtitle">{{ $t('choosePlan.team_subtitle') }}</p>
                                     </div>
 
                                     <div class="price-stack">
                                         <div class="price-row">
-                                            <span class="price-label">Mensal</span>
-                                            <span class="price-amount">{{ planDetails.BUSINESS_MONTHLY.displayPrice }}</span>
+                                            <span class="price-label">{{ $t('choosePlan.monthly_label') }}</span>
+                                            <span class="price-amount">{{ formatPlanPrice(planDetails.BUSINESS_MONTHLY) }}</span>
                                         </div>
                                         <div class="price-row annual">
-                                            <span class="price-label">Anual</span>
-                                            <span class="price-strike">De {{ formatAmount(annualOriginal(planDetails.BUSINESS_MONTHLY.amount)) }}</span>
-                                            <span class="price-amount">{{ planDetails.BUSINESS_ANNUAL.displayPrice }}</span>
-                                            <span class="price-badge">Economize {{ discountPercent(planDetails.BUSINESS_MONTHLY.amount, planDetails.BUSINESS_ANNUAL.amount) }}</span>
-                                            <span class="price-note">Equivale a {{ formatAmount(planDetails.BUSINESS_ANNUAL.amount / 12) }}/mês</span>
+                                            <span class="price-label">{{ $t('choosePlan.annual_label') }}</span>
+                                            <span class="price-strike">{{ $t('choosePlan.from_price', { amount: formatAmount(annualOriginal(planDetails.BUSINESS_MONTHLY.amount)) }) }}</span>
+                                            <span class="price-amount">{{ formatPlanPrice(planDetails.BUSINESS_ANNUAL) }}</span>
+                                            <span class="price-badge">{{ $t('choosePlan.save_percent', { percent: discountPercent(planDetails.BUSINESS_MONTHLY.amount, planDetails.BUSINESS_ANNUAL.amount) }) }}</span>
+                                            <span class="price-note">{{ $t('choosePlan.equals_month', { amount: formatAmount(planDetails.BUSINESS_ANNUAL.amount / 12) }) }}</span>
                                         </div>
                                     </div>
 
                                     <ul class="plan-benefits">
-                                        <li><span class="check">✓</span> até 10 membros</li>
-                                        <li><span class="check">✓</span> IA Financial Copilot</li>
-                                        <li><span class="check">✓</span> simulação de cenários</li>
-                                        <li><span class="check">✓</span> previsão financeira</li>
-                                        <li><span class="check">✓</span> decisões financeiras colaborativas</li>
-                                        <li><span class="check">✓</span> colaboração entre membros</li>
+                                        <li><span class="check">✓</span> {{ $t('choosePlan.team_feature_1') }}</li>
+                                        <li><span class="check">✓</span> {{ $t('choosePlan.team_feature_2') }}</li>
+                                        <li><span class="check">✓</span> {{ $t('choosePlan.team_feature_3') }}</li>
+                                        <li><span class="check">✓</span> {{ $t('choosePlan.team_feature_4') }}</li>
+                                        <li><span class="check">✓</span> {{ $t('choosePlan.team_feature_5') }}</li>
+                                        <li><span class="check">✓</span> {{ $t('choosePlan.team_feature_6') }}</li>
                                     </ul>
 
                                     <div class="plan-cta">
                                         <button class="btn btn-outline team-outline" @click.prevent="handleTeamClick('BUSINESS_MONTHLY')">
-                                            Mensal
+                                            {{ $t('choosePlan.monthly_short') }}
                                         </button>
                                         <button class="btn btn-solid team-solid" @click.prevent="handleTeamClick('BUSINESS_ANNUAL')">
-                                            Anual -20%
+                                            {{ $t('choosePlan.annual_short_discount') }}
                                         </button>
                                     </div>
                                 </article>
@@ -111,20 +111,17 @@
 
         <!-- Política de Cancelamento -->
         <section class="section cancellation-policy">
-            <h2>Política de Cancelamento</h2>
+            <h2>{{ $t('choosePlan.cancellation_title') }}</h2>
             <p>
-                Cancelar sua assinatura é simples. Durante o período de avaliação, você pode cancelar sem custos.
-                Após a cobrança, você pode cancelar para evitar futuras renovações, mas o valor pago não será
-                reembolsado.
+                {{ $t('choosePlan.cancellation_text') }}
             </p>
         </section>
 
         <!-- Segurança no Pagamento -->
         <section class="section payment-security">
-            <h2>Segurança e Privacidade no Pagamento</h2>
+            <h2>{{ $t('choosePlan.payment_security_title') }}</h2>
             <p>
-                Seus pagamentos são processados com segurança através do Stripe. Não armazenamos suas informações de
-                pagamento e garantimos uma experiência segura com a mais alta tecnologia de criptografia.
+                {{ $t('choosePlan.payment_security_text') }}
             </p>
         </section>
     </v-container>
@@ -135,7 +132,8 @@ import FAQ from '@/components/FAQ.vue';
 import BillingDecisionService from '@/services/BillingDecisionService'
 import OnboardingOrchestrator from '@/services/OnboardingOrchestrator'
 import { createCorrelationId } from '@/utils/correlation'
-import { PLAN_DETAILS, formatPlanAmount } from '@/constants/plans';
+import { PLAN_DETAILS } from '@/constants/plans';
+import { formatConvertedPriceFromBRL, resolvePricingCurrency } from '@/utils/pricing'
 import { useUserStore } from '@/plugins/userStore';
 
 export default {
@@ -146,26 +144,17 @@ export default {
     data() {
         return {
             faqs: [
-                {
-                    question: "Como funciona o período de avaliação gratuita?",
-                    answer: "O período de avaliação é de 30 dias, durante o qual você pode acessar todos os recursos da plataforma sem custo. Ao final, você poderá escolher um plano de assinatura para continuar.",
-                },
-                {
-                    question: "Posso cancelar a assinatura antes do fim da avaliação?",
-                    answer: "Sim, você pode cancelar a qualquer momento durante o período de avaliação sem custos.",
-                },
-                {
-                    question: "O que acontece se eu não escolher um plano após a avaliação gratuita?",
-                    answer: "Se você não escolher um plano ao final da avaliação gratuita, seu acesso aos recursos premium será suspenso. Você poderá continuar com o plano gratuito ou optar por um plano pago a qualquer momento.",
-                },
-                {
-                    question: "Como posso mudar meu plano depois de escolher?",
-                    answer: "Você pode atualizar ou reduzir seu plano a qualquer momento através da página de configurações da sua conta.",
-                },
-                {
-                    question: "Meu pagamento é seguro?",
-                    answer: "Sim, todos os pagamentos são processados com segurança através do Stripe, utilizando criptografia de última geração.",
-                },
+                // Perguntas específicas do ChoosePlan
+                { question: 'choosePlanFaq.q1', answer: 'choosePlanFaq.a1' },
+                { question: 'choosePlanFaq.q2', answer: 'choosePlanFaq.a2' },
+                { question: 'choosePlanFaq.q3', answer: 'choosePlanFaq.a3' },
+                { question: 'choosePlanFaq.q4', answer: 'choosePlanFaq.a4' },
+                { question: 'choosePlanFaq.q5', answer: 'choosePlanFaq.a5' },
+                // Perguntas gerais do sistema
+                { question: 'faq.q1', answer: 'faq.a1' },
+                { question: 'faq.q2', answer: 'faq.a2' },
+                { question: 'faq.q3', answer: 'faq.a3' },
+                { question: 'faq.q4', answer: 'faq.a4' },
             ],
             selectedPlan: null,
             planDetails: PLAN_DETAILS,
@@ -219,13 +208,13 @@ export default {
         handleTeamClick(plan) {
             const userStore = useUserStore()
             if (!this.isAuthenticated) {
-                alert('Faça login para contratar um plano TEAM.');
+                alert(this.$t('choosePlan.error_login_team'));
                 const redirect = OnboardingOrchestrator.buildRedirectPath('/choose-plan', { plan })
                 this.$router.push({ name: 'login', query: { redirect } })
                 return
             }
             if (!userStore.currentCompanyId) {
-                alert('Selecione ou crie uma empresa antes de contratar um plano TEAM.');
+                alert(this.$t('choosePlan.error_select_company_team'));
                 const redirect = OnboardingOrchestrator.buildRedirectPath('/choose-plan', { plan })
                 this.$router.push({ name: 'select-company', query: { redirect } })
                 return;
@@ -239,7 +228,7 @@ export default {
                 const user = userStore.user;
 
                 if (!user?.id) {
-                    throw new Error('Usuário não autenticado');
+                    throw new Error(this.$t('choosePlan.error_user_not_authenticated'));
                 }
 
                 const correlationId = createCorrelationId()
@@ -247,7 +236,7 @@ export default {
                 const isTeamPlan = String(plan).startsWith('BUSINESS_');
                 const companyId = userStore.currentCompanyId;
                 if (isTeamPlan && !companyId) {
-                    throw new Error('Selecione uma empresa para contratar um plano TEAM.');
+                    throw new Error(this.$t('choosePlan.error_select_company_team'));
                 }
 
                 // IMPORTANT (ADR-001/004): FE must NOT call payment-api and must NOT send PII.
@@ -276,7 +265,7 @@ export default {
                 }
 
                 if (decision.action !== 'START_SUBSCRIPTION') {
-                    throw new Error('Ação de billing inesperada');
+                    throw new Error(this.$t('choosePlan.error_unexpected_billing_action'));
                 }
 
                 this.$router.push({
@@ -297,7 +286,7 @@ export default {
             console.error("Erro no processo de checkout:", error);
             const errorMessage = error.response?.data?.error || 
                                error.message || 
-                               'Não foi possível continuar com o processo';
+                               this.$t('choosePlan.error_continue_process');
             
             if (this.$vuetify) {
                 this.$vuetify.notify({
@@ -309,7 +298,18 @@ export default {
             }
         },
         formatAmount(amount) {
-            return formatPlanAmount(amount);
+            const browserLocale = typeof navigator !== 'undefined' ? navigator.language : null
+            return formatConvertedPriceFromBRL({
+                amountInBRL: amount,
+                targetCurrency: resolvePricingCurrency({
+                    locale: this.$i18n?.locale,
+                    browserLocale
+                }),
+                uiLocale: this.$i18n?.locale
+            })
+        },
+        formatPlanPrice(plan) {
+            return `${this.formatAmount(plan.amount)} / ${this.$t(plan.billingPeriod === 'year' ? 'landingPage.plans.perYear' : 'landingPage.plans.perMonth')}`
         },
         annualOriginal(monthlyAmount) {
             return monthlyAmount * 12;

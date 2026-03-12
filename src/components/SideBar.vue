@@ -104,6 +104,7 @@ const navSections = computed(() => [
         title: t('sidebar.workspace.personal_finance'),
         icon: 'mdi-briefcase-outline',
         disabled: true,
+        to: undefined,
       },
     ],
   },
@@ -116,18 +117,21 @@ const navSections = computed(() => [
         title: t('sidebar.overview'),
         icon: 'mdi-view-dashboard',
         to: { name: 'dashboard' },
+        disabled: false,
       },
       {
         key: 'cashflow',
         title: t('sidebar.cashflow'),
         icon: 'mdi-chart-areaspline',
         to: { name: 'cashflow' },
+        disabled: false,
       },
       {
         key: 'home',
         title: t('sidebar.home'),
         icon: 'mdi-home',
         to: { name: 'home' },
+        disabled: false,
       },
     ],
   },
@@ -140,18 +144,21 @@ const navSections = computed(() => [
         title: t('sidebar.transactions'),
         icon: 'mdi-swap-horizontal',
         to: { name: 'budget' },
+        disabled: false,
       },
       {
         key: 'accounts',
         title: t('sidebar.accounts'),
         icon: 'mdi-bank-outline',
         to: { name: 'accounts' },
+        disabled: false,
       },
       {
         key: 'categories',
         title: t('sidebar.categories'),
         icon: 'mdi-shape-outline',
         to: { name: 'categories' },
+        disabled: false,
       },
     ],
   },
@@ -164,18 +171,21 @@ const navSections = computed(() => [
         title: t('sidebar.planning_budget'),
         icon: 'mdi-wallet-outline',
         to: { name: 'planning-budget' },
+        disabled: false,
       },
       {
         key: 'planning-scenarios',
         title: t('sidebar.planning_scenarios'),
         icon: 'mdi-layers-triple-outline',
         to: { name: 'planning-scenarios' },
+        disabled: false,
       },
       {
         key: 'planning-goals',
         title: t('sidebar.planning_goals'),
         icon: 'mdi-bullseye-arrow',
         to: { name: 'planning-goals' },
+        disabled: false,
       },
     ],
   },
@@ -188,12 +198,14 @@ const navSections = computed(() => [
         title: t('sidebar.decisions'),
         icon: 'mdi-lightbulb-outline',
         to: { name: 'decisions' },
+        disabled: false,
       },
       {
         key: 'insights',
         title: t('sidebar.insights'),
         icon: 'mdi-brain',
         to: { name: 'insights' },
+        disabled: false,
       },
     ],
   },
@@ -206,6 +218,7 @@ const navSections = computed(() => [
         title: t('sidebar.report'),
         icon: 'mdi-file-chart',
         to: { name: 'report' },
+        disabled: false,
       },
     ],
   },
@@ -218,6 +231,7 @@ const navSections = computed(() => [
         title: t('sidebar.settings'),
         icon: 'mdi-cog-outline',
         to: { name: 'settings' },
+        disabled: false,
       },
     ],
   },
@@ -258,7 +272,15 @@ const navSections = computed(() => [
                   v-bind="props"
                   :prepend-icon="item.icon"
                   :title="item.title"
+                  v-if="item.to"
                   :to="item.to"
+                  :disabled="item.disabled"
+                ></v-list-item>
+                <v-list-item
+                  v-bind="props"
+                  :prepend-icon="item.icon"
+                  :title="item.title"
+                  v-else
                   :disabled="item.disabled"
                 ></v-list-item>
               </template>
@@ -268,7 +290,14 @@ const navSections = computed(() => [
             <v-list-item
               :prepend-icon="item.icon"
               :title="item.title"
+              v-if="item.to"
               :to="item.to"
+              :disabled="item.disabled"
+            ></v-list-item>
+            <v-list-item
+              :prepend-icon="item.icon"
+              :title="item.title"
+              v-else
               :disabled="item.disabled"
             ></v-list-item>
           </template>
@@ -278,7 +307,7 @@ const navSections = computed(() => [
 
     <v-divider></v-divider>
 
-    <v-tooltip text="Alternar Tema" location="end">
+    <v-tooltip :text="$t('sidebar.toggle_theme_tooltip')" location="end">
       <template v-slot:activator="{ props }">
         <v-switch v-bind="props" @click="toggleTheme" hide-details class="ml-4 mt-2">
           <template v-slot:prepend>
@@ -288,7 +317,7 @@ const navSections = computed(() => [
       </template>
     </v-tooltip>
 
-    <v-tooltip text="Notificações" location="end">
+    <v-tooltip :text="$t('sidebar.notifications_tooltip')" location="end">
       <template v-slot:activator="{ props }">
         <div v-bind="props" class="notification-icon" @click="toggleNotifications">
           <v-badge :content="notifications.length" color="red" overlap>

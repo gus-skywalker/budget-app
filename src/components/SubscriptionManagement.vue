@@ -17,14 +17,14 @@
               <div class="info-item">
                 <div class="info-label">
                   <v-icon size="20" color="#667eea">mdi-package-variant</v-icon>
-                  Plano
+                  {{ t('subscription_management.plan_label') }}
                 </div>
                 <div class="info-value">{{ currentPlanText }}</div>
               </div>
               <div class="info-item">
                 <div class="info-label">
                   <v-icon size="20" color="#667eea">mdi-check-circle</v-icon>
-                  Status
+                  {{ t('subscription_management.status') }}
                 </div>
                 <div class="info-value">
                   <v-chip 
@@ -49,7 +49,7 @@
             <div>
               <h2 class="card-title">
                 <v-icon color="#667eea" class="mr-2">mdi-swap-horizontal</v-icon>
-                Alterar Plano
+                {{ t('subscription_management.change_plan_title') }}
               </h2>
               <p class="card-description">{{ t('subscription_management.change_plan_instructions') }}</p>
             </div>
@@ -61,16 +61,16 @@
               @click="openPlanDetails"
             >
               <v-icon start size="small">mdi-information-outline</v-icon>
-              Detalhes
+              {{ t('subscription_management.details') }}
             </v-btn>
           </div>
         </div>
         <div class="card-content">
           <v-radio-group v-model="selectedPlan" class="plan-radio-group">
-            <div v-if="isTenantMode" class="plan-group-label">STARTER</div>
+            <div v-if="isTenantMode" class="plan-group-label">{{ t('subscription_management.starter_group') }}</div>
             <div class="plan-option" :class="{ 'disabled': currentPlan === 'MONTHLY' }">
               <v-radio 
-                label="STARTER Mensal"
+                :label="t('subscription_management.starter_monthly_name')"
                 value="MONTHLY"
                 :disabled="currentPlan === 'MONTHLY'"
                 color="#667eea"
@@ -79,10 +79,10 @@
                   <div class="plan-label">
                     <div class="plan-name">
                       <v-icon class="mr-2">mdi-calendar-month</v-icon>
-                      STARTER Mensal
+                      {{ t('subscription_management.starter_monthly_name') }}
                     </div>
-                    <div class="plan-price">{{ plans.MONTHLY.displayPrice }}</div>
-                    <div class="plan-description">Cobrado mensalmente</div>
+                    <div class="plan-price">{{ formatPlanPrice(plans.MONTHLY) }}</div>
+                    <div class="plan-description">{{ t('subscription_management.billed_monthly') }}</div>
                   </div>
                 </template>
               </v-radio>
@@ -92,13 +92,13 @@
                 color="#667eea"
                 class="current-badge"
               >
-                Atual
+                {{ t('subscription_management.current') }}
               </v-chip>
             </div>
             <v-divider class="my-4"></v-divider>
             <div class="plan-option" :class="{ 'disabled': currentPlan === 'ANNUAL' }">
               <v-radio 
-                label="STARTER Anual"
+                :label="t('subscription_management.starter_annual_name')"
                 value="ANNUAL"
                 :disabled="currentPlan === 'ANNUAL'"
                 color="#667eea"
@@ -107,15 +107,15 @@
                   <div class="plan-label">
                       <div class="plan-name">
                         <v-icon class="mr-2">mdi-calendar-check</v-icon>
-                        STARTER Anual
-                      <v-chip size="x-small" color="success" class="ml-2">Economize</v-chip>
+                        {{ t('subscription_management.starter_annual_name') }}
+                      <v-chip size="x-small" color="success" class="ml-2">{{ t('subscription_management.save_badge') }}</v-chip>
                       </div>
-                    <div class="plan-price">{{ plans.ANNUAL.displayPrice }}</div>
+                    <div class="plan-price">{{ formatPlanPrice(plans.ANNUAL) }}</div>
                     <div class="plan-description">
-                      <span class="plan-strike">De {{ formatAmount(annualOriginal(plans.MONTHLY.amount)) }}/ano</span>
-                      <span class="plan-badge">Economize {{ discountPercent(plans.MONTHLY.amount, plans.ANNUAL.amount) }}</span>
+                      <span class="plan-strike">{{ t('subscription_management.from_year', { amount: formatAmount(annualOriginal(plans.MONTHLY.amount)) }) }}</span>
+                      <span class="plan-badge">{{ t('subscription_management.save_percent', { percent: discountPercent(plans.MONTHLY.amount, plans.ANNUAL.amount) }) }}</span>
                     </div>
-                    <div class="plan-description">{{ formatAmount(plans.ANNUAL.amount / 12) }}/mês (cobrado anualmente)</div>
+                    <div class="plan-description">{{ t('subscription_management.per_month_billed_annually', { amount: formatAmount(plans.ANNUAL.amount / 12) }) }}</div>
                   </div>
                 </template>
               </v-radio>
@@ -125,16 +125,16 @@
                 color="#667eea"
                 class="current-badge"
               >
-                Atual
+                {{ t('subscription_management.current') }}
               </v-chip>
             </div>
 
             <template v-if="isTenantMode">
               <v-divider class="my-6"></v-divider>
-              <div class="plan-group-label">TEAM</div>
+              <div class="plan-group-label">{{ t('subscription_management.team_group') }}</div>
               <div class="plan-option" :class="{ 'disabled': currentPlan === 'BUSINESS_MONTHLY' }">
                 <v-radio 
-                  label="TEAM Mensal" 
+                  :label="t('subscription_management.team_monthly_name')" 
                   value="BUSINESS_MONTHLY"
                   :disabled="currentPlan === 'BUSINESS_MONTHLY'"
                   color="#667eea"
@@ -143,10 +143,10 @@
                     <div class="plan-label">
                       <div class="plan-name">
                         <v-icon class="mr-2">mdi-domain</v-icon>
-                        TEAM Mensal
+                        {{ t('subscription_management.team_monthly_name') }}
                       </div>
-                      <div class="plan-price">{{ plans.BUSINESS_MONTHLY.displayPrice }}</div>
-                      <div class="plan-description">Cobrado mensalmente</div>
+                      <div class="plan-price">{{ formatPlanPrice(plans.BUSINESS_MONTHLY) }}</div>
+                      <div class="plan-description">{{ t('subscription_management.billed_monthly') }}</div>
                     </div>
                   </template>
                 </v-radio>
@@ -156,13 +156,13 @@
                   color="#667eea"
                   class="current-badge"
                 >
-                  Atual
+                  {{ t('subscription_management.current') }}
                 </v-chip>
               </div>
               <v-divider class="my-4"></v-divider>
               <div class="plan-option" :class="{ 'disabled': currentPlan === 'BUSINESS_ANNUAL' }">
                 <v-radio 
-                  label="TEAM Anual" 
+                  :label="t('subscription_management.team_annual_name')" 
                   value="BUSINESS_ANNUAL"
                   :disabled="currentPlan === 'BUSINESS_ANNUAL'"
                   color="#667eea"
@@ -171,15 +171,15 @@
                     <div class="plan-label">
                       <div class="plan-name">
                         <v-icon class="mr-2">mdi-domain</v-icon>
-                        TEAM Anual
-                        <v-chip size="x-small" color="success" class="ml-2">Economize</v-chip>
+                        {{ t('subscription_management.team_annual_name') }}
+                        <v-chip size="x-small" color="success" class="ml-2">{{ t('subscription_management.save_badge') }}</v-chip>
                       </div>
-                      <div class="plan-price">{{ plans.BUSINESS_ANNUAL.displayPrice }}</div>
+                      <div class="plan-price">{{ formatPlanPrice(plans.BUSINESS_ANNUAL) }}</div>
                       <div class="plan-description">
-                        <span class="plan-strike">De {{ formatAmount(annualOriginal(plans.BUSINESS_MONTHLY.amount)) }}/ano</span>
-                        <span class="plan-badge">Economize {{ discountPercent(plans.BUSINESS_MONTHLY.amount, plans.BUSINESS_ANNUAL.amount) }}</span>
+                        <span class="plan-strike">{{ t('subscription_management.from_year', { amount: formatAmount(annualOriginal(plans.BUSINESS_MONTHLY.amount)) }) }}</span>
+                        <span class="plan-badge">{{ t('subscription_management.save_percent', { percent: discountPercent(plans.BUSINESS_MONTHLY.amount, plans.BUSINESS_ANNUAL.amount) }) }}</span>
                       </div>
-                      <div class="plan-description">{{ formatAmount(plans.BUSINESS_ANNUAL.amount / 12) }}/mês (cobrado anualmente)</div>
+                      <div class="plan-description">{{ t('subscription_management.per_month_billed_annually', { amount: formatAmount(plans.BUSINESS_ANNUAL.amount / 12) }) }}</div>
                     </div>
                   </template>
                 </v-radio>
@@ -189,7 +189,7 @@
                   color="#667eea"
                   class="current-badge"
                 >
-                  Atual
+                  {{ t('subscription_management.current') }}
                 </v-chip>
               </div>
             </template>
@@ -219,7 +219,7 @@
               block
             >
               <v-icon left>mdi-close</v-icon>
-              Cancelar Mudança
+              {{ t('subscription_management.cancel_change') }}
             </v-btn>
 
             <!-- Botão para gerenciar assinatura (sempre visível se não houver mudança pendente) -->
@@ -242,52 +242,52 @@
       <v-dialog v-model="showPlanDetails" max-width="720">
         <v-card class="details-card">
           <v-card-title class="details-title">
-            Detalhes dos Planos
+            {{ t('subscription_management.plan_details_title') }}
           </v-card-title>
           <v-card-text>
             <div class="details-grid">
               <div class="details-col">
-                <div class="details-tag starter-tag">Starter</div>
+                <div class="details-tag starter-tag">{{ t('subscription_management.starter_group') }}</div>
                 <div class="details-price">
-                  <div class="details-price-row">Mensal: {{ plans.MONTHLY.displayPrice }}</div>
+                  <div class="details-price-row">{{ t('subscription_management.monthly_label') }}: {{ formatPlanPrice(plans.MONTHLY) }}</div>
                   <div class="details-price-row">
-                    Anual: {{ plans.ANNUAL.displayPrice }}
-                    <span class="plan-strike ml-1">De {{ formatAmount(annualOriginal(plans.MONTHLY.amount)) }}/ano</span>
-                    <span class="plan-badge ml-2">Economize {{ discountPercent(plans.MONTHLY.amount, plans.ANNUAL.amount) }}</span>
+                    {{ t('subscription_management.annual_label') }}: {{ formatPlanPrice(plans.ANNUAL) }}
+                    <span class="plan-strike ml-1">{{ t('subscription_management.from_year', { amount: formatAmount(annualOriginal(plans.MONTHLY.amount)) }) }}</span>
+                    <span class="plan-badge ml-2">{{ t('subscription_management.save_percent', { percent: discountPercent(plans.MONTHLY.amount, plans.ANNUAL.amount) }) }}</span>
                   </div>
                 </div>
                 <ul class="details-list">
-                  <li>até 4 membros</li>
-                  <li>workspace financeiro compartilhado</li>
-                  <li>planejamento de orçamento</li>
-                  <li>metas financeiras</li>
-                  <li>simulação básica de cenários</li>
+                  <li>{{ t('subscription_management.starter_feature_1') }}</li>
+                  <li>{{ t('subscription_management.starter_feature_2') }}</li>
+                  <li>{{ t('subscription_management.starter_feature_3') }}</li>
+                  <li>{{ t('subscription_management.starter_feature_4') }}</li>
+                  <li>{{ t('subscription_management.starter_feature_5') }}</li>
                 </ul>
               </div>
               <div class="details-col">
-                <div class="details-tag team-tag">Team</div>
+                <div class="details-tag team-tag">{{ t('subscription_management.team_group') }}</div>
                 <div class="details-price">
-                  <div class="details-price-row">Mensal: {{ plans.BUSINESS_MONTHLY.displayPrice }}</div>
+                  <div class="details-price-row">{{ t('subscription_management.monthly_label') }}: {{ formatPlanPrice(plans.BUSINESS_MONTHLY) }}</div>
                   <div class="details-price-row">
-                    Anual: {{ plans.BUSINESS_ANNUAL.displayPrice }}
-                    <span class="plan-strike ml-1">De {{ formatAmount(annualOriginal(plans.BUSINESS_MONTHLY.amount)) }}/ano</span>
-                    <span class="plan-badge ml-2">Economize {{ discountPercent(plans.BUSINESS_MONTHLY.amount, plans.BUSINESS_ANNUAL.amount) }}</span>
+                    {{ t('subscription_management.annual_label') }}: {{ formatPlanPrice(plans.BUSINESS_ANNUAL) }}
+                    <span class="plan-strike ml-1">{{ t('subscription_management.from_year', { amount: formatAmount(annualOriginal(plans.BUSINESS_MONTHLY.amount)) }) }}</span>
+                    <span class="plan-badge ml-2">{{ t('subscription_management.save_percent', { percent: discountPercent(plans.BUSINESS_MONTHLY.amount, plans.BUSINESS_ANNUAL.amount) }) }}</span>
                   </div>
                 </div>
                 <ul class="details-list">
-                  <li>até 10 membros</li>
-                  <li>IA Financial Copilot</li>
-                  <li>simulação de cenários</li>
-                  <li>previsão financeira</li>
-                  <li>decisões financeiras colaborativas</li>
-                  <li>colaboração entre membros</li>
+                  <li>{{ t('subscription_management.team_feature_1') }}</li>
+                  <li>{{ t('subscription_management.team_feature_2') }}</li>
+                  <li>{{ t('subscription_management.team_feature_3') }}</li>
+                  <li>{{ t('subscription_management.team_feature_4') }}</li>
+                  <li>{{ t('subscription_management.team_feature_5') }}</li>
+                  <li>{{ t('subscription_management.team_feature_6') }}</li>
                 </ul>
               </div>
             </div>
           </v-card-text>
           <v-card-actions class="justify-end">
             <v-btn variant="text" color="#667eea" @click="showPlanDetails = false">
-              Fechar
+              {{ t('common.close') }}
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -298,15 +298,15 @@
         <div class="card-header">
           <h2 class="card-title">
             <v-icon color="#f44336" class="mr-2">mdi-alert-circle</v-icon>
-            Zona de Perigo
+            {{ t('subscription_management.danger_zone_title') }}
           </h2>
-          <p class="card-description">Ações irreversíveis da sua assinatura</p>
+          <p class="card-description">{{ t('subscription_management.danger_zone_desc') }}</p>
         </div>
         <div class="card-content">
           <div class="cancel-section">
             <div class="cancel-info">
-              <div class="cancel-label">Cancelar Assinatura</div>
-              <div class="cancel-hint">Você perderá acesso aos recursos premium ao final do período atual</div>
+              <div class="cancel-label">{{ t('subscription_management.cancel_subscription_label') }}</div>
+              <div class="cancel-hint">{{ t('subscription_management.cancel_subscription_hint') }}</div>
             </div>
             <v-btn 
               @click="cancelSubscription"
@@ -331,11 +331,12 @@ import { useI18n } from 'vue-i18n'
 import BillingDecisionService from '@/services/BillingDecisionService'
 import BillingOrchestrationService from '@/services/BillingOrchestrationService'
 import { createCorrelationId } from '@/utils/correlation'
-import { PLAN_DETAILS, formatPlanAmount, type PlanId } from '@/constants/plans';
+import { PLAN_DETAILS, type PlanId } from '@/constants/plans';
+import { buildBillingPricingContext, formatConvertedPriceFromBRL, resolvePricingCurrency } from '@/utils/pricing'
 import { createMessageId } from '@/utils/messageId'
 
 // Provide typed translation function for template (instead of relying on this.$t)
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 interface User {
     id?: string;
@@ -385,7 +386,29 @@ const isBillingCycle = (value: string | null | undefined): value is Exclude<Bill
   return value === 'MONTHLY' || value === 'ANNUAL';
 };
 
-const formatAmount = (amount: number) => formatPlanAmount(amount);
+const getPricingCurrency = () => {
+  const browserLocale = typeof navigator !== 'undefined' ? navigator.language : null
+  return resolvePricingCurrency({
+    locale: locale.value,
+    browserLocale
+  })
+}
+
+const getBillingContext = () => buildBillingPricingContext({
+  uiLocale: locale.value,
+  browserLocale: typeof navigator !== 'undefined' ? navigator.language : null
+})
+
+const formatAmount = (amount: number) => formatConvertedPriceFromBRL({
+  amountInBRL: amount,
+  targetCurrency: getPricingCurrency(),
+  uiLocale: locale.value
+});
+
+const formatPlanPrice = (plan: { amount: number; billingPeriod: 'month' | 'year' }) => {
+  const periodLabel = t(plan.billingPeriod === 'year' ? 'landingPage.plans.perYear' : 'landingPage.plans.perMonth')
+  return `${formatAmount(plan.amount)} / ${periodLabel}`
+}
 const annualOriginal = (monthlyAmount: number) => monthlyAmount * 12;
 const discountPercent = (monthlyAmount: number, annualAmount: number) => {
   if (!monthlyAmount || !annualAmount) return '0%';
@@ -410,14 +433,11 @@ const mapTierCycleToPlanId = (tier: Exclude<PlanTier, ''>, cycle: Exclude<Billin
 };
 
 const mapTierCycleToLabel = (tier: Exclude<PlanTier, ''>, cycle: Exclude<BillingCycleUi, ''>) => {
-  return `${tier} ${cycle === 'ANNUAL' ? 'Anual' : 'Mensal'}`;
+  return `${t(`subscription_management.tiers.${tier.toLowerCase()}`)} ${t(`subscription_management.cycles.${cycle.toLowerCase()}`)}`;
 };
 
 const mapTierToLabel = (tier: Exclude<PlanTier, ''>) => {
-  if (tier === 'FREE') {
-    return 'Gratuito';
-  }
-  return tier;
+  return t(`subscription_management.tiers.${tier.toLowerCase()}`)
 };
 
 // Obter o texto do plano atual
@@ -431,29 +451,29 @@ const currentPlanText = computed(() => {
     if (isPlanTier(currentPlanTier.value)) {
       return mapTierToLabel(currentPlanTier.value);
     }
-    return 'Gratuito';
+    return t('subscription_management.tiers.free');
 });
 
 const selectedPlanText = computed(() => {
-    if (isPlanId(selectedPlan.value)) {
-        return plans[selectedPlan.value].name;
-    }
-    return '';
+  if (isPlanId(selectedPlan.value)) {
+    return mapTierCycleToLabel(mapPlanIdToTier(selectedPlan.value), mapPlanIdToCycle(selectedPlan.value));
+  }
+  return '';
 });
 
 const statusText = computed(() => {
     switch (subscriptionStatus.value) {
         case 'ACTIVE':
-            return 'Ativa';
+      return t('subscription_management.statuses.active');
         case 'INCOMPLETE':
-            return 'Pagamento pendente';
+      return t('subscription_management.statuses.incomplete');
         case 'PAST_DUE':
-            return 'Pagamento em atraso';
+      return t('subscription_management.statuses.past_due');
         case 'CANCELED':
-            return 'Cancelada';
+      return t('subscription_management.statuses.canceled');
         case 'NONE':
         default:
-            return 'Inativa';
+      return t('subscription_management.statuses.inactive');
     }
 });
 
@@ -548,13 +568,13 @@ const loadSubscriptionDetails = async () => {
     }
     lastLoadedPlan.value = currentPlan.value
   } catch (error) {
-    console.error('Erro ao carregar detalhes da assinatura:', error);
+    console.error(t('subscription_management.error_load_details'), error);
   }
 };
 
 const handlePlanChange = async () => {
   if (!isPlanId(selectedPlan.value)) {
-    alert('Plano inválido');
+    alert(t('subscription_management.error_invalid_plan'));
     return;
   }
   if (isPremium.value) {
@@ -591,7 +611,8 @@ const startCheckoutSession = async () => {
         subjectType,
         subjectId,
         userId: subjectType === 'USER' ? actorUserId.value : null,
-        companyId: subjectType === 'COMPANY' ? String(companyId) : null
+        companyId: subjectType === 'COMPANY' ? String(companyId) : null,
+        ...getBillingContext()
       },
       correlationId
     )
@@ -599,7 +620,7 @@ const startCheckoutSession = async () => {
     const decision = decisionResp.data
 
     if (decision.action === 'NOOP_ALREADY_PREMIUM') {
-      alert('Você já possui acesso premium.')
+      alert(t('subscription_management.already_premium'))
       return
     }
 
@@ -613,8 +634,8 @@ const startCheckoutSession = async () => {
       }
     })
   } catch (error) {
-    console.error('Erro ao iniciar sessão de checkout:', error);
-    alert('Não foi possível iniciar o checkout. Tente novamente mais tarde.');
+    console.error(t('subscription_management.error_start_checkout'), error);
+    alert(t('subscription_management.error_checkout_later'));
   }
 };
 
@@ -629,7 +650,7 @@ const openBillingPortal = async (targetPlan?: PlanId) => {
     const subjectType = (isTenantMode.value && userStore.currentCompanyId) ? 'COMPANY' : 'USER'
     const subjectId = subjectType === 'COMPANY' ? String(userStore.currentCompanyId) : actorUserId.value
     if (subjectType === 'COMPANY' && !userStore.isTenantAdmin) {
-      alert('Apenas o owner/admin da empresa pode gerenciar a assinatura.');
+      alert(t('subscription_management.admin_only_manage'));
       return;
     }
 
@@ -646,7 +667,8 @@ const openBillingPortal = async (targetPlan?: PlanId) => {
       subjectId,
       correlationId,
       messageId,
-      returnUrl
+      returnUrl,
+      ...getBillingContext()
     }
     if (targetPlan && isPlanId(targetPlan)) {
       payload.targetPlan = targetPlan
@@ -662,13 +684,13 @@ const openBillingPortal = async (targetPlan?: PlanId) => {
     }
 
     const errorMsg = portalResult.lastError
-      ? `Portal indisponível: ${portalResult.lastError}`
-      : 'Solicitação enviada. O portal de billing ainda está sendo preparado.'
+      ? t('subscription_management.portal_unavailable', { error: portalResult.lastError })
+      : t('subscription_management.portal_preparing')
     alert(errorMsg)
   } catch (error) {
-    console.error('Erro ao solicitar portal de faturamento:', error)
+    console.error(t('subscription_management.error_request_portal'), error)
     const apiError = (error as any)?.response?.data?.error
-    alert(apiError ? `Erro ao abrir portal: ${apiError}` : 'Não foi possível solicitar o portal de faturamento. Tente novamente mais tarde.')
+    alert(apiError ? t('subscription_management.error_open_portal', { error: apiError }) : t('subscription_management.error_portal_later'))
   }
 };
 
@@ -722,7 +744,7 @@ const cancelSubscription = async () => {
   try {
     if (!actorUserId.value) throw new Error('Usuário não autenticado')
 
-    const confirmed = confirm('Tem certeza de que deseja cancelar sua assinatura?');
+    const confirmed = confirm(t('subscription_management.cancel_confirm'));
     if (!confirmed) return;
 
     const correlationId = createCorrelationId()
@@ -743,11 +765,11 @@ const cancelSubscription = async () => {
       messageId
     })
 
-    alert('Solicitação de cancelamento enviada. Você manterá acesso até o final do período vigente (quando aplicável).')
+    alert(t('subscription_management.cancel_requested'))
     await loadSubscriptionDetails()
   } catch (error) {
-    console.error('Erro ao solicitar cancelamento:', error)
-    alert('Não foi possível cancelar a assinatura. Tente novamente mais tarde.')
+    console.error(t('subscription_management.error_cancel_request'), error)
+    alert(t('subscription_management.error_cancel_later'))
   }
 };
 

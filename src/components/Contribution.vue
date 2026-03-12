@@ -5,7 +5,7 @@
         <v-text-field :label="$t('financial_goals.description')" v-model="contributionForm.description" outlined
             class="mb-4"></v-text-field>
         <v-btn type="submit" color="primary">
-            {{ $t('financial_goals.add_contribution') }}
+            {{ $t('add_contribution') }}
         </v-btn>
     </v-form>
 </template>
