@@ -1254,20 +1254,36 @@ body {
     display: block;
   }
 
+
   .auth-buttons {
     display: flex;
     justify-content: flex-end;
     align-items: center;
-    gap: 10px;
-    margin-right: 60px; /* Espaço para o menu sandwich */
+    gap: 6px;
+    margin-right: 8vw; /* Reduz o espaço para o menu sandwich */
     z-index: 10;
+    flex-shrink: 0;
   }
 
   .login-btn,
   .signup-btn {
-    padding: 8px 12px;
-    font-size: 14px;
-    white-space: nowrap; /* Evita quebra de linha no texto do botão */
+    padding: 6px 10px;
+    font-size: 13px;
+    min-width: 80px;
+    white-space: nowrap;
+    border-radius: 4px;
+  }
+
+  /* Garante que o menu-toggle fique acima dos botões */
+  .menu-toggle {
+    z-index: 20;
+  }
+
+  /* Evita sobreposição visual do menu-toggle com os botões */
+  .header {
+    position: relative;
+    min-height: 70px;
+    padding-right: 10vw;
   }
 
   .hero {
