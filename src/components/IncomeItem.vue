@@ -8,6 +8,48 @@
         <v-list-item-subtitle>
           R$ {{ income.amount }} - Data: {{ income.date }}
         </v-list-item-subtitle>
+        <div v-if="income.openFinance || income.reconciliationStatus" class="status-row">
+          <v-chip
+            v-if="income.openFinance"
+            color="#667eea"
+            size="small"
+            variant="tonal"
+            class="mt-1"
+          >
+            Open Finance
+          </v-chip>
+          <v-chip
+            v-if="income.reconciliationStatus"
+            :color="reconciliationColor"
+            size="small"
+            variant="tonal"
+            class="mt-1"
+          >
+            {{ reconciliationLabel }}
+          </v-chip>
+        </div>
+        <div v-if="income.reconciliationConflictId" class="conflict-resolution-row">
+          <v-btn
+            size="x-small"
+            variant="outlined"
+            color="#667eea"
+            :loading="resolvingAction === 'keep-existing'"
+            :disabled="Boolean(resolvingAction)"
+            @click.stop="$emit('resolveConflict', { income, action: 'keep-existing' })"
+          >
+            Manter existente
+          </v-btn>
+          <v-btn
+            size="x-small"
+            variant="tonal"
+            color="#667eea"
+            :loading="resolvingAction === 'create-new'"
+            :disabled="Boolean(resolvingAction)"
+            @click.stop="$emit('resolveConflict', { income, action: 'create-new' })"
+          >
+            Criar nova
+          </v-btn>
+        </div>
         <v-chip
           v-if="income.isRecurring"
           color="blue"
@@ -64,14 +106,38 @@
 export default {
   name: 'IncomeItem',
   props: {
-    income: Object
+    income: Object,
+    resolvingAction: {
+      type: String,
+      default: null
+    }
   },
-  emits: ['toggle-recurring', 'deleteIncome', 'select'],
+  emits: ['toggle-recurring', 'deleteIncome', 'select', 'resolveConflict'],
   data() {
     return {
       recurrenceDialog: false,
       selectedMonths: 1,
       monthsOptions: [1, 3, 6, 12] // opções de meses
+    }
+  },
+  computed: {
+    reconciliationLabel() {
+      const status = this.income?.reconciliationStatus
+      if (!status) return ''
+      const labels = {
+        IMPORTED: 'Importada',
+        PROMOTED_FROM_PENDING: 'Pendente → confirmada',
+        MATCHED_AND_CANCELLED: 'Cancelada pelo banco',
+        CONFLICT_DUPLICATE: 'Conflito de duplicidade',
+        RESOLVED_CREATE_NEW: 'Conflito resolvido',
+      }
+      return labels[status] || status
+    },
+    reconciliationColor() {
+      const status = this.income?.reconciliationStatus
+      if (status === 'CONFLICT_DUPLICATE') return 'warning'
+      if (status === 'MATCHED_AND_CANCELLED') return 'error'
+      return '#667eea'
     }
   },
   methods: {
@@ -109,5 +175,19 @@ export default {
 .income-actions .v-btn {
   font-size: 0.75rem;
   padding: 0.25rem 0.5rem;
+}
+
+.status-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.conflict-resolution-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 4px;
 }
 </style>

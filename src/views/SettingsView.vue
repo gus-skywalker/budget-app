@@ -378,76 +378,392 @@
                 <div class="card-content">
                   <div class="bank-cards">
                     <div
+                      v-for="bank in supportedBankCards"
+                      :key="bank.institutionKey"
                       class="bank-card-item"
-                      :class="{ 'bank-card-highlight': highlightedCard === 'Nubank' }"
-                      @mouseenter="highlightCard('Nubank')"
+                      :class="{ 'bank-card-highlight': highlightedCard === bank.institutionKey }"
+                      @mouseenter="highlightCard(bank.institutionKey)"
                       @mouseleave="highlightCard('')"
-                      @focusin="highlightCard('Nubank')"
+                      @focusin="highlightCard(bank.institutionKey)"
                       @focusout="highlightCard('')"
-                      @click="openBankDialog('Nubank')"
+                      @click="toggleOpenFinanceConnection(bank.institutionKey)"
                       tabindex="0"
                       role="button"
                     >
                       <div class="bank-logo">
-                        <v-img src="banks/nubank-logo.png" aspect-ratio="1"></v-img>
+                        <v-img :src="bank.logo" aspect-ratio="1"></v-img>
                       </div>
-                      <div class="bank-name">Nubank</div>
-                      <v-chip size="small" color="grey" variant="outlined">
-                        <v-icon start size="small">mdi-link-variant-off</v-icon>
-                        {{ $t('account_management.bank_connections.disconnected') }}
+                      <div class="bank-name">{{ bank.label }}</div>
+                      <v-chip :color="bankCardStatus(bank.institutionKey).color" size="small" variant="outlined">
+                        <v-icon start size="small">{{ bankCardStatus(bank.institutionKey).icon }}</v-icon>
+                        {{ bankCardStatus(bank.institutionKey).label }}
                       </v-chip>
-                    </div>
-
-                    <div
-                      class="bank-card-item"
-                      :class="{ 'bank-card-highlight': highlightedCard === 'BancoDoBrasil' }"
-                      @mouseenter="highlightCard('BancoDoBrasil')"
-                      @mouseleave="highlightCard('')"
-                      @focusin="highlightCard('BancoDoBrasil')"
-                      @focusout="highlightCard('')"
-                      @click="openBankDialog('Banco do Brasil')"
-                      tabindex="0"
-                      role="button"
-                    >
-                      <div class="bank-logo">
-                        <v-img src="banks/bb-logo.webp" aspect-ratio="1"></v-img>
+                      <div
+                        v-if="openFinanceConnectionByKey[bank.institutionKey]?.linkedAccountsCount"
+                        class="bank-card-meta"
+                      >
+                        {{ openFinanceConnectionByKey[bank.institutionKey]?.linkedAccountsCount }} conta(s) importada(s)
                       </div>
-                      <div class="bank-name">Banco do Brasil</div>
-                      <v-chip size="small" color="grey" variant="outlined">
-                        <v-icon start size="small">mdi-link-variant-off</v-icon>
-                        {{ $t('account_management.bank_connections.disconnected') }}
-                      </v-chip>
-                    </div>
-
-                    <div
-                      class="bank-card-item"
-                      :class="{ 'bank-card-highlight': highlightedCard === 'Itau' }"
-                      @mouseenter="highlightCard('Itau')"
-                      @mouseleave="highlightCard('')"
-                      @focusin="highlightCard('Itau')"
-                      @focusout="highlightCard('')"
-                      @click="openBankDialog('Itaú')"
-                      tabindex="0"
-                      role="button"
-                    >
-                      <div class="bank-logo">
-                        <v-img src="banks/itau-logo.jpg" aspect-ratio="1"></v-img>
+                      <div
+                        v-if="openFinanceConnectionByKey[bank.institutionKey]?.lastSyncTo"
+                        class="bank-card-meta"
+                      >
+                        Último sync: {{ openFinanceConnectionByKey[bank.institutionKey]?.lastSyncTo }}
                       </div>
-                      <div class="bank-name">Itaú</div>
-                      <v-chip size="small" color="grey" variant="outlined">
-                        <v-icon start size="small">mdi-link-variant-off</v-icon>
-                        {{ $t('account_management.bank_connections.disconnected') }}
-                      </v-chip>
+                      <div
+                        v-if="openFinanceConnectionByKey[bank.institutionKey]?.lastErrorSummary"
+                        class="bank-card-error"
+                      >
+                        {{ openFinanceConnectionByKey[bank.institutionKey]?.lastErrorSummary }}
+                      </div>
+                      <v-btn
+                        class="mt-3"
+                        size="small"
+                        variant="tonal"
+                        color="#667eea"
+                        :loading="openFinanceConnectionLoadingKey === bank.institutionKey"
+                        :disabled="openFinanceConnectionLoadingKey === bank.institutionKey"
+                      >
+                        {{
+                          openFinanceConnectionByKey[bank.institutionKey]
+                            && (openFinanceConnectionByKey[bank.institutionKey].status === 'CONNECTED'
+                              || openFinanceConnectionByKey[bank.institutionKey].status === 'ERROR')
+                            ? 'Desconectar'
+                            : 'Conectar'
+                        }}
+                      </v-btn>
                     </div>
                   </div>
                 </div>
+              </div>
 
-                <!-- Overlay de Em Breve -->
-                <div class="coming-soon-overlay">
-                  <div class="coming-soon-badge">
-                    <v-icon size="48" class="mb-3">mdi-clock-outline</v-icon>
-                    <div class="coming-soon-title">{{ $t('account_management.bank_connections.coming_soon') }}</div>
-                    <div class="coming-soon-subtitle">{{ $t('account_management.bank_connections.coming_soon_message') }}</div>
+              <div class="modern-card mt-6">
+                <div class="card-header">
+                  <h2 class="card-title">
+                    <v-icon color="#667eea" class="mr-2">mdi-chart-box-outline</v-icon>
+                    Saúde operacional
+                  </h2>
+                  <p class="card-description">
+                    Visão rápida do estado atual do Open Finance para esta empresa.
+                  </p>
+                </div>
+                <div class="card-content">
+                  <div v-if="openFinanceObservabilitySummary" class="observability-grid">
+                    <div class="observability-card">
+                      <div class="observability-label">Contas conectadas</div>
+                      <div class="observability-value">{{ openFinanceObservabilitySummary.connectedAccounts }}</div>
+                    </div>
+                    <div class="observability-card">
+                      <div class="observability-label">Transações importadas</div>
+                      <div class="observability-value">{{ openFinanceObservabilitySummary.importedTransactions }}</div>
+                    </div>
+                    <div class="observability-card">
+                      <div class="observability-label">Mappings ativos</div>
+                      <div class="observability-value">{{ openFinanceObservabilitySummary.categoryMappings }}</div>
+                    </div>
+                    <div class="observability-card">
+                      <div class="observability-label">Conflitos abertos</div>
+                      <div class="observability-value">{{ openFinanceObservabilitySummary.openConflicts }}</div>
+                    </div>
+                    <div class="observability-card">
+                      <div class="observability-label">Contas em rate limit hoje</div>
+                      <div class="observability-value">{{ openFinanceObservabilitySummary.accountsAtRateLimitToday }}</div>
+                    </div>
+                    <div class="observability-card">
+                      <div class="observability-label">Última sincronização</div>
+                      <div class="observability-value observability-value--small">
+                        {{ openFinanceObservabilitySummary.lastSyncedAt ? formatOpenFinanceDate(openFinanceObservabilitySummary.lastSyncTo || '') : 'Ainda não sincronizado' }}
+                      </div>
+                      <div
+                        v-if="openFinanceObservabilitySummary.lastSyncFrom && openFinanceObservabilitySummary.lastSyncTo"
+                        class="observability-subtitle"
+                      >
+                        {{ openFinanceObservabilitySummary.lastSyncFrom }} → {{ openFinanceObservabilitySummary.lastSyncTo }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="modern-card mt-6">
+                <div class="card-header">
+                  <h2 class="card-title">
+                    <v-icon color="#667eea" class="mr-2">mdi-history</v-icon>
+                    Histórico de sincronizações
+                  </h2>
+                  <p class="card-description">
+                    Últimas execuções de sync Open Finance com os principais contadores operacionais.
+                  </p>
+                </div>
+                <div class="card-content">
+                  <div v-if="!openFinanceSyncHistory.length" class="empty-state-panel">
+                    <v-icon size="40" color="#667eea" class="mb-3">mdi-history</v-icon>
+                    <p class="empty-message">Nenhuma sincronização registrada ainda.</p>
+                  </div>
+                  <div v-else class="sync-history-list">
+                    <div v-for="item in openFinanceSyncHistory" :key="item.id" class="sync-history-item">
+                      <div class="sync-history-title-row">
+                        <div class="sync-history-title">{{ item.syncFrom }} → {{ item.syncTo }}</div>
+                        <v-chip
+                          size="small"
+                          variant="tonal"
+                          :color="item.status === 'FAILED' ? 'error' : '#667eea'"
+                        >
+                          {{ item.status === 'FAILED' ? 'Falhou' : 'Sucesso' }}
+                        </v-chip>
+                      </div>
+                      <div class="sync-history-subtitle">
+                        {{ formatOpenFinanceDate(item.createdAt.split('T')[0]) }}
+                      </div>
+                      <div class="sync-history-metrics">
+                        <span>{{ item.transactionsCreated }} novas</span>
+                        <span>{{ item.transactionsUpdated }} atualizadas</span>
+                        <span>{{ item.reconciliationConflicts }} conflitos</span>
+                        <span>{{ item.accountsSkippedDueToRateLimit }} rate limit</span>
+                      </div>
+                      <div v-if="item.errorSummary" class="sync-history-error">
+                        {{ item.errorSummary }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="modern-card mt-6">
+                <div class="card-header">
+                  <h2 class="card-title">
+                    <v-icon color="#667eea" class="mr-2">mdi-file-compare</v-icon>
+                    Revisão Open Finance
+                  </h2>
+                  <p class="card-description">
+                    Sincronize uma janela de datas e resolva conflitos de reconciliação sem sair da área de conexões.
+                  </p>
+                </div>
+                <div class="card-content">
+                  <v-alert type="info" variant="tonal" class="mb-4">
+                    Algumas integrações Open Finance limitam o fetch a 4 sincronizações por dia, por conta.
+                  </v-alert>
+
+                  <v-alert
+                    v-if="openFinanceFeedback.message"
+                    :type="openFinanceFeedback.type"
+                    variant="tonal"
+                    class="mb-4"
+                  >
+                    {{ openFinanceFeedback.message }}
+                  </v-alert>
+
+                  <div class="open-finance-toolbar mb-4">
+                    <v-text-field
+                      v-model="openFinanceFrom"
+                      label="De"
+                      type="date"
+                      variant="outlined"
+                      density="comfortable"
+                      color="#667eea"
+                      hide-details
+                    />
+                    <v-text-field
+                      v-model="openFinanceTo"
+                      label="Até"
+                      type="date"
+                      variant="outlined"
+                      density="comfortable"
+                      color="#667eea"
+                      hide-details
+                    />
+                    <v-btn
+                      class="modern-btn gradient-btn"
+                      :loading="openFinanceSyncing"
+                      :disabled="openFinanceSyncing"
+                      @click="syncOpenFinance"
+                    >
+                      <v-icon start>mdi-sync</v-icon>
+                      Sincronizar
+                    </v-btn>
+                    <v-btn
+                      variant="outlined"
+                      color="#667eea"
+                      @click="goToImportedTransactions"
+                    >
+                      <v-icon start>mdi-open-in-new</v-icon>
+                      Ver transações importadas
+                    </v-btn>
+                  </div>
+
+                  <div v-if="lastOpenFinanceSync" class="sync-summary mb-4">
+                    <v-chip size="small" variant="tonal" color="#667eea">
+                      {{ lastOpenFinanceSync.transactionsCreated }} novas
+                    </v-chip>
+                    <v-chip size="small" variant="tonal" color="#667eea">
+                      {{ lastOpenFinanceSync.transactionsUpdated }} atualizadas
+                    </v-chip>
+                    <v-chip size="small" variant="tonal" color="#667eea">
+                      {{ lastOpenFinanceSync.reconciliationConflicts }} conflitos
+                    </v-chip>
+                    <v-chip size="small" variant="tonal" color="warning">
+                      {{ lastOpenFinanceSync.accountsSkippedDueToRateLimit }} contas em rate limit
+                    </v-chip>
+                  </div>
+
+                  <div v-if="openFinanceLoadingConflicts" class="loading-state">
+                    <v-progress-circular indeterminate color="#667eea" size="36" />
+                  </div>
+                  <div v-else-if="!openFinanceConflicts.length" class="empty-state-panel">
+                    <v-icon size="40" color="#667eea" class="mb-3">mdi-check-decagram-outline</v-icon>
+                    <p class="empty-message">Nenhum conflito de reconciliação pendente.</p>
+                  </div>
+                  <div v-else class="conflict-list">
+                    <div v-for="conflict in openFinanceConflicts" :key="conflict.id" class="conflict-item">
+                      <div class="conflict-main">
+                        <div class="conflict-title-row">
+                          <div class="conflict-title">{{ conflict.description }}</div>
+                          <v-chip size="small" color="warning" variant="tonal">
+                            {{ conflict.rawStatus || 'SEM STATUS' }}
+                          </v-chip>
+                        </div>
+                        <div class="conflict-meta">
+                          <span>{{ formatOpenFinanceDate(conflict.transactionDate) }}</span>
+                          <span>{{ formatOpenFinanceCurrency(conflict.amount) }}</span>
+                          <span>{{ conflict.conflictReason || 'Conflito de assinatura' }}</span>
+                        </div>
+                        <div class="conflict-meta">
+                          <span>Transação remota: {{ conflict.remoteTransactionId }}</span>
+                          <span>Conta: {{ conflict.accountExternalId }}</span>
+                          <span v-if="conflict.bankCategoryId">Categoria banco: {{ conflict.bankCategoryId }}</span>
+                        </div>
+                      </div>
+                      <div class="conflict-actions">
+                        <v-btn
+                          variant="outlined"
+                          color="#667eea"
+                          :loading="openFinanceResolvingId === conflict.id"
+                          :disabled="openFinanceResolvingId === conflict.id"
+                          @click="resolveOpenFinanceConflict(conflict.id, 'keep-existing')"
+                        >
+                          Manter existente
+                        </v-btn>
+                        <v-btn
+                          color="#667eea"
+                          variant="tonal"
+                          :loading="openFinanceResolvingId === conflict.id"
+                          :disabled="openFinanceResolvingId === conflict.id"
+                          @click="resolveOpenFinanceConflict(conflict.id, 'create-new')"
+                        >
+                          Criar nova
+                        </v-btn>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="modern-card mt-6">
+                <div class="card-header">
+                  <h2 class="card-title">
+                    <v-icon color="#667eea" class="mr-2">mdi-shape-plus</v-icon>
+                    Mapeamento de categorias
+                  </h2>
+                  <p class="card-description">
+                    Defina como cada categoria do banco deve ser convertida para a categoria interna do produto.
+                  </p>
+                </div>
+                <div class="card-content">
+                  <v-text-field
+                    v-model="openFinanceCategorySearch"
+                    label="Buscar categoria do banco"
+                    variant="outlined"
+                    density="comfortable"
+                    color="#667eea"
+                    prepend-inner-icon="mdi-magnify"
+                    class="modern-input mb-4"
+                  />
+
+                  <div v-if="!filteredOpenFinanceCategoryRows.length" class="empty-state-panel">
+                    <v-icon size="40" color="#667eea" class="mb-3">mdi-shape-outline</v-icon>
+                    <p class="empty-message">Nenhuma categoria bancária encontrada para mapear.</p>
+                  </div>
+
+                  <div v-else class="mapping-list">
+                    <div
+                      v-for="row in filteredOpenFinanceCategoryRows"
+                      :key="row.bankCategory.id"
+                      class="mapping-item"
+                      :class="{ 'mapping-item--unmapped': !row.isMapped }"
+                    >
+                      <div class="mapping-main">
+                        <div class="mapping-title-row">
+                          <div>
+                            <div class="mapping-title">{{ row.bankCategory.name }}</div>
+                            <div class="mapping-subtitle">
+                              {{ row.bankCategory.id }}
+                              <span v-if="row.bankCategory.parentId">• pai: {{ row.bankCategory.parentId }}</span>
+                            </div>
+                            <div v-if="!row.isMapped && row.suggestedCategoryName" class="mapping-suggestion">
+                              Sugestão: {{ row.suggestedCategoryName }}
+                              <span v-if="row.suggestionReason">• {{ row.suggestionReason }}</span>
+                            </div>
+                          </div>
+                          <v-chip
+                            size="small"
+                            :color="row.isMapped ? '#667eea' : 'warning'"
+                            variant="tonal"
+                          >
+                            {{ row.isMapped ? 'Mapeada' : 'Pendente' }}
+                          </v-chip>
+                        </div>
+
+                        <v-select
+                          v-model="openFinanceMappingSelections[row.bankCategory.id]"
+                          :items="internalCategories"
+                          item-title="name"
+                          item-value="id"
+                          label="Categoria interna"
+                          variant="outlined"
+                          density="comfortable"
+                          color="#667eea"
+                          class="modern-input mt-3"
+                        />
+                        <v-btn
+                          v-if="!row.isMapped && row.suggestedCategoryId"
+                          variant="text"
+                          color="#667eea"
+                          class="mapping-suggestion-action"
+                          @click="openFinanceMappingSelections[row.bankCategory.id] = row.suggestedCategoryId"
+                        >
+                          Aplicar sugestão
+                        </v-btn>
+                        <v-checkbox
+                          v-model="openFinanceMappingReprocessSelections[row.bankCategory.id]"
+                          label="Reprocessar transações já importadas com esta categoria"
+                          color="#667eea"
+                          density="comfortable"
+                          hide-details
+                          class="mt-2"
+                        />
+                      </div>
+
+                      <div class="mapping-actions">
+                        <v-btn
+                          variant="tonal"
+                          color="#667eea"
+                          :loading="openFinanceMappingSavingId === row.bankCategory.id"
+                          :disabled="openFinanceMappingDeletingId === row.bankCategory.id"
+                          @click="saveOpenFinanceCategoryMapping(row.bankCategory.id)"
+                        >
+                          Salvar
+                        </v-btn>
+                        <v-btn
+                          variant="outlined"
+                          color="error"
+                          :disabled="!row.isMapped || openFinanceMappingSavingId === row.bankCategory.id"
+                          :loading="openFinanceMappingDeletingId === row.bankCategory.id"
+                          @click="removeOpenFinanceCategoryMapping(row.bankCategory.id)"
+                        >
+                          Remover
+                        </v-btn>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -512,94 +828,32 @@
       </v-window>
     </v-container>
 
-    <!-- Diálogo de Login do Banco -->
+    <!-- Diálogo de consentimento Open Finance -->
     <v-dialog v-model="bankDialog" max-width="500">
       <v-card class="modern-dialog-card">
         <v-card-title class="dialog-header">
-          <v-icon color="#667eea" class="mr-2">mdi-lock</v-icon>
-          <span class="headline">{{ $t('account_management.connect_to_bank', { bank: selectedBank }) }}</span>
+          <v-icon color="#667eea" class="mr-2">mdi-shield-check-outline</v-icon>
+          <span class="headline">Conectar {{ selectedBank }}</span>
         </v-card-title>
         <v-card-text class="dialog-content">
-          <v-form>
-            <v-text-field 
-              v-model="bankLogin" 
-              :label="$t('account_management.bank_login_label')"
-              variant="outlined"
-              density="comfortable"
-              color="#667eea"
-              class="modern-input mb-3"
-            ></v-text-field>
-            <v-text-field 
-              v-model="bankPassword" 
-              :label="$t('account_management.bank_password_label')"
-              type="password"
-              variant="outlined"
-              density="comfortable"
-              color="#667eea"
-              class="modern-input"
-            ></v-text-field>
-          </v-form>
+          <p class="mb-3">
+            Esta etapa simula o consentimento Open Finance para a instituição
+            <strong>{{ selectedBank }}</strong>.
+          </p>
+          <p class="mb-0 text-medium-emphasis">
+            Ao confirmar, a conexão ficará ativa para sincronizar contas, transações, saldos,
+            limites e categorias do banco dentro do seu workspace.
+          </p>
         </v-card-text>
         <v-card-actions class="dialog-actions">
           <v-spacer></v-spacer>
           <v-btn @click="closeBankDialog" variant="text">{{ $t('common.cancel') }}</v-btn>
-          <v-btn @click="authenticateBank" class="modern-btn gradient-btn">
-            {{ $t('account_management.connect_to_bank') }}
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-
-    <!-- Modal para gerar certificado -->
-    <v-dialog v-model="certDialog" max-width="500">
-      <v-card class="modern-dialog-card">
-        <v-card-title class="dialog-header">
-          <v-icon color="#667eea" class="mr-2">mdi-alert</v-icon>
-          <span class="headline">{{ $t('account_management.generate_certificate') }}</span>
-        </v-card-title>
-        <v-card-text class="dialog-content">
-          <p>{{ $t('account_management.generate_certificate_description') }}</p>
-          <v-btn @click="requestCode" class="modern-btn gradient-btn mt-3">
-            {{ $t('account_management.send_code') }}
-          </v-btn>
-        </v-card-text>
-        <v-card-actions class="dialog-actions">
-          <v-spacer></v-spacer>
-          <v-btn @click="closeCertDialog" variant="text">{{ $t('common.cancel') }}</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-
-    <!-- Modal de Código de Verificação -->
-    <v-dialog v-model="verificationDialog" max-width="500">
-      <v-card class="modern-dialog-card">
-        <v-card-title class="dialog-header">
-          <v-icon color="#667eea" class="mr-2">mdi-lock</v-icon>
-          <span class="headline">{{ $t('account_management.verification_code') }}</span>
-        </v-card-title>
-        <v-card-text class="dialog-content">
-          <p>{{ $t('account_management.verification_code_description') }}</p>
-          <v-form>
-            <v-text-field 
-              v-model="verificationCode" 
-              :label="$t('account_management.verification_code_label')"
-              type="text"
-              maxlength="6"
-              :rules="[v => v.length === 6 || $t('account_management.verification_code_length')]"
-              pattern="[0-9]*"
-              inputmode="numeric"
-              variant="outlined"
-              density="comfortable"
-              color="#667eea"
-              class="modern-input"
-            ></v-text-field>
-          </v-form>
-        </v-card-text>
-        <v-card-actions class="dialog-actions">
-          <v-spacer></v-spacer>
-          <v-btn @click="closeVerificationDialog" variant="text">{{ $t('common.cancel') }}</v-btn>
-          <v-btn @click="verifyCode" class="modern-btn gradient-btn">
-            {{ $t('account_management.verify_code') }}
+          <v-btn
+            @click="confirmOpenFinanceConsent"
+            class="modern-btn gradient-btn"
+            :loading="openFinanceConnectionLoadingKey === selectedInstitutionKey"
+          >
+            Confirmar consentimento
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -644,25 +898,40 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useTheme } from 'vuetify';
-import { useBankStore } from '@/plugins/bankStore';
 import { useUserStore } from '@/plugins/userStore';
 import SubscriptionManagement from '@/components/SubscriptionManagement.vue';
 import CompanySettings from '@/components/CompanySettings.vue';
-import BankService from '@/services/BankService';
+import DataService from '@/services/DataService';
+import OpenFinanceService from '@/services/OpenFinanceService';
 import AuthService from '@/services/AuthService';
 import NotificationService, { type UserSettings } from '@/services/NotificationService';
+import type {
+  OpenFinanceBankCategory,
+  OpenFinanceCategoryMapping,
+  OpenFinanceConnection,
+  OpenFinanceConflict,
+  OpenFinanceObservabilitySummary,
+  OpenFinanceSyncHistoryItem,
+  OpenFinanceSyncResponse,
+} from '@/types/openFinance';
 import { toUiLocale, toUserLanguageCode } from '@/utils/languageUtils';
 
-const bankStore = useBankStore();
 const userStore = useUserStore();
 const theme = useTheme();
 const router = useRouter();
+const route = useRoute();
 const { t, locale } = useI18n();
 
 // Tab ativa
 const activeTab = ref('profile')
+const validSettingsTabs = new Set(['profile', 'security', 'preferences', 'company', 'connections', 'subscription'])
+
+const resolveSettingsTab = (value: unknown) => {
+  const tab = typeof value === 'string' ? value : ''
+  return validSettingsTabs.has(tab) ? tab : 'profile'
+}
 
 const loadAlertSettings = async () => {
   try {
@@ -729,18 +998,65 @@ watch(darkTheme, (newValue) => {
   theme.global.name.value = newValue ? 'dark' : 'light';
 });
 
+watch(locale, () => {
+  loadInternalCategories()
+})
+
+watch(
+  () => route.query.tab,
+  (tab) => {
+    activeTab.value = resolveSettingsTab(tab)
+  },
+  { immediate: true }
+)
+
+watch(activeTab, async (tab) => {
+  if (route.query.tab === tab) {
+    return
+  }
+
+  await router.replace({
+    query: {
+      ...route.query,
+      tab,
+    },
+  })
+})
+
 // Estado dos diálogos
 const bankDialog = ref(false)
-const certDialog = ref(false)
-const verificationDialog = ref(false)
 
 const selectedBank = ref('')
-const bankLogin = ref('')
-const bankPassword = ref('')
+const selectedInstitutionKey = ref('')
 const highlightedCard = ref('')
+const openFinanceFrom = ref('')
+const openFinanceTo = ref('')
+const openFinanceSyncing = ref(false)
+const openFinanceLoadingConflicts = ref(false)
+const openFinanceResolvingId = ref<string | null>(null)
+const openFinanceConflicts = ref<OpenFinanceConflict[]>([])
+const lastOpenFinanceSync = ref<OpenFinanceSyncResponse | null>(null)
+const openFinanceConnections = ref<OpenFinanceConnection[]>([])
+const openFinanceConnectionLoadingKey = ref<string | null>(null)
+const openFinanceObservabilitySummary = ref<OpenFinanceObservabilitySummary | null>(null)
+const openFinanceSyncHistory = ref<OpenFinanceSyncHistoryItem[]>([])
+const openFinanceBankCategories = ref<OpenFinanceBankCategory[]>([])
+const openFinanceCategoryMappings = ref<OpenFinanceCategoryMapping[]>([])
+const internalCategories = ref<Array<{ id: number; name: string; code: string }>>([])
+const openFinanceCategorySearch = ref('')
+const openFinanceMappingSavingId = ref<string | null>(null)
+const openFinanceMappingDeletingId = ref<string | null>(null)
+const openFinanceMappingSelections = ref<Record<string, number | null>>({})
+const openFinanceMappingReprocessSelections = ref<Record<string, boolean>>({})
+const openFinanceFeedback = ref<{ type: 'success' | 'error' | 'info'; message: string }>({
+  type: 'info',
+  message: ''
+})
 
-const verificationCode = ref('')
-const sessionId = ref('')
+type SuggestedMapping = {
+  categoryId: number | null
+  reason: string | null
+}
 
 const availableLanguages = [
   { text: 'English', value: 'en' },
@@ -749,6 +1065,12 @@ const availableLanguages = [
   { text: 'Español', value: 'es' }
 ];
 
+const supportedBankCards = [
+  { institutionKey: 'nubank', label: 'Nubank', logo: 'banks/nubank-logo.png' },
+  { institutionKey: 'banco-do-brasil', label: 'Banco do Brasil', logo: 'banks/bb-logo.webp' },
+  { institutionKey: 'itau', label: 'Itaú', logo: 'banks/itau-logo.jpg' },
+]
+
 const normalizeOptionalText = (value: unknown): string | null => {
   const raw = String(value ?? '').trim()
   if (!raw) return null
@@ -756,6 +1078,241 @@ const normalizeOptionalText = (value: unknown): string | null => {
   if (raw.toLowerCase() === 'null') return null
   if (raw.toLowerCase() === 'undefined') return null
   return raw
+}
+
+const normalizeMappingText = (value: string | null | undefined) => {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '')
+}
+
+const CATEGORY_ALIASES: Array<{ terms: string[]; categoryCodes: string[] }> = [
+  { terms: ['supermercado', 'mercado', 'grocery', 'groceries'], categoryCodes: ['groceries', 'of_market', 'mercado'] },
+  { terms: ['transporte', 'uber', '99', 'taxi', 'mobilidade', 'bus'], categoryCodes: ['transportation', 'of_transport'] },
+  { terms: ['restaurante', 'ifood', 'food', 'delivery', 'dining'], categoryCodes: ['dining_out', 'alimentacao'] },
+  { terms: ['saude', 'health', 'farmacia', 'pharmacy'], categoryCodes: ['healthcare', 'saude'] },
+  { terms: ['assinatura', 'subscription', 'streaming', 'netflix', 'spotify'], categoryCodes: ['subscriptions'] },
+  { terms: ['casa', 'home', 'moradia', 'maintenance'], categoryCodes: ['home_maintenance'] },
+  { terms: ['viagem', 'travel', 'hotel', 'airline'], categoryCodes: ['travel'] },
+  { terms: ['educacao', 'education', 'school', 'curso'], categoryCodes: ['education'] },
+  { terms: ['entretenimento', 'entertainment', 'cinema', 'movie'], categoryCodes: ['entertainment'] },
+  { terms: ['vestuario', 'clothing', 'roupa'], categoryCodes: ['clothing'] },
+  { terms: ['conta', 'utilities', 'energia', 'agua', 'internet'], categoryCodes: ['utilities'] },
+]
+
+const findInternalCategoryByCodes = (codes: string[]) => {
+  const normalizedCodes = codes.map((code) => normalizeMappingText(code))
+  return internalCategories.value.find((category) => {
+    const normalizedCode = normalizeMappingText(category.code)
+    const normalizedName = normalizeMappingText(category.name)
+    return normalizedCodes.includes(normalizedCode) || normalizedCodes.includes(normalizedName)
+  }) || null
+}
+
+const suggestInternalCategory = (bankCategory: OpenFinanceBankCategory): SuggestedMapping => {
+  const normalizedName = normalizeMappingText(bankCategory.name)
+  const normalizedParentId = normalizeMappingText(bankCategory.parentId)
+
+  const exactMatch = internalCategories.value.find((category) => {
+    return (
+      normalizeMappingText(category.name) === normalizedName ||
+      normalizeMappingText(category.code) === normalizedName
+    )
+  })
+  if (exactMatch) {
+    return { categoryId: exactMatch.id, reason: 'Nome equivalente' }
+  }
+
+  const aliasMatch = CATEGORY_ALIASES.find((alias) =>
+    alias.terms.some((term) => normalizedName.includes(normalizeMappingText(term)) || normalizedParentId.includes(normalizeMappingText(term)))
+  )
+  if (aliasMatch) {
+    const internalCategory = findInternalCategoryByCodes(aliasMatch.categoryCodes)
+    if (internalCategory) {
+      return { categoryId: internalCategory.id, reason: 'Sugestão por similaridade' }
+    }
+  }
+
+  return { categoryId: null, reason: null }
+}
+
+const toIsoDateInput = (value: Date) => value.toISOString().split('T')[0]
+
+const formatOpenFinanceDate = (value: string) => {
+  if (!value) return '-'
+  return new Date(`${value}T00:00:00`).toLocaleDateString('pt-BR')
+}
+
+const formatOpenFinanceCurrency = (value: number) => {
+  return Number(value || 0).toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  })
+}
+
+const extractErrorMessage = (error: any, fallback: string) => {
+  return (
+    error?.response?.data?.message ||
+    (typeof error?.response?.data === 'string' ? error.response.data : null) ||
+    fallback
+  )
+}
+
+const filteredOpenFinanceCategoryRows = computed(() => {
+  const query = openFinanceCategorySearch.value.trim().toLowerCase()
+  const mappingByBankCategoryId = new Map(
+    openFinanceCategoryMappings.value.map((mapping) => [mapping.bankCategoryId, mapping])
+  )
+
+  return [...openFinanceBankCategories.value]
+    .map((bankCategory) => {
+      const mapping = mappingByBankCategoryId.get(bankCategory.id) || null
+      const selectedCategoryId = openFinanceMappingSelections.value[bankCategory.id]
+        ?? mapping?.categoryId
+        ?? null
+      const internalCategory = internalCategories.value.find((category) => category.id === selectedCategoryId) || null
+      const suggestedMapping = suggestInternalCategory(bankCategory)
+      const suggestedCategory = internalCategories.value.find((category) => category.id === suggestedMapping.categoryId) || null
+
+      return {
+        bankCategory,
+        mapping,
+        selectedCategoryId,
+        internalCategoryName: internalCategory?.name || null,
+        suggestedCategoryId: suggestedMapping.categoryId,
+        suggestedCategoryName: suggestedCategory?.name || null,
+        suggestionReason: suggestedMapping.reason,
+        isMapped: Boolean(mapping),
+      }
+    })
+    .filter((row) => {
+      if (!query) return true
+      return (
+        row.bankCategory.name.toLowerCase().includes(query) ||
+        row.bankCategory.id.toLowerCase().includes(query) ||
+        (row.internalCategoryName || '').toLowerCase().includes(query)
+      )
+    })
+    .sort((left, right) => {
+      if (left.isMapped !== right.isMapped) {
+        return left.isMapped ? 1 : -1
+      }
+      return left.bankCategory.name.localeCompare(right.bankCategory.name)
+    })
+})
+
+const openFinanceConnectionByKey = computed(() => {
+  return openFinanceConnections.value.reduce((accumulator, connection) => {
+    accumulator[connection.institutionKey] = connection
+    return accumulator
+  }, {} as Record<string, OpenFinanceConnection>)
+})
+
+const loadOpenFinanceConflicts = async () => {
+  openFinanceLoadingConflicts.value = true
+  try {
+    const response = await OpenFinanceService.listReconciliationConflicts()
+    openFinanceConflicts.value = response.data || []
+  } catch (error: any) {
+    openFinanceFeedback.value = {
+      type: 'error',
+      message: extractErrorMessage(error, 'Não foi possível carregar os conflitos Open Finance.')
+    }
+  } finally {
+    openFinanceLoadingConflicts.value = false
+  }
+}
+
+const loadOpenFinanceConnections = async () => {
+  try {
+    const response = await OpenFinanceService.listConnections()
+    openFinanceConnections.value = response.data || []
+  } catch (error: any) {
+    openFinanceFeedback.value = {
+      type: 'error',
+      message: extractErrorMessage(error, 'Não foi possível carregar as conexões Open Finance.')
+    }
+  }
+}
+
+const loadOpenFinanceObservabilitySummary = async () => {
+  try {
+    const response = await OpenFinanceService.getObservabilitySummary()
+    openFinanceObservabilitySummary.value = response.data || null
+  } catch (error: any) {
+    openFinanceFeedback.value = {
+      type: 'error',
+      message: extractErrorMessage(error, 'Não foi possível carregar o resumo operacional do Open Finance.')
+    }
+  }
+}
+
+const loadOpenFinanceSyncHistory = async () => {
+  try {
+    const response = await OpenFinanceService.listSyncHistory(10)
+    openFinanceSyncHistory.value = response.data || []
+  } catch (error: any) {
+    openFinanceFeedback.value = {
+      type: 'error',
+      message: extractErrorMessage(error, 'Não foi possível carregar o histórico de sincronização Open Finance.')
+    }
+  }
+}
+
+const syncOpenFinanceMappingSelections = () => {
+  const nextSelections: Record<string, number | null> = {}
+  const nextReprocessSelections: Record<string, boolean> = {}
+  for (const bankCategory of openFinanceBankCategories.value) {
+    const mapping = openFinanceCategoryMappings.value.find((item) => item.bankCategoryId === bankCategory.id)
+    const suggestion = suggestInternalCategory(bankCategory)
+    nextSelections[bankCategory.id] = mapping?.categoryId ?? suggestion.categoryId ?? null
+    nextReprocessSelections[bankCategory.id] = false
+  }
+  openFinanceMappingSelections.value = nextSelections
+  openFinanceMappingReprocessSelections.value = nextReprocessSelections
+}
+
+const loadInternalCategories = async () => {
+  try {
+    const response = await DataService.fetchCategories(locale.value)
+    const categories = Array.isArray(response?.data)
+      ? response.data
+      : Array.isArray(response?.data?.items)
+        ? response.data.items
+        : []
+
+    internalCategories.value = categories
+      .map((category: any) => ({
+        id: Number(category.id),
+        name: String(category.name || category.code || '').trim(),
+        code: String(category.code || '').trim(),
+      }))
+      .filter((category: { id: number; name: string; code: string }) => Number.isFinite(category.id) && category.name)
+  } catch (error: any) {
+    openFinanceFeedback.value = {
+      type: 'error',
+      message: extractErrorMessage(error, 'Não foi possível carregar as categorias internas.')
+    }
+  }
+}
+
+const loadOpenFinanceCategoryMappings = async () => {
+  try {
+    const [bankCategoriesResponse, mappingsResponse] = await Promise.all([
+      OpenFinanceService.listBankCategories(),
+      OpenFinanceService.listCategoryMappings(),
+    ])
+    openFinanceBankCategories.value = bankCategoriesResponse.data || []
+    openFinanceCategoryMappings.value = mappingsResponse.data || []
+    syncOpenFinanceMappingSelections()
+  } catch (error: any) {
+    openFinanceFeedback.value = {
+      type: 'error',
+      message: extractErrorMessage(error, 'Não foi possível carregar o mapeamento de categorias Open Finance.')
+    }
+  }
 }
 
 const loadUserProfile = async () => {
@@ -817,9 +1374,21 @@ const loadUserProfile = async () => {
 }
 
 onMounted(async () => {
+  const today = new Date()
+  const thirtyDaysAgo = new Date()
+  thirtyDaysAgo.setDate(today.getDate() - 30)
+  openFinanceFrom.value = toIsoDateInput(thirtyDaysAgo)
+  openFinanceTo.value = toIsoDateInput(today)
+
   await Promise.all([
     loadAlertSettings(),
-    loadUserProfile()
+    loadUserProfile(),
+    loadOpenFinanceConflicts(),
+    loadOpenFinanceConnections(),
+    loadOpenFinanceObservabilitySummary(),
+    loadOpenFinanceSyncHistory(),
+    loadInternalCategories(),
+    loadOpenFinanceCategoryMappings(),
   ])
 });
 
@@ -989,25 +1558,88 @@ const openBankDialog = (bank: string) => {
 
 const closeBankDialog = () => {
   bankDialog.value = false
-  bankLogin.value = ''
-  bankPassword.value = ''
+  selectedBank.value = ''
+  selectedInstitutionKey.value = ''
 }
 
-const openCertDialog = () => {
-  certDialog.value = true
+const bankCardStatus = (institutionKey: string) => {
+  const connection = openFinanceConnectionByKey.value[institutionKey]
+  if (!connection) {
+    return { label: t('account_management.bank_connections.disconnected'), color: 'grey', icon: 'mdi-link-variant-off' }
+  }
+  if (connection.status === 'CONNECTED') {
+    return { label: 'Conectado', color: 'green', icon: 'mdi-link-variant' }
+  }
+  if (connection.status === 'PENDING_CONSENT') {
+    return { label: 'Consentimento pendente', color: 'warning', icon: 'mdi-clock-outline' }
+  }
+  if (connection.status === 'ERROR') {
+    return { label: 'Erro', color: 'error', icon: 'mdi-alert-circle-outline' }
+  }
+  return { label: 'Pendente', color: 'warning', icon: 'mdi-clock-outline' }
 }
 
-const closeCertDialog = () => {
-  certDialog.value = false
+const toggleOpenFinanceConnection = async (institutionKey: string) => {
+  openFinanceConnectionLoadingKey.value = institutionKey
+  openFinanceFeedback.value.message = ''
+  try {
+    const existing = openFinanceConnectionByKey.value[institutionKey]
+    if (existing && (existing.status === 'CONNECTED' || existing.status === 'ERROR')) {
+      await OpenFinanceService.disconnectConnection(institutionKey)
+      openFinanceFeedback.value = {
+        type: 'success',
+        message: 'Conexão Open Finance removida com sucesso.'
+      }
+    } else {
+      await OpenFinanceService.startConnection(institutionKey)
+      selectedInstitutionKey.value = institutionKey
+      openBankDialog(supportedBankCards.find((item) => item.institutionKey === institutionKey)?.label || institutionKey)
+      openFinanceFeedback.value = {
+        type: 'success',
+        message: 'Conexão Open Finance iniciada. Confirme o consentimento para concluir.'
+      }
+    }
+    await loadOpenFinanceConnections()
+    await loadOpenFinanceObservabilitySummary()
+  } catch (error: any) {
+    openFinanceFeedback.value = {
+      type: 'error',
+      message: extractErrorMessage(error, 'Falha ao alterar a conexão Open Finance.')
+    }
+  } finally {
+    openFinanceConnectionLoadingKey.value = null
+  }
 }
 
-const openVerificationDialog = () => {
-  verificationDialog.value = true
-}
-
-const closeVerificationDialog = () => {
-  verificationDialog.value = false
-  verificationCode.value = ''
+const confirmOpenFinanceConsent = async () => {
+  if (!selectedInstitutionKey.value) {
+    return
+  }
+  openFinanceConnectionLoadingKey.value = selectedInstitutionKey.value
+  try {
+    await OpenFinanceService.confirmConsent(selectedInstitutionKey.value)
+    const syncResponse = await OpenFinanceService.sync({
+      from: openFinanceFrom.value,
+      to: openFinanceTo.value,
+    })
+    lastOpenFinanceSync.value = syncResponse.data
+    openFinanceFeedback.value = {
+      type: 'success',
+      message: 'Consentimento confirmado e sincronização inicial concluída. As transações já podem ser vistas em Orçamento.'
+    }
+    closeBankDialog()
+    await loadOpenFinanceConnections()
+    await loadOpenFinanceConflicts()
+    await loadOpenFinanceObservabilitySummary()
+    await loadOpenFinanceSyncHistory()
+  } catch (error: any) {
+    openFinanceFeedback.value = {
+      type: 'error',
+      message: extractErrorMessage(error, 'Falha ao confirmar o consentimento Open Finance.')
+    }
+  } finally {
+    openFinanceConnectionLoadingKey.value = null
+  }
 }
 
 let timeoutId: ReturnType<typeof setTimeout> | null = null
@@ -1021,51 +1653,136 @@ const highlightCard = (cardName: string) => {
   }, 200)
 }
 
-const authenticateBank = async () => {
+const goToImportedTransactions = () => {
+  const month = openFinanceTo.value ? new Date(`${openFinanceTo.value}T00:00:00`).getMonth() + 1 : new Date().getMonth() + 1
+  const year = openFinanceTo.value ? new Date(`${openFinanceTo.value}T00:00:00`).getFullYear() : new Date().getFullYear()
+  router.push({
+    name: 'budget',
+    query: {
+      focus: 'expenses',
+      openFinance: '1',
+      month: String(month),
+      year: String(year),
+    },
+  })
+}
+
+const syncOpenFinance = async () => {
+  if (!openFinanceFrom.value || !openFinanceTo.value) {
+    openFinanceFeedback.value = {
+      type: 'error',
+      message: 'Informe o intervalo de datas para sincronização.'
+    }
+    return
+  }
+
+  openFinanceSyncing.value = true
+  openFinanceFeedback.value.message = ''
   try {
-    // Tenta autenticar no banco
-    const response = await BankService.authenticateNubank({
-      cpf: bankLogin.value,
-      password: bankPassword.value
+    const response = await OpenFinanceService.sync({
+      from: openFinanceFrom.value,
+      to: openFinanceTo.value,
     })
-    console.log(response.data)
-    bankStore.setNubankToken(response.data.access_token)
-    // Fechar o diálogo de banco após a conexão bem-sucedida
-    closeBankDialog()
-  } catch (error) {
-    console.error('Erro ao conectar o banco', error)
-    // Se a autenticação falhar, abrir o diálogo de certificado
-    openCertDialog()
+    lastOpenFinanceSync.value = response.data
+    openFinanceFeedback.value = {
+      type: 'success',
+      message: 'Sincronização Open Finance concluída.'
+    }
+    await loadOpenFinanceConnections()
+    await loadOpenFinanceConflicts()
+    await loadOpenFinanceObservabilitySummary()
+    await loadOpenFinanceSyncHistory()
+  } catch (error: any) {
+    await loadOpenFinanceConnections()
+    await loadOpenFinanceSyncHistory()
+    openFinanceFeedback.value = {
+      type: 'error',
+      message: extractErrorMessage(error, 'Falha ao sincronizar dados Open Finance.')
+    }
+  } finally {
+    openFinanceSyncing.value = false
   }
 }
 
-const requestCode = async () => {
-  try {
-    // Solicita um novo código de verificação
-    const response = await BankService.requestCode({
-      cpf: bankLogin.value,
-      password: bankPassword.value
-    })
+const saveOpenFinanceCategoryMapping = async (bankCategoryId: string) => {
+  const categoryId = openFinanceMappingSelections.value[bankCategoryId]
+  const reprocessExistingTransactions = Boolean(openFinanceMappingReprocessSelections.value[bankCategoryId])
+  if (!categoryId) {
+    openFinanceFeedback.value = {
+      type: 'error',
+      message: 'Selecione uma categoria interna antes de salvar o mapeamento.'
+    }
+    return
+  }
 
-    sessionId.value = response.data.session_id
-    openVerificationDialog()
-  } catch (error) {
-    console.error('Erro ao solicitar o código de verificação', error)
+  openFinanceMappingSavingId.value = bankCategoryId
+  openFinanceFeedback.value.message = ''
+  try {
+    await OpenFinanceService.upsertCategoryMapping(bankCategoryId, categoryId, reprocessExistingTransactions)
+    await loadOpenFinanceCategoryMappings()
+    openFinanceFeedback.value = {
+      type: 'success',
+      message: reprocessExistingTransactions
+        ? 'Mapeamento salvo e transações existentes reprocessadas.'
+        : 'Mapeamento de categoria salvo com sucesso.'
+    }
+    await loadOpenFinanceObservabilitySummary()
+  } catch (error: any) {
+    openFinanceFeedback.value = {
+      type: 'error',
+      message: extractErrorMessage(error, 'Falha ao salvar o mapeamento de categoria.')
+    }
+  } finally {
+    openFinanceMappingSavingId.value = null
   }
 }
 
-const verifyCode = async () => {
+const removeOpenFinanceCategoryMapping = async (bankCategoryId: string) => {
+  const reprocessExistingTransactions = Boolean(openFinanceMappingReprocessSelections.value[bankCategoryId])
+  openFinanceMappingDeletingId.value = bankCategoryId
+  openFinanceFeedback.value.message = ''
   try {
-    // Verifica o código recebido por e-mail
-    await BankService.exchangeCertificate({
-      cpf: bankLogin.value,
-      session_id: sessionId.value,
-      code: verificationCode.value
-    })
-    closeVerificationDialog()
-    // Prosseguir com a autenticação ou outra lógica após a verificação bem-sucedida
-  } catch (error) {
-    console.error('Erro ao verificar o código', error)
+    await OpenFinanceService.deleteCategoryMapping(bankCategoryId, reprocessExistingTransactions)
+    await loadOpenFinanceCategoryMappings()
+    openFinanceFeedback.value = {
+      type: 'success',
+      message: reprocessExistingTransactions
+        ? 'Mapeamento removido e transações existentes reprocessadas.'
+        : 'Mapeamento removido com sucesso.'
+    }
+    await loadOpenFinanceObservabilitySummary()
+  } catch (error: any) {
+    openFinanceFeedback.value = {
+      type: 'error',
+      message: extractErrorMessage(error, 'Falha ao remover o mapeamento de categoria.')
+    }
+  } finally {
+    openFinanceMappingDeletingId.value = null
+  }
+}
+
+const resolveOpenFinanceConflict = async (conflictId: string, action: 'keep-existing' | 'create-new') => {
+  openFinanceResolvingId.value = conflictId
+  openFinanceFeedback.value.message = ''
+  try {
+    if (action === 'keep-existing') {
+      await OpenFinanceService.resolveKeepExisting(conflictId)
+    } else {
+      await OpenFinanceService.resolveCreateNew(conflictId)
+    }
+    openFinanceFeedback.value = {
+      type: 'success',
+      message: 'Conflito resolvido com sucesso.'
+    }
+    await loadOpenFinanceConflicts()
+    await loadOpenFinanceObservabilitySummary()
+  } catch (error: any) {
+    openFinanceFeedback.value = {
+      type: 'error',
+      message: extractErrorMessage(error, 'Falha ao resolver conflito Open Finance.')
+    }
+  } finally {
+    openFinanceResolvingId.value = null
   }
 }
 
@@ -1341,6 +2058,26 @@ const saveAlertSettings = async () => {
   color: #ffffff;
 }
 
+.bank-card-meta {
+  margin-top: 10px;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.v-theme--dark .bank-card-meta {
+  color: #b0b0b0;
+}
+
+.bank-card-error {
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: #c62828;
+}
+
+.v-theme--dark .bank-card-error {
+  color: #ef9a9a;
+}
+
 /* Integration Item */
 .integration-item {
   display: flex;
@@ -1350,6 +2087,296 @@ const saveAlertSettings = async () => {
   background: rgba(102, 126, 234, 0.03);
   border-radius: 12px;
   border: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.open-finance-toolbar {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  align-items: center;
+}
+
+.sync-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.observability-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.observability-card {
+  border: 1px solid rgba(102, 126, 234, 0.14);
+  border-radius: 14px;
+  padding: 16px;
+  background: rgba(102, 126, 234, 0.04);
+}
+
+.v-theme--dark .observability-card {
+  border-color: rgba(102, 126, 234, 0.22);
+  background: rgba(102, 126, 234, 0.08);
+}
+
+.observability-label {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 6px;
+}
+
+.v-theme--dark .observability-label {
+  color: #b0b0b0;
+}
+
+.observability-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.v-theme--dark .observability-value {
+  color: #ffffff;
+}
+
+.observability-value--small {
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.observability-subtitle {
+  margin-top: 6px;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.v-theme--dark .observability-subtitle {
+  color: #b0b0b0;
+}
+
+.sync-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sync-history-item {
+  padding: 16px;
+  border: 1px solid rgba(102, 126, 234, 0.14);
+  border-radius: 14px;
+  background: rgba(102, 126, 234, 0.04);
+}
+
+.v-theme--dark .sync-history-item {
+  border-color: rgba(102, 126, 234, 0.22);
+  background: rgba(102, 126, 234, 0.08);
+}
+
+.sync-history-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.sync-history-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.v-theme--dark .sync-history-title {
+  color: #ffffff;
+}
+
+.sync-history-subtitle {
+  margin-top: 6px;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.v-theme--dark .sync-history-subtitle {
+  color: #b0b0b0;
+}
+
+.sync-history-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 10px;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.v-theme--dark .sync-history-metrics {
+  color: #b0b0b0;
+}
+
+.sync-history-error {
+  margin-top: 10px;
+  font-size: 0.9rem;
+  color: #c62828;
+  font-weight: 500;
+}
+
+.v-theme--dark .sync-history-error {
+  color: #ef9a9a;
+}
+
+.empty-state-panel {
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.conflict-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.conflict-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid rgba(102, 126, 234, 0.14);
+  border-radius: 14px;
+  background: rgba(102, 126, 234, 0.04);
+}
+
+.v-theme--dark .conflict-item {
+  border-color: rgba(102, 126, 234, 0.22);
+  background: rgba(102, 126, 234, 0.08);
+}
+
+.conflict-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.conflict-title-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.conflict-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.v-theme--dark .conflict-title {
+  color: #ffffff;
+}
+
+.conflict-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 6px;
+}
+
+.v-theme--dark .conflict-meta {
+  color: #b0b0b0;
+}
+
+.conflict-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  justify-content: center;
+}
+
+.mapping-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mapping-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid rgba(102, 126, 234, 0.14);
+  border-radius: 14px;
+  background: rgba(102, 126, 234, 0.04);
+}
+
+.mapping-item--unmapped {
+  border-color: rgba(255, 152, 0, 0.3);
+  background: rgba(255, 152, 0, 0.06);
+}
+
+.v-theme--dark .mapping-item {
+  border-color: rgba(102, 126, 234, 0.22);
+  background: rgba(102, 126, 234, 0.08);
+}
+
+.v-theme--dark .mapping-item--unmapped {
+  border-color: rgba(255, 152, 0, 0.4);
+  background: rgba(255, 152, 0, 0.09);
+}
+
+.mapping-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.mapping-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.mapping-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.v-theme--dark .mapping-title {
+  color: #ffffff;
+}
+
+.mapping-subtitle {
+  margin-top: 4px;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.v-theme--dark .mapping-subtitle {
+  color: #b0b0b0;
+}
+
+.mapping-suggestion {
+  margin-top: 6px;
+  color: #667eea;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.mapping-suggestion-action {
+  align-self: flex-start;
+  padding-left: 0 !important;
+}
+
+.mapping-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  justify-content: center;
 }
 
 .v-theme--dark .integration-item {
@@ -1513,6 +2540,26 @@ const saveAlertSettings = async () => {
 
   .bank-cards {
     grid-template-columns: 1fr;
+  }
+
+  .open-finance-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .conflict-item {
+    flex-direction: column;
+  }
+
+  .conflict-actions {
+    width: 100%;
+  }
+
+  .mapping-item {
+    flex-direction: column;
+  }
+
+  .mapping-actions {
+    width: 100%;
   }
 }
 

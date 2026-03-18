@@ -47,8 +47,15 @@ const mapTransactionToExpense = (transaction: TransactionView) => ({
   group: null,
   groupId: null,
   status: transaction.status,
+  source: transaction.source ?? 'MANUAL',
   accountId: transaction.accountId,
   accountName: transaction.accountName,
+  openFinance: transaction.openFinance ?? false,
+  openFinanceRawStatus: transaction.openFinanceRawStatus ?? null,
+  openFinanceBankCategoryId: transaction.openFinanceBankCategoryId ?? null,
+  reconciliationStatus: transaction.reconciliationStatus ?? null,
+  reconciliationMatchedBy: transaction.reconciliationMatchedBy ?? null,
+  reconciliationConflictReason: transaction.reconciliationConflictReason ?? null,
 })
 
 async function toExpenseTransactionRequest(data: any): Promise<TransactionRequest> {

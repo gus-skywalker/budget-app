@@ -150,20 +150,43 @@
                 ></v-select>
               </v-col>
             </v-row>
+            <div v-if="hasActiveExpenseDrillDown" class="budget-drilldown-banner">
+              <div class="budget-drilldown-banner__content">
+                <v-icon color="#667eea">mdi-tune-vertical</v-icon>
+                <span>
+                  Filtro aplicado:
+                  <strong v-if="activeExpenseCategoryName">{{ activeExpenseCategoryName }}</strong>
+                  <strong v-if="activeExpenseCategoryName && activeExpenseAccountName"> • </strong>
+                  <strong v-if="activeExpenseAccountName">{{ activeExpenseAccountName }}</strong>
+                  <strong v-if="(activeExpenseCategoryName || activeExpenseAccountName) && activeExpenseFilterLabel"> • </strong>
+                  <strong v-if="activeExpenseFilterLabel">{{ activeExpenseFilterLabel }}</strong>
+                </span>
+              </div>
+              <v-btn size="small" variant="text" @click="clearExpenseDrillDown">Limpar</v-btn>
+            </div>
+            <div class="transaction-filter-row">
+              <v-chip-group v-model="incomeListFilter" mandatory selected-class="filter-chip-selected">
+                <v-chip size="small" value="all" variant="outlined">Todas</v-chip>
+                <v-chip size="small" value="open-finance" variant="outlined">Open Finance</v-chip>
+                <v-chip size="small" value="conflicts" variant="outlined">Conflitos</v-chip>
+              </v-chip-group>
+            </div>
             <div class="list-wrapper">
-              <v-list v-if="!isLoadingIncomes && monthlyIncomes.length" class="modern-list">
+              <v-list v-if="!isLoadingIncomes && filteredMonthlyIncomes.length" class="modern-list">
                 <income-item 
-                  v-for="(income, index) in monthlyIncomes" 
+                  v-for="(income, index) in filteredMonthlyIncomes" 
                   :key="index" 
                   :income="income"
+                  :resolving-action="resolvingConflictId === income.reconciliationConflictId ? resolvingConflictAction : null"
                   @toggle-recurring="toggleRecurring" 
                   @deleteIncome="deleteIncome"
+                  @resolveConflict="handleResolveIncomeConflict"
                   @select="startEditingIncome"
                 ></income-item>
               </v-list>
               <div v-else-if="!isLoadingIncomes" class="empty-state">
                 <v-icon size="48" color="#667eea" class="mb-3">mdi-inbox</v-icon>
-                <p class="empty-message">{{ $t('income.no_entries') }}</p>
+                <p class="empty-message">{{ incomeEmptyMessage }}</p>
               </div>
               <div v-else class="loading-state">
                 <v-progress-circular indeterminate color="#667eea" size="48"></v-progress-circular>
@@ -380,25 +403,34 @@
                 ></v-select>
               </v-col>
             </v-row>
+            <div class="transaction-filter-row">
+              <v-chip-group v-model="expenseListFilter" mandatory selected-class="filter-chip-selected">
+                <v-chip size="small" value="all" variant="outlined">Todas</v-chip>
+                <v-chip size="small" value="open-finance" variant="outlined">Open Finance</v-chip>
+                <v-chip size="small" value="conflicts" variant="outlined">Conflitos</v-chip>
+              </v-chip-group>
+            </div>
             <div class="list-wrapper">
-              <v-list v-if="!isLoadingExpenses && monthlyExpenses.length" class="modern-list">
+              <v-list v-if="!isLoadingExpenses && filteredMonthlyExpenses.length" class="modern-list">
                 <expense-item 
-                  v-for="(expense, index) in monthlyExpenses" 
+                  v-for="(expense, index) in filteredMonthlyExpenses" 
                   :key="index" 
                   :expense="expense"
                   :alert-settings="alertSettings"
+                  :resolving-action="resolvingConflictId === expense.reconciliationConflictId ? resolvingConflictAction : null"
                   @attachFiles="handleAttachFiles" 
                   @removeAttachment="handleRemoveAttachment"
                   @downloadAttachment="handleDownloadAttachment"
                   @sendReminder="handleSendReminder"
                   @shareExpense="handleShareExpense"
+                  @resolveConflict="handleResolveExpenseConflict"
                   @deleteExpense="deleteExpense"
                   @select="startEditingExpense"
                 ></expense-item>
               </v-list>
               <div v-else-if="!isLoadingExpenses" class="empty-state">
                 <v-icon size="48" color="#667eea" class="mb-3">mdi-inbox</v-icon>
-                <p class="empty-message">{{ $t('expense.no_entries') }}</p>
+                <p class="empty-message">{{ expenseEmptyMessage }}</p>
               </div>
               <div v-else class="loading-state">
                 <v-progress-circular indeterminate color="#667eea" size="48"></v-progress-circular>
@@ -456,6 +488,7 @@ import IncomeItem from '../components/IncomeItem.vue'
 import ExpenseItem from '../components/ExpenseItem.vue'
 import IncomeService from '@/services/IncomeService'
 import ExpenseService from '@/services/ExpenseService'
+import OpenFinanceService from '@/services/OpenFinanceService'
 import DataService from '@/services/DataService'
 import FinancialReadService, { NO_FINANCIAL_ACCOUNT_ERROR_MESSAGE } from '@/services/FinancialReadService'
 import UsersService from '@/services/UsersService'
@@ -621,6 +654,11 @@ export default {
       selectedExpenseYear: currentYear,
         selectedLanguage: this.$i18n?.locale || 'pt',
       users: [],
+      openFinanceConflicts: [],
+      resolvingConflictId: null,
+      resolvingConflictAction: null,
+      routeExpenseAccountId: null,
+      routeExpenseCategory: null,
       months: [
         { name: 'Janeiro', value: 1 },
         { name: 'Fevereiro', value: 2 },
@@ -650,6 +688,8 @@ export default {
       },
       isLoadingIncomes: false,
       isLoadingExpenses: false,
+      incomeListFilter: 'all',
+      expenseListFilter: 'all',
       isEditingIncome: false,
       editingIncomeId: null,
       isEditingExpense: false,
@@ -699,13 +739,67 @@ export default {
       const end = Math.min(this.expensePagination.offset + this.expensePagination.limit, this.expensePagination.total)
       return `${start}-${end} / ${this.expensePagination.total}`
     },
+    filteredMonthlyIncomes() {
+      return this.applyTransactionFilter(this.monthlyIncomes, this.incomeListFilter)
+    },
+    filteredMonthlyExpenses() {
+      return this.applyExpenseDrillDown(this.applyTransactionFilter(this.monthlyExpenses, this.expenseListFilter))
+    },
+    hasActiveExpenseDrillDown() {
+      return Boolean(this.routeExpenseAccountId || this.routeExpenseCategory || this.expenseListFilter === 'open-finance')
+    },
+    activeExpenseCategoryName() {
+      if (!this.routeExpenseCategory) {
+        return null
+      }
+      const category = this.categories.find((item) => item.name === this.routeExpenseCategory || item.code === this.routeExpenseCategory)
+      return category?.name || this.routeExpenseCategory
+    },
+    activeExpenseAccountName() {
+      if (!this.routeExpenseAccountId) {
+        return null
+      }
+      const account = this.financialAccounts.find((item) => item.id === this.routeExpenseAccountId)
+      return account?.displayName || account?.name || this.routeExpenseAccountId
+    },
+    activeExpenseFilterLabel() {
+      return this.expenseListFilter === 'open-finance' ? 'Somente Open Finance' : null
+    },
+    openFinanceConflictMap() {
+      return this.openFinanceConflicts.reduce((accumulator, conflict) => {
+        if (conflict?.existingTransactionId) {
+          accumulator[conflict.existingTransactionId] = conflict
+        }
+        return accumulator
+      }, {})
+    },
+    incomeEmptyMessage() {
+      if (this.incomeListFilter === 'all') {
+        return this.$t('income.no_entries')
+      }
+      if (this.incomeListFilter === 'open-finance') {
+        return 'Nenhuma entrada Open Finance neste período.'
+      }
+      return 'Nenhum conflito de reconciliação em entradas neste período.'
+    },
+    expenseEmptyMessage() {
+      if (this.expenseListFilter === 'all') {
+        return this.$t('expense.no_entries')
+      }
+      if (this.expenseListFilter === 'open-finance') {
+        return 'Nenhuma despesa Open Finance neste período.'
+      }
+      return 'Nenhum conflito de reconciliação em despesas neste período.'
+    },
   },
   mounted() {
+    this.applyBudgetQueryFilters();
     this.fetchCategories();
     this.fetchPaymentMethods();
     this.fetchFinancialAccounts();
     this.fetchShareableUsers();
     this.fetchAlertSettings();
+    this.fetchOpenFinanceConflicts();
     this.fetchMonthlyIncomes();
     this.fetchMonthlyExpenses();
   },
@@ -716,9 +810,85 @@ export default {
         this.fetchCategories()
         this.fetchPaymentMethods()
       }
-    }
+    },
+    '$route.query': {
+      handler() {
+        this.applyBudgetQueryFilters()
+        this.resetExpensePaginationAndFetch()
+      },
+      deep: true,
+    },
   },
   methods: {
+    applyTransactionFilter(items, filter) {
+      if (!Array.isArray(items)) {
+        return []
+      }
+      if (filter === 'open-finance') {
+        return items.filter((item) => Boolean(item?.openFinance))
+      }
+      if (filter === 'conflicts') {
+        return items.filter((item) => item?.reconciliationStatus === 'CONFLICT_DUPLICATE')
+      }
+      return items
+    },
+    applyExpenseDrillDown(items) {
+      if (!Array.isArray(items)) {
+        return []
+      }
+
+      return items.filter((item) => {
+        const matchesCategory = this.routeExpenseCategory
+          ? item?.category === this.routeExpenseCategory
+          : true
+        const matchesAccount = this.routeExpenseAccountId
+          ? item?.accountId === this.routeExpenseAccountId
+          : true
+        return matchesCategory && matchesAccount
+      })
+    },
+    applyBudgetQueryFilters() {
+      const query = this.$route?.query || {}
+      const month = Number(query.month)
+      const year = Number(query.year)
+
+      if (Number.isInteger(month) && month >= 1 && month <= 12) {
+        this.selectedExpenseMonth = month
+      }
+
+      if (Number.isInteger(year) && year >= 2000 && year <= 2100) {
+        this.selectedExpenseYear = year
+      }
+
+      this.routeExpenseAccountId = typeof query.accountId === 'string' ? query.accountId : null
+      this.routeExpenseCategory = typeof query.category === 'string' ? query.category : null
+      this.expenseListFilter = query.openFinance === '1' ? 'open-finance' : 'all'
+    },
+    clearExpenseDrillDown() {
+      this.$router.replace({
+        name: 'budget',
+        query: {
+          month: String(this.selectedExpenseMonth),
+          year: String(this.selectedExpenseYear),
+        },
+      })
+    },
+    enrichExpenseWithConflict(expense) {
+      const conflict = this.openFinanceConflictMap[expense?.id]
+      return {
+        ...expense,
+        reconciliationConflictId: conflict?.id ?? null,
+        reconciliationConflictReason: expense?.reconciliationConflictReason || conflict?.conflictReason || null,
+      }
+    },
+    enrichIncomeWithConflict(income) {
+      const conflict = this.openFinanceConflictMap[income?.id]
+      return {
+        ...income,
+        reconciliationConflictId: conflict?.id ?? null,
+        reconciliationConflictReason: income?.reconciliationConflictReason || conflict?.conflictReason || null,
+      }
+    },
     normalizeCollection(payload) {
       if (Array.isArray(payload)) return payload
       if (!payload || typeof payload !== 'object') return []
@@ -1031,6 +1201,18 @@ export default {
           console.error('Erro ao buscar configurações de alerta:', error)
         })
     },
+    fetchOpenFinanceConflicts() {
+      return OpenFinanceService.listReconciliationConflicts()
+        .then((response) => {
+          this.openFinanceConflicts = Array.isArray(response?.data) ? response.data : []
+          this.monthlyIncomes = this.monthlyIncomes.map((income) => this.enrichIncomeWithConflict(income))
+          this.monthlyExpenses = this.monthlyExpenses.map((expense) => this.enrichExpenseWithConflict(expense))
+        })
+        .catch((error) => {
+          console.error('Erro ao buscar conflitos Open Finance:', error)
+          this.openFinanceConflicts = []
+        })
+    },
     resetIncomePaginationAndFetch() {
       this.incomePagination.offset = 0
       this.fetchMonthlyIncomes()
@@ -1076,10 +1258,10 @@ export default {
       const yearNumber = this.selectedIncomeYear;
       if (monthNumber !== null) {
         this.isLoadingIncomes = true;
-        IncomeService.fetchMonthlyIncomes(monthNumber, yearNumber, this.incomePagination)
+        return IncomeService.fetchMonthlyIncomes(monthNumber, yearNumber, this.incomePagination)
           .then((response) => {
             const page = response?.data || {}
-            this.monthlyIncomes = this.normalizeCollection(page);
+            this.monthlyIncomes = this.normalizeCollection(page).map((income) => this.enrichIncomeWithConflict(income));
             this.incomePagination.total = Number(page.total ?? this.monthlyIncomes.length)
             this.incomePagination.limit = Number(page.limit ?? this.incomePagination.limit)
             this.incomePagination.offset = Number(page.offset ?? this.incomePagination.offset)
@@ -1091,6 +1273,7 @@ export default {
             this.isLoadingIncomes = false;
           });
       }
+      return Promise.resolve()
     },
     saveIncome() {
       const normalizedDate = this.normalizeDate(this.income.date)
@@ -1391,10 +1574,10 @@ export default {
       const yearNumber = this.selectedExpenseYear;
       if (monthNumber !== null) {
         this.isLoadingExpenses = true;
-        ExpenseService.fetchMonthlyExpenses(monthNumber, yearNumber, this.expensePagination)
+        return ExpenseService.fetchMonthlyExpenses(monthNumber, yearNumber, this.expensePagination)
           .then((response) => {
             const page = response?.data || {}
-            this.monthlyExpenses = this.normalizeCollection(page);
+            this.monthlyExpenses = this.normalizeCollection(page).map((expense) => this.enrichExpenseWithConflict(expense));
             this.expensePagination.total = Number(page.total ?? this.monthlyExpenses.length)
             this.expensePagination.limit = Number(page.limit ?? this.expensePagination.limit)
             this.expensePagination.offset = Number(page.offset ?? this.expensePagination.offset)
@@ -1406,6 +1589,69 @@ export default {
             this.isLoadingExpenses = false;
           });
       }
+      return Promise.resolve()
+    },
+    handleResolveExpenseConflict({ expense, action }) {
+      const conflictId = expense?.reconciliationConflictId
+      if (!conflictId) {
+        this.showToast('Conflito Open Finance não encontrado para esta despesa.', 'warning')
+        return
+      }
+
+      this.resolvingConflictId = conflictId
+      this.resolvingConflictAction = action
+
+      const request = action === 'keep-existing'
+        ? OpenFinanceService.resolveKeepExisting(conflictId)
+        : OpenFinanceService.resolveCreateNew(conflictId)
+
+      request
+        .then(() => Promise.all([
+          this.fetchOpenFinanceConflicts(),
+          this.fetchMonthlyExpenses(),
+        ]))
+        .then(() => {
+          this.showToast('Conflito Open Finance resolvido.', 'success')
+        })
+        .catch((error) => {
+          console.error('Erro ao resolver conflito Open Finance:', error)
+          this.showToast('Falha ao resolver conflito Open Finance.', 'error')
+        })
+        .finally(() => {
+          this.resolvingConflictId = null
+          this.resolvingConflictAction = null
+        })
+    },
+    handleResolveIncomeConflict({ income, action }) {
+      const conflictId = income?.reconciliationConflictId
+      if (!conflictId) {
+        this.showToast('Conflito Open Finance não encontrado para esta receita.', 'warning')
+        return
+      }
+
+      this.resolvingConflictId = conflictId
+      this.resolvingConflictAction = action
+
+      const request = action === 'keep-existing'
+        ? OpenFinanceService.resolveKeepExisting(conflictId)
+        : OpenFinanceService.resolveCreateNew(conflictId)
+
+      request
+        .then(() => Promise.all([
+          this.fetchOpenFinanceConflicts(),
+          this.fetchMonthlyIncomes(),
+        ]))
+        .then(() => {
+          this.showToast('Conflito Open Finance resolvido.', 'success')
+        })
+        .catch((error) => {
+          console.error('Erro ao resolver conflito Open Finance:', error)
+          this.showToast('Falha ao resolver conflito Open Finance.', 'error')
+        })
+        .finally(() => {
+          this.resolvingConflictId = null
+          this.resolvingConflictAction = null
+        })
     },
     handleAttachFiles({ expense, files }) {
       const expenseId = expense.id
@@ -1637,6 +1883,35 @@ export default {
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
 }
 
+.budget-drilldown-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(102, 126, 234, 0.08);
+  border: 1px solid rgba(102, 126, 234, 0.18);
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.budget-drilldown-banner__content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #334155;
+}
+
+.v-theme--dark .budget-drilldown-banner {
+  background: rgba(102, 126, 234, 0.12);
+  border-color: rgba(148, 163, 184, 0.28);
+}
+
+.v-theme--dark .budget-drilldown-banner__content {
+  color: #e2e8f0;
+}
+
 .card-header {
   padding: 20px 24px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
@@ -1730,6 +2005,15 @@ export default {
 .modern-list {
   background: transparent;
   padding: 0;
+}
+
+.transaction-filter-row {
+  margin-bottom: 12px;
+}
+
+.filter-chip-selected {
+  background: rgba(102, 126, 234, 0.14) !important;
+  color: #667eea !important;
 }
 
 .pagination-row {

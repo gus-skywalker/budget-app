@@ -21,6 +21,13 @@ export interface TransactionView {
   accountId: string | null
   accountName: string | null
   status: string
+  source?: TransactionSource
+  openFinance?: boolean
+  openFinanceRawStatus?: string | null
+  openFinanceBankCategoryId?: string | null
+  reconciliationStatus?: string | null
+  reconciliationMatchedBy?: string | null
+  reconciliationConflictReason?: string | null
 }
 
 export interface LedgerEntryRequest {

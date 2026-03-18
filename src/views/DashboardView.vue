@@ -17,6 +17,34 @@
         <span>{{ headlineMessage }}</span>
       </div>
 
+      <v-alert
+        v-if="openFinanceConflictCount > 0"
+        type="warning"
+        variant="tonal"
+        class="conflict-banner"
+      >
+        Existem {{ openFinanceConflictCount }} conflito(s) Open Finance pendente(s) de revisão.
+      </v-alert>
+
+      <div v-if="openFinanceObservabilitySummary" class="open-finance-overview">
+        <div class="overview-pill">
+          <span class="overview-pill__label">Open Finance</span>
+          <span class="overview-pill__value">{{ openFinanceObservabilitySummary.connectedAccounts }} contas</span>
+        </div>
+        <div class="overview-pill">
+          <span class="overview-pill__label">Importadas</span>
+          <span class="overview-pill__value">{{ openFinanceObservabilitySummary.importedTransactions }}</span>
+        </div>
+        <div class="overview-pill">
+          <span class="overview-pill__label">Mappings</span>
+          <span class="overview-pill__value">{{ openFinanceObservabilitySummary.categoryMappings }}</span>
+        </div>
+        <div class="overview-pill" :class="{ 'overview-pill--warning': openFinanceObservabilitySummary.accountsAtRateLimitToday > 0 }">
+          <span class="overview-pill__label">Rate limit hoje</span>
+          <span class="overview-pill__value">{{ openFinanceObservabilitySummary.accountsAtRateLimitToday }}</span>
+        </div>
+      </div>
+
       <!-- Trends Over Time -->
       <div class="modern-card trends-section">
         <div class="card-header">
@@ -75,7 +103,7 @@
         </div>
         <v-row class="overview-cards">
           <v-col cols="12" md="3">
-            <div class="stat-card savings-card">
+            <div class="stat-card savings-card stat-card--clickable" @click="openAccountDrillDown()">
               <div class="stat-icon">
                 <v-icon size="40" color="white">mdi-piggy-bank</v-icon>
               </div>
@@ -97,7 +125,7 @@
             </div>
           </v-col>
           <v-col cols="12" md="3">
-            <div class="stat-card expense-card">
+            <div class="stat-card expense-card stat-card--clickable" @click="openCategoryDrillDown()">
               <div class="stat-icon">
                 <v-icon size="40" color="white">mdi-trending-down</v-icon>
               </div>
@@ -193,12 +221,29 @@
                 <v-icon color="#667eea" class="mr-2">mdi-shape-outline</v-icon>
                 {{ $t('overview.top_categories_title') }}
               </h2>
+              <v-btn size="small" variant="text" @click="openExpenseReport()">
+                <v-icon start>mdi-file-chart-outline</v-icon>
+                Relatório
+              </v-btn>
             </div>
             <div class="card-content">
               <div v-if="dashboardSummary.topCategories.length" class="categories-list">
-                <div v-for="category in dashboardSummary.topCategories" :key="category" class="category-row">
+                <div
+                  v-for="category in dashboardSummary.topCategories"
+                  :key="category"
+                  class="category-row category-row--clickable"
+                  @click="openCategoryDrillDown(category)"
+                >
                   <v-icon size="18" color="#667eea">mdi-tag-outline</v-icon>
                   <span>{{ category }}</span>
+                  <v-btn
+                    icon
+                    size="x-small"
+                    variant="text"
+                    @click.stop="openExpenseReport(category)"
+                  >
+                    <v-icon size="18" color="#667eea">mdi-file-chart-outline</v-icon>
+                  </v-btn>
                   <v-icon size="18" color="#9e9e9e">mdi-trending-neutral</v-icon>
                 </div>
               </div>
@@ -233,6 +278,32 @@
           </div>
         </v-col>
       </v-row>
+
+      <section class="section-block">
+        <div class="section-header">
+          <h2 class="section-title">Contas conectadas</h2>
+        </div>
+        <div v-if="accounts.length" class="accounts-grid">
+          <div
+            v-for="account in accounts"
+            :key="account.id"
+            class="account-card account-card--clickable"
+            @click="openAccountDrillDown(account.id)"
+          >
+            <div class="account-card__header">
+              <div>
+                <h3 class="account-card__title">{{ account.name }}</h3>
+                <p class="account-card__subtitle">{{ account.provider }} • {{ account.accountType }}</p>
+              </div>
+              <v-chip size="small" variant="tonal" color="#667eea">{{ account.currency }}</v-chip>
+            </div>
+            <div class="account-card__balance">{{ formatCurrency(account.balance, account.currency) }}</div>
+          </div>
+        </div>
+        <div v-else class="projection-placeholder">
+          <p>Sem contas disponíveis para drill-down.</p>
+        </div>
+      </section>
 
       <section class="section-block">
         <div class="section-header">
@@ -291,6 +362,71 @@
         </div>
       </section>
     </v-container>
+
+    <v-dialog v-model="drillDownDialog" max-width="960">
+      <v-card class="modern-dialog-card">
+        <v-card-title class="dialog-header">
+          <v-icon color="#667eea" class="mr-2">
+            {{ drillDownMode === 'account' ? 'mdi-bank-outline' : 'mdi-shape-outline' }}
+          </v-icon>
+          <span class="headline">{{ drillDownTitle }}</span>
+        </v-card-title>
+        <v-card-text class="dialog-content">
+          <div class="drilldown-summary">
+            <div class="overview-pill">
+              <span class="overview-pill__label">Transações</span>
+              <span class="overview-pill__value">{{ drillDownTransactions.length }}</span>
+            </div>
+            <div class="overview-pill">
+              <span class="overview-pill__label">Volume</span>
+              <span class="overview-pill__value">{{ formatCurrency(drillDownTotalAmount) }}</span>
+            </div>
+          </div>
+
+          <div v-if="drillDownMode === 'category'" class="transactions-list">
+            <div
+              v-for="transaction in drillDownTransactions"
+              :key="transaction.id"
+              class="transaction-row"
+            >
+              <div>
+                <div class="upcoming-title">{{ transaction.description }}</div>
+                <div class="upcoming-date">
+                  {{ formatTransactionDate(transaction.date) }} • {{ transaction.accountName || 'Sem conta' }}
+                </div>
+              </div>
+              <div class="transaction-row__amount">
+                {{ formatCurrency(Math.abs(transaction.amount)) }}
+              </div>
+            </div>
+          </div>
+
+          <div v-else class="transactions-list">
+            <div
+              v-for="item in accountDrillDownGroups"
+              :key="item.accountId"
+              class="transaction-row transaction-row--stacked"
+            >
+              <div>
+                <div class="upcoming-title">{{ item.accountName }}</div>
+                <div class="upcoming-date">{{ item.transactionCount }} transação(ões) no período</div>
+              </div>
+              <div class="transaction-row__amount">
+                {{ formatCurrency(item.totalAmount) }}
+              </div>
+            </div>
+          </div>
+
+          <div v-if="!drillDownTransactions.length" class="empty-state">
+            <p class="empty-message">Nenhum dado encontrado para esse recorte.</p>
+          </div>
+        </v-card-text>
+        <v-card-actions class="dialog-actions">
+          <v-spacer />
+          <v-btn variant="text" @click="drillDownDialog = false">Fechar</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -300,6 +436,7 @@ import { Chart, registerables } from 'chart.js/auto'
 import moment from 'moment'
 import DataService from '@/services/DataService'
 import FinancialReadService from '@/services/FinancialReadService'
+import OpenFinanceService from '@/services/OpenFinanceService'
 import 'chartjs-adapter-moment'
 
 Chart.register(...registerables)
@@ -426,6 +563,59 @@ export default {
         },
       ]
     },
+    drillDownTransactions() {
+      const items = Array.isArray(this.monthTransactions) ? this.monthTransactions : []
+      if (this.drillDownMode === 'category') {
+        return items.filter((transaction) => {
+          if (!this.drillDownCategory) {
+            return transaction.direction === 'OUTFLOW'
+          }
+          return transaction.direction === 'OUTFLOW' && transaction.category === this.drillDownCategory
+        })
+      }
+
+      if (this.drillDownAccountId) {
+        return items.filter((transaction) => transaction.accountId === this.drillDownAccountId)
+      }
+
+      return items.filter((transaction) => Boolean(transaction.accountId))
+    },
+    drillDownTotalAmount() {
+      return this.drillDownTransactions.reduce((total, transaction) => total + Math.abs(Number(transaction.amount || 0)), 0)
+    },
+    drillDownTitle() {
+      if (this.drillDownMode === 'category') {
+        return this.drillDownCategory
+          ? `Despesas da categoria ${this.drillDownCategory}`
+          : 'Despesas por categoria'
+      }
+
+      if (this.drillDownAccountId) {
+        const account = this.accounts.find((item) => item.id === this.drillDownAccountId)
+        return account ? `Conta ${account.name}` : 'Saldo por conta'
+      }
+
+      return 'Saldo por conta'
+    },
+    accountDrillDownGroups() {
+      const items = this.drillDownTransactions
+      const grouped = new Map()
+
+      items.forEach((transaction) => {
+        const key = transaction.accountId || 'unknown'
+        const current = grouped.get(key) || {
+          accountId: key,
+          accountName: transaction.accountName || 'Sem conta',
+          totalAmount: 0,
+          transactionCount: 0,
+        }
+        current.totalAmount += Math.abs(Number(transaction.amount || 0))
+        current.transactionCount += 1
+        grouped.set(key, current)
+      })
+
+      return Array.from(grouped.values()).sort((left, right) => right.totalAmount - left.totalAmount)
+    },
   },
   data() {
     const today = new Date();
@@ -438,6 +628,14 @@ export default {
         monthlyExpenses: 0,
         topCategories: [],
       },
+      accounts: [],
+      monthTransactions: [],
+      drillDownDialog: false,
+      drillDownMode: 'category',
+      drillDownCategory: null,
+      drillDownAccountId: null,
+      openFinanceObservabilitySummary: null,
+      openFinanceConflictCount: 0,
       upcomingExpenses: [],
       selectedTimePeriod: '3m',
       selectedCategory: null,
@@ -485,6 +683,10 @@ export default {
   },
   mounted() {
     this.fetchDashboardSummary()
+    this.fetchAccounts()
+    this.fetchMonthTransactions()
+    this.fetchOpenFinanceConflicts()
+    this.fetchOpenFinanceObservabilitySummary()
     this.fetchCategories()
     this.createChart()
     this.fetchChartData()
@@ -530,6 +732,55 @@ export default {
         })
         .finally(() => {
           this.dashboardLoading = false
+        })
+    },
+    fetchAccounts() {
+      FinancialReadService.fetchAccounts()
+        .then((response) => {
+          this.accounts = Array.isArray(response?.data) ? response.data : []
+        })
+        .catch((error) => {
+          console.error('Error fetching accounts:', error)
+          this.accounts = []
+        })
+    },
+    fetchMonthTransactions() {
+      const currentMonth = new Date()
+      const fromDate = moment(currentMonth).startOf('month').format('YYYY-MM-DD')
+      const toDate = moment(currentMonth).endOf('month').format('YYYY-MM-DD')
+
+      FinancialReadService.fetchTransactions({
+        fromDate,
+        toDate,
+        limit: 200,
+        offset: 0,
+      })
+        .then((response) => {
+          this.monthTransactions = Array.isArray(response?.data?.items) ? response.data.items : []
+        })
+        .catch((error) => {
+          console.error('Error fetching month transactions:', error)
+          this.monthTransactions = []
+        })
+    },
+    fetchOpenFinanceConflicts() {
+      OpenFinanceService.listReconciliationConflicts()
+        .then((response) => {
+          this.openFinanceConflictCount = Array.isArray(response?.data) ? response.data.length : 0
+        })
+        .catch((error) => {
+          console.error('Error fetching Open Finance conflicts:', error)
+          this.openFinanceConflictCount = 0
+        })
+    },
+    fetchOpenFinanceObservabilitySummary() {
+      OpenFinanceService.getObservabilitySummary()
+        .then((response) => {
+          this.openFinanceObservabilitySummary = response.data || null
+        })
+        .catch((error) => {
+          console.error('Error fetching Open Finance observability summary:', error)
+          this.openFinanceObservabilitySummary = null
         })
     },
     createChart() {
@@ -633,6 +884,44 @@ export default {
         .catch((error) => {
           console.error('Error fetching chart data:', error)
         })
+    },
+    formatTransactionDate(value) {
+      if (!value) return '-'
+      return moment(value).format('DD/MM/YYYY')
+    },
+    openCategoryDrillDown(category = null) {
+      this.$router.push({
+        name: 'budget',
+        query: {
+          month: String(new Date().getMonth() + 1),
+          year: String(new Date().getFullYear()),
+          ...(category ? { category } : {}),
+          focus: 'expenses',
+        },
+      })
+    },
+    openAccountDrillDown(accountId = null) {
+      this.$router.push({
+        name: 'budget',
+        query: {
+          month: String(new Date().getMonth() + 1),
+          year: String(new Date().getFullYear()),
+          ...(accountId ? { accountId } : {}),
+          focus: 'expenses',
+        },
+      })
+    },
+    openExpenseReport(category = null) {
+      const currentMonth = moment()
+      this.$router.push({
+        name: 'report',
+        query: {
+          reportType: 'expenses',
+          startDate: currentMonth.startOf('month').format('YYYY-MM-DD'),
+          endDate: currentMonth.endOf('month').format('YYYY-MM-DD'),
+          ...(category ? { category } : {}),
+        },
+      })
     },
     projectBalance(months) {
       const net = this.netMonthlyCashflow
@@ -755,6 +1044,19 @@ export default {
   transition: all 0.3s ease;
   border: 1px solid rgba(0, 0, 0, 0.05);
   height: 100%;
+}
+
+.stat-card--clickable,
+.account-card--clickable,
+.category-row--clickable {
+  cursor: pointer;
+}
+
+.stat-card--clickable:hover,
+.account-card--clickable:hover,
+.category-row--clickable:hover {
+  transform: translateY(-2px);
+  transition: transform 0.2s ease;
 }
 
 .v-theme--dark .stat-card {
@@ -1131,6 +1433,46 @@ export default {
   color: #667eea;
 }
 
+.drilldown-summary {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.transaction-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  background: rgba(102, 126, 234, 0.04);
+}
+
+.transaction-row--stacked {
+  background: rgba(17, 153, 142, 0.05);
+}
+
+.transaction-row__amount {
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.v-theme--dark .transaction-row {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(102, 126, 234, 0.08);
+}
+
+.v-theme--dark .transaction-row--stacked {
+  background: rgba(17, 153, 142, 0.12);
+}
+
+.v-theme--dark .transaction-row__amount {
+  color: #ffffff;
+}
+
 .transaction-row {
   display: flex;
   align-items: center;
@@ -1458,6 +1800,62 @@ export default {
 
 .v-theme--dark .empty-message {
   color: #b0b0b0;
+}
+
+.conflict-banner {
+  margin: 16px 0 24px;
+}
+
+.open-finance-overview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.overview-pill {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 150px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(102, 126, 234, 0.14);
+  background: rgba(102, 126, 234, 0.04);
+}
+
+.overview-pill--warning {
+  border-color: rgba(255, 152, 0, 0.3);
+  background: rgba(255, 152, 0, 0.08);
+}
+
+.overview-pill__label {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.overview-pill__value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.v-theme--dark .overview-pill {
+  border-color: rgba(102, 126, 234, 0.22);
+  background: rgba(102, 126, 234, 0.08);
+}
+
+.v-theme--dark .overview-pill--warning {
+  border-color: rgba(255, 152, 0, 0.4);
+  background: rgba(255, 152, 0, 0.12);
+}
+
+.v-theme--dark .overview-pill__label {
+  color: #b0b0b0;
+}
+
+.v-theme--dark .overview-pill__value {
+  color: #ffffff;
 }
 
 /* Responsive */

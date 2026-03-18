@@ -6,6 +6,15 @@
           <h1 class="page-title">{{ $t('accounts.title') }}</h1>
           <p class="page-subtitle">{{ $t('accounts.subtitle') }}</p>
         </div>
+        <v-alert
+          v-if="conflictCount > 0"
+          type="warning"
+          variant="tonal"
+          density="comfortable"
+          class="conflict-alert"
+        >
+          {{ conflictCount }} conflito(s) Open Finance pendente(s) de revisão.
+        </v-alert>
       </div>
 
       <div class="modern-card">
@@ -45,12 +54,14 @@
 import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import FinancialReadService from '@/services/FinancialReadService'
+import OpenFinanceService from '@/services/OpenFinanceService'
 import type { AccountView } from '@/types/financialRead'
 
 const { locale } = useI18n()
 
 const accounts = ref<AccountView[]>([])
 const loading = ref(false)
+const conflictCount = ref(0)
 
 const getLocaleForFormatting = () => {
   if (locale.value === 'en') return 'en-US'
@@ -69,8 +80,12 @@ const formatCurrency = (value: number, currency = 'BRL') => {
 const fetchAccounts = async () => {
   loading.value = true
   try {
-    const response = await FinancialReadService.fetchAccounts()
-    accounts.value = response.data || []
+    const [accountsResponse, conflictsResponse] = await Promise.all([
+      FinancialReadService.fetchAccounts(),
+      OpenFinanceService.listReconciliationConflicts(),
+    ])
+    accounts.value = accountsResponse.data || []
+    conflictCount.value = Array.isArray(conflictsResponse.data) ? conflictsResponse.data.length : 0
   } catch (error) {
     console.error('Erro ao carregar contas:', error)
   } finally {
@@ -100,6 +115,14 @@ onMounted(fetchAccounts)
 
 .page-header {
   margin-bottom: 32px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.conflict-alert {
+  max-width: 420px;
 }
 
 .page-title {
@@ -235,5 +258,16 @@ onMounted(fetchAccounts)
 
 .v-theme--dark .empty-message {
   color: #b0b0b0;
+}
+
+@media (max-width: 720px) {
+  .page-header {
+    flex-direction: column;
+  }
+
+  .conflict-alert {
+    max-width: none;
+    width: 100%;
+  }
 }
 </style>

@@ -8,10 +8,53 @@
         <v-list-item-subtitle>
           {{ $t('expenseItem.amount') }} {{ expense.amount }} - {{ $t('expenseItem.date') }}: {{ expense.date }}
         </v-list-item-subtitle>
+        <div v-if="expense.openFinance || expense.reconciliationStatus" class="status-row">
+          <v-chip
+            v-if="expense.openFinance"
+            color="#667eea"
+            size="small"
+            variant="tonal"
+          >
+            Open Finance
+          </v-chip>
+          <v-chip
+            v-if="expense.reconciliationStatus"
+            :color="reconciliationColor"
+            size="small"
+            variant="tonal"
+          >
+            {{ reconciliationLabel }}
+          </v-chip>
+        </div>
         <v-list-item-subtitle v-if="expense.category">
           {{ $t('expenseItem.category') }}: {{ expense.category.name }}
           <v-icon :icon="categoryIcons[expense.category.code]" class="mr-2"></v-icon>
         </v-list-item-subtitle>
+        <v-list-item-subtitle v-if="expense.reconciliationConflictReason">
+          {{ expense.reconciliationConflictReason }}
+        </v-list-item-subtitle>
+        <div v-if="expense.reconciliationConflictId" class="conflict-resolution-row">
+          <v-btn
+            size="x-small"
+            variant="outlined"
+            color="#667eea"
+            :loading="resolvingAction === 'keep-existing'"
+            :disabled="Boolean(resolvingAction)"
+            @click.stop="$emit('resolveConflict', { expense, action: 'keep-existing' })"
+          >
+            Manter existente
+          </v-btn>
+          <v-btn
+            size="x-small"
+            variant="tonal"
+            color="#667eea"
+            :loading="resolvingAction === 'create-new'"
+            :disabled="Boolean(resolvingAction)"
+            @click.stop="$emit('resolveConflict', { expense, action: 'create-new' })"
+          >
+            Criar nova
+          </v-btn>
+        </div>
         <v-list-item-subtitle v-if="expense.users && expense.users.length">
           {{ $t('expenseItem.sharedWith') }}
           <v-chip
@@ -252,9 +295,31 @@ export default {
       type: Object,
       default: () => null,
     },
+    resolvingAction: {
+      type: String,
+      default: null,
+    },
   },
-  emits: ['deleteExpense', 'removeAttachment', 'attachFiles', 'shareExpense', 'sendReminder', 'select', 'downloadAttachment'],
+  emits: ['deleteExpense', 'removeAttachment', 'attachFiles', 'shareExpense', 'sendReminder', 'select', 'downloadAttachment', 'resolveConflict'],
   computed: {
+    reconciliationLabel() {
+      const status = this.expense?.reconciliationStatus;
+      if (!status) return '';
+      const labels = {
+        IMPORTED: 'Importada',
+        PROMOTED_FROM_PENDING: 'Pendente → confirmada',
+        MATCHED_AND_CANCELLED: 'Cancelada pelo banco',
+        CONFLICT_DUPLICATE: 'Conflito de duplicidade',
+        RESOLVED_CREATE_NEW: 'Conflito resolvido',
+      };
+      return labels[status] || status;
+    },
+    reconciliationColor() {
+      const status = this.expense?.reconciliationStatus;
+      if (status === 'CONFLICT_DUPLICATE') return 'warning';
+      if (status === 'MATCHED_AND_CANCELLED') return 'error';
+      return '#667eea';
+    },
     hasAlerts() {
       return Array.isArray(this.expense.alerts) && this.expense.alerts.length > 0;
     },
@@ -533,6 +598,20 @@ export default {
 
 .expense-action-btn .v-icon {
   line-height: 32px;
+}
+
+.status-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0;
+}
+
+.conflict-resolution-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 4px;
 }
 
 @media (max-width: 420px) {

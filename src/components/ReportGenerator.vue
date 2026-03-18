@@ -183,9 +183,27 @@ import ReportService from '@/services/ReportService';
 import DataService from "@/services/DataService"
 
 export default {
+    props: {
+        initialReportType: {
+            type: String,
+            default: 'expenses',
+        },
+        initialStartDate: {
+            type: String,
+            default: null,
+        },
+        initialEndDate: {
+            type: String,
+            default: null,
+        },
+        initialCategoryFilter: {
+            type: String,
+            default: null,
+        },
+    },
     data() {
         return {
-            reportType: 'expenses',
+            reportType: this.initialReportType || 'expenses',
             viewType: 'grouped',
             reportTypes: [
                 { text: this.$t('reportGenerator.report_types.expenses'), value: 'expenses' },
@@ -214,8 +232,8 @@ export default {
             },
             selectedCategories: [],
             availableCategories: [],
-            startDate: null,
-            endDate: null,
+            startDate: this.initialStartDate ? new Date(`${this.initialStartDate}T00:00:00`) : null,
+            endDate: this.initialEndDate ? new Date(`${this.initialEndDate}T00:00:00`) : null,
             formattedStartDate: '',
             formattedEndDate: '',
             startDateMenu: false,
@@ -232,6 +250,8 @@ export default {
         };
     },
     created() {
+        this.formattedStartDate = this.formatDate(this.startDate);
+        this.formattedEndDate = this.formatDate(this.endDate);
         this.fetchCategories();
     },
     methods: {
@@ -274,6 +294,8 @@ export default {
                             };
                         })
                         .filter((category) => Boolean(category));
+
+                    this.applyInitialCategoryFilter();
 
                 } catch (error) {
                     console.error('Erro ao buscar categorias:', error);
@@ -336,6 +358,19 @@ export default {
                 return false;
             }
             return true;
+        },
+        applyInitialCategoryFilter() {
+            if (!this.initialCategoryFilter || this.reportType !== 'expenses') {
+                return;
+            }
+
+            const match = this.availableCategories.find((category) =>
+                category?.code === this.initialCategoryFilter || category?.name === this.initialCategoryFilter
+            );
+
+            if (match) {
+                this.selectedCategories = [match.id];
+            }
         },
     },
     watch: {
