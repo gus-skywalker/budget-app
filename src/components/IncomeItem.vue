@@ -6,7 +6,7 @@
           {{ income.description }}
         </v-list-item-title>
         <v-list-item-subtitle>
-          R$ {{ income.amount }} - Data: {{ income.date }}
+          {{ $t('incomeItem.amount') }} {{ income.amount }} - {{ $t('incomeItem.date') }}: {{ income.date }}
         </v-list-item-subtitle>
         <div v-if="income.openFinance || income.reconciliationStatus" class="status-row">
           <v-chip
@@ -16,7 +16,7 @@
             variant="tonal"
             class="mt-1"
           >
-            Open Finance
+            {{ $t('incomeItem.open_finance') }}
           </v-chip>
           <v-chip
             v-if="income.reconciliationStatus"
@@ -37,7 +37,7 @@
             :disabled="Boolean(resolvingAction)"
             @click.stop="$emit('resolveConflict', { income, action: 'keep-existing' })"
           >
-            Manter existente
+            {{ $t('incomeItem.keep_existing') }}
           </v-btn>
           <v-btn
             size="x-small"
@@ -47,7 +47,7 @@
             :disabled="Boolean(resolvingAction)"
             @click.stop="$emit('resolveConflict', { income, action: 'create-new' })"
           >
-            Criar nova
+            {{ $t('incomeItem.create_new') }}
           </v-btn>
         </div>
         <v-chip
@@ -57,7 +57,7 @@
           size="small"
           class="mt-1"
         >
-          Renda Recorrente
+          {{ $t('incomeItem.recurring_income') }}
         </v-chip>
       </v-col>
       <v-col cols="3" md="4" class="d-flex justify-end align-center income-actions">
@@ -88,14 +88,14 @@
     <!-- Diálogo para escolher a quantidade de meses -->
     <v-dialog v-model="recurrenceDialog" persistent max-width="400px">
       <v-card>
-        <v-card-title>Escolha a quantidade de meses</v-card-title>
+        <v-card-title>{{ $t('incomeItem.choose_months') }}</v-card-title>
         <v-card-text>
-          <v-select v-model="selectedMonths" :items="monthsOptions" label="Quantidade de meses" dense></v-select>
+          <v-select v-model="selectedMonths" :items="monthsOptions" :label="$t('incomeItem.month_count')" dense></v-select>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" text @click="closeRecurrenceDialog">Cancelar</v-btn>
-          <v-btn color="blue darken-1" text @click="confirmRecurrence">Confirmar</v-btn>
+          <v-btn color="blue darken-1" text @click="closeRecurrenceDialog">{{ $t('common.cancel') }}</v-btn>
+          <v-btn color="blue darken-1" text @click="confirmRecurrence">{{ $t('common.confirm') }}</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -124,14 +124,9 @@ export default {
     reconciliationLabel() {
       const status = this.income?.reconciliationStatus
       if (!status) return ''
-      const labels = {
-        IMPORTED: 'Importada',
-        PROMOTED_FROM_PENDING: 'Pendente → confirmada',
-        MATCHED_AND_CANCELLED: 'Cancelada pelo banco',
-        CONFLICT_DUPLICATE: 'Conflito de duplicidade',
-        RESOLVED_CREATE_NEW: 'Conflito resolvido',
-      }
-      return labels[status] || status
+      const key = `incomeItem.reconciliation.${status}`
+      const translated = this.$t(key)
+      return translated !== key ? translated : status
     },
     reconciliationColor() {
       const status = this.income?.reconciliationStatus

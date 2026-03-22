@@ -1,11 +1,25 @@
 <template>
-    <v-form @submit.prevent="submitContribution">
-        <v-text-field :label="$t('financial_goals.amount')" v-model="contributionForm.amount" type="number" required
-            outlined class="mb-4"></v-text-field>
-        <v-text-field :label="$t('financial_goals.description')" v-model="contributionForm.description" outlined
-            class="mb-4"></v-text-field>
-        <v-btn type="submit" color="primary">
-            {{ $t('add_contribution') }}
+    <v-form @submit.prevent="submitContribution" class="contribution-form">
+        <div class="contribution-form__grid">
+            <v-text-field
+                :label="$t('financial_goals.amount')"
+                v-model="contributionForm.amount"
+                type="number"
+                required
+                variant="outlined"
+                density="comfortable"
+                color="#667eea"
+            ></v-text-field>
+            <v-text-field
+                :label="$t('financial_goals.description_optional')"
+                v-model="contributionForm.description"
+                variant="outlined"
+                density="comfortable"
+                color="#667eea"
+            ></v-text-field>
+        </div>
+        <v-btn type="submit" color="primary" class="contribution-form__button">
+            {{ $t('financial_goals.add_contribution') }}
         </v-btn>
     </v-form>
 </template>
@@ -60,5 +74,19 @@ export default {
 </script>
 
 <style scoped>
-/* Estilos específicos, se necessário */
+.contribution-form {
+    margin-top: 16px;
+}
+
+.contribution-form__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+}
+
+.contribution-form__button {
+    margin-top: 8px;
+    text-transform: none;
+    font-weight: 600;
+}
 </style>

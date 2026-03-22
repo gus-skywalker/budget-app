@@ -364,7 +364,8 @@
     "title": "Tendências ao Longo do Tempo",
     "select_chart_type": "Selecione o Tipo de Gráfico",
     "select_time_period": "Selecione o Período de Tempo",
-    "select_expense_category": "Selecione a Categoria de Débito"
+    "select_expense_category": "Selecione a Categoria de Débito",
+    "all_categories": "Todas as categorias"
   },
   "cashflow": {
     "title": "Cashflow",
@@ -515,17 +516,52 @@
     "title": "Metas Financeiras",
     "goal_name": "Nome da Meta",
     "category": "Categoria",
-    "target_amount": "Quantidade Almejada",
+    "target_amount": "Valor alvo",
     "initial_amount": "Valor Inicial",
     "contribution_frequency": "Contribuição Periódica",
     "periodicity": "Periodicidade",
+    "advanced_planning": "Planejamento avançado (opcional)",
     "deadline": "Data Limite",
     "update": "Atualizar",
     "add": "Adicionar",
+    "add_contribution": "Adicionar contribuição",
     "new_goal": "Nova Meta",
     "progress": "Progresso",
     "contribution_history": "Histórico de Contribuições",
     "amount": "Valor",
+    "description": "Descrição",
+    "description_optional": "Descrição (opcional)",
+    "planning_hint_default": "Defina o valor alvo e o prazo. Nós sugerimos o ritmo mensal ideal para chegar lá.",
+    "planning_hint_goal_reached": "Com os valores atuais, essa meta já está coberta.",
+    "planning_hint_suggestion": "Com esse prazo, um aporte sugerido é {amount} por mês.",
+    "tip_title": "Dica importante",
+    "tip_body": "Para receber sugestões mais inteligentes e entender se sua meta é viável, conecte suas contas em Conexões e sincronize o Open Finance.",
+    "tip_cta": "Ir para Conexões",
+    "empty_state_tip": "Conecte suas contas e sincronize o Open Finance para receber sugestões mais realistas antes de criar sua primeira meta.",
+    "templates_title": "Comece com um objetivo comum",
+    "templates_subtitle": "Escolha um ponto de partida e depois ajuste os valores ao seu contexto.",
+    "templates": {
+      "travel": {
+        "title": "Viagem",
+        "description": "Planeje férias, passagem e hospedagem com um prazo confortável.",
+        "prefill_name": "Reserva de viagem"
+      },
+      "emergency": {
+        "title": "Reserva de emergência",
+        "description": "Monte um colchão de segurança para imprevistos do dia a dia.",
+        "prefill_name": "Reserva de emergência"
+      },
+      "notebook": {
+        "title": "Notebook",
+        "description": "Defina um prazo para trocar de equipamento sem apertar o caixa.",
+        "prefill_name": "Troca de notebook"
+      },
+      "car": {
+        "title": "Carro",
+        "description": "Entenda o esforço mensal necessário para chegar em uma entrada ou compra futura.",
+        "prefill_name": "Comprar carro"
+      }
+    },
     "date": "Data",
     "total_income": "Renda Total",
     "total_expense": "Despesas Totais",
@@ -567,6 +603,68 @@
       "signup_success": "Conta criada com sucesso.",
       "signup_failed": "Erro ao criar a conta. Por favor, tente novamente.",
       "password_mismatch": "As senhas não coincidem. Por favor, tente novamente."
+    }
+  },
+  "incomeItem": {
+    "amount": "Valor",
+    "date": "Data",
+    "open_finance": "Open Finance",
+    "keep_existing": "Manter existente",
+    "create_new": "Criar nova",
+    "recurring_income": "Renda recorrente",
+    "choose_months": "Escolha a quantidade de meses",
+    "month_count": "Quantidade de meses",
+    "reconciliation": {
+      "IMPORTED": "Importada",
+      "PROMOTED_FROM_PENDING": "Pendente → confirmada",
+      "MATCHED_AND_CANCELLED": "Cancelada pelo banco",
+      "CONFLICT_DUPLICATE": "Conflito de duplicidade",
+      "RESOLVED_CREATE_NEW": "Conflito resolvido"
+    }
+  },
+  "expenseItem": {
+    "amount": "Valor",
+    "date": "Data",
+    "category": "Categoria",
+    "sharedWith": "Compartilhado com",
+    "alertConfigured": "Alerta configurado",
+    "manageAttachments": "Gerenciar anexos",
+    "email": "Email",
+    "addAttachments": "Adicionar anexos",
+    "attach": "Anexar",
+    "share": "Compartilhar",
+    "confirmDeleteTitle": "Excluir anexo?",
+    "confirmDeleteText": "Deseja excluir {file}?",
+    "delete": "Excluir",
+    "configureAlert": "Configurar alerta",
+    "configuredAlerts": "Alertas configurados",
+    "alertDate": "Data do alerta",
+    "status": "Status",
+    "methods": "Métodos",
+    "recurrence": "Recorrência",
+    "notRecurring": "Não recorrente",
+    "noAlerts": "Nenhum alerta configurado.",
+    "configureNewAlert": "Configurar novo alerta",
+    "useDefaultAlertDays": "Usar alerta padrão ({days} dias)",
+    "customAlertDays": "Alerta personalizado",
+    "daysBeforeAlert": "Dias antes do alerta",
+    "daysBeforeAlertPlaceholder": "Informe a quantidade de dias",
+    "setAsRecurring": "Definir como recorrente",
+    "recurrenceInterval": "Intervalo de recorrência",
+    "selectFrequency": "Selecione a frequência",
+    "recurrenceEndDate": "Data final da recorrência",
+    "reset": "Limpar",
+    "save": "Salvar",
+    "close": "Fechar",
+    "openFinance": "Open Finance",
+    "keepExisting": "Manter existente",
+    "createNew": "Criar nova",
+    "reconciliation": {
+      "IMPORTED": "Importada",
+      "PROMOTED_FROM_PENDING": "Pendente → confirmada",
+      "MATCHED_AND_CANCELLED": "Cancelada pelo banco",
+      "CONFLICT_DUPLICATE": "Conflito de duplicidade",
+      "RESOLVED_CREATE_NEW": "Conflito resolvido"
     }
   },
   "companySettings": {

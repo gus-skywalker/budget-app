@@ -97,6 +97,7 @@
                 :items="expenseCategories"
                 item-title="name"
                 item-value="code"
+                clearable
                 @update:modelValue="updateCharts"
                 class="modern-select"
                 color="#667eea"
@@ -319,6 +320,92 @@
 
       <section class="section-block">
         <div class="section-header">
+          <h2 class="section-title">Metas em risco</h2>
+          <v-btn size="small" variant="text" @click="openGoalsView">
+            <v-icon start>mdi-open-in-new</v-icon>
+            Ver metas
+          </v-btn>
+        </div>
+        <div v-if="goalsAtRisk.length" class="goals-grid">
+          <div v-for="goal in goalsAtRisk" :key="goal.id" class="goal-card">
+            <div class="goal-header">
+              <h3 class="goal-name">{{ goal.name }}</h3>
+            </div>
+            <div class="goal-details">
+              <div class="goal-info">
+                <span class="info-label">Falta</span>
+                <span class="info-value">{{ formatCurrency(goal.remainingAmount) }}</span>
+              </div>
+              <div class="goal-info">
+                <span class="info-label">Sugestão mensal</span>
+                <span class="info-value">{{ formatCurrency(goal.suggestedContributionAmount) }}</span>
+              </div>
+              <div class="goal-info">
+                <span class="info-label">Prazo</span>
+                <span class="info-value">{{ goal.monthsRemaining || 0 }} mês(es)</span>
+              </div>
+              <div class="progress-section">
+                <div class="progress-header">
+                  <span class="info-label">Ritmo</span>
+                  <v-chip size="small" color="warning" variant="tonal">
+                    {{ paceStatusLabel(goal.paceStatus) }}
+                  </v-chip>
+                </div>
+                <p class="context-message">{{ goal.insightMessage }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div v-else class="projection-placeholder">
+          <p>Nenhuma meta em risco no momento.</p>
+        </div>
+      </section>
+
+      <section class="section-block">
+        <div class="section-header">
+          <h2 class="section-title">Metas com folga</h2>
+          <v-btn size="small" variant="text" @click="openGoalsView">
+            <v-icon start>mdi-open-in-new</v-icon>
+            Ver metas
+          </v-btn>
+        </div>
+        <div v-if="goalOpportunities.length" class="goals-grid">
+          <div v-for="goal in goalOpportunities" :key="goal.id" class="goal-card">
+            <div class="goal-header">
+              <h3 class="goal-name">{{ goal.name }}</h3>
+            </div>
+            <div class="goal-details">
+              <div class="goal-info">
+                <span class="info-label">Falta</span>
+                <span class="info-value">{{ formatCurrency(goal.remainingAmount) }}</span>
+              </div>
+              <div class="goal-info">
+                <span class="info-label">Sugestão mensal</span>
+                <span class="info-value">{{ formatCurrency(goal.suggestedContributionAmount) }}</span>
+              </div>
+              <div class="goal-info">
+                <span class="info-label">Prazo</span>
+                <span class="info-value">{{ goal.monthsRemaining || 0 }} mês(es)</span>
+              </div>
+              <div class="progress-section">
+                <div class="progress-header">
+                  <span class="info-label">Ritmo</span>
+                  <v-chip size="small" color="success" variant="tonal">
+                    {{ paceStatusLabel(goal.paceStatus) }}
+                  </v-chip>
+                </div>
+                <p class="context-message">{{ goal.insightMessage }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div v-else class="projection-placeholder">
+          <p>Nenhuma meta adiantada ainda.</p>
+        </div>
+      </section>
+
+      <section class="section-block">
+        <div class="section-header">
           <h2 class="section-title">{{ $t('overview.projection_title') }}</h2>
         </div>
         <div v-if="hasProjectionData" class="projection-grid">
@@ -448,6 +535,7 @@ import { Chart, registerables } from 'chart.js/auto'
 import moment from 'moment'
 import DataService from '@/services/DataService'
 import FinancialReadService from '@/services/FinancialReadService'
+import FinancialGoalService from '@/services/FinancialGoalService'
 import OpenFinanceService from '@/services/OpenFinanceService'
 import 'chartjs-adapter-moment'
 
@@ -648,9 +736,11 @@ export default {
       drillDownAccountId: null,
       openFinanceObservabilitySummary: null,
       openFinanceConflictCount: 0,
+      goalsAtRisk: [],
+      goalOpportunities: [],
       upcomingExpenses: [],
       selectedTimePeriod: '3m',
-      selectedCategory: null,
+      selectedCategory: '',
       isYearly: false,
       expenseCategories: [],
       selectedLanguage: this.i18n$?.locale || 'en',
@@ -699,6 +789,7 @@ export default {
     this.fetchMonthTransactions()
     this.fetchOpenFinanceConflicts()
     this.fetchOpenFinanceObservabilitySummary()
+    this.fetchGoalsAtRisk()
     this.fetchCategories()
     this.createChart()
     this.fetchChartData()
@@ -795,6 +886,28 @@ export default {
           this.openFinanceObservabilitySummary = null
         })
     },
+    fetchGoalsAtRisk() {
+      FinancialGoalService.fetchFinancialGoals()
+        .then((response) => {
+          const goals = Array.isArray(response?.data) ? response.data : []
+          this.goalsAtRisk = goals
+            .filter((goal) => goal?.paceStatus === 'AT_RISK')
+            .sort((left, right) => Number(right?.remainingAmount || 0) - Number(left?.remainingAmount || 0))
+            .slice(0, 3)
+          this.goalOpportunities = goals
+            .filter((goal) => goal?.paceStatus === 'AHEAD')
+            .sort((left, right) => Number(left?.remainingAmount || 0) - Number(right?.remainingAmount || 0))
+            .slice(0, 3)
+        })
+        .catch((error) => {
+          console.error('Error fetching goals at risk:', error)
+          this.goalsAtRisk = []
+          this.goalOpportunities = []
+        })
+    },
+    openGoalsView() {
+      this.$router.push({ path: '/planning/goals' })
+    },
     createChart() {
       const trendsCtx = this.$refs.trendsChart?.getContext?.('2d')
       if (!trendsCtx) {
@@ -867,6 +980,11 @@ export default {
             }
           })
             .filter((category) => Boolean(category))
+          this.expenseCategories.unshift({
+            id: 'all',
+            code: '',
+            name: this.$t('trends.all_categories'),
+          })
         })
         .catch((error) => {
           console.error('Error fetching categories:', error)
@@ -880,7 +998,7 @@ export default {
           if (this.selectedTimePeriod.includes('m')) {
             this.isYearly = false
             this.chartData.labels = rawData.labels.map((label) =>
-              moment(label, 'MM-YYYY').toISOString()
+              moment(label, ['YYYY-MM', 'MM-YYYY']).toISOString()
             )
             this.chartData.datasets[0].data = rawData.datasets[0].data
             this.chartData.datasets[1].data = rawData.datasets[1].data
@@ -938,6 +1056,12 @@ export default {
     projectBalance(months) {
       const net = this.netMonthlyCashflow
       return Number(this.dashboardSummary.totalBalance || 0) + net * months
+    },
+    paceStatusLabel(status) {
+      if (status === 'AT_RISK') return 'Em risco'
+      if (status === 'AHEAD') return 'Adiantado'
+      if (status === 'ON_TRACK') return 'No ritmo'
+      return 'Sem dados'
     }
   }
 }
@@ -1392,6 +1516,7 @@ export default {
 }
 
 .accounts-grid,
+.goals-grid,
 .transactions-list {
   display: flex;
   flex-direction: column;

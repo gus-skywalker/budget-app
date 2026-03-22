@@ -11,6 +11,29 @@
               </h2>
             </div>
             <div class="card-content">
+              <v-alert
+                type="info"
+                variant="tonal"
+                class="mb-4"
+                border="start"
+              >
+                <div class="goal-tip">
+                  <div>
+                    <strong>{{ $t('financial_goals.tip_title') }}</strong>
+                    <div>{{ $t('financial_goals.tip_body') }}</div>
+                  </div>
+                  <v-btn
+                    variant="outlined"
+                    color="#667eea"
+                    class="goal-tip__button"
+                    @click="goToConnections"
+                  >
+                    <v-icon start>mdi-bank-outline</v-icon>
+                    {{ $t('financial_goals.tip_cta') }}
+                  </v-btn>
+                </div>
+              </v-alert>
+
               <!-- Formulário para adicionar ou editar metas -->
               <v-form v-if="isAddingOrEditing" @submit.prevent="submitGoalForm" ref="formRef" class="goal-form">
                 <v-text-field 
@@ -42,7 +65,6 @@
                   :label="$t('financial_goals.target_amount')" 
                   v-model="goalForm.targetAmount"
                   :rules="[requiredRule, positiveNumberRule]" 
-                  @input="suggestDeadline" 
                   type="number" 
                   required
                   variant="outlined"
@@ -55,37 +77,12 @@
                   :label="$t('financial_goals.initial_amount')" 
                   v-model="goalForm.initialAmount"
                   :rules="[positiveNumberRule]" 
-                  @input="suggestDeadline" 
                   type="number"
                   variant="outlined"
                   density="comfortable"
                   color="#667eea"
                   class="modern-input mb-4"
                 ></v-text-field>
-
-                <v-text-field 
-                  :label="$t('financial_goals.contribution_frequency')"
-                  v-model="goalForm.contributionFrequency" 
-                  :rules="[positiveNumberRule]" 
-                  @input="suggestDeadline"
-                  type="number"
-                  variant="outlined"
-                  density="comfortable"
-                  color="#667eea"
-                  class="modern-input mb-4"
-                ></v-text-field>
-
-                <v-select 
-                  :label="$t('financial_goals.periodicity')" 
-                  v-model="goalForm.periodicity"
-                  :items="['weekly', 'monthly']" 
-                  :rules="[requiredRule]" 
-                  @change="suggestDeadline"
-                  variant="outlined"
-                  density="comfortable"
-                  color="#667eea"
-                  class="modern-input mb-4"
-                ></v-select>
 
                 <v-text-field 
                   :label="$t('financial_goals.deadline')" 
@@ -97,6 +94,40 @@
                   color="#667eea"
                   class="modern-input mb-4"
                 ></v-text-field>
+
+                <v-alert type="info" variant="tonal" class="mb-4">
+                  {{ planningHint() }}
+                </v-alert>
+
+                <v-expansion-panels variant="accordion" class="goal-advanced-panel mb-4">
+                  <v-expansion-panel>
+                    <v-expansion-panel-title>
+                      {{ $t('financial_goals.advanced_planning') }}
+                    </v-expansion-panel-title>
+                    <v-expansion-panel-text>
+                      <v-text-field 
+                        :label="$t('financial_goals.contribution_frequency')"
+                        v-model="goalForm.contributionFrequency" 
+                        :rules="[positiveNumberRule]" 
+                        type="number"
+                        variant="outlined"
+                        density="comfortable"
+                        color="#667eea"
+                        class="modern-input mb-4"
+                      ></v-text-field>
+
+                      <v-select 
+                        :label="$t('financial_goals.periodicity')" 
+                        v-model="goalForm.periodicity"
+                        :items="['weekly', 'monthly']" 
+                        variant="outlined"
+                        density="comfortable"
+                        color="#667eea"
+                        class="modern-input"
+                      ></v-select>
+                    </v-expansion-panel-text>
+                  </v-expansion-panel>
+                </v-expansion-panels>
 
                 <v-row justify="center" class="mb-4">
                   <v-col cols="auto">
@@ -129,6 +160,26 @@
               </v-form>
 
               <!-- Botão para adicionar uma nova meta -->
+              <div v-if="!isAddingOrEditing" class="goal-template-section mt-4">
+                <div class="goal-template-section__header">
+                  <h3 class="goal-template-section__title">{{ $t('financial_goals.templates_title') }}</h3>
+                  <p class="goal-template-section__subtitle">{{ $t('financial_goals.templates_subtitle') }}</p>
+                </div>
+                <div class="goal-template-grid">
+                  <button
+                    v-for="template in goalTemplates()"
+                    :key="template.key"
+                    type="button"
+                    class="goal-template-card"
+                    @click="startFromTemplate(template)"
+                  >
+                    <v-icon color="#667eea" size="26">{{ template.icon }}</v-icon>
+                    <div class="goal-template-card__title">{{ template.title }}</div>
+                    <div class="goal-template-card__description">{{ template.description }}</div>
+                  </button>
+                </div>
+              </div>
+
               <v-btn 
                 v-if="!isAddingOrEditing" 
                 @click="addNewGoal" 
@@ -156,8 +207,41 @@
                       rounded></v-progress-linear>
                     <div>{{ $t('financial_goals.progress') }}: {{ goal.progress }}%</div>
 
+                    <div class="goal-insight-grid">
+                      <div class="goal-insight-chip">
+                        <span class="goal-insight-chip__label">Falta</span>
+                        <span class="goal-insight-chip__value">{{ formatCurrency(goal.remainingAmount || 0) }}</span>
+                      </div>
+                      <div class="goal-insight-chip">
+                        <span class="goal-insight-chip__label">Prazo restante</span>
+                        <span class="goal-insight-chip__value">{{ goal.monthsRemaining || 0 }} mês(es)</span>
+                      </div>
+                      <div class="goal-insight-chip">
+                        <span class="goal-insight-chip__label">Sugestão</span>
+                        <span class="goal-insight-chip__value">{{ formatCurrency(goal.suggestedContributionAmount || 0) }}/mês</span>
+                      </div>
+                      <div class="goal-insight-chip" :class="paceStatusClass(goal.paceStatus)">
+                        <span class="goal-insight-chip__label">Ritmo</span>
+                        <span class="goal-insight-chip__value">{{ paceStatusLabel(goal.paceStatus) }}</span>
+                      </div>
+                    </div>
+
+                    <v-alert
+                      v-if="goal.insightMessage"
+                      variant="tonal"
+                      density="comfortable"
+                      class="goal-insight-alert"
+                      :type="goal.paceStatus === 'AT_RISK' ? 'warning' : 'info'"
+                    >
+                      {{ goal.insightMessage }}
+                    </v-alert>
+
+                    <div v-if="goal.plannedContributionMessage" class="goal-planned-message">
+                      {{ goal.plannedContributionMessage }}
+                    </div>
+
                     <!-- Histórico de contribuições -->
-                    <v-row>
+                    <v-row v-if="goal.contributions?.length">
                       <v-col>
                         <h3>{{ $t('financial_goals.contribution_history') }}</h3>
                         <v-list>
@@ -181,10 +265,6 @@
                     <!-- Adicionar contribuição -->
                     <ContributionComponent :goal="goal" @contribution-added="fetchFinancialGoals" />
 
-                    <!-- Exibir se a meta é viável ou não -->
-                    <v-alert v-if="!goal.feasible" type="warning">
-                      {{ $t('financial_goals.not_feasible') }}
-                    </v-alert>
                   </v-col>
                   <v-col class="d-flex justify-end">
                     <v-btn @click="editGoal(goal)" icon>
@@ -203,6 +283,16 @@
               <div v-else class="empty-state">
                 <v-icon size="64" color="#667eea" class="mb-4">mdi-bullseye-arrow</v-icon>
                 <p class="empty-message">{{ $t('financial_goals.no_goals') }}</p>
+                <p class="empty-submessage">{{ $t('financial_goals.empty_state_tip') }}</p>
+                <v-btn
+                  variant="outlined"
+                  color="#667eea"
+                  class="modern-btn mt-4"
+                  @click="goToConnections"
+                >
+                  <v-icon left>mdi-bank-outline</v-icon>
+                  {{ $t('financial_goals.tip_cta') }}
+                </v-btn>
               </div>
 
               <!-- Seção para inserir visão geral do mês e buscar sugestões -->
@@ -361,6 +451,79 @@ export default {
         contributionFrequency: 0,
         periodicity: 'monthly',
         category: ''
+      };
+    },
+    goalTemplates() {
+      return [
+        {
+          key: 'travel',
+          icon: 'mdi-airplane',
+          title: this.$t('financial_goals.templates.travel.title'),
+          description: this.$t('financial_goals.templates.travel.description'),
+          form: {
+            name: this.$t('financial_goals.templates.travel.prefill_name'),
+            category: 'viagem',
+            targetAmount: 5000,
+            initialAmount: 0,
+            deadline: this.addMonthsToToday(8),
+            contributionFrequency: 0,
+            periodicity: 'monthly',
+          },
+        },
+        {
+          key: 'emergency',
+          icon: 'mdi-shield-check-outline',
+          title: this.$t('financial_goals.templates.emergency.title'),
+          description: this.$t('financial_goals.templates.emergency.description'),
+          form: {
+            name: this.$t('financial_goals.templates.emergency.prefill_name'),
+            category: 'fundo_emergencia',
+            targetAmount: 10000,
+            initialAmount: 0,
+            deadline: this.addMonthsToToday(12),
+            contributionFrequency: 0,
+            periodicity: 'monthly',
+          },
+        },
+        {
+          key: 'notebook',
+          icon: 'mdi-laptop',
+          title: this.$t('financial_goals.templates.notebook.title'),
+          description: this.$t('financial_goals.templates.notebook.description'),
+          form: {
+            name: this.$t('financial_goals.templates.notebook.prefill_name'),
+            category: 'tecnologia',
+            targetAmount: 12000,
+            initialAmount: 0,
+            deadline: this.addMonthsToToday(6),
+            contributionFrequency: 0,
+            periodicity: 'monthly',
+          },
+        },
+        {
+          key: 'car',
+          icon: 'mdi-car-outline',
+          title: this.$t('financial_goals.templates.car.title'),
+          description: this.$t('financial_goals.templates.car.description'),
+          form: {
+            name: this.$t('financial_goals.templates.car.prefill_name'),
+            category: 'carro',
+            targetAmount: 200000,
+            initialAmount: 0,
+            deadline: this.addMonthsToToday(12),
+            contributionFrequency: 0,
+            periodicity: 'monthly',
+          },
+        },
+      ];
+    },
+    startFromTemplate(template) {
+      this.addNewGoal();
+      const resolvedCategory = this.resolveTemplateCategory(template.form.category);
+      this.goalForm = {
+        ...this.goalForm,
+        ...template.form,
+        category: resolvedCategory,
       };
     },
     editGoal(goal) {
@@ -532,8 +695,25 @@ export default {
           // Adicione outras categorias conforme necessário
         };
         this.goalForm.targetAmount = suggestions[categoryCode] || 0;
-        this.suggestDeadline();
       }
+    },
+    planningHint() {
+      const targetAmount = Number(this.goalForm.targetAmount || 0);
+      const initialAmount = Number(this.goalForm.initialAmount || 0);
+      const monthsRemaining = this.calculateMonthsRemaining(this.goalForm.deadline);
+
+      if (!targetAmount || !monthsRemaining) {
+        return this.$t('financial_goals.planning_hint_default');
+      }
+
+      const remainingAmount = Math.max(0, targetAmount - initialAmount);
+      if (!remainingAmount) {
+        return this.$t('financial_goals.planning_hint_goal_reached');
+      }
+
+      return this.$t('financial_goals.planning_hint_suggestion', {
+        amount: this.formatCurrency(remainingAmount / monthsRemaining),
+      });
     },
     suggestDeadline() {
       const targetAmount = this.goalForm.targetAmount || 0; // Garante um valor numérico
@@ -563,6 +743,36 @@ export default {
       }
 
       this.goalForm.deadline = suggestedDate.toISOString().substr(0, 10);
+    },
+    calculateMonthsRemaining(deadline) {
+      if (!deadline) {
+        return 0;
+      }
+      const today = new Date();
+      const targetDate = new Date(deadline);
+      const diffInMilliseconds = targetDate.getTime() - today.getTime();
+      if (diffInMilliseconds <= 0) {
+        return 0;
+      }
+      return Math.max(1, Math.ceil(diffInMilliseconds / (1000 * 60 * 60 * 24 * 30)));
+    },
+    addMonthsToToday(months) {
+      const date = new Date();
+      date.setMonth(date.getMonth() + months);
+      return date.toISOString().substr(0, 10);
+    },
+    resolveTemplateCategory(preferredCode) {
+      if (!preferredCode) {
+        return '';
+      }
+      const exactMatch = this.categories.find((category) => category.code === preferredCode);
+      if (exactMatch) {
+        return exactMatch.code;
+      }
+      const fallbackByName = this.categories.find((category) =>
+        String(category.name || '').toLowerCase().includes(String(preferredCode).toLowerCase())
+      );
+      return fallbackByName?.code || '';
     },
     checkGoalDeadlines() {
       const today = new Date();
@@ -600,6 +810,33 @@ export default {
     formatDate(dateStr) {
       const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
       return new Date(dateStr).toLocaleDateString('pt-BR', options);
+    },
+    formatCurrency(value) {
+      return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+      }).format(Number(value || 0));
+    },
+    paceStatusLabel(status) {
+      if (status === 'AHEAD') return 'Adiantado';
+      if (status === 'AT_RISK') return 'Em risco';
+      if (status === 'ON_TRACK') return 'No ritmo';
+      return 'Sem dados';
+    },
+    paceStatusClass(status) {
+      return {
+        'goal-insight-chip--ahead': status === 'AHEAD',
+        'goal-insight-chip--risk': status === 'AT_RISK',
+        'goal-insight-chip--track': status === 'ON_TRACK',
+      };
+    },
+    goToConnections() {
+      this.$router.push({
+        path: '/settings',
+        query: {
+          tab: 'connections',
+        },
+      });
     }
   },
   mounted() {
@@ -745,8 +982,171 @@ export default {
   font-weight: 600;
 }
 
+.goal-insight-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.goal-insight-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(102, 126, 234, 0.06);
+  border: 1px solid rgba(102, 126, 234, 0.12);
+}
+
+.goal-insight-chip__label {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.goal-insight-chip__value {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.goal-insight-chip--ahead {
+  background: rgba(34, 197, 94, 0.10);
+  border-color: rgba(34, 197, 94, 0.2);
+}
+
+.goal-insight-chip--track {
+  background: rgba(59, 130, 246, 0.10);
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+.goal-insight-chip--risk {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.24);
+}
+
+.goal-insight-alert {
+  margin-top: 14px;
+}
+
+.goal-planned-message {
+  margin-top: 10px;
+  font-size: 0.92rem;
+  color: #5b6475;
+}
+
+.goal-advanced-panel {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.goal-tip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.goal-template-section__header {
+  margin-bottom: 12px;
+}
+
+.goal-template-section__title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+  color: #1f2937;
+}
+
+.goal-template-section__subtitle {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.94rem;
+}
+
+.goal-template-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.goal-template-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(102, 126, 234, 0.15);
+  background: rgba(102, 126, 234, 0.05);
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.goal-template-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(102, 126, 234, 0.28);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.12);
+}
+
+.goal-template-card__title {
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.goal-template-card__description {
+  font-size: 0.92rem;
+  color: #6b7280;
+}
+
+.goal-tip__button {
+  flex-shrink: 0;
+  text-transform: none;
+  font-weight: 600;
+}
+
 .v-theme--dark .progress-text {
   color: #b0b0b0;
+}
+
+.v-theme--dark .goal-insight-chip {
+  background: rgba(102, 126, 234, 0.12);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.v-theme--dark .goal-insight-chip__label {
+  color: #cbd5e1;
+}
+
+.v-theme--dark .goal-insight-chip__value {
+  color: #f8fafc;
+}
+
+.v-theme--dark .goal-planned-message {
+  color: #cbd5e1;
+}
+
+.v-theme--dark .goal-template-section__title,
+.v-theme--dark .goal-template-card__title {
+  color: #f8fafc;
+}
+
+.v-theme--dark .goal-template-section__subtitle,
+.v-theme--dark .goal-template-card__description {
+  color: #cbd5e1;
+}
+
+.v-theme--dark .goal-template-card {
+  background: rgba(102, 126, 234, 0.12);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+@media (max-width: 760px) {
+  .goal-tip {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 /* Suggestions */
@@ -804,6 +1204,20 @@ export default {
   font-size: 1rem;
   color: #666;
   margin: 0;
+}
+
+.empty-submessage {
+  margin-top: 12px;
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+.v-theme--dark .empty-message {
+  color: #b0b0b0;
+}
+
+.v-theme--dark .empty-submessage {
+  color: #cbd5e1;
 }
 
 /* Responsive */

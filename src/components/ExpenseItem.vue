@@ -15,7 +15,7 @@
             size="small"
             variant="tonal"
           >
-            Open Finance
+            {{ $t('expenseItem.openFinance') }}
           </v-chip>
           <v-chip
             v-if="expense.reconciliationStatus"
@@ -27,7 +27,7 @@
           </v-chip>
         </div>
         <v-list-item-subtitle v-if="expense.category">
-          {{ $t('expenseItem.category') }}: {{ expense.category.name }}
+          {{ $t('expenseItem.category') }}: {{ translatedCategoryName }}
           <v-icon :icon="categoryIcons[expense.category.code]" class="mr-2"></v-icon>
         </v-list-item-subtitle>
         <v-list-item-subtitle v-if="expense.reconciliationConflictReason">
@@ -42,7 +42,7 @@
             :disabled="Boolean(resolvingAction)"
             @click.stop="$emit('resolveConflict', { expense, action: 'keep-existing' })"
           >
-            Manter existente
+            {{ $t('expenseItem.keepExisting') }}
           </v-btn>
           <v-btn
             size="x-small"
@@ -52,7 +52,7 @@
             :disabled="Boolean(resolvingAction)"
             @click.stop="$emit('resolveConflict', { expense, action: 'create-new' })"
           >
-            Criar nova
+            {{ $t('expenseItem.createNew') }}
           </v-btn>
         </div>
         <v-list-item-subtitle v-if="expense.users && expense.users.length">
@@ -305,14 +305,9 @@ export default {
     reconciliationLabel() {
       const status = this.expense?.reconciliationStatus;
       if (!status) return '';
-      const labels = {
-        IMPORTED: 'Importada',
-        PROMOTED_FROM_PENDING: 'Pendente → confirmada',
-        MATCHED_AND_CANCELLED: 'Cancelada pelo banco',
-        CONFLICT_DUPLICATE: 'Conflito de duplicidade',
-        RESOLVED_CREATE_NEW: 'Conflito resolvido',
-      };
-      return labels[status] || status;
+      const key = `expenseItem.reconciliation.${status}`;
+      const translated = this.$t(key);
+      return translated !== key ? translated : status;
     },
     reconciliationColor() {
       const status = this.expense?.reconciliationStatus;
@@ -322,6 +317,17 @@ export default {
     },
     hasAlerts() {
       return Array.isArray(this.expense.alerts) && this.expense.alerts.length > 0;
+    },
+    translatedCategoryName() {
+      const category = this.expense?.category;
+      if (!category) return '';
+      const code = String(category.code || '').trim();
+      if (!code) {
+        return category.name || '';
+      }
+      const key = `categories.${code}`;
+      const translated = this.$t(key);
+      return translated !== key ? translated : (category.name || code);
     },
   },
   data() {

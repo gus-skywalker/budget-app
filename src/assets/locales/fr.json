@@ -364,7 +364,8 @@
     "title": "Tendances dans le temps",
     "select_chart_type": "Sélectionner le type de graphique",
     "select_time_period": "Sélectionner la période",
-    "select_expense_category": "Sélectionner la catégorie de dépense"
+    "select_expense_category": "Sélectionner la catégorie de dépense",
+    "all_categories": "Toutes les catégories"
   },
   "cashflow": {
     "title": "Flux de trésorerie",
@@ -519,13 +520,48 @@
     "initial_amount": "Montant initial",
     "contribution_frequency": "Fréquence de contribution",
     "periodicity": "Périodicité",
+    "advanced_planning": "Planification avancée (optionnelle)",
     "deadline": "Date limite",
     "update": "Mettre à jour",
     "add": "Ajouter",
+    "add_contribution": "Ajouter une contribution",
     "new_goal": "Nouvel objectif",
     "progress": "Progrès",
     "contribution_history": "Historique des contributions",
     "amount": "Montant",
+    "description": "Description",
+    "description_optional": "Description (optionnelle)",
+    "planning_hint_default": "Définissez le montant cible et la date limite. Nous suggérerons le rythme mensuel idéal.",
+    "planning_hint_goal_reached": "Avec les valeurs actuelles, cet objectif est déjà couvert.",
+    "planning_hint_suggestion": "Avec cette échéance, une contribution suggérée est de {amount} par mois.",
+    "tip_title": "Conseil utile",
+    "tip_body": "Pour recevoir des suggestions plus intelligentes et comprendre si votre objectif est réalisable, connectez vos comptes dans Connexions et synchronisez Open Finance.",
+    "tip_cta": "Aller aux Connexions",
+    "empty_state_tip": "Connectez vos comptes et synchronisez Open Finance pour recevoir des suggestions plus réalistes avant de créer votre premier objectif.",
+    "templates_title": "Commencez avec un objectif courant",
+    "templates_subtitle": "Choisissez un point de départ, puis ajustez les valeurs à votre réalité.",
+    "templates": {
+      "travel": {
+        "title": "Voyage",
+        "description": "Planifiez vacances, billets et hébergement avec un délai confortable.",
+        "prefill_name": "Budget voyage"
+      },
+      "emergency": {
+        "title": "Fonds d'urgence",
+        "description": "Construisez un matelas de sécurité pour les imprévus du quotidien.",
+        "prefill_name": "Fonds d'urgence"
+      },
+      "notebook": {
+        "title": "Ordinateur portable",
+        "description": "Fixez un délai pour remplacer votre équipement sans tendre votre trésorerie.",
+        "prefill_name": "Remplacer l'ordinateur portable"
+      },
+      "car": {
+        "title": "Voiture",
+        "description": "Comprenez l'effort mensuel nécessaire pour un apport ou un achat futur.",
+        "prefill_name": "Acheter une voiture"
+      }
+    },
     "date": "Date",
     "total_income": "Revenu total",
     "total_expense": "Dépenses totales",
@@ -567,6 +603,68 @@
       "signup_success": "Compte créé avec succès.",
       "signup_failed": "Erreur lors de la création du compte. Veuillez réessayer.",
       "password_mismatch": "Les mots de passe ne correspondent pas. Veuillez réessayer."
+    }
+  },
+  "incomeItem": {
+    "amount": "Montant",
+    "date": "Date",
+    "open_finance": "Open Finance",
+    "keep_existing": "Conserver l'existante",
+    "create_new": "Créer une nouvelle",
+    "recurring_income": "Revenu récurrent",
+    "choose_months": "Choisissez le nombre de mois",
+    "month_count": "Nombre de mois",
+    "reconciliation": {
+      "IMPORTED": "Importée",
+      "PROMOTED_FROM_PENDING": "En attente → confirmée",
+      "MATCHED_AND_CANCELLED": "Annulée par la banque",
+      "CONFLICT_DUPLICATE": "Conflit de doublon",
+      "RESOLVED_CREATE_NEW": "Conflit résolu"
+    }
+  },
+  "expenseItem": {
+    "amount": "Montant",
+    "date": "Date",
+    "category": "Catégorie",
+    "sharedWith": "Partagé avec",
+    "alertConfigured": "Alerte configurée",
+    "manageAttachments": "Gérer les pièces jointes",
+    "email": "Email",
+    "addAttachments": "Ajouter des pièces jointes",
+    "attach": "Joindre",
+    "share": "Partager",
+    "confirmDeleteTitle": "Supprimer la pièce jointe ?",
+    "confirmDeleteText": "Voulez-vous supprimer {file} ?",
+    "delete": "Supprimer",
+    "configureAlert": "Configurer une alerte",
+    "configuredAlerts": "Alertes configurées",
+    "alertDate": "Date d'alerte",
+    "status": "Statut",
+    "methods": "Méthodes",
+    "recurrence": "Récurrence",
+    "notRecurring": "Non récurrent",
+    "noAlerts": "Aucune alerte configurée.",
+    "configureNewAlert": "Configurer une nouvelle alerte",
+    "useDefaultAlertDays": "Utiliser l'alerte par défaut ({days} jours)",
+    "customAlertDays": "Alerte personnalisée",
+    "daysBeforeAlert": "Jours avant l'alerte",
+    "daysBeforeAlertPlaceholder": "Entrez le nombre de jours",
+    "setAsRecurring": "Définir comme récurrent",
+    "recurrenceInterval": "Intervalle de récurrence",
+    "selectFrequency": "Sélectionnez la fréquence",
+    "recurrenceEndDate": "Date de fin de récurrence",
+    "reset": "Réinitialiser",
+    "save": "Enregistrer",
+    "close": "Fermer",
+    "openFinance": "Open Finance",
+    "keepExisting": "Conserver l'existante",
+    "createNew": "Créer une nouvelle",
+    "reconciliation": {
+      "IMPORTED": "Importée",
+      "PROMOTED_FROM_PENDING": "En attente → confirmée",
+      "MATCHED_AND_CANCELLED": "Annulée par la banque",
+      "CONFLICT_DUPLICATE": "Conflit de doublon",
+      "RESOLVED_CREATE_NEW": "Conflit résolu"
     }
   },
   "companySettings": {

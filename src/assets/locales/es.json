@@ -364,7 +364,8 @@
     "title": "Gestión de cuentas",
     "select_chart_type": "Seleccionar tipo de gráfico",
     "select_time_period": "Seleccionar período",
-    "select_expense_category": "Seleccionar categoría de gasto"
+    "select_expense_category": "Seleccionar categoría de gasto",
+    "all_categories": "Todas las categorías"
   },
   "cashflow": {
     "title": "Gestión de cuentas",
@@ -512,20 +513,55 @@
     }
   },
   "financial_goals": {
-    "title": "Gestión de cuentas",
+    "title": "Metas financieras",
     "goal_name": "Nombre de la meta",
     "category": "Categoría",
     "target_amount": "Monto objetivo",
     "initial_amount": "Monto inicial",
     "contribution_frequency": "Monto de contribución",
     "periodicity": "Periodicidad",
+    "advanced_planning": "Planificación avanzada (opcional)",
     "deadline": "Fecha límite",
     "update": "Actualizar",
     "add": "Agregar",
+    "add_contribution": "Agregar contribución",
     "new_goal": "Nueva meta",
     "progress": "Progreso",
     "contribution_history": "Historial de contribuciones",
     "amount": "Monto",
+    "description": "Descripción",
+    "description_optional": "Descripción (opcional)",
+    "planning_hint_default": "Define el monto objetivo y la fecha límite. Sugeriremos el ritmo mensual ideal.",
+    "planning_hint_goal_reached": "Con los valores actuales, esta meta ya está cubierta.",
+    "planning_hint_suggestion": "Con este plazo, una contribución sugerida es {amount} por mes.",
+    "tip_title": "Consejo útil",
+    "tip_body": "Para recibir sugerencias más inteligentes y entender si tu meta es viable, conecta tus cuentas en Conexiones y sincroniza Open Finance.",
+    "tip_cta": "Ir a Conexiones",
+    "empty_state_tip": "Conecta tus cuentas y sincroniza Open Finance para recibir sugerencias más realistas antes de crear tu primera meta.",
+    "templates_title": "Empieza con un objetivo común",
+    "templates_subtitle": "Elige un punto de partida y luego ajusta los valores a tu realidad.",
+    "templates": {
+      "travel": {
+        "title": "Viaje",
+        "description": "Planifica vacaciones, pasajes y alojamiento con un plazo cómodo.",
+        "prefill_name": "Fondo de viaje"
+      },
+      "emergency": {
+        "title": "Fondo de emergencia",
+        "description": "Crea un colchón de seguridad para imprevistos del día a día.",
+        "prefill_name": "Fondo de emergencia"
+      },
+      "notebook": {
+        "title": "Notebook",
+        "description": "Define un plazo para cambiar de equipo sin presionar tu flujo de caja.",
+        "prefill_name": "Cambiar notebook"
+      },
+      "car": {
+        "title": "Auto",
+        "description": "Entiende el esfuerzo mensual necesario para una entrada o compra futura.",
+        "prefill_name": "Comprar auto"
+      }
+    },
     "date": "Fecha",
     "total_income": "Ingresos totales",
     "total_expense": "Gastos totales",
@@ -567,6 +603,68 @@
       "signup_success": "Cuenta creada con éxito.",
       "signup_failed": "Error al crear la cuenta. Inténtalo de nuevo.",
       "password_mismatch": "La nueva contraseña y la confirmación no coinciden."
+    }
+  },
+  "incomeItem": {
+    "amount": "Monto",
+    "date": "Fecha",
+    "open_finance": "Open Finance",
+    "keep_existing": "Mantener existente",
+    "create_new": "Crear nueva",
+    "recurring_income": "Ingreso recurrente",
+    "choose_months": "Elige la cantidad de meses",
+    "month_count": "Cantidad de meses",
+    "reconciliation": {
+      "IMPORTED": "Importada",
+      "PROMOTED_FROM_PENDING": "Pendiente → confirmada",
+      "MATCHED_AND_CANCELLED": "Cancelada por el banco",
+      "CONFLICT_DUPLICATE": "Conflicto por duplicidad",
+      "RESOLVED_CREATE_NEW": "Conflicto resuelto"
+    }
+  },
+  "expenseItem": {
+    "amount": "Monto",
+    "date": "Fecha",
+    "category": "Categoría",
+    "sharedWith": "Compartido con",
+    "alertConfigured": "Alerta configurada",
+    "manageAttachments": "Gestionar adjuntos",
+    "email": "Email",
+    "addAttachments": "Agregar adjuntos",
+    "attach": "Adjuntar",
+    "share": "Compartir",
+    "confirmDeleteTitle": "¿Eliminar adjunto?",
+    "confirmDeleteText": "¿Deseas eliminar {file}?",
+    "delete": "Eliminar",
+    "configureAlert": "Configurar alerta",
+    "configuredAlerts": "Alertas configuradas",
+    "alertDate": "Fecha de alerta",
+    "status": "Estado",
+    "methods": "Métodos",
+    "recurrence": "Recurrencia",
+    "notRecurring": "No recurrente",
+    "noAlerts": "No hay alertas configuradas.",
+    "configureNewAlert": "Configurar nueva alerta",
+    "useDefaultAlertDays": "Usar alerta predeterminada ({days} días)",
+    "customAlertDays": "Alerta personalizada",
+    "daysBeforeAlert": "Días antes de la alerta",
+    "daysBeforeAlertPlaceholder": "Ingresa la cantidad de días",
+    "setAsRecurring": "Marcar como recurrente",
+    "recurrenceInterval": "Intervalo de recurrencia",
+    "selectFrequency": "Selecciona la frecuencia",
+    "recurrenceEndDate": "Fecha final de recurrencia",
+    "reset": "Restablecer",
+    "save": "Guardar",
+    "close": "Cerrar",
+    "openFinance": "Open Finance",
+    "keepExisting": "Mantener existente",
+    "createNew": "Crear nueva",
+    "reconciliation": {
+      "IMPORTED": "Importada",
+      "PROMOTED_FROM_PENDING": "Pendiente → confirmada",
+      "MATCHED_AND_CANCELLED": "Cancelada por el banco",
+      "CONFLICT_DUPLICATE": "Conflicto por duplicidad",
+      "RESOLVED_CREATE_NEW": "Conflicto resuelto"
     }
   },
   "companySettings": {

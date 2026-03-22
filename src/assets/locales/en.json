@@ -371,7 +371,8 @@
     "title": "Trends Over Time",
     "select_chart_type": "Select Chart Type",
     "select_time_period": "Select Time Period",
-    "select_expense_category": "Select Expense Category"
+    "select_expense_category": "Select Expense Category",
+    "all_categories": "All categories"
   },
 
   "cashflow": {
@@ -536,13 +537,48 @@
     "initial_amount": "Initial Amount",
     "contribution_frequency": "Contribution Amount",
     "periodicity": "Periodicity",
+    "advanced_planning": "Advanced planning (optional)",
     "deadline": "Deadline",
     "update": "Update",
     "add": "Add",
+    "add_contribution": "Add contribution",
     "new_goal": "New Goal",
     "progress": "Progress",
     "contribution_history": "Contribution History",
     "amount": "Amount",
+    "description": "Description",
+    "description_optional": "Description (optional)",
+    "planning_hint_default": "Set your target amount and deadline. We will suggest the ideal monthly pace.",
+    "planning_hint_goal_reached": "With the current values, this goal is already covered.",
+    "planning_hint_suggestion": "With this deadline, a suggested contribution is {amount} per month.",
+    "tip_title": "Helpful tip",
+    "tip_body": "To receive smarter suggestions and understand whether your goal is feasible, connect your accounts in Connections and sync Open Finance.",
+    "tip_cta": "Go to Connections",
+    "empty_state_tip": "Connect your accounts and sync Open Finance to receive more realistic suggestions before creating your first goal.",
+    "templates_title": "Start from a common goal",
+    "templates_subtitle": "Choose a starting point, then adjust the values to your reality.",
+    "templates": {
+      "travel": {
+        "title": "Travel",
+        "description": "Plan vacations, flights, and lodging with a comfortable timeline.",
+        "prefill_name": "Travel fund"
+      },
+      "emergency": {
+        "title": "Emergency fund",
+        "description": "Build a safety cushion for unexpected day-to-day expenses.",
+        "prefill_name": "Emergency fund"
+      },
+      "notebook": {
+        "title": "Notebook",
+        "description": "Set a timeline to replace your device without straining cashflow.",
+        "prefill_name": "Replace notebook"
+      },
+      "car": {
+        "title": "Car",
+        "description": "Understand the monthly effort needed for a down payment or future purchase.",
+        "prefill_name": "Buy a car"
+      }
+    },
     "date": "Date",
     "total_income": "Total Income",
     "total_expense": "Total Expenses",
@@ -585,6 +621,68 @@
       "signup_success": "Account created successfully.",
       "signup_failed": "Error creating account. Please try again.",
       "password_mismatch": "Passwords do not match. Please try again."
+    }
+  },
+  "incomeItem": {
+    "amount": "Amount",
+    "date": "Date",
+    "open_finance": "Open Finance",
+    "keep_existing": "Keep existing",
+    "create_new": "Create new",
+    "recurring_income": "Recurring income",
+    "choose_months": "Choose the number of months",
+    "month_count": "Number of months",
+    "reconciliation": {
+      "IMPORTED": "Imported",
+      "PROMOTED_FROM_PENDING": "Pending → posted",
+      "MATCHED_AND_CANCELLED": "Cancelled by bank",
+      "CONFLICT_DUPLICATE": "Duplicate conflict",
+      "RESOLVED_CREATE_NEW": "Conflict resolved"
+    }
+  },
+  "expenseItem": {
+    "amount": "Amount",
+    "date": "Date",
+    "category": "Category",
+    "sharedWith": "Shared with",
+    "alertConfigured": "Alert configured",
+    "manageAttachments": "Manage attachments",
+    "email": "Email",
+    "addAttachments": "Add attachments",
+    "attach": "Attach",
+    "share": "Share",
+    "confirmDeleteTitle": "Delete attachment?",
+    "confirmDeleteText": "Do you want to delete {file}?",
+    "delete": "Delete",
+    "configureAlert": "Configure alert",
+    "configuredAlerts": "Configured alerts",
+    "alertDate": "Alert date",
+    "status": "Status",
+    "methods": "Methods",
+    "recurrence": "Recurrence",
+    "notRecurring": "Not recurring",
+    "noAlerts": "No alerts configured.",
+    "configureNewAlert": "Configure new alert",
+    "useDefaultAlertDays": "Use default alert ({days} days)",
+    "customAlertDays": "Custom alert",
+    "daysBeforeAlert": "Days before alert",
+    "daysBeforeAlertPlaceholder": "Enter the number of days",
+    "setAsRecurring": "Set as recurring",
+    "recurrenceInterval": "Recurrence interval",
+    "selectFrequency": "Select frequency",
+    "recurrenceEndDate": "Recurrence end date",
+    "reset": "Reset",
+    "save": "Save",
+    "close": "Close",
+    "openFinance": "Open Finance",
+    "keepExisting": "Keep existing",
+    "createNew": "Create new",
+    "reconciliation": {
+      "IMPORTED": "Imported",
+      "PROMOTED_FROM_PENDING": "Pending → posted",
+      "MATCHED_AND_CANCELLED": "Cancelled by bank",
+      "CONFLICT_DUPLICATE": "Duplicate conflict",
+      "RESOLVED_CREATE_NEW": "Conflict resolved"
     }
   },
   "companySettings": {
