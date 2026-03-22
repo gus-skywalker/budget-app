@@ -273,15 +273,18 @@ export default {
         async fetchCategories() {
             if (this.reportType === 'expenses') {
                 try {
-                    const language = this.$i18n?.locale || this.selectedLanguage || 'pt';
-                    this.selectedLanguage = language;
-                    const response = await DataService.fetchCategories(language);
+                    const response = await DataService.listCategories();
                     const categories = this.normalizeTranslatedCollection(response?.data);
                     this.availableCategories = categories
                         .map((category) => {
                             const code = String(category?.code || '').trim();
                             const id = category?.id ?? null;
+                            const isActive = category?.active !== false;
+                            const isSystemDefined = category?.systemDefined !== false;
                             if (!code || id === null || id === undefined) {
+                                return null;
+                            }
+                            if (!isActive) {
                                 return null;
                             }
                             const translationKey = `categories.${code}`;
@@ -290,7 +293,7 @@ export default {
                             return {
                                 id,
                                 code,
-                                name: isTranslated ? translatedName : (category?.name || code)
+                                name: isSystemDefined && isTranslated ? translatedName : (category?.name || code)
                             };
                         })
                         .filter((category) => Boolean(category));

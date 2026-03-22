@@ -1058,30 +1058,32 @@ export default {
           return logAndReturn(null)
         },
     fetchCategories() {
-      const language = this.$i18n?.locale || this.selectedLanguage || 'pt'
-      this.selectedLanguage = language
-      DataService.fetchCategories(language)
+      DataService.listCategories()
         .then((response) => {
           const categories = this.normalizeCollection(response?.data)
           this.categories = categories
             .map((category) => {
               const code = String(category?.code || '').trim()
               const id = category?.id ?? null
+              const isActive = category?.active !== false
+              const isSystemDefined = category?.systemDefined !== false
               if (!code || id === null || id === undefined) {
+                return null
+              }
+              if (!isActive) {
                 return null
               }
 
               const translationKey = `categories.${code}`
-            const translatedName = this.$t(translationKey)
-            const isTranslated = translatedName !== translationKey
+              const translatedName = this.$t(translationKey)
+              const isTranslated = translatedName !== translationKey
               return {
                 id,
                 code,
-                name: isTranslated ? translatedName : (category?.name || code)
+                name: isSystemDefined && isTranslated ? translatedName : (category?.name || code)
               }
             })
             .filter((category) => Boolean(category))
-          console.log(this.categories);
         })
         .catch((error) => {
           console.error('Error fetching categories:', error)

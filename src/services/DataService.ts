@@ -20,6 +20,22 @@ export default {
       }
     })
   },
+
+  listCategories(): Promise<any> {
+    return axiosInterceptor.get(`${API_URL}/categories`)
+  },
+
+  createCategory(payload: { code: string; name: string }): Promise<any> {
+    return axiosInterceptor.post(`${API_URL}/categories`, payload)
+  },
+
+  updateCategory(id: number, payload: { code: string; name: string }): Promise<any> {
+    return axiosInterceptor.put(`${API_URL}/categories/${id}`, payload)
+  },
+
+  deactivateCategory(id: number): Promise<any> {
+    return axiosInterceptor.delete(`${API_URL}/categories/${id}`)
+  },
   
   /**
    * Busca métodos de pagamento traduzidos

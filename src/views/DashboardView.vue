@@ -43,6 +43,18 @@
           <span class="overview-pill__label">Rate limit hoje</span>
           <span class="overview-pill__value">{{ openFinanceObservabilitySummary.accountsAtRateLimitToday }}</span>
         </div>
+        <div v-if="openFinanceObservabilitySummary.lastSyncTrigger" class="overview-pill">
+          <span class="overview-pill__label">Última sync</span>
+          <span class="overview-pill__value">
+            {{ openFinanceObservabilitySummary.lastSyncTrigger === 'AUTOMATIC' ? 'Automática' : 'Manual' }}
+          </span>
+          <span
+            v-if="openFinanceObservabilitySummary.lastSyncTo"
+            class="overview-pill__label"
+          >
+            {{ formatDate(openFinanceObservabilitySummary.lastSyncTo) }}
+          </span>
+        </div>
       </div>
 
       <!-- Trends Over Time -->

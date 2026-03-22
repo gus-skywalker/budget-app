@@ -402,7 +402,13 @@
                         v-if="openFinanceConnectionByKey[bank.institutionKey]?.linkedAccountsCount"
                         class="bank-card-meta"
                       >
-                        {{ openFinanceConnectionByKey[bank.institutionKey]?.linkedAccountsCount }} conta(s) importada(s)
+                        {{ openFinanceConnectionByKey[bank.institutionKey]?.linkedAccountsCount }} conta(s) deste banco
+                      </div>
+                      <div
+                        v-if="openFinanceAccountNamesByInstitution[bank.institutionKey]?.length"
+                        class="bank-card-meta bank-card-meta--stacked"
+                      >
+                        {{ openFinanceAccountNamesByInstitution[bank.institutionKey].join(' • ') }}
                       </div>
                       <div
                         v-if="openFinanceConnectionByKey[bank.institutionKey]?.lastSyncTo"
@@ -480,6 +486,12 @@
                       >
                         {{ openFinanceObservabilitySummary.lastSyncFrom }} → {{ openFinanceObservabilitySummary.lastSyncTo }}
                       </div>
+                      <div
+                        v-if="openFinanceObservabilitySummary.lastSyncTrigger"
+                        class="observability-subtitle"
+                      >
+                        Origem: {{ openFinanceObservabilitySummary.lastSyncTrigger === 'AUTOMATIC' ? 'Automática' : 'Manual' }}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -514,6 +526,9 @@
                       </div>
                       <div class="sync-history-subtitle">
                         {{ formatOpenFinanceDate(item.createdAt.split('T')[0]) }}
+                        <span class="sync-history-trigger">
+                          • {{ item.trigger === 'AUTOMATIC' ? 'Automático' : 'Manual' }}
+                        </span>
                       </div>
                       <div class="sync-history-metrics">
                         <span>{{ item.transactionsCreated }} novas</span>
@@ -904,9 +919,11 @@ import { useUserStore } from '@/plugins/userStore';
 import SubscriptionManagement from '@/components/SubscriptionManagement.vue';
 import CompanySettings from '@/components/CompanySettings.vue';
 import DataService from '@/services/DataService';
+import FinancialReadService from '@/services/FinancialReadService';
 import OpenFinanceService from '@/services/OpenFinanceService';
 import AuthService from '@/services/AuthService';
 import NotificationService, { type UserSettings } from '@/services/NotificationService';
+import type { AccountView } from '@/types/financialRead';
 import type {
   OpenFinanceBankCategory,
   OpenFinanceCategoryMapping,
@@ -1037,6 +1054,7 @@ const openFinanceResolvingId = ref<string | null>(null)
 const openFinanceConflicts = ref<OpenFinanceConflict[]>([])
 const lastOpenFinanceSync = ref<OpenFinanceSyncResponse | null>(null)
 const openFinanceConnections = ref<OpenFinanceConnection[]>([])
+const openFinanceImportedAccounts = ref<AccountView[]>([])
 const openFinanceConnectionLoadingKey = ref<string | null>(null)
 const openFinanceObservabilitySummary = ref<OpenFinanceObservabilitySummary | null>(null)
 const openFinanceSyncHistory = ref<OpenFinanceSyncHistoryItem[]>([])
@@ -1210,6 +1228,24 @@ const openFinanceConnectionByKey = computed(() => {
   }, {} as Record<string, OpenFinanceConnection>)
 })
 
+const openFinanceAccountNamesByInstitution = computed(() => {
+  return openFinanceImportedAccounts.value.reduce((accumulator: Record<string, string[]>, account: AccountView) => {
+    const connection = openFinanceConnections.value.find((item) =>
+      account.name.startsWith(`${item.institutionName} - `)
+    )
+    if (!connection) {
+      return accumulator
+    }
+
+    if (!accumulator[connection.institutionKey]) {
+      accumulator[connection.institutionKey] = []
+    }
+
+    accumulator[connection.institutionKey].push(account.name.replace(`${connection.institutionName} - `, ''))
+    return accumulator
+  }, {} as Record<string, string[]>)
+})
+
 const loadOpenFinanceConflicts = async () => {
   openFinanceLoadingConflicts.value = true
   try {
@@ -1233,6 +1269,18 @@ const loadOpenFinanceConnections = async () => {
     openFinanceFeedback.value = {
       type: 'error',
       message: extractErrorMessage(error, 'Não foi possível carregar as conexões Open Finance.')
+    }
+  }
+}
+
+const loadOpenFinanceImportedAccounts = async () => {
+  try {
+    const response = await FinancialReadService.fetchAccounts()
+    openFinanceImportedAccounts.value = (response.data || []).filter((account: AccountView) => account.provider === 'OPEN_FINANCE')
+  } catch (error: any) {
+    openFinanceFeedback.value = {
+      type: 'error',
+      message: extractErrorMessage(error, 'Não foi possível carregar as contas importadas do Open Finance.')
     }
   }
 }
@@ -1385,6 +1433,7 @@ onMounted(async () => {
     loadUserProfile(),
     loadOpenFinanceConflicts(),
     loadOpenFinanceConnections(),
+    loadOpenFinanceImportedAccounts(),
     loadOpenFinanceObservabilitySummary(),
     loadOpenFinanceSyncHistory(),
     loadInternalCategories(),
@@ -1600,6 +1649,7 @@ const toggleOpenFinanceConnection = async (institutionKey: string) => {
       }
     }
     await loadOpenFinanceConnections()
+    await loadOpenFinanceImportedAccounts()
     await loadOpenFinanceObservabilitySummary()
   } catch (error: any) {
     openFinanceFeedback.value = {
@@ -1629,6 +1679,7 @@ const confirmOpenFinanceConsent = async () => {
     }
     closeBankDialog()
     await loadOpenFinanceConnections()
+    await loadOpenFinanceImportedAccounts()
     await loadOpenFinanceConflicts()
     await loadOpenFinanceObservabilitySummary()
     await loadOpenFinanceSyncHistory()
@@ -1689,11 +1740,13 @@ const syncOpenFinance = async () => {
       message: 'Sincronização Open Finance concluída.'
     }
     await loadOpenFinanceConnections()
+    await loadOpenFinanceImportedAccounts()
     await loadOpenFinanceConflicts()
     await loadOpenFinanceObservabilitySummary()
     await loadOpenFinanceSyncHistory()
   } catch (error: any) {
     await loadOpenFinanceConnections()
+    await loadOpenFinanceImportedAccounts()
     await loadOpenFinanceSyncHistory()
     openFinanceFeedback.value = {
       type: 'error',
@@ -2062,6 +2115,10 @@ const saveAlertSettings = async () => {
   margin-top: 10px;
   font-size: 0.85rem;
   color: #666;
+}
+
+.bank-card-meta--stacked {
+  line-height: 1.5;
 }
 
 .v-theme--dark .bank-card-meta {

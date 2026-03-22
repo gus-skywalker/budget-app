@@ -6,23 +6,42 @@
           <h1 class="page-title">{{ $t('categories_page.title') }}</h1>
           <p class="page-subtitle">{{ $t('categories_page.subtitle') }}</p>
         </div>
-        <v-btn class="modern-btn" variant="outlined" color="#667eea" @click="goToOpenFinanceSettings">
-          <v-icon start>mdi-bank-outline</v-icon>
-          Open Finance
-        </v-btn>
+        <div class="page-header__actions">
+          <v-btn class="modern-btn" variant="outlined" color="#667eea" @click="goToOpenFinanceSettings">
+            <v-icon start>mdi-bank-outline</v-icon>
+            Open Finance
+          </v-btn>
+          <v-btn class="modern-btn gradient-btn" @click="startCreateCategory">
+            <v-icon start>mdi-plus</v-icon>
+            Nova categoria
+          </v-btn>
+        </div>
       </div>
+
+      <v-alert
+        v-if="feedback.message"
+        :type="feedback.type"
+        variant="tonal"
+        class="mb-4"
+      >
+        {{ feedback.message }}
+      </v-alert>
 
       <div class="stats-grid">
         <div class="stat-card">
-          <div class="stat-card__label">Categorias internas</div>
-          <div class="stat-card__value">{{ categories.length }}</div>
+          <div class="stat-card__label">Categorias padrão</div>
+          <div class="stat-card__value">{{ systemCategoriesCount }}</div>
         </div>
         <div class="stat-card">
-          <div class="stat-card__label">Categorias bancárias mapeadas</div>
-          <div class="stat-card__value">{{ mappedBankCategoriesCount }}</div>
+          <div class="stat-card__label">Categorias customizadas</div>
+          <div class="stat-card__value">{{ customCategoriesCount }}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card__label">Customizadas inativas</div>
+          <div class="stat-card__value">{{ inactiveCustomCategoriesCount }}</div>
         </div>
         <div class="stat-card" :class="{ 'stat-card--warning': unmappedBankCategories.length > 0 }">
-          <div class="stat-card__label">Categorias bancárias pendentes</div>
+          <div class="stat-card__label">Pendências Open Finance</div>
           <div class="stat-card__value">{{ unmappedBankCategories.length }}</div>
         </div>
       </div>
@@ -52,6 +71,12 @@
               hide-details
               label="Somente com mapping bancário"
             />
+            <v-switch
+              v-model="showInactiveCustom"
+              color="#667eea"
+              hide-details
+              label="Mostrar customizadas inativas"
+            />
           </div>
 
           <div v-if="loading" class="loading-state">
@@ -59,19 +84,33 @@
           </div>
 
           <div v-else-if="filteredCategories.length" class="categories-grid">
-            <div v-for="category in filteredCategories" :key="category.code" class="category-card">
+            <div v-for="category in filteredCategories" :key="`${category.id}-${category.code}`" class="category-card">
               <div class="category-card__header">
                 <div>
                   <div class="category-card__name">{{ category.name }}</div>
                   <div class="category-card__code">{{ category.code }}</div>
                 </div>
-                <v-chip
-                  size="small"
-                  variant="tonal"
-                  :color="category.bankMappings.length ? 'success' : 'default'"
-                >
-                  {{ category.bankMappings.length ? `${category.bankMappings.length} mapping(s)` : 'Sem mapping' }}
-                </v-chip>
+                <div class="category-card__badges">
+                  <v-chip size="small" variant="tonal" :color="category.systemDefined ? 'default' : 'primary'">
+                    {{ category.systemDefined ? 'Padrão' : 'Customizada' }}
+                  </v-chip>
+                  <v-chip
+                    v-if="category.bankMappings.length"
+                    size="small"
+                    variant="tonal"
+                    color="success"
+                  >
+                    {{ category.bankMappings.length }} mapping(s)
+                  </v-chip>
+                  <v-chip
+                    v-if="category.active === false"
+                    size="small"
+                    variant="tonal"
+                    color="warning"
+                  >
+                    Inativa
+                  </v-chip>
+                </div>
               </div>
 
               <div v-if="category.bankMappings.length" class="mapping-tags">
@@ -84,6 +123,28 @@
                 >
                   {{ bankCategoryLabel(mapping.bankCategoryId) }}
                 </v-chip>
+              </div>
+
+              <div class="category-card__actions">
+                <v-btn
+                  v-if="!category.systemDefined && category.active !== false"
+                  size="small"
+                  variant="text"
+                  color="#667eea"
+                  @click="startEditCategory(category)"
+                >
+                  Editar
+                </v-btn>
+                <v-btn
+                  v-if="!category.systemDefined && category.active !== false"
+                  size="small"
+                  variant="text"
+                  color="warning"
+                  :loading="deactivatingCategoryId === category.id"
+                  @click="deactivateCategory(category)"
+                >
+                  Desativar
+                </v-btn>
               </div>
             </div>
           </div>
@@ -123,6 +184,42 @@
         </div>
       </div>
     </v-container>
+
+    <v-dialog v-model="editorDialog" max-width="560">
+      <v-card class="modern-dialog-card">
+        <v-card-title class="dialog-header">
+          <v-icon color="#667eea" class="mr-2">mdi-pencil-outline</v-icon>
+          <span class="headline">{{ editingCategoryId ? 'Editar categoria' : 'Nova categoria' }}</span>
+        </v-card-title>
+        <v-card-text class="dialog-content">
+          <v-text-field
+            v-model="editorName"
+            label="Nome"
+            variant="outlined"
+            density="comfortable"
+            color="#667eea"
+            class="modern-input mb-3"
+          />
+          <v-text-field
+            v-model="editorCode"
+            label="Código"
+            hint="Use um identificador estável, ex: lazer_premium"
+            persistent-hint
+            variant="outlined"
+            density="comfortable"
+            color="#667eea"
+            class="modern-input"
+          />
+        </v-card-text>
+        <v-card-actions class="dialog-actions">
+          <v-spacer />
+          <v-btn variant="text" @click="closeEditor">Cancelar</v-btn>
+          <v-btn class="modern-btn gradient-btn" :loading="savingCategory" @click="saveCategory">
+            Salvar
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -138,12 +235,16 @@ interface CategoryItem {
   id: number | null
   code: string
   name: string
+  systemDefined?: boolean
+  active?: boolean
 }
 
 interface ApiCategoryItem {
   id?: number | null
   code?: string
   name?: string
+  systemDefined?: boolean
+  active?: boolean
 }
 
 interface CategoryWithMappings extends CategoryItem {
@@ -159,6 +260,17 @@ const bankMappings = ref<OpenFinanceCategoryMapping[]>([])
 const loading = ref(false)
 const search = ref('')
 const showMappedOnly = ref(false)
+const showInactiveCustom = ref(false)
+const editorDialog = ref(false)
+const editorName = ref('')
+const editorCode = ref('')
+const editingCategoryId = ref<number | null>(null)
+const savingCategory = ref(false)
+const deactivatingCategoryId = ref<number | null>(null)
+const feedback = ref<{ type: 'success' | 'error'; message: string }>({
+  type: 'success',
+  message: '',
+})
 
 const normalizeCategoriesPayload = (payload: unknown): ApiCategoryItem[] => {
   if (Array.isArray(payload)) return payload as ApiCategoryItem[]
@@ -184,11 +296,14 @@ const filteredCategories = computed(() => {
       category.name.toLowerCase().includes(term) ||
       category.code.toLowerCase().includes(term)
     const matchesMapped = !showMappedOnly.value || category.bankMappings.length > 0
-    return matchesSearch && matchesMapped
+    const matchesInactive = category.systemDefined || category.active !== false || showInactiveCustom.value
+    return matchesSearch && matchesMapped && matchesInactive
   })
 })
 
-const mappedBankCategoriesCount = computed(() => bankMappings.value.length)
+const systemCategoriesCount = computed(() => categories.value.filter((category) => category.systemDefined !== false).length)
+const customCategoriesCount = computed(() => categories.value.filter((category) => category.systemDefined === false).length)
+const inactiveCustomCategoriesCount = computed(() => categories.value.filter((category) => category.systemDefined === false && category.active === false).length)
 
 const unmappedBankCategories = computed(() => {
   const mappedIds = new Set(bankMappings.value.map((mapping) => mapping.bankCategoryId))
@@ -200,39 +315,134 @@ const bankCategoryLabel = (bankCategoryId: string) => {
   return bankCategory?.name || bankCategoryId
 }
 
+const mapApiCategory = (category: ApiCategoryItem): CategoryItem | null => {
+  const code = String(category.code || '').trim()
+  const fallbackName = String(category.name || code).trim()
+  if (!code) {
+    return null
+  }
+  const isSystemDefined = category.systemDefined !== false
+  const translationKey = `categories.${code}`
+  const translatedName = t(translationKey)
+  const isTranslated = translatedName !== translationKey
+  return {
+    id: typeof category.id === 'number' ? category.id : null,
+    code,
+    name: isSystemDefined && isTranslated ? translatedName : fallbackName,
+    systemDefined: isSystemDefined,
+    active: category.active !== false,
+  }
+}
+
 const fetchCategories = async () => {
   loading.value = true
   try {
     const [categoriesResponse, bankCategoriesResponse, mappingsResponse] = await Promise.all([
-      DataService.fetchCategories(locale.value || 'pt'),
+      DataService.listCategories(),
       OpenFinanceService.listBankCategories(),
       OpenFinanceService.listCategoryMappings(),
     ])
 
     categories.value = normalizeCategoriesPayload(categoriesResponse.data)
-      .map((category: ApiCategoryItem) => {
-        const code = String(category.code || '').trim()
-        const fallbackName = String(category.name || code).trim()
-        if (!code) {
-          return null
-        }
-        const translationKey = `categories.${code}`
-        const translatedName = t(translationKey)
-        const isTranslated = translatedName !== translationKey
-        return {
-          id: typeof category.id === 'number' ? category.id : null,
-          code,
-          name: isTranslated ? translatedName : fallbackName,
-        }
-      })
+      .map(mapApiCategory)
       .filter((category): category is CategoryItem => Boolean(category))
 
     bankCategories.value = Array.isArray(bankCategoriesResponse.data) ? bankCategoriesResponse.data : []
     bankMappings.value = Array.isArray(mappingsResponse.data) ? mappingsResponse.data : []
   } catch (error) {
     console.error('Erro ao carregar categorias:', error)
+    feedback.value = {
+      type: 'error',
+      message: 'Não foi possível carregar as categorias.',
+    }
   } finally {
     loading.value = false
+  }
+}
+
+const startCreateCategory = () => {
+  editingCategoryId.value = null
+  editorName.value = ''
+  editorCode.value = ''
+  editorDialog.value = true
+}
+
+const startEditCategory = (category: CategoryItem) => {
+  editingCategoryId.value = category.id
+  editorName.value = category.name
+  editorCode.value = category.code
+  editorDialog.value = true
+}
+
+const closeEditor = () => {
+  editorDialog.value = false
+  editingCategoryId.value = null
+  editorName.value = ''
+  editorCode.value = ''
+}
+
+const saveCategory = async () => {
+  if (!editorName.value.trim() || !editorCode.value.trim()) {
+    feedback.value = {
+      type: 'error',
+      message: 'Nome e código são obrigatórios.',
+    }
+    return
+  }
+
+  savingCategory.value = true
+  try {
+    const payload = {
+      name: editorName.value.trim(),
+      code: editorCode.value.trim(),
+    }
+
+    if (editingCategoryId.value) {
+      await DataService.updateCategory(editingCategoryId.value, payload)
+      feedback.value = {
+        type: 'success',
+        message: 'Categoria atualizada com sucesso.',
+      }
+    } else {
+      await DataService.createCategory(payload)
+      feedback.value = {
+        type: 'success',
+        message: 'Categoria criada com sucesso.',
+      }
+    }
+
+    closeEditor()
+    await fetchCategories()
+  } catch (error: any) {
+    feedback.value = {
+      type: 'error',
+      message: error?.response?.data?.message || 'Não foi possível salvar a categoria.',
+    }
+  } finally {
+    savingCategory.value = false
+  }
+}
+
+const deactivateCategory = async (category: CategoryItem) => {
+  if (!category.id) {
+    return
+  }
+
+  deactivatingCategoryId.value = category.id
+  try {
+    await DataService.deactivateCategory(category.id)
+    feedback.value = {
+      type: 'success',
+      message: 'Categoria desativada com sucesso.',
+    }
+    await fetchCategories()
+  } catch (error: any) {
+    feedback.value = {
+      type: 'error',
+      message: error?.response?.data?.message || 'Não foi possível desativar a categoria.',
+    }
+  } finally {
+    deactivatingCategoryId.value = null
   }
 }
 
@@ -270,6 +480,12 @@ watch(locale, () => {
   justify-content: space-between;
   align-items: center;
   gap: 16px;
+  flex-wrap: wrap;
+}
+
+.page-header__actions {
+  display: flex;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
@@ -414,7 +630,7 @@ watch(locale, () => {
 .pending-grid {
   display: grid;
   gap: 12px;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
 .category-card,
@@ -463,11 +679,21 @@ watch(locale, () => {
   color: #94a3b8;
 }
 
-.mapping-tags {
+.category-card__badges,
+.mapping-tags,
+.category-card__actions {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.mapping-tags {
   margin-top: 12px;
+}
+
+.category-card__actions {
+  margin-top: 14px;
+  justify-content: flex-end;
 }
 
 .empty-message {

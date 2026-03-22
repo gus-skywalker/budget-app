@@ -54,6 +54,7 @@ export interface OpenFinanceObservabilitySummary {
   lastSyncedAt: string | null
   lastSyncFrom: string | null
   lastSyncTo: string | null
+  lastSyncTrigger: 'MANUAL' | 'AUTOMATIC' | null
 }
 
 export interface OpenFinanceConnection {
@@ -81,6 +82,7 @@ export interface OpenFinanceSyncHistoryItem {
   metadataUpserted: number
   accountsSkippedDueToRateLimit: number
   reconciliationConflicts: number
+  trigger: 'MANUAL' | 'AUTOMATIC'
   status: 'SUCCESS' | 'FAILED'
   errorSummary: string | null
   createdAt: string
