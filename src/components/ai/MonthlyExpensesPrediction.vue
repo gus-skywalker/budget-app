@@ -1,8 +1,12 @@
 <template>
   <section class="ai-card">
     <header>
-      <h2>{{ t('ai.monthly_prediction.title') }}</h2>
+      <div class="title-row">
+        <h2>{{ t('ai.monthly_prediction.title') }}</h2>
+        <span class="experimental-badge">{{ t('ai.common.experimental') }}</span>
+      </div>
       <p>{{ t('ai.monthly_prediction.description') }}</p>
+      <small class="experimental-note">{{ t('ai.monthly_prediction.experimental_note') }}</small>
     </header>
 
     <form class="ai-form" @submit.prevent="handleSubmit">
@@ -137,6 +141,32 @@ const handleSubmit = async () => {
 
 <style scoped>
 @import './styles.css';
+
+.title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.experimental-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.2rem 0.65rem;
+  background: rgba(245, 158, 11, 0.12);
+  color: #b45309;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.experimental-note {
+  display: block;
+  color: #64748b;
+  margin-top: 0.35rem;
+}
 
 .transaction-row {
   grid-template-columns: repeat(4, minmax(0, 1fr)) auto;

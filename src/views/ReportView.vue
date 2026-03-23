@@ -3,7 +3,8 @@
         <v-container>
             <v-row>
                 <v-col cols="12">
-                    <h1>Gerar Relatórios</h1>
+                    <h1>{{ $t('report_view.title') }}</h1>
+                    <p class="report-view-subtitle">{{ $t('report_view.subtitle') }}</p>
                     <report-generator
                       :initial-report-type="initialReportType"
                       :initial-start-date="initialStartDate"
@@ -43,5 +44,14 @@ export default {
 <style scoped>
 .report-view-container {
     padding: 20px;
+}
+
+.report-view-subtitle {
+    color: rgba(0, 0, 0, 0.62);
+    margin: 8px 0 20px;
+}
+
+.v-theme--dark .report-view-subtitle {
+    color: rgba(255, 255, 255, 0.72);
 }
 </style>

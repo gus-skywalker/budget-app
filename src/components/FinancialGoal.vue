@@ -55,11 +55,66 @@
                   item-value="code" 
                   :rules="[requiredRule]" 
                   @change="onCategoryChange"
+                  :loading="isLoadingCategories"
+                  :disabled="isLoadingCategories || !categories.length"
+                  :no-data-text="$t('financial_goals.categories_unavailable')"
                   variant="outlined"
                   density="comfortable"
                   color="#667eea"
                   class="modern-input mb-4"
                 ></v-select>
+
+                <div class="goal-ai-row mb-4">
+                  <v-btn
+                    variant="tonal"
+                    color="#667eea"
+                    :loading="isSuggestingGoalCategory"
+                    :disabled="!canSuggestGoalCategory"
+                    @click="suggestGoalCategory"
+                  >
+                    <v-icon start>mdi-brain</v-icon>
+                    {{ $t('financial_goals.ai_suggest_category') }}
+                  </v-btn>
+                  <span v-if="goalCategorySuggestion" class="goal-ai-row__meta">
+                    {{ goalCategorySuggestionSourceLabel(goalCategorySuggestion.source) }}
+                    • {{ Math.round((goalCategorySuggestion.suggestedCategory?.confidence || 0) * 100) }}%
+                  </span>
+                </div>
+
+                <v-alert
+                  v-if="goalCategorySuggestion"
+                  type="info"
+                  variant="tonal"
+                  density="comfortable"
+                  class="mb-4"
+                >
+                  <div class="goal-ai-suggestion">
+                    <div>
+                      <strong>{{ $t('financial_goals.ai_suggested_category') }}:</strong>
+                      {{ goalCategorySuggestion.suggestedCategory?.name }}
+                    </div>
+                    <div v-if="goalCategorySuggestion.reasoning" class="goal-ai-suggestion__reasoning">
+                      {{ goalCategorySuggestion.reasoning }}
+                    </div>
+                    <div class="goal-ai-suggestion__actions">
+                      <v-btn
+                        size="small"
+                        color="#667eea"
+                        variant="outlined"
+                        @click="applyGoalCategorySuggestion"
+                      >
+                        {{ $t('financial_goals.ai_apply_suggestion') }}
+                      </v-btn>
+                      <v-btn
+                        size="small"
+                        variant="text"
+                        @click="dismissGoalCategorySuggestion"
+                      >
+                        {{ $t('common.close') }}
+                      </v-btn>
+                    </div>
+                  </div>
+                </v-alert>
 
                 <v-text-field 
                   :label="$t('financial_goals.target_amount')" 
@@ -391,6 +446,7 @@
 import FinancialGoalService from '@/services/FinancialGoalService';
 import ContributionComponent from '@/components/Contribution.vue';
 import DataService from '@/services/DataService';
+import AiService from '@/services/aiService';
 
 export default {
   components: {
@@ -414,11 +470,14 @@ export default {
       },
       editedGoalId: null,
       categories: [],
+      isLoadingCategories: false,
       selectedLanguage: this.$i18n?.locale || 'pt',
       monthOverview: {
         totalIncome: 0,
         totalExpense: 0
       },
+      isSuggestingGoalCategory: false,
+      goalCategorySuggestion: null,
     };
   },
   watch: {
@@ -427,7 +486,15 @@ export default {
         this.selectedLanguage = newLocale;
         this.fetchCategories();
       }
-    }
+    },
+    'goalForm.name'() {
+      this.goalCategorySuggestion = null;
+    },
+  },
+  computed: {
+    canSuggestGoalCategory() {
+      return Boolean(String(this.goalForm.name || '').trim());
+    },
   },
   methods: {
     requiredRule(value) {
@@ -443,6 +510,7 @@ export default {
     addNewGoal() {
       this.isAddingOrEditing = true;
       this.isEditing = false;
+      this.goalCategorySuggestion = null;
       this.goalForm = {
         name: '',
         targetAmount: 0,
@@ -530,6 +598,7 @@ export default {
       this.isAddingOrEditing = true;
       this.isEditing = true;
       this.editedGoalId = goal.id;
+      this.goalCategorySuggestion = null;
 
       this.goalForm = {
         name: goal.name,
@@ -544,6 +613,7 @@ export default {
     cancelEdit() {
       this.isAddingOrEditing = false;
       this.isEditing = false;
+      this.goalCategorySuggestion = null;
       this.goalForm = {
         name: '',
         targetAmount: 0,
@@ -655,38 +725,78 @@ export default {
       return [];
     },
     fetchCategories() {
-      DataService.listCategories()
-        .then((response) => {
-          const categories = this.normalizeTranslatedCollection(response?.data);
-          this.categories = categories
-            .map((category) => {
+      this.isLoadingCategories = true;
+      const language = this.$i18n?.locale || this.selectedLanguage || 'pt';
+      Promise.all([
+        DataService.listCategories(),
+        DataService.fetchCategories(language),
+      ])
+        .then(([listResponse, translatedResponse]) => {
+          const categories = this.normalizeTranslatedCollection(listResponse?.data);
+          const translatedCategories = this.normalizeTranslatedCollection(translatedResponse?.data);
+          const translatedNamesByCode = translatedCategories.reduce((accumulator, category) => {
             const code = String(category?.code || '').trim();
-            const id = category?.id ?? null;
-            const isActive = category?.active !== false;
-            const isSystemDefined = category?.systemDefined !== false;
-            if (!code || id === null || id === undefined) {
-              return null;
+            if (code) {
+              accumulator[code] = category?.name || code;
             }
-            if (!isActive) {
-              return null;
-            }
-            const translationKey = `categories.${code}`;
-            const translatedName = this.$t(translationKey);
-            const isTranslated = translatedName !== translationKey;
-            return {
-              id,
-              code,
-              name: isSystemDefined && isTranslated ? translatedName : (category?.name || code),
-            };
-          })
+            return accumulator;
+          }, {});
+
+          const normalizedCategories = categories
+            .map((category) => {
+              const code = String(category?.code || '').trim();
+              const id = category?.id ?? null;
+              const isActive = category?.active !== false;
+              const isSystemDefined = category?.systemDefined !== false;
+              if (!code || id === null || id === undefined || !isActive) {
+                return null;
+              }
+              const translationKey = `categories.${code}`;
+              const translatedName = this.$t(translationKey);
+              const isTranslated = translatedName !== translationKey;
+              const resolvedName = translatedNamesByCode[code]
+                || (isSystemDefined && isTranslated ? translatedName : null)
+                || category?.name
+                || code;
+              return {
+                id,
+                code,
+                name: resolvedName,
+              };
+            })
+            .filter((category) => Boolean(category));
+
+          if (normalizedCategories.length) {
+            this.categories = normalizedCategories;
+            return;
+          }
+
+          this.categories = translatedCategories
+            .map((category) => {
+              const code = String(category?.code || '').trim();
+              const id = category?.id ?? null;
+              if (!code || id === null || id === undefined) {
+                return null;
+              }
+              return {
+                id,
+                code,
+                name: category?.name || code,
+              };
+            })
             .filter((category) => Boolean(category));
         })
         .catch((error) => {
           console.error('Erro ao buscar categorias:', error);
+          this.categories = [];
+        })
+        .finally(() => {
+          this.isLoadingCategories = false;
         });
     },
     onCategoryChange(categoryCode) {
       if (categoryCode) {
+        this.goalCategorySuggestion = null;
         const suggestions = {
           'carro': 20000,
           'casa': 50000,
@@ -696,6 +806,63 @@ export default {
         };
         this.goalForm.targetAmount = suggestions[categoryCode] || 0;
       }
+    },
+    goalCategorySuggestionSourceLabel(source) {
+      if (source === 'BANK_MAPPING') return this.$t('financial_goals.ai_source_bank_mapping');
+      if (source === 'HISTORY') return this.$t('financial_goals.ai_source_history');
+      if (source === 'AI_FALLBACK') return this.$t('financial_goals.ai_source_fallback');
+      return this.$t('financial_goals.ai_source_generic');
+    },
+    isWeakGoalCategorySuggestion(suggestion) {
+      const confidence = Number(suggestion?.suggestedCategory?.confidence || 0);
+      const reasoning = String(suggestion?.reasoning || '').trim().toLowerCase();
+      const source = suggestion?.source;
+      return source === 'AI_FALLBACK' && (confidence <= 0.5 || reasoning === 'model-error');
+    },
+    suggestGoalCategory() {
+      const description = String(this.goalForm.name || '').trim();
+      if (!description) {
+        return;
+      }
+
+      this.isSuggestingGoalCategory = true;
+      this.goalCategorySuggestion = null;
+
+      AiService.autoCategorize({
+        expenses: [
+          {
+            description,
+            amount: Number(this.goalForm.targetAmount || 1),
+          },
+        ],
+      })
+        .then(({ data }) => {
+          const suggestion = Array.isArray(data?.suggestions) ? data.suggestions[0] : null;
+          if (!suggestion?.suggestedCategory || this.isWeakGoalCategorySuggestion(suggestion)) {
+            return;
+          }
+          this.goalCategorySuggestion = suggestion;
+        })
+        .catch((error) => {
+          console.error('Erro ao sugerir categoria da meta:', error);
+        })
+        .finally(() => {
+          this.isSuggestingGoalCategory = false;
+        });
+    },
+    applyGoalCategorySuggestion() {
+      const code = this.goalCategorySuggestion?.suggestedCategory?.code;
+      if (!code) {
+        return;
+      }
+
+      const matchingCategory = this.categories.find((category) => category.code === code);
+      if (matchingCategory) {
+        this.goalForm.category = matchingCategory.code;
+      }
+    },
+    dismissGoalCategorySuggestion() {
+      this.goalCategorySuggestion = null;
     },
     planningHint() {
       const targetAmount = Number(this.goalForm.targetAmount || 0);
@@ -1218,6 +1385,42 @@ export default {
 
 .v-theme--dark .empty-submessage {
   color: #cbd5e1;
+}
+
+.goal-ai-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.goal-ai-row__meta {
+  font-size: 0.9rem;
+  color: #667085;
+}
+
+.v-theme--dark .goal-ai-row__meta {
+  color: #d0d5dd;
+}
+
+.goal-ai-suggestion {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.goal-ai-suggestion__reasoning {
+  color: #475467;
+}
+
+.v-theme--dark .goal-ai-suggestion__reasoning {
+  color: #d0d5dd;
+}
+
+.goal-ai-suggestion__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 /* Responsive */

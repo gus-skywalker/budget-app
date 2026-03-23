@@ -294,32 +294,6 @@
 
       <section class="section-block">
         <div class="section-header">
-          <h2 class="section-title">Contas conectadas</h2>
-        </div>
-        <div v-if="accounts.length" class="accounts-grid">
-          <div
-            v-for="account in accounts"
-            :key="account.id"
-            class="account-card account-card--clickable"
-            @click="openAccountDrillDown(account.id)"
-          >
-            <div class="account-card__header">
-              <div>
-                <h3 class="account-card__title">{{ account.name }}</h3>
-                <p class="account-card__subtitle">{{ account.provider }} • {{ account.accountType }}</p>
-              </div>
-              <v-chip size="small" variant="tonal" color="#667eea">{{ account.currency }}</v-chip>
-            </div>
-            <div class="account-card__balance">{{ formatCurrency(account.balance, account.currency) }}</div>
-          </div>
-        </div>
-        <div v-else class="projection-placeholder">
-          <p>Sem contas disponíveis para drill-down.</p>
-        </div>
-      </section>
-
-      <section class="section-block">
-        <div class="section-header">
           <h2 class="section-title">Metas em risco</h2>
           <v-btn size="small" variant="text" @click="openGoalsView">
             <v-icon start>mdi-open-in-new</v-icon>

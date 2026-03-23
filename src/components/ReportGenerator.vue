@@ -43,7 +43,7 @@
                         <!-- Seleção de categorias -->
                         <v-col cols="12" md="4" v-if="reportType === 'expenses'">
                             <v-select 
-                                :label="$t('common.category')" 
+                                :label="$t('reportGenerator.category_filter')" 
                                 v-model="selectedCategories" 
                                 :items="availableCategories"
                                 item-title="name" 
@@ -54,18 +54,22 @@
                                 density="comfortable"
                                 color="#667eea"
                                 class="modern-input"
+                                :placeholder="$t('reportGenerator.all_categories_hint')"
+                                :hint="selectedCategories.length ? $t('reportGenerator.selected_categories_count', { count: selectedCategories.length }) : $t('reportGenerator.all_categories_hint')"
+                                persistent-hint
+                                :no-data-text="$t('reportGenerator.no_categories')"
                             >
                                 <template #item="{ item, props }">
                                     <v-list-item v-bind="props">
                                         <template #prepend>
-                                            <v-icon :icon="categoryIcons[item.raw.code]" class="mr-2"></v-icon>
+                                            <v-icon :icon="categoryIcons[item.raw.code] || 'mdi-shape-outline'" class="mr-2"></v-icon>
                                         </template>
                                     </v-list-item>
                                 </template>
 
                                 <template #selection="{ item, props }">
                                     <v-chip v-bind="props" class="ma-1" small>
-                                        <v-icon left :icon="categoryIcons[item.raw.code]"></v-icon>
+                                        <v-icon left :icon="categoryIcons[item.raw.code] || 'mdi-shape-outline'"></v-icon>
                                         {{ item.raw.name }}
                                     </v-chip>
                                 </template>
@@ -205,15 +209,6 @@ export default {
         return {
             reportType: this.initialReportType || 'expenses',
             viewType: 'grouped',
-            reportTypes: [
-                { text: this.$t('reportGenerator.report_types.expenses'), value: 'expenses' },
-                { text: this.$t('reportGenerator.report_types.incomes'), value: 'incomes' },
-            ],
-            viewTypes: [
-                { text: this.$t('reportGenerator.view_types.normal'), value: 'normal' },
-                { text: this.$t('reportGenerator.view_types.grouped'), value: 'grouped' },
-                { text: this.$t('reportGenerator.view_types.detailed'), value: 'detailed' },
-            ],
             categoryIcons: {
                 groceries: 'mdi-cart',
                 utilities: 'mdi-lightbulb',
@@ -254,10 +249,25 @@ export default {
         this.formattedEndDate = this.formatDate(this.endDate);
         this.fetchCategories();
     },
+    computed: {
+        reportTypes() {
+            return [
+                { text: this.$t('reportGenerator.report_types.expenses'), value: 'expenses' },
+                { text: this.$t('reportGenerator.report_types.incomes'), value: 'incomes' },
+            ];
+        },
+        viewTypes() {
+            return [
+                { text: this.$t('reportGenerator.view_types.normal'), value: 'normal' },
+                { text: this.$t('reportGenerator.view_types.grouped'), value: 'grouped' },
+                { text: this.$t('reportGenerator.view_types.detailed'), value: 'detailed' },
+            ];
+        },
+    },
     methods: {
         formatDate(date) {
             if (!date) return '';
-            return new Intl.DateTimeFormat('pt-BR').format(new Date(date));
+            return new Intl.DateTimeFormat(this.$i18n?.locale || 'pt-BR').format(new Date(date));
         },
         normalizeTranslatedCollection(payload) {
             if (Array.isArray(payload)) return payload;
@@ -273,8 +283,20 @@ export default {
         async fetchCategories() {
             if (this.reportType === 'expenses') {
                 try {
-                    const response = await DataService.listCategories();
-                    const categories = this.normalizeTranslatedCollection(response?.data);
+                    const [listResponse, translatedResponse] = await Promise.all([
+                        DataService.listCategories(),
+                        DataService.fetchCategories(this.selectedLanguage),
+                    ]);
+                    const categories = this.normalizeTranslatedCollection(listResponse?.data);
+                    const translatedCategories = this.normalizeTranslatedCollection(translatedResponse?.data);
+                    const translatedNamesByCode = translatedCategories.reduce((accumulator, category) => {
+                        const code = String(category?.code || '').trim();
+                        if (code) {
+                            accumulator[code] = category?.name || code;
+                        }
+                        return accumulator;
+                    }, {});
+
                     this.availableCategories = categories
                         .map((category) => {
                             const code = String(category?.code || '').trim();
@@ -293,10 +315,13 @@ export default {
                             return {
                                 id,
                                 code,
-                                name: isSystemDefined && isTranslated ? translatedName : (category?.name || code)
+                                name: translatedNamesByCode[code]
+                                    || (isSystemDefined && isTranslated ? translatedName : null)
+                                    || (category?.name || code)
                             };
                         })
-                        .filter((category) => Boolean(category));
+                        .filter((category) => Boolean(category))
+                        .sort((left, right) => left.name.localeCompare(right.name, this.selectedLanguage));
 
                     this.applyInitialCategoryFilter();
 
@@ -392,11 +417,6 @@ export default {
             if (newLocale && newLocale !== this.selectedLanguage) {
                 this.selectedLanguage = newLocale;
                 this.fetchCategories();
-            } else {
-                this.availableCategories = this.availableCategories.map((cat) => ({
-                    ...cat,
-                    name: this.$t(`categories.${cat.code}`) || cat.name
-                }));
             }
         }
     },

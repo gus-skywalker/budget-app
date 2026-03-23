@@ -89,6 +89,7 @@ export interface AutoCategorizeExpenseInput {
   description?: string
   amount: number
   paymentMethodId?: number
+  bankCategoryId?: string
 }
 
 export interface CategorySuggestion {

@@ -309,6 +309,58 @@
                   class="modern-input"
                 ></v-select>
               </v-col>
+              <v-col cols="12">
+                <div class="ai-category-row">
+                  <v-btn
+                    variant="tonal"
+                    color="#667eea"
+                    :loading="isSuggestingExpenseCategory"
+                    :disabled="!canSuggestExpenseCategory"
+                    @click="suggestExpenseCategory"
+                  >
+                    <v-icon start>mdi-brain</v-icon>
+                    {{ $t('expense.ai_suggest_category') }}
+                  </v-btn>
+                  <span v-if="expenseCategorySuggestion" class="ai-category-row__meta">
+                    {{ expenseCategorySuggestionSourceLabel(expenseCategorySuggestion.source) }}
+                    • {{ Math.round((expenseCategorySuggestion.suggestedCategory?.confidence || 0) * 100) }}%
+                  </span>
+                </div>
+                <v-alert
+                  v-if="expenseCategorySuggestion"
+                  type="info"
+                  variant="tonal"
+                  density="comfortable"
+                  class="mt-3"
+                >
+                  <div class="ai-category-suggestion">
+                    <div>
+                      <strong>{{ $t('expense.ai_suggested_category') }}:</strong>
+                      {{ expenseCategorySuggestion.suggestedCategory?.name }}
+                    </div>
+                    <div v-if="expenseCategorySuggestion.reasoning" class="ai-category-suggestion__reasoning">
+                      {{ expenseCategorySuggestion.reasoning }}
+                    </div>
+                    <div class="ai-category-suggestion__actions">
+                      <v-btn
+                        size="small"
+                        color="#667eea"
+                        variant="outlined"
+                        @click="applyExpenseCategorySuggestion"
+                      >
+                        {{ $t('expense.ai_apply_suggestion') }}
+                      </v-btn>
+                      <v-btn
+                        size="small"
+                        variant="text"
+                        @click="dismissExpenseCategorySuggestion"
+                      >
+                        {{ $t('common.close') }}
+                      </v-btn>
+                    </div>
+                  </div>
+                </v-alert>
+              </v-col>
               <v-col cols="12" sm="6">
                 <v-select
                   :label="$t('common.account')"
@@ -408,7 +460,40 @@
                 <v-chip size="small" value="all" variant="outlined">Todas</v-chip>
                 <v-chip size="small" value="open-finance" variant="outlined">Open Finance</v-chip>
                 <v-chip size="small" value="conflicts" variant="outlined">Conflitos</v-chip>
+                <v-chip size="small" value="uncategorized" variant="outlined">{{ $t('expense.uncategorized_only') }}</v-chip>
               </v-chip-group>
+            </div>
+            <div v-if="uncategorizedExpenses.length" class="ai-queue-card">
+              <div class="ai-queue-card__content">
+                <div>
+                  <div class="ai-queue-card__title">{{ $t('expense.ai_queue_title') }}</div>
+                  <div class="ai-queue-card__subtitle">
+                    {{ $t('expense.ai_queue_summary', { total: uncategorizedExpenses.length, suggested: uncategorizedSuggestionCount }) }}
+                  </div>
+                </div>
+                <div class="ai-queue-card__actions">
+                  <v-btn
+                    size="small"
+                    variant="tonal"
+                    color="#667eea"
+                    :loading="isBatchSuggestingExpenseCategories"
+                    @click="suggestUncategorizedExpensesInBatch"
+                  >
+                    <v-icon start>mdi-brain</v-icon>
+                    {{ $t('expense.ai_queue_suggest') }}
+                  </v-btn>
+                  <v-btn
+                    size="small"
+                    color="#667eea"
+                    :disabled="!canApplyBatchExpenseSuggestions"
+                    :loading="isApplyingBatchExpenseSuggestions"
+                    @click="applyBatchExpenseSuggestions"
+                  >
+                    <v-icon start>mdi-check-decagram</v-icon>
+                    {{ $t('expense.ai_queue_apply') }}
+                  </v-btn>
+                </div>
+              </div>
             </div>
             <div class="list-wrapper">
               <v-list v-if="!isLoadingExpenses && filteredMonthlyExpenses.length" class="modern-list">
@@ -418,12 +503,18 @@
                   :expense="expense"
                   :alert-settings="alertSettings"
                   :resolving-action="resolvingConflictId === expense.reconciliationConflictId ? resolvingConflictAction : null"
+                  :ai-suggesting="aiSuggestingExpenseId === expense.id"
+                  :has-suggestion-ready="Boolean(getStoredExpenseSuggestion(expense.id))"
+                  :suggestion-details="getExpenseSuggestionDetails(expense)"
+                  :is-applying-suggestion="applyingExpenseSuggestionId === expense.id"
                   @attachFiles="handleAttachFiles" 
                   @removeAttachment="handleRemoveAttachment"
                   @downloadAttachment="handleDownloadAttachment"
                   @sendReminder="handleSendReminder"
                   @shareExpense="handleShareExpense"
                   @resolveConflict="handleResolveExpenseConflict"
+                  @suggestCategory="handleSuggestExpenseCategoryInline"
+                  @applySuggestion="applyStoredExpenseSuggestionInline"
                   @deleteExpense="deleteExpense"
                   @select="startEditingExpense"
                 ></expense-item>
@@ -490,6 +581,7 @@ import IncomeService from '@/services/IncomeService'
 import ExpenseService from '@/services/ExpenseService'
 import OpenFinanceService from '@/services/OpenFinanceService'
 import DataService from '@/services/DataService'
+import AiService from '@/services/aiService'
 import FinancialReadService, { NO_FINANCIAL_ACCOUNT_ERROR_MESSAGE } from '@/services/FinancialReadService'
 import UsersService from '@/services/UsersService'
 import CompanyService from '@/services/CompanyService'
@@ -627,6 +719,7 @@ export default {
         paymentMethod: null,
         selectedUsers: [],
         accountId: null,
+        openFinanceBankCategoryId: null,
       },
       categoryIcons: {
         groceries: 'mdi-cart',
@@ -695,6 +788,13 @@ export default {
       isEditingExpense: false,
       editingExpenseId: null,
       editingExpenseOriginal: null,
+      isSuggestingExpenseCategory: false,
+      aiSuggestingExpenseId: null,
+      applyingExpenseSuggestionId: null,
+      expenseCategorySuggestion: null,
+      batchExpenseCategorySuggestions: {},
+      isBatchSuggestingExpenseCategories: false,
+      isApplyingBatchExpenseSuggestions: false,
       snackbar: {
         show: false,
         text: '',
@@ -743,7 +843,28 @@ export default {
       return this.applyTransactionFilter(this.monthlyIncomes, this.incomeListFilter)
     },
     filteredMonthlyExpenses() {
-      return this.applyExpenseDrillDown(this.applyTransactionFilter(this.monthlyExpenses, this.expenseListFilter))
+      const filteredItems = this.applyExpenseDrillDown(this.applyTransactionFilter(this.monthlyExpenses, this.expenseListFilter))
+      if (this.expenseListFilter !== 'uncategorized') {
+        return filteredItems
+      }
+
+      return [...filteredItems].sort((left, right) => {
+        const leftHasSuggestion = Boolean(this.getStoredExpenseSuggestion(left.id))
+        const rightHasSuggestion = Boolean(this.getStoredExpenseSuggestion(right.id))
+        if (leftHasSuggestion === rightHasSuggestion) {
+          return 0
+        }
+        return leftHasSuggestion ? -1 : 1
+      })
+    },
+    uncategorizedExpenses() {
+      return this.monthlyExpenses.filter((expense) => !expense?.category)
+    },
+    uncategorizedSuggestionCount() {
+      return this.uncategorizedExpenses.filter((expense) => Boolean(this.getStoredExpenseSuggestion(expense.id))).length
+    },
+    canApplyBatchExpenseSuggestions() {
+      return this.uncategorizedExpenses.some((expense) => Boolean(this.getStoredExpenseSuggestion(expense.id)?.suggestedCategory?.id))
     },
     hasActiveExpenseDrillDown() {
       return Boolean(this.routeExpenseAccountId || this.routeExpenseCategory || this.expenseListFilter === 'open-finance')
@@ -789,7 +910,13 @@ export default {
       if (this.expenseListFilter === 'open-finance') {
         return 'Nenhuma despesa Open Finance neste período.'
       }
+      if (this.expenseListFilter === 'uncategorized') {
+        return this.$t('expense.no_uncategorized_entries')
+      }
       return 'Nenhum conflito de reconciliação em despesas neste período.'
+    },
+    canSuggestExpenseCategory() {
+      return Boolean(String(this.expense.description || '').trim()) && parseCurrencyToNumber(this.expense.amount) !== null
     },
   },
   mounted() {
@@ -829,6 +956,9 @@ export default {
       }
       if (filter === 'conflicts') {
         return items.filter((item) => item?.reconciliationStatus === 'CONFLICT_DUPLICATE')
+      }
+      if (filter === 'uncategorized') {
+        return items.filter((item) => !item?.category)
       }
       return items
     },
@@ -957,6 +1087,299 @@ export default {
         paymentMethod: paymentMethodId,
         selectedUsers: sanitizedSelectedUsers,
         accountId,
+      }
+    },
+    expenseCategorySuggestionSourceLabel(source) {
+      if (source === 'BANK_MAPPING') return this.$t('expense.ai_source_bank_mapping')
+      if (source === 'HISTORY') return this.$t('expense.ai_source_history')
+      if (source === 'DOMAIN_ALIAS') return this.$t('expense.ai_source_domain_alias')
+      if (source === 'AI_FALLBACK') return this.$t('expense.ai_source_fallback')
+      return this.$t('expense.ai_source_generic')
+    },
+    translateCategoryLabel(category) {
+      if (!category) {
+        return ''
+      }
+
+      const categoryCode = String(category.code || '').trim()
+      if (!categoryCode) {
+        return category.name || ''
+      }
+
+      const translationKey = `categories.${categoryCode}`
+      const translated = this.$t(translationKey)
+      return translated !== translationKey ? translated : (category.name || categoryCode)
+    },
+    getExpenseSuggestionDetails(expense) {
+      const suggestion = this.getStoredExpenseSuggestion(expense?.id)
+      const suggestedCategory = suggestion?.suggestedCategory
+      if (!suggestedCategory?.id) {
+        return null
+      }
+
+      const confidence = Number(suggestedCategory.confidence || 0)
+      return {
+        categoryName: this.translateCategoryLabel(suggestedCategory),
+        sourceLabel: this.expenseCategorySuggestionSourceLabel(suggestion.source),
+        confidenceLabel: Number.isFinite(confidence) && confidence > 0
+          ? this.$t('expense.ai_confidence_short', { value: Math.round(confidence * 100) })
+          : null,
+      }
+    },
+    isWeakCategorySuggestion(suggestion) {
+      const confidence = Number(suggestion?.suggestedCategory?.confidence || 0)
+      const reasoning = String(suggestion?.reasoning || '').trim().toLowerCase()
+      const source = suggestion?.source
+      return source === 'AI_FALLBACK' && (confidence <= 0.5 || reasoning === 'model-error')
+    },
+    getStoredExpenseSuggestion(expenseId) {
+      if (!expenseId) {
+        return null
+      }
+      return this.batchExpenseCategorySuggestions?.[expenseId] ?? null
+    },
+    clearStoredExpenseSuggestion(expenseId) {
+      if (!expenseId || !this.batchExpenseCategorySuggestions?.[expenseId]) {
+        return
+      }
+      const nextSuggestions = { ...this.batchExpenseCategorySuggestions }
+      delete nextSuggestions[expenseId]
+      this.batchExpenseCategorySuggestions = nextSuggestions
+    },
+    resolveActiveExpenseSuggestion() {
+      if (this.expenseCategorySuggestion?.suggestedCategory?.id) {
+        return this.expenseCategorySuggestion
+      }
+      if (this.editingExpenseId) {
+        return this.getStoredExpenseSuggestion(this.editingExpenseId)
+      }
+      return null
+    },
+    handleExpenseSuggestionFeedback(savedCategoryId) {
+      const suggestion = this.resolveActiveExpenseSuggestion()
+      const expenseId = this.editingExpenseId
+      if (!suggestion?.suggestedCategory?.id || !expenseId) {
+        return null
+      }
+
+      const suggestedCategoryId = Number(suggestion.suggestedCategory.id)
+      this.clearStoredExpenseSuggestion(expenseId)
+      return savedCategoryId === suggestedCategoryId
+        ? this.$t('expense.ai_feedback_accepted')
+        : this.$t('expense.ai_feedback_adjusted')
+    },
+    suggestExpenseCategory() {
+      const parsedAmount = parseCurrencyToNumber(this.expense.amount)
+      const description = String(this.expense.description || '').trim()
+      if (!description || parsedAmount === null) {
+        this.showToast(this.$t('expense.ai_missing_context'), 'warning')
+        return
+      }
+
+      this.isSuggestingExpenseCategory = true
+      this.expenseCategorySuggestion = null
+
+      AiService.autoCategorize({
+        expenses: [
+          {
+            expenseId: this.isEditingExpense && this.editingExpenseId ? this.editingExpenseId : undefined,
+            description,
+            amount: parsedAmount,
+            paymentMethodId: this.resolvePaymentMethodId(this.expense.paymentMethod) ?? undefined,
+            bankCategoryId: this.expense.openFinanceBankCategoryId ?? undefined,
+          }
+        ]
+      })
+        .then(({ data }) => {
+          const suggestion = Array.isArray(data?.suggestions) ? data.suggestions[0] : null
+          if (!suggestion?.suggestedCategory || this.isWeakCategorySuggestion(suggestion)) {
+            this.showToast(this.$t('expense.ai_no_suggestion'), 'info')
+            return
+          }
+          this.expenseCategorySuggestion = suggestion
+        })
+        .catch((error) => {
+          console.error('Error suggesting expense category:', error)
+          this.showToast(this.$t('expense.ai_suggestion_failed'), 'error')
+        })
+        .finally(() => {
+          this.isSuggestingExpenseCategory = false
+        })
+    },
+    applyExpenseCategorySuggestion() {
+      if (!this.expenseCategorySuggestion?.suggestedCategory?.id) {
+        return
+      }
+      this.expense.category = this.expenseCategorySuggestion.suggestedCategory.id
+      this.showToast(this.$t('expense.ai_suggestion_applied'), 'success')
+    },
+    dismissExpenseCategorySuggestion() {
+      this.expenseCategorySuggestion = null
+    },
+    handleSuggestExpenseCategoryInline(expense) {
+      if (!expense?.description) {
+        this.showToast(this.$t('expense.ai_missing_context'), 'warning')
+        return
+      }
+
+      this.aiSuggestingExpenseId = expense.id
+      AiService.autoCategorize({
+        expenses: [
+          {
+            expenseId: expense.id,
+            description: expense.description,
+            amount: Number(expense.amount || 0),
+            paymentMethodId: expense.paymentMethodId ?? this.resolvePaymentMethodId(expense.paymentMethod) ?? undefined,
+            bankCategoryId: expense.openFinanceBankCategoryId ?? undefined,
+          }
+        ]
+      })
+        .then(({ data }) => {
+          const suggestion = Array.isArray(data?.suggestions) ? data.suggestions[0] : null
+          const suggestedCategoryId = suggestion?.suggestedCategory?.id
+          if (!suggestedCategoryId || this.isWeakCategorySuggestion(suggestion)) {
+            this.showToast(this.$t('expense.ai_no_suggestion'), 'info')
+            return
+          }
+          this.batchExpenseCategorySuggestions = {
+            ...this.batchExpenseCategorySuggestions,
+            [expense.id]: suggestion,
+          }
+
+          const category = this.categories.find((item) => item.id === suggestedCategoryId)
+          if (!category) {
+            this.showToast(this.$t('expense.ai_no_suggestion'), 'info')
+            return
+          }
+
+          this.startEditingExpense(expense)
+          this.expense.category = category.id
+          this.expenseCategorySuggestion = suggestion
+          this.showToast(this.$t('expense.ai_suggestion_applied'), 'success')
+        })
+        .catch((error) => {
+          console.error('Error suggesting inline expense category:', error)
+          this.showToast(this.$t('expense.ai_suggestion_failed'), 'error')
+        })
+        .finally(() => {
+          this.aiSuggestingExpenseId = null
+        })
+    },
+    suggestUncategorizedExpensesInBatch() {
+      const candidates = this.uncategorizedExpenses
+        .filter((expense) => expense?.description)
+        .map((expense) => ({
+          expenseId: expense.id,
+          description: expense.description,
+          amount: Number(expense.amount || 0),
+          paymentMethodId: expense.paymentMethodId ?? this.resolvePaymentMethodId(expense.paymentMethod) ?? undefined,
+          bankCategoryId: expense.openFinanceBankCategoryId ?? undefined,
+        }))
+
+      if (!candidates.length) {
+        this.showToast(this.$t('expense.ai_no_pending_uncategorized'), 'info')
+        return
+      }
+
+      this.isBatchSuggestingExpenseCategories = true
+      AiService.autoCategorize({ expenses: candidates })
+        .then(({ data }) => {
+          const suggestions = Array.isArray(data?.suggestions) ? data.suggestions : []
+          const nextSuggestions = { ...this.batchExpenseCategorySuggestions }
+          let storedCount = 0
+
+          suggestions.forEach((suggestion) => {
+            if (!suggestion?.expenseId || !suggestion?.suggestedCategory?.id || this.isWeakCategorySuggestion(suggestion)) {
+              return
+            }
+            nextSuggestions[suggestion.expenseId] = suggestion
+            storedCount += 1
+          })
+
+          this.batchExpenseCategorySuggestions = nextSuggestions
+
+          if (!storedCount) {
+            this.showToast(this.$t('expense.ai_no_suggestion'), 'info')
+            return
+          }
+
+          this.showToast(this.$t('expense.ai_queue_suggestions_ready', { count: storedCount }), 'success')
+        })
+        .catch((error) => {
+          console.error('Error suggesting uncategorized expenses in batch:', error)
+          this.showToast(this.$t('expense.ai_suggestion_failed'), 'error')
+        })
+        .finally(() => {
+          this.isBatchSuggestingExpenseCategories = false
+        })
+    },
+    async applyBatchExpenseSuggestions() {
+      const candidates = this.uncategorizedExpenses
+        .map((expense) => ({ expense, suggestion: this.getStoredExpenseSuggestion(expense.id) }))
+        .filter(({ suggestion }) => Boolean(suggestion?.suggestedCategory?.id))
+
+      if (!candidates.length) {
+        this.showToast(this.$t('expense.ai_no_pending_uncategorized'), 'info')
+        return
+      }
+
+      this.isApplyingBatchExpenseSuggestions = true
+      let appliedCount = 0
+
+      try {
+        for (const { expense, suggestion } of candidates) {
+          await ExpenseService.update(expense.id, {
+            date: this.normalizeDate(expense.date),
+            amount: Number(expense.amount || 0),
+            description: expense.description,
+            category: suggestion.suggestedCategory.id,
+            paymentMethod: expense.paymentMethodId ?? this.resolvePaymentMethodId(expense.paymentMethod) ?? null,
+            selectedUsers: [],
+            accountId: expense.accountId ?? null,
+          })
+          appliedCount += 1
+        }
+
+        this.batchExpenseCategorySuggestions = {}
+        this.showToast(this.$t('expense.ai_queue_apply_success', { count: appliedCount }), 'success')
+        await this.fetchMonthlyExpenses()
+      } catch (error) {
+        console.error('Error applying batch expense suggestions:', error)
+        this.showToast(this.$t('expense.ai_queue_apply_failed'), 'error')
+      } finally {
+        this.isApplyingBatchExpenseSuggestions = false
+      }
+    },
+    async applyStoredExpenseSuggestionInline(expense) {
+      const suggestion = this.getStoredExpenseSuggestion(expense?.id)
+      const suggestedCategoryId = suggestion?.suggestedCategory?.id
+
+      if (!expense?.id || !suggestedCategoryId) {
+        this.showToast(this.$t('expense.ai_no_suggestion'), 'info')
+        return
+      }
+
+      this.applyingExpenseSuggestionId = expense.id
+
+      try {
+        await ExpenseService.update(expense.id, {
+          date: this.normalizeDate(expense.date),
+          amount: Number(expense.amount || 0),
+          description: expense.description,
+          category: suggestedCategoryId,
+          paymentMethod: expense.paymentMethodId ?? this.resolvePaymentMethodId(expense.paymentMethod) ?? null,
+          selectedUsers: Array.isArray(expense.users) ? expense.users.map((user) => user.id ?? user.userId).filter(Boolean) : [],
+          accountId: expense.accountId ?? null,
+        })
+
+        this.clearStoredExpenseSuggestion(expense.id)
+        this.showToast(this.$t('expense.ai_feedback_accepted'), 'success')
+        await this.fetchMonthlyExpenses()
+      } catch (error) {
+        console.error('Error applying inline expense suggestion:', error)
+        this.showToast(this.$t('expense.ai_queue_apply_failed'), 'error')
+      } finally {
+        this.applyingExpenseSuggestionId = null
       }
     },
         resolvePaymentMethodId(value) {
@@ -1391,7 +1814,8 @@ export default {
       request
         .then(() => {
           if (isEditing) {
-            this.showToast(this.$t('expense.updated_successfully'), 'success')
+            const feedbackMessage = this.handleExpenseSuggestionFeedback(categoryId)
+            this.showToast(feedbackMessage || this.$t('expense.updated_successfully'), 'success')
           } else {
             this.showToast(this.$t('expense.saved_successfully'), 'success')
           }
@@ -1444,10 +1868,12 @@ export default {
         paymentMethod: null,
         selectedUsers: [],
         accountId: this.getDefaultFinancialAccountId(),
+        openFinanceBankCategoryId: null,
       }
       this.isEditingExpense = false
       this.editingExpenseId = null
       this.editingExpenseOriginal = null
+      this.expenseCategorySuggestion = null
     },
     toggleRecurring({ income, months }) {
       console.log('Toggled income:', income)
@@ -1482,6 +1908,9 @@ export default {
       if (confirm('Are you sure you want to delete this expense?')) {
         ExpenseService.delete(expense.id)
           .then(() => {
+            const nextSuggestions = { ...this.batchExpenseCategorySuggestions }
+            delete nextSuggestions[expense.id]
+            this.batchExpenseCategorySuggestions = nextSuggestions
             const expenseIndex = this.monthlyExpenses.findIndex((item) => item.id === expense.id)
             if (expenseIndex !== -1) {
               this.monthlyExpenses.splice(expenseIndex, 1)
@@ -1534,7 +1963,9 @@ export default {
           ? expense.users.map((user) => user.userId ?? user.id ?? user)
           : [],
         accountId: expense.accountId ?? null,
+        openFinanceBankCategoryId: expense.openFinanceBankCategoryId ?? null,
       }
+      this.expenseCategorySuggestion = null
 
       if (Array.isArray(expense.users) && expense.users.length) {
         this.users = expense.users.map((user) => ({
@@ -2077,6 +2508,87 @@ export default {
 /* Snackbar */
 .modern-snackbar {
   border-radius: 8px;
+}
+
+.ai-category-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ai-category-row__meta {
+  font-size: 0.9rem;
+  color: #667085;
+}
+
+.v-theme--dark .ai-category-row__meta {
+  color: #d0d5dd;
+}
+
+.ai-category-suggestion {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ai-category-suggestion__reasoning {
+  color: #475467;
+}
+
+.v-theme--dark .ai-category-suggestion__reasoning {
+  color: #d0d5dd;
+}
+
+.ai-category-suggestion__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ai-queue-card {
+  border: 1px solid rgba(102, 126, 234, 0.18);
+  background: rgba(102, 126, 234, 0.04);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.ai-queue-card__content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.ai-queue-card__title {
+  font-weight: 700;
+  color: #334155;
+}
+
+.ai-queue-card__subtitle {
+  color: #64748b;
+  font-size: 0.92rem;
+}
+
+.v-theme--dark .ai-queue-card {
+  background: rgba(102, 126, 234, 0.08);
+  border-color: rgba(148, 163, 184, 0.24);
+}
+
+.v-theme--dark .ai-queue-card__title {
+  color: #e2e8f0;
+}
+
+.v-theme--dark .ai-queue-card__subtitle {
+  color: #cbd5e1;
+}
+
+.ai-queue-card__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 /* Responsive */

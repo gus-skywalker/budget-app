@@ -22,12 +22,16 @@
 
       <div class="modern-card">
         <div class="card-header">
-          <h2 class="card-title">
-            <v-icon color="#667eea" class="mr-2">mdi-brain</v-icon>
-            {{ $t('cashflow.insights_title') }}
-          </h2>
+          <div class="insights-header">
+            <h2 class="card-title">
+              <v-icon color="#667eea" class="mr-2">mdi-brain</v-icon>
+              {{ $t('cashflow.insights_title') }}
+            </h2>
+            <span class="experimental-badge">{{ $t('cashflow.experimental_badge') }}</span>
+          </div>
         </div>
         <div class="card-content">
+          <p class="experimental-note">{{ $t('cashflow.experimental_note') }}</p>
           <div class="insights-grid">
             <MonthlyExpensesPrediction />
             <AnomalyDetectionTable />
@@ -132,6 +136,42 @@ import AnomalyDetectionTable from '@/components/ai/AnomalyDetectionTable.vue'
 
 .card-content {
   padding: 24px;
+}
+
+.insights-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.experimental-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.3rem 0.8rem;
+  background: rgba(245, 158, 11, 0.12);
+  color: #b45309;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.v-theme--dark .experimental-badge {
+  background: rgba(245, 158, 11, 0.18);
+  color: #fbbf24;
+}
+
+.experimental-note {
+  margin: 0 0 16px;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.v-theme--dark .experimental-note {
+  color: #cbd5e1;
 }
 
 .insights-grid {

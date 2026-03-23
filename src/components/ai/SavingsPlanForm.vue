@@ -1,41 +1,56 @@
 <template>
   <section class="ai-card">
     <header>
-      <h2>Plano de Economia</h2>
-      <p>Informe sua meta e receba recomendações automáticas.</p>
+      <h2>{{ t('ai.savings_plan.title') }}</h2>
+      <p>{{ t('ai.savings_plan.description') }}</p>
     </header>
 
-    <form class="ai-form" @submit.prevent="handleSubmit">
+    <div v-if="!goals.length" class="empty">
+      {{ t('ai.savings_plan.empty_goals') }}
+    </div>
+
+    <template v-else>
       <label>
-        Meta mensal (R$)
-        <input v-model.number="goal" type="number" min="0" step="10" />
+        {{ t('ai.savings_plan.goal') }}
+        <select v-model="selectedGoalId">
+          <option value="">{{ t('ai.savings_plan.select_goal') }}</option>
+          <option v-for="goal in goals" :key="goal.id" :value="goal.id">
+            {{ goal.name }}
+          </option>
+        </select>
       </label>
 
-      <label>
-        Data alvo
-        <input v-model="targetDate" type="date" />
-      </label>
+      <div v-if="selectedGoal" class="goal-context">
+        <p><strong>{{ t('ai.savings_plan.remaining_amount') }}:</strong> {{ formatCurrency(selectedGoal.remainingAmount ?? remainingAmount) }}</p>
+        <p><strong>{{ t('ai.savings_plan.deadline') }}:</strong> {{ formatDate(selectedGoal.deadline) }}</p>
+        <p><strong>{{ t('ai.savings_plan.monthly_target') }}:</strong> {{ formatCurrency(selectedGoal.suggestedContributionAmount ?? 0) }}</p>
+      </div>
 
-      <button type="submit" :disabled="isLoading">{{ isLoading ? 'Calculando...' : 'Gerar plano' }}</button>
-      <p v-if="error" class="error">{{ error }}</p>
-    </form>
+      <form class="ai-form" @submit.prevent="handleSubmit">
+        <p class="context-note">{{ t('ai.savings_plan.context_note') }}</p>
+        <button type="submit" :disabled="isLoading || !selectedGoal">
+          {{ isLoading ? t('ai.common.calculating') : t('ai.savings_plan.submit') }}
+        </button>
+        <p v-if="error" class="error">{{ error }}</p>
+      </form>
+    </template>
 
     <section v-if="plan" class="results">
-      <h3>Resultado</h3>
+      <h3>{{ t('ai.savings_plan.result') }}</h3>
       <p>{{ summaryText }}</p>
       <ul>
-        <li>Economia recomendada: <strong>{{ formatCurrency(plan.recommendedMonthlySavings) }}</strong></li>
-        <li>Saldo projetado: {{ formatCurrency(plan.projectedBalanceByTargetDate) }}</li>
-        <li>Probabilidade de sucesso: {{ (plan.probabilityOfSuccess * 100).toFixed(0) }}%</li>
+        <li>{{ t('ai.savings_plan.recommended_savings') }}: <strong>{{ formatCurrency(plan.recommendedMonthlySavings) }}</strong></li>
+        <li>{{ t('ai.savings_plan.projected_balance') }}: {{ formatCurrency(plan.projectedBalanceByTargetDate) }}</li>
+        <li>{{ t('ai.savings_plan.success_probability') }}: {{ (plan.probabilityOfSuccess * 100).toFixed(0) }}%</li>
       </ul>
 
-      <h4>Ações sugeridas</h4>
+      <h4>{{ t('ai.savings_plan.suggested_actions') }}</h4>
       <div class="actions">
         <article v-for="action in plan.actions" :key="action.id" class="action-card">
           <h5>{{ action.description }}</h5>
-          <p>Impacto estimado: {{ formatCurrency(action.estimatedMonthlyImpact) }}</p>
-          <p>Dificuldade: {{ action.difficultyLevel }}</p>
-          <p>Confiança: {{ (action.confidence * 100).toFixed(0) }}%</p>
+          <p>{{ t('ai.savings_plan.estimated_impact') }}: {{ formatCurrency(action.estimatedMonthlyImpact) }}</p>
+          <p>{{ t('ai.savings_plan.difficulty') }}: {{ action.difficultyLevel }}</p>
+          <p>{{ t('ai.monthly_prediction.confidence') }}: {{ (action.confidence * 100).toFixed(0) }}%</p>
         </article>
       </div>
     </section>
@@ -43,23 +58,60 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import AiService from '../../services/aiService'
+import FinancialGoalService from '../../services/FinancialGoalService'
 import type { SavingsPlan } from '../../services/aiService'
 
-const goal = ref<number | null>(200)
-const targetDate = ref('')
+interface FinancialGoalLike {
+  id: string
+  name: string
+  deadline: string
+  targetAmount?: number
+  initialAmount?: number
+  remainingAmount?: number
+  suggestedContributionAmount?: number
+}
+
+const { t, locale } = useI18n()
+
+const goals = ref<FinancialGoalLike[]>([])
+const selectedGoalId = ref('')
 const isLoading = ref(false)
 const error = ref('')
 const plan = ref<SavingsPlan | null>(null)
 const summaryText = ref('')
 
+const selectedGoal = computed(() => goals.value.find((goal) => goal.id === selectedGoalId.value) ?? null)
+
+const remainingAmount = computed(() => {
+  if (!selectedGoal.value) return 0
+  if (typeof selectedGoal.value.remainingAmount === 'number') return selectedGoal.value.remainingAmount
+  return Math.max(0, Number(selectedGoal.value.targetAmount || 0) - Number(selectedGoal.value.initialAmount || 0))
+})
+
 const formatCurrency = (value: number) =>
-  value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+  value.toLocaleString(locale.value === 'en' ? 'en-US' : 'pt-BR', { style: 'currency', currency: 'BRL' })
+
+const formatDate = (value?: string) => {
+  if (!value) return '—'
+  return new Date(value).toLocaleDateString(locale.value === 'en' ? 'en-US' : 'pt-BR')
+}
+
+const loadGoals = async () => {
+  try {
+    const { data } = await FinancialGoalService.fetchFinancialGoals()
+    goals.value = Array.isArray(data) ? data : []
+  } catch (err) {
+    console.error(err)
+    goals.value = []
+  }
+}
 
 const handleSubmit = async () => {
-  if (goal.value !== null && goal.value < 0) {
-    error.value = 'Meta inválida.'
+  if (!selectedGoal.value) {
+    error.value = t('ai.savings_plan.error_select_goal')
     return
   }
 
@@ -67,26 +119,41 @@ const handleSubmit = async () => {
   isLoading.value = true
   plan.value = null
 
-  const payload = {
-    savingsGoalAmount: goal.value ?? undefined,
-    targetDate: targetDate.value || undefined
-  }
-
   try {
-    const { data } = await AiService.getSavingsRecommendations(payload)
+    const { data } = await AiService.getSavingsRecommendations({
+      savingsGoalAmount: remainingAmount.value || undefined,
+      targetDate: selectedGoal.value.deadline || undefined,
+    })
     plan.value = data.plan
-    summaryText.value = data.summaryText || 'Plano gerado.'
+    summaryText.value = data.summaryText || t('ai.savings_plan.generated')
   } catch (err) {
-    error.value = 'Não foi possível gerar o plano agora.'
+    error.value = t('ai.savings_plan.error_generate')
     console.error(err)
   } finally {
     isLoading.value = false
   }
 }
+
+onMounted(() => {
+  loadGoals()
+})
 </script>
 
 <style scoped>
 @import './styles.css';
+
+.goal-context {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 0;
+  background: rgba(102, 126, 234, 0.05);
+}
+
+.context-note {
+  margin-bottom: 0.75rem;
+  color: #667085;
+}
 
 .actions {
   display: grid;

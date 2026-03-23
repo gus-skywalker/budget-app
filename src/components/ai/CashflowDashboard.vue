@@ -27,7 +27,10 @@
         </article>
       </div>
 
-      <p class="insight" v-for="text in insights.insights" :key="text">{{ text }}</p>
+      <div v-if="displayInsights.length" class="insights-section">
+        <h3>{{ t('ai.cashflow.insights_title') }}</h3>
+        <p class="insight" v-for="text in displayInsights" :key="text">{{ text }}</p>
+      </div>
 
       <table>
         <thead>
@@ -47,14 +50,14 @@
             <td>{{ formatCurrency(row.predictedExpenses) }}</td>
             <td>{{ formatCurrency(row.projectedBalance) }}</td>
             <td>
-              <span :class="['chip', row.status]">{{ row.status }}</span>
+              <span :class="['chip', row.status]">{{ statusLabel(row.status) }}</span>
             </td>
             <td>
               <div v-if="row.alert">
                 <p>{{ row.alert.message }}</p>
                 <small v-for="suggestion in row.alert.suggestions" :key="suggestion">• {{ suggestion }}</small>
               </div>
-              <span v-else>—</span>
+              <span v-else>{{ t('ai.cashflow.no_alerts') }}</span>
             </td>
           </tr>
         </tbody>
@@ -64,7 +67,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AiService from '../../services/aiService'
 import type { CashflowInsightsResponse } from '../../services/aiService'
@@ -75,9 +78,48 @@ const months = ref(6)
 const isLoading = ref(false)
 const error = ref('')
 const insights = ref<CashflowInsightsResponse | null>(null)
+const duplicateInsightPatterns = [
+  /^fluxo de caixa estável/i,
+  /^cash flow is stable/i,
+  /^flujo de caja estable/i,
+  /^flux de trésorerie stable/i
+]
 
 const formatCurrency = (value: number) =>
   value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+
+const displayInsights = computed(() => {
+  if (!insights.value?.insights?.length) {
+    return []
+  }
+
+  const unique = new Set<string>()
+  const filtered = insights.value.insights
+    .map((text) => text?.trim())
+    .filter((text): text is string => Boolean(text))
+    .filter((text) => !duplicateInsightPatterns.some((pattern) => pattern.test(text)))
+    .filter((text) => {
+      const normalized = text.toLowerCase()
+      if (unique.has(normalized)) {
+        return false
+      }
+      unique.add(normalized)
+      return true
+    })
+
+  return filtered.slice(0, 3)
+})
+
+const statusLabel = (status: string) => {
+  const normalized = status?.toLowerCase()
+  if (normalized === 'surplus') {
+    return t('ai.cashflow.status_surplus')
+  }
+  if (normalized === 'deficit') {
+    return t('ai.cashflow.status_deficit')
+  }
+  return status
+}
 
 const handleSubmit = async () => {
   error.value = ''
@@ -117,6 +159,18 @@ const handleSubmit = async () => {
   border-left: 4px solid #2563eb;
   padding: 0.5rem 0.75rem;
   border-radius: 6px;
+}
+
+.insights-section {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.insights-section h3 {
+  margin: 0.25rem 0 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
 }
 
 .chip {

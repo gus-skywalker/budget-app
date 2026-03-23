@@ -202,6 +202,21 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
   const isAuthenticated = userStore.isAuthenticated
+  const companies = userStore.getCompanies || []
+  const hasCompanies = companies.length > 0
+
+  if (to.name === 'landing' && isAuthenticated) {
+    if (!hasCompanies) {
+      next({ name: 'create-company', query: { redirect: '/dashboard' } })
+      return
+    }
+    if (!userStore.isTenantMode) {
+      next({ name: 'select-company', query: { redirect: '/dashboard' } })
+      return
+    }
+    next({ name: 'dashboard' })
+    return
+  }
 
   // Se requer autenticação e usuário não está autenticado
   if (to.meta.requiresAuth && !isAuthenticated) {
@@ -216,9 +231,6 @@ router.beforeEach((to, from, next) => {
     })
     return
   }
-
-  const companies = userStore.getCompanies || []
-  const hasCompanies = companies.length > 0
 
   if (isAuthenticated && to.name === 'select-company' && !hasCompanies) {
     next({ name: 'create-company', query: { redirect: (to.query.redirect as string) || '/dashboard' } })

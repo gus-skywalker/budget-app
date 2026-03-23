@@ -30,6 +30,65 @@
           {{ $t('expenseItem.category') }}: {{ translatedCategoryName }}
           <v-icon :icon="categoryIcons[expense.category.code]" class="mr-2"></v-icon>
         </v-list-item-subtitle>
+        <div v-else class="uncategorized-row">
+          <v-chip size="small" color="warning" variant="tonal">
+            {{ $t('expenseItem.uncategorized') }}
+          </v-chip>
+          <v-chip
+            v-if="hasSuggestionReady"
+            size="small"
+            color="#667eea"
+            variant="tonal"
+          >
+            {{ $t('expenseItem.suggestionReady') }}
+          </v-chip>
+          <v-btn
+            size="x-small"
+            variant="text"
+            color="#667eea"
+            :loading="aiSuggesting"
+            :disabled="aiSuggesting"
+            @click.stop="$emit('suggestCategory', expense)"
+          >
+            <v-icon start size="14">mdi-brain</v-icon>
+            {{ $t('expenseItem.suggestCategory') }}
+          </v-btn>
+          <v-btn
+            v-if="hasSuggestionReady"
+            size="x-small"
+            variant="text"
+            color="#667eea"
+            @click.stop="handleSelect"
+          >
+            <v-icon start size="14">mdi-check-decagram</v-icon>
+            {{ $t('expenseItem.reviewSuggestion') }}
+          </v-btn>
+        </div>
+        <div v-if="suggestionDetails" class="suggestion-details">
+          <v-chip size="small" color="#667eea" variant="outlined">
+            <v-icon start size="14">mdi-shape-outline</v-icon>
+            {{ $t('expenseItem.suggestedCategoryLabel') }}: {{ suggestionDetails.categoryName }}
+          </v-chip>
+          <v-chip size="small" variant="text">
+            <v-icon start size="14">mdi-source-branch</v-icon>
+            {{ suggestionDetails.sourceLabel }}
+          </v-chip>
+          <v-chip v-if="suggestionDetails.confidenceLabel" size="small" variant="text">
+            <v-icon start size="14">mdi-speedometer-medium</v-icon>
+            {{ suggestionDetails.confidenceLabel }}
+          </v-chip>
+          <v-btn
+            size="x-small"
+            color="#667eea"
+            variant="tonal"
+            :loading="isApplyingSuggestion"
+            :disabled="isApplyingSuggestion"
+            @click.stop="$emit('applySuggestion', expense)"
+          >
+            <v-icon start size="14">mdi-check</v-icon>
+            {{ $t('expenseItem.applySuggestion') }}
+          </v-btn>
+        </div>
         <v-list-item-subtitle v-if="expense.reconciliationConflictReason">
           {{ expense.reconciliationConflictReason }}
         </v-list-item-subtitle>
@@ -299,8 +358,24 @@ export default {
       type: String,
       default: null,
     },
+    aiSuggesting: {
+      type: Boolean,
+      default: false,
+    },
+    hasSuggestionReady: {
+      type: Boolean,
+      default: false,
+    },
+    suggestionDetails: {
+      type: Object,
+      default: null,
+    },
+    isApplyingSuggestion: {
+      type: Boolean,
+      default: false,
+    },
   },
-  emits: ['deleteExpense', 'removeAttachment', 'attachFiles', 'shareExpense', 'sendReminder', 'select', 'downloadAttachment', 'resolveConflict'],
+  emits: ['deleteExpense', 'removeAttachment', 'attachFiles', 'shareExpense', 'sendReminder', 'select', 'downloadAttachment', 'resolveConflict', 'suggestCategory', 'applySuggestion'],
   computed: {
     reconciliationLabel() {
       const status = this.expense?.reconciliationStatus;
@@ -618,6 +693,22 @@ export default {
   flex-wrap: wrap;
   gap: 8px;
   margin: 8px 0 4px;
+}
+
+.uncategorized-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 6px 0;
+}
+
+.suggestion-details {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 6px 0;
 }
 
 @media (max-width: 420px) {
