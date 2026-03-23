@@ -34,6 +34,144 @@
                 </div>
               </v-alert>
 
+              <div class="modern-card suggestions-card mt-5">
+                <div class="card-header">
+                  <h3 class="card-title">
+                    <v-icon color="#667eea" class="mr-2">mdi-lightbulb</v-icon>
+                    {{ $t('financial_goals.suggested_goals_title') }}
+                  </h3>
+                </div>
+                <div class="card-content">
+                  <p class="suggestions-helper">
+                    {{ $t('financial_goals.suggested_goals_helper') }}
+                  </p>
+                  <v-alert
+                    type="info"
+                    variant="tonal"
+                    density="comfortable"
+                    class="mb-4"
+                  >
+                    {{ $t('financial_goals.suggested_goals_note') }}
+                  </v-alert>
+                  <v-form @submit.prevent="fetchSuggestions">
+                    <v-row>
+                      <v-col cols="12" md="6">
+                        <v-text-field 
+                          :label="$t('financial_goals.total_income')" 
+                          v-model.number="monthOverview.totalIncome"
+                          type="number" 
+                          variant="outlined"
+                          density="comfortable"
+                          color="#667eea"
+                          class="modern-input"
+                          required
+                        ></v-text-field>
+                      </v-col>
+                      <v-col cols="12" md="6">
+                        <v-text-field 
+                          :label="$t('financial_goals.total_expense')" 
+                          v-model.number="monthOverview.totalExpense"
+                          type="number" 
+                          variant="outlined"
+                          density="comfortable"
+                          color="#667eea"
+                          class="modern-input"
+                          required
+                        ></v-text-field>
+                      </v-col>
+                    </v-row>
+                    <div class="goal-insight-grid mb-4">
+                      <div class="goal-insight-chip">
+                        <span class="goal-insight-chip__label">{{ $t('financial_goals.available_monthly_space') }}</span>
+                        <span class="goal-insight-chip__value">{{ formatCurrency(disposableIncome) }}</span>
+                      </div>
+                      <div class="goal-insight-chip">
+                        <span class="goal-insight-chip__label">{{ $t('financial_goals.suggested_goals_mode') }}</span>
+                        <span class="goal-insight-chip__value">{{ $t('financial_goals.suggested_goals_mode_manual') }}</span>
+                      </div>
+                    </div>
+                    <v-btn 
+                      type="submit" 
+                      color="secondary"
+                      class="modern-btn gradient-btn"
+                      size="large"
+                      :disabled="!canFetchSuggestions"
+                    >
+                      <v-icon left>mdi-lightbulb</v-icon>
+                      {{ $t('financial_goals.get_suggestions') }}
+                    </v-btn>
+                  </v-form>
+
+                  <div v-if="suggestedGoals.length" class="mt-4 suggestions-grid">
+                    <div class="suggestions-ranking-note">
+                      <v-icon size="16" color="#667eea">mdi-information-outline</v-icon>
+                      <span>{{ $t('financial_goals.suggested_goals_ranking_note') }}</span>
+                    </div>
+                    <article
+                      v-for="suggestion in rankedSuggestedGoals"
+                      :key="suggestion.name"
+                      class="suggestion-item"
+                    >
+                      <div class="suggestion-item__top">
+                        <div class="suggestion-item__title-group">
+                          <div class="suggestion-icon">
+                            <v-icon color="#667eea">{{ suggestedGoalIcon(suggestion) }}</v-icon>
+                          </div>
+                          <div class="suggestion-item__headline">
+                            <div class="suggestion-name">{{ suggestion.name }}</div>
+                            <div class="suggestion-details">
+                              {{ $t('financial_goals.target_amount_label') }}: {{ formatCurrency(suggestion.targetAmount) }}
+                            </div>
+                          </div>
+                        </div>
+                        <div class="suggestion-badge">
+                          <v-icon size="16">mdi-star-four-points-outline</v-icon>
+                          {{
+                            isTopSuggestedGoal(suggestion)
+                              ? $t('financial_goals.suggested_goals_best_badge')
+                              : $t('financial_goals.suggested_goals_badge')
+                          }}
+                        </div>
+                      </div>
+
+                      <div class="goal-insight-grid mt-3">
+                        <div class="goal-insight-chip">
+                          <span class="goal-insight-chip__label">{{ $t('financial_goals.goal_monthly_suggestion') }}</span>
+                          <span class="goal-insight-chip__value">{{ formatCurrency(suggestion.suggestedContributionAmount || 0) }}/mês</span>
+                        </div>
+                        <div class="goal-insight-chip">
+                          <span class="goal-insight-chip__label">{{ $t('financial_goals.goal_months_left') }}</span>
+                          <span class="goal-insight-chip__value">{{ suggestion.monthsRemaining || 0 }} mês(es)</span>
+                        </div>
+                        <div class="goal-insight-chip">
+                          <span class="goal-insight-chip__label">{{ $t('financial_goals.deadline_label') }}</span>
+                          <span class="goal-insight-chip__value">{{ formatDate(suggestion.deadline) }}</span>
+                        </div>
+                      </div>
+
+                      <div class="suggestion-note mt-3">
+                        {{ suggestedGoalMessage(suggestion) }}
+                      </div>
+
+                      <div class="suggestion-footer">
+                        <span class="suggestion-footer__text">{{ $t('financial_goals.suggested_goals_footer') }}</span>
+                        <v-btn 
+                          color="success" 
+                          @click="acceptSuggestedGoal(suggestion)"
+                          class="modern-btn"
+                        >
+                          <v-icon left>mdi-check</v-icon>
+                          {{ $t('financial_goals.create_suggested_goal') }}
+                        </v-btn>
+                      </div>
+                    </article>
+                  </div>
+                  <div v-else-if="suggestedGoalsFetched" class="empty-state">
+                    <p class="empty-message">{{ $t('financial_goals.no_suggestions') }}</p>
+                  </div>
+                </div>
+              </div>
+
               <!-- Formulário para adicionar ou editar metas -->
               <v-form v-if="isAddingOrEditing" @submit.prevent="submitGoalForm" ref="formRef" class="goal-form">
                 <v-text-field 
@@ -248,8 +386,8 @@
               </v-btn>
 
             <!-- Lista de objetivos financeiros -->
-            <v-list v-if="financialGoals.length" class="mt-4">
-              <v-list-item v-for="goal in financialGoals" :key="goal.id" class="goal-item">
+              <v-list v-if="financialGoals.length" class="mt-4">
+              <v-list-item v-for="goal in financialGoals" :key="goal.id" :id="`goal-${goal.id}`" class="goal-item">
                 <v-row align="center" class="w-200">
                   <v-col>
                     <v-list-item-title>{{ goal.name }}</v-list-item-title>
@@ -349,96 +487,25 @@
                   {{ $t('financial_goals.tip_cta') }}
                 </v-btn>
               </div>
-
-              <!-- Seção para inserir visão geral do mês e buscar sugestões -->
-              <div class="modern-card suggestions-card mt-5">
-                <div class="card-header">
-                  <h3 class="card-title">
-                    <v-icon color="#667eea" class="mr-2">mdi-lightbulb</v-icon>
-                    {{ $t('financial_goals.suggested_goals_title') }}
-                  </h3>
-                </div>
-                <div class="card-content">
-                  <v-form @submit.prevent="fetchSuggestions">
-                    <v-row>
-                      <v-col cols="12" md="6">
-                        <v-text-field 
-                          :label="$t('financial_goals.total_income')" 
-                          v-model.number="monthOverview.totalIncome"
-                          type="number" 
-                          variant="outlined"
-                          density="comfortable"
-                          color="#667eea"
-                          class="modern-input"
-                          required
-                        ></v-text-field>
-                      </v-col>
-                      <v-col cols="12" md="6">
-                        <v-text-field 
-                          :label="$t('financial_goals.total_expense')" 
-                          v-model.number="monthOverview.totalExpense"
-                          type="number" 
-                          variant="outlined"
-                          density="comfortable"
-                          color="#667eea"
-                          class="modern-input"
-                          required
-                        ></v-text-field>
-                      </v-col>
-                    </v-row>
-                    <v-btn 
-                      type="submit" 
-                      color="secondary"
-                      class="modern-btn gradient-btn"
-                      size="large"
-                    >
-                      <v-icon left>mdi-lightbulb</v-icon>
-                      {{ $t('financial_goals.get_suggestions') }}
-                    </v-btn>
-                  </v-form>
-
-                  <!-- Lista de metas sugeridas -->
-                  <v-list v-if="suggestedGoals.length" class="mt-4 suggestions-list">
-                    <div v-for="suggestion in suggestedGoals" :key="suggestion.id" class="suggestion-item">
-                      <v-row align="center">
-                        <v-col>
-                          <div class="suggestion-name">{{ suggestion.name }}</div>
-                          <div class="suggestion-details">
-                            {{ $t('financial_goals.target_amount_label') }}: ${{ suggestion.targetAmount }} |
-                            {{ $t('financial_goals.deadline_label') }}: {{ formatDate(suggestion.deadline) }}
-                          </div>
-                          <div class="progress-section mt-2">
-                            <v-progress-linear :value="suggestion.progress" color="#667eea" height="8"></v-progress-linear>
-                            <div class="progress-text">{{ $t('financial_goals.progress') }}: {{ suggestion.progress }}%</div>
-                          </div>
-                          <v-alert v-if="!suggestion.feasible" type="warning" density="compact" class="mt-2">
-                            {{ $t('financial_goals.not_feasible') }}
-                          </v-alert>
-                        </v-col>
-                        <v-col cols="auto">
-                          <v-btn 
-                            color="success" 
-                            @click="acceptSuggestedGoal(suggestion)"
-                            class="modern-btn"
-                          >
-                            <v-icon left>mdi-check</v-icon>
-                            {{ $t('financial_goals.accept') }}
-                          </v-btn>
-                        </v-col>
-                      </v-row>
-                      <v-divider class="my-3"></v-divider>
-                    </div>
-                  </v-list>
-                  <div v-else-if="suggestedGoalsFetched" class="empty-state">
-                    <p class="empty-message">{{ $t('financial_goals.no_suggestions') }}</p>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </v-col>
       </v-row>
     </v-container>
+
+    <v-snackbar
+      v-model="snackbar.show"
+      :color="snackbar.color"
+      timeout="3500"
+      location="top right"
+    >
+      {{ snackbar.message }}
+      <template #actions>
+        <v-btn variant="text" @click="snackbar.show = false">
+          {{ $t('common.close') }}
+        </v-btn>
+      </template>
+    </v-snackbar>
   </div>
 </template>
 
@@ -478,6 +545,11 @@ export default {
       },
       isSuggestingGoalCategory: false,
       goalCategorySuggestion: null,
+      snackbar: {
+        show: false,
+        message: '',
+        color: 'success',
+      },
     };
   },
   watch: {
@@ -494,6 +566,33 @@ export default {
   computed: {
     canSuggestGoalCategory() {
       return Boolean(String(this.goalForm.name || '').trim());
+    },
+    disposableIncome() {
+      const income = Number(this.monthOverview.totalIncome || 0);
+      const expense = Number(this.monthOverview.totalExpense || 0);
+      return Math.max(0, income - expense);
+    },
+    canFetchSuggestions() {
+      return Number(this.monthOverview.totalIncome || 0) > 0;
+    },
+    rankedSuggestedGoals() {
+      const monthlyRoom = this.disposableIncome;
+      return [...this.suggestedGoals].sort((left, right) => {
+        // O ranking no frontend não decide quais metas existem; ele só ordena a vitrine.
+        // Priorizamos a sugestão que parece mais "acionável agora":
+        // 1) cabe no espaço mensal informado;
+        // 2) usa uma fatia relevante, mas não exagerada, da folga;
+        // 3) em empate, mostramos a que pede menor aporte absoluto.
+        const leftScore = this.suggestedGoalFitScore(left, monthlyRoom);
+        const rightScore = this.suggestedGoalFitScore(right, monthlyRoom);
+        if (leftScore !== rightScore) {
+          return rightScore - leftScore;
+        }
+
+        const leftContribution = Number(left?.suggestedContributionAmount || 0);
+        const rightContribution = Number(right?.suggestedContributionAmount || 0);
+        return leftContribution - rightContribution;
+      });
     },
   },
   methods: {
@@ -680,16 +779,32 @@ export default {
         });
     },
     acceptSuggestedGoal(suggestion) {
-      FinancialGoalService.createFinancialGoal(suggestion)
-        .then(() => {
+      const payload = {
+        name: suggestion.name,
+        category: suggestion.category,
+        targetAmount: suggestion.targetAmount,
+        initialAmount: suggestion.initialAmount || 0,
+        deadline: suggestion.deadline,
+        contributionFrequency: suggestion.contributionFrequency || 0,
+        periodicity: suggestion.periodicity || 'monthly',
+      };
+
+      FinancialGoalService.createFinancialGoal(payload)
+        .then((response) => {
+          const createdGoal = response?.data;
           this.fetchFinancialGoals();
-          this.suggestedGoals = this.suggestedGoals.filter(goal => goal.id !== suggestion.id);
+          this.suggestedGoals = this.suggestedGoals.filter(goal => goal.name !== suggestion.name);
           if (this.suggestedGoals.length === 0) {
             this.suggestedGoalsFetched = true;
+          }
+          this.showSnackbar(this.$t('financial_goals.suggested_goal_created'), 'success');
+          if (createdGoal?.id) {
+            this.scrollToGoal(createdGoal.id);
           }
         })
         .catch((error) => {
           console.error('Erro ao aceitar meta sugerida:', error);
+          this.showSnackbar(this.$t('financial_goals.suggested_goal_create_error'), 'error');
         });
     },
     fetchFinancialGoals() {
@@ -702,15 +817,17 @@ export default {
           console.error('Erro ao buscar metas financeiras:', error);
         });
     },
-    fetchSuggestedGoals(overview) {
-      FinancialGoalService.suggestGoalsBasedOnIncome(overview)
+    fetchMonthOverview() {
+      DataService.fetchMonthOverview()
         .then((response) => {
-          this.suggestedGoals = response.data;
-          this.suggestedGoalsFetched = false;
+          const data = response?.data || {};
+          this.monthOverview = {
+            totalIncome: Number(data.totalIncome || 0),
+            totalExpense: Number(data.totalExpense || 0),
+          };
         })
         .catch((error) => {
-          console.error('Erro ao buscar metas sugeridas:', error);
-          this.suggestedGoalsFetched = true;
+          console.error('Erro ao buscar visão geral do mês:', error);
         });
     },
     normalizeTranslatedCollection(payload) {
@@ -953,10 +1070,6 @@ export default {
       });
     },
     getCurrentMonthOverview() {
-      // Implemente a lógica para obter a visão geral do mês atual
-      // Pode ser uma chamada para um serviço ou utilizar dados já disponíveis
-      // Exemplo:
-      // Aqui, por simplicidade, assumimos que os dados estão no componente
       return {
         totalIncome: this.monthOverview.totalIncome,
         totalExpense: this.monthOverview.totalExpense
@@ -964,6 +1077,11 @@ export default {
     },
     fetchSuggestions() {
       const overview = this.getCurrentMonthOverview();
+      if (!this.canFetchSuggestions) {
+        this.suggestedGoals = [];
+        this.suggestedGoalsFetched = true;
+        return;
+      }
       FinancialGoalService.suggestGoalsBasedOnIncome(overview)
         .then((response) => {
           this.suggestedGoals = response.data;
@@ -983,6 +1101,55 @@ export default {
         style: 'currency',
         currency: 'BRL'
       }).format(Number(value || 0));
+    },
+    suggestedGoalMessage(suggestion) {
+      const amount = this.formatCurrency(suggestion?.suggestedContributionAmount || 0);
+      const months = suggestion?.monthsRemaining || 0;
+      return this.$t('financial_goals.suggested_goals_result_message', {
+        amount,
+        months,
+      });
+    },
+    suggestedGoalIcon(suggestion) {
+      const category = String(suggestion?.category || '').toLowerCase();
+      const name = String(suggestion?.name || '').toLowerCase();
+      if (category.includes('viagem') || name.includes('viagem') || name.includes('travel')) return 'mdi-airplane';
+      if (category.includes('fundo_emergencia') || name.includes('emerg') || name.includes('reserve')) return 'mdi-shield-check-outline';
+      if (category.includes('tecnologia') || name.includes('notebook') || name.includes('laptop')) return 'mdi-laptop';
+      if (category.includes('carro') || name.includes('carro') || name.includes('car')) return 'mdi-car-outline';
+      return 'mdi-bullseye-arrow';
+    },
+    suggestedGoalFitScore(suggestion, monthlyRoom) {
+      const contribution = Number(suggestion?.suggestedContributionAmount || 0);
+      if (contribution <= 0 && monthlyRoom <= 0) {
+        return 1;
+      }
+      if (contribution <= 0) {
+        return 0;
+      }
+
+      if (monthlyRoom <= 0) {
+        return 0;
+      }
+
+      if (contribution <= monthlyRoom) {
+        // "Sweet spot" de vitrine: algo que use entre ~25% e ~45% da folga mensal.
+        // Abaixo disso tende a parecer tímido demais; acima disso começa a competir
+        // demais com o restante da vida financeira do usuário.
+        const usageRatio = contribution / monthlyRoom;
+        const targetRatio = 0.35;
+        const distanceFromTarget = Math.abs(usageRatio - targetRatio);
+        return 100 + Math.max(0, 1 - distanceFromTarget);
+      }
+
+      // Se a sugestão não cabe na folga mensal, ela ainda pode aparecer,
+      // mas com penalização forte para ficar atrás das opções mais viáveis.
+      const overflowRatio = (contribution - monthlyRoom) / contribution;
+      return Math.max(0, 10 - overflowRatio);
+    },
+    isTopSuggestedGoal(suggestion) {
+      const firstSuggestion = this.rankedSuggestedGoals[0];
+      return Boolean(firstSuggestion && firstSuggestion.name === suggestion?.name);
     },
     paceStatusLabel(status) {
       if (status === 'AHEAD') return 'Adiantado';
@@ -1004,12 +1171,25 @@ export default {
           tab: 'connections',
         },
       });
+    },
+    showSnackbar(message, color = 'success') {
+      this.snackbar.message = message;
+      this.snackbar.color = color;
+      this.snackbar.show = true;
+    },
+    scrollToGoal(goalId) {
+      this.$nextTick(() => {
+        const element = document.getElementById(`goal-${goalId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      });
     }
   },
   mounted() {
     this.fetchCategories();
     this.fetchFinancialGoals();
-    // Remover chamadas de contribuições diretas, pois elas são agora gerenciadas dentro das metas
+    this.fetchMonthOverview();
   },
 }
 </script>
@@ -1029,6 +1209,11 @@ export default {
   max-width: 1400px;
   padding-left: 16px;
   padding-right: 16px;
+}
+
+.suggestions-helper {
+  margin: 0 0 16px;
+  color: #64748b;
 }
 
 @media (min-width: 600px) {
@@ -1152,27 +1337,27 @@ export default {
 .goal-insight-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 12px;
-  margin-top: 16px;
+  gap: 10px;
+  margin-top: 14px;
 }
 
 .goal-insight-chip {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 12px 14px;
+  gap: 3px;
+  padding: 10px 12px;
   border-radius: 10px;
   background: rgba(102, 126, 234, 0.06);
   border: 1px solid rgba(102, 126, 234, 0.12);
 }
 
 .goal-insight-chip__label {
-  font-size: 0.8rem;
+  font-size: 0.77rem;
   color: #6b7280;
 }
 
 .goal-insight-chip__value {
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   font-weight: 700;
   color: #1f2937;
 }
@@ -1322,17 +1507,82 @@ export default {
   border: 1px solid rgba(255, 193, 7, 0.2);
 }
 
-.suggestions-list {
-  background: transparent;
-  padding: 0;
+.suggestions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.suggestions-ranking-note {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 2px 2px;
+  color: #667085;
+  font-size: 0.88rem;
+}
+
+.v-theme--dark .suggestions-ranking-note {
+  color: #cbd5e1;
 }
 
 .suggestion-item {
   padding: 16px;
   background: white;
   border-radius: 12px;
-  margin-bottom: 12px;
   border: 1px solid rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 100%;
+}
+
+.suggestion-item__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.suggestion-item__title-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+
+.suggestion-item__headline {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.suggestion-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(102, 126, 234, 0.10);
+  border: 1px solid rgba(102, 126, 234, 0.14);
+  flex-shrink: 0;
+}
+
+.suggestion-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(102, 126, 234, 0.10);
+  color: #5b5bd6;
+  font-size: 0.74rem;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .v-theme--dark .suggestion-item {
@@ -1340,11 +1590,22 @@ export default {
   border-color: rgba(255, 255, 255, 0.1);
 }
 
+.v-theme--dark .suggestion-badge {
+  background: rgba(102, 126, 234, 0.18);
+  color: #c7d2fe;
+}
+
+.v-theme--dark .suggestion-icon {
+  background: rgba(102, 126, 234, 0.18);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
 .suggestion-name {
-  font-size: 1.1rem;
+  font-size: 1.02rem;
   font-weight: 600;
   color: #1a1a1a;
-  margin-bottom: 8px;
+  line-height: 1.2;
+  word-break: break-word;
 }
 
 .v-theme--dark .suggestion-name {
@@ -1352,13 +1613,47 @@ export default {
 }
 
 .suggestion-details {
-  font-size: 0.9rem;
+  font-size: 0.86rem;
   color: #666;
-  margin-bottom: 8px;
+  line-height: 1.35;
+  word-break: break-word;
 }
 
 .v-theme--dark .suggestion-details {
   color: #b0b0b0;
+}
+
+.suggestion-note {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.15);
+  color: #1e40af;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.v-theme--dark .suggestion-note {
+  background: rgba(59, 130, 246, 0.14);
+  border-color: rgba(147, 197, 253, 0.18);
+  color: #dbeafe;
+}
+
+.suggestion-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+}
+
+.suggestion-footer__text {
+  font-size: 0.84rem;
+  color: #667085;
+}
+
+.v-theme--dark .suggestion-footer__text {
+  color: #cbd5e1;
 }
 
 /* Empty State */
@@ -1449,6 +1744,16 @@ export default {
 
   .goal-item {
     padding: 16px;
+  }
+
+  .suggestion-item__top,
+  .suggestion-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .suggestion-badge {
+    white-space: normal;
   }
 }
 </style>

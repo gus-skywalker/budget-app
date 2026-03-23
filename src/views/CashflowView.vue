@@ -23,15 +23,28 @@
       <div class="modern-card">
         <div class="card-header">
           <div class="insights-header">
-            <h2 class="card-title">
-              <v-icon color="#667eea" class="mr-2">mdi-brain</v-icon>
-              {{ $t('cashflow.insights_title') }}
-            </h2>
+            <div class="insights-heading">
+              <h2 class="card-title">
+                <v-icon color="#667eea" class="mr-2">mdi-brain</v-icon>
+                {{ $t('cashflow.insights_title') }}
+              </h2>
+              <p class="insights-subtitle">{{ $t('cashflow.insights_subtitle') }}</p>
+            </div>
             <span class="experimental-badge">{{ $t('cashflow.experimental_badge') }}</span>
           </div>
         </div>
         <div class="card-content">
           <p class="experimental-note">{{ $t('cashflow.experimental_note') }}</p>
+          <div class="insights-context">
+            <div class="insights-context__item">
+              <v-icon size="18" color="#667eea">mdi-database-outline</v-icon>
+              <span>{{ $t('cashflow.insights_context_history') }}</span>
+            </div>
+            <div class="insights-context__item">
+              <v-icon size="18" color="#f59e0b">mdi-flask-outline</v-icon>
+              <span>{{ $t('cashflow.insights_context_experimental') }}</span>
+            </div>
+          </div>
           <div class="insights-grid">
             <MonthlyExpensesPrediction />
             <AnomalyDetectionTable />
@@ -146,6 +159,17 @@ import AnomalyDetectionTable from '@/components/ai/AnomalyDetectionTable.vue'
   flex-wrap: wrap;
 }
 
+.insights-heading {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.insights-subtitle {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
 .experimental-badge {
   display: inline-flex;
   align-items: center;
@@ -172,6 +196,33 @@ import AnomalyDetectionTable from '@/components/ai/AnomalyDetectionTable.vue'
 
 .v-theme--dark .experimental-note {
   color: #cbd5e1;
+}
+
+.insights-context {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+  margin: 0 0 18px;
+}
+
+.insights-context__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0.85rem 0.95rem;
+  border-radius: 12px;
+  background: rgba(248, 250, 252, 0.9);
+  color: #334155;
+  font-size: 0.93rem;
+}
+
+.v-theme--dark .insights-subtitle {
+  color: #cbd5e1;
+}
+
+.v-theme--dark .insights-context__item {
+  background: rgba(51, 65, 85, 0.55);
+  color: #e2e8f0;
 }
 
 .insights-grid {

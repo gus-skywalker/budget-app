@@ -9,25 +9,23 @@
       <small class="experimental-note">{{ t('ai.anomaly.experimental_note') }}</small>
     </header>
 
+    <div class="history-context">
+      <strong>{{ t('ai.anomaly.history_scope_title') }}</strong>
+      <span>{{ t('ai.anomaly.history_scope_description') }}</span>
+    </div>
+
     <form class="ai-form" @submit.prevent="handleSubmit">
+      <label>
+        {{ t('ai.anomaly.window_days') }}
+        <input v-model.number="windowDays" type="number" min="30" max="365" step="30" />
+      </label>
+
       <label>
         {{ t('ai.anomaly.sensitivity') }}
         <input v-model.number="sensitivity" type="number" min="0.5" max="3" step="0.1" />
       </label>
 
-      <div class="transactions">
-        <div class="transactions__header">
-          <h3>{{ t('ai.anomaly.expenses') }}</h3>
-          <button type="button" class="ghost" @click="addTransaction">+ {{ t('ai.common.add') }}</button>
-        </div>
-        <div v-if="!transactions.length" class="empty">{{ t('ai.anomaly.empty_transactions') }}</div>
-        <div v-for="(tx, index) in transactions" :key="tx.localId" class="transaction-row">
-          <input v-model="tx.description" :placeholder="t('common.description')" required />
-          <input v-model.number="tx.amount" type="number" min="0" step="0.01" :placeholder="t('common.amount')" required />
-          <input v-model="tx.date" type="date" required />
-          <button type="button" class="danger" @click="removeTransaction(index)">x</button>
-        </div>
-      </div>
+      <p class="history-note">{{ t('ai.anomaly.scope_window', { days: windowDays }) }}</p>
 
       <button type="submit" :disabled="isLoading">
         {{ isLoading ? t('ai.common.processing') : t('ai.anomaly.submit') }}
@@ -42,12 +40,14 @@
         <li>{{ t('ai.anomaly.anomalies') }}: {{ response.summary.anomaliesCount }}</li>
         <li>{{ t('ai.anomaly.anomalous_amount') }}: {{ formatCurrency(response.summary.totalAnomalousAmount) }}</li>
       </ul>
+      <p v-if="response.summary.summaryText" class="history-note">{{ response.summary.summaryText }}</p>
 
       <table v-if="response.anomalies.length">
         <thead>
           <tr>
             <th>{{ t('common.date') }}</th>
             <th>{{ t('common.description') }}</th>
+            <th>{{ t('ai.anomaly.category') }}</th>
             <th>{{ t('common.amount') }}</th>
             <th>{{ t('ai.anomaly.deviation') }}</th>
             <th>{{ t('ai.anomaly.severity') }}</th>
@@ -58,12 +58,13 @@
           <tr v-for="item in response.anomalies" :key="item.expense.id || item.expense.description">
             <td>{{ item.expense.date || '—' }}</td>
             <td>{{ item.expense.description || t('ai.common.no_description') }}</td>
+            <td>{{ item.expense.categoryName || t('ai.anomaly.uncategorized') }}</td>
             <td>{{ formatCurrency(item.expense.amount) }}</td>
             <td>{{ item.deviation.toFixed(2) }}</td>
             <td>
-              <span :class="['chip', item.severity]">{{ item.severity }}</span>
+              <span :class="['chip', item.severity]">{{ severityLabel(item.severity) }}</span>
             </td>
-            <td>{{ item.suggestion || '—' }}</td>
+            <td>{{ anomalySuggestion(item) }}</td>
           </tr>
         </tbody>
       </table>
@@ -73,62 +74,49 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AiService from '../../services/aiService'
-import type { AiTransaction, AnomalyDetectionResponse } from '../../services/aiService'
+import type { AnomalyDetectionItem, AnomalyDetectionResponse, AnomalySeverity } from '../../services/aiService'
 
 const { t } = useI18n()
 
-interface UiTransaction extends AiTransaction {
-  localId: string
-}
-
 const sensitivity = ref(1.5)
-const transactions = reactive<UiTransaction[]>([])
+const windowDays = ref(90)
 const isLoading = ref(false)
 const error = ref('')
 const response = ref<AnomalyDetectionResponse | null>(null)
 
-const addTransaction = () => {
-  transactions.push({
-    localId: crypto.randomUUID(),
-    type: 'EXPENSE',
-    amount: 0,
-    currency: 'BRL',
-    date: new Date().toISOString().substring(0, 10),
-    description: ''
-  })
-}
-
-const removeTransaction = (index: number) => {
-  transactions.splice(index, 1)
-}
-
 const formatCurrency = (value: number) =>
   value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
-const handleSubmit = async () => {
-  if (!transactions.length) {
-    error.value = t('ai.anomaly.error_add_expenses')
-    return
-  }
+const severityLabel = (severity: AnomalySeverity) =>
+  severity === 'high' ? t('ai.anomaly.severity_high') : t('ai.anomaly.severity_medium')
 
+const anomalySuggestion = (item: AnomalyDetectionItem) => {
+  if (item.suggestion?.trim()) {
+    return item.suggestion
+  }
+  if (item.expense.categoryName) {
+    return item.severity === 'high'
+      ? t('ai.anomaly.fallback_suggestion_high_category', { category: item.expense.categoryName })
+      : t('ai.anomaly.fallback_suggestion_medium_category', { category: item.expense.categoryName })
+  }
+  return item.severity === 'high'
+    ? t('ai.anomaly.fallback_suggestion_high')
+    : t('ai.anomaly.fallback_suggestion_medium')
+}
+
+const handleSubmit = async () => {
   error.value = ''
   isLoading.value = true
   response.value = null
 
-  const payload = {
-    sensitivity: sensitivity.value,
-    transactions: transactions.map((tx) => {
-      const { localId, ...rest } = tx
-      void localId
-      return rest as AiTransaction
-    })
-  }
-
   try {
-    const { data } = await AiService.detectAnomalies(payload)
+    const { data } = await AiService.detectAnomalies({
+      sensitivity: sensitivity.value,
+      windowDays: windowDays.value,
+    })
     response.value = data
   } catch (err) {
     error.value = t('ai.anomaly.error_detect')
@@ -166,6 +154,22 @@ const handleSubmit = async () => {
   display: block;
   color: #64748b;
   margin-top: 0.35rem;
+}
+
+.history-context {
+  display: grid;
+  gap: 0.35rem;
+  margin: 1rem 0 1.25rem;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  background: rgba(248, 250, 252, 0.95);
+  color: #334155;
+}
+
+.history-note {
+  margin: 0.75rem 0 0;
+  color: #64748b;
+  font-size: 0.92rem;
 }
 
 .chip {

@@ -20,12 +20,18 @@ export interface AiTransaction {
 export interface MonthlyExpensesPredictionRequest {
   categoryId?: number
   forecastMonths?: number
-  historicalTransactions: AiTransaction[]
+  historicalTransactions?: AiTransaction[]
+}
+
+export interface PredictionCategory {
+  id?: number
+  code?: string
+  name?: string
 }
 
 export interface MonthlyExpensePredictionItem {
   month: string
-  categoryId?: number
+  category?: PredictionCategory
   predictedAmount: number
   confidence: number
   historicalAverage?: number
@@ -41,7 +47,8 @@ export interface MonthlyExpensesPredictionResponse {
 }
 
 export interface AnomalyDetectionRequest {
-  transactions: AiTransaction[]
+  transactions?: AiTransaction[]
+  windowDays?: number
   sensitivity?: number
 }
 
@@ -166,6 +173,18 @@ export interface CashflowInsightsResponse {
   forecast: CashflowForecastItem[]
   averageMonthlyBalance: number
   insights: string[]
+  decisionStatus?: 'ACTION_NEEDED' | 'WATCH' | 'STABLE' | 'NO_DATA'
+  availableForGoals?: number
+  requiredMonthlyAdjustment?: number
+  goalsAtRiskCount?: number
+  goalsOnTrackCount?: number
+  nextRiskMonth?: string | null
+  primaryDriverType?: string
+  primaryDriver?: string
+  recommendedAction?: string
+  recommendedActionAmount?: number
+  opportunityMessage?: string
+  riskWindowStart?: string | null
 }
 
 const AiService = {

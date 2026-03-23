@@ -27,6 +27,41 @@
         </article>
       </div>
 
+      <div class="decision-cards">
+        <article>
+          <h4>{{ t('ai.cashflow.decision_status') }}</h4>
+          <strong :class="['decision-pill', decisionTone]">{{ decisionStatusLabel }}</strong>
+        </article>
+        <article>
+          <h4>{{ t('ai.cashflow.available_for_goals') }}</h4>
+          <strong>{{ formatCurrency(insights.availableForGoals || 0) }}</strong>
+        </article>
+        <article>
+          <h4>{{ t('ai.cashflow.required_adjustment') }}</h4>
+          <strong>{{ formatCurrency(insights.requiredMonthlyAdjustment || 0) }}</strong>
+        </article>
+        <article>
+          <h4>{{ t('ai.cashflow.goals_impact') }}</h4>
+          <strong>{{ goalsImpactLabel }}</strong>
+        </article>
+      </div>
+
+      <div v-if="insights.primaryDriver || insights.recommendedAction || insights.opportunityMessage" class="action-cards">
+        <article v-if="insights.primaryDriver">
+          <h4>{{ t('ai.cashflow.primary_driver') }}</h4>
+          <p>{{ insights.primaryDriver }}</p>
+        </article>
+        <article v-if="insights.recommendedAction">
+          <h4>{{ t('ai.cashflow.recommended_action') }}</h4>
+          <p>{{ insights.recommendedAction }}</p>
+          <strong v-if="(insights.recommendedActionAmount || 0) > 0">{{ formatCurrency(insights.recommendedActionAmount || 0) }}</strong>
+        </article>
+        <article v-if="insights.opportunityMessage">
+          <h4>{{ t('ai.cashflow.opportunity') }}</h4>
+          <p>{{ insights.opportunityMessage }}</p>
+        </article>
+      </div>
+
       <div v-if="displayInsights.length" class="insights-section">
         <h3>{{ t('ai.cashflow.insights_title') }}</h3>
         <p class="insight" v-for="text in displayInsights" :key="text">{{ text }}</p>
@@ -110,6 +145,33 @@ const displayInsights = computed(() => {
   return filtered.slice(0, 3)
 })
 
+const decisionTone = computed(() => {
+  const status = insights.value?.decisionStatus
+  if (status === 'ACTION_NEEDED') return 'deficit'
+  if (status === 'WATCH') return 'watch'
+  return 'surplus'
+})
+
+const decisionStatusLabel = computed(() => {
+  const status = insights.value?.decisionStatus
+  if (status === 'ACTION_NEEDED') return t('ai.cashflow.decision_action_needed')
+  if (status === 'WATCH') return t('ai.cashflow.decision_watch')
+  if (status === 'STABLE') return t('ai.cashflow.decision_stable')
+  return t('ai.cashflow.decision_no_data')
+})
+
+const goalsImpactLabel = computed(() => {
+  const atRisk = insights.value?.goalsAtRiskCount || 0
+  const onTrack = insights.value?.goalsOnTrackCount || 0
+  if (atRisk > 0) {
+    return t('ai.cashflow.goals_at_risk_count', { count: atRisk })
+  }
+  if (onTrack > 0) {
+    return t('ai.cashflow.goals_on_track_count', { count: onTrack })
+  }
+  return t('ai.cashflow.goals_no_data')
+})
+
 const statusLabel = (status: string) => {
   const normalized = status?.toLowerCase()
   if (normalized === 'surplus') {
@@ -148,10 +210,47 @@ const handleSubmit = async () => {
   gap: 0.75rem;
 }
 
+.decision-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
 .metrics article {
   border: 1px solid #e5e7eb;
   border-radius: 10px;
   padding: 0.75rem;
+}
+
+.decision-cards article {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 0.75rem;
+}
+
+.action-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.action-cards article {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 0.9rem;
+  background: #f8fafc;
+}
+
+.action-cards h4,
+.action-cards p {
+  margin: 0;
+}
+
+.action-cards article {
+  display: grid;
+  gap: 0.45rem;
 }
 
 .insight {
@@ -180,6 +279,16 @@ const handleSubmit = async () => {
   font-weight: 600;
 }
 
+.decision-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.25rem 0.75rem;
+}
+
 .chip.surplus { background: #dcfce7; color: #15803d; }
 .chip.deficit { background: #fee2e2; color: #b91c1c; }
+.decision-pill.surplus { background: #dcfce7; color: #15803d; }
+.decision-pill.watch { background: #fef3c7; color: #b45309; }
+.decision-pill.deficit { background: #fee2e2; color: #b91c1c; }
 </style>

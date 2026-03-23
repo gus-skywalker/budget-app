@@ -9,6 +9,11 @@
       <small class="experimental-note">{{ t('ai.monthly_prediction.experimental_note') }}</small>
     </header>
 
+    <div class="history-context">
+      <strong>{{ t('ai.monthly_prediction.history_scope_title') }}</strong>
+      <span>{{ t('ai.monthly_prediction.history_scope_description') }}</span>
+    </div>
+
     <form class="ai-form" @submit.prevent="handleSubmit">
       <label>
         {{ t('ai.monthly_prediction.months_to_forecast') }}
@@ -17,26 +22,21 @@
 
       <label>
         {{ t('ai.monthly_prediction.category_optional') }}
-        <input v-model.number="categoryId" type="number" min="1" placeholder="123" />
+        <select v-model="selectedCategory">
+          <option value="">{{ t('ai.monthly_prediction.all_categories') }}</option>
+          <option v-for="category in categories" :key="category.id" :value="String(category.id)">
+            {{ category.name }}
+          </option>
+        </select>
       </label>
 
-      <div class="transactions">
-        <div class="transactions__header">
-          <h3>{{ t('ai.monthly_prediction.transactions_expenses') }}</h3>
-          <button type="button" class="ghost" @click="addTransaction">+ {{ t('ai.common.add') }}</button>
-        </div>
-        <div v-if="!transactions.length" class="empty">{{ t('ai.monthly_prediction.empty_transactions') }}</div>
-        <div v-for="(tx, index) in transactions" :key="tx.localId" class="transaction-row">
-          <input v-model="tx.description" :placeholder="t('common.description')" required />
-          <input v-model.number="tx.amount" type="number" min="0" step="0.01" :placeholder="t('common.amount')" required />
-          <input v-model="tx.date" type="date" required />
-          <select v-model="tx.currency">
-            <option value="BRL">BRL</option>
-            <option value="USD">USD</option>
-          </select>
-          <button type="button" class="danger" @click="removeTransaction(index)">{{ t('ai.common.remove') }}</button>
-        </div>
-      </div>
+      <p class="history-note">
+        {{
+          selectedCategoryLabel
+            ? t('ai.monthly_prediction.scope_category', { category: selectedCategoryLabel })
+            : t('ai.monthly_prediction.scope_all_categories')
+        }}
+      </p>
 
       <button type="submit" :disabled="isLoading">
         {{ isLoading ? t('ai.common.calculating') : t('ai.monthly_prediction.submit') }}
@@ -46,21 +46,38 @@
 
     <section v-if="prediction" class="results">
       <h3>{{ t('ai.monthly_prediction.result') }}</h3>
-      <p>{{ t('ai.monthly_prediction.total_predicted') }}: <strong>{{ formatCurrency(prediction.totalPredicted) }}</strong></p>
-      <p v-if="prediction.modelAccuracy">{{ t('ai.monthly_prediction.estimated_accuracy') }}: {{ (prediction.modelAccuracy * 100).toFixed(1) }}%</p>
+      <div class="summary-grid">
+        <div class="summary-card">
+          <span class="summary-label">{{ t('ai.monthly_prediction.total_predicted') }}</span>
+          <strong>{{ formatCurrency(prediction.totalPredicted) }}</strong>
+        </div>
+        <div v-if="historicalAverage > 0" class="summary-card">
+          <span class="summary-label">{{ t('ai.monthly_prediction.historical_average') }}</span>
+          <strong>{{ formatCurrency(historicalAverage) }}</strong>
+        </div>
+        <div v-if="prediction.modelAccuracy" class="summary-card">
+          <span class="summary-label">{{ t('ai.monthly_prediction.estimated_accuracy') }}</span>
+          <strong>{{ (prediction.modelAccuracy * 100).toFixed(1) }}%</strong>
+        </div>
+      </div>
+      <p v-if="trendInsight" class="history-note">{{ trendInsight }}</p>
       <table>
         <thead>
           <tr>
             <th>{{ t('ai.monthly_prediction.month') }}</th>
+            <th>{{ t('ai.monthly_prediction.category') }}</th>
             <th>{{ t('ai.monthly_prediction.predicted_amount') }}</th>
+            <th>{{ t('ai.monthly_prediction.trend') }}</th>
             <th>{{ t('ai.monthly_prediction.confidence') }}</th>
             <th>{{ t('ai.monthly_prediction.range') }}</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="item in prediction.predictions" :key="item.month + item.categoryId">
+          <tr v-for="item in prediction.predictions" :key="`${item.month}-${item.category?.id ?? 'all'}`">
             <td>{{ item.month }}</td>
+            <td>{{ item.category?.name || t('ai.monthly_prediction.all_categories') }}</td>
             <td>{{ formatCurrency(item.predictedAmount) }}</td>
+            <td>{{ trendLabel(item.trend) }}</td>
             <td>{{ (item.confidence * 100).toFixed(0) }}%</td>
             <td>{{ formatCurrency(item.minExpected || 0) }} - {{ formatCurrency(item.maxExpected || 0) }}</td>
           </tr>
@@ -71,64 +88,109 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AiService from '../../services/aiService'
-import type { AiTransaction, MonthlyExpensesPredictionResponse } from '../../services/aiService'
+import DataService from '../../services/DataService'
+import type { MonthlyExpensesPredictionResponse } from '../../services/aiService'
 
-const { t } = useI18n()
-
-interface UiTransaction extends AiTransaction {
-  localId: string
+interface CategoryOption {
+  id: number
+  code?: string
+  name: string
 }
 
+interface TranslatedCategoryOption {
+  code: string
+  name: string
+}
+
+const { t, locale } = useI18n()
+
 const forecastMonths = ref(3)
-const categoryId = ref<number | null>(null)
-const transactions = reactive<UiTransaction[]>([])
+const selectedCategory = ref('')
+const categories = ref<CategoryOption[]>([])
 const isLoading = ref(false)
 const error = ref('')
 const prediction = ref<MonthlyExpensesPredictionResponse | null>(null)
 
-const addTransaction = () => {
-  transactions.push({
-    localId: crypto.randomUUID(),
-    type: 'EXPENSE',
-    amount: 0,
-    currency: 'BRL',
-    date: new Date().toISOString().substring(0, 10),
-    description: ''
-  })
+const selectedCategoryLabel = computed(() =>
+  categories.value.find((category) => String(category.id) === selectedCategory.value)?.name || ''
+)
+
+const historicalAverage = computed(() => prediction.value?.predictions?.[0]?.historicalAverage || 0)
+
+const trendLabel = (trend?: string) => {
+  if (trend === 'up') return t('ai.monthly_prediction.trend_up')
+  if (trend === 'down') return t('ai.monthly_prediction.trend_down')
+  return t('ai.monthly_prediction.trend_stable')
 }
 
-const removeTransaction = (index: number) => {
-  transactions.splice(index, 1)
-}
+const trendInsight = computed(() => {
+  const firstPrediction = prediction.value?.predictions?.[0]
+  if (!firstPrediction) {
+    return ''
+  }
+
+  const category = firstPrediction.category?.name || selectedCategoryLabel.value || t('ai.monthly_prediction.all_categories').toLowerCase()
+  const trend = firstPrediction.trend || 'stable'
+
+  if (trend === 'up') {
+    return t('ai.monthly_prediction.trend_insight_up', { category })
+  }
+  if (trend === 'down') {
+    return t('ai.monthly_prediction.trend_insight_down', { category })
+  }
+  return t('ai.monthly_prediction.trend_insight_stable', { category })
+})
 
 const formatCurrency = (value: number) =>
   value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
-const handleSubmit = async () => {
-  if (!transactions.length) {
-    error.value = t('ai.monthly_prediction.error_add_expense')
-    return
-  }
+const loadCategories = async () => {
+  try {
+    const [catalogResponse, translatedResponse] = await Promise.all([
+      DataService.listCategories(),
+      DataService.fetchCategories(locale.value),
+    ])
 
+    const catalog = Array.isArray(catalogResponse?.data) ? catalogResponse.data : []
+    const translated = Array.isArray(translatedResponse?.data) ? translatedResponse.data : []
+    const translatedByCode = new Map<string, TranslatedCategoryOption>(
+      translated
+        .filter((item: any) => item?.code)
+        .map((item: any) => [String(item.code), { code: String(item.code), name: String(item.name || '') }])
+    )
+
+    const mergedCategories: CategoryOption[] = catalog
+      .filter((item: any) => item?.id && item?.name)
+      .map((item: any) => {
+        const translatedMatch = item.code ? translatedByCode.get(String(item.code)) : null
+        return {
+          id: Number(item.id),
+          code: item.code,
+          name: translatedMatch?.name || item.name,
+        }
+      })
+    categories.value = mergedCategories.sort((left: CategoryOption, right: CategoryOption) =>
+      left.name.localeCompare(right.name, locale.value)
+    )
+  } catch (loadError) {
+    console.error(loadError)
+    categories.value = []
+  }
+}
+
+const handleSubmit = async () => {
   error.value = ''
   isLoading.value = true
   prediction.value = null
 
-  const payload = {
-    forecastMonths: forecastMonths.value,
-    categoryId: categoryId.value ?? undefined,
-    historicalTransactions: transactions.map((tx) => {
-      const { localId, ...rest } = tx
-      void localId
-      return rest as AiTransaction
-    })
-  }
-
   try {
-    const { data } = await AiService.predictMonthlyExpenses(payload)
+    const { data } = await AiService.predictMonthlyExpenses({
+      forecastMonths: forecastMonths.value,
+      categoryId: selectedCategory.value ? Number(selectedCategory.value) : undefined,
+    })
     prediction.value = data
   } catch (err) {
     error.value = t('ai.monthly_prediction.error_forecast')
@@ -137,6 +199,9 @@ const handleSubmit = async () => {
     isLoading.value = false
   }
 }
+
+onMounted(loadCategories)
+watch(locale, loadCategories)
 </script>
 
 <style scoped>
@@ -168,7 +233,41 @@ const handleSubmit = async () => {
   margin-top: 0.35rem;
 }
 
-.transaction-row {
-  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+.history-context {
+  display: grid;
+  gap: 0.35rem;
+  margin: 1rem 0 1.25rem;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  background: rgba(102, 126, 234, 0.06);
+  color: #334155;
+}
+
+.history-note {
+  margin: -0.5rem 0 0;
+  color: #64748b;
+  font-size: 0.92rem;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.summary-card {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  background: rgba(248, 250, 252, 0.92);
+}
+
+.summary-label {
+  color: #64748b;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 </style>

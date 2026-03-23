@@ -23,30 +23,30 @@
         variant="tonal"
         class="conflict-banner"
       >
-        Existem {{ openFinanceConflictCount }} conflito(s) Open Finance pendente(s) de revisão.
+        {{ $t('overview.open_finance_conflicts', { count: openFinanceConflictCount }) }}
       </v-alert>
 
       <div v-if="openFinanceObservabilitySummary" class="open-finance-overview">
         <div class="overview-pill">
-          <span class="overview-pill__label">Open Finance</span>
-          <span class="overview-pill__value">{{ openFinanceObservabilitySummary.connectedAccounts }} contas</span>
+          <span class="overview-pill__label">{{ $t('overview.open_finance_label') }}</span>
+          <span class="overview-pill__value">{{ $t('overview.open_finance_accounts', { count: openFinanceObservabilitySummary.connectedAccounts }) }}</span>
         </div>
         <div class="overview-pill">
-          <span class="overview-pill__label">Importadas</span>
+          <span class="overview-pill__label">{{ $t('overview.imported_label') }}</span>
           <span class="overview-pill__value">{{ openFinanceObservabilitySummary.importedTransactions }}</span>
         </div>
         <div class="overview-pill">
-          <span class="overview-pill__label">Mappings</span>
+          <span class="overview-pill__label">{{ $t('overview.mappings_label') }}</span>
           <span class="overview-pill__value">{{ openFinanceObservabilitySummary.categoryMappings }}</span>
         </div>
         <div class="overview-pill" :class="{ 'overview-pill--warning': openFinanceObservabilitySummary.accountsAtRateLimitToday > 0 }">
-          <span class="overview-pill__label">Rate limit hoje</span>
+          <span class="overview-pill__label">{{ $t('overview.rate_limit_today') }}</span>
           <span class="overview-pill__value">{{ openFinanceObservabilitySummary.accountsAtRateLimitToday }}</span>
         </div>
         <div v-if="openFinanceObservabilitySummary.lastSyncTrigger" class="overview-pill">
-          <span class="overview-pill__label">Última sync</span>
+          <span class="overview-pill__label">{{ $t('overview.last_sync') }}</span>
           <span class="overview-pill__value">
-            {{ openFinanceObservabilitySummary.lastSyncTrigger === 'AUTOMATIC' ? 'Automática' : 'Manual' }}
+            {{ openFinanceObservabilitySummary.lastSyncTrigger === 'AUTOMATIC' ? $t('overview.sync_automatic') : $t('overview.sync_manual') }}
           </span>
           <span
             v-if="openFinanceObservabilitySummary.lastSyncTo"
@@ -162,6 +162,60 @@
         </v-row>
       </section>
 
+      <section class="section-block">
+        <div class="section-header">
+          <h2 class="section-title">{{ $t('overview.cashflow_decision_title') }}</h2>
+          <v-btn size="small" variant="text" @click="openCashflowView">
+            <v-icon start>mdi-open-in-new</v-icon>
+            {{ $t('overview.view_cashflow') }}
+          </v-btn>
+        </div>
+        <div v-if="hasCashflowDecisionData" class="projection-grid">
+          <div class="projection-card">
+            <div class="projection-label">{{ $t('overview.cashflow_decision_status') }}</div>
+            <div class="decision-chip" :class="decisionChipClass">
+              {{ cashflowDecisionLabel }}
+            </div>
+          </div>
+          <div class="projection-card">
+            <div class="projection-label">{{ $t('overview.cashflow_available_for_goals') }}</div>
+            <div class="projection-value">{{ formatCurrency(cashflowDecisionData.availableForGoals) }}</div>
+          </div>
+          <div class="projection-card">
+            <div class="projection-label">{{ $t('overview.cashflow_required_adjustment') }}</div>
+            <div class="projection-value">{{ formatCurrency(cashflowDecisionData.requiredMonthlyAdjustment) }}</div>
+          </div>
+          <div class="projection-card">
+            <div class="projection-label">{{ $t('overview.cashflow_goals_impact') }}</div>
+            <div class="projection-value">{{ cashflowGoalsImpactLabel }}</div>
+          </div>
+        </div>
+        <div v-if="hasCashflowDecisionData && cashflowDecisionSummary" class="insight-pill mt-4">
+          <v-icon size="18" color="#667eea">mdi-lightbulb-outline</v-icon>
+          <span>{{ cashflowDecisionSummary }}</span>
+        </div>
+        <div v-if="hasCashflowDecisionContext" class="cashflow-action-grid mt-4">
+          <div v-if="cashflowPrimaryDriver" class="projection-card">
+            <div class="projection-label">{{ $t('overview.cashflow_primary_driver') }}</div>
+            <div class="projection-context">{{ cashflowPrimaryDriver }}</div>
+          </div>
+          <div v-if="cashflowRecommendedAction" class="projection-card">
+            <div class="projection-label">{{ $t('overview.cashflow_recommended_action') }}</div>
+            <div class="projection-context">{{ cashflowRecommendedAction }}</div>
+            <div v-if="cashflowRecommendedActionAmount > 0" class="projection-value">
+              {{ formatCurrency(cashflowRecommendedActionAmount) }}
+            </div>
+          </div>
+          <div v-if="cashflowOpportunityMessage" class="projection-card">
+            <div class="projection-label">{{ $t('overview.cashflow_opportunity') }}</div>
+            <div class="projection-context">{{ cashflowOpportunityMessage }}</div>
+          </div>
+        </div>
+        <div v-else class="projection-placeholder">
+          <p>{{ $t('overview.cashflow_decision_placeholder') }}</p>
+        </div>
+      </section>
+
       <v-row class="two-column-grid">
         <v-col cols="12" lg="6">
           <div class="modern-card">
@@ -236,13 +290,13 @@
               </h2>
               <v-btn size="small" variant="text" @click="openExpenseReport()">
                 <v-icon start>mdi-file-chart-outline</v-icon>
-                Relatório
+                {{ $t('overview.view_report') }}
               </v-btn>
             </div>
             <div class="card-content">
-              <div v-if="dashboardSummary.topCategories.length" class="categories-list">
+              <div v-if="topCategoriesDisplay.length" class="categories-list">
                 <div
-                  v-for="category in dashboardSummary.topCategories"
+                  v-for="category in topCategoriesDisplay"
                   :key="category"
                   class="category-row category-row--clickable"
                   @click="openCategoryDrillDown(category)"
@@ -276,7 +330,7 @@
             </div>
             <div class="card-content">
               <div v-if="upcomingExpenses.length" class="upcoming-list">
-                <div v-for="expense in upcomingExpenses" :key="expense.title" class="upcoming-row">
+                <div v-for="expense in upcomingExpensesDisplay" :key="expense.title" class="upcoming-row">
                   <div>
                     <div class="upcoming-title">{{ expense.title }}</div>
                     <div class="upcoming-date">{{ expense.dueDate }}</div>
@@ -294,10 +348,10 @@
 
       <section class="section-block">
         <div class="section-header">
-          <h2 class="section-title">Metas em risco</h2>
+          <h2 class="section-title">{{ $t('overview.goals_at_risk_title') }}</h2>
           <v-btn size="small" variant="text" @click="openGoalsView">
             <v-icon start>mdi-open-in-new</v-icon>
-            Ver metas
+            {{ $t('overview.view_goals') }}
           </v-btn>
         </div>
         <div v-if="goalsAtRisk.length" class="goals-grid">
@@ -307,20 +361,20 @@
             </div>
             <div class="goal-details">
               <div class="goal-info">
-                <span class="info-label">Falta</span>
+                <span class="info-label">{{ $t('overview.goal_remaining') }}</span>
                 <span class="info-value">{{ formatCurrency(goal.remainingAmount) }}</span>
               </div>
               <div class="goal-info">
-                <span class="info-label">Sugestão mensal</span>
+                <span class="info-label">{{ $t('overview.goal_monthly_suggestion') }}</span>
                 <span class="info-value">{{ formatCurrency(goal.suggestedContributionAmount) }}</span>
               </div>
               <div class="goal-info">
-                <span class="info-label">Prazo</span>
-                <span class="info-value">{{ goal.monthsRemaining || 0 }} mês(es)</span>
+                <span class="info-label">{{ $t('overview.goal_deadline') }}</span>
+                <span class="info-value">{{ $t('overview.goal_months_remaining', { count: goal.monthsRemaining || 0 }) }}</span>
               </div>
               <div class="progress-section">
                 <div class="progress-header">
-                  <span class="info-label">Ritmo</span>
+                  <span class="info-label">{{ $t('overview.goal_pace') }}</span>
                   <v-chip size="small" color="warning" variant="tonal">
                     {{ paceStatusLabel(goal.paceStatus) }}
                   </v-chip>
@@ -331,16 +385,16 @@
           </div>
         </div>
         <div v-else class="projection-placeholder">
-          <p>Nenhuma meta em risco no momento.</p>
+          <p>{{ $t('overview.no_goals_at_risk') }}</p>
         </div>
       </section>
 
       <section class="section-block">
         <div class="section-header">
-          <h2 class="section-title">Metas com folga</h2>
+          <h2 class="section-title">{{ $t('overview.goals_ahead_title') }}</h2>
           <v-btn size="small" variant="text" @click="openGoalsView">
             <v-icon start>mdi-open-in-new</v-icon>
-            Ver metas
+            {{ $t('overview.view_goals') }}
           </v-btn>
         </div>
         <div v-if="goalOpportunities.length" class="goals-grid">
@@ -350,20 +404,20 @@
             </div>
             <div class="goal-details">
               <div class="goal-info">
-                <span class="info-label">Falta</span>
+                <span class="info-label">{{ $t('overview.goal_remaining') }}</span>
                 <span class="info-value">{{ formatCurrency(goal.remainingAmount) }}</span>
               </div>
               <div class="goal-info">
-                <span class="info-label">Sugestão mensal</span>
+                <span class="info-label">{{ $t('overview.goal_monthly_suggestion') }}</span>
                 <span class="info-value">{{ formatCurrency(goal.suggestedContributionAmount) }}</span>
               </div>
               <div class="goal-info">
-                <span class="info-label">Prazo</span>
-                <span class="info-value">{{ goal.monthsRemaining || 0 }} mês(es)</span>
+                <span class="info-label">{{ $t('overview.goal_deadline') }}</span>
+                <span class="info-value">{{ $t('overview.goal_months_remaining', { count: goal.monthsRemaining || 0 }) }}</span>
               </div>
               <div class="progress-section">
                 <div class="progress-header">
-                  <span class="info-label">Ritmo</span>
+                  <span class="info-label">{{ $t('overview.goal_pace') }}</span>
                   <v-chip size="small" color="success" variant="tonal">
                     {{ paceStatusLabel(goal.paceStatus) }}
                   </v-chip>
@@ -374,7 +428,7 @@
           </div>
         </div>
         <div v-else class="projection-placeholder">
-          <p>Nenhuma meta adiantada ainda.</p>
+          <p>{{ $t('overview.no_goals_ahead') }}</p>
         </div>
       </section>
 
@@ -385,16 +439,20 @@
         <div v-if="hasProjectionData" class="projection-grid">
           <div class="projection-card">
             <div class="projection-label">{{ $t('overview.projection_3m') }}</div>
-            <div class="projection-value">{{ formatCurrency(projectBalance(3)) }}</div>
+            <div class="projection-value">{{ formatCurrency(projectedBalanceForMonths(3)) }}</div>
           </div>
           <div class="projection-card">
             <div class="projection-label">{{ $t('overview.projection_6m') }}</div>
-            <div class="projection-value">{{ formatCurrency(projectBalance(6)) }}</div>
+            <div class="projection-value">{{ formatCurrency(projectedBalanceForMonths(6)) }}</div>
           </div>
           <div class="projection-card">
             <div class="projection-label">{{ $t('overview.projection_12m') }}</div>
-            <div class="projection-value">{{ formatCurrency(projectBalance(12)) }}</div>
+            <div class="projection-value">{{ formatCurrency(projectedBalanceForMonths(12)) }}</div>
           </div>
+        </div>
+        <div v-if="hasProjectionData && projectionContextMessage" class="insight-pill mt-4">
+          <v-icon size="18" color="#667eea">mdi-chart-timeline-variant</v-icon>
+          <span>{{ projectionContextMessage }}</span>
         </div>
         <div v-else class="projection-placeholder">
           <p>{{ $t('overview.projection_placeholder') }}</p>
@@ -421,7 +479,12 @@
           <h2 class="section-title">{{ $t('overview.decisions_title') }}</h2>
         </div>
         <div v-if="hasDecisions" class="decisions-grid">
-          <div v-for="decision in overviewDecisions" :key="decision.title" class="decision-card">
+          <div
+            v-for="decision in overviewDecisions"
+            :key="decision.title"
+            class="decision-card"
+            :class="decision.cardClass"
+          >
             <div class="decision-card__header">
               <h3 class="decision-card__title">{{ decision.title }}</h3>
               <v-chip size="x-small" variant="tonal" color="#667eea">{{ decision.status }}</v-chip>
@@ -511,6 +574,7 @@ import DataService from '@/services/DataService'
 import FinancialReadService from '@/services/FinancialReadService'
 import FinancialGoalService from '@/services/FinancialGoalService'
 import OpenFinanceService from '@/services/OpenFinanceService'
+import AiService from '@/services/aiService'
 import 'chartjs-adapter-moment'
 
 Chart.register(...registerables)
@@ -530,6 +594,24 @@ export default {
     headlineMessage() {
       if (!this.hasData) {
         return this.$t('overview.headline_placeholder')
+      }
+
+      if (this.cashflowDecisionData?.decisionStatus === 'ACTION_NEEDED') {
+        return this.$t('overview.headline_action_needed', {
+          amount: this.formatCurrency(this.cashflowDecisionData.requiredMonthlyAdjustment || 0),
+        })
+      }
+
+      if (this.goalsAtRisk.length > 0) {
+        return this.$t('overview.headline_goal_risk', {
+          goal: this.goalsAtRisk[0]?.name || this.$t('overview.goal_generic_label'),
+        })
+      }
+
+      if (this.topCategoriesDisplay.length > 0) {
+        return this.$t('overview.headline_category_attention', {
+          category: this.topCategoriesDisplay[0],
+        })
       }
 
       if (this.netMonthlyCashflow >= 0) {
@@ -602,40 +684,268 @@ export default {
     hasProjectionData() {
       return this.hasData
     },
+    firstProjectionRiskMonth() {
+      if (this.cashflowDecisionData?.nextRiskMonth) {
+        return this.cashflowDecisionData.nextRiskMonth
+      }
+      const forecast = Array.isArray(this.cashflowDecisionData?.forecast) ? this.cashflowDecisionData.forecast : []
+      return forecast.find((item) => item?.status === 'deficit')?.month || null
+    },
+    projectionContextMessage() {
+      if (this.firstProjectionRiskMonth) {
+        return this.$t('overview.projection_risk_month', { month: this.firstProjectionRiskMonth })
+      }
+      if (this.cashflowDecisionData?.decisionStatus === 'ACTION_NEEDED') {
+        return this.$t('overview.projection_action_needed')
+      }
+      if (this.cashflowDecisionData?.decisionStatus === 'WATCH') {
+        return this.$t('overview.projection_watch')
+      }
+      if (this.cashflowDecisionData?.decisionStatus === 'STABLE') {
+        return this.$t('overview.projection_stable')
+      }
+      return ''
+    },
+    topCategoriesDisplay() {
+      if (Array.isArray(this.dashboardSummary.topCategories) && this.dashboardSummary.topCategories.length) {
+        return this.dashboardSummary.topCategories
+      }
+
+      const categoryCounts = new Map()
+      this.monthTransactions
+        .filter((transaction) => transaction?.direction === 'OUTFLOW' && transaction?.category)
+        .forEach((transaction) => {
+          const key = String(transaction.category).trim()
+          if (!key) return
+          categoryCounts.set(key, (categoryCounts.get(key) || 0) + 1)
+        })
+
+      return Array.from(categoryCounts.entries())
+        .sort((left, right) => right[1] - left[1])
+        .slice(0, 5)
+        .map(([category]) => category)
+    },
+    upcomingExpensesDisplay() {
+      return Array.isArray(this.upcomingExpenses) ? this.upcomingExpenses.slice(0, 5) : []
+    },
+    cashflowDecisionData() {
+      if (this.cashflowInsightsSummary?.decisionStatus) {
+        return this.cashflowInsightsSummary
+      }
+      if (!this.hasData) {
+        return null
+      }
+      return {
+        decisionStatus: this.netMonthlyCashflow < 0 ? 'ACTION_NEEDED' : (this.goalsAtRisk.length ? 'WATCH' : 'STABLE'),
+        availableForGoals: Math.max(this.netMonthlyCashflow, 0),
+        requiredMonthlyAdjustment: Math.max(this.netMonthlyCashflow * -1, 0),
+        goalsAtRiskCount: this.goalsAtRisk.length,
+        goalsOnTrackCount: this.goalOpportunities.length,
+        insights: [this.cashflowFallbackSummary],
+      }
+    },
+    hasCashflowDecisionData() {
+      return Boolean(this.cashflowDecisionData?.decisionStatus)
+    },
+    hasCashflowDecisionContext() {
+      return Boolean(this.cashflowPrimaryDriver || this.cashflowRecommendedAction || this.cashflowOpportunityMessage)
+    },
     hasInsights() {
-      return this.hasData
+      return this.overviewInsights.length > 0
     },
     hasDecisions() {
-      return this.hasData
+      return this.overviewDecisions.length > 0
     },
     overviewInsights() {
-      return [
-        this.$t('overview.insight_1'),
-        this.$t('overview.insight_2'),
-        this.$t('overview.insight_3'),
-      ]
+      const insights = []
+
+      if (this.hasMomentumData) {
+        insights.push(this.momentumMessage)
+      }
+
+      if (this.hasCashflowDecisionData && this.cashflowDecisionSummary) {
+        insights.push(this.cashflowDecisionSummary)
+      }
+
+      if (this.cashflowPrimaryDriver && this.cashflowPrimaryDriver !== this.cashflowDecisionSummary) {
+        insights.push(this.cashflowPrimaryDriver)
+      }
+
+      if (this.topCategoriesDisplay.length > 0) {
+        insights.push(this.$t('overview.top_category_signal', { category: this.topCategoriesDisplay[0] }))
+      }
+
+      if (this.goalsAtRisk.length > 0) {
+        insights.push(this.$t('overview.goals_risk_signal', { count: this.goalsAtRisk.length }))
+      } else if (this.goalOpportunities.length > 0) {
+        insights.push(this.$t('overview.goals_opportunity_signal', { count: this.goalOpportunities.length }))
+      }
+
+      if (this.cashflowOpportunityMessage) {
+        insights.push(this.cashflowOpportunityMessage)
+      }
+
+      return insights
+        .filter((text) => Boolean(text && String(text).trim()))
+        .slice(0, 4)
     },
     overviewDecisions() {
-      return [
-        {
-          title: this.$t('overview.decision_1_title'),
-          description: this.$t('overview.decision_1_desc'),
-          impact: this.$t('overview.decision_1_impact'),
-          status: this.$t('overview.decision_status_pending'),
-        },
-        {
-          title: this.$t('overview.decision_2_title'),
-          description: this.$t('overview.decision_2_desc'),
-          impact: this.$t('overview.decision_2_impact'),
+      const decisions = []
+
+      if (this.cashflowDecisionData?.decisionStatus === 'ACTION_NEEDED') {
+        decisions.push({
+          severity: 'critical',
+          title: this.$t('overview.decision_adjust_cashflow_title'),
+          description: this.cashflowRecommendedAction || this.cashflowPrimaryDriver || this.$t('overview.decision_adjust_cashflow_desc'),
+          impact: this.$t('overview.decision_adjust_cashflow_impact', {
+            amount: this.formatCurrency(this.cashflowRecommendedActionAmount || this.cashflowDecisionData.requiredMonthlyAdjustment || 0),
+          }),
+          status: this.$t('overview.decision_status_priority'),
+          cardClass: 'decision-card--critical',
+        })
+      }
+
+      if (this.goalsAtRisk.length > 0) {
+        const primaryGoal = this.goalsAtRisk[0]
+        decisions.push({
+          severity: 'high',
+          title: this.$t('overview.decision_review_goal_title', { goal: primaryGoal.name }),
+          description: primaryGoal.insightMessage || this.$t('overview.decision_review_goal_desc'),
+          impact: this.$t('overview.decision_review_goal_impact', {
+            amount: this.formatCurrency(primaryGoal.suggestedContributionAmount || 0),
+          }),
           status: this.$t('overview.decision_status_review'),
-        },
-        {
-          title: this.$t('overview.decision_3_title'),
-          description: this.$t('overview.decision_3_desc'),
-          impact: this.$t('overview.decision_3_impact'),
+          cardClass: 'decision-card--high',
+        })
+      }
+
+      if (this.topCategoriesDisplay.length > 0) {
+        decisions.push({
+          severity: 'medium',
+          title: this.$t('overview.decision_investigate_category_title', { category: this.topCategoriesDisplay[0] }),
+          description: this.$t('overview.decision_investigate_category_desc'),
+          impact: this.$t('overview.decision_investigate_category_impact'),
           status: this.$t('overview.decision_status_suggested'),
-        },
-      ]
+          cardClass: 'decision-card--medium',
+        })
+      }
+
+      if (this.goalOpportunities.length > 0) {
+        const firstGoal = this.goalOpportunities[0]
+        decisions.push({
+          severity: 'opportunity',
+          title: this.$t('overview.decision_accelerate_goal_title', { goal: firstGoal.name }),
+          description: firstGoal.insightMessage || this.$t('overview.decision_accelerate_goal_desc'),
+          impact: this.$t('overview.decision_accelerate_goal_impact', {
+            amount: this.formatCurrency(firstGoal.suggestedContributionAmount || 0),
+          }),
+          status: this.$t('overview.decision_status_opportunity'),
+          cardClass: 'decision-card--opportunity',
+        })
+      }
+
+      const priority = {
+        critical: 0,
+        high: 1,
+        medium: 2,
+        opportunity: 3,
+      }
+
+      return decisions
+        .sort((left, right) => priority[left.severity] - priority[right.severity])
+        .slice(0, 3)
+    },
+    cashflowDecisionLabel() {
+      const status = this.cashflowDecisionData?.decisionStatus
+      if (status === 'ACTION_NEEDED') return this.$t('overview.cashflow_decision_action_needed')
+      if (status === 'WATCH') return this.$t('overview.cashflow_decision_watch')
+      if (status === 'STABLE') return this.$t('overview.cashflow_decision_stable')
+      return this.$t('overview.cashflow_decision_no_data')
+    },
+    decisionChipClass() {
+      const status = this.cashflowDecisionData?.decisionStatus
+      if (status === 'ACTION_NEEDED') return 'decision-chip--danger'
+      if (status === 'WATCH') return 'decision-chip--warning'
+      return 'decision-chip--success'
+    },
+    cashflowGoalsImpactLabel() {
+      const atRisk = Number(this.cashflowDecisionData?.goalsAtRiskCount || 0)
+      const onTrack = Number(this.cashflowDecisionData?.goalsOnTrackCount || 0)
+      if (atRisk > 0) {
+        return this.$t('overview.cashflow_goals_at_risk', { count: atRisk })
+      }
+      if (onTrack > 0) {
+        return this.$t('overview.cashflow_goals_on_track', { count: onTrack })
+      }
+      return this.$t('overview.cashflow_goals_none')
+    },
+    cashflowDecisionSummary() {
+      const insights = Array.isArray(this.cashflowDecisionData?.insights) ? this.cashflowDecisionData.insights : []
+      return insights.find((item) => item && item.trim()) || ''
+    },
+    cashflowPrimaryDriver() {
+      return this.cashflowDecisionData?.primaryDriver || this.cashflowFallbackPrimaryDriver
+    },
+    cashflowRecommendedAction() {
+      return this.cashflowDecisionData?.recommendedAction || this.cashflowFallbackRecommendedAction
+    },
+    cashflowRecommendedActionAmount() {
+      return Number(this.cashflowDecisionData?.recommendedActionAmount || this.cashflowDecisionData?.requiredMonthlyAdjustment || 0)
+    },
+    cashflowOpportunityMessage() {
+      return this.cashflowDecisionData?.opportunityMessage || this.cashflowFallbackOpportunity
+    },
+    cashflowFallbackSummary() {
+      if (this.netMonthlyCashflow < 0) {
+        return this.$t('overview.cashflow_fallback_negative', {
+          amount: this.formatCurrency(Math.abs(this.netMonthlyCashflow)),
+        })
+      }
+      if (this.goalsAtRisk.length > 0) {
+        return this.$t('overview.cashflow_fallback_watch', { count: this.goalsAtRisk.length })
+      }
+      return this.$t('overview.cashflow_fallback_positive', {
+        amount: this.formatCurrency(this.netMonthlyCashflow),
+      })
+    },
+    cashflowFallbackPrimaryDriver() {
+      if (this.netMonthlyCashflow < 0) {
+        return this.$t('overview.cashflow_primary_driver_negative', {
+          amount: this.formatCurrency(Math.abs(this.netMonthlyCashflow)),
+        })
+      }
+      if (this.goalsAtRisk.length > 0) {
+        return this.$t('overview.cashflow_primary_driver_goal', {
+          goal: this.goalsAtRisk[0]?.name || this.$t('overview.goal_generic_label'),
+        })
+      }
+      return ''
+    },
+    cashflowFallbackRecommendedAction() {
+      if (this.netMonthlyCashflow < 0) {
+        return this.$t('overview.cashflow_recommended_action_negative')
+      }
+      if (this.goalsAtRisk.length > 0) {
+        return this.$t('overview.cashflow_recommended_action_goal')
+      }
+      if (this.netMonthlyCashflow > 0) {
+        return this.$t('overview.cashflow_recommended_action_positive')
+      }
+      return ''
+    },
+    cashflowFallbackOpportunity() {
+      if (this.goalOpportunities.length > 0 && this.netMonthlyCashflow > 0) {
+        return this.$t('overview.cashflow_opportunity_goal', {
+          goal: this.goalOpportunities[0]?.name || this.$t('overview.goal_generic_label'),
+          amount: this.formatCurrency(this.netMonthlyCashflow),
+        })
+      }
+      if (this.netMonthlyCashflow > 0) {
+        return this.$t('overview.cashflow_opportunity_positive', {
+          amount: this.formatCurrency(this.netMonthlyCashflow),
+        })
+      }
+      return ''
     },
     drillDownTransactions() {
       const items = Array.isArray(this.monthTransactions) ? this.monthTransactions : []
@@ -713,6 +1023,7 @@ export default {
       goalsAtRisk: [],
       goalOpportunities: [],
       upcomingExpenses: [],
+      cashflowInsightsSummary: null,
       selectedTimePeriod: '3m',
       selectedCategory: '',
       isYearly: false,
@@ -763,6 +1074,7 @@ export default {
     this.fetchMonthTransactions()
     this.fetchOpenFinanceConflicts()
     this.fetchOpenFinanceObservabilitySummary()
+    this.fetchCashflowInsightsSummary()
     this.fetchGoalsAtRisk()
     this.fetchCategories()
     this.createChart()
@@ -860,6 +1172,16 @@ export default {
           this.openFinanceObservabilitySummary = null
         })
     },
+    fetchCashflowInsightsSummary() {
+      AiService.getCashflowInsights({ months: 6 })
+        .then((response) => {
+          this.cashflowInsightsSummary = response?.data || null
+        })
+        .catch((error) => {
+          console.error('Error fetching cashflow insights summary:', error)
+          this.cashflowInsightsSummary = null
+        })
+    },
     fetchGoalsAtRisk() {
       FinancialGoalService.fetchFinancialGoals()
         .then((response) => {
@@ -881,6 +1203,9 @@ export default {
     },
     openGoalsView() {
       this.$router.push({ path: '/planning/goals' })
+    },
+    openCashflowView() {
+      this.$router.push({ path: '/cashflow' })
     },
     createChart() {
       const trendsCtx = this.$refs.trendsChart?.getContext?.('2d')
@@ -1031,11 +1356,19 @@ export default {
       const net = this.netMonthlyCashflow
       return Number(this.dashboardSummary.totalBalance || 0) + net * months
     },
+    projectedBalanceForMonths(months) {
+      const forecast = Array.isArray(this.cashflowDecisionData?.forecast) ? this.cashflowDecisionData.forecast : []
+      const item = forecast.find((entry, index) => index === months - 1)
+      if (item && Number.isFinite(Number(item.projectedBalance))) {
+        return Number(item.projectedBalance)
+      }
+      return this.projectBalance(months)
+    },
     paceStatusLabel(status) {
-      if (status === 'AT_RISK') return 'Em risco'
-      if (status === 'AHEAD') return 'Adiantado'
-      if (status === 'ON_TRACK') return 'No ritmo'
-      return 'Sem dados'
+      if (status === 'AT_RISK') return this.$t('overview.goal_pace_at_risk')
+      if (status === 'AHEAD') return this.$t('overview.goal_pace_ahead')
+      if (status === 'ON_TRACK') return this.$t('overview.goal_pace_on_track')
+      return this.$t('overview.goal_pace_no_data')
     }
   }
 }
@@ -1409,6 +1742,30 @@ export default {
   color: #667eea;
 }
 
+.decision-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.decision-chip--success {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.decision-chip--warning {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.decision-chip--danger {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
 .insights-grid {
   display: flex;
   flex-wrap: wrap;
@@ -1446,9 +1803,43 @@ export default {
   border: 1px solid rgba(102, 126, 234, 0.12);
 }
 
+.decision-card--critical {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.18);
+}
+
+.decision-card--high {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.18);
+}
+
+.decision-card--medium {
+  background: rgba(102, 126, 234, 0.05);
+}
+
+.decision-card--opportunity {
+  background: rgba(34, 197, 94, 0.08);
+  border-color: rgba(34, 197, 94, 0.18);
+}
+
 .v-theme--dark .decision-card {
   background: rgba(102, 126, 234, 0.14);
   border-color: rgba(102, 126, 234, 0.2);
+}
+
+.v-theme--dark .decision-card--critical {
+  background: rgba(239, 68, 68, 0.16);
+  border-color: rgba(239, 68, 68, 0.24);
+}
+
+.v-theme--dark .decision-card--high {
+  background: rgba(245, 158, 11, 0.16);
+  border-color: rgba(245, 158, 11, 0.24);
+}
+
+.v-theme--dark .decision-card--opportunity {
+  background: rgba(34, 197, 94, 0.16);
+  border-color: rgba(34, 197, 94, 0.24);
 }
 
 .decision-card__header {
@@ -1464,6 +1855,22 @@ export default {
   font-size: 1.05rem;
   font-weight: 600;
   color: #1a1a1a;
+}
+
+.cashflow-action-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.projection-context {
+  margin-top: 6px;
+  color: #475569;
+  line-height: 1.45;
+}
+
+.v-theme--dark .projection-context {
+  color: #cbd5e1;
 }
 
 .v-theme--dark .decision-card__title {

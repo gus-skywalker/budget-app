@@ -20,5 +20,8 @@ export default {
   },
   deleteContribution(goalId: string, contributionId: string): Promise<any> {
     return axiosInterceptor.delete(`${FINANCIAL_GOALS_API_URL}/${goalId}/contributions/${contributionId}`)
+  },
+  suggestGoalsBasedOnIncome(overview: { totalIncome: number; totalExpense: number }): Promise<any> {
+    return axiosInterceptor.post(`${FINANCIAL_GOALS_API_URL}/suggest-goals`, overview)
   }
 }

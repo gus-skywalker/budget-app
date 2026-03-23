@@ -102,7 +102,7 @@
                       :loading="isLoadingProfile"
                     ></v-file-input>
                     <v-select 
-                      v-model="locale" 
+                      v-model="profileLocale" 
                       :items="availableLanguages" 
                       item-title="text" 
                       item-value="value"
@@ -1002,6 +1002,7 @@ const passwordFeedback = ref<{ type: 'success' | 'error'; message: string }>({
 })
 const twoFactorAuth = ref(false)
 const isGoogleConnected = computed(() => isOAuthUser.value)
+const profileLocale = ref(locale.value)
 
 // Preferências
 const notificationEmail = ref(true)
@@ -1376,7 +1377,7 @@ const loadUserProfile = async () => {
   username.value = normalizeOptionalText(fallbackUser?.username) || ''
   email.value = normalizeOptionalText(fallbackUser?.email) || ''
   if (normalizeOptionalText(fallbackUser?.language)) {
-    locale.value = toUiLocale(fallbackUser.language)
+    profileLocale.value = toUiLocale(fallbackUser.language)
   }
 
   try {
@@ -1398,6 +1399,7 @@ const loadUserProfile = async () => {
 
     const apiLanguage = normalizeOptionalText(payload.language) || normalizeOptionalText(fallbackUser?.language) || 'PT'
     const uiLocale = toUiLocale(apiLanguage)
+    profileLocale.value = uiLocale
     locale.value = uiLocale
     userStore.setLanguage(apiLanguage)
 
@@ -1465,7 +1467,7 @@ const saveProfile = async () => {
   const payload = {
     username: username.value.trim(),
     email: email.value.trim(),
-    language: toUserLanguageCode(locale.value)
+    language: toUserLanguageCode(profileLocale.value)
   }
 
   isSavingProfile.value = true
@@ -1476,6 +1478,7 @@ const saveProfile = async () => {
     const updatedLanguage = String(updated.language || payload.language || 'PT')
     userStore.setLanguage(updatedLanguage)
     locale.value = toUiLocale(updatedLanguage)
+    profileLocale.value = toUiLocale(updatedLanguage)
 
     userStore.setUser({
       id: profileUserId.value,
