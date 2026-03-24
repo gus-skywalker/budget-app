@@ -10,6 +10,14 @@
                 </div>
                 <div class="card-content">
                     <v-row class="mb-4">
+                        <v-col cols="12">
+                            <div class="report-scope-row">
+                                <v-chip size="small" color="#667eea" variant="outlined">
+                                    <v-icon start size="14">mdi-account-group-outline</v-icon>
+                                    {{ $t('transactionVisibility.reportFilter') }}
+                                </v-chip>
+                            </div>
+                        </v-col>
                         <!-- Tipo de Relatório -->
                         <v-col cols="12" md="4">
                             <v-select 
@@ -423,6 +431,14 @@ export default {
 
 };
 </script>
+
+<style scoped>
+.report-scope-row {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 8px;
+}
+</style>
 
 <style scoped>
 .report-generator-wrapper {

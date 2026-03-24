@@ -6,7 +6,7 @@ export interface Notification {
   destinationUser: string;
   message: string;
   status: string;
-  // Add other fields as needed
+  relatedEntityId?: string;
 }
 
 export interface UserSettings {

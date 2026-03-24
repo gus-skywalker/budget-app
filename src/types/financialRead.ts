@@ -10,6 +10,7 @@ export interface AccountView {
 export type TransactionDirection = 'INFLOW' | 'OUTFLOW'
 export type TransactionSource = 'MANUAL' | 'OPEN_FINANCE' | 'SYSTEM'
 export type TransactionStatus = 'PENDING' | 'POSTED' | 'CANCELLED'
+export type TransactionVisibilityScope = 'PRIVATE' | 'COMPANY'
 
 export interface TransactionView {
   id: string
@@ -21,6 +22,8 @@ export interface TransactionView {
   accountId: string | null
   accountName: string | null
   status: string
+  visibilityScope?: TransactionVisibilityScope
+  ownerUserId?: string | null
   source?: TransactionSource
   openFinance?: boolean
   openFinanceRawStatus?: string | null
@@ -43,6 +46,7 @@ export interface TransactionRequest {
   source?: TransactionSource
   status?: TransactionStatus
   externalId?: string | null
+  visibilityScope?: TransactionVisibilityScope
   entries: LedgerEntryRequest[]
 }
 
@@ -51,6 +55,14 @@ export interface TransactionAttachmentListItem {
   fileName: string
   kind: string | null
   sizeBytes: number
+  createdAt: string
+}
+
+export interface TransactionCommentView {
+  id: string
+  transactionId: string
+  authorUserId: string
+  body: string
   createdAt: string
 }
 

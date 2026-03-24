@@ -73,6 +73,21 @@
               </v-col>
               <v-col cols="12">
                 <v-select
+                  :label="$t('transactionVisibility.label')"
+                  v-model="income.visibilityScope"
+                  :items="localizedTransactionVisibilityOptions"
+                  item-title="title"
+                  item-value="value"
+                  variant="outlined"
+                  density="comfortable"
+                  color="#667eea"
+                  class="modern-input"
+                  :hint="transactionVisibilityHint(income.visibilityScope)"
+                  persistent-hint
+                ></v-select>
+              </v-col>
+              <v-col cols="12">
+                <v-select
                   :label="$t('common.account')"
                   v-model="income.accountId"
                   :items="financialAccounts"
@@ -166,7 +181,9 @@
             </div>
             <div class="transaction-filter-row">
               <v-chip-group v-model="incomeListFilter" mandatory selected-class="filter-chip-selected">
-                <v-chip size="small" value="all" variant="outlined">Todas</v-chip>
+                <v-chip size="small" value="all" variant="outlined">{{ $t('transactionVisibility.filters.all') }}</v-chip>
+                <v-chip size="small" value="company" variant="outlined">{{ $t('transactionVisibility.filters.company') }}</v-chip>
+                <v-chip size="small" value="private" variant="outlined">{{ $t('transactionVisibility.filters.private') }}</v-chip>
                 <v-chip size="small" value="open-finance" variant="outlined">Open Finance</v-chip>
                 <v-chip size="small" value="conflicts" variant="outlined">Conflitos</v-chip>
               </v-chip-group>
@@ -181,6 +198,7 @@
                   @toggle-recurring="toggleRecurring" 
                   @deleteIncome="deleteIncome"
                   @resolveConflict="handleResolveIncomeConflict"
+                  @openComments="openTransactionComments"
                   @select="startEditingIncome"
                 ></income-item>
               </v-list>
@@ -338,8 +356,8 @@
                       <strong>{{ $t('expense.ai_suggested_category') }}:</strong>
                       {{ expenseCategorySuggestion.suggestedCategory?.name }}
                     </div>
-                    <div v-if="expenseCategorySuggestion.reasoning" class="ai-category-suggestion__reasoning">
-                      {{ expenseCategorySuggestion.reasoning }}
+                    <div v-if="expenseCategoryReasoningLabel(expenseCategorySuggestion)" class="ai-category-suggestion__reasoning">
+                      {{ expenseCategoryReasoningLabel(expenseCategorySuggestion) }}
                     </div>
                     <div class="ai-category-suggestion__actions">
                       <v-btn
@@ -377,19 +395,19 @@
                   persistent-hint
                 ></v-select>
               </v-col>
-              <v-col cols="12">
+              <v-col cols="12" sm="6">
                 <v-select 
-                  :label="$t('expense.share_with_members')" 
-                  v-model="expense.selectedUsers" 
-                  :items="users"
-                  item-title="name" 
-                  item-value="id" 
-                  multiple
+                  :label="$t('transactionVisibility.label')" 
+                  v-model="expense.visibilityScope" 
+                  :items="localizedTransactionVisibilityOptions"
+                  item-title="title" 
+                  item-value="value" 
                   variant="outlined"
                   density="comfortable"
                   color="#667eea"
                   class="modern-input"
-                  :disabled="!users.length"
+                  :hint="transactionVisibilityHint(expense.visibilityScope)"
+                  persistent-hint
                 ></v-select>
               </v-col>
             </v-row>
@@ -457,7 +475,9 @@
             </v-row>
             <div class="transaction-filter-row">
               <v-chip-group v-model="expenseListFilter" mandatory selected-class="filter-chip-selected">
-                <v-chip size="small" value="all" variant="outlined">Todas</v-chip>
+                <v-chip size="small" value="all" variant="outlined">{{ $t('transactionVisibility.filters.all') }}</v-chip>
+                <v-chip size="small" value="company" variant="outlined">{{ $t('transactionVisibility.filters.company') }}</v-chip>
+                <v-chip size="small" value="private" variant="outlined">{{ $t('transactionVisibility.filters.private') }}</v-chip>
                 <v-chip size="small" value="open-finance" variant="outlined">Open Finance</v-chip>
                 <v-chip size="small" value="conflicts" variant="outlined">Conflitos</v-chip>
                 <v-chip size="small" value="uncategorized" variant="outlined">{{ $t('expense.uncategorized_only') }}</v-chip>
@@ -515,6 +535,7 @@
                   @resolveConflict="handleResolveExpenseConflict"
                   @suggestCategory="handleSuggestExpenseCategoryInline"
                   @applySuggestion="applyStoredExpenseSuggestionInline"
+                  @openComments="openTransactionComments"
                   @deleteExpense="deleteExpense"
                   @select="startEditingExpense"
                 ></expense-item>
@@ -570,6 +591,15 @@
         </v-btn>
       </template>
     </v-snackbar>
+    <TransactionCommentsDialog
+      :visible="transactionCommentsDialog.show"
+      :loading="transactionCommentsDialog.loading"
+      :submitting="transactionCommentsDialog.submitting"
+      :comments="transactionCommentsDialog.comments"
+      :transaction-description="transactionCommentsDialog.transactionDescription"
+      @update:visible="handleCommentsDialogVisibility"
+      @submit="submitTransactionComment"
+    />
     </v-container>
   </div>
 </template>
@@ -577,6 +607,7 @@
 <script>
 import IncomeItem from '../components/IncomeItem.vue'
 import ExpenseItem from '../components/ExpenseItem.vue'
+import TransactionCommentsDialog from '@/components/TransactionCommentsDialog.vue'
 import IncomeService from '@/services/IncomeService'
 import ExpenseService from '@/services/ExpenseService'
 import OpenFinanceService from '@/services/OpenFinanceService'
@@ -693,6 +724,7 @@ export default {
   components: {
     IncomeItem,
     ExpenseItem,
+    TransactionCommentsDialog,
   },
   data() {
     // const currentYear = new Date().getFullYear();
@@ -710,6 +742,7 @@ export default {
         paymentMethod: null,
         isRecurring: false,
         accountId: null,
+        visibilityScope: 'COMPANY',
       },
       expense: {
         date: today,
@@ -720,6 +753,7 @@ export default {
         selectedUsers: [],
         accountId: null,
         openFinanceBankCategoryId: null,
+        visibilityScope: 'COMPANY',
       },
       categoryIcons: {
         groceries: 'mdi-cart',
@@ -747,6 +781,10 @@ export default {
       selectedExpenseYear: currentYear,
         selectedLanguage: this.$i18n?.locale || 'pt',
       users: [],
+      transactionVisibilityOptions: [
+        { titleKey: 'transactionVisibility.company', value: 'COMPANY' },
+        { titleKey: 'transactionVisibility.private', value: 'PRIVATE' },
+      ],
       openFinanceConflicts: [],
       resolvingConflictId: null,
       resolvingConflictAction: null,
@@ -800,6 +838,14 @@ export default {
         text: '',
         color: 'success',
       },
+      transactionCommentsDialog: {
+        show: false,
+        loading: false,
+        submitting: false,
+        transactionId: null,
+        transactionDescription: '',
+        comments: [],
+      },
       alertSettings: null,
     }
   },
@@ -808,6 +854,12 @@ export default {
       return this.financialAccounts.length
         ? this.$t('common.account_hint')
         : this.$t('validation.account_required')
+    },
+    localizedTransactionVisibilityOptions() {
+      return this.transactionVisibilityOptions.map((option) => ({
+        value: option.value,
+        title: this.$t(option.titleKey),
+      }))
     },
     canGoToPreviousIncomePage() {
       return this.incomePagination.offset > 0
@@ -849,10 +901,18 @@ export default {
       }
 
       return [...filteredItems].sort((left, right) => {
-        const leftHasSuggestion = Boolean(this.getStoredExpenseSuggestion(left.id))
-        const rightHasSuggestion = Boolean(this.getStoredExpenseSuggestion(right.id))
+        const leftSuggestion = this.getStoredExpenseSuggestion(left.id)
+        const rightSuggestion = this.getStoredExpenseSuggestion(right.id)
+        const leftHasSuggestion = Boolean(leftSuggestion)
+        const rightHasSuggestion = Boolean(rightSuggestion)
         if (leftHasSuggestion === rightHasSuggestion) {
-          return 0
+          if (!leftHasSuggestion) {
+            return 0
+          }
+
+          const leftConfidence = Number(leftSuggestion?.suggestedCategory?.confidence || 0)
+          const rightConfidence = Number(rightSuggestion?.suggestedCategory?.confidence || 0)
+          return rightConfidence - leftConfidence
         }
         return leftHasSuggestion ? -1 : 1
       })
@@ -884,7 +944,16 @@ export default {
       return account?.displayName || account?.name || this.routeExpenseAccountId
     },
     activeExpenseFilterLabel() {
-      return this.expenseListFilter === 'open-finance' ? 'Somente Open Finance' : null
+      if (this.expenseListFilter === 'open-finance') {
+        return 'Somente Open Finance'
+      }
+      if (this.expenseListFilter === 'company') {
+        return this.$t('transactionVisibility.filters.company')
+      }
+      if (this.expenseListFilter === 'private') {
+        return this.$t('transactionVisibility.filters.private')
+      }
+      return null
     },
     openFinanceConflictMap() {
       return this.openFinanceConflicts.reduce((accumulator, conflict) => {
@@ -901,6 +970,12 @@ export default {
       if (this.incomeListFilter === 'open-finance') {
         return 'Nenhuma entrada Open Finance neste período.'
       }
+      if (this.incomeListFilter === 'company') {
+        return this.$t('transactionVisibility.empty.companyIncome')
+      }
+      if (this.incomeListFilter === 'private') {
+        return this.$t('transactionVisibility.empty.privateIncome')
+      }
       return 'Nenhum conflito de reconciliação em entradas neste período.'
     },
     expenseEmptyMessage() {
@@ -909,6 +984,12 @@ export default {
       }
       if (this.expenseListFilter === 'open-finance') {
         return 'Nenhuma despesa Open Finance neste período.'
+      }
+      if (this.expenseListFilter === 'company') {
+        return this.$t('transactionVisibility.empty.companyExpense')
+      }
+      if (this.expenseListFilter === 'private') {
+        return this.$t('transactionVisibility.empty.privateExpense')
       }
       if (this.expenseListFilter === 'uncategorized') {
         return this.$t('expense.no_uncategorized_entries')
@@ -953,6 +1034,12 @@ export default {
       }
       if (filter === 'open-finance') {
         return items.filter((item) => Boolean(item?.openFinance))
+      }
+      if (filter === 'company') {
+        return items.filter((item) => (item?.visibilityScope || 'COMPANY') === 'COMPANY')
+      }
+      if (filter === 'private') {
+        return items.filter((item) => item?.visibilityScope === 'PRIVATE')
       }
       if (filter === 'conflicts') {
         return items.filter((item) => item?.reconciliationStatus === 'CONFLICT_DUPLICATE')
@@ -1002,6 +1089,12 @@ export default {
           year: String(this.selectedExpenseYear),
         },
       })
+    },
+    transactionVisibilityHint(scope) {
+      if (scope === 'PRIVATE') {
+        return this.$t('transactionVisibility.hintPrivate')
+      }
+      return this.$t('transactionVisibility.hintCompany')
     },
     enrichExpenseWithConflict(expense) {
       const conflict = this.openFinanceConflictMap[expense?.id]
@@ -1060,7 +1153,7 @@ export default {
       return null
     },
     buildIncomePayload({ normalizedDate, paymentMethodId, amount }) {
-      const { description, isRecurring, accountId } = this.income
+      const { description, isRecurring, accountId, visibilityScope } = this.income
       return {
         date: normalizedDate,
         amount,
@@ -1068,6 +1161,7 @@ export default {
         paymentMethod: paymentMethodId,
         isRecurring,
         accountId,
+        visibilityScope,
       }
     },
     buildExpensePayload({ normalizedDate, categoryId, paymentMethodId, amount }) {
@@ -1075,6 +1169,7 @@ export default {
         description,
         selectedUsers = [],
         accountId,
+        visibilityScope,
       } = this.expense
 
       const sanitizedSelectedUsers = Array.isArray(selectedUsers) ? [...selectedUsers] : []
@@ -1087,6 +1182,7 @@ export default {
         paymentMethod: paymentMethodId,
         selectedUsers: sanitizedSelectedUsers,
         accountId,
+        visibilityScope,
       }
     },
     expenseCategorySuggestionSourceLabel(source) {
@@ -1124,7 +1220,22 @@ export default {
         confidenceLabel: Number.isFinite(confidence) && confidence > 0
           ? this.$t('expense.ai_confidence_short', { value: Math.round(confidence * 100) })
           : null,
+        reasoningLabel: this.expenseCategoryReasoningLabel(suggestion),
       }
+    },
+    expenseCategoryReasoningLabel(suggestion) {
+      const source = String(suggestion?.source || '').trim()
+      const reasoning = String(suggestion?.reasoning || '').trim().toLowerCase()
+
+      if (source === 'BANK_MAPPING') return this.$t('expense.ai_reason_bank_mapping')
+      if (reasoning.includes('recent categorized expenses')) return this.$t('expense.ai_reason_recent_history')
+      if (reasoning.includes('confirmed manually')) return this.$t('expense.ai_reason_manual_feedback')
+      if (reasoning.includes('repeated categorized expenses')) return this.$t('expense.ai_reason_repeated_history')
+      if (reasoning.includes('exact description')) return this.$t('expense.ai_reason_exact_match')
+      if (reasoning.includes('similar description')) return this.$t('expense.ai_reason_similar_match')
+      if (reasoning.includes('recurring terms')) return this.$t('expense.ai_reason_recurring_terms')
+      if (source === 'DOMAIN_ALIAS') return this.$t('expense.ai_reason_domain_alias')
+      return reasoning ? this.$t('expense.ai_reason_history_generic') : ''
     },
     isWeakCategorySuggestion(suggestion) {
       const confidence = Number(suggestion?.suggestedCategory?.confidence || 0)
@@ -1855,6 +1966,7 @@ export default {
         paymentMethod: null,
         isRecurring: false,
         accountId: this.getDefaultFinancialAccountId(),
+        visibilityScope: 'COMPANY',
       }
       this.isEditingIncome = false
       this.editingIncomeId = null
@@ -1869,6 +1981,7 @@ export default {
         selectedUsers: [],
         accountId: this.getDefaultFinancialAccountId(),
         openFinanceBankCategoryId: null,
+        visibilityScope: 'COMPANY',
       }
       this.isEditingExpense = false
       this.editingExpenseId = null
@@ -1921,6 +2034,57 @@ export default {
           })
       }
     },
+    handleCommentsDialogVisibility(value) {
+      this.transactionCommentsDialog.show = value
+      if (!value) {
+        this.transactionCommentsDialog.transactionId = null
+        this.transactionCommentsDialog.transactionDescription = ''
+        this.transactionCommentsDialog.comments = []
+      }
+    },
+    openTransactionComments(transaction) {
+      if (!transaction?.id || transaction.visibilityScope !== 'COMPANY') {
+        return
+      }
+      this.transactionCommentsDialog.show = true
+      this.transactionCommentsDialog.transactionId = transaction.id
+      this.transactionCommentsDialog.transactionDescription = transaction.description || ''
+      this.loadTransactionComments(transaction.id)
+    },
+    loadTransactionComments(transactionId) {
+      this.transactionCommentsDialog.loading = true
+      FinancialReadService.listTransactionComments(transactionId)
+        .then((response) => {
+          this.transactionCommentsDialog.comments = Array.isArray(response?.data) ? response.data : []
+        })
+        .catch((error) => {
+          console.error('Error loading transaction comments:', error)
+          this.transactionCommentsDialog.comments = []
+          this.showToast(this.$t('transactionComments.loadError'), 'error')
+        })
+        .finally(() => {
+          this.transactionCommentsDialog.loading = false
+        })
+    },
+    submitTransactionComment(body) {
+      const transactionId = this.transactionCommentsDialog.transactionId
+      if (!transactionId || !body?.trim()) {
+        return
+      }
+      this.transactionCommentsDialog.submitting = true
+      FinancialReadService.addTransactionComment(transactionId, body)
+        .then(() => {
+          this.showToast(this.$t('transactionComments.submitSuccess'), 'success')
+          this.loadTransactionComments(transactionId)
+        })
+        .catch((error) => {
+          console.error('Error adding transaction comment:', error)
+          this.showToast(this.$t('transactionComments.submitError'), 'error')
+        })
+        .finally(() => {
+          this.transactionCommentsDialog.submitting = false
+        })
+    },
     startEditingIncome(income) {
       console.debug('[BudgetView] startEditingIncome', income)
       this.isEditingIncome = true
@@ -1934,6 +2098,7 @@ export default {
         ),
         isRecurring: income.isRecurring ?? false,
         accountId: income.accountId ?? null,
+        visibilityScope: income.visibilityScope ?? 'COMPANY',
       }
     },
     cancelIncomeEdit() {
@@ -1964,6 +2129,7 @@ export default {
           : [],
         accountId: expense.accountId ?? null,
         openFinanceBankCategoryId: expense.openFinanceBankCategoryId ?? null,
+        visibilityScope: expense.visibilityScope ?? 'COMPANY',
       }
       this.expenseCategorySuggestion = null
 

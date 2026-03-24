@@ -12,6 +12,7 @@ import PlanningBudgetView from '@/views/PlanningBudgetView.vue'
 import PlanningScenariosView from '@/views/PlanningScenariosView.vue'
 import DecisionsView from '@/views/DecisionsView.vue'
 import InsightsView from '@/views/InsightsView.vue'
+import ActivityView from '@/views/ActivityView.vue'
 import OAuth2Redirect from '@/views/redirect_url/OAuth2Redirect.vue'
 import PrivacyPolicy from '@/components/compliance/PrivacyPolicy.vue'
 import TermsOfUse from '@/components/compliance/TermsOfUse.vue'
@@ -95,6 +96,12 @@ const router = createRouter({
       path: '/insights',
       name: 'insights',
       component: InsightsView,
+      meta: { requiresAuth: true, requiresWorkspace: true }
+    },
+    {
+      path: '/activity',
+      name: 'activity',
+      component: ActivityView,
       meta: { requiresAuth: true, requiresWorkspace: true }
     },
     // GRUPOS E CATEGORIAS

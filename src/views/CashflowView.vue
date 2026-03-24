@@ -8,6 +8,14 @@
         </div>
       </div>
 
+      <div class="scope-badge-row">
+        <v-chip size="small" color="#667eea" variant="outlined">
+          <v-icon start size="14">mdi-account-group-outline</v-icon>
+          {{ $t('transactionVisibility.cashflowBadge') }}
+        </v-chip>
+        <span class="scope-badge-note">{{ $t('transactionVisibility.cashflowScopeNote') }}</span>
+      </div>
+
       <div class="modern-card">
         <div class="card-header">
           <h2 class="card-title">
@@ -45,6 +53,29 @@
               <span>{{ $t('cashflow.insights_context_experimental') }}</span>
             </div>
           </div>
+          <div v-if="hasCreditCardContext" class="credit-card-context">
+            <div class="credit-card-context__header">
+              <h3>{{ $t('cashflow.credit_card_context_title') }}</h3>
+              <p>{{ $t('cashflow.credit_card_context_subtitle') }}</p>
+            </div>
+            <div class="credit-card-context__grid">
+              <div v-if="pendingCreditCardAmount > 0" class="credit-card-context__card credit-card-context__card--warning">
+                <span>{{ $t('cashflow.credit_card_pending_title') }}</span>
+                <strong>{{ formatCurrency(pendingCreditCardAmount) }}</strong>
+                <p>{{ $t('cashflow.credit_card_pending_message', { amount: formatCurrency(pendingCreditCardAmount) }) }}</p>
+              </div>
+              <div v-if="recurringCreditCardAverage > 0" class="credit-card-context__card">
+                <span>{{ $t('cashflow.credit_card_recurring_title') }}</span>
+                <strong>{{ formatCurrency(recurringCreditCardAverage) }}</strong>
+                <p>{{ $t('cashflow.credit_card_recurring_message', { count: recurringCreditCardCount, amount: formatCurrency(recurringCreditCardAverage) }) }}</p>
+              </div>
+              <div v-if="creditCardShare > 0" class="credit-card-context__card">
+                <span>{{ $t('cashflow.credit_card_share_title') }}</span>
+                <strong>{{ creditCardShareLabel }}</strong>
+                <p>{{ $t('cashflow.credit_card_share_message', { share: creditCardShareLabel }) }}</p>
+              </div>
+            </div>
+          </div>
           <div class="insights-grid">
             <MonthlyExpensesPrediction />
             <AnomalyDetectionTable />
@@ -56,9 +87,41 @@
 </template>
 
 <script setup lang="ts">
+import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import CashflowDashboard from '@/components/ai/CashflowDashboard.vue'
 import MonthlyExpensesPrediction from '@/components/ai/MonthlyExpensesPrediction.vue'
 import AnomalyDetectionTable from '@/components/ai/AnomalyDetectionTable.vue'
+import AiService from '@/services/aiService'
+
+const { locale } = useI18n()
+
+const predictionSummary = ref<any | null>(null)
+
+const creditCardShare = computed(() => Number(predictionSummary.value?.creditCardShare || 0))
+const creditCardShareLabel = computed(() => `${Math.round(creditCardShare.value * 100)}%`)
+const recurringCreditCardAverage = computed(() => Number(predictionSummary.value?.recurringCreditCardAverage || 0))
+const recurringCreditCardCount = computed(() => Number(predictionSummary.value?.recurringCreditCardCount || 0))
+const pendingCreditCardAmount = computed(() => Number(predictionSummary.value?.pendingCreditCardAmount || 0))
+const hasCreditCardContext = computed(() =>
+  creditCardShare.value > 0 || recurringCreditCardAverage.value > 0 || pendingCreditCardAmount.value > 0
+)
+
+const formatCurrency = (value: number) =>
+  Number(value || 0).toLocaleString(
+    locale.value === 'en' ? 'en-US' : locale.value === 'fr' ? 'fr-FR' : locale.value === 'es' ? 'es-ES' : 'pt-BR',
+    { style: 'currency', currency: 'BRL' }
+  )
+
+onMounted(async () => {
+  try {
+    const { data } = await AiService.predictMonthlyExpenses({ forecastMonths: 3 })
+    predictionSummary.value = data
+  } catch (error) {
+    console.error('Error fetching credit card prediction context:', error)
+    predictionSummary.value = null
+  }
+})
 </script>
 
 <style scoped>
@@ -104,8 +167,25 @@ import AnomalyDetectionTable from '@/components/ai/AnomalyDetectionTable.vue'
   font-size: 1rem;
 }
 
+.scope-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.scope-badge-note {
+  color: #64748b;
+  font-size: 0.92rem;
+}
+
 .v-theme--dark .page-subtitle {
   color: #b0b0b0;
+}
+
+.v-theme--dark .scope-badge-note {
+  color: #cbd5e1;
 }
 
 .modern-card {
@@ -229,5 +309,92 @@ import AnomalyDetectionTable from '@/components/ai/AnomalyDetectionTable.vue'
   display: grid;
   gap: 24px;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.credit-card-context {
+  display: grid;
+  gap: 14px;
+  margin: 0 0 20px;
+}
+
+.credit-card-context__header {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.credit-card-context__header h3,
+.credit-card-context__header p {
+  margin: 0;
+}
+
+.credit-card-context__header h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.credit-card-context__header p {
+  color: #64748b;
+  font-size: 0.92rem;
+}
+
+.credit-card-context__grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.credit-card-context__card {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.95rem 1rem;
+  border-radius: 14px;
+  background: rgba(248, 250, 252, 0.92);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.credit-card-context__card--warning {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.2);
+}
+
+.credit-card-context__card span {
+  color: #64748b;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.credit-card-context__card strong {
+  color: #0f172a;
+  font-size: 1.15rem;
+}
+
+.credit-card-context__card p {
+  margin: 0;
+  color: #475569;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.v-theme--dark .credit-card-context__header h3,
+.v-theme--dark .credit-card-context__card strong {
+  color: #f8fafc;
+}
+
+.v-theme--dark .credit-card-context__header p,
+.v-theme--dark .credit-card-context__card p {
+  color: #cbd5e1;
+}
+
+.v-theme--dark .credit-card-context__card {
+  background: rgba(51, 65, 85, 0.55);
+  border-color: rgba(148, 163, 184, 0.2);
+}
+
+.v-theme--dark .credit-card-context__card--warning {
+  background: rgba(245, 158, 11, 0.16);
+  border-color: rgba(245, 158, 11, 0.24);
 }
 </style>

@@ -50,7 +50,8 @@ function pollNotifications() {
           id: notification.id,
           destinationUser: notification.destinationUser,
           message: notification.message,
-          status: notification.status
+          status: notification.status,
+          relatedEntityId: notification.relatedEntityId
         }))
         if (notifications.value.length > 0) {
           showNotificationsPopup.value = true

@@ -5,6 +5,13 @@
                 <v-col cols="12">
                     <h1>{{ $t('report_view.title') }}</h1>
                     <p class="report-view-subtitle">{{ $t('report_view.subtitle') }}</p>
+                    <v-alert
+                      type="info"
+                      variant="tonal"
+                      class="report-view-scope-alert"
+                    >
+                      {{ $t('transactionVisibility.reportScopeNote') }}
+                    </v-alert>
                     <report-generator
                       :initial-report-type="initialReportType"
                       :initial-start-date="initialStartDate"
@@ -49,6 +56,10 @@ export default {
 .report-view-subtitle {
     color: rgba(0, 0, 0, 0.62);
     margin: 8px 0 20px;
+}
+
+.report-view-scope-alert {
+    margin-bottom: 20px;
 }
 
 .v-theme--dark .report-view-subtitle {

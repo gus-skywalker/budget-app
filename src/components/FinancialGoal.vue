@@ -231,8 +231,8 @@
                       <strong>{{ $t('financial_goals.ai_suggested_category') }}:</strong>
                       {{ goalCategorySuggestion.suggestedCategory?.name }}
                     </div>
-                    <div v-if="goalCategorySuggestion.reasoning" class="goal-ai-suggestion__reasoning">
-                      {{ goalCategorySuggestion.reasoning }}
+                    <div v-if="goalCategoryReasoningLabel(goalCategorySuggestion)" class="goal-ai-suggestion__reasoning">
+                      {{ goalCategoryReasoningLabel(goalCategorySuggestion) }}
                     </div>
                     <div class="goal-ai-suggestion__actions">
                       <v-btn
@@ -927,8 +927,23 @@ export default {
     goalCategorySuggestionSourceLabel(source) {
       if (source === 'BANK_MAPPING') return this.$t('financial_goals.ai_source_bank_mapping');
       if (source === 'HISTORY') return this.$t('financial_goals.ai_source_history');
+      if (source === 'DOMAIN_ALIAS') return this.$t('financial_goals.ai_source_domain_alias');
       if (source === 'AI_FALLBACK') return this.$t('financial_goals.ai_source_fallback');
       return this.$t('financial_goals.ai_source_generic');
+    },
+    goalCategoryReasoningLabel(suggestion) {
+      const source = String(suggestion?.source || '').trim();
+      const reasoning = String(suggestion?.reasoning || '').trim().toLowerCase();
+
+      if (source === 'BANK_MAPPING') return this.$t('financial_goals.ai_reason_bank_mapping');
+      if (reasoning.includes('recent categorized expenses')) return this.$t('financial_goals.ai_reason_recent_history');
+      if (reasoning.includes('confirmed manually')) return this.$t('financial_goals.ai_reason_manual_feedback');
+      if (reasoning.includes('repeated categorized expenses')) return this.$t('financial_goals.ai_reason_repeated_history');
+      if (reasoning.includes('exact description')) return this.$t('financial_goals.ai_reason_exact_match');
+      if (reasoning.includes('similar description')) return this.$t('financial_goals.ai_reason_similar_match');
+      if (reasoning.includes('recurring terms')) return this.$t('financial_goals.ai_reason_recurring_terms');
+      if (source === 'DOMAIN_ALIAS') return this.$t('financial_goals.ai_reason_domain_alias');
+      return reasoning ? this.$t('financial_goals.ai_reason_history_generic') : '';
     },
     isWeakGoalCategorySuggestion(suggestion) {
       const confidence = Number(suggestion?.suggestedCategory?.confidence || 0);

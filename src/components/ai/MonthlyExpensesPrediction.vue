@@ -59,7 +59,18 @@
           <span class="summary-label">{{ t('ai.monthly_prediction.estimated_accuracy') }}</span>
           <strong>{{ (prediction.modelAccuracy * 100).toFixed(1) }}%</strong>
         </div>
+        <div v-if="creditCardShareLabel" class="summary-card">
+          <span class="summary-label">{{ t('ai.monthly_prediction.credit_card_share') }}</span>
+          <strong>{{ creditCardShareLabel }}</strong>
+        </div>
+        <div v-if="prediction.recurringCreditCardCount" class="summary-card">
+          <span class="summary-label">{{ t('ai.monthly_prediction.recurring_card_items') }}</span>
+          <strong>{{ prediction.recurringCreditCardCount }}</strong>
+        </div>
       </div>
+      <p v-if="creditCardContext" class="history-note">{{ creditCardContext }}</p>
+      <p v-if="recurringCardContext" class="history-note">{{ recurringCardContext }}</p>
+      <p v-if="pendingCardContext" class="history-note">{{ pendingCardContext }}</p>
       <p v-if="trendInsight" class="history-note">{{ trendInsight }}</p>
       <table>
         <thead>
@@ -119,11 +130,24 @@ const selectedCategoryLabel = computed(() =>
 )
 
 const historicalAverage = computed(() => prediction.value?.predictions?.[0]?.historicalAverage || 0)
+const creditCardShareLabel = computed(() => {
+  const share = prediction.value?.creditCardShare
+  if (!share || share <= 0) {
+    return ''
+  }
+  return `${Math.round(share * 100)}%`
+})
 
 const trendLabel = (trend?: string) => {
   if (trend === 'up') return t('ai.monthly_prediction.trend_up')
   if (trend === 'down') return t('ai.monthly_prediction.trend_down')
   return t('ai.monthly_prediction.trend_stable')
+}
+
+const creditCardTrendLabel = (trend?: string) => {
+  if (trend === 'up') return t('ai.monthly_prediction.credit_card_trend_up')
+  if (trend === 'down') return t('ai.monthly_prediction.credit_card_trend_down')
+  return t('ai.monthly_prediction.credit_card_trend_stable')
 }
 
 const trendInsight = computed(() => {
@@ -142,6 +166,42 @@ const trendInsight = computed(() => {
     return t('ai.monthly_prediction.trend_insight_down', { category })
   }
   return t('ai.monthly_prediction.trend_insight_stable', { category })
+})
+
+const creditCardContext = computed(() => {
+  if (!prediction.value?.creditCardShare || prediction.value.creditCardShare <= 0) {
+    return ''
+  }
+
+  return t('ai.monthly_prediction.credit_card_context', {
+    share: `${Math.round(prediction.value.creditCardShare * 100)}%`,
+    amount: formatCurrency(prediction.value.creditCardAverage || 0),
+    trend: creditCardTrendLabel(prediction.value.creditCardTrend),
+  })
+})
+
+const recurringCardContext = computed(() => {
+  const count = prediction.value?.recurringCreditCardCount || 0
+  const average = prediction.value?.recurringCreditCardAverage || 0
+  if (!count || !average) {
+    return ''
+  }
+
+  return t('ai.monthly_prediction.recurring_card_context', {
+    count,
+    amount: formatCurrency(average),
+  })
+})
+
+const pendingCardContext = computed(() => {
+  const pendingAmount = prediction.value?.pendingCreditCardAmount || 0
+  if (!pendingAmount) {
+    return ''
+  }
+
+  return t('ai.monthly_prediction.pending_card_context', {
+    amount: formatCurrency(pendingAmount),
+  })
 })
 
 const formatCurrency = (value: number) =>

@@ -26,6 +26,15 @@
             {{ reconciliationLabel }}
           </v-chip>
         </div>
+        <div class="status-row">
+          <v-chip
+            size="small"
+            variant="outlined"
+            color="#667eea"
+          >
+            {{ visibilityScopeLabel }}
+          </v-chip>
+        </div>
         <v-list-item-subtitle v-if="expense.category">
           {{ $t('expenseItem.category') }}: {{ translatedCategoryName }}
           <v-icon :icon="categoryIcons[expense.category.code]" class="mr-2"></v-icon>
@@ -77,6 +86,10 @@
             <v-icon start size="14">mdi-speedometer-medium</v-icon>
             {{ suggestionDetails.confidenceLabel }}
           </v-chip>
+          <div v-if="suggestionDetails.reasoningLabel" class="suggestion-details__reasoning">
+            <v-icon size="14">mdi-information-outline</v-icon>
+            {{ suggestionDetails.reasoningLabel }}
+          </div>
           <v-btn
             size="x-small"
             color="#667eea"
@@ -131,6 +144,17 @@
         </v-list-item-subtitle>
       </div>
       <div class="expense-actions">
+        <v-btn
+          v-if="expense.visibilityScope === 'COMPANY'"
+          icon
+          size="x-small"
+          density="comfortable"
+          @click.stop="$emit('openComments', expense)"
+          color="#667eea"
+          class="expense-action-btn"
+        >
+          <v-icon size="16">mdi-comment-text-outline</v-icon>
+        </v-btn>
         <v-btn
           icon
           size="x-small"
@@ -375,8 +399,12 @@ export default {
       default: false,
     },
   },
-  emits: ['deleteExpense', 'removeAttachment', 'attachFiles', 'shareExpense', 'sendReminder', 'select', 'downloadAttachment', 'resolveConflict', 'suggestCategory', 'applySuggestion'],
+  emits: ['deleteExpense', 'removeAttachment', 'attachFiles', 'shareExpense', 'sendReminder', 'select', 'downloadAttachment', 'resolveConflict', 'suggestCategory', 'applySuggestion', 'openComments'],
   computed: {
+    visibilityScopeLabel() {
+      const scope = this.expense?.visibilityScope === 'PRIVATE' ? 'private' : 'company'
+      return this.$t(`transactionVisibility.${scope}`)
+    },
     reconciliationLabel() {
       const status = this.expense?.reconciliationStatus;
       if (!status) return '';
@@ -709,6 +737,18 @@ export default {
   gap: 8px;
   flex-wrap: wrap;
   margin: 6px 0;
+}
+
+.suggestion-details__reasoning {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #667085;
+  font-size: 0.85rem;
+}
+
+.v-theme--dark .suggestion-details__reasoning {
+  color: #d0d5dd;
 }
 
 @media (max-width: 420px) {

@@ -28,6 +28,16 @@
             {{ reconciliationLabel }}
           </v-chip>
         </div>
+        <div class="status-row">
+          <v-chip
+            size="small"
+            variant="outlined"
+            color="#667eea"
+            class="mt-1"
+          >
+            {{ visibilityScopeLabel }}
+          </v-chip>
+        </div>
         <div v-if="income.reconciliationConflictId" class="conflict-resolution-row">
           <v-btn
             size="x-small"
@@ -61,6 +71,18 @@
         </v-chip>
       </v-col>
       <v-col cols="3" md="4" class="d-flex justify-end align-center income-actions">
+        <v-btn
+          v-if="income.visibilityScope === 'COMPANY'"
+          x-small
+          icon
+          height="32px"
+          width="32px"
+          color="#667eea"
+          class="mr-2"
+          @click.stop="$emit('openComments', income)"
+        >
+          <v-icon size="16">mdi-comment-text-outline</v-icon>
+        </v-btn>
         <v-btn
           x-small
           icon
@@ -112,7 +134,7 @@ export default {
       default: null
     }
   },
-  emits: ['toggle-recurring', 'deleteIncome', 'select', 'resolveConflict'],
+  emits: ['toggle-recurring', 'deleteIncome', 'select', 'resolveConflict', 'openComments'],
   data() {
     return {
       recurrenceDialog: false,
@@ -121,6 +143,10 @@ export default {
     }
   },
   computed: {
+    visibilityScopeLabel() {
+      const scope = this.income?.visibilityScope === 'PRIVATE' ? 'private' : 'company'
+      return this.$t(`transactionVisibility.${scope}`)
+    },
     reconciliationLabel() {
       const status = this.income?.reconciliationStatus
       if (!status) return ''

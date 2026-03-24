@@ -4,6 +4,7 @@ import type {
   DashboardView,
   PagedResponse,
   TransactionAttachmentListItem,
+  TransactionCommentView,
   TransactionDirection,
   TransactionQueryParams,
   TransactionRequest,
@@ -165,6 +166,14 @@ export default {
 
   removeTransactionAttachment(transactionId: string, attachmentId: string) {
     return axiosInterceptor.delete(`${API_URL}/transactions/${transactionId}/attachments/${attachmentId}`)
+  },
+
+  listTransactionComments(transactionId: string) {
+    return axiosInterceptor.get<TransactionCommentView[]>(`${API_URL}/transactions/${transactionId}/comments`)
+  },
+
+  addTransactionComment(transactionId: string, body: string) {
+    return axiosInterceptor.post<TransactionCommentView>(`${API_URL}/transactions/${transactionId}/comments`, { body })
   },
 
   downloadTransactionAttachment(transactionId: string, attachmentId: string) {

@@ -30,6 +30,7 @@ const mapTransactionToIncome = (transaction: TransactionView) => ({
   reconciliationStatus: transaction.reconciliationStatus ?? null,
   reconciliationMatchedBy: transaction.reconciliationMatchedBy ?? null,
   reconciliationConflictReason: transaction.reconciliationConflictReason ?? null,
+  visibilityScope: transaction.visibilityScope ?? 'COMPANY',
 })
 
 async function toIncomeTransactionRequest(data: any): Promise<TransactionRequest> {
@@ -48,6 +49,7 @@ async function toIncomeTransactionRequest(data: any): Promise<TransactionRequest
         categoryId: null,
       },
     ],
+    visibilityScope: data?.visibilityScope ?? 'COMPANY',
   }
 }
 

@@ -207,6 +207,13 @@ const navSections = computed(() => [
         to: { name: 'insights' },
         disabled: false,
       },
+      {
+        key: 'activity',
+        title: t('sidebar.activity'),
+        icon: 'mdi-timeline-text-outline',
+        to: { name: 'activity' },
+        disabled: false,
+      },
     ],
   },
   {

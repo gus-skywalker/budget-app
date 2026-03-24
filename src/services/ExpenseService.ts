@@ -56,6 +56,7 @@ const mapTransactionToExpense = (transaction: TransactionView) => ({
   reconciliationStatus: transaction.reconciliationStatus ?? null,
   reconciliationMatchedBy: transaction.reconciliationMatchedBy ?? null,
   reconciliationConflictReason: transaction.reconciliationConflictReason ?? null,
+  visibilityScope: transaction.visibilityScope ?? 'COMPANY',
 })
 
 async function toExpenseTransactionRequest(data: any): Promise<TransactionRequest> {
@@ -74,6 +75,7 @@ async function toExpenseTransactionRequest(data: any): Promise<TransactionReques
         categoryId: data?.category ?? null,
       },
     ],
+    visibilityScope: data?.visibilityScope ?? 'COMPANY',
   }
 }
 

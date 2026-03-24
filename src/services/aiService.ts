@@ -44,6 +44,12 @@ export interface MonthlyExpensesPredictionResponse {
   predictions: MonthlyExpensePredictionItem[]
   totalPredicted: number
   modelAccuracy?: number
+  creditCardAverage?: number
+  creditCardShare?: number
+  creditCardTrend?: string
+  recurringCreditCardAverage?: number
+  recurringCreditCardCount?: number
+  pendingCreditCardAmount?: number
 }
 
 export interface AnomalyDetectionRequest {

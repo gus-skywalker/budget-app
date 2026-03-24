@@ -17,6 +17,13 @@
         <span>{{ headlineMessage }}</span>
       </div>
 
+      <div class="scope-badge-row">
+        <v-chip size="small" color="#667eea" variant="outlined">
+          <v-icon start size="14">mdi-account-group-outline</v-icon>
+          {{ $t('transactionVisibility.dashboardBadge') }}
+        </v-chip>
+      </div>
+
       <v-alert
         v-if="openFinanceConflictCount > 0"
         type="warning"
@@ -56,6 +63,76 @@
           </span>
         </div>
       </div>
+
+      <section class="section-block">
+        <div class="section-header">
+          <h2 class="section-title">{{ $t('overview.activity_title') }}</h2>
+          <v-btn size="small" variant="text" @click="$router.push('/activity')">
+            <v-icon start>mdi-open-in-new</v-icon>
+            {{ $t('activity.view_all') }}
+          </v-btn>
+        </div>
+        <div class="modern-card">
+          <div class="card-content">
+            <div class="scope-badge-row">
+              <v-chip size="small" color="#667eea" variant="outlined">
+                <v-icon start size="14">mdi-account-group-outline</v-icon>
+                {{ $t('overview.activity_badge') }}
+              </v-chip>
+              <span class="scope-badge-note">{{ $t('overview.activity_scope_note') }}</span>
+            </div>
+            <div class="activity-filters">
+              <v-chip
+                v-for="filter in activityFilters"
+                :key="filter.value"
+                size="small"
+                :variant="selectedActivityFilter === filter.value ? 'flat' : 'outlined'"
+                :color="selectedActivityFilter === filter.value ? '#667eea' : undefined"
+                @click="selectedActivityFilter = filter.value"
+              >
+                {{ filter.title }}
+              </v-chip>
+            </div>
+            <div v-if="activityLoading" class="empty-state">
+              <p>{{ $t('overview.activity_loading') }}</p>
+            </div>
+            <div v-else-if="filteredRecentActivity.length" class="activity-feed">
+              <div
+                v-for="event in filteredRecentActivity"
+                :key="event.id"
+                class="activity-row"
+              >
+                <div class="activity-row__icon">
+                  <v-icon :color="activityAccent(event).color">{{ activityAccent(event).icon }}</v-icon>
+                </div>
+                <div class="activity-row__content">
+                  <div class="activity-row__header">
+                    <strong>{{ activityTitle(event) }}</strong>
+                    <span class="activity-row__time">{{ formatActivityTime(event.createdAt) }}</span>
+                  </div>
+                  <p class="activity-row__description">{{ activityDescription(event) }}</p>
+                  <div class="activity-row__meta">
+                    <span>{{ activityActorLabel(event.actorUserId) }}</span>
+                    <v-btn
+                      v-if="activityRoute(event)"
+                      size="x-small"
+                      variant="text"
+                      color="#667eea"
+                      @click="openActivity(event)"
+                    >
+                      <v-icon start size="14">mdi-open-in-new</v-icon>
+                      {{ $t('overview.activity_open') }}
+                    </v-btn>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div v-else class="empty-state">
+              <p>{{ selectedActivityFilter === 'all' ? $t('overview.activity_empty') : $t('overview.activity_empty_filtered') }}</p>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <!-- Trends Over Time -->
       <div class="modern-card trends-section">
@@ -209,6 +286,23 @@
           <div v-if="cashflowOpportunityMessage" class="projection-card">
             <div class="projection-label">{{ $t('overview.cashflow_opportunity') }}</div>
             <div class="projection-context">{{ cashflowOpportunityMessage }}</div>
+          </div>
+        </div>
+        <div v-if="hasCreditCardPredictionContext" class="cashflow-action-grid mt-4">
+          <div v-if="creditCardPendingAmount > 0" class="projection-card projection-card--warning">
+            <div class="projection-label">{{ $t('overview.credit_card_pending_title') }}</div>
+            <div class="projection-value">{{ formatCurrency(creditCardPendingAmount) }}</div>
+            <div class="projection-context">{{ creditCardPendingMessage }}</div>
+          </div>
+          <div v-if="creditCardRecurringAverage > 0" class="projection-card">
+            <div class="projection-label">{{ $t('overview.credit_card_recurring_title') }}</div>
+            <div class="projection-value">{{ formatCurrency(creditCardRecurringAverage) }}</div>
+            <div class="projection-context">{{ creditCardRecurringMessage }}</div>
+          </div>
+          <div v-if="creditCardShareValue > 0" class="projection-card">
+            <div class="projection-label">{{ $t('overview.credit_card_share_title') }}</div>
+            <div class="projection-value">{{ creditCardShareLabel }}</div>
+            <div class="projection-context">{{ creditCardShareMessage }}</div>
           </div>
         </div>
         <div v-else class="projection-placeholder">
@@ -575,6 +669,7 @@ import FinancialReadService from '@/services/FinancialReadService'
 import FinancialGoalService from '@/services/FinancialGoalService'
 import OpenFinanceService from '@/services/OpenFinanceService'
 import AiService from '@/services/aiService'
+import ActivityService from '@/services/ActivityService'
 import 'chartjs-adapter-moment'
 
 Chart.register(...registerables)
@@ -724,6 +819,20 @@ export default {
         .sort((left, right) => right[1] - left[1])
         .slice(0, 5)
         .map(([category]) => category)
+    },
+    activityFilters() {
+      return [
+        { title: this.$t('overview.activity_filter_all'), value: 'all' },
+        { title: this.$t('overview.activity_filter_transactions'), value: 'transactions' },
+        { title: this.$t('overview.activity_filter_scenarios'), value: 'scenarios' },
+        { title: this.$t('overview.activity_filter_decisions'), value: 'decisions' },
+      ]
+    },
+    filteredRecentActivity() {
+      if (this.selectedActivityFilter === 'all') {
+        return this.recentActivity
+      }
+      return this.recentActivity.filter((event) => this.activityFilterKey(event) === this.selectedActivityFilter)
     },
     upcomingExpensesDisplay() {
       return Array.isArray(this.upcomingExpenses) ? this.upcomingExpenses.slice(0, 5) : []
@@ -895,6 +1004,37 @@ export default {
     cashflowOpportunityMessage() {
       return this.cashflowDecisionData?.opportunityMessage || this.cashflowFallbackOpportunity
     },
+    creditCardShareValue() {
+      return Number(this.expensePredictionSummary?.creditCardShare || 0)
+    },
+    creditCardShareLabel() {
+      return `${Math.round(this.creditCardShareValue * 100)}%`
+    },
+    creditCardRecurringAverage() {
+      return Number(this.expensePredictionSummary?.recurringCreditCardAverage || 0)
+    },
+    creditCardPendingAmount() {
+      return Number(this.expensePredictionSummary?.pendingCreditCardAmount || 0)
+    },
+    hasCreditCardPredictionContext() {
+      return this.creditCardPendingAmount > 0 || this.creditCardRecurringAverage > 0 || this.creditCardShareValue > 0
+    },
+    creditCardPendingMessage() {
+      return this.$t('overview.credit_card_pending_message', {
+        amount: this.formatCurrency(this.creditCardPendingAmount),
+      })
+    },
+    creditCardRecurringMessage() {
+      return this.$t('overview.credit_card_recurring_message', {
+        count: Number(this.expensePredictionSummary?.recurringCreditCardCount || 0),
+        amount: this.formatCurrency(this.creditCardRecurringAverage),
+      })
+    },
+    creditCardShareMessage() {
+      return this.$t('overview.credit_card_share_message', {
+        share: this.creditCardShareLabel,
+      })
+    },
     cashflowFallbackSummary() {
       if (this.netMonthlyCashflow < 0) {
         return this.$t('overview.cashflow_fallback_negative', {
@@ -1020,10 +1160,14 @@ export default {
       drillDownAccountId: null,
       openFinanceObservabilitySummary: null,
       openFinanceConflictCount: 0,
+      activityLoading: false,
+      recentActivity: [],
+      selectedActivityFilter: 'all',
       goalsAtRisk: [],
       goalOpportunities: [],
       upcomingExpenses: [],
       cashflowInsightsSummary: null,
+      expensePredictionSummary: null,
       selectedTimePeriod: '3m',
       selectedCategory: '',
       isYearly: false,
@@ -1074,7 +1218,9 @@ export default {
     this.fetchMonthTransactions()
     this.fetchOpenFinanceConflicts()
     this.fetchOpenFinanceObservabilitySummary()
+    this.fetchRecentActivity()
     this.fetchCashflowInsightsSummary()
+    this.fetchExpensePredictionSummary()
     this.fetchGoalsAtRisk()
     this.fetchCategories()
     this.createChart()
@@ -1172,6 +1318,80 @@ export default {
           this.openFinanceObservabilitySummary = null
         })
     },
+    fetchRecentActivity() {
+      this.activityLoading = true
+      ActivityService.list(8)
+        .then((response) => {
+          this.recentActivity = Array.isArray(response?.data) ? response.data : []
+        })
+        .catch((error) => {
+          console.error('Error fetching recent activity:', error)
+          this.recentActivity = []
+        })
+        .finally(() => {
+          this.activityLoading = false
+        })
+    },
+    activityTitle(event) {
+      return event?.title || this.$t('overview.activity_fallback_title')
+    },
+    activityDescription(event) {
+      return event?.description || this.$t('overview.activity_fallback_description')
+    },
+    activityActorLabel(actorUserId) {
+      if (!actorUserId) {
+        return this.$t('overview.activity_actor_system')
+      }
+      const raw = String(actorUserId)
+      const label = raw.includes('@') ? raw.split('@')[0] : raw
+      return this.$t('overview.activity_actor_label', { actor: label })
+    },
+    activityAccent(event) {
+      const type = String(event?.eventType || '')
+      if (type.startsWith('TRANSACTION_SHARED_')) return { icon: 'mdi-swap-horizontal-bold', color: '#667eea' }
+      if (type.startsWith('SCENARIO_')) return { icon: 'mdi-chart-timeline-variant', color: '#7c3aed' }
+      if (type.startsWith('DECISION_')) return { icon: 'mdi-gavel', color: '#ea580c' }
+      return { icon: 'mdi-bell-outline', color: '#64748b' }
+    },
+    activityFilterKey(event) {
+      const type = String(event?.eventType || '')
+      if (type.startsWith('TRANSACTION_SHARED_')) return 'transactions'
+      if (type.startsWith('SCENARIO_')) return 'scenarios'
+      if (type.startsWith('DECISION_')) return 'decisions'
+      return 'all'
+    },
+    activityRoute(event) {
+      const relatedType = String(event?.relatedEntityType || '')
+      if (relatedType === 'TRANSACTION') return '/budget'
+      if (relatedType === 'SCENARIO') return '/planning/scenarios'
+      if (relatedType === 'DECISION') return '/decisions'
+      return null
+    },
+    openActivity(event) {
+      const path = this.activityRoute(event)
+      if (!path) return
+      if (path === '/budget') {
+        this.$router.push({ path, query: { visibility: 'company' } })
+        return
+      }
+      if (path === '/planning/scenarios' && event?.relatedEntityId) {
+        this.$router.push({ path, query: { scenarios: event.relatedEntityId } })
+        return
+      }
+      if (path === '/decisions' && event?.relatedEntityId) {
+        window.localStorage.setItem('decisions-scenarios', '')
+      }
+      this.$router.push(path)
+    },
+    formatActivityTime(value) {
+      if (!value) return ''
+      const date = new Date(value)
+      if (Number.isNaN(date.getTime())) return ''
+      return new Intl.DateTimeFormat(this.getLocaleForFormatting(), {
+        dateStyle: 'short',
+        timeStyle: 'short',
+      }).format(date)
+    },
     fetchCashflowInsightsSummary() {
       AiService.getCashflowInsights({ months: 6 })
         .then((response) => {
@@ -1180,6 +1400,16 @@ export default {
         .catch((error) => {
           console.error('Error fetching cashflow insights summary:', error)
           this.cashflowInsightsSummary = null
+        })
+    },
+    fetchExpensePredictionSummary() {
+      AiService.predictMonthlyExpenses({ forecastMonths: 3 })
+        .then((response) => {
+          this.expensePredictionSummary = response?.data || null
+        })
+        .catch((error) => {
+          console.error('Error fetching expense prediction summary:', error)
+          this.expensePredictionSummary = null
         })
     },
     fetchGoalsAtRisk() {
@@ -1466,8 +1696,98 @@ export default {
   font-weight: 600;
 }
 
+.scope-badge-row {
+  margin: 12px 0 0;
+}
+
+.scope-badge-note {
+  color: #64748b;
+  font-size: 0.92rem;
+}
+
+.activity-feed {
+  display: grid;
+  gap: 14px;
+}
+
+.activity-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 14px 0 18px;
+}
+
+.activity-row {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.activity-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.activity-row__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: rgba(102, 126, 234, 0.08);
+}
+
+.activity-row__content {
+  display: grid;
+  gap: 6px;
+}
+
+.activity-row__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: #0f172a;
+}
+
+.activity-row__time {
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.activity-row__description {
+  margin: 0;
+  color: #475569;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.activity-row__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: #64748b;
+  font-size: 0.86rem;
+}
+
 .v-theme--dark .headline-card {
   background: rgba(102, 126, 234, 0.2);
+  color: #ffffff;
+}
+
+.v-theme--dark .scope-badge-note,
+.v-theme--dark .activity-row__time,
+.v-theme--dark .activity-row__meta,
+.v-theme--dark .activity-row__description {
+  color: #cbd5e1;
+}
+
+.v-theme--dark .activity-row__header {
   color: #ffffff;
 }
 
@@ -1721,6 +2041,16 @@ export default {
 .v-theme--dark .projection-card {
   background: #2a2a2a;
   border-color: rgba(255, 255, 255, 0.1);
+}
+
+.projection-card--warning {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.18);
+}
+
+.v-theme--dark .projection-card--warning {
+  background: rgba(245, 158, 11, 0.16);
+  border-color: rgba(245, 158, 11, 0.24);
 }
 
 .projection-label {
