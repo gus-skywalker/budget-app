@@ -150,6 +150,7 @@
                 variant="outlined"
                 v-model="chartType"
                 :items="chartTypes"
+                :disabled="chartLoading"
                 @update:modelValue="updateCharts"
                 class="modern-select"
                 color="#667eea"
@@ -161,6 +162,7 @@
                 variant="outlined"
                 v-model="selectedTimePeriod"
                 :items="timePeriods"
+                :disabled="chartLoading"
                 @update:modelValue="updateCharts"
                 class="modern-select"
                 color="#667eea"
@@ -175,6 +177,7 @@
                 item-title="name"
                 item-value="code"
                 clearable
+                :disabled="chartLoading"
                 @update:modelValue="updateCharts"
                 class="modern-select"
                 color="#667eea"
@@ -182,6 +185,15 @@
             </v-col>
           </v-row>
           <div class="chart-wrapper">
+            <div v-if="chartLoading" class="chart-loading-overlay">
+              <v-progress-circular
+                indeterminate
+                color="#667eea"
+                size="34"
+                width="4"
+              />
+              <span class="chart-loading-text">{{ $t('overview.activity_loading') }}</span>
+            </div>
             <canvas ref="trendsChart"></canvas>
           </div>
         </div>
@@ -1147,6 +1159,10 @@ export default {
     const today = new Date();
     return {
       chart: null,
+      lastRenderedChartType: null,
+      chartRequestSequence: 0,
+      isUnmounting: false,
+      chartLoading: false,
       dashboardLoading: false,
       dashboardSummary: {
         totalBalance: 0,
@@ -1225,8 +1241,14 @@ export default {
     this.fetchPremiumFeatureSummaries()
     this.fetchGoalsAtRisk()
     this.fetchCategories()
-    this.createChart()
     this.fetchChartData()
+  },
+  beforeUnmount() {
+    this.isUnmounting = true
+    if (this.chart) {
+      this.chart.destroy()
+      this.chart = null
+    }
   },
   watch: {
     '$i18n.locale'(newLocale) {
@@ -1250,6 +1272,17 @@ export default {
         style: 'currency',
         currency: resolvedCurrency,
       })
+    },
+    formatDate(value) {
+      if (!value) return '-'
+
+      const date = new Date(value)
+      if (Number.isNaN(date.getTime())) return '-'
+
+      return new Intl.DateTimeFormat(this.getLocaleForFormatting(), {
+        dateStyle: 'short',
+        timeStyle: 'short',
+      }).format(date)
     },
     getMonthName(monthIndex) {
       const monthNames = [
@@ -1495,37 +1528,83 @@ export default {
       if (!trendsCtx) {
         return
       }
-      this.chart = new Chart(trendsCtx, {
-        type: this.chartType,
-        data: this.chartData,
-        options: {
-          responsive: true,
-          scales: {
-            x: {
-              type: 'time',
-              time: {
-                unit: this.isYearly ? 'year' : 'month',
-                displayFormats: {
-                  year: 'YYYY',
-                  month: 'MM-YYYY'
+
+      const shouldRecreate = !this.chart || this.lastRenderedChartType !== this.chartType
+
+      if (shouldRecreate && this.chart) {
+        this.chart.destroy()
+        this.chart = null
+      }
+
+      if (shouldRecreate) {
+        this.chart = new Chart(trendsCtx, {
+          type: this.chartType,
+          data: {
+            labels: [...this.chartData.labels],
+            datasets: this.chartData.datasets.map((dataset) => ({
+              ...dataset,
+              data: [...dataset.data],
+            })),
+          },
+          options: {
+            responsive: true,
+            scales: {
+              x: {
+                type: 'time',
+                time: {
+                  unit: this.isYearly ? 'year' : 'month',
+                  displayFormats: {
+                    year: 'YYYY',
+                    month: 'MM-YYYY'
+                  },
+                  tooltipFormat: 'DD/MM/YYYY'
                 },
-                tooltipFormat: 'DD/MM/YYYY'
+                ticks: {
+                  source: 'labels'
+                }
               },
-              ticks: {
-                source: 'labels'
+              y: {
+                beginAtZero: true
               }
-            },
-            y: {
-              beginAtZero: true
             }
           }
-        }
-      })
+        })
+        this.lastRenderedChartType = this.chartType
+        return
+      }
+
+      this.chart.data.labels = [...this.chartData.labels]
+      this.chart.data.datasets = this.chartData.datasets.map((dataset) => ({
+        ...dataset,
+        data: [...dataset.data],
+      }))
+
+      if (this.chart.options?.scales?.x?.time) {
+        this.chart.options.scales.x.time.unit = this.isYearly ? 'year' : 'month'
+      }
+
+      this.chart.update()
+    },
+    normalizeChartData(rawData) {
+      const labels = Array.isArray(rawData?.labels) ? rawData.labels : []
+      const datasets = Array.isArray(rawData?.datasets) ? rawData.datasets : []
+      const incomeDataset = datasets[0]?.data ?? []
+      const expenseDataset = datasets[1]?.data ?? []
+
+      if (this.selectedTimePeriod.includes('m')) {
+        this.isYearly = false
+        this.chartData.labels = labels.map((label) =>
+          moment(label, ['YYYY-MM', 'MM-YYYY']).toISOString()
+        )
+      } else {
+        this.isYearly = true
+        this.chartData.labels = labels
+      }
+
+      this.chartData.datasets[0].data = Array.isArray(incomeDataset) ? incomeDataset : []
+      this.chartData.datasets[1].data = Array.isArray(expenseDataset) ? expenseDataset : []
     },
     updateCharts() {
-      if (this.chart) {
-        this.chart.destroy()
-      }
       this.fetchChartData()
     },
     normalizeTranslatedCollection(payload) {
@@ -1573,28 +1652,29 @@ export default {
         });
     },
     fetchChartData() {
+      const requestId = ++this.chartRequestSequence
+      this.chartLoading = true
+
       DataService.fetchChartData(this.selectedTimePeriod, this.selectedCategory)
         .then((response) => {
-          const rawData = response.data
-
-          if (this.selectedTimePeriod.includes('m')) {
-            this.isYearly = false
-            this.chartData.labels = rawData.labels.map((label) =>
-              moment(label, ['YYYY-MM', 'MM-YYYY']).toISOString()
-            )
-            this.chartData.datasets[0].data = rawData.datasets[0].data
-            this.chartData.datasets[1].data = rawData.datasets[1].data
-          } else {
-            this.isYearly = true
-            this.chartData.labels = rawData.labels
-            this.chartData.datasets[0].data = rawData.datasets[0].data
-            this.chartData.datasets[1].data = rawData.datasets[1].data
+          if (this.isUnmounting || requestId !== this.chartRequestSequence) {
+            return
           }
 
+          this.normalizeChartData(response?.data)
           this.createChart()
         })
         .catch((error) => {
+          if (this.isUnmounting || requestId !== this.chartRequestSequence) {
+            return
+          }
           console.error('Error fetching chart data:', error)
+        })
+        .finally(() => {
+          if (this.isUnmounting || requestId !== this.chartRequestSequence) {
+            return
+          }
+          this.chartLoading = false
         })
     },
     formatTransactionDate(value) {
@@ -2559,6 +2639,34 @@ export default {
 
 .v-theme--dark .chart-wrapper {
   background: #1e1e1e;
+}
+
+.chart-loading-overlay {
+  position: absolute;
+  inset: 20px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(2px);
+}
+
+.v-theme--dark .chart-loading-overlay {
+  background: rgba(30, 30, 30, 0.72);
+}
+
+.chart-loading-text {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.v-theme--dark .chart-loading-text {
+  color: #e2e8f0;
 }
 
 /* Goal Cards */

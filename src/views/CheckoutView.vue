@@ -196,6 +196,16 @@ export default {
                 const subjectType = decision.subjectType
                 const subjectId = decision.subjectId
 
+                sessionStorage.setItem(
+                    'billing.checkout.context',
+                    JSON.stringify({
+                        subjectType: String(subjectType),
+                        subjectId: String(subjectId),
+                        plan: String(plan),
+                        correlationId: String(correlationId)
+                    })
+                )
+
                 // New checkout attempt must use a fresh command id.
                 // Reusing messageId can return stale/expired checkout URLs from old operations.
                 const messageId = createMessageId()

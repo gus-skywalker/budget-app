@@ -88,18 +88,47 @@ export default {
   },
 
   methods: {
+    resolveCheckoutContext() {
+      const fallbackContext = {
+        subjectType: null,
+        subjectId: null
+      }
+
+      try {
+        const raw = sessionStorage.getItem('billing.checkout.context')
+        if (!raw) {
+          return fallbackContext
+        }
+        const parsed = JSON.parse(raw)
+        return {
+          subjectType: typeof parsed?.subjectType === 'string' ? parsed.subjectType : null,
+          subjectId: typeof parsed?.subjectId === 'string' ? parsed.subjectId : null
+        }
+      } catch (error) {
+        console.warn('Não foi possível recuperar o contexto do checkout.', error)
+        return fallbackContext
+      }
+    },
+
     async checkSubscriptionStatus() {
       const userStore = useUserStore();
       const userId = userStore.user?.id;
       const companyId = userStore.currentCompanyId;
       const isTenantMode = userStore.isTenantMode;
+      const checkoutContext = this.resolveCheckoutContext()
 
-      if (!userId && !(isTenantMode && companyId)) {
-        throw new Error('Usuário não identificado');
+      if (!checkoutContext.subjectType || !checkoutContext.subjectId) {
+        if (!userId && !(isTenantMode && companyId)) {
+          throw new Error('Usuário não identificado');
+        }
       }
 
-      const subjectType = (isTenantMode && companyId) ? 'COMPANY' : 'USER';
-      const subjectId = subjectType === 'COMPANY' ? String(companyId) : String(userId);
+      const subjectType = checkoutContext.subjectType || ((isTenantMode && companyId) ? 'COMPANY' : 'USER');
+      const subjectId = checkoutContext.subjectId || (subjectType === 'COMPANY' ? String(companyId) : String(userId));
+
+      if (!subjectId) {
+        throw new Error('Usuário não identificado');
+      }
 
       // Poll budget-api until webhook projection becomes premium=true.
       const startedAt = Date.now();
@@ -110,6 +139,7 @@ export default {
         const response = await BillingOrchestrationService.getPremiumAccess(subjectType, subjectId);
         if (response.data?.hasPremiumAccess) {
           this.subscriptionDetails = response.data;
+          sessionStorage.removeItem('billing.checkout.context');
           return;
         }
         await new Promise(resolve => setTimeout(resolve, intervalMs));
