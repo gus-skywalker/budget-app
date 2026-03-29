@@ -61,10 +61,14 @@ export interface BillingAccessResponse {
   subjectId: string
   hasPremiumAccess: boolean
   hasPlanAccess?: boolean
-  subscriptionStatus?: 'NONE' | 'INCOMPLETE' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED'
+  subscriptionStatus?: 'NONE' | 'INCOMPLETE' | 'TRIALING' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED'
   currentPlanTier?: 'FREE' | 'STARTER' | 'TEAM'
   currentBillingCycle?: 'MONTHLY' | 'ANNUAL'
   currentPlanId?: 'MONTHLY' | 'ANNUAL' | 'BUSINESS_MONTHLY' | 'BUSINESS_ANNUAL'
+  trialEndsAt?: string
+  nextBillingDate?: string
+  paymentProviderReachable?: boolean
+  subscriptionDataSource?: 'LOCAL' | 'PAYMENT_API' | 'LOCAL_FALLBACK'
   checkedAt: string
 }
 

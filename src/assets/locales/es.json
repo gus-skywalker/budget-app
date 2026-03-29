@@ -199,8 +199,8 @@
     "cancel_subscription": "Cancelar suscripción",
     "statuses": {
       "active": "Activa",
-      "incomplete": "Payment pending",
-      "past_due": "Payment overdue",
+      "incomplete": "Pago pendiente",
+      "past_due": "Pago atrasado",
       "trialing": "Período de prueba",
       "canceled": "Cancelada al final del período",
       "inactive": "Inactiva"
@@ -228,7 +228,14 @@
     "cancel_confirm": "¿Seguro que quieres cancelar tu suscripción?",
     "cancel_requested": "Cancelación solicitada. Mantendrás el acceso hasta el final del período actual (cuando aplique).",
     "error_cancel_request": "Error al solicitar la cancelación:",
-    "error_cancel_later": "No se pudo cancelar la suscripción. Inténtalo de nuevo más tarde."
+    "error_cancel_later": "No se pudo cancelar la suscripción. Inténtalo de nuevo más tarde.",
+    "trial_active_title": "Tu período de prueba está activo",
+    "trial_active_until": "Tienes acceso premium durante la prueba hasta {date}. No habrá ningún cargo antes de esa fecha.",
+    "trial_billing_after": "Tu acceso premium está en período de prueba. El próximo cobro previsto será después de {date}.",
+    "trial_active_generic": "Actualmente tienes acceso premium durante el período de prueba.",
+    "payment_sync_unavailable_title": "Servicio de pagos temporalmente no disponible",
+    "payment_sync_unavailable_body": "Estamos mostrando la última información de suscripción disponible en Budget. Los cambios de plan, el portal de facturación y la cancelación no estarán disponibles hasta que vuelva la sincronización con el proveedor de pagos.",
+    "payment_sync_actions_disabled": "Las acciones de suscripción están temporalmente no disponibles mientras el servicio de pagos esté fuera de línea."
   },
   "budget": {
     "title": "Gestión de cuentas"

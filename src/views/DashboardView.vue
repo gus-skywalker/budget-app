@@ -670,6 +670,8 @@ import FinancialGoalService from '@/services/FinancialGoalService'
 import OpenFinanceService from '@/services/OpenFinanceService'
 import AiService from '@/services/aiService'
 import ActivityService from '@/services/ActivityService'
+import BillingOrchestrationService from '@/services/BillingOrchestrationService'
+import { useUserStore } from '@/plugins/userStore'
 import 'chartjs-adapter-moment'
 
 Chart.register(...registerables)
@@ -1166,6 +1168,7 @@ export default {
       goalsAtRisk: [],
       goalOpportunities: [],
       upcomingExpenses: [],
+      hasPremiumAccess: false,
       cashflowInsightsSummary: null,
       expensePredictionSummary: null,
       selectedTimePeriod: '3m',
@@ -1219,8 +1222,7 @@ export default {
     this.fetchOpenFinanceConflicts()
     this.fetchOpenFinanceObservabilitySummary()
     this.fetchRecentActivity()
-    this.fetchCashflowInsightsSummary()
-    this.fetchExpensePredictionSummary()
+    this.fetchPremiumFeatureSummaries()
     this.fetchGoalsAtRisk()
     this.fetchCategories()
     this.createChart()
@@ -1331,6 +1333,57 @@ export default {
         .finally(() => {
           this.activityLoading = false
         })
+    },
+    resolveBillingSubject() {
+      const userStore = useUserStore()
+      const companyId = userStore.currentCompanyId
+      const userId = userStore.user?.id
+      const isTenantMode = userStore.isTenantMode
+
+      if (isTenantMode && companyId) {
+        return {
+          subjectType: 'COMPANY',
+          subjectId: String(companyId),
+        }
+      }
+
+      if (userId) {
+        return {
+          subjectType: 'USER',
+          subjectId: String(userId),
+        }
+      }
+
+      return null
+    },
+    async fetchPremiumFeatureSummaries() {
+      const billingSubject = this.resolveBillingSubject()
+      if (!billingSubject) {
+        this.hasPremiumAccess = false
+        this.cashflowInsightsSummary = null
+        this.expensePredictionSummary = null
+        return
+      }
+
+      try {
+        const response = await BillingOrchestrationService.getPremiumAccess(
+          billingSubject.subjectType,
+          billingSubject.subjectId
+        )
+        this.hasPremiumAccess = Boolean(response?.data?.hasPremiumAccess)
+      } catch (error) {
+        console.error('Error checking premium access:', error)
+        this.hasPremiumAccess = false
+      }
+
+      if (!this.hasPremiumAccess) {
+        this.cashflowInsightsSummary = null
+        this.expensePredictionSummary = null
+        return
+      }
+
+      this.fetchCashflowInsightsSummary()
+      this.fetchExpensePredictionSummary()
     },
     activityTitle(event) {
       return event?.title || this.$t('overview.activity_fallback_title')

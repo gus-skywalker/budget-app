@@ -228,7 +228,14 @@
     "cancel_confirm": "Tem certeza de que deseja cancelar sua assinatura?",
     "cancel_requested": "Cancelamento solicitado. Você manterá o acesso até o fim do período atual (quando aplicável).",
     "error_cancel_request": "Erro ao solicitar cancelamento:",
-    "error_cancel_later": "Não foi possível cancelar a assinatura. Tente novamente mais tarde."
+    "error_cancel_later": "Não foi possível cancelar a assinatura. Tente novamente mais tarde.",
+    "trial_active_title": "Seu período de avaliação está ativo",
+    "trial_active_until": "Você tem acesso premium durante a avaliação até {date}. Não haverá cobrança antes dessa data.",
+    "trial_billing_after": "Seu acesso premium está em avaliação. A próxima cobrança prevista acontece após {date}.",
+    "trial_active_generic": "Você tem acesso premium durante o período de avaliação.",
+    "payment_sync_unavailable_title": "Serviço de pagamentos temporariamente indisponível",
+    "payment_sync_unavailable_body": "Estamos mostrando a última informação de assinatura disponível no budget. Alterações de plano, portal e cancelamento ficam indisponíveis até a sincronização com o provedor voltar.",
+    "payment_sync_actions_disabled": "As ações de assinatura estão temporariamente indisponíveis enquanto o serviço de pagamentos estiver fora do ar."
   },
   "budget": {
     "title": "Sua Contabilidade"

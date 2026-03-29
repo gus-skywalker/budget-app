@@ -38,6 +38,28 @@
                 </div>
               </div>
             </div>
+            <v-alert
+              v-if="isTrialing"
+              type="info"
+              variant="tonal"
+              class="trial-alert mt-4"
+            >
+              <div class="trial-alert__title">{{ t('subscription_management.trial_active_title') }}</div>
+              <div>
+                {{ trialStatusMessage }}
+              </div>
+            </v-alert>
+            <v-alert
+              v-if="paymentSyncDegraded"
+              type="warning"
+              variant="tonal"
+              class="trial-alert mt-4"
+            >
+              <div class="trial-alert__title">{{ t('subscription_management.payment_sync_unavailable_title') }}</div>
+              <div>
+                {{ t('subscription_management.payment_sync_unavailable_body') }}
+              </div>
+            </v-alert>
           </div>
         </div>
       </div>
@@ -203,6 +225,7 @@
               class="modern-btn gradient-btn mb-3"
               size="large"
               block
+              :disabled="paymentSyncDegraded"
             >
               <v-icon left>mdi-swap-horizontal</v-icon>
               {{ changePlanActionText }}
@@ -231,6 +254,7 @@
               class="modern-btn"
               size="large"
               block
+              :disabled="paymentSyncDegraded"
             >
               <v-icon left>mdi-cog</v-icon>
               {{ t('subscription_management.manage_subscription') }}
@@ -294,7 +318,7 @@
       </v-dialog>
 
       <!-- Card de Cancelamento -->
-      <div v-if="subscriptionStatus === 'ACTIVE'" class="modern-card cancel-card">
+      <div v-if="subscriptionStatus === 'ACTIVE' || subscriptionStatus === 'TRIALING'" class="modern-card cancel-card">
         <div class="card-header">
           <h2 class="card-title">
             <v-icon color="#f44336" class="mr-2">mdi-alert-circle</v-icon>
@@ -313,6 +337,7 @@
               color="error"
               variant="outlined"
               class="modern-btn"
+              :disabled="paymentSyncDegraded"
             >
               <v-icon left>mdi-close-circle</v-icon>
               {{ t('subscription_management.cancel_subscription') }}
@@ -362,6 +387,10 @@ const currentPlan = ref<MaybePlanId>('');
 const currentPlanTier = ref<PlanTier>('');
 const currentBillingCycle = ref<BillingCycleUi>('');
 const subscriptionStatus = ref('');
+const trialEndsAt = ref('');
+const nextBillingDate = ref('');
+const paymentProviderReachable = ref(true);
+const subscriptionDataSource = ref<'LOCAL' | 'PAYMENT_API' | 'LOCAL_FALLBACK'>('LOCAL');
 const selectedPlan = ref<MaybePlanId>(''); // Para atualizar o plano
 const hasPremiumAccess = ref(false);
 const lastLoadedPlan = ref<MaybePlanId>('');
@@ -463,6 +492,8 @@ const selectedPlanText = computed(() => {
 
 const statusText = computed(() => {
     switch (subscriptionStatus.value) {
+        case 'TRIALING':
+      return t('subscription_management.statuses.trialing');
         case 'ACTIVE':
       return t('subscription_management.statuses.active');
         case 'INCOMPLETE':
@@ -479,6 +510,8 @@ const statusText = computed(() => {
 
 const statusColor = computed(() => {
     switch (subscriptionStatus.value) {
+        case 'TRIALING':
+            return 'info';
         case 'ACTIVE':
             return 'success';
         case 'INCOMPLETE':
@@ -494,6 +527,8 @@ const statusColor = computed(() => {
 
 const statusIcon = computed(() => {
     switch (subscriptionStatus.value) {
+        case 'TRIALING':
+            return 'mdi-timer-sand';
         case 'ACTIVE':
             return 'mdi-check-circle';
         case 'INCOMPLETE':
@@ -508,8 +543,41 @@ const statusIcon = computed(() => {
 });
 
 const isPremium = computed(() => {
-  return hasPremiumAccess.value || subscriptionStatus.value === 'ACTIVE';
+  return hasPremiumAccess.value || subscriptionStatus.value === 'ACTIVE' || subscriptionStatus.value === 'TRIALING';
 });
+
+const isTrialing = computed(() => subscriptionStatus.value === 'TRIALING');
+const paymentSyncDegraded = computed(() => subscriptionDataSource.value === 'LOCAL_FALLBACK' || !paymentProviderReachable.value);
+
+const formatDateTime = (value: string) => {
+  if (!value) return ''
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) return ''
+  const localeMap: Record<string, string> = {
+    en: 'en-US',
+    pt: 'pt-BR',
+    es: 'es-ES',
+    fr: 'fr-FR'
+  }
+  const resolvedLocale = localeMap[String(locale.value || 'pt')] || 'pt-BR'
+  return new Intl.DateTimeFormat(resolvedLocale, {
+    dateStyle: 'medium'
+  }).format(parsed)
+}
+
+const trialStatusMessage = computed(() => {
+  if (trialEndsAt.value) {
+    return t('subscription_management.trial_active_until', {
+      date: formatDateTime(trialEndsAt.value)
+    })
+  }
+  if (nextBillingDate.value) {
+    return t('subscription_management.trial_billing_after', {
+      date: formatDateTime(nextBillingDate.value)
+    })
+  }
+  return t('subscription_management.trial_active_generic')
+})
 
 const changePlanActionText = computed(() => {
   const base = t('subscription_management.change_to', { plan: selectedPlanText.value });
@@ -532,6 +600,10 @@ const loadSubscriptionDetails = async () => {
     hasPremiumAccess.value = Boolean(access.data?.hasPremiumAccess)
     const resolvedStatus = access.data?.subscriptionStatus || (access.data?.hasPremiumAccess ? 'ACTIVE' : 'NONE')
     subscriptionStatus.value = String(resolvedStatus).toUpperCase()
+    trialEndsAt.value = String(access.data?.trialEndsAt || '')
+    nextBillingDate.value = String(access.data?.nextBillingDate || '')
+    paymentProviderReachable.value = access.data?.paymentProviderReachable !== false
+    subscriptionDataSource.value = access.data?.subscriptionDataSource || 'LOCAL'
 
     const rawPlanId = (access.data as any)?.currentPlanId
       || (access.data as any)?.planId
@@ -573,6 +645,10 @@ const loadSubscriptionDetails = async () => {
 };
 
 const handlePlanChange = async () => {
+  if (paymentSyncDegraded.value) {
+    alert(t('subscription_management.payment_sync_actions_disabled'))
+    return
+  }
   if (!isPlanId(selectedPlan.value)) {
     alert(t('subscription_management.error_invalid_plan'));
     return;
@@ -643,6 +719,10 @@ const startCheckoutSession = async () => {
 const openBillingPortal = async (targetPlan?: PlanId) => {
   try {
     if (!actorUserId.value) throw new Error('Usuário não autenticado')
+    if (paymentSyncDegraded.value) {
+      alert(t('subscription_management.payment_sync_actions_disabled'))
+      return
+    }
 
     const correlationId = createCorrelationId()
 
@@ -743,6 +823,10 @@ const pollPortalUrl = async (
 const cancelSubscription = async () => {
   try {
     if (!actorUserId.value) throw new Error('Usuário não autenticado')
+    if (paymentSyncDegraded.value) {
+      alert(t('subscription_management.payment_sync_actions_disabled'))
+      return
+    }
 
     const confirmed = confirm(t('subscription_management.cancel_confirm'));
     if (!confirmed) return;

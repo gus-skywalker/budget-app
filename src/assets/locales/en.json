@@ -230,7 +230,14 @@
     "cancel_confirm": "Are you sure you want to cancel your subscription?",
     "cancel_requested": "Cancellation requested. You will keep access until the end of the current period (when applicable).",
     "error_cancel_request": "Error requesting cancellation:",
-    "error_cancel_later": "Could not cancel subscription. Please try again later."
+    "error_cancel_later": "Could not cancel subscription. Please try again later.",
+    "trial_active_title": "Your trial period is active",
+    "trial_active_until": "You have premium access during the trial until {date}. No charge will be made before that date.",
+    "trial_billing_after": "Your premium access is currently in trial. The next billing date is after {date}.",
+    "trial_active_generic": "You currently have premium access during the trial period.",
+    "payment_sync_unavailable_title": "Payment service temporarily unavailable",
+    "payment_sync_unavailable_body": "We are showing the latest subscription information available in Budget. Plan changes, billing portal, and cancellation stay unavailable until synchronization with the payment provider is restored.",
+    "payment_sync_actions_disabled": "Subscription actions are temporarily unavailable while the payment service is offline."
   },
 
   "budget": {
