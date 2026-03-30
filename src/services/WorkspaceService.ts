@@ -18,8 +18,8 @@ const isEventualConsistencyStatus = (status?: number) => status === 403 || statu
 const isRetryableStatus = (status?: number) =>
   status == null || status === 403 || status === 404 || status === 408 || status === 409 || status === 425 || status === 429 || status >= 500
 
-const authSelectWorkspaceEndpoint = `${AUTH_URL}/select-company`
-const authClearWorkspaceEndpoint = `${AUTH_URL}/clear-company`
+const authSelectWorkspaceEndpoint = `${AUTH_URL}/select-workspace`
+const authClearWorkspaceEndpoint = `${AUTH_URL}/clear-workspace`
 
 const WorkspaceService = {
   /**
@@ -40,7 +40,7 @@ const WorkspaceService = {
     }
   },
 
-  // Compat transport: auth-api e budget-api ainda usam `company/companyId`.
+  // Compat transport: budget-api ainda usa `company/companyId` em parte das rotas.
 
   /**
    * Listar workspaces do usuário.
@@ -78,8 +78,7 @@ const WorkspaceService = {
   /**
    * Selecionar workspace ativo.
    *
-   * O auth-api ainda usa o endpoint `/select-company`, entao mantemos o payload
-   * legado `companyId` apenas no transporte.
+   * O frontend já usa o endpoint canônico `/select-workspace`.
    */
   selectWorkspace(workspaceId: string): Promise<any> {
     const maxAttempts = 8
@@ -88,7 +87,7 @@ const WorkspaceService = {
     const run = async () => {
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         try {
-          return await axiosInterceptor.post(authSelectWorkspaceEndpoint, { companyId: workspaceId })
+          return await axiosInterceptor.post(authSelectWorkspaceEndpoint, { workspaceId })
         } catch (error: any) {
           lastError = error
         }
@@ -115,7 +114,7 @@ const WorkspaceService = {
 
   /**
    * Limpar workspace ativo (voltar ao modo pessoal).
-   * POST /api/auth/clear-company
+   * POST /api/auth/clear-workspace
    */
   clearWorkspace(): Promise<any> {
     const run = async () => {

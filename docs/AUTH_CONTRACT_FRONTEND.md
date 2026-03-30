@@ -20,8 +20,8 @@
 - `PUT /api/auth/{userId}`
 - `DELETE /api/auth/{userId}`
 - `POST /api/auth/refresh`
-- `POST /api/auth/select-company`
-- `POST /api/auth/clear-company`
+- `POST /api/auth/select-workspace`
+- `POST /api/auth/clear-workspace`
 - `GET /api/companies`
 
 ## Token Contract
@@ -36,4 +36,5 @@
 
 ## Notes
 - Paths without `/api` are non-canonical for current frontend integration.
-- Context switch (`select-company` / `clear-company`) must be followed by token replacement in client state.
+- Context switch (`select-workspace` / `clear-workspace`) must be followed by token replacement in client state.
+- `select-company` / `clear-company` remain backend compatibility aliases only.
