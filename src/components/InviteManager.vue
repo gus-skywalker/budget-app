@@ -2,7 +2,7 @@
   <v-card class="invite-manager">
     <v-card-title>
       <v-icon left>mdi-account-plus</v-icon>
-      {{ $t('inviteManager.title') }}
+      {{ $t('workspaceInviteManager.title') }}
     </v-card-title>
     
     <v-card-text>
@@ -13,8 +13,8 @@
             <v-text-field
               v-model="inviteEmail"
               :rules="emailRules"
-              :label="$t('inviteManager.email_label')"
-              :placeholder="$t('inviteManager.email_placeholder')"
+              :label="$t('workspaceInviteManager.email_label')"
+              :placeholder="$t('workspaceInviteManager.email_placeholder')"
               type="email"
               required
             ></v-text-field>
@@ -23,7 +23,7 @@
             <v-select
               v-model="inviteRole"
               :items="roleOptionsI18n"
-              :label="$t('inviteManager.role_label')"
+              :label="$t('workspaceInviteManager.role_label')"
               required
             ></v-select>
           </v-col>
@@ -35,7 +35,7 @@
           @click="sendInvite"
         >
           <v-icon left>mdi-email-send</v-icon>
-          {{ $t('inviteManager.send_invite') }}
+          {{ $t('workspaceInviteManager.send_invite') }}
         </v-btn>
       </v-form>
 
@@ -43,7 +43,7 @@
 
       <!-- Lista de convites pendentes -->
       <div class="invites-list">
-        <h3 class="mb-3">{{ $t('inviteManager.pending_title') }}</h3>
+        <h3 class="mb-3">{{ $t('workspaceInviteManager.pending_title') }}</h3>
         <v-progress-linear v-if="loadingInvites" indeterminate></v-progress-linear>
         <v-list v-else-if="pendingInvites.length > 0">
           <v-list-item
@@ -74,7 +74,7 @@
           </v-list-item>
         </v-list>
         <v-alert v-else type="info" variant="tonal">
-          {{ $t('inviteManager.no_pending') }}
+          {{ $t('workspaceInviteManager.no_pending') }}
         </v-alert>
       </div>
     </v-card-text>
@@ -90,12 +90,12 @@
 import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/plugins/userStore'
-import InviteService from '@/services/InviteService'
+import WorkspaceInviteService from '@/services/WorkspaceInviteService'
 
 const { t } = useI18n()
 
 const userStore = useUserStore()
-const currentCompanyId = computed(() => userStore.getCurrentCompanyId)
+const currentWorkspaceId = computed(() => userStore.getCurrentWorkspaceId)
 
 const inviteForm = ref(null)
 const valid = ref(false)
@@ -112,17 +112,17 @@ const snackbarMessage = ref('')
 const snackbarColor = ref('success')
 
 const roleOptionsI18n = [
-  { title: t('inviteManager.admin'), value: 'ROLE_ADMIN' },
-  { title: t('inviteManager.member'), value: 'ROLE_MEMBER' },
-  { title: t('inviteManager.viewer'), value: 'ROLE_VIEWER' },
-  { title: t('inviteManager.owner'), value: 'ROLE_OWNER' },
-  { title: t('inviteManager.user'), value: 'ROLE_USER' },
-  { title: t('inviteManager.client'), value: 'ROLE_CLIENT' },
-  { title: t('inviteManager.oauth2_user'), value: 'OAUTH2_USER' }
+  { title: t('workspaceInviteManager.admin'), value: 'ROLE_ADMIN' },
+  { title: t('workspaceInviteManager.member'), value: 'ROLE_MEMBER' },
+  { title: t('workspaceInviteManager.viewer'), value: 'ROLE_VIEWER' },
+  { title: t('workspaceInviteManager.owner'), value: 'ROLE_OWNER' },
+  { title: t('workspaceInviteManager.user'), value: 'ROLE_USER' },
+  { title: t('workspaceInviteManager.client'), value: 'ROLE_CLIENT' },
+  { title: t('workspaceInviteManager.oauth2_user'), value: 'OAUTH2_USER' }
 ]
 
 const emailRules = [
-  v => !!v || t('inviteManager.email_label') + ' ' + t('validation.required'),
+  v => !!v || t('workspaceInviteManager.email_label') + ' ' + t('validation.required'),
   v => /.+@.+\..+/.test(v) || t('authentication.login.invalid_email')
 ]
 
@@ -132,26 +132,26 @@ onMounted(() => {
 
 const sendInvite = async () => {
   if (!inviteForm.value.validate()) return
-  if (!currentCompanyId.value) {
-    showSnackbar(t('inviteManager.select_company'), 'error')
+  if (!currentWorkspaceId.value) {
+    showSnackbar(t('workspaceInviteManager.select_company'), 'error')
     return
   }
   
   try {
     loading.value = true
-    await InviteService.inviteUser(
-      currentCompanyId.value,
+    await WorkspaceInviteService.inviteWorkspaceUser(
+      currentWorkspaceId.value,
       inviteEmail.value,
       inviteRole.value
     )
     
-    showSnackbar(t('inviteManager.invite_success'), 'success')
+    showSnackbar(t('workspaceInviteManager.invite_success'), 'success')
     inviteEmail.value = ''
     inviteRole.value = 'ROLE_MEMBER'
     inviteForm.value.reset()
     loadInvites()
   } catch (error) {
-    const message = error.response?.data?.message || t('inviteManager.invite_error')
+    const message = error.response?.data?.message || t('workspaceInviteManager.invite_error')
     showSnackbar(message, 'error')
   } finally {
     loading.value = false
@@ -159,10 +159,10 @@ const sendInvite = async () => {
 }
 
 const loadInvites = async () => {
-  if (!currentCompanyId.value) return
+  if (!currentWorkspaceId.value) return
   try {
     loadingInvites.value = true
-    pendingInvites.value = await InviteService.listInvites(currentCompanyId.value)
+    pendingInvites.value = await WorkspaceInviteService.listWorkspaceInvites(currentWorkspaceId.value)
   } catch (error) {
     console.error('Erro ao carregar convites:', error)
   } finally {
@@ -171,14 +171,14 @@ const loadInvites = async () => {
 }
 
 const cancelInvite = async (inviteId) => {
-  if (!currentCompanyId.value) return
+  if (!currentWorkspaceId.value) return
   try {
     cancellingInvite.value = inviteId
-    await InviteService.cancelInvite(currentCompanyId.value, inviteId)
-    showSnackbar(t('inviteManager.cancel_success'), 'info')
+    await WorkspaceInviteService.cancelWorkspaceInvite(currentWorkspaceId.value, inviteId)
+    showSnackbar(t('workspaceInviteManager.cancel_success'), 'info')
     loadInvites()
   } catch (error) {
-    const message = error.response?.data?.message || t('inviteManager.cancel_error')
+    const message = error.response?.data?.message || t('workspaceInviteManager.cancel_error')
     showSnackbar(message, 'error')
   } finally {
     cancellingInvite.value = null
@@ -188,13 +188,13 @@ const cancelInvite = async (inviteId) => {
 const getRoleLabel = (role) => {
   const normalized = (role || '').toUpperCase()
   switch (normalized) {
-    case 'ROLE_ADMIN': return t('inviteManager.admin')
-    case 'ROLE_OWNER': return t('inviteManager.owner')
-    case 'ROLE_MEMBER': return t('inviteManager.member')
-    case 'ROLE_VIEWER': return t('inviteManager.viewer')
-    case 'ROLE_USER': return t('inviteManager.user')
-    case 'ROLE_CLIENT': return t('inviteManager.client')
-    case 'OAUTH2_USER': return t('inviteManager.oauth2_user')
+    case 'ROLE_ADMIN': return t('workspaceInviteManager.admin')
+    case 'ROLE_OWNER': return t('workspaceInviteManager.owner')
+    case 'ROLE_MEMBER': return t('workspaceInviteManager.member')
+    case 'ROLE_VIEWER': return t('workspaceInviteManager.viewer')
+    case 'ROLE_USER': return t('workspaceInviteManager.user')
+    case 'ROLE_CLIENT': return t('workspaceInviteManager.client')
+    case 'OAUTH2_USER': return t('workspaceInviteManager.oauth2_user')
     default: return role
   }
 }

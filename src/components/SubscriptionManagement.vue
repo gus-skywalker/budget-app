@@ -89,7 +89,7 @@
         </div>
         <div class="card-content">
           <v-radio-group v-model="selectedPlan" class="plan-radio-group">
-            <div v-if="isTenantMode" class="plan-group-label">{{ t('subscription_management.starter_group') }}</div>
+            <div v-if="isWorkspaceMode" class="plan-group-label">{{ t('subscription_management.starter_group') }}</div>
             <div class="plan-option" :class="{ 'disabled': currentPlan === 'MONTHLY' }">
               <v-radio 
                 :label="t('subscription_management.starter_monthly_name')"
@@ -151,7 +151,7 @@
               </v-chip>
             </div>
 
-            <template v-if="isTenantMode">
+            <template v-if="isWorkspaceMode">
               <v-divider class="my-6"></v-divider>
               <div class="plan-group-label">{{ t('subscription_management.team_group') }}</div>
               <div class="plan-option" :class="{ 'disabled': currentPlan === 'BUSINESS_MONTHLY' }">
@@ -355,6 +355,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import BillingDecisionService from '@/services/BillingDecisionService'
 import BillingOrchestrationService from '@/services/BillingOrchestrationService'
+import { resolveCanonicalBillingSubject } from '@/utils/billing'
 import { createCorrelationId } from '@/utils/correlation'
 import { PLAN_DETAILS, type PlanId } from '@/constants/plans';
 import { buildBillingPricingContext, formatConvertedPriceFromBRL, resolvePricingCurrency } from '@/utils/pricing'
@@ -375,7 +376,8 @@ import { useUserStore } from '@/plugins/userStore';
 const props = defineProps<{ user: User }>();
 const userStore = useUserStore();
 const router = useRouter()
-const isTenantMode = computed(() => userStore.isTenantMode);
+const isWorkspaceMode = computed(() => userStore.isWorkspaceMode);
+const currentWorkspaceId = computed(() => userStore.getCurrentWorkspaceId ? String(userStore.getCurrentWorkspaceId) : '');
 const actorUserId = computed(() => String(props.user.id || userStore.user?.id || ''))
 
 // Estado da assinatura e plano selecionado
@@ -589,14 +591,15 @@ const changePlanActionText = computed(() => {
 
 const loadSubscriptionDetails = async () => {
   try {
-    if (!actorUserId.value) {
+    const canonicalBillingSubject = resolveCanonicalBillingSubject(userStore)
+    if (!canonicalBillingSubject) {
       return
     }
 
-    const subjectType = (isTenantMode.value && userStore.currentCompanyId) ? 'COMPANY' : 'USER'
-    const subjectId = subjectType === 'COMPANY' ? String(userStore.currentCompanyId) : actorUserId.value
-
-    const access = await BillingOrchestrationService.getPremiumAccess(subjectType as any, subjectId)
+    const access = await BillingOrchestrationService.getPremiumAccess(
+      canonicalBillingSubject.subjectType,
+      canonicalBillingSubject.subjectId
+    )
     hasPremiumAccess.value = Boolean(access.data?.hasPremiumAccess)
     const resolvedStatus = access.data?.subscriptionStatus || (access.data?.hasPremiumAccess ? 'ACTIVE' : 'NONE')
     subscriptionStatus.value = String(resolvedStatus).toUpperCase()
@@ -662,7 +665,8 @@ const handlePlanChange = async () => {
 
 const startCheckoutSession = async () => {
   try {
-    if (!actorUserId.value) {
+    const canonicalBillingSubject = resolveCanonicalBillingSubject(userStore)
+    if (!actorUserId.value || !canonicalBillingSubject) {
       throw new Error('Usuário não autenticado')
     }
 
@@ -673,21 +677,15 @@ const startCheckoutSession = async () => {
     const correlationId = createCorrelationId()
 
     const plan = String(selectedPlan.value)
-    const isBusinessPlan = plan.startsWith('BUSINESS_')
-    const companyId = userStore.currentCompanyId
-
-    const subjectType = (isTenantMode.value && companyId) ? 'COMPANY' : 'USER'
-    const subjectId = subjectType === 'COMPANY' ? String(companyId) : actorUserId.value
-
     // ADR-001/004: do not call payment-api; do not send PII.
     const decisionResp = await BillingDecisionService.decide(
       {
         plan,
         actor: actorUserId.value,
-        subjectType,
-        subjectId,
-        userId: subjectType === 'USER' ? actorUserId.value : null,
-        companyId: subjectType === 'COMPANY' ? String(companyId) : null,
+        subjectType: canonicalBillingSubject.subjectType,
+        subjectId: canonicalBillingSubject.subjectId,
+        userId: canonicalBillingSubject.subjectId,
+        companyId: currentWorkspaceId.value || null,
         ...getBillingContext()
       },
       correlationId
@@ -718,21 +716,16 @@ const startCheckoutSession = async () => {
 // Função para abrir o portal de faturamento
 const openBillingPortal = async (targetPlan?: PlanId) => {
   try {
-    if (!actorUserId.value) throw new Error('Usuário não autenticado')
+    const canonicalBillingSubject = resolveCanonicalBillingSubject(userStore)
+    if (!actorUserId.value || !canonicalBillingSubject) throw new Error('Usuário não autenticado')
     if (paymentSyncDegraded.value) {
       alert(t('subscription_management.payment_sync_actions_disabled'))
       return
     }
 
     const correlationId = createCorrelationId()
-
-    // Prefer company if tenant mode has company selected; else user.
-    const subjectType = (isTenantMode.value && userStore.currentCompanyId) ? 'COMPANY' : 'USER'
-    const subjectId = subjectType === 'COMPANY' ? String(userStore.currentCompanyId) : actorUserId.value
-    if (subjectType === 'COMPANY' && !userStore.isTenantAdmin) {
-      alert(t('subscription_management.admin_only_manage'));
-      return;
-    }
+    const subjectType = canonicalBillingSubject.subjectType
+    const subjectId = canonicalBillingSubject.subjectId
 
     const storageKey = `billing.portal.messageId:${correlationId}:${subjectType}:${subjectId}`
     const existingMessageId = sessionStorage.getItem(storageKey)
@@ -777,11 +770,12 @@ const openBillingPortal = async (targetPlan?: PlanId) => {
 const openPlanDetails = () => {
   showPlanDetails.value = true;
   try {
+    const canonicalBillingSubject = resolveCanonicalBillingSubject(userStore)
     window.dispatchEvent(
       new CustomEvent('billing:plan-details-opened', {
         detail: {
-          subjectType: isTenantMode.value && userStore.currentCompanyId ? 'COMPANY' : 'USER',
-          subjectId: isTenantMode.value && userStore.currentCompanyId ? String(userStore.currentCompanyId) : actorUserId.value,
+          subjectType: canonicalBillingSubject?.subjectType || 'USER',
+          subjectId: canonicalBillingSubject?.subjectId || actorUserId.value,
           currentPlan: currentPlan.value || currentPlanTier.value || 'FREE'
         }
       })
@@ -822,7 +816,8 @@ const pollPortalUrl = async (
 // Função para cancelar a assinatura
 const cancelSubscription = async () => {
   try {
-    if (!actorUserId.value) throw new Error('Usuário não autenticado')
+    const canonicalBillingSubject = resolveCanonicalBillingSubject(userStore)
+    if (!actorUserId.value || !canonicalBillingSubject) throw new Error('Usuário não autenticado')
     if (paymentSyncDegraded.value) {
       alert(t('subscription_management.payment_sync_actions_disabled'))
       return
@@ -832,9 +827,8 @@ const cancelSubscription = async () => {
     if (!confirmed) return;
 
     const correlationId = createCorrelationId()
-
-    const subjectType = (isTenantMode.value && userStore.currentCompanyId) ? 'COMPANY' : 'USER'
-    const subjectId = subjectType === 'COMPANY' ? String(userStore.currentCompanyId) : actorUserId.value
+    const subjectType = canonicalBillingSubject.subjectType
+    const subjectId = canonicalBillingSubject.subjectId
 
     const storageKey = `billing.cancel.messageId:${correlationId}:${subjectType}:${subjectId}`
     const existingMessageId = sessionStorage.getItem(storageKey)
@@ -858,13 +852,7 @@ const cancelSubscription = async () => {
 };
 
 const shouldLoad = computed(() => {
-  if (!actorUserId.value) {
-    return false;
-  }
-  if (isTenantMode.value && !userStore.currentCompanyId) {
-    return false;
-  }
-  return true;
+  return Boolean(actorUserId.value)
 });
 
 onMounted(() => {
@@ -874,7 +862,7 @@ onMounted(() => {
 });
 
 watch(
-  () => [actorUserId.value, userStore.currentCompanyId, isTenantMode.value],
+  () => [actorUserId.value, currentWorkspaceId.value, isWorkspaceMode.value],
   () => {
     if (shouldLoad.value) {
       loadSubscriptionDetails();

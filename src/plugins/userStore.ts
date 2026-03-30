@@ -8,8 +8,9 @@
  */
 // src/plugins/userStore.ts
 import { defineStore } from 'pinia'
-import CompanyService from '@/services/CompanyService'
+import WorkspaceService from '@/services/WorkspaceService'
 import AuthService from '@/services/AuthService'
+import type { WorkspaceMembership } from '@/types/workspace'
 
 /**
  * Decode JWT token without external libraries
@@ -48,11 +49,8 @@ const TENANT_ADMIN_ROLES = ['ROLE_OWNER', 'ROLE_ADMIN']
 const TENANT_WRITE_ROLES = ['ROLE_OWNER', 'ROLE_ADMIN', 'ROLE_MEMBER']
 const hasCompanyName = (value?: string) => Boolean(value && value.trim().length > 0)
 
-interface Company {
-  companyId: string
-  companyName?: string
-  role?: string | null
-}
+type Company = WorkspaceMembership
+type Workspace = WorkspaceMembership
 
 interface User {
   id?: string
@@ -115,19 +113,24 @@ export const useUserStore = defineStore({
     getToken: (state): string | null => state.token,
     getRefreshToken: (state): string | null => state.refreshToken,
     getCurrentCompanyId: (state): string | null => state.currentCompanyId,
+    getCurrentWorkspaceId: (state): string | null => state.currentCompanyId,
     getCurrentRole: (state): string | null => state.tenantRole,
     getTenantRole: (state): string | null => state.tenantRole,
     getCompanies: (state): Company[] => state.user.companies || [],
+    getWorkspaces: (state): Workspace[] => state.user.companies || [],
     getUserRoles: (state): string[] => state.user.userRoles || [],
     hasMultipleCompanies: (state): boolean => (state.user.companies?.length || 0) > 1,
+    hasMultipleWorkspaces: (state): boolean => (state.user.companies?.length || 0) > 1,
     isAdmin: (state): boolean => TENANT_ADMIN_ROLES.includes((state.tenantRole || '').toUpperCase()),
     isPersonalMode: (state): boolean => !state.currentCompanyId,
     isTenantMode: (state): boolean => Boolean(state.currentCompanyId && state.tenantRole),
+    isWorkspaceMode: (state): boolean => Boolean(state.currentCompanyId && state.tenantRole),
     isTenantAdmin: (state): boolean => TENANT_ADMIN_ROLES.includes((state.tenantRole || '').toUpperCase()),
     canWrite: (state): boolean => TENANT_WRITE_ROLES.includes((state.tenantRole || '').toUpperCase()),
     getLanguage: (state): string => state.language,
     getPreferredMode: (state): 'personal' | 'tenant' | null => state.preferredMode,
     getPreferredCompanyId: (state): string | null => state.preferredCompanyId,
+    getPreferredWorkspaceId: (state): string | null => state.preferredCompanyId,
     getApiLanguage: (state): string => {
       const lang = state.language.toLowerCase()
       return ['pt', 'en', 'fr'].includes(lang) ? lang : 'pt'
@@ -176,6 +179,10 @@ export const useUserStore = defineStore({
       this.savePreference()
     },
 
+    setPreferredWorkspace(workspaceId: string) {
+      this.setPreferredTenant(workspaceId)
+    },
+
     setToken(token: string | null) {
       this.token = token
       this.saveState()
@@ -222,6 +229,10 @@ export const useUserStore = defineStore({
       this.saveState()
     },
 
+    setCurrentWorkspace(workspaceId: string | null, role?: string | null, workspaceName?: string) {
+      this.setCurrentCompany(workspaceId, role, workspaceName)
+    },
+
     setCompanies(companies: Company[]) {
       const merged = mergeCompanies(companies || [], this.user.companies || [])
       this.user.companies = merged
@@ -241,10 +252,18 @@ export const useUserStore = defineStore({
       this.saveState()
     },
 
+    updateWorkspaceName(workspaceId: string, workspaceName: string) {
+      this.updateCompanyName(workspaceId, workspaceName)
+    },
+
     clearCurrentCompany() {
       this.currentCompanyId = null
       this.tenantRole = null
       this.saveState()
+    },
+
+    clearCurrentWorkspace() {
+      this.clearCurrentCompany()
     },
 
     resetUser() {
@@ -369,7 +388,7 @@ export const useUserStore = defineStore({
           }
 
           try {
-            const response = await CompanyService.getDetails(companyId)
+            const response = await WorkspaceService.getWorkspaceDetails(companyId)
             const companyName =
               response?.data?.companyName ||
               response?.data?.name ||
@@ -462,7 +481,7 @@ export const useUserStore = defineStore({
      */
     async selectCompany(companyId: string) {
       try {
-        const response = await CompanyService.selectCompany(companyId)
+        const response = await WorkspaceService.selectWorkspace(companyId)
         const { accessToken, refreshToken, tenantRole, companyId: resolvedCompanyId } = response.data
 
         if (accessToken) {
@@ -490,9 +509,13 @@ export const useUserStore = defineStore({
       }
     },
 
+    async selectWorkspace(workspaceId: string) {
+      return this.selectCompany(workspaceId)
+    },
+
     async clearCompanySelection() {
       try {
-        const response = await CompanyService.clearCompany()
+        const response = await WorkspaceService.clearWorkspace()
         const { accessToken, refreshToken } = response.data
 
         if (accessToken) {
@@ -511,6 +534,10 @@ export const useUserStore = defineStore({
         console.error('Error clearing company selection:', error)
         throw error
       }
+    },
+
+    async clearWorkspaceSelection() {
+      return this.clearCompanySelection()
     },
 
     /**

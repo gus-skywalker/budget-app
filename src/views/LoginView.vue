@@ -393,9 +393,9 @@ const mockLogin = (scenario) => {
   if (companies.length > 1) {
     store.saveState()
     console.log('🔄 Redirecionando para seletor de empresa - múltiplas empresas detectadas')
-    router.push({ name: 'select-company', query: { redirect: '/dashboard' } })
+    router.push({ name: 'select-workspace', query: { redirect: '/dashboard' } })
   } else if (companies.length === 1) {
-    store.setCurrentCompany(companies[0].companyId, companies[0].role, companies[0].companyName)
+    store.setCurrentWorkspace(companies[0].companyId, companies[0].role, companies[0].companyName)
     store.saveState()
     loginSuccess.value = 'Login realizado com sucesso!'
     setTimeout(() => {
@@ -408,7 +408,7 @@ const mockLogin = (scenario) => {
     loginSuccess.value = 'Login realizado com sucesso!'
     setTimeout(() => {
       loginSuccess.value = null
-      router.push('/create-company')
+      router.push('/create-workspace')
     }, 800)
     console.log('Workspace obrigatorio: redirecionando para criacao')
   }
@@ -416,7 +416,7 @@ const mockLogin = (scenario) => {
   console.log('Mock Login executado:', {
     scenario,
     companies: companies.length,
-    currentCompany: store.currentCompanyId
+    currentWorkspace: store.getCurrentWorkspaceId
   })
 }
 

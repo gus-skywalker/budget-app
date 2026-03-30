@@ -33,6 +33,7 @@ export interface OnboardingResolution {
   route: RouteLocationRaw
   targetPath: string
   selectedCompanyId?: string
+  selectedWorkspaceId?: string
 }
 
 export interface OnboardingBannerInput {
@@ -124,21 +125,15 @@ const routeRequiresWorkspace = (router: Router, targetPath: string): boolean => 
   return resolved.matched.some((record) => Boolean(record.meta?.requiresWorkspace || record.meta?.requiresTenant))
 }
 
-const targetRequiresBusinessTenant = (targetPath: string): boolean => {
-  const url = parseLocalPath(targetPath)
-  const path = url.pathname
-  const plan = url.searchParams.get('plan')
-  if (!isBusinessPlan(plan)) return false
-  return path === '/choose-plan' || path === '/checkout'
-}
+const targetRequiresBusinessTenant = (_targetPath: string): boolean => false
 
 const createCompanyRoute = (targetPath: string): RouteLocationRaw => ({
-  name: 'create-company',
+  name: 'create-workspace',
   query: { redirect: targetPath }
 })
 
 const selectCompanyRoute = (targetPath: string): RouteLocationRaw => ({
-  name: 'select-company',
+  name: 'select-workspace',
   query: { redirect: targetPath }
 })
 
@@ -166,29 +161,29 @@ export const resolvePostAuthRoute = async (
     }
   }
 
-  if (!userStore.isTenantMode) {
-    const preferredCompanyId = userStore.getPreferredCompanyId
+  if (!userStore.isWorkspaceMode) {
+    const preferredWorkspaceId = userStore.getPreferredWorkspaceId
     const canAutoSelectPreferred = options.autoSelectPreferredCompany !== false
     const preferredIsAvailable =
-      typeof preferredCompanyId === 'string' &&
-      companies.some((company) => company.companyId === preferredCompanyId)
+      typeof preferredWorkspaceId === 'string' &&
+      companies.some((company) => company.companyId === preferredWorkspaceId)
 
-    const autoSelectCompanyId =
+    const autoSelectWorkspaceId =
       companies.length === 1
         ? companies[0].companyId
         : canAutoSelectPreferred && preferredIsAvailable
-          ? String(preferredCompanyId)
+          ? String(preferredWorkspaceId)
           : null
 
-    if (autoSelectCompanyId) {
+    if (autoSelectWorkspaceId) {
       try {
-        await userStore.selectCompany(autoSelectCompanyId)
+        await userStore.selectWorkspace(autoSelectWorkspaceId)
       } catch {
         // Fallback is deterministic routing to explicit company selection.
       }
     }
 
-    if (!userStore.isTenantMode && requiresTenantContext) {
+    if (!userStore.isWorkspaceMode && requiresTenantContext) {
       return {
         state: 'COMPANY_SELECTION_REQUIRED',
         route: selectCompanyRoute(targetPath),
@@ -201,7 +196,8 @@ export const resolvePostAuthRoute = async (
     state: requiresBusinessTenant ? 'READY_BILLING_DECISION' : 'READY',
     route: { path: targetPath },
     targetPath,
-    selectedCompanyId: userStore.getCurrentCompanyId || undefined
+    selectedCompanyId: userStore.getCurrentCompanyId || undefined,
+    selectedWorkspaceId: userStore.getCurrentWorkspaceId || undefined
   }
 }
 

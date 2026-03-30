@@ -684,6 +684,7 @@ import AiService from '@/services/aiService'
 import ActivityService from '@/services/ActivityService'
 import BillingOrchestrationService from '@/services/BillingOrchestrationService'
 import { useUserStore } from '@/plugins/userStore'
+import { resolveCanonicalBillingSubject } from '@/utils/billing'
 import 'chartjs-adapter-moment'
 
 Chart.register(...registerables)
@@ -1369,25 +1370,7 @@ export default {
     },
     resolveBillingSubject() {
       const userStore = useUserStore()
-      const companyId = userStore.currentCompanyId
-      const userId = userStore.user?.id
-      const isTenantMode = userStore.isTenantMode
-
-      if (isTenantMode && companyId) {
-        return {
-          subjectType: 'COMPANY',
-          subjectId: String(companyId),
-        }
-      }
-
-      if (userId) {
-        return {
-          subjectType: 'USER',
-          subjectId: String(userId),
-        }
-      }
-
-      return null
+      return resolveCanonicalBillingSubject(userStore)
     },
     async fetchPremiumFeatureSummaries() {
       const billingSubject = this.resolveBillingSubject()

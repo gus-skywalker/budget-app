@@ -2,22 +2,22 @@
   <v-dialog v-model="dialog" persistent max-width="500">
     <v-card>
       <v-card-title class="headline">
-        {{ $t('companySelector.title') }}
+        {{ $t('workspaceSelector.title') }}
       </v-card-title>
       <v-card-text>
-        <p class="mb-4">{{ $t('companySelector.desc') }}</p>
+        <p class="mb-4">{{ $t('workspaceSelector.desc') }}</p>
         <v-list>
           <v-list-item
-            v-for="company in companies"
-            :key="company.companyId"
-            @click="selectCompany(company)"
-            class="company-item"
+            v-for="workspace in companies"
+            :key="workspace.companyId"
+            @click="selectWorkspace(workspace)"
+            class="workspace-item"
           >
             <template v-slot:prepend>
               <v-icon>mdi-office-building</v-icon>
             </template>
-            <v-list-item-title>{{ company.companyName || company.companyId }}</v-list-item-title>
-            <v-list-item-subtitle>{{ getRoleLabel(company.role) }}</v-list-item-subtitle>
+            <v-list-item-title>{{ workspace.companyName || workspace.companyId }}</v-list-item-title>
+            <v-list-item-subtitle>{{ getRoleLabel(workspace.role) }}</v-list-item-subtitle>
             <template v-slot:append>
               <v-icon>mdi-chevron-right</v-icon>
             </template>
@@ -30,8 +30,9 @@
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-const { t } = useI18n()
 import { computed } from 'vue'
+
+const { t } = useI18n()
 
 const props = defineProps({
   modelValue: Boolean,
@@ -41,41 +42,41 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:modelValue', 'company-selected'])
+const emit = defineEmits(['update:modelValue', 'workspace-selected'])
 
 const dialog = computed({
   get: () => props.modelValue,
   set: (value) => emit('update:modelValue', value)
 })
 
-const selectCompany = (company) => {
-  emit('company-selected', company)
+const selectWorkspace = (workspace) => {
+  emit('workspace-selected', workspace)
 }
 
 const getRoleLabel = (role) => {
   const normalized = (role || '').toUpperCase()
-  if (t(`companySelector.roles.${normalized}`) !== `companySelector.roles.${normalized}`) {
-    return t(`companySelector.roles.${normalized}`)
+  if (t(`workspaceSelector.roles.${normalized}`) !== `workspaceSelector.roles.${normalized}`) {
+    return t(`workspaceSelector.roles.${normalized}`)
   }
-  if (t(`companySelector.roles.${role}`) !== `companySelector.roles.${role}`) {
-    return t(`companySelector.roles.${role}`)
+  if (t(`workspaceSelector.roles.${role}`) !== `workspaceSelector.roles.${role}`) {
+    return t(`workspaceSelector.roles.${role}`)
   }
   return role
 }
 </script>
 
 <style scoped>
-.company-item {
+.workspace-item {
   cursor: pointer;
   border-bottom: 1px solid #e0e0e0;
   transition: background-color 0.2s;
 }
 
-.company-item:hover {
+.workspace-item:hover {
   background-color: #f5f5f5;
 }
 
-.company-item:last-child {
+.workspace-item:last-child {
   border-bottom: none;
 }
 </style>

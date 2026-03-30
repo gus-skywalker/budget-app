@@ -55,8 +55,8 @@ const routeQuery = computed<Record<string, unknown>>(() => ({ ...route.query }))
 const banner = computed(() =>
   OnboardingOrchestrator.resolveOnboardingBannerState({
     isAuthenticated: userStore.isAuthenticated,
-    hasCompanies: (userStore.getCompanies?.length || 0) > 0,
-    isTenantMode: userStore.isTenantMode,
+    hasCompanies: (userStore.getWorkspaces?.length || 0) > 0,
+    isTenantMode: userStore.isWorkspaceMode,
     currentPath: route.path,
     currentQuery: routeQuery.value,
     requiresWorkspace: requiresWorkspace.value,

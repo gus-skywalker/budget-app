@@ -82,6 +82,7 @@ import { PLAN_DETAILS } from '@/constants/plans';
 import { createCorrelationId } from '@/utils/correlation'
 import { createMessageId } from '@/utils/messageId'
 import { buildBillingPricingContext, formatConvertedPriceFromBRL } from '@/utils/pricing'
+import { resolveCanonicalBillingSubject } from '@/utils/billing'
 import BillingOrchestrationService from '@/services/BillingOrchestrationService'
 import BillingDecisionService from '@/services/BillingDecisionService'
 
@@ -164,24 +165,19 @@ export default {
                 }
 
                 const correlationId = createCorrelationId()
-                const isTeamPlan = String(plan).startsWith('BUSINESS_')
-                const companyId = userStore.currentCompanyId
-                if (isTeamPlan && !companyId) {
-                    router.push({ name: 'select-company', query: { redirect: `/checkout?plan=${encodeURIComponent(String(plan))}` } })
-                    throw new Error('Selecione uma empresa para continuar com plano TEAM.')
+                const canonicalBillingSubject = resolveCanonicalBillingSubject(userStore)
+                if (!canonicalBillingSubject) {
+                    throw new Error('Usuário não autenticado')
                 }
-
-                const preferredSubjectType = (isTeamPlan && companyId) ? 'COMPANY' : 'USER'
-                const preferredSubjectId = preferredSubjectType === 'COMPANY' ? String(companyId) : String(user.id)
 
                 const decisionResp = await BillingDecisionService.decide(
                     {
                         plan: String(plan),
                         actor: String(user.id),
-                        subjectType: preferredSubjectType,
-                        subjectId: preferredSubjectId,
-                        userId: preferredSubjectType === 'USER' ? String(user.id) : null,
-                        companyId: preferredSubjectType === 'COMPANY' ? String(companyId) : null,
+                        subjectType: canonicalBillingSubject.subjectType,
+                        subjectId: canonicalBillingSubject.subjectId,
+                        userId: canonicalBillingSubject.subjectId,
+                        companyId: userStore.getCurrentWorkspaceId ? String(userStore.getCurrentWorkspaceId) : null,
                         ...getBillingContext()
                     },
                     correlationId

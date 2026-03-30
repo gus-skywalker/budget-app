@@ -615,7 +615,7 @@ import DataService from '@/services/DataService'
 import AiService from '@/services/aiService'
 import FinancialReadService, { NO_FINANCIAL_ACCOUNT_ERROR_MESSAGE } from '@/services/FinancialReadService'
 import UsersService from '@/services/UsersService'
-import CompanyService from '@/services/CompanyService'
+import WorkspaceService from '@/services/WorkspaceService'
 import NotificationService from '@/services/NotificationService'
 import { useUserStore } from '@/plugins/userStore'
 
@@ -1700,15 +1700,15 @@ export default {
     },
     fetchShareableUsers() {
       const userStore = useUserStore()
-      const companyId = userStore.getCurrentCompanyId
-      const isTenantMode = userStore.isTenantMode
+      const workspaceId = userStore.getCurrentWorkspaceId
+      const isWorkspaceMode = userStore.isWorkspaceMode
 
-      if (!(isTenantMode && companyId)) {
+      if (!(isWorkspaceMode && workspaceId)) {
         this.users = []
         return
       }
 
-      CompanyService.listMembers(companyId)
+      WorkspaceService.listWorkspaceMembers(workspaceId)
         .then((response) => {
           const members = this.normalizeCollection(response?.data)
           this.users = members
@@ -1724,7 +1724,7 @@ export default {
             .filter((member) => Boolean(member))
         })
         .catch((error) => {
-          console.error('Erro ao buscar membros da empresa:', error)
+          console.error('Erro ao buscar membros do workspace:', error)
           this.users = []
         })
     },

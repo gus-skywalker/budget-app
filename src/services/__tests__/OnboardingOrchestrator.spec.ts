@@ -15,10 +15,10 @@ const createRouterMock = (requiresWorkspace: boolean = false) =>
 const createUserStoreMock = (overrides: Record<string, any> = {}) =>
   ({
     getCompanies: [],
-    isTenantMode: false,
-    getPreferredCompanyId: null,
-    getCurrentCompanyId: null,
-    selectCompany: vi.fn(async () => {}),
+    isWorkspaceMode: false,
+    getPreferredWorkspaceId: null,
+    getCurrentWorkspaceId: null,
+    selectWorkspace: vi.fn(async () => {}),
     ...overrides
   }) as any
 
@@ -47,7 +47,7 @@ describe('OnboardingOrchestrator', () => {
     expect(target).toBe('/dashboard')
   })
 
-  it('routes to create-company when authenticated user has no companies', async () => {
+  it('routes to create-workspace when authenticated user has no workspaces', async () => {
     const result = await OnboardingOrchestrator.resolvePostAuthRoute(
       makeOptions({
         plan: 'BUSINESS_ANNUAL',
@@ -57,22 +57,22 @@ describe('OnboardingOrchestrator', () => {
 
     expect(result.state).toBe('COMPANY_REQUIRED')
     expect(result.route).toEqual({
-      name: 'create-company',
+      name: 'create-workspace',
       query: { redirect: '/choose-plan?plan=BUSINESS_ANNUAL' }
     })
   })
 
-  it('auto-selects single company and proceeds to target route', async () => {
+  it('auto-selects a single workspace and proceeds to target route', async () => {
     const userStore = createUserStoreMock({
       getCompanies: [{ companyId: 'company-1' }],
-      isTenantMode: false,
-      getCurrentCompanyId: null
+      isWorkspaceMode: false,
+      getCurrentWorkspaceId: null
     })
-    const selectCompany = vi.fn(async (companyId: string) => {
-      userStore.isTenantMode = true
-      userStore.getCurrentCompanyId = companyId
+    const selectWorkspace = vi.fn(async (workspaceId: string) => {
+      userStore.isWorkspaceMode = true
+      userStore.getCurrentWorkspaceId = workspaceId
     })
-    userStore.selectCompany = selectCompany
+    userStore.selectWorkspace = selectWorkspace
 
     const result = await OnboardingOrchestrator.resolvePostAuthRoute(
       makeOptions({
@@ -84,13 +84,13 @@ describe('OnboardingOrchestrator', () => {
 
     expect(result.state).toBe('READY')
     expect(result.route).toEqual({ path: '/dashboard' })
-    expect(selectCompany).toHaveBeenCalledWith('company-1')
+    expect(selectWorkspace).toHaveBeenCalledWith('company-1')
   })
 
-  it('requires explicit company selection for business plan when tenant is not selected', async () => {
+  it('allows business plan checkout to proceed without an active workspace', async () => {
     const userStore = createUserStoreMock({
       getCompanies: [{ companyId: 'company-a' }, { companyId: 'company-b' }],
-      isTenantMode: false
+      isWorkspaceMode: false
     })
 
     const result = await OnboardingOrchestrator.resolvePostAuthRoute(
@@ -101,14 +101,11 @@ describe('OnboardingOrchestrator', () => {
       })
     )
 
-    expect(result.state).toBe('COMPANY_SELECTION_REQUIRED')
-    expect(result.route).toEqual({
-      name: 'select-company',
-      query: { redirect: '/choose-plan?plan=BUSINESS_MONTHLY' }
-    })
+    expect(result.state).toBe('READY')
+    expect(result.route).toEqual({ path: '/choose-plan?plan=BUSINESS_MONTHLY' })
   })
 
-  it('resolves banner state to company required when no company exists', () => {
+  it('resolves banner state to workspace required when no workspace exists', () => {
     const banner = resolveOnboardingBannerState({
       isAuthenticated: true,
       hasCompanies: false,
@@ -121,12 +118,12 @@ describe('OnboardingOrchestrator', () => {
     expect(banner.visible).toBe(true)
     expect(banner.phase).toBe('COMPANY_REQUIRED')
     expect(banner.ctaRoute).toEqual({
-      name: 'create-company',
+      name: 'create-workspace',
       query: { redirect: '/dashboard' }
     })
   })
 
-  it('resolves banner state to company selection for business checkout without tenant context', () => {
+  it('resolves banner state to workspace selection for business checkout without workspace context', () => {
     const banner = resolveOnboardingBannerState({
       isAuthenticated: true,
       hasCompanies: true,
@@ -138,7 +135,7 @@ describe('OnboardingOrchestrator', () => {
     expect(banner.visible).toBe(true)
     expect(banner.phase).toBe('COMPANY_SELECTION_REQUIRED')
     expect(banner.ctaRoute).toEqual({
-      name: 'select-company',
+      name: 'select-workspace',
       query: { redirect: '/choose-plan?plan=BUSINESS_MONTHLY' }
     })
   })

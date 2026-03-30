@@ -5,7 +5,7 @@ import { useTheme } from 'vuetify'
 import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/plugins/userStore'
 import type { Notification } from '@/services/NotificationService'
-import CompanySwitcher from '@/components/CompanySwitcher.vue'
+import WorkspaceSwitcher from '@/components/WorkspaceSwitcher.vue'
 
 // Import props and emits
 const props = defineProps<{
@@ -264,8 +264,8 @@ const navSections = computed(() => [
 
     <v-divider></v-divider>
 
-    <div class="company-switcher-wrapper">
-      <CompanySwitcher />
+    <div class="workspace-switcher-wrapper">
+      <WorkspaceSwitcher />
     </div>
 
     <v-list density="compact" nav>
@@ -385,11 +385,11 @@ const navSections = computed(() => [
   width: 56px; /* Largura fixa do rail */
 }
 
-.company-switcher-wrapper {
+.workspace-switcher-wrapper {
   padding: 12px 16px;
 }
 
-.company-switcher-wrapper :deep(.company-switcher-btn) {
+.workspace-switcher-wrapper :deep(.workspace-switcher-btn) {
   width: 100%;
   justify-content: flex-start;
 }

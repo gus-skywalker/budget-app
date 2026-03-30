@@ -59,6 +59,7 @@
 <script>
 import { useUserStore } from '@/plugins/userStore';
 import BillingOrchestrationService from '@/services/BillingOrchestrationService';
+import { resolveCanonicalBillingSubject } from '@/utils/billing'
 
 export default {
   name: 'StripeSuccess',
@@ -112,19 +113,17 @@ export default {
 
     async checkSubscriptionStatus() {
       const userStore = useUserStore();
-      const userId = userStore.user?.id;
-      const companyId = userStore.currentCompanyId;
-      const isTenantMode = userStore.isTenantMode;
+      const canonicalBillingSubject = resolveCanonicalBillingSubject(userStore);
       const checkoutContext = this.resolveCheckoutContext()
 
       if (!checkoutContext.subjectType || !checkoutContext.subjectId) {
-        if (!userId && !(isTenantMode && companyId)) {
+        if (!canonicalBillingSubject?.subjectId) {
           throw new Error('Usuário não identificado');
         }
       }
 
-      const subjectType = checkoutContext.subjectType || ((isTenantMode && companyId) ? 'COMPANY' : 'USER');
-      const subjectId = checkoutContext.subjectId || (subjectType === 'COMPANY' ? String(companyId) : String(userId));
+      const subjectType = checkoutContext.subjectType || canonicalBillingSubject?.subjectType || 'USER';
+      const subjectId = checkoutContext.subjectId || canonicalBillingSubject?.subjectId;
 
       if (!subjectId) {
         throw new Error('Usuário não identificado');

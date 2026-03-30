@@ -130,6 +130,7 @@
 <script>
 import FAQ from '@/components/FAQ.vue';
 import BillingDecisionService from '@/services/BillingDecisionService'
+import { resolveCanonicalBillingSubject } from '@/utils/billing'
 import OnboardingOrchestrator from '@/services/OnboardingOrchestrator'
 import { createCorrelationId } from '@/utils/correlation'
 import { PLAN_DETAILS } from '@/constants/plans';
@@ -158,7 +159,7 @@ export default {
             ],
             selectedPlan: null,
             planDetails: PLAN_DETAILS,
-            isTenantMode: false,
+            isWorkspaceMode: false,
         };
     },
     computed: {
@@ -172,16 +173,16 @@ export default {
         }
     },
     mounted() {
-        // Detecta modo tenant via Pinia
+        // Detecta contexto de workspace via Pinia
         try {
             const userStore = useUserStore()
-            this.isTenantMode = userStore.isTenantMode
+            this.isWorkspaceMode = userStore.isWorkspaceMode
             const preselectedPlan = this.$route?.query?.plan
             if (typeof preselectedPlan === 'string' && preselectedPlan.trim()) {
                 this.redirectToCheckout(preselectedPlan.trim())
             }
         } catch (e) {
-            this.isTenantMode = false
+            this.isWorkspaceMode = false
         }
     },
     methods: {
@@ -206,18 +207,11 @@ export default {
         },
 
         handleTeamClick(plan) {
-            const userStore = useUserStore()
             if (!this.isAuthenticated) {
                 alert(this.$t('choosePlan.error_login_team'));
                 const redirect = OnboardingOrchestrator.buildRedirectPath('/choose-plan', { plan })
                 this.$router.push({ name: 'login', query: { redirect } })
                 return
-            }
-            if (!userStore.currentCompanyId) {
-                alert(this.$t('choosePlan.error_select_company_team'));
-                const redirect = OnboardingOrchestrator.buildRedirectPath('/choose-plan', { plan })
-                this.$router.push({ name: 'select-company', query: { redirect } })
-                return;
             }
             this.redirectToCheckout(plan);
         },
@@ -233,26 +227,19 @@ export default {
 
                 const correlationId = createCorrelationId()
 
-                const isTeamPlan = String(plan).startsWith('BUSINESS_');
-                const companyId = userStore.currentCompanyId;
-                if (isTeamPlan && !companyId) {
-                    throw new Error(this.$t('choosePlan.error_select_company_team'));
+                const canonicalBillingSubject = resolveCanonicalBillingSubject(userStore)
+                if (!canonicalBillingSubject) {
+                    throw new Error(this.$t('choosePlan.error_user_not_authenticated'));
                 }
-
-                // IMPORTANT (ADR-001/004): FE must NOT call payment-api and must NOT send PII.
-                // Decide subject based on plan + tenant context.
-                const subjectType = (isTeamPlan && userStore.isTenantMode && companyId) ? 'COMPANY' : 'USER'
-                const subjectId = subjectType === 'COMPANY' ? String(companyId) : String(user.id)
 
                 const decisionResp = await BillingDecisionService.decide(
                     {
                         plan: String(plan),
                         actor: String(user.id),
-                        subjectType,
-                        subjectId,
-                        // backward compatible fields
-                        userId: subjectType === 'USER' ? String(user.id) : null,
-                        companyId: subjectType === 'COMPANY' ? String(companyId) : null
+                        subjectType: canonicalBillingSubject.subjectType,
+                        subjectId: canonicalBillingSubject.subjectId,
+                        userId: canonicalBillingSubject.subjectId,
+                        companyId: userStore.currentWorkspaceId ? String(userStore.currentWorkspaceId) : null
                     },
                     correlationId
                 )

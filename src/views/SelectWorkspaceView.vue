@@ -1,5 +1,5 @@
 <template>
-  <div class="select-company-view">
+  <div class="select-workspace-view">
     <v-container class="py-12">
       <v-row justify="center">
         <v-col cols="12" md="8" lg="6">
@@ -10,13 +10,13 @@
                 <p class="subtitle">Defina o workspace ativo para continuar</p>
               </div>
               <v-chip color="primary" variant="flat" size="small">
-                {{ companies.length }} workspaces
+                {{ workspaces.length }} workspaces
               </v-chip>
             </v-card-title>
 
             <v-card-text>
               <v-alert
-                v-if="!companies.length"
+                v-if="!workspaces.length"
                 type="info"
                 variant="tonal"
                 class="mb-4"
@@ -26,11 +26,11 @@
 
               <v-list v-else density="comfortable" nav>
                 <v-list-item
-                  v-for="company in companies"
-                  :key="company.companyId"
-                  class="company-entry"
-                  :disabled="loadingCompany === company.companyId"
-                  @click="selectCompany(company.companyId)"
+                  v-for="workspace in workspaces"
+                  :key="workspace.companyId"
+                  class="workspace-entry"
+                  :disabled="loadingWorkspace === workspace.companyId"
+                  @click="selectWorkspace(workspace.companyId)"
                 >
                   <template #prepend>
                     <v-avatar color="primary" variant="tonal">
@@ -38,12 +38,12 @@
                     </v-avatar>
                   </template>
                   <div class="d-flex flex-column">
-                    <span class="company-name">{{ company.companyName || company.companyId }}</span>
-                    <small class="role-label">{{ getRoleLabel(company.role) }}</small>
+                    <span class="workspace-name">{{ workspace.companyName || workspace.companyId }}</span>
+                    <small class="role-label">{{ getRoleLabel(workspace.role) }}</small>
                   </div>
                   <template #append>
                     <v-progress-circular
-                      v-if="loadingCompany === company.companyId"
+                      v-if="loadingWorkspace === workspace.companyId"
                       indeterminate
                       size="20"
                       color="primary"
@@ -62,7 +62,7 @@
                 color="primary"
                 variant="elevated"
                 prepend-icon="mdi-plus"
-                @click="router.push({ name: 'create-company', query: { redirect: redirectTarget } })"
+                @click="router.push({ name: 'create-workspace', query: { redirect: redirectTarget } })"
               >
                 Criar workspace
               </v-btn>
@@ -84,7 +84,7 @@ const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
 
-const companies = computed(() => userStore.getCompanies)
+const workspaces = computed(() => userStore.getWorkspaces)
 const redirectTarget = computed(() =>
   OnboardingOrchestrator.resolveOnboardingTargetPath({
     redirect: route.query.redirect,
@@ -92,7 +92,7 @@ const redirectTarget = computed(() =>
     defaultRedirect: '/dashboard'
   })
 )
-const loadingCompany = ref<string | null>(null)
+const loadingWorkspace = ref<string | null>(null)
 
 const getRoleLabel = (role?: string | null) => {
   const normalized = (role || '').toUpperCase()
@@ -105,22 +105,22 @@ const getRoleLabel = (role?: string | null) => {
   return labels[normalized] || 'Sem permissao definida'
 }
 
-const selectCompany = async (companyId: string) => {
-  if (loadingCompany.value) return
+const selectWorkspace = async (workspaceId: string) => {
+  if (loadingWorkspace.value) return
   try {
-    loadingCompany.value = companyId
-    await userStore.selectCompany(companyId)
+    loadingWorkspace.value = workspaceId
+    await userStore.selectWorkspace(workspaceId)
     router.push(redirectTarget.value)
   } catch (error) {
     console.error('Erro ao selecionar workspace pela tela dedicada:', error)
   } finally {
-    loadingCompany.value = null
+    loadingWorkspace.value = null
   }
 }
 </script>
 
 <style scoped>
-.select-company-view {
+.select-workspace-view {
   min-height: 100vh;
   background: radial-gradient(circle at top, #1f2a44 25%, #0f172a 70%);
   color: #fff;
@@ -143,17 +143,17 @@ const selectCompany = async (companyId: string) => {
   color: rgba(255, 255, 255, 0.7);
 }
 
-.company-entry {
+.workspace-entry {
   border-radius: 12px;
   margin-bottom: 8px;
   transition: background 0.2s ease;
 }
 
-.company-entry:hover {
+.workspace-entry:hover {
   background: rgba(255, 255, 255, 0.08);
 }
 
-.company-name {
+.workspace-name {
   font-weight: 600;
 }
 

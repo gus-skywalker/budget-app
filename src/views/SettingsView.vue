@@ -360,7 +360,7 @@
 
         <!-- Tab: Empresa -->
         <v-window-item value="company">
-          <CompanySettings />
+          <WorkspaceSettings />
         </v-window-item>
 
         <!-- Tab: Conexões -->
@@ -917,7 +917,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useTheme } from 'vuetify';
 import { useUserStore } from '@/plugins/userStore';
 import SubscriptionManagement from '@/components/SubscriptionManagement.vue';
-import CompanySettings from '@/components/CompanySettings.vue';
+import WorkspaceSettings from '@/components/WorkspaceSettings.vue';
 import DataService from '@/services/DataService';
 import FinancialReadService from '@/services/FinancialReadService';
 import OpenFinanceService from '@/services/OpenFinanceService';

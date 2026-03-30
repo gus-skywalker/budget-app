@@ -2,10 +2,13 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useUserStore } from '@/plugins/userStore'
 
-// Mock CompanyService
-vi.mock('@/services/CompanyService', () => ({
+// Mock WorkspaceService
+vi.mock('@/services/WorkspaceService', () => ({
   default: {
-    selectCompany: vi.fn()
+    selectCompany: vi.fn(),
+    selectWorkspace: vi.fn(),
+    clearCompany: vi.fn(),
+    clearWorkspace: vi.fn()
   }
 }))
 
@@ -23,6 +26,8 @@ describe('UserStore', () => {
       expect(store.refreshToken).toBeNull()
       expect(store.auth).toBe(false)
       expect(store.currentCompanyId).toBeNull()
+      expect(store.getCurrentWorkspaceId).toBeNull()
+      expect(store.isWorkspaceMode).toBe(false)
       expect(store.tenantRole).toBeNull()
       expect(store.language).toBe('PT')
     })
@@ -47,8 +52,9 @@ describe('UserStore', () => {
       const mockToken = `header.${encodedPayload}.signature`
       
       store.syncFromToken(mockToken)
-      
+
       expect(store.currentCompanyId).toBe('company-456')
+      expect(store.getCurrentWorkspaceId).toBe('company-456')
       expect(store.tenantRole).toBe('ROLE_ADMIN')
       expect(store.language).toBe('EN')
       expect(store.user.companies).toEqual(payload.companies)
@@ -62,6 +68,7 @@ describe('UserStore', () => {
       
       // Should not crash and should not update state
       expect(store.currentCompanyId).toBeNull()
+      expect(store.getCurrentWorkspaceId).toBeNull()
     })
   })
 
@@ -89,7 +96,7 @@ describe('UserStore', () => {
       expect(result.companyPreselected).toBe(false)
     })
 
-    it('should process signin response with multiple companies', () => {
+    it('should process signin response with multiple workspaces', () => {
       const store = useUserStore()
       
       const companies = [
@@ -124,7 +131,7 @@ describe('UserStore', () => {
       expect(store.user.companies).toEqual(companies)
     })
 
-    it('should process signin response with preselected company', () => {
+    it('should process signin response with a preselected workspace', () => {
       const store = useUserStore()
       
       const companies = [
@@ -209,20 +216,55 @@ describe('UserStore', () => {
 
       expect(store.getPreferredMode).toBe('tenant')
       expect(store.getPreferredCompanyId).toBe('comp-pref')
+      expect(store.getPreferredWorkspaceId).toBe('comp-pref')
     })
   })
 
-  describe('Company Management', () => {
-    it('should set current company correctly', () => {
+  describe('Workspace Aliases', () => {
+    it('should set current workspace correctly through the legacy company state', () => {
       const store = useUserStore()
       
       store.setCurrentCompany('comp-456', 'ROLE_USER', 'Test Company')
       
       expect(store.currentCompanyId).toBe('comp-456')
+      expect(store.getCurrentWorkspaceId).toBe('comp-456')
       expect(store.tenantRole).toBe('ROLE_USER')
     })
 
-    it('should detect multiple companies', () => {
+    it('should set current workspace correctly via alias', () => {
+      const store = useUserStore()
+
+      store.setCurrentWorkspace('comp-789', 'ROLE_ADMIN', 'Workspace X')
+
+      expect(store.currentCompanyId).toBe('comp-789')
+      expect(store.getCurrentWorkspaceId).toBe('comp-789')
+      expect(store.tenantRole).toBe('ROLE_ADMIN')
+    })
+
+    it('should update workspace name via alias', () => {
+      const store = useUserStore()
+
+      store.user.companies = [
+        { companyId: 'comp-789', companyName: 'Old Name', role: 'ROLE_ADMIN' }
+      ]
+
+      store.updateWorkspaceName('comp-789', 'New Workspace Name')
+
+      expect(store.user.companies[0].companyName).toBe('New Workspace Name')
+    })
+
+    it('should clear current workspace via alias', () => {
+      const store = useUserStore()
+
+      store.setCurrentWorkspace('comp-789', 'ROLE_ADMIN', 'Workspace X')
+      store.clearCurrentWorkspace()
+
+      expect(store.currentCompanyId).toBeNull()
+      expect(store.getCurrentWorkspaceId).toBeNull()
+      expect(store.tenantRole).toBeNull()
+    })
+
+    it('should detect multiple workspaces', () => {
       const store = useUserStore()
       
       store.user.companies = [
@@ -244,10 +286,10 @@ describe('UserStore', () => {
     })
   })
 
-  describe('selectCompany', () => {
-    it('should call API and update state', async () => {
+  describe('selectCompany (legacy transport)', () => {
+    it('should call the API and update the active workspace state', async () => {
       const store = useUserStore()
-      const CompanyService = (await import('@/services/CompanyService')).default
+      const WorkspaceService = (await import('@/services/WorkspaceService')).default
       
       const payload = {
         user_id: '123',
@@ -257,7 +299,7 @@ describe('UserStore', () => {
       const encodedPayload = btoa(JSON.stringify(payload))
       const newToken = `header.${encodedPayload}.signature`
       
-      vi.mocked(CompanyService.selectCompany).mockResolvedValue({
+      vi.mocked(WorkspaceService.selectWorkspace).mockResolvedValue({
         data: {
           accessToken: newToken,
           refreshToken: 'new-refresh',
@@ -274,7 +316,69 @@ describe('UserStore', () => {
       expect(store.token).toBe(newToken)
       expect(store.refreshToken).toBe('new-refresh')
       expect(store.currentCompanyId).toBe('new-company')
+      expect(store.getCurrentWorkspaceId).toBe('new-company')
       expect(store.tenantRole).toBe('ROLE_USER')
+    })
+  })
+
+  describe('selectWorkspace', () => {
+    it('should delegate to the legacy transport and update the active workspace state', async () => {
+      const store = useUserStore()
+      const WorkspaceService = (await import('@/services/WorkspaceService')).default
+
+      const payload = {
+        user_id: '123',
+        companyId: 'workspace-1',
+        userRole: 'ROLE_ADMIN'
+      }
+      const encodedPayload = btoa(JSON.stringify(payload))
+      const newToken = `header.${encodedPayload}.signature`
+
+      vi.mocked(WorkspaceService.selectWorkspace).mockResolvedValue({
+        data: {
+          accessToken: newToken,
+          refreshToken: 'new-refresh',
+          tenantRole: 'ROLE_ADMIN'
+        }
+      })
+
+      store.user.companies = [
+        { companyId: 'workspace-1', companyName: 'Workspace 1', role: 'ROLE_ADMIN' }
+      ]
+
+      await store.selectWorkspace('workspace-1')
+
+      expect(store.currentCompanyId).toBe('workspace-1')
+      expect(store.getCurrentWorkspaceId).toBe('workspace-1')
+      expect(store.tenantRole).toBe('ROLE_ADMIN')
+    })
+  })
+
+  describe('clearWorkspaceSelection', () => {
+    it('should delegate to the legacy transport and clear the active workspace state', async () => {
+      const store = useUserStore()
+      const WorkspaceService = (await import('@/services/WorkspaceService')).default
+
+      const payload = {
+        user_id: '123'
+      }
+      const encodedPayload = btoa(JSON.stringify(payload))
+      const newToken = `header.${encodedPayload}.signature`
+
+      vi.mocked(WorkspaceService.clearWorkspace).mockResolvedValue({
+        data: {
+          accessToken: newToken,
+          refreshToken: 'new-refresh'
+        }
+      })
+
+      store.setCurrentWorkspace('workspace-1', 'ROLE_ADMIN', 'Workspace 1')
+
+      await store.clearWorkspaceSelection()
+
+      expect(store.currentCompanyId).toBeNull()
+      expect(store.getCurrentWorkspaceId).toBeNull()
+      expect(store.tenantRole).toBeNull()
     })
   })
 
@@ -309,6 +413,7 @@ describe('UserStore', () => {
       expect(store.refreshToken).toBeNull()
       expect(store.auth).toBe(false)
       expect(store.currentCompanyId).toBeNull()
+      expect(store.getCurrentWorkspaceId).toBeNull()
       expect(sessionStorage.getItem('userStore')).toBeNull()
     })
   })
