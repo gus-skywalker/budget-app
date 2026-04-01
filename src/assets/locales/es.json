@@ -1009,9 +1009,10 @@
   },
   "authentication": {
     "login": {
-      "title": "Gestión de cuentas",
+      "title": "Iniciar sesión",
+      "description": "Accede a tu espacio financiero con continuidad, seguridad y contexto operativo claro.",
       "email_label": "Correo electrónico",
-      "password_label": "Password",
+      "password_label": "Contraseña",
       "login_button": "Iniciar sesión",
       "google_login": "Iniciar sesión con Google",
       "forgot_password": "¿Olvidaste tu contraseña?",
@@ -1019,25 +1020,72 @@
       "not_registered": "¿Aún no tienes una cuenta?",
       "create_account_link": "Crear una cuenta."
     },
+    "hero": {
+      "title": "Entra en CoBudget y recupera claridad financiera con mejor contexto.",
+      "subtitle": "Reúne presupuesto, flujo de caja, colaboración y decisiones en una experiencia más confiable para familias, equipos y empresas en crecimiento.",
+      "feature_security": "Acceso protegido y continuidad para tu operación financiera.",
+      "feature_visibility": "Visibilidad clara de presupuestos, gastos y metas en un solo flujo.",
+      "feature_collaboration": "Colaboración organizada entre familia, socios y equipos con menos fricción."
+    },
+    "common": {
+      "or": "o",
+      "and": "y",
+      "show_password": "Mostrar contraseña",
+      "hide_password": "Ocultar contraseña",
+      "terms_of_use": "Términos de uso",
+      "privacy_policy": "Política de privacidad",
+      "login_terms_prefix": "Al iniciar sesión, aceptas los",
+      "signup_terms_prefix": "Al crear tu cuenta, aceptas los",
+      "test_area_title": "Acceso rápido para pruebas",
+      "test_no_company": "Simular usuario sin empresa",
+      "test_single_company": "Simular usuario con una empresa",
+      "test_multiple_companies": "Simular usuario con varias empresas"
+    },
     "forgot_password": {
+      "title": "Recuperar acceso",
+      "description": "Ingresa tu correo electrónico y te enviaremos un enlace seguro para restablecer tu contraseña.",
+      "email_label": "Correo electrónico",
+      "email_placeholder": "Ingresa tu correo electrónico",
+      "submit_button": "Enviar enlace de restablecimiento",
+      "success_message": "Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.",
+      "invalid_email": "Ingresa una dirección de correo válida.",
+      "generic_error": "Ocurrió un error. Inténtalo de nuevo más tarde.",
       "back_to_login": "Volver al inicio de sesión"
     },
     "signup": {
-      "title": "Gestión de cuentas",
+      "title": "Crear cuenta",
+      "description": "Crea tu cuenta para organizar finanzas, automatizar rutinas y avanzar con más previsibilidad.",
       "username_label": "Nombre de usuario",
       "email_label": "Correo electrónico",
-      "password_label": "Password",
+      "password_label": "Contraseña",
       "confirm_password_label": "Confirmar contraseña",
       "signup_button": "Crear cuenta",
       "already_registered": "¿Ya tienes una cuenta?",
       "login_here_link": "Inicia sesión aquí."
     },
+    "reset_password": {
+      "title": "Definir nueva contraseña",
+      "description": "Elige una nueva contraseña para recuperar el acceso seguro a tu cuenta.",
+      "password_label": "Nueva contraseña",
+      "password_placeholder": "Ingresa tu nueva contraseña",
+      "confirm_password_label": "Confirmar nueva contraseña",
+      "confirm_password_placeholder": "Confirma tu nueva contraseña",
+      "submit_button": "Restablecer contraseña",
+      "success_message": "Tu contraseña se restableció correctamente. Ya puedes iniciar sesión.",
+      "generic_error": "Ocurrió un error al restablecer tu contraseña. Inténtalo de nuevo más tarde.",
+      "missing_token": "Enlace inválido o vencido. Solicita un nuevo restablecimiento.",
+      "back_to_login": "Volver al inicio de sesión"
+    },
     "messages": {
       "login_success": "¡Inicio de sesión exitoso!",
       "login_failed": "Credenciales inválidas. Inténtalo de nuevo.",
       "signup_success": "Cuenta creada con éxito.",
+      "signup_success_ready": "Cuenta creada con éxito. Ahora ya puedes iniciar sesión.",
       "signup_failed": "Error al crear la cuenta. Inténtalo de nuevo.",
-      "password_mismatch": "La nueva contraseña y la confirmación no coinciden."
+      "password_mismatch": "La nueva contraseña y la confirmación no coinciden.",
+      "network_error": "No se pudo conectar con el servidor. Verifica tu conexión e inténtalo de nuevo.",
+      "server_unavailable": "El servicio no está disponible en este momento. Inténtalo de nuevo en breve.",
+      "login_unavailable": "No pudimos completar el inicio de sesión ahora. Inténtalo de nuevo."
     }
   },
   "transactionVisibility": {

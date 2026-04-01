@@ -9,7 +9,7 @@
 
           <div class="hero-notes">
             <article class="note-card">
-              <div class="icon-chip icon-chip-dark">
+              <div class="icon-chip icon-chip-contrast">
                 <v-icon size="20">mdi-brain</v-icon>
               </div>
               <div>
@@ -33,13 +33,13 @@
         <div class="hero-side">
           <div class="ai-summary-card">
             <div class="summary-head">
-                <span class="summary-tag">{{ $t('landingPage.ai.title') }}</span>
+              <span class="summary-tag">{{ $t('landingPage.ai.title') }}</span>
               <h2>{{ $t('choosePlan.ai_title') }}</h2>
             </div>
 
             <ul class="feature-list feature-list-ai">
               <li v-for="item in aiFeatures" :key="item.labelKey">
-                <div class="icon-chip icon-chip-small">
+                <div class="icon-chip icon-chip-contrast icon-chip-small">
                   <v-icon size="18">{{ item.icon }}</v-icon>
                 </div>
                 <span>{{ $t(item.labelKey) }}</span>
@@ -123,7 +123,7 @@
 
             <ul class="feature-list">
               <li v-for="item in teamFeatures" :key="item.labelKey">
-                <div class="icon-chip icon-chip-dark icon-chip-small">
+                <div class="icon-chip icon-chip-contrast icon-chip-small">
                   <v-icon size="18">{{ item.icon }}</v-icon>
                 </div>
                 <span>{{ $t(item.labelKey) }}</span>
@@ -396,12 +396,12 @@ export default {
   --brand-strong: #8e4318;
   --accent: #205f63;
   --accent-strong: #173f4b;
-  --shadow: 0 18px 42px rgba(23, 32, 51, 0.1);
-  --shadow-soft: 0 12px 28px rgba(23, 32, 51, 0.08);
+  --shadow: 0 16px 34px rgba(23, 32, 51, 0.08);
+  --shadow-soft: 0 10px 22px rgba(23, 32, 51, 0.05);
   background:
-    radial-gradient(circle at top left, rgba(32, 95, 99, 0.12), transparent 28%),
-    radial-gradient(circle at 85% 10%, rgba(182, 85, 31, 0.12), transparent 20%),
-    linear-gradient(180deg, #f8f4ec 0%, #f4efe6 52%, #fbf7ef 100%);
+    radial-gradient(circle at top left, rgba(32, 95, 99, 0.08), transparent 28%),
+    radial-gradient(circle at 85% 10%, rgba(182, 85, 31, 0.08), transparent 20%),
+    linear-gradient(180deg, #fbf8f2 0%, #f8f4ed 52%, #fdfaf5 100%);
   color: var(--ink);
   font-family: 'Source Sans 3', sans-serif;
   max-width: none !important;
@@ -457,8 +457,8 @@ export default {
 }
 
 .summary-tag {
-  background: rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.84);
+  background: rgba(32, 95, 99, 0.1);
+  color: var(--accent-strong);
 }
 
 h1,
@@ -530,7 +530,7 @@ p {
   grid-template-columns: auto 1fr;
   gap: 16px;
   padding: 22px;
-  background: rgba(255, 255, 255, 0.76);
+  background: rgba(255, 255, 255, 0.88);
 }
 
 .hero-side {
@@ -540,9 +540,9 @@ p {
 
 .ai-summary-card {
   padding: 26px;
-  background: linear-gradient(135deg, #183744 0%, #1c2434 100%);
-  color: #f7efe7;
-  box-shadow: var(--shadow);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(242, 236, 227, 0.82) 100%);
+  color: var(--ink);
+  box-shadow: var(--shadow-soft);
 }
 
 .ai-summary-card p,
@@ -575,7 +575,8 @@ p {
 .feature-list-ai li {
   padding: 14px;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(23, 32, 51, 0.08);
 }
 
 .plans-section {
@@ -609,9 +610,9 @@ p {
 }
 
 .plan-card.team {
-  background: linear-gradient(180deg, #1d2838 0%, #203749 100%);
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, #fbf7ef 0%, #f4ece2 100%);
+  color: var(--ink);
+  border-color: rgba(32, 95, 99, 0.14);
   box-shadow: var(--shadow);
 }
 
@@ -644,8 +645,8 @@ p {
 }
 
 .team-tag {
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
+  background: rgba(32, 95, 99, 0.12);
+  color: var(--accent-strong);
 }
 
 .plan-ribbon {
@@ -684,8 +685,8 @@ p {
 
 .team-highlight,
 .team-annual {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.72);
+  border-color: rgba(23, 32, 51, 0.1);
 }
 
 .price-label {
@@ -721,8 +722,8 @@ p {
 }
 
 .plan-card.team .price-badge {
-  background: rgba(242, 199, 109, 0.18);
-  color: #f2c76d;
+  background: rgba(32, 95, 99, 0.12);
+  color: var(--accent-strong);
 }
 
 .plan-cta {
@@ -765,13 +766,13 @@ p {
 }
 
 .team-outline {
-  border-color: rgba(255, 255, 255, 0.22);
-  color: #fff;
+  border-color: rgba(32, 95, 99, 0.22);
+  color: var(--accent-strong);
 }
 
 .team-solid {
-  background: linear-gradient(135deg, #f2c76d 0%, #d89b2c 100%);
-  color: #2e2411;
+  background: linear-gradient(135deg, #205f63 0%, #2d7b7d 100%);
+  color: #fff;
 }
 
 .trust-section {
@@ -788,7 +789,7 @@ p {
 
 .faq-shell {
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.82);
 }
 
 .icon-chip {

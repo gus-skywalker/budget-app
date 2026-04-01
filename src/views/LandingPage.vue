@@ -179,12 +179,12 @@
         </div>
       </section>
 
-      <section id="ai" class="section-offset section-block section-dark">
+      <section id="ai" class="section-offset section-block section-airy">
         <div class="shell ai-grid">
           <div>
-            <span class="section-kicker section-kicker-dark">{{ $t('landingPage.ai.title') }}</span>
+            <span class="section-kicker">{{ $t('landingPage.ai.title') }}</span>
             <h2>{{ $t('landingPage.ai.title') }}</h2>
-            <p class="section-intro section-intro-dark">{{ $t('landingPage.ai.subtitle') }}</p>
+            <p class="section-intro">{{ $t('landingPage.ai.subtitle') }}</p>
 
             <ul class="bullet-list">
               <li v-for="item in aiBullets" :key="item.labelKey">
@@ -197,7 +197,7 @@
               <button class="btn btn-primary btn-large" type="button" @click="scrollToSection('plans')">
                 {{ $t('landingPage.ai.ctaSecondary') }}
               </button>
-              <button class="btn btn-dark-outline btn-large" type="button" @click="navigateTo('login')">
+              <button class="btn btn-secondary btn-large" type="button" @click="navigateTo('login')">
                 {{ $t('landingPage.ai.ctaPrimary') }}
               </button>
             </div>
@@ -206,7 +206,7 @@
           <div class="ai-card-stack">
             <article v-for="item in aiCards" :key="`stack-${item.titleKey}`" class="ai-showcase-card">
               <div class="ai-card-head">
-                <div class="icon-chip icon-chip-dark">
+                <div class="icon-chip icon-chip-contrast">
                   <v-icon size="20">{{ item.icon }}</v-icon>
                 </div>
                 <span>{{ $t(item.tagKey) }}</span>
@@ -640,10 +640,10 @@ export default {
 
 #landing-page {
   --page-bg: #f5f1e8;
-  --surface: rgba(255, 255, 255, 0.76);
+  --surface: rgba(255, 255, 255, 0.82);
   --surface-strong: #ffffff;
-  --surface-soft: #fbf7ef;
-  --surface-accent: #efe7dd;
+  --surface-soft: #fcf8f1;
+  --surface-accent: #f2ece3;
   --ink: #172033;
   --ink-soft: #4c576d;
   --line: rgba(23, 32, 51, 0.12);
@@ -652,12 +652,12 @@ export default {
   --accent: #205f63;
   --accent-strong: #173f4b;
   --plum: #69495f;
-  --shadow: 0 22px 50px rgba(23, 32, 51, 0.12);
-  --shadow-soft: 0 14px 30px rgba(23, 32, 51, 0.08);
+  --shadow: 0 18px 38px rgba(23, 32, 51, 0.08);
+  --shadow-soft: 0 10px 22px rgba(23, 32, 51, 0.05);
   background:
-    radial-gradient(circle at top left, rgba(32, 95, 99, 0.12), transparent 28%),
-    radial-gradient(circle at 85% 10%, rgba(182, 85, 31, 0.12), transparent 22%),
-    linear-gradient(180deg, #f8f4ec 0%, #f4efe6 52%, #fbf7ef 100%);
+    radial-gradient(circle at top left, rgba(32, 95, 99, 0.08), transparent 28%),
+    radial-gradient(circle at 85% 10%, rgba(182, 85, 31, 0.08), transparent 22%),
+    linear-gradient(180deg, #fbf8f2 0%, #f8f4ed 52%, #fdfaf5 100%);
   color: var(--ink);
   font-family: 'Source Sans 3', sans-serif;
   max-width: none !important;
@@ -685,8 +685,8 @@ export default {
   position: sticky;
   top: 0;
   z-index: 40;
-  backdrop-filter: blur(18px);
-  background: rgba(248, 244, 236, 0.86);
+  backdrop-filter: blur(14px);
+  background: rgba(251, 248, 242, 0.82);
   border-bottom: 1px solid rgba(23, 32, 51, 0.08);
 }
 
@@ -799,7 +799,7 @@ h3 {
 .btn-primary {
   background: linear-gradient(135deg, var(--brand) 0%, #d16b31 100%);
   color: #fff;
-  box-shadow: 0 14px 24px rgba(182, 85, 31, 0.2);
+  box-shadow: 0 10px 18px rgba(182, 85, 31, 0.16);
 }
 
 .btn-primary:hover {
@@ -866,12 +866,11 @@ h3 {
 }
 
 .section-soft-accent {
-  background: linear-gradient(180deg, rgba(239, 231, 221, 0.85), rgba(255, 255, 255, 0.16));
+  background: linear-gradient(180deg, rgba(245, 239, 231, 0.76), rgba(255, 255, 255, 0.1));
 }
 
-.section-dark {
-  background: linear-gradient(135deg, #16313a 0%, #1c2434 100%);
-  color: #f7efe7;
+.section-airy {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.48), rgba(242, 236, 227, 0.5));
 }
 
 .hero-section {
@@ -938,23 +937,10 @@ p {
   line-height: 1.65;
 }
 
-.section-dark p,
-.section-dark h2,
-.section-dark h3,
-.section-dark li,
-.section-dark strong,
-.section-dark span {
-  color: inherit;
-}
-
 .hero-lead,
 .section-intro {
   max-width: 62ch;
   font-size: 1.16rem;
-}
-
-.section-intro-dark {
-  color: rgba(247, 239, 231, 0.82);
 }
 
 .narrow {
@@ -980,7 +966,7 @@ p {
   gap: 10px;
   padding: 10px 14px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.92);
   border: 1px solid rgba(23, 32, 51, 0.08);
   box-shadow: var(--shadow-soft);
   color: var(--ink);
@@ -1007,8 +993,8 @@ p {
 .hero-panel {
   border-radius: 32px;
   padding: 24px;
-  background: var(--surface);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(23, 32, 51, 0.08);
   box-shadow: var(--shadow);
 }
 
@@ -1023,7 +1009,7 @@ p {
   inset: auto -80px -80px auto;
   width: 220px;
   height: 220px;
-  background: radial-gradient(circle, rgba(32, 95, 99, 0.16), transparent 72%);
+  background: radial-gradient(circle, rgba(32, 95, 99, 0.1), transparent 72%);
 }
 
 .hero-panel-head {
@@ -1058,6 +1044,7 @@ p {
   gap: 14px;
   padding: 18px;
   border-radius: 22px;
+  background: rgba(255, 255, 255, 0.94);
 }
 
 .insight-card span {
@@ -1184,8 +1171,8 @@ p {
 }
 
 .ai-showcase-card {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.94);
+  border-color: rgba(23, 32, 51, 0.08);
 }
 
 .ai-card-head {
@@ -1199,7 +1186,7 @@ p {
 .ai-card-head span {
   font-size: 0.86rem;
   font-weight: 700;
-  color: rgba(247, 239, 231, 0.76);
+  color: var(--accent-strong);
 }
 
 .testimonial-grid {
@@ -1213,6 +1200,7 @@ p {
   flex-direction: column;
   gap: 18px;
   justify-content: space-between;
+  background: rgba(255, 255, 255, 0.78);
 }
 
 .testimonial-topline {
@@ -1257,13 +1245,14 @@ p {
   margin-bottom: 26px;
   padding: 20px 22px;
   border-radius: 24px;
-  background: linear-gradient(135deg, #183744 0%, #294651 100%);
-  color: #f7efe7;
-  box-shadow: var(--shadow);
+  background: linear-gradient(135deg, rgba(32, 95, 99, 0.08) 0%, rgba(255, 255, 255, 0.92) 100%);
+  color: var(--ink);
+  border: 1px solid rgba(23, 32, 51, 0.08);
+  box-shadow: var(--shadow-soft);
 }
 
 .value-banner p {
-  color: rgba(247, 239, 231, 0.78);
+  color: var(--ink-soft);
 }
 
 .plans-grid {
@@ -1285,9 +1274,10 @@ p {
 }
 
 .plan-card-team {
-  background: linear-gradient(180deg, #1d2838 0%, #203749 100%);
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, #fbf7ef 0%, #f4ece2 100%);
+  color: var(--ink);
+  border-color: rgba(32, 95, 99, 0.14);
+  box-shadow: 0 16px 34px rgba(32, 95, 99, 0.08);
 }
 
 .plan-card-team p,
@@ -1315,8 +1305,8 @@ p {
 }
 
 .plan-tag-team {
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
+  background: rgba(32, 95, 99, 0.12);
+  color: var(--accent-strong);
 }
 
 .plan-pill {
@@ -1346,7 +1336,7 @@ p {
 }
 
 .plan-card-team .price-stack span {
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--ink-soft);
 }
 
 .plan-benefits {
@@ -1361,7 +1351,7 @@ p {
 }
 
 .plan-card-team .plan-benefits .v-icon {
-  color: #f2c76d;
+  color: var(--accent-strong);
 }
 
 .plan-actions {
@@ -1415,7 +1405,7 @@ p {
 
 .landing-footer {
   padding: 52px 0;
-  background: #172033;
+  background: linear-gradient(135deg, #22313b 0%, #283541 100%);
   color: #f7efe7;
 }
 

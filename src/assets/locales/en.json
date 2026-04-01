@@ -1028,6 +1028,7 @@
   "authentication": {
     "login": {
       "title": "Login",
+      "description": "Access your financial workspace with continuity, security, and clear operational context.",
       "email_label": "Email",
       "password_label": "Password",
       "login_button": "Login",
@@ -1037,11 +1038,41 @@
       "not_registered": "Don't have an account yet?",
       "create_account_link": "Create an account."
     },
+    "hero": {
+      "title": "Sign in to CoBudget and regain financial clarity with better context.",
+      "subtitle": "Bring budgeting, cash flow, collaboration, and decision-making into one more reliable experience for families, teams, and growing companies.",
+      "feature_security": "Protected access and continuity for your financial operation.",
+      "feature_visibility": "Clear visibility into budgets, spending, and goals in a single flow.",
+      "feature_collaboration": "Organized collaboration for households, partners, and teams with less friction."
+    },
+    "common": {
+      "or": "or",
+      "and": "and",
+      "show_password": "Show password",
+      "hide_password": "Hide password",
+      "terms_of_use": "Terms of use",
+      "privacy_policy": "Privacy policy",
+      "login_terms_prefix": "By signing in, you agree to the",
+      "signup_terms_prefix": "By creating your account, you agree to the",
+      "test_area_title": "Quick access for tests",
+      "test_no_company": "Simulate user without company",
+      "test_single_company": "Simulate user with one company",
+      "test_multiple_companies": "Simulate user with multiple companies"
+    },
     "forgot_password": {
+      "title": "Recover access",
+      "description": "Enter your email and we will send you a secure link to reset your password.",
+      "email_label": "Email",
+      "email_placeholder": "Enter your email",
+      "submit_button": "Send reset link",
+      "success_message": "If the email is registered, you will receive a link to reset your password.",
+      "invalid_email": "Please enter a valid email address.",
+      "generic_error": "Something went wrong. Please try again later.",
       "back_to_login": "Back to login"
     },
     "signup": {
       "title": "Sign Up",
+      "description": "Create your account to organize finances, automate routines, and move forward with more predictability.",
       "username_label": "Username",
       "email_label": "Email",
       "password_label": "Password",
@@ -1050,12 +1081,29 @@
       "already_registered": "Already have an account?",
       "login_here_link": "Login here."
     },
+    "reset_password": {
+      "title": "Set a new password",
+      "description": "Choose a new password to regain secure access to your account.",
+      "password_label": "New password",
+      "password_placeholder": "Enter your new password",
+      "confirm_password_label": "Confirm new password",
+      "confirm_password_placeholder": "Confirm your new password",
+      "submit_button": "Reset password",
+      "success_message": "Your password has been reset successfully. You can now sign in.",
+      "generic_error": "There was an error resetting your password. Please try again later.",
+      "missing_token": "Invalid or expired link. Request a new password reset.",
+      "back_to_login": "Back to login"
+    },
     "messages": {
       "login_success": "Login successful!",
       "login_failed": "Invalid credentials. Please try again.",
       "signup_success": "Account created successfully.",
+      "signup_success_ready": "Account created successfully. You can sign in now.",
       "signup_failed": "Error creating account. Please try again.",
-      "password_mismatch": "Passwords do not match. Please try again."
+      "password_mismatch": "Passwords do not match. Please try again.",
+      "network_error": "Could not connect to the server. Check your connection and try again.",
+      "server_unavailable": "The service is unavailable right now. Please try again shortly.",
+      "login_unavailable": "We could not complete the login right now. Please try again."
     }
   },
   "transactionVisibility": {

@@ -1,27 +1,23 @@
 <template>
-  <div class="app-container login-page">
-    <!-- Snackbar de erro -->
+  <div class="auth-page login-page">
     <transition name="fade">
       <div v-if="error" class="snackbar error-snackbar" @click="closeNotification('error')">
         {{ error }}
         <span class="close-btn">&times;</span>
       </div>
     </transition>
-    <!-- Snackbar de sucesso -->
     <transition name="fade">
       <div v-if="loginSuccess" class="snackbar success-snackbar" @click="closeNotification('success')">
         {{ loginSuccess }}
         <span class="close-btn">&times;</span>
       </div>
     </transition>
-    <!-- Snackbar de erro do signup -->
     <transition name="fade">
       <div v-if="signupError" class="snackbar error-snackbar" @click="closeNotification('signupError')">
         {{ signupError }}
         <span class="close-btn">&times;</span>
       </div>
     </transition>
-    <!-- Snackbar de sucesso do signup -->
     <transition name="fade">
       <div v-if="signupSuccess" class="snackbar success-snackbar" @click="closeNotification('signupSuccess')">
         {{ signupSuccess }}
@@ -29,88 +25,125 @@
       </div>
     </transition>
 
-    <div class="login-wrapper">
-      <!-- Lado esquerdo - Branding / Hero -->
-      <div class="hero-section">
-        <div class="hero-content">
-          <div class="brand-logo">
-            <img src="/logo.jpg" alt="CoBudget Logo" class="logo-image" />
+    <div class="auth-shell">
+      <section class="auth-hero">
+        <div class="hero-card">
+          <button class="brand-link" type="button" @click="router.push({ name: 'landing' })">
+            <img src="/logo.jpg" alt="CoBudget" class="logo-image" />
+            <span>CoBudget</span>
+          </button>
+
+          <div class="hero-copy">
+            <span class="section-tag">{{ showSignupForm ? $t('authentication.signup.title') : $t('authentication.login.title') }}</span>
+            <h1>{{ $t('authentication.hero.title') }}</h1>
+            <p>{{ $t('authentication.hero.subtitle') }}</p>
           </div>
-          <h1 class="hero-title">CoBudget</h1>
-          <p class="hero-subtitle">Sua jornada financeira começa aqui</p>
+
           <div class="hero-features">
             <div class="feature-item">
-              <v-icon color="white" size="24">mdi-shield-check</v-icon>
-              <span>Segurança garantida</span>
+              <div class="feature-icon">
+                <v-icon size="18">mdi-shield-check-outline</v-icon>
+              </div>
+              <span>{{ $t('authentication.hero.feature_security') }}</span>
             </div>
             <div class="feature-item">
-              <v-icon color="white" size="24">mdi-chart-line</v-icon>
-              <span>Controle total das finanças</span>
+              <div class="feature-icon">
+                <v-icon size="18">mdi-finance</v-icon>
+              </div>
+              <span>{{ $t('authentication.hero.feature_visibility') }}</span>
             </div>
             <div class="feature-item">
-              <v-icon color="white" size="24">mdi-account-group</v-icon>
-              <span>Gestão em grupo</span>
+              <div class="feature-icon">
+                <v-icon size="18">mdi-account-group-outline</v-icon>
+              </div>
+              <span>{{ $t('authentication.hero.feature_collaboration') }}</span>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <!-- Lado direito - Formulário -->
-      <div class="form-section">
-        <div class="form-container">
-          <!-- Login Form -->
+      <section class="auth-panel">
+        <div class="panel-card">
+          <div class="panel-header">
+            <div class="panel-switch">
+              <button
+                type="button"
+                class="switch-chip"
+                :class="{ active: !showSignupForm }"
+                @click="toggleForm(false)"
+              >
+                {{ $t('authentication.login.title') }}
+              </button>
+              <button
+                type="button"
+                class="switch-chip"
+                :class="{ active: showSignupForm }"
+                @click="toggleForm(true)"
+              >
+                {{ $t('authentication.signup.title') }}
+              </button>
+            </div>
+
+            <div v-if="!showSignupForm" class="auth-form-header">
+              <h2 class="form-title">{{ $t('authentication.login.title') }}</h2>
+              <p class="form-description">{{ $t('authentication.login.description') }}</p>
+            </div>
+
+            <div v-else class="auth-form-header">
+              <h2 class="form-title">{{ $t('authentication.signup.title') }}</h2>
+              <p class="form-description">{{ $t('authentication.signup.description') }}</p>
+            </div>
+          </div>
+
           <div v-if="!showSignupForm" class="auth-form">
-            <h2 class="form-title">{{ $t('authentication.login.title') }}</h2>
-            <p class="form-description">Acesse sua conta para continuar</p>
-            
             <form @submit.prevent="userLogin">
               <div class="form-group">
                 <label for="email">{{ $t('authentication.login.email_label') }}</label>
-                <input 
-                  type="email" 
-                  v-model="userData.email" 
+                <input
+                  id="email"
+                  type="email"
+                  v-model="userData.email"
                   :placeholder="$t('authentication.login.email_label')"
                   @input="resetEmailValidation"
                   @blur="validateEmail"
                   :class="{ 'invalid-email': !emailValid }"
-                  required 
+                  required
                 />
                 <span v-if="!emailValid" class="error-message">{{ $t('authentication.login.invalid_email') }}</span>
               </div>
-              
+
               <div class="form-group password-field">
                 <label for="password">{{ $t('authentication.login.password_label') }}</label>
                 <div class="password-input-wrapper">
-                  <input 
-                    :type="showPassword ? 'text' : 'password'" 
-                    v-model="userData.password" 
+                  <input
+                    id="password"
+                    :type="showPassword ? 'text' : 'password'"
+                    v-model="userData.password"
                     :placeholder="$t('authentication.login.password_label')"
-                    required 
+                    required
                   />
-                  <span class="toggle-password" @click="togglePasswordVisibility" :title="showPassword ? 'Ocultar senha' : 'Mostrar senha'">
-                    <svg v-if="!showPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                      <circle cx="12" cy="12" r="3"></circle>
-                    </svg>
-                    <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                      <line x1="1" y1="1" x2="23" y2="23"></line>
-                    </svg>
-                  </span>
+                  <button
+                    type="button"
+                    class="toggle-password"
+                    @click="togglePasswordVisibility"
+                    :title="showPassword ? $t('authentication.common.hide_password') : $t('authentication.common.show_password')"
+                  >
+                    <v-icon size="18">{{ showPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline' }}</v-icon>
+                  </button>
                 </div>
               </div>
 
               <p class="forgot-password-link">
                 <a href="#" @click.prevent="goToForgotPassword">{{ $t('authentication.login.forgot_password') }}</a>
               </p>
-              
+
               <button type="submit" class="btn btn-primary" :disabled="isLoading">
                 <span v-if="isLoading" class="spinner"></span>
                 <span v-else>{{ $t('authentication.login.login_button') }}</span>
               </button>
 
               <div class="divider">
-                <span>ou</span>
+                <span>{{ $t('authentication.common.or') }}</span>
               </div>
 
               <button class="oauth-button" @click.prevent="loginWithGoogle">
@@ -119,113 +152,107 @@
               </button>
 
               <p class="switch-form">
-                {{ $t('authentication.login.not_registered') }} 
+                {{ $t('authentication.login.not_registered') }}
                 <a href="#" @click.prevent="toggleForm(true)">{{ $t('authentication.login.create_account_link') }}</a>
               </p>
 
               <p class="terms-links">
-                Ao fazer login, você concorda com nossos 
-                <router-link to="/terms-of-use">Termos de Uso</router-link> e 
-                <router-link to="/privacy-policy">Política de Privacidade</router-link>
+                {{ $t('authentication.common.login_terms_prefix') }}
+                <router-link to="/terms-of-use">{{ $t('authentication.common.terms_of_use') }}</router-link>
+                {{ $t('authentication.common.and') }}
+                <router-link to="/privacy-policy">{{ $t('authentication.common.privacy_policy') }}</router-link>
               </p>
             </form>
-            
-            <!-- Botões de teste temporários -->
-            <div class="test-buttons mt-4">
-              <h4>🧪 Testes Multi-tenancy:</h4>
-              <button @click="mockLogin('no-company')" class="btn-test">Login sem empresa</button>
-              <button @click="mockLogin('single-company')" class="btn-test">Login 1 empresa</button>
-              <button @click="mockLogin('multiple-companies')" class="btn-test">Login múltiplas empresas</button>
+
+            <div v-if="isDev" class="test-buttons">
+              <h4>{{ $t('authentication.common.test_area_title') }}</h4>
+              <button @click="mockLogin('no-company')" class="btn-test">{{ $t('authentication.common.test_no_company') }}</button>
+              <button @click="mockLogin('single-company')" class="btn-test">{{ $t('authentication.common.test_single_company') }}</button>
+              <button @click="mockLogin('multiple-companies')" class="btn-test">{{ $t('authentication.common.test_multiple_companies') }}</button>
             </div>
           </div>
 
-          <!-- Signup Form -->
-          <div v-if="showSignupForm" class="auth-form">
-            <h2 class="form-title">{{ $t('authentication.signup.title') }}</h2>
-            <p class="form-description">Crie sua conta gratuita</p>
-            
+          <div v-else class="auth-form">
             <form @submit.prevent="userSignup">
               <div class="form-group">
                 <label for="username">{{ $t('authentication.signup.username_label') }}</label>
-                <input type="text" v-model="signupData.username" :placeholder="$t('authentication.signup.username_label')"
-                  required />
+                <input id="username" type="text" v-model="signupData.username" :placeholder="$t('authentication.signup.username_label')" required />
               </div>
-              
+
               <div class="form-group">
-                <label for="email">{{ $t('authentication.signup.email_label') }}</label>
-                <input type="email" v-model="signupData.email" :placeholder="$t('authentication.signup.email_label')"
-                  required />
+                <label for="signup-email">{{ $t('authentication.signup.email_label') }}</label>
+                <input id="signup-email" type="email" v-model="signupData.email" :placeholder="$t('authentication.signup.email_label')" required />
               </div>
-              
+
               <div class="form-group password-field">
-                <label for="password">{{ $t('authentication.signup.password_label') }}</label>
+                <label for="signup-password">{{ $t('authentication.signup.password_label') }}</label>
                 <div class="password-input-wrapper">
-                  <input 
-                    :type="showPassword ? 'text' : 'password'" 
+                  <input
+                    id="signup-password"
+                    :type="showPassword ? 'text' : 'password'"
                     v-model="signupData.password"
-                    :placeholder="$t('authentication.signup.password_label')" 
-                    required 
+                    :placeholder="$t('authentication.signup.password_label')"
+                    required
                   />
-                  <span class="toggle-password" @click="togglePasswordVisibility" :title="showPassword ? 'Ocultar senha' : 'Mostrar senha'">
-                    <svg v-if="!showPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                      <circle cx="12" cy="12" r="3"></circle>
-                    </svg>
-                    <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                      <line x1="1" y1="1" x2="23" y2="23"></line>
-                    </svg>
-                  </span>
+                  <button
+                    type="button"
+                    class="toggle-password"
+                    @click="togglePasswordVisibility"
+                    :title="showPassword ? $t('authentication.common.hide_password') : $t('authentication.common.show_password')"
+                  >
+                    <v-icon size="18">{{ showPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline' }}</v-icon>
+                  </button>
                 </div>
               </div>
-              
+
               <div class="form-group password-field">
                 <label for="confirmPassword">{{ $t('authentication.signup.confirm_password_label') }}</label>
                 <div class="password-input-wrapper">
-                  <input 
-                    :type="showConfirmPassword ? 'text' : 'password'" 
+                  <input
+                    id="confirmPassword"
+                    :type="showConfirmPassword ? 'text' : 'password'"
                     v-model="signupData.confirmPassword"
-                    :placeholder="$t('authentication.signup.confirm_password_label')" 
-                    required 
+                    :placeholder="$t('authentication.signup.confirm_password_label')"
+                    required
                   />
-                  <span class="toggle-password" @click="toggleConfirmPasswordVisibility" :title="showConfirmPassword ? 'Ocultar senha' : 'Mostrar senha'">
-                    <svg v-if="!showConfirmPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                      <circle cx="12" cy="12" r="3"></circle>
-                    </svg>
-                    <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                      <line x1="1" y1="1" x2="23" y2="23"></line>
-                    </svg>
-                  </span>
+                  <button
+                    type="button"
+                    class="toggle-password"
+                    @click="toggleConfirmPasswordVisibility"
+                    :title="showConfirmPassword ? $t('authentication.common.hide_password') : $t('authentication.common.show_password')"
+                  >
+                    <v-icon size="18">{{ showConfirmPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline' }}</v-icon>
+                  </button>
                 </div>
               </div>
-              
+
               <button type="submit" class="btn btn-primary" :disabled="isLoading">
                 <span v-if="isLoading" class="spinner"></span>
                 <span v-else>{{ $t('authentication.signup.signup_button') }}</span>
               </button>
 
               <p class="switch-form">
-                {{ $t('authentication.signup.already_registered') }} 
+                {{ $t('authentication.signup.already_registered') }}
                 <a href="#" @click.prevent="toggleForm(false)">{{ $t('authentication.signup.login_here_link') }}</a>
               </p>
 
               <p class="terms-links">
-                Ao criar uma conta, você concorda com nossos 
-                <router-link to="/terms-of-use">Termos de Uso</router-link> e 
-                <router-link to="/privacy-policy">Política de Privacidade</router-link>
+                {{ $t('authentication.common.signup_terms_prefix') }}
+                <router-link to="/terms-of-use">{{ $t('authentication.common.terms_of_use') }}</router-link>
+                {{ $t('authentication.common.and') }}
+                <router-link to="/privacy-policy">{{ $t('authentication.common.privacy_policy') }}</router-link>
               </p>
             </form>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/plugins/userStore'
 import { useRouter, useRoute } from 'vue-router'
 import { updateI18nLocale } from '@/i18n'
@@ -234,6 +261,7 @@ import OnboardingOrchestrator from '@/services/OnboardingOrchestrator'
 
 const router = useRouter()
 const route = useRoute()
+const { t, locale } = useI18n()
 const userData = ref({ email: '', password: '' })
 const signupData = ref({ email: '', password: '', confirmPassword: '', username: '' })
 const error = ref(null)
@@ -245,28 +273,28 @@ const isLoading = ref(false)
 const showPassword = ref(false)
 const showConfirmPassword = ref(false)
 const emailValid = ref(true)
+const isDev = import.meta.env.DEV
 
 onMounted(() => {
-  console.log(route.query);
   if (route.query && route.query.signup === 'true') {
-    toggleForm(true);
+    toggleForm(true)
   }
-});
+})
 
 const getLoginErrorMessage = (err) => {
   const status = err?.response?.status
   const data = err?.response?.data
 
   if (err?.code === 'ERR_NETWORK' || !err?.response) {
-    return 'Não foi possível conectar ao servidor. Verifique se ele está no ar e tente novamente.'
+    return t('authentication.messages.network_error')
   }
 
   if (status === 401 || status === 403) {
-    return 'Credenciais inválidas. Tente novamente.'
+    return t('authentication.messages.login_failed')
   }
 
   if (status >= 500) {
-    return 'Servidor indisponível no momento. Tente novamente em instantes.'
+    return t('authentication.messages.server_unavailable')
   }
 
   if (typeof data === 'string' && data.trim()) {
@@ -277,7 +305,7 @@ const getLoginErrorMessage = (err) => {
     return data.message
   }
 
-  return 'Não foi possível realizar o login agora. Tente novamente.'
+  return t('authentication.messages.login_unavailable')
 }
 
 const userLogin = async () => {
@@ -287,8 +315,6 @@ const userLogin = async () => {
 
     const res = await AuthService.signIn(userData.value)
     if (res.data) {
-      console.log('Login response:', res.data)
-      
       store.handleSigninResponse(res.data)
       updateI18nLocale(res.data.language || 'PT')
 
@@ -306,7 +332,7 @@ const userLogin = async () => {
         defaultRedirect: '/dashboard'
       })
 
-      loginSuccess.value = 'Login realizado com sucesso!'
+      loginSuccess.value = t('authentication.messages.login_success')
       setTimeout(() => {
         loginSuccess.value = null
         router.push(onboarding.route)
@@ -325,23 +351,19 @@ const userLogin = async () => {
   }
 }
 
-// Função mock para testar diferentes cenários
 const mockLogin = (scenario) => {
   const store = useUserStore()
-  
-  // Simula dados do usuário
+
   const mockUser = {
     id: 123,
     username: 'Usuario Teste',
     email: 'teste@email.com'
   }
-  
-  // Simula token (não é JWT real, apenas para teste)
+
   const mockToken = 'mock.jwt.token'
-  
+
   let companies = []
-  
-  // Define cenários diferentes
+
   switch (scenario) {
     case 'no-company':
       companies = []
@@ -375,8 +397,7 @@ const mockLogin = (scenario) => {
       ]
       break
   }
-  
-  // Simula o fluxo de login
+
   store.$patch({
     user: {
       ...mockUser,
@@ -386,71 +407,59 @@ const mockLogin = (scenario) => {
     refreshToken: 'mock.refresh.token',
     auth: true
   })
-  
+
   store.setCompanies(companies)
-  
-  // Aplica a lógica de seleção de empresa
+
   if (companies.length > 1) {
     store.saveState()
-    console.log('🔄 Redirecionando para seletor de empresa - múltiplas empresas detectadas')
     router.push({ name: 'select-company', query: { redirect: '/dashboard' } })
   } else if (companies.length === 1) {
     store.setCurrentCompany(companies[0].companyId, companies[0].role, companies[0].companyName)
     store.saveState()
-    loginSuccess.value = 'Login realizado com sucesso!'
+    loginSuccess.value = t('authentication.messages.login_success')
     setTimeout(() => {
       loginSuccess.value = null
       router.push('/dashboard')
     }, 800)
-    console.log('✅ Empresa única selecionada automaticamente')
   } else {
     store.saveState()
-    loginSuccess.value = 'Login realizado com sucesso!'
+    loginSuccess.value = t('authentication.messages.login_success')
     setTimeout(() => {
       loginSuccess.value = null
       router.push('/create-company')
     }, 800)
-    console.log('Workspace obrigatorio: redirecionando para criacao')
   }
-  
-  console.log('Mock Login executado:', {
-    scenario,
-    companies: companies.length,
-    currentCompany: store.currentCompanyId
-  })
 }
 
 const userSignup = async () => {
   if (signupData.value.password !== signupData.value.confirmPassword) {
-    signupError.value = 'As senhas não coincidem. Tente novamente.';
+    signupError.value = t('authentication.messages.password_mismatch')
     setTimeout(() => {
       signupError.value = null
     }, 4000)
-    return;
+    return
   }
   try {
     isLoading.value = true
-    
-    // Prepara os dados de registro
+
     const requestData = {
       username: signupData.value.username,
       email: signupData.value.email,
       password: signupData.value.password,
-      language: 'PT'
-    };
-    
-    // Monta a URL com parâmetros apropriados
-    const res = await AuthService.signUp(requestData);
+      language: String(locale.value || 'pt').slice(0, 2).toUpperCase()
+    }
+
+    const res = await AuthService.signUp(requestData)
 
     if (res.status === 201) {
-      signupSuccess.value = 'Conta criada com sucesso! Você já pode fazer login.';
+      signupSuccess.value = t('authentication.messages.signup_success_ready')
       setTimeout(() => {
         signupSuccess.value = null
-        clearSignupForm();
-        toggleForm(false);
+        clearSignupForm()
+        toggleForm(false)
       }, 3000)
     } else {
-      signupError.value = 'Falha ao criar conta. Tente novamente.';
+      signupError.value = t('authentication.messages.signup_failed')
       setTimeout(() => {
         signupError.value = null
       }, 4000)
@@ -458,15 +467,14 @@ const userSignup = async () => {
 
   } catch (err) {
     console.error('Signup error:', err)
-    signupError.value = 'Erro ao criar conta. Tente novamente.';
+    signupError.value = t('authentication.messages.signup_failed')
     setTimeout(() => {
       signupError.value = null
     }, 4000)
   } finally {
     isLoading.value = false
   }
-};
-
+}
 
 const clearSignupForm = () => {
   signupData.value = { email: '', password: '', confirmPassword: '', username: '' }
@@ -485,7 +493,6 @@ const goToForgotPassword = () => {
   router.push('/forgot-password')
 }
 
-// Toggle de visibilidade da senha
 const togglePasswordVisibility = () => {
   showPassword.value = !showPassword.value
 }
@@ -494,18 +501,15 @@ const toggleConfirmPasswordVisibility = () => {
   showConfirmPassword.value = !showConfirmPassword.value
 }
 
-// Validação de email em tempo real
 const validateEmail = () => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   emailValid.value = emailRegex.test(userData.value.email)
 }
 
-// Reset validação quando usuário começa a digitar
 const resetEmailValidation = () => {
   emailValid.value = true
 }
 
-// Notificações: fechar manualmente ou sumir automaticamente
 const closeNotification = (type) => {
   if (type === 'error') error.value = null
   if (type === 'success') loginSuccess.value = null
@@ -515,9 +519,11 @@ const closeNotification = (type) => {
 </script>
 
 <style>
-/* Estilo global (sem scoped) para forçar o background na página de login */
 body:has(.login-page) {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  background:
+    radial-gradient(circle at top left, rgba(32, 95, 99, 0.08), transparent 28%),
+    radial-gradient(circle at 85% 10%, rgba(182, 85, 31, 0.08), transparent 20%),
+    linear-gradient(180deg, #fbf8f2 0%, #f8f4ed 52%, #fdfaf5 100%) !important;
   overflow-x: hidden;
 }
 
@@ -537,16 +543,57 @@ body:has(.login-page) .main-content {
 </style>
 
 <style scoped>
-.app-container {
-  display: flex;
-  flex-direction: column;
+.auth-page {
   min-height: 100vh;
-  background: transparent;
-  position: relative;
-  width: 100%;
+  padding: 24px;
+  color: #172033;
+  font-family: 'Source Sans 3', sans-serif;
 }
 
-/* Fade transition para snackbar */
+.auth-shell {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(420px, 0.88fr);
+  gap: 22px;
+  align-items: stretch;
+}
+
+.auth-hero,
+.panel-card,
+.snackbar {
+  border: 1px solid rgba(23, 32, 51, 0.1);
+  box-shadow: 0 12px 28px rgba(23, 32, 51, 0.06);
+}
+
+.auth-hero {
+  min-height: calc(100vh - 48px);
+  border-radius: 32px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(242, 236, 227, 0.78) 100%);
+  padding: 28px;
+}
+
+.hero-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.brand-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  width: fit-content;
+  border: 0;
+  background: transparent;
+  font-family: 'Manrope', sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #172033;
+  cursor: pointer;
+}
+
 .fade-enter-active, .fade-leave-active {
   transition: opacity 0.5s;
 }
@@ -562,8 +609,7 @@ body:has(.login-page) .main-content {
   min-width: 280px;
   max-width: 90vw;
   padding: 16px 32px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  border-radius: 16px;
   font-size: 1rem;
   z-index: 9999;
   display: flex;
@@ -572,14 +618,12 @@ body:has(.login-page) .main-content {
   cursor: pointer;
 }
 .error-snackbar {
-  background: #f2dede;
-  color: #a94442;
-  border: 1px solid #ebccd1;
+  background: rgba(182, 85, 31, 0.1);
+  color: #8e4318;
 }
 .success-snackbar {
-  background: #dff0d8;
-  color: #3c763d;
-  border: 1px solid #d6e9c6;
+  background: rgba(32, 95, 99, 0.12);
+  color: #173f4b;
 }
 .close-btn {
   margin-left: 24px;
@@ -588,130 +632,152 @@ body:has(.login-page) .main-content {
   cursor: pointer;
 }
 
-.login-wrapper {
-  display: flex;
-  flex: 1;
-  max-width: 1400px;
-  margin: 0 auto;
-  width: 100%;
-  box-shadow: none;
-  border-radius: 0;
-  overflow: hidden;
-  background: transparent;
+.hero-copy {
+  display: grid;
+  gap: 18px;
+  max-width: 540px;
 }
 
-/* Hero Section - Lado Esquerdo */
-.hero-section {
-  flex: 1;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 60px;
-  display: flex;
+.section-tag {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  color: white;
-  position: relative;
-  overflow: hidden;
+  width: fit-content;
+  border-radius: 999px;
+  padding: 8px 14px;
+  background: rgba(32, 95, 99, 0.1);
+  color: #173f4b;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
-.hero-section::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  right: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-  animation: pulse 15s ease-in-out infinite;
+.hero-copy h1,
+.form-title,
+.panel-switch,
+.btn,
+.test-buttons h4 {
+  font-family: 'Manrope', sans-serif;
 }
 
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.1); }
+.hero-copy h1 {
+  margin: 0;
+  font-size: clamp(2.5rem, 5vw, 4.4rem);
+  line-height: 0.98;
+  letter-spacing: -0.05em;
 }
 
-.hero-content {
-  position: relative;
-  z-index: 1;
-  text-align: center;
-  max-width: 500px;
-}
-
-.brand-logo {
-  margin-bottom: 30px;
-}
-
-.logo-image {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  border: 4px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-}
-
-.hero-title {
-  font-size: 3rem;
-  font-weight: 700;
-  margin-bottom: 16px;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-}
-
-.hero-subtitle {
-  font-size: 1.25rem;
-  margin-bottom: 50px;
-  opacity: 0.95;
+.hero-copy p {
+  margin: 0;
+  color: #536177;
+  font-size: 1.12rem;
+  line-height: 1.7;
 }
 
 .hero-features {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  align-items: flex-start;
-  text-align: left;
+  display: grid;
+  gap: 16px;
+  margin-top: auto;
 }
 
 .feature-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
   align-items: center;
-  gap: 16px;
-  font-size: 1.1rem;
+  padding: 16px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(23, 32, 51, 0.08);
 }
 
-.feature-item i {
-  font-size: 1.5rem;
+.logo-image {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  object-fit: cover;
+  box-shadow: 0 10px 18px rgba(23, 32, 51, 0.08);
 }
 
-/* Form Section - Lado Direito */
-.form-section {
-  flex: 1;
-  background-color: #ffffff;
-  padding: 60px;
+.feature-icon {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: rgba(32, 95, 99, 0.12);
+  color: #173f4b;
+}
+
+.auth-panel {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.form-container {
+.panel-card {
   width: 100%;
-  max-width: 450px;
+  max-width: 560px;
+  border-radius: 32px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 30px;
+}
+
+.panel-header {
+  display: grid;
+  gap: 22px;
+  margin-bottom: 26px;
+}
+
+.panel-switch {
+  display: inline-flex;
+  gap: 8px;
+  width: fit-content;
+  padding: 6px;
+  border-radius: 999px;
+  background: rgba(23, 32, 51, 0.05);
+}
+
+.switch-chip {
+  min-height: 40px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #536177;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.switch-chip.active {
+  background: #ffffff;
+  color: #172033;
+  box-shadow: 0 6px 14px rgba(23, 32, 51, 0.06);
 }
 
 .auth-form {
   width: 100%;
 }
 
+.auth-form-header {
+  display: grid;
+  gap: 8px;
+}
+
 .form-title {
-  font-size: 2rem;
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: #1a1a1a;
-  text-align: center;
+  margin: 0;
+  font-size: clamp(1.9rem, 3vw, 2.5rem);
+  font-weight: 700;
+  color: #172033;
 }
 
 .form-description {
-  text-align: center;
-  color: #666;
-  opacity: 0.9;
-  margin-bottom: 32px;
+  margin: 0;
+  color: #536177;
+  line-height: 1.6;
 }
 
 .form-group {
@@ -721,8 +787,8 @@ body:has(.login-page) .main-content {
 label {
   display: block;
   margin-bottom: 8px;
-  font-weight: 500;
-  color: #333;
+  font-weight: 600;
+  color: #172033;
   font-size: 0.95rem;
 }
 
@@ -731,7 +797,7 @@ input[type='email'],
 input[type='password'] {
   width: 100%;
   padding: 14px 16px;
-  border: 2px solid #e0e0e0;
+  border: 1px solid rgba(23, 32, 51, 0.14);
   border-radius: 8px;
   background-color: #ffffff;
   color: #1a1a1a;
@@ -742,8 +808,8 @@ input[type='password'] {
 
 input:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #205f63;
+  box-shadow: 0 0 0 4px rgba(32, 95, 99, 0.1);
 }
 
 .password-field {
@@ -766,7 +832,7 @@ input:focus {
   right: 12px;
   cursor: pointer;
   user-select: none;
-  color: #666;
+  color: #536177;
   top: 50%;
   transform: translateY(-50%);
   padding: 8px;
@@ -774,23 +840,21 @@ input:focus {
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 0;
+  background: transparent;
 }
 
 .toggle-password:hover {
-  color: #333;
-}
-
-.toggle-password svg {
-  display: block;
+  color: #172033;
 }
 
 .invalid-email {
-  border-color: #f44336 !important;
-  background-color: #ffebee !important;
+  border-color: #b6551f !important;
+  background-color: rgba(182, 85, 31, 0.06) !important;
 }
 
 .error-message {
-  color: #f44336;
+  color: #b6551f;
   font-size: 0.85em;
   margin-top: 6px;
   display: block;
@@ -803,23 +867,23 @@ input:focus {
 
 .forgot-password-link a {
   font-size: 0.9rem;
-  color: #667eea;
+  color: #205f63;
   text-decoration: none;
   transition: color 0.2s;
 }
 
 .forgot-password-link a:hover {
-  color: #764ba2;
+  color: #173f4b;
   text-decoration: underline;
 }
 
 .btn {
   width: 100%;
   padding: 14px 24px;
-  border: none;
-  border-radius: 8px;
+  border: 1px solid transparent;
+  border-radius: 999px;
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
@@ -829,14 +893,14 @@ input:focus {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #b6551f 0%, #d16b31 100%);
   color: white;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 10px 18px rgba(182, 85, 31, 0.16);
 }
 
 .btn-primary:hover:not(:disabled) {
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-  transform: translateY(-2px);
+  box-shadow: 0 14px 24px rgba(182, 85, 31, 0.2);
+  transform: translateY(-1px);
 }
 
 .btn-primary:disabled {
@@ -863,7 +927,7 @@ input:focus {
   display: flex;
   align-items: center;
   margin: 24px 0;
-  color: #666;
+  color: #536177;
   opacity: 0.7;
 }
 
@@ -884,11 +948,11 @@ input:focus {
   width: 100%;
   padding: 12px 24px;
   background-color: #ffffff;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
+  border: 1px solid rgba(23, 32, 51, 0.14);
+  border-radius: 999px;
   font-size: 1rem;
   cursor: pointer;
-  color: #333;
+  color: #172033;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -898,8 +962,8 @@ input:focus {
 }
 
 .oauth-button:hover {
-  border-color: #667eea;
-  background-color: rgba(102, 126, 234, 0.05);
+  border-color: #205f63;
+  background-color: rgba(32, 95, 99, 0.04);
 }
 
 .oauth-button img {
@@ -910,19 +974,19 @@ input:focus {
 .switch-form {
   text-align: center;
   margin-top: 32px;
-  color: #666;
+  color: #536177;
   opacity: 0.9;
 }
 
 .switch-form a {
-  color: #667eea;
+  color: #205f63;
   text-decoration: none;
   font-weight: 600;
   transition: color 0.2s;
 }
 
 .switch-form a:hover {
-  color: #764ba2;
+  color: #173f4b;
   text-decoration: underline;
 }
 
@@ -930,12 +994,12 @@ input:focus {
   text-align: center;
   margin-top: 24px;
   font-size: 0.85rem;
-  color: #999;
+  color: #758298;
   line-height: 1.5;
 }
 
 .terms-links a {
-  color: #667eea;
+  color: #205f63;
   text-decoration: none;
   font-weight: 500;
 }
@@ -944,96 +1008,51 @@ input:focus {
   text-decoration: underline;
 }
 
-/* Responsive */
 @media (max-width: 1024px) {
-  .login-wrapper {
-    flex-direction: column;
-    margin: 20px;
-    border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  .auth-shell {
+    grid-template-columns: 1fr;
   }
-  
-  .hero-section {
-    padding: 40px 30px;
-  }
-  
-  .hero-title {
-    font-size: 2rem;
-  }
-  
-  .form-section {
-    padding: 40px 30px;
+
+  .auth-hero {
+    min-height: auto;
   }
 }
 
 @media (max-width: 768px) {
-  body:has(.login-page) {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  .auth-page {
+    padding: 12px;
   }
 
-  .app-container {
+  .auth-shell {
+    gap: 14px;
+  }
+
+  .auth-hero,
+  .panel-card {
+    border-radius: 24px;
     padding: 20px;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
   }
 
-  .login-wrapper {
-    margin: 0;
+  .hero-copy h1 {
+    font-size: clamp(2rem, 11vw, 3rem);
+  }
+
+  .panel-card {
+    padding: 22px;
+  }
+
+  .panel-switch {
     width: 100%;
-    max-width: 500px;
-    border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-    background: white;
+    justify-content: space-between;
   }
 
-  .hero-section {
-    display: none;
-  }
-  
-  .form-section {
-    padding: 40px 24px;
-    border-radius: 16px;
-  }
-
-  .form-container {
-    max-width: 100%;
-  }
-
-  .form-title {
-    font-size: 1.75rem;
-  }
-
-  .logo-image {
-    width: 80px;
-    height: 80px;
-  }
-
-  /* Adicionar pequeno header com logo no mobile */
-  .auth-form::before {
-    content: '';
-    display: block;
-    width: 80px;
-    height: 80px;
-    margin: 0 auto 24px;
-    background-image: url('/logo.jpg');
-    background-size: cover;
-    background-position: center;
-    border-radius: 50%;
-    border: 3px solid rgba(102, 126, 234, 0.2);
+  .switch-chip {
+    flex: 1;
+    text-align: center;
   }
 }
 
 @media (max-width: 480px) {
-  .app-container {
-    padding: 12px;
-  }
-
-  .form-section {
-    padding: 32px 20px;
-  }
-
   .form-title {
     font-size: 1.5rem;
   }
@@ -1060,20 +1079,19 @@ input:focus {
   }
 }
 
-/* Company fields styles */
 .company-fields {
   margin-top: 12px;
   padding: 16px;
-  background-color: rgba(102, 126, 234, 0.05);
+  background-color: rgba(32, 95, 99, 0.05);
   border-radius: 8px;
-  border: 1px solid rgba(102, 126, 234, 0.2);
+  border: 1px solid rgba(32, 95, 99, 0.12);
 }
 
 .company-fields input.form-control,
 .company-fields input[type='text'] {
   width: 100%;
   padding: 12px 16px;
-  border: 2px solid #e0e0e0;
+  border: 1px solid rgba(23, 32, 51, 0.14);
   border-radius: 8px;
   background-color: #ffffff;
   color: #1a1a1a;
@@ -1085,8 +1103,8 @@ input:focus {
 
 .company-fields input:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #205f63;
+  box-shadow: 0 0 0 3px rgba(32, 95, 99, 0.1);
 }
 
 .company-fields small {
@@ -1101,19 +1119,18 @@ input[type="checkbox"] {
   transform: scale(1.1);
 }
 
-/* Test buttons - temporários */
 .test-buttons {
   padding: 16px;
-  background-color: #fff3cd;
-  border: 1px solid #ffeaa7;
-  border-radius: 8px;
+  background-color: rgba(182, 85, 31, 0.08);
+  border: 1px solid rgba(182, 85, 31, 0.18);
+  border-radius: 16px;
   margin-top: 16px;
 }
 
 .test-buttons h4 {
   margin: 0 0 12px 0;
   font-size: 0.9rem;
-  color: #856404;
+  color: #8e4318;
 }
 
 .btn-test {
@@ -1122,15 +1139,15 @@ input[type="checkbox"] {
   margin: 6px 0;
   padding: 8px 12px;
   background: #fff;
-  border: 1px solid #ffc107;
-  border-radius: 6px;
+  border: 1px solid rgba(182, 85, 31, 0.18);
+  border-radius: 10px;
   font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .btn-test:hover {
-  background: #ffc107;
-  color: #000;
+  background: rgba(182, 85, 31, 0.08);
+  color: #172033;
 }
 </style>

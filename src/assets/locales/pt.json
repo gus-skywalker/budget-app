@@ -1010,6 +1010,7 @@
   "authentication": {
     "login": {
       "title": "Entrar",
+      "description": "Acesse seu workspace financeiro com contexto, segurança e continuidade operacional.",
       "email_label": "E-mail",
       "password_label": "Senha",
       "login_button": "Entrar",
@@ -1019,11 +1020,41 @@
       "not_registered": "Ainda não tem uma conta?",
       "create_account_link": "Crie uma conta."
     },
+    "hero": {
+      "title": "Entre no CoBudget e recupere clareza financeira com mais contexto.",
+      "subtitle": "Centralize orçamento, fluxo de caixa, colaboração e decisões com uma experiência mais confiável para famílias, times e empresas em crescimento.",
+      "feature_security": "Acesso protegido e continuidade da sua operação financeira.",
+      "feature_visibility": "Visibilidade clara sobre orçamento, gastos e metas em um único fluxo.",
+      "feature_collaboration": "Colaboração organizada entre família, sócios e times com menos atrito."
+    },
+    "common": {
+      "or": "ou",
+      "and": "e",
+      "show_password": "Mostrar senha",
+      "hide_password": "Ocultar senha",
+      "terms_of_use": "Termos de uso",
+      "privacy_policy": "Política de privacidade",
+      "login_terms_prefix": "Ao entrar, você concorda com os",
+      "signup_terms_prefix": "Ao criar sua conta, você concorda com os",
+      "test_area_title": "Acesso rápido para testes",
+      "test_no_company": "Simular usuário sem empresa",
+      "test_single_company": "Simular usuário com uma empresa",
+      "test_multiple_companies": "Simular usuário com múltiplas empresas"
+    },
     "forgot_password": {
+      "title": "Recuperar acesso",
+      "description": "Informe seu e-mail e enviaremos um link seguro para redefinir sua senha.",
+      "email_label": "E-mail",
+      "email_placeholder": "Digite seu e-mail",
+      "submit_button": "Enviar link de redefinição",
+      "success_message": "Se o e-mail estiver cadastrado, você receberá um link para redefinir sua senha.",
+      "invalid_email": "Por favor, insira um e-mail válido.",
+      "generic_error": "Ocorreu um erro. Tente novamente mais tarde.",
       "back_to_login": "Voltar para o login"
     },
     "signup": {
       "title": "Cadastrar",
+      "description": "Crie sua conta para organizar finanças, automatizar rotinas e avançar com mais previsibilidade.",
       "username_label": "Nome de usuário",
       "email_label": "E-mail",
       "password_label": "Senha",
@@ -1032,12 +1063,29 @@
       "already_registered": "Já possui uma conta?",
       "login_here_link": "Entre aqui."
     },
+    "reset_password": {
+      "title": "Definir nova senha",
+      "description": "Escolha uma nova senha para retomar o acesso à sua conta com segurança.",
+      "password_label": "Nova senha",
+      "password_placeholder": "Digite sua nova senha",
+      "confirm_password_label": "Confirmar nova senha",
+      "confirm_password_placeholder": "Confirme sua nova senha",
+      "submit_button": "Redefinir senha",
+      "success_message": "Sua senha foi redefinida com sucesso. Você já pode fazer login.",
+      "generic_error": "Ocorreu um erro ao redefinir sua senha. Tente novamente mais tarde.",
+      "missing_token": "Link inválido ou expirado. Solicite uma nova redefinição.",
+      "back_to_login": "Voltar para o login"
+    },
     "messages": {
       "login_success": "Login realizado com sucesso!",
       "login_failed": "Credenciais inválidas. Por favor, tente novamente.",
       "signup_success": "Conta criada com sucesso.",
+      "signup_success_ready": "Conta criada com sucesso. Agora você já pode entrar.",
       "signup_failed": "Erro ao criar a conta. Por favor, tente novamente.",
-      "password_mismatch": "As senhas não coincidem. Por favor, tente novamente."
+      "password_mismatch": "As senhas não coincidem. Por favor, tente novamente.",
+      "network_error": "Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.",
+      "server_unavailable": "O serviço está indisponível no momento. Tente novamente em instantes.",
+      "login_unavailable": "Não foi possível concluir o login agora. Tente novamente."
     }
   },
   "transactionVisibility": {

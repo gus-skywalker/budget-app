@@ -1010,6 +1010,7 @@
   "authentication": {
     "login": {
       "title": "Connexion",
+      "description": "Accédez à votre espace financier avec continuité, sécurité et contexte opérationnel clair.",
       "email_label": "E-mail",
       "password_label": "Mot de passe",
       "login_button": "Connexion",
@@ -1019,11 +1020,41 @@
       "not_registered": "Vous n'avez pas encore de compte ?",
       "create_account_link": "Créer un compte."
     },
+    "hero": {
+      "title": "Connectez-vous à CoBudget et retrouvez de la clarté financière avec plus de contexte.",
+      "subtitle": "Réunissez budget, cash flow, collaboration et décisions dans une expérience plus fiable pour les familles, les équipes et les entreprises en croissance.",
+      "feature_security": "Accès protégé et continuité pour votre opération financière.",
+      "feature_visibility": "Une visibilité claire sur les budgets, les dépenses et les objectifs dans un seul flux.",
+      "feature_collaboration": "Une collaboration organisée entre famille, associés et équipes avec moins de friction."
+    },
+    "common": {
+      "or": "ou",
+      "and": "et",
+      "show_password": "Afficher le mot de passe",
+      "hide_password": "Masquer le mot de passe",
+      "terms_of_use": "Conditions d'utilisation",
+      "privacy_policy": "Politique de confidentialité",
+      "login_terms_prefix": "En vous connectant, vous acceptez les",
+      "signup_terms_prefix": "En créant votre compte, vous acceptez les",
+      "test_area_title": "Accès rapide pour les tests",
+      "test_no_company": "Simuler un utilisateur sans entreprise",
+      "test_single_company": "Simuler un utilisateur avec une entreprise",
+      "test_multiple_companies": "Simuler un utilisateur avec plusieurs entreprises"
+    },
     "forgot_password": {
+      "title": "Récupérer l'accès",
+      "description": "Saisissez votre e-mail et nous vous enverrons un lien sécurisé pour réinitialiser votre mot de passe.",
+      "email_label": "E-mail",
+      "email_placeholder": "Saisissez votre e-mail",
+      "submit_button": "Envoyer le lien de réinitialisation",
+      "success_message": "Si l'e-mail est enregistré, vous recevrez un lien pour réinitialiser votre mot de passe.",
+      "invalid_email": "Veuillez entrer une adresse e-mail valide.",
+      "generic_error": "Une erreur s'est produite. Veuillez réessayer plus tard.",
       "back_to_login": "Retour à la connexion"
     },
     "signup": {
       "title": "Inscription",
+      "description": "Créez votre compte pour organiser vos finances, automatiser les routines et avancer avec plus de prévisibilité.",
       "username_label": "Nom d'utilisateur",
       "email_label": "E-mail",
       "password_label": "Mot de passe",
@@ -1032,12 +1063,29 @@
       "already_registered": "Vous avez déjà un compte ?",
       "login_here_link": "Connectez-vous ici."
     },
+    "reset_password": {
+      "title": "Définir un nouveau mot de passe",
+      "description": "Choisissez un nouveau mot de passe pour retrouver un accès sécurisé à votre compte.",
+      "password_label": "Nouveau mot de passe",
+      "password_placeholder": "Saisissez votre nouveau mot de passe",
+      "confirm_password_label": "Confirmer le nouveau mot de passe",
+      "confirm_password_placeholder": "Confirmez votre nouveau mot de passe",
+      "submit_button": "Réinitialiser le mot de passe",
+      "success_message": "Votre mot de passe a été réinitialisé avec succès. Vous pouvez maintenant vous connecter.",
+      "generic_error": "Une erreur s'est produite lors de la réinitialisation du mot de passe. Veuillez réessayer plus tard.",
+      "missing_token": "Lien invalide ou expiré. Demandez une nouvelle réinitialisation.",
+      "back_to_login": "Retour à la connexion"
+    },
     "messages": {
       "login_success": "Connexion réussie !",
       "login_failed": "Identifiants invalides. Veuillez réessayer.",
       "signup_success": "Compte créé avec succès.",
+      "signup_success_ready": "Compte créé avec succès. Vous pouvez maintenant vous connecter.",
       "signup_failed": "Erreur lors de la création du compte. Veuillez réessayer.",
-      "password_mismatch": "Les mots de passe ne correspondent pas. Veuillez réessayer."
+      "password_mismatch": "Les mots de passe ne correspondent pas. Veuillez réessayer.",
+      "network_error": "Impossible de se connecter au serveur. Vérifiez votre connexion et réessayez.",
+      "server_unavailable": "Le service est indisponible pour le moment. Veuillez réessayer dans un instant.",
+      "login_unavailable": "Nous n'avons pas pu terminer la connexion pour le moment. Veuillez réessayer."
     }
   },
   "transactionVisibility": {
