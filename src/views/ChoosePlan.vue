@@ -1,590 +1,868 @@
-// src/views/ChoosePlan.vue
 <template>
-    <v-container id="color-setup">
-        <!-- Seção de Planos -->
-                        <section id="plans" class="section plans-section">
-                                <h2>{{ $t('choosePlan.title') }}</h2>
-                                <p class="plans-subtitle">
-                                    {{ $t('choosePlan.subtitle') }}
-                                </p>
+  <v-container id="choose-plan-page" fluid class="choose-plan-page">
+    <section class="plan-hero">
+      <div class="shell hero-grid">
+        <div class="hero-copy">
+          <span class="eyebrow">{{ $t('landingPage.auth.signupNow') }}</span>
+          <h1>{{ $t('choosePlan.title') }}</h1>
+          <p class="hero-subtitle">{{ $t('choosePlan.subtitle') }}</p>
 
-                        <section class="section ai-value" style="background: #f7f7ff; border-radius: 12px; padding: 24px 16px; margin-bottom: 32px;">
-                            <h3 style="text-align:center; color:var(--purple); margin-bottom:8px;">{{ $t('choosePlan.ai_title') }}</h3>
-                            <p style="text-align:center; max-width:600px; margin:0 auto 0; color:var(--dark-gray); font-size:16px;">
-                                {{ $t('choosePlan.ai_desc') }}<br>
-                                <span style="display:block; margin-top:12px; text-align:left; max-width:400px; margin-left:auto; margin-right:auto;">
-                                    • {{ $t('choosePlan.ai_feature_1') }}<br>
-                                    • {{ $t('choosePlan.ai_feature_2') }}<br>
-                                    • {{ $t('choosePlan.ai_feature_3') }}<br>
-                                    • {{ $t('choosePlan.ai_feature_4') }}
-                                </span>
-                            </p>
-                        </section>
+          <div class="hero-notes">
+            <article class="note-card">
+              <div class="icon-chip icon-chip-dark">
+                <v-icon size="20">mdi-brain</v-icon>
+              </div>
+              <div>
+                <strong>{{ $t('choosePlan.ai_title') }}</strong>
+                <p>{{ $t('choosePlan.ai_desc') }}</p>
+              </div>
+            </article>
 
-                                                <div class="plans-grid">
-                                <!-- Plano STARTER -->
-                                <article class="plan-card starter">
-                                    <div class="plan-head">
-                                        <span class="plan-tag starter-tag">{{ $t('choosePlan.starter_tag') }}</span>
-                                        <h3>{{ $t('choosePlan.starter_name') }}</h3>
-                                        <p class="plan-subtitle">{{ $t('choosePlan.starter_subtitle') }}</p>
-                                    </div>
+            <article class="note-card">
+              <div class="icon-chip icon-chip-warm">
+                <v-icon size="20">mdi-shield-lock-outline</v-icon>
+              </div>
+              <div>
+                <strong>{{ $t('choosePlan.payment_security_title') }}</strong>
+                <p>{{ $t('choosePlan.payment_security_text') }}</p>
+              </div>
+            </article>
+          </div>
+        </div>
 
-                                    <div class="price-stack">
-                                        <div class="price-row">
-                                            <span class="price-label">{{ $t('choosePlan.monthly_label') }}</span>
-                                            <span class="price-amount">{{ formatPlanPrice(planDetails.MONTHLY) }}</span>
-                                        </div>
-                                        <div class="price-row annual">
-                                            <span class="price-label">{{ $t('choosePlan.annual_label') }}</span>
-                                            <span class="price-strike">{{ $t('choosePlan.from_price', { amount: formatAmount(annualOriginal(planDetails.MONTHLY.amount)) }) }}</span>
-                                            <span class="price-amount">{{ formatPlanPrice(planDetails.ANNUAL) }}</span>
-                                            <span class="price-badge">{{ $t('choosePlan.save_percent', { percent: discountPercent(planDetails.MONTHLY.amount, planDetails.ANNUAL.amount) }) }}</span>
-                                            <span class="price-note">{{ $t('choosePlan.equals_month', { amount: formatAmount(planDetails.ANNUAL.amount / 12) }) }}</span>
-                                        </div>
-                                    </div>
+        <div class="hero-side">
+          <div class="ai-summary-card">
+            <div class="summary-head">
+                <span class="summary-tag">{{ $t('landingPage.ai.title') }}</span>
+              <h2>{{ $t('choosePlan.ai_title') }}</h2>
+            </div>
 
-                                    <ul class="plan-benefits">
-                                        <li><span class="check">✓</span> {{ $t('choosePlan.starter_feature_1') }}</li>
-                                        <li><span class="check">✓</span> {{ $t('choosePlan.starter_feature_2') }}</li>
-                                        <li><span class="check">✓</span> {{ $t('choosePlan.starter_feature_3') }}</li>
-                                        <li><span class="check">✓</span> {{ $t('choosePlan.starter_feature_4') }}</li>
-                                        <li><span class="check">✓</span> {{ $t('choosePlan.starter_feature_5') }}</li>
-                                    </ul>
+            <ul class="feature-list feature-list-ai">
+              <li v-for="item in aiFeatures" :key="item.labelKey">
+                <div class="icon-chip icon-chip-small">
+                  <v-icon size="18">{{ item.icon }}</v-icon>
+                </div>
+                <span>{{ $t(item.labelKey) }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
 
-                                    <div class="plan-cta">
-                                        <button class="btn btn-outline starter-outline" @click.prevent="redirectToCheckout('MONTHLY')">
-                                            {{ $t('choosePlan.monthly_short') }}
-                                        </button>
-                                        <button class="btn btn-solid starter-solid" @click.prevent="redirectToCheckout('ANNUAL')">
-                                            {{ $t('choosePlan.annual_short_discount') }}
-                                        </button>
-                                    </div>
-                                </article>
+    <section id="plans" class="plans-section section-block">
+      <div class="shell">
+        <div class="section-heading">
+          <span class="section-kicker">{{ $t('choosePlan.best_offer') }}</span>
+          <h2>{{ $t('choosePlan.title') }}</h2>
+          <p>{{ $t('choosePlan.subtitle') }}</p>
+        </div>
 
-                                <!-- Plano TEAM -->
-                                <article class="plan-card team">
-                                    <div class="plan-ribbon">{{ $t('choosePlan.best_offer') }}</div>
-                                    <div class="plan-head">
-                                        <span class="plan-tag team-tag">{{ $t('choosePlan.team_tag') }}</span>
-                                        <h3>{{ $t('choosePlan.team_name') }}</h3>
-                                        <p class="plan-subtitle">{{ $t('choosePlan.team_subtitle') }}</p>
-                                    </div>
+        <div class="plans-grid">
+          <article class="plan-card starter">
+            <div class="plan-head">
+              <span class="plan-tag starter-tag">{{ $t('choosePlan.starter_tag') }}</span>
+              <h3>{{ $t('choosePlan.starter_name') }}</h3>
+              <p class="plan-subtitle">{{ $t('choosePlan.starter_subtitle') }}</p>
+            </div>
 
-                                    <div class="price-stack">
-                                        <div class="price-row">
-                                            <span class="price-label">{{ $t('choosePlan.monthly_label') }}</span>
-                                            <span class="price-amount">{{ formatPlanPrice(planDetails.BUSINESS_MONTHLY) }}</span>
-                                        </div>
-                                        <div class="price-row annual">
-                                            <span class="price-label">{{ $t('choosePlan.annual_label') }}</span>
-                                            <span class="price-strike">{{ $t('choosePlan.from_price', { amount: formatAmount(annualOriginal(planDetails.BUSINESS_MONTHLY.amount)) }) }}</span>
-                                            <span class="price-amount">{{ formatPlanPrice(planDetails.BUSINESS_ANNUAL) }}</span>
-                                            <span class="price-badge">{{ $t('choosePlan.save_percent', { percent: discountPercent(planDetails.BUSINESS_MONTHLY.amount, planDetails.BUSINESS_ANNUAL.amount) }) }}</span>
-                                            <span class="price-note">{{ $t('choosePlan.equals_month', { amount: formatAmount(planDetails.BUSINESS_ANNUAL.amount / 12) }) }}</span>
-                                        </div>
-                                    </div>
+            <div class="price-stack">
+              <div class="price-row">
+                <span class="price-label">{{ $t('choosePlan.monthly_label') }}</span>
+                <span class="price-amount">{{ formatPlanPrice(planDetails.MONTHLY) }}</span>
+              </div>
+              <div class="price-row annual">
+                <span class="price-label">{{ $t('choosePlan.annual_label') }}</span>
+                <span class="price-strike">{{ $t('choosePlan.from_price', { amount: formatAmount(annualOriginal(planDetails.MONTHLY.amount)) }) }}</span>
+                <span class="price-amount">{{ formatPlanPrice(planDetails.ANNUAL) }}</span>
+                <span class="price-badge">{{ $t('choosePlan.save_percent', { percent: discountPercent(planDetails.MONTHLY.amount, planDetails.ANNUAL.amount) }) }}</span>
+                <span class="price-note">{{ $t('choosePlan.equals_month', { amount: formatAmount(planDetails.ANNUAL.amount / 12) }) }}</span>
+              </div>
+            </div>
 
-                                    <ul class="plan-benefits">
-                                        <li><span class="check">✓</span> {{ $t('choosePlan.team_feature_1') }}</li>
-                                        <li><span class="check">✓</span> {{ $t('choosePlan.team_feature_2') }}</li>
-                                        <li><span class="check">✓</span> {{ $t('choosePlan.team_feature_3') }}</li>
-                                        <li><span class="check">✓</span> {{ $t('choosePlan.team_feature_4') }}</li>
-                                        <li><span class="check">✓</span> {{ $t('choosePlan.team_feature_5') }}</li>
-                                        <li><span class="check">✓</span> {{ $t('choosePlan.team_feature_6') }}</li>
-                                    </ul>
+            <ul class="feature-list">
+              <li v-for="item in starterFeatures" :key="item.labelKey">
+                <div class="icon-chip icon-chip-contrast icon-chip-small">
+                  <v-icon size="18">{{ item.icon }}</v-icon>
+                </div>
+                <span>{{ $t(item.labelKey) }}</span>
+              </li>
+            </ul>
 
-                                    <div class="plan-cta">
-                                        <button class="btn btn-outline team-outline" @click.prevent="handleTeamClick('BUSINESS_MONTHLY')">
-                                            {{ $t('choosePlan.monthly_short') }}
-                                        </button>
-                                        <button class="btn btn-solid team-solid" @click.prevent="handleTeamClick('BUSINESS_ANNUAL')">
-                                            {{ $t('choosePlan.annual_short_discount') }}
-                                        </button>
-                                    </div>
-                                </article>
-                        </div>
-        </section>
+            <div class="plan-cta">
+              <button class="btn btn-outline starter-outline" type="button" @click.prevent="redirectToCheckout('MONTHLY')">
+                {{ $t('choosePlan.monthly_short') }}
+              </button>
+              <button class="btn btn-solid starter-solid" type="button" @click.prevent="redirectToCheckout('ANNUAL')">
+                {{ $t('choosePlan.annual_short_discount') }}
+              </button>
+            </div>
+          </article>
 
-        <!-- FAQ reutilizável -->
+          <article class="plan-card team">
+            <div class="plan-ribbon">{{ $t('choosePlan.best_offer') }}</div>
+            <div class="plan-head">
+              <span class="plan-tag team-tag">{{ $t('choosePlan.team_tag') }}</span>
+              <h3>{{ $t('choosePlan.team_name') }}</h3>
+              <p class="plan-subtitle">{{ $t('choosePlan.team_subtitle') }}</p>
+            </div>
+
+            <div class="price-stack">
+              <div class="price-row team-highlight">
+                <span class="price-label">{{ $t('choosePlan.monthly_label') }}</span>
+                <span class="price-amount">{{ formatPlanPrice(planDetails.BUSINESS_MONTHLY) }}</span>
+              </div>
+              <div class="price-row annual team-annual">
+                <span class="price-label">{{ $t('choosePlan.annual_label') }}</span>
+                <span class="price-strike">{{ $t('choosePlan.from_price', { amount: formatAmount(annualOriginal(planDetails.BUSINESS_MONTHLY.amount)) }) }}</span>
+                <span class="price-amount">{{ formatPlanPrice(planDetails.BUSINESS_ANNUAL) }}</span>
+                <span class="price-badge">{{ $t('choosePlan.save_percent', { percent: discountPercent(planDetails.BUSINESS_MONTHLY.amount, planDetails.BUSINESS_ANNUAL.amount) }) }}</span>
+                <span class="price-note">{{ $t('choosePlan.equals_month', { amount: formatAmount(planDetails.BUSINESS_ANNUAL.amount / 12) }) }}</span>
+              </div>
+            </div>
+
+            <ul class="feature-list">
+              <li v-for="item in teamFeatures" :key="item.labelKey">
+                <div class="icon-chip icon-chip-dark icon-chip-small">
+                  <v-icon size="18">{{ item.icon }}</v-icon>
+                </div>
+                <span>{{ $t(item.labelKey) }}</span>
+              </li>
+            </ul>
+
+            <div class="plan-cta">
+              <button class="btn btn-outline team-outline" type="button" @click.prevent="handleTeamClick('BUSINESS_MONTHLY')">
+                {{ $t('choosePlan.monthly_short') }}
+              </button>
+              <button class="btn btn-solid team-solid" type="button" @click.prevent="handleTeamClick('BUSINESS_ANNUAL')">
+                {{ $t('choosePlan.annual_short_discount') }}
+              </button>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-block trust-section">
+      <div class="shell trust-grid">
+        <article class="trust-card">
+          <div class="icon-chip icon-chip-warm">
+            <v-icon size="20">mdi-backup-restore</v-icon>
+          </div>
+          <div>
+            <h3>{{ $t('choosePlan.cancellation_title') }}</h3>
+            <p>{{ $t('choosePlan.cancellation_text') }}</p>
+          </div>
+        </article>
+
+        <article class="trust-card">
+          <div class="icon-chip icon-chip-contrast">
+            <v-icon size="20">mdi-lock-check-outline</v-icon>
+          </div>
+          <div>
+            <h3>{{ $t('choosePlan.payment_security_title') }}</h3>
+            <p>{{ $t('choosePlan.payment_security_text') }}</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section-block faq-wrapper">
+      <div class="shell faq-shell">
         <FAQ :faqs="faqs" />
-
-        <!-- Política de Cancelamento -->
-        <section class="section cancellation-policy">
-            <h2>{{ $t('choosePlan.cancellation_title') }}</h2>
-            <p>
-                {{ $t('choosePlan.cancellation_text') }}
-            </p>
-        </section>
-
-        <!-- Segurança no Pagamento -->
-        <section class="section payment-security">
-            <h2>{{ $t('choosePlan.payment_security_title') }}</h2>
-            <p>
-                {{ $t('choosePlan.payment_security_text') }}
-            </p>
-        </section>
-    </v-container>
+      </div>
+    </section>
+  </v-container>
 </template>
 
 <script>
-import FAQ from '@/components/FAQ.vue';
+import FAQ from '@/components/FAQ.vue'
 import BillingDecisionService from '@/services/BillingDecisionService'
 import OnboardingOrchestrator from '@/services/OnboardingOrchestrator'
 import { createCorrelationId } from '@/utils/correlation'
-import { PLAN_DETAILS } from '@/constants/plans';
+import { PLAN_DETAILS } from '@/constants/plans'
 import { formatConvertedPriceFromBRL, resolvePricingCurrency } from '@/utils/pricing'
-import { useUserStore } from '@/plugins/userStore';
+import { useUserStore } from '@/plugins/userStore'
 
 export default {
-    name: "ChoosePlan",
-    components: {
-        FAQ,
+  name: 'ChoosePlan',
+  components: {
+    FAQ,
+  },
+  data() {
+    return {
+      faqs: [
+        { question: 'choosePlanFaq.q1', answer: 'choosePlanFaq.a1' },
+        { question: 'choosePlanFaq.q2', answer: 'choosePlanFaq.a2' },
+        { question: 'choosePlanFaq.q3', answer: 'choosePlanFaq.a3' },
+        { question: 'choosePlanFaq.q4', answer: 'choosePlanFaq.a4' },
+        { question: 'choosePlanFaq.q5', answer: 'choosePlanFaq.a5' },
+        { question: 'faq.q1', answer: 'faq.a1' },
+        { question: 'faq.q2', answer: 'faq.a2' },
+        { question: 'faq.q3', answer: 'faq.a3' },
+        { question: 'faq.q4', answer: 'faq.a4' },
+      ],
+      selectedPlan: null,
+      planDetails: PLAN_DETAILS,
+      isTenantMode: false,
+      aiFeatures: [
+        { icon: 'mdi-chart-box-outline', labelKey: 'choosePlan.ai_feature_1' },
+        { icon: 'mdi-bell-alert-outline', labelKey: 'choosePlan.ai_feature_2' },
+        { icon: 'mdi-piggy-bank-outline', labelKey: 'choosePlan.ai_feature_3' },
+        { icon: 'mdi-tag-multiple-outline', labelKey: 'choosePlan.ai_feature_4' },
+      ],
+      starterFeatures: [
+        { icon: 'mdi-account-group-outline', labelKey: 'choosePlan.starter_feature_1' },
+        { icon: 'mdi-view-dashboard-outline', labelKey: 'choosePlan.starter_feature_2' },
+        { icon: 'mdi-calendar-range-outline', labelKey: 'choosePlan.starter_feature_3' },
+        { icon: 'mdi-flag-checkered', labelKey: 'choosePlan.starter_feature_4' },
+        { icon: 'mdi-chart-timeline-variant', labelKey: 'choosePlan.starter_feature_5' },
+      ],
+      teamFeatures: [
+        { icon: 'mdi-account-multiple-outline', labelKey: 'choosePlan.team_feature_1' },
+        { icon: 'mdi-brain', labelKey: 'choosePlan.team_feature_2' },
+        { icon: 'mdi-source-branch', labelKey: 'choosePlan.team_feature_3' },
+        { icon: 'mdi-finance', labelKey: 'choosePlan.team_feature_4' },
+        { icon: 'mdi-handshake-outline', labelKey: 'choosePlan.team_feature_5' },
+        { icon: 'mdi-forum-outline', labelKey: 'choosePlan.team_feature_6' },
+      ],
+    }
+  },
+  computed: {
+    isAuthenticated() {
+      try {
+        const userStore = useUserStore()
+        return userStore.isAuthenticated
+      } catch (e) {
+        return false
+      }
     },
-    data() {
-        return {
-            faqs: [
-                // Perguntas específicas do ChoosePlan
-                { question: 'choosePlanFaq.q1', answer: 'choosePlanFaq.a1' },
-                { question: 'choosePlanFaq.q2', answer: 'choosePlanFaq.a2' },
-                { question: 'choosePlanFaq.q3', answer: 'choosePlanFaq.a3' },
-                { question: 'choosePlanFaq.q4', answer: 'choosePlanFaq.a4' },
-                { question: 'choosePlanFaq.q5', answer: 'choosePlanFaq.a5' },
-                // Perguntas gerais do sistema
-                { question: 'faq.q1', answer: 'faq.a1' },
-                { question: 'faq.q2', answer: 'faq.a2' },
-                { question: 'faq.q3', answer: 'faq.a3' },
-                { question: 'faq.q4', answer: 'faq.a4' },
-            ],
-            selectedPlan: null,
-            planDetails: PLAN_DETAILS,
-            isTenantMode: false,
-        };
-    },
-    computed: {
-        isAuthenticated() {
-            try {
-                const userStore = useUserStore();
-                return userStore.isAuthenticated;
-            } catch (e) {
-                return false;
-            }
+  },
+  mounted() {
+    try {
+      const userStore = useUserStore()
+      this.isTenantMode = userStore.isTenantMode
+      const preselectedPlan = this.$route?.query?.plan
+      if (typeof preselectedPlan === 'string' && preselectedPlan.trim()) {
+        this.redirectToCheckout(preselectedPlan.trim())
+      }
+    } catch (e) {
+      this.isTenantMode = false
+    }
+  },
+  methods: {
+    async redirectToCheckout(plan) {
+      try {
+        this.selectedPlan = plan
+        if (!this.isAuthenticated) {
+          localStorage.setItem('selectedPlan', plan)
+          const redirect = OnboardingOrchestrator.buildRedirectPath('/choose-plan', { plan })
+          this.$router.push({
+            name: 'login',
+            query: {
+              redirect,
+            },
+          })
+          return
         }
+        await this.processCheckout(plan)
+      } catch (error) {
+        this.handleError(error)
+      }
     },
-    mounted() {
-        // Detecta modo tenant via Pinia
-        try {
-            const userStore = useUserStore()
-            this.isTenantMode = userStore.isTenantMode
-            const preselectedPlan = this.$route?.query?.plan
-            if (typeof preselectedPlan === 'string' && preselectedPlan.trim()) {
-                this.redirectToCheckout(preselectedPlan.trim())
-            }
-        } catch (e) {
-            this.isTenantMode = false
+
+    handleTeamClick(plan) {
+      const userStore = useUserStore()
+      if (!this.isAuthenticated) {
+        alert(this.$t('choosePlan.error_login_team'))
+        const redirect = OnboardingOrchestrator.buildRedirectPath('/choose-plan', { plan })
+        this.$router.push({ name: 'login', query: { redirect } })
+        return
+      }
+      if (!userStore.currentCompanyId) {
+        alert(this.$t('choosePlan.error_select_company_team'))
+        const redirect = OnboardingOrchestrator.buildRedirectPath('/choose-plan', { plan })
+        this.$router.push({ name: 'select-company', query: { redirect } })
+        return
+      }
+      this.redirectToCheckout(plan)
+    },
+
+    async processCheckout(plan) {
+      try {
+        const userStore = useUserStore()
+        const user = userStore.user
+
+        if (!user?.id) {
+          throw new Error(this.$t('choosePlan.error_user_not_authenticated'))
         }
-    },
-    methods: {
-        async redirectToCheckout(plan) {
-            try {
-                this.selectedPlan = plan;
-                if (!this.isAuthenticated) {
-                    localStorage.setItem('selectedPlan', plan);
-                    const redirect = OnboardingOrchestrator.buildRedirectPath('/choose-plan', { plan })
-                    this.$router.push({
-                        name: 'login',
-                        query: {
-                            redirect
-                        }
-                    });
-                    return;
-                }
-                await this.processCheckout(plan);
-            } catch (error) {
-                this.handleError(error);
-            }
-        },
 
-        handleTeamClick(plan) {
-            const userStore = useUserStore()
-            if (!this.isAuthenticated) {
-                alert(this.$t('choosePlan.error_login_team'));
-                const redirect = OnboardingOrchestrator.buildRedirectPath('/choose-plan', { plan })
-                this.$router.push({ name: 'login', query: { redirect } })
-                return
-            }
-            if (!userStore.currentCompanyId) {
-                alert(this.$t('choosePlan.error_select_company_team'));
-                const redirect = OnboardingOrchestrator.buildRedirectPath('/choose-plan', { plan })
-                this.$router.push({ name: 'select-company', query: { redirect } })
-                return;
-            }
-            this.redirectToCheckout(plan);
-        },
+        const correlationId = createCorrelationId()
 
-        async processCheckout(plan) {
-            try {
-                const userStore = useUserStore();
-                const user = userStore.user;
-
-                if (!user?.id) {
-                    throw new Error(this.$t('choosePlan.error_user_not_authenticated'));
-                }
-
-                const correlationId = createCorrelationId()
-
-                const isTeamPlan = String(plan).startsWith('BUSINESS_');
-                const companyId = userStore.currentCompanyId;
-                if (isTeamPlan && !companyId) {
-                    throw new Error(this.$t('choosePlan.error_select_company_team'));
-                }
-
-                // IMPORTANT (ADR-001/004): FE must NOT call payment-api and must NOT send PII.
-                // Decide subject based on plan + tenant context.
-                const subjectType = (isTeamPlan && userStore.isTenantMode && companyId) ? 'COMPANY' : 'USER'
-                const subjectId = subjectType === 'COMPANY' ? String(companyId) : String(user.id)
-
-                const decisionResp = await BillingDecisionService.decide(
-                    {
-                        plan: String(plan),
-                        actor: String(user.id),
-                        subjectType,
-                        subjectId,
-                        // backward compatible fields
-                        userId: subjectType === 'USER' ? String(user.id) : null,
-                        companyId: subjectType === 'COMPANY' ? String(companyId) : null
-                    },
-                    correlationId
-                )
-
-                const decision = decisionResp.data
-
-                if (decision.action === 'NOOP_ALREADY_PREMIUM') {
-                    this.$router.push({ name: 'dashboard' })
-                    return
-                }
-
-                if (decision.action !== 'START_SUBSCRIPTION') {
-                    throw new Error(this.$t('choosePlan.error_unexpected_billing_action'));
-                }
-
-                this.$router.push({
-                    name: 'checkout',
-                    query: {
-                        plan: String(plan),
-                        subjectType: decision.subjectType,
-                        subjectId: decision.subjectId,
-                        correlationId: decision.correlationId || correlationId
-                    }
-                })
-            } catch (error) {
-                this.handleError(error);
-            }
-        },
-
-        handleError(error) {
-            console.error("Erro no processo de checkout:", error);
-            const errorMessage = error.response?.data?.error || 
-                               error.message || 
-                               this.$t('choosePlan.error_continue_process');
-            
-            if (this.$vuetify) {
-                this.$vuetify.notify({
-                    type: 'error',
-                    text: errorMessage
-                });
-            } else {
-                alert(errorMessage);
-            }
-        },
-        formatAmount(amount) {
-            const browserLocale = typeof navigator !== 'undefined' ? navigator.language : null
-            return formatConvertedPriceFromBRL({
-                amountInBRL: amount,
-                targetCurrency: resolvePricingCurrency({
-                    locale: this.$i18n?.locale,
-                    browserLocale
-                }),
-                uiLocale: this.$i18n?.locale
-            })
-        },
-        formatPlanPrice(plan) {
-            return `${this.formatAmount(plan.amount)} / ${this.$t(plan.billingPeriod === 'year' ? 'landingPage.plans.perYear' : 'landingPage.plans.perMonth')}`
-        },
-        annualOriginal(monthlyAmount) {
-            return monthlyAmount * 12;
-        },
-        discountPercent(monthlyAmount, annualAmount) {
-            if (!monthlyAmount || !annualAmount) return '0%';
-            const full = monthlyAmount * 12;
-            const pct = Math.round(((full - annualAmount) / full) * 100);
-            return `${pct}%`;
+        const isTeamPlan = String(plan).startsWith('BUSINESS_')
+        const companyId = userStore.currentCompanyId
+        if (isTeamPlan && !companyId) {
+          throw new Error(this.$t('choosePlan.error_select_company_team'))
         }
+
+        const subjectType = isTeamPlan && userStore.isTenantMode && companyId ? 'COMPANY' : 'USER'
+        const subjectId = subjectType === 'COMPANY' ? String(companyId) : String(user.id)
+
+        const decisionResp = await BillingDecisionService.decide(
+          {
+            plan: String(plan),
+            actor: String(user.id),
+            subjectType,
+            subjectId,
+            userId: subjectType === 'USER' ? String(user.id) : null,
+            companyId: subjectType === 'COMPANY' ? String(companyId) : null,
+          },
+          correlationId,
+        )
+
+        const decision = decisionResp.data
+
+        if (decision.action === 'NOOP_ALREADY_PREMIUM') {
+          this.$router.push({ name: 'dashboard' })
+          return
+        }
+
+        if (decision.action !== 'START_SUBSCRIPTION') {
+          throw new Error(this.$t('choosePlan.error_unexpected_billing_action'))
+        }
+
+        this.$router.push({
+          name: 'checkout',
+          query: {
+            plan: String(plan),
+            subjectType: decision.subjectType,
+            subjectId: decision.subjectId,
+            correlationId: decision.correlationId || correlationId,
+          },
+        })
+      } catch (error) {
+        this.handleError(error)
+      }
     },
-};
+
+    handleError(error) {
+      console.error('Erro no processo de checkout:', error)
+      const errorMessage = error.response?.data?.error || error.message || this.$t('choosePlan.error_continue_process')
+
+      if (this.$vuetify) {
+        this.$vuetify.notify({
+          type: 'error',
+          text: errorMessage,
+        })
+      } else {
+        alert(errorMessage)
+      }
+    },
+    formatAmount(amount) {
+      const browserLocale = typeof navigator !== 'undefined' ? navigator.language : null
+      return formatConvertedPriceFromBRL({
+        amountInBRL: amount,
+        targetCurrency: resolvePricingCurrency({
+          locale: this.$i18n?.locale,
+          browserLocale,
+        }),
+        uiLocale: this.$i18n?.locale,
+      })
+    },
+    formatPlanPrice(plan) {
+      return `${this.formatAmount(plan.amount)} / ${this.$t(plan.billingPeriod === 'year' ? 'landingPage.plans.perYear' : 'landingPage.plans.perMonth')}`
+    },
+    annualOriginal(monthlyAmount) {
+      return monthlyAmount * 12
+    },
+    discountPercent(monthlyAmount, annualAmount) {
+      if (!monthlyAmount || !annualAmount) return '0%'
+      const full = monthlyAmount * 12
+      const pct = Math.round(((full - annualAmount) / full) * 100)
+      return `${pct}%`
+    },
+  },
+}
 </script>
 
 <style scoped>
-#color-setup {
-    --orange: #f39c12;
-    --dark-orange: #e67e22;
-    --yellow: #f1c40f;
-    --purple: #8e44ad;
-    --dark-purple: #5b2c6f;
-    --white: #ffffff;
-    --light-gray: #f8f9f9;
-    --dark-gray: #2c3e50;
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Source+Sans+3:wght@400;500;600;700&display=swap');
+
+#choose-plan-page {
+  --ink: #172033;
+  --ink-soft: #536177;
+  --line: rgba(23, 32, 51, 0.12);
+  --brand: #b6551f;
+  --brand-strong: #8e4318;
+  --accent: #205f63;
+  --accent-strong: #173f4b;
+  --shadow: 0 18px 42px rgba(23, 32, 51, 0.1);
+  --shadow-soft: 0 12px 28px rgba(23, 32, 51, 0.08);
+  background:
+    radial-gradient(circle at top left, rgba(32, 95, 99, 0.12), transparent 28%),
+    radial-gradient(circle at 85% 10%, rgba(182, 85, 31, 0.12), transparent 20%),
+    linear-gradient(180deg, #f8f4ec 0%, #f4efe6 52%, #fbf7ef 100%);
+  color: var(--ink);
+  font-family: 'Source Sans 3', sans-serif;
+  max-width: none !important;
+  padding: 0 !important;
 }
 
-/* Estilos para a seção de planos */
+#choose-plan-page :deep(*) {
+  box-sizing: border-box;
+}
+
+#choose-plan-page :deep(.v-icon) {
+  color: inherit;
+}
+
+.shell {
+  width: min(1180px, calc(100vw - 32px));
+  margin: 0 auto;
+}
+
+.section-block {
+  padding: 84px 0;
+}
+
+.plan-hero {
+  padding: 72px 0 44px;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: 28px;
+  align-items: start;
+}
+
+.eyebrow,
+.section-kicker,
+.summary-tag {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.eyebrow,
+.section-kicker {
+  background: rgba(32, 95, 99, 0.1);
+  color: var(--accent-strong);
+}
+
+.summary-tag {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.84);
+}
+
+h1,
+h2,
+h3,
+.price-amount,
+.plan-tag,
+.plan-ribbon,
+.btn {
+  font-family: 'Manrope', sans-serif;
+}
+
+h1 {
+  margin: 16px 0 14px;
+  font-size: clamp(2.5rem, 4.5vw, 4.4rem);
+  line-height: 0.98;
+  letter-spacing: -0.05em;
+}
+
+h2 {
+  margin: 0 0 12px;
+  font-size: clamp(1.9rem, 3vw, 3rem);
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+}
+
+h3 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 1.05rem;
+  line-height: 1.65;
+}
+
+.hero-subtitle,
+.section-heading p {
+  max-width: 60ch;
+  font-size: 1.18rem;
+}
+
+.hero-notes,
+.trust-grid,
+.plans-grid {
+  display: grid;
+  gap: 20px;
+}
+
+.hero-notes {
+  margin-top: 28px;
+}
+
+.note-card,
+.plan-card,
+.trust-card,
+.ai-summary-card,
+.faq-shell {
+  border-radius: 28px;
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-soft);
+}
+
+.note-card,
+.trust-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 16px;
+  padding: 22px;
+  background: rgba(255, 255, 255, 0.76);
+}
+
+.hero-side {
+  position: sticky;
+  top: 24px;
+}
+
+.ai-summary-card {
+  padding: 26px;
+  background: linear-gradient(135deg, #183744 0%, #1c2434 100%);
+  color: #f7efe7;
+  box-shadow: var(--shadow);
+}
+
+.ai-summary-card p,
+.ai-summary-card span,
+.ai-summary-card h2 {
+  color: inherit;
+}
+
+.summary-head {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.feature-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.feature-list li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.feature-list-ai li {
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
 .plans-section {
-    background-color: var(--white);
-    padding: 60px 40px;
-    text-align: center;
+  padding-top: 28px;
 }
 
-.plans-subtitle {
-    text-align: center;
-    max-width: 600px;
-    margin: 16px auto 32px;
-    color: var(--dark-gray);
-    font-size: 18px;
+.section-heading {
+  text-align: center;
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  margin-bottom: 34px;
 }
 
 .plans-grid {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    flex-wrap: wrap;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
 }
 
 .plan-card {
-    width: min(520px, 100%);
-    background-color: #ffffff;
-    padding: 28px 24px;
-    border-radius: 16px;
-    text-align: left;
-    border: 1px solid rgba(0, 0, 0, 0.06);
-    box-shadow: 0 8px 28px rgba(15, 23, 42, 0.06);
-    position: relative;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 28px;
+  background: #fff;
+}
+
+.plan-card.starter {
+  background: linear-gradient(180deg, #fff 0%, #fcf5ec 100%);
 }
 
 .plan-card.team {
-    border: 2px solid rgba(142, 68, 173, 0.35);
-    background: linear-gradient(180deg, #f8f4ff 0%, #ffffff 80%);
+  background: linear-gradient(180deg, #1d2838 0%, #203749 100%);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: var(--shadow);
 }
 
-.plan-head h3 {
-    font-size: 28px;
-    color: var(--dark-gray);
-    margin: 8px 0 6px;
+.plan-card.team p,
+.plan-card.team span,
+.plan-card.team h3,
+.plan-card.team li {
+  color: inherit;
 }
 
-.plan-subtitle {
-    font-size: 15px;
-    color: #54616f;
+.plan-head {
+  display: grid;
+  gap: 10px;
 }
 
 .plan-tag {
-    display: inline-flex;
-    align-items: center;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    padding: 6px 10px;
-    border-radius: 8px;
+  display: inline-flex;
+  width: fit-content;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .starter-tag {
-    background: rgba(243, 156, 18, 0.15);
-    color: #b06a0c;
+  background: rgba(182, 85, 31, 0.12);
+  color: var(--brand-strong);
 }
 
 .team-tag {
-    background: rgba(142, 68, 173, 0.15);
-    color: #5b2c6f;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
 }
 
 .plan-ribbon {
-    position: absolute;
-    top: -16px;
-    right: 20px;
-    background: var(--yellow);
-    color: var(--dark-purple);
-    padding: 6px 14px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 700;
-    box-shadow: 0 6px 16px rgba(241, 196, 15, 0.25);
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: #f2c76d;
+  color: #3d2a10;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.plan-subtitle {
+  min-height: 52px;
 }
 
 .price-stack {
-    margin: 18px 0 20px;
-    display: grid;
-    gap: 14px;
+  display: grid;
+  gap: 14px;
 }
 
 .price-row {
-    display: grid;
-    gap: 6px;
-    padding: 12px 14px;
-    border-radius: 12px;
-    background: #f7f8fb;
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(23, 32, 51, 0.04);
 }
 
 .price-row.annual {
-    background: #ffffff;
-    border: 1px dashed rgba(0, 0, 0, 0.08);
+  border: 1px dashed rgba(23, 32, 51, 0.12);
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.team-highlight,
+.team-annual {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.14);
 }
 
 .price-label {
-    font-size: 12px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #7b8794;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .price-amount {
-    font-size: 26px;
-    font-weight: 700;
-    color: var(--dark-gray);
+  font-size: 1.72rem;
+  line-height: 1.1;
+}
+
+.price-strike,
+.price-note {
+  font-size: 0.88rem;
 }
 
 .price-strike {
-    font-size: 13px;
-    color: #9aa5b1;
-    text-decoration: line-through;
+  text-decoration: line-through;
 }
 
 .price-badge {
-    display: inline-flex;
-    width: fit-content;
-    padding: 4px 10px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 700;
-    color: #0f6b3f;
-    background: rgba(34, 197, 94, 0.16);
+  display: inline-flex;
+  width: fit-content;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.16);
+  color: #11653a;
+  font-size: 0.8rem;
+  font-weight: 800;
 }
 
-.price-note {
-    font-size: 12px;
-    color: #7b8794;
-}
-
-.plan-benefits {
-    list-style-type: none;
-    padding: 0;
-    margin: 20px 0;
-    color: var(--dark-gray);
-    font-size: 14px;
-}
-
-.plan-benefits li {
-    margin: 5px 0;
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-}
-
-.check {
-    color: #22c55e;
-    font-weight: 700;
+.plan-card.team .price-badge {
+  background: rgba(242, 199, 109, 0.18);
+  color: #f2c76d;
 }
 
 .plan-cta {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 12px;
-    margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: auto;
 }
 
 .btn {
-    padding: 12px 18px;
-    border-radius: 10px;
-    font-weight: 700;
-    border: 2px solid transparent;
-    cursor: pointer;
+  min-height: 50px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
 }
 
 .btn-outline {
-    background: transparent;
+  background: transparent;
 }
 
 .btn-solid {
-    color: #ffffff;
+  color: #fff;
 }
 
 .starter-outline {
-    border-color: #f39c12;
-    color: #b06a0c;
+  border-color: rgba(182, 85, 31, 0.28);
+  color: var(--brand-strong);
 }
 
 .starter-solid {
-    background: #f39c12;
+  background: linear-gradient(135deg, var(--brand) 0%, #d16b31 100%);
 }
 
 .team-outline {
-    border-color: var(--purple);
-    color: var(--purple);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #fff;
 }
 
 .team-solid {
-    background: var(--purple);
+  background: linear-gradient(135deg, #f2c76d 0%, #d89b2c 100%);
+  color: #2e2411;
 }
 
-.btn-solid:hover,
-.btn-outline:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12);
+.trust-section {
+  padding-top: 0;
 }
 
-/* Estilos das Informações de Avaliação, FAQ e Cancelamento */
-.trial-info,
-.faq-section,
-.cancellation-policy,
-.payment-security {
-    padding: 40px 20px;
-    background-color: var(--white);
-    text-align: center;
+.trust-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.trial-info h2,
-.faq-section h2,
-.cancellation-policy h2,
-.payment-security h2 {
-    color: var(--dark-gray);
-    font-size: 28px;
-    margin-bottom: 20px;
+.faq-wrapper {
+  padding-top: 0;
 }
 
-.trial-info p,
-.faq-section p,
-.cancellation-policy p,
-.payment-security p {
-    color: var(--dark-gray);
-    font-size: 16px;
-    line-height: 1.6;
+.faq-shell {
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.72);
 }
 
-/* FAQ Item */
-.faq-item {
-    margin-bottom: 20px;
-    text-align: left;
-    max-width: 800px;
-    margin: 0 auto;
+.icon-chip {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  background: rgba(182, 85, 31, 0.1);
+  color: var(--brand-strong);
 }
 
-.faq-item h3 {
-    color: var(--dark-gray);
-    font-size: 20px;
-    margin-bottom: 5px;
+.icon-chip-small {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
 }
 
-.faq-item p {
-    font-size: 16px;
-    color: var(--dark-gray);
+.icon-chip-dark {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.icon-chip-warm {
+  background: rgba(217, 141, 44, 0.14);
+  color: #8c4f10;
+}
+
+.icon-chip-contrast {
+  background: rgba(32, 95, 99, 0.12);
+  color: var(--accent-strong);
+}
+
+@media (max-width: 1080px) {
+  .hero-grid,
+  .plans-grid,
+  .trust-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-side {
+    position: static;
+  }
+}
+
+@media (max-width: 760px) {
+  .shell {
+    width: min(100vw - 24px, 100%);
+  }
+
+  .plan-hero,
+  .section-block {
+    padding: 68px 0;
+  }
+
+  h1 {
+    font-size: clamp(2.2rem, 12vw, 3.2rem);
+  }
+
+  h2 {
+    font-size: clamp(1.8rem, 9vw, 2.5rem);
+  }
+
+  .plan-card,
+  .note-card,
+  .trust-card,
+  .ai-summary-card {
+    border-radius: 22px;
+    padding: 20px;
+  }
+
+  .plan-cta {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
