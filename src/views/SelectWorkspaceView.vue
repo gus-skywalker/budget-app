@@ -1,36 +1,36 @@
 <template>
-  <div class="select-company-view">
+  <div class="select-workspace-view">
     <v-container class="py-12">
       <v-row justify="center">
         <v-col cols="12" md="8" lg="6">
           <v-card class="elevation-12 gradient-card">
             <v-card-title class="d-flex align-center justify-space-between">
               <div>
-                <h2 class="title mb-1">Escolha um workspace</h2>
-                <p class="subtitle">Defina o workspace ativo para continuar</p>
+                <h2 class="title mb-1">{{ t('workspaceSelector.title') }}</h2>
+                <p class="subtitle">{{ t('workspaceSelector.desc') }}</p>
               </div>
               <v-chip color="primary" variant="flat" size="small">
-                {{ companies.length }} workspaces
+                {{ workspaces.length }} {{ t('workspaceSelector.count_label') }}
               </v-chip>
             </v-card-title>
 
             <v-card-text>
               <v-alert
-                v-if="!companies.length"
+                v-if="!workspaces.length"
                 type="info"
                 variant="tonal"
                 class="mb-4"
               >
-                Nao encontramos nenhum workspace no seu perfil. Voce pode criar um agora mesmo.
+                {{ t('workspaceSelector.empty') }}
               </v-alert>
 
               <v-list v-else density="comfortable" nav>
                 <v-list-item
-                  v-for="company in companies"
-                  :key="company.companyId"
-                  class="company-entry"
-                  :disabled="loadingCompany === company.companyId"
-                  @click="selectCompany(company.companyId)"
+                  v-for="workspace in workspaces"
+                  :key="workspaceKey(workspace)"
+                  class="workspace-entry"
+                  :disabled="loadingWorkspace === workspaceKey(workspace)"
+                  @click="selectWorkspace(workspaceKey(workspace))"
                 >
                   <template #prepend>
                     <v-avatar color="primary" variant="tonal">
@@ -38,12 +38,12 @@
                     </v-avatar>
                   </template>
                   <div class="d-flex flex-column">
-                    <span class="company-name">{{ company.companyName || company.companyId }}</span>
-                    <small class="role-label">{{ getRoleLabel(company.role) }}</small>
+                    <span class="workspace-name">{{ workspace.workspaceName || workspaceKey(workspace) }}</span>
+                    <small class="role-label">{{ getRoleLabel(workspace.role) }}</small>
                   </div>
                   <template #append>
                     <v-progress-circular
-                      v-if="loadingCompany === company.companyId"
+                      v-if="loadingWorkspace === workspaceKey(workspace)"
                       indeterminate
                       size="20"
                       color="primary"
@@ -62,9 +62,9 @@
                 color="primary"
                 variant="elevated"
                 prepend-icon="mdi-plus"
-                @click="router.push({ name: 'create-company', query: { redirect: redirectTarget } })"
+                @click="router.push({ name: 'create-workspace', query: { redirect: redirectTarget } })"
               >
-                Criar workspace
+                {{ t('workspaceSwitcher.create_new_workspace') }}
               </v-btn>
             </v-card-actions>
           </v-card>
@@ -77,14 +77,22 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/plugins/userStore'
 import OnboardingOrchestrator from '@/services/OnboardingOrchestrator'
 
+type WorkspaceEntry = {
+  workspaceId: string
+  workspaceName?: string
+  role?: string | null
+}
+
+const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
 
-const companies = computed(() => userStore.getCompanies)
+const workspaces = computed(() => userStore.getWorkspaces as WorkspaceEntry[] ?? [])
 const redirectTarget = computed(() =>
   OnboardingOrchestrator.resolveOnboardingTargetPath({
     redirect: route.query.redirect,
@@ -92,35 +100,33 @@ const redirectTarget = computed(() =>
     defaultRedirect: '/dashboard'
   })
 )
-const loadingCompany = ref<string | null>(null)
+const loadingWorkspace = ref<string | null>(null)
 
 const getRoleLabel = (role?: string | null) => {
   const normalized = (role || '').toUpperCase()
-  const labels: Record<string, string> = {
-    ROLE_OWNER: 'Proprietario',
-    ROLE_ADMIN: 'Administrador',
-    ROLE_MEMBER: 'Colaborador',
-    ROLE_VIEWER: 'Visualizador'
-  }
-  return labels[normalized] || 'Sem permissao definida'
+  const key = `workspaceSelector.roles.${normalized}`
+  const translated = t(key)
+  return translated !== key ? translated : t('workspaceSelector.undefined_role')
 }
 
-const selectCompany = async (companyId: string) => {
-  if (loadingCompany.value) return
+const workspaceKey = (workspace: WorkspaceEntry) => workspace.workspaceId
+
+const selectWorkspace = async (workspaceId: string) => {
+  if (!workspaceId || loadingWorkspace.value) return
   try {
-    loadingCompany.value = companyId
-    await userStore.selectCompany(companyId)
+    loadingWorkspace.value = workspaceId
+    await userStore.selectWorkspace(workspaceId)
     router.push(redirectTarget.value)
   } catch (error) {
     console.error('Erro ao selecionar workspace pela tela dedicada:', error)
   } finally {
-    loadingCompany.value = null
+    loadingWorkspace.value = null
   }
 }
 </script>
 
 <style scoped>
-.select-company-view {
+.select-workspace-view {
   min-height: 100vh;
   background: radial-gradient(circle at top, #1f2a44 25%, #0f172a 70%);
   color: #fff;
@@ -143,17 +149,17 @@ const selectCompany = async (companyId: string) => {
   color: rgba(255, 255, 255, 0.7);
 }
 
-.company-entry {
+.workspace-entry {
   border-radius: 12px;
   margin-bottom: 8px;
   transition: background 0.2s ease;
 }
 
-.company-entry:hover {
+.workspace-entry:hover {
   background: rgba(255, 255, 255, 0.08);
 }
 
-.company-name {
+.workspace-name {
   font-weight: 600;
 }
 

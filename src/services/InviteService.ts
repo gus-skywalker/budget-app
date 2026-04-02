@@ -1,29 +1,30 @@
 import axiosInterceptor from './axiosInterceptor'
 
-const API_URL = `${import.meta.env.VITE_API_BASE_URL}/companies`
+const API_URL = `${import.meta.env.VITE_API_BASE_URL}/workspaces`
 
 export default {
   /**
    * Enviar convite para usuário
-   * POST /companies/:companyId/invites
+   * POST /workspaces/:workspaceId/invites
    */
-  inviteUser(companyId: string, email: string, role: string): Promise<any> {
+  inviteUser(workspaceId: string, email: string, role: string): Promise<any> {
     return axiosInterceptor.post(
-      `${API_URL}/${companyId}/invites`,
+      `${API_URL}/${workspaceId}/invites`,
       { email, tenantRole: role },
       { timeout: 15000 }
     )
   },
 
   /**
-   * Listar convites pendentes da empresa
-   * GET /companies/:companyId/invites
+   * Listar convites pendentes do workspace
+   * GET /workspaces/:workspaceId/invites
    */
-  async listInvites(companyId: string): Promise<any[]> {
-    const response = await axiosInterceptor.get(`${API_URL}/${companyId}/invites`, { timeout: 15000 })
+  async listInvites(workspaceId: string): Promise<any[]> {
+    const response = await axiosInterceptor.get(`${API_URL}/${workspaceId}/invites`, { timeout: 15000 })
     const invites = Array.isArray(response.data) ? response.data : []
     return invites.map((invite: any) => ({
       ...invite,
+      workspaceId: invite?.workspaceId,
       role: invite?.role || invite?.tenantRole || invite?.invitedTenantRole,
       createdAt: invite?.createdAt || invite?.created_at
     }))
@@ -31,19 +32,19 @@ export default {
 
   /**
    * Cancelar convite
-   * DELETE /companies/:companyId/invites/:inviteId
+   * DELETE /workspaces/:workspaceId/invites/:inviteId
    */
-  cancelInvite(companyId: string, inviteId: string): Promise<any> {
-    return axiosInterceptor.delete(`${API_URL}/${companyId}/invites/${inviteId}`, { timeout: 15000 })
+  cancelInvite(workspaceId: string, inviteId: string): Promise<any> {
+    return axiosInterceptor.delete(`${API_URL}/${workspaceId}/invites/${inviteId}`, { timeout: 15000 })
   },
 
   /**
    * (Opcional) Associar um group/workspace a um convite
-   * POST /companies/:companyId/invites/:inviteId/attach-group
+   * POST /workspaces/:workspaceId/invites/:inviteId/attach-group
    */
-  attachGroup(companyId: string, inviteId: string, groupId: number): Promise<any> {
+  attachGroup(workspaceId: string, inviteId: string, groupId: number): Promise<any> {
     return axiosInterceptor.post(
-      `${API_URL}/${companyId}/invites/${inviteId}/attach-group`,
+      `${API_URL}/${workspaceId}/invites/${inviteId}/attach-group`,
       { groupId },
       { timeout: 15000 }
     )

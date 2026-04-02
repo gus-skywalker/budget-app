@@ -2,10 +2,17 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useUserStore } from '@/plugins/userStore'
 
-// Mock CompanyService
-vi.mock('@/services/CompanyService', () => ({
+vi.mock('@/services/WorkspaceService', () => ({
   default: {
-    selectCompany: vi.fn()
+    selectWorkspace: vi.fn(),
+    getDetails: vi.fn(),
+    clearWorkspace: vi.fn()
+  }
+}))
+
+vi.mock('@/services/AuthService', () => ({
+  default: {
+    refreshToken: vi.fn()
   }
 }))
 
@@ -22,7 +29,7 @@ describe('UserStore', () => {
       expect(store.token).toBeNull()
       expect(store.refreshToken).toBeNull()
       expect(store.auth).toBe(false)
-      expect(store.currentCompanyId).toBeNull()
+      expect(store.currentWorkspaceId).toBeNull()
       expect(store.tenantRole).toBeNull()
       expect(store.language).toBe('PT')
     })
@@ -35,11 +42,11 @@ describe('UserStore', () => {
       // Create a mock JWT token with base64 encoded payload
       const payload = {
         user_id: '123',
-        companyId: 'company-456',
+        workspaceId: 'company-456',
         tenantRole: 'ROLE_ADMIN',
         user_language: 'EN',
-        companies: [
-          { companyId: 'company-456', companyName: 'Test Corp', role: 'ROLE_ADMIN' }
+        workspaces: [
+          { workspaceId: 'company-456', workspaceName: 'Test Corp', role: 'ROLE_ADMIN' }
         ]
       }
       
@@ -48,25 +55,30 @@ describe('UserStore', () => {
       
       store.syncFromToken(mockToken)
       
-      expect(store.currentCompanyId).toBe('company-456')
+      expect(store.currentWorkspaceId).toBe('company-456')
       expect(store.tenantRole).toBe('ROLE_ADMIN')
       expect(store.language).toBe('EN')
-      expect(store.user.companies).toEqual(payload.companies)
+      expect(store.user.workspaces).toEqual([
+        { workspaceId: 'company-456', workspaceName: 'Test Corp', role: 'ROLE_ADMIN' }
+      ])
     })
 
     it('should handle invalid JWT gracefully', () => {
       const store = useUserStore()
-      
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
       // Invalid token format
       store.syncFromToken('invalid.token')
       
       // Should not crash and should not update state
-      expect(store.currentCompanyId).toBeNull()
+      expect(store.currentWorkspaceId).toBeNull()
+      expect(consoleErrorSpy).toHaveBeenCalled()
+      consoleErrorSpy.mockRestore()
     })
   })
 
   describe('handleSigninResponse', () => {
-    it('should process signin response with no companies', () => {
+    it('should process signin response with no workspaces', () => {
       const store = useUserStore()
       
       const response = {
@@ -76,8 +88,8 @@ describe('UserStore', () => {
         language: 'PT',
         accessToken: 'header.eyJ1c2VyX2lkIjoiMTIzIn0.signature',
         refreshToken: 'refresh123',
-        companyId: null,
-        companies: []
+        workspaceId: null,
+        workspaces: []
       }
       
       const result = store.handleSigninResponse(response)
@@ -85,22 +97,22 @@ describe('UserStore', () => {
       expect(store.auth).toBe(true)
       expect(store.user.email).toBe('john@example.com')
       expect(store.language).toBe('PT')
-      expect(result.hasCompanies).toBe(false)
-      expect(result.companyPreselected).toBe(false)
+      expect(result.hasWorkspaces).toBe(false)
+      expect(result.workspacePreselected).toBe(false)
     })
 
-    it('should process signin response with multiple companies', () => {
+    it('should process signin response with multiple workspaces', () => {
       const store = useUserStore()
       
-      const companies = [
-        { companyId: 'comp1', companyName: 'Company 1', role: 'ROLE_ADMIN' },
-        { companyId: 'comp2', companyName: 'Company 2', role: 'ROLE_USER' }
+      const workspaces = [
+        { workspaceId: 'comp1', workspaceName: 'Company 1', role: 'ROLE_ADMIN' },
+        { workspaceId: 'comp2', workspaceName: 'Company 2', role: 'ROLE_USER' }
       ]
       
-      // Create token with companies in payload
+      // Create token with workspaces in payload
       const payload = {
         user_id: '123',
-        companies: companies
+        workspaces
       }
       const encodedPayload = btoa(JSON.stringify(payload))
       const mockToken = `header.${encodedPayload}.signature`
@@ -112,29 +124,32 @@ describe('UserStore', () => {
         language: 'EN',
         accessToken: mockToken,
         refreshToken: 'refresh123',
-        companyId: null,
-        companies
+        workspaceId: null,
+        workspaces
       }
       
       const result = store.handleSigninResponse(response)
       
-      expect(result.hasCompanies).toBe(true)
-      expect(result.hasMultipleCompanies).toBe(true)
-      expect(result.companyPreselected).toBe(false)
-      expect(store.user.companies).toEqual(companies)
+      expect(result.hasWorkspaces).toBe(true)
+      expect(result.hasMultipleWorkspaces).toBe(true)
+      expect(result.workspacePreselected).toBe(false)
+      expect(store.user.workspaces).toEqual([
+        { workspaceId: 'comp1', workspaceName: 'Company 1', role: 'ROLE_ADMIN' },
+        { workspaceId: 'comp2', workspaceName: 'Company 2', role: 'ROLE_USER' }
+      ])
     })
 
-    it('should process signin response with preselected company', () => {
+    it('should process signin response with preselected workspace', () => {
       const store = useUserStore()
       
-      const companies = [
-        { companyId: 'comp1', companyName: 'Company 1', role: 'ROLE_ADMIN' }
+      const workspaces = [
+        { workspaceId: 'comp1', workspaceName: 'Company 1', role: 'ROLE_ADMIN' }
       ]
       
       const payload = {
         user_id: '123',
-        companyId: 'comp1',
-        userRole: 'ROLE_ADMIN'
+        workspaceId: 'comp1',
+        tenantRole: 'ROLE_ADMIN'
       }
       const encodedPayload = btoa(JSON.stringify(payload))
       const mockToken = `header.${encodedPayload}.signature`
@@ -146,14 +161,14 @@ describe('UserStore', () => {
         language: 'PT',
         accessToken: mockToken,
         refreshToken: 'refresh123',
-        companyId: 'comp1',
-        companies
+        workspaceId: 'comp1',
+        workspaces
       }
       
       const result = store.handleSigninResponse(response)
       
-      expect(result.companyPreselected).toBe(true)
-      expect(store.currentCompanyId).toBe('comp1')
+      expect(result.workspacePreselected).toBe(true)
+      expect(store.currentWorkspaceId).toBe('comp1')
       expect(store.tenantRole).toBe('ROLE_ADMIN')
     })
   })
@@ -182,7 +197,7 @@ describe('UserStore', () => {
         refreshToken: 'saved-refresh',
         auth: true,
         user: { id: '123', email: 'test@test.com' },
-        currentCompanyId: 'comp-123',
+        currentWorkspaceId: 'comp-123',
         tenantRole: 'ROLE_ADMIN',
         language: 'EN'
       }
@@ -193,44 +208,106 @@ describe('UserStore', () => {
       store.loadState()
       
       expect(store.token).toBe('saved-token')
-      expect(store.currentCompanyId).toBe('comp-123')
+      expect(store.currentWorkspaceId).toBe('comp-123')
       expect(store.tenantRole).toBe('ROLE_ADMIN')
       expect(store.language).toBe('EN')
+    })
+
+    it('should restore tenant role from stored workspace when session omits tenantRole', () => {
+      const state = {
+        token: 'saved-token',
+        refreshToken: 'saved-refresh',
+        auth: true,
+        user: {
+          id: '123',
+          email: 'test@test.com',
+          workspaces: [
+            { workspaceId: 'comp-123', workspaceName: 'Workspace 123', role: 'ROLE_OWNER' }
+          ]
+        },
+        currentWorkspaceId: 'comp-123',
+        tenantRole: null,
+        language: 'EN'
+      }
+
+      sessionStorage.setItem('userStore', JSON.stringify(state))
+
+      const store = useUserStore()
+      store.loadState()
+
+      expect(store.currentWorkspaceId).toBe('comp-123')
+      expect(store.tenantRole).toBe('ROLE_OWNER')
+      expect(store.isTenantMode).toBe(true)
     })
 
     it('should load preferred context from localStorage', () => {
       localStorage.setItem('userPreference', JSON.stringify({
         preferredMode: 'tenant',
-        preferredCompanyId: 'comp-pref'
+        preferredWorkspaceId: 'comp-pref'
       }))
 
       const store = useUserStore()
       store.loadState()
 
       expect(store.getPreferredMode).toBe('tenant')
-      expect(store.getPreferredCompanyId).toBe('comp-pref')
+      expect(store.getPreferredWorkspaceId).toBe('comp-pref')
     })
   })
 
-  describe('Company Management', () => {
-    it('should set current company correctly', () => {
+  describe('Workspace Management', () => {
+    it('should set current workspace correctly', () => {
       const store = useUserStore()
       
-      store.setCurrentCompany('comp-456', 'ROLE_USER', 'Test Company')
-      
-      expect(store.currentCompanyId).toBe('comp-456')
+      store.setCurrentWorkspace('comp-456', 'ROLE_USER', 'Test Company')
+
+      expect(store.currentWorkspaceId).toBe('comp-456')
       expect(store.tenantRole).toBe('ROLE_USER')
     })
 
-    it('should detect multiple companies', () => {
+    it('should preserve existing workspaces when setUser updates profile-only fields', () => {
+      const store = useUserStore()
+
+      store.user.workspaces = [
+        { workspaceId: 'comp-456', workspaceName: 'Test Company', role: 'ROLE_USER' }
+      ]
+
+      store.setUser({
+        id: '123',
+        username: 'Updated User',
+        email: 'updated@example.com'
+      })
+
+      expect(store.user.workspaces).toEqual([
+        { workspaceId: 'comp-456', workspaceName: 'Test Company', role: 'ROLE_USER' }
+      ])
+      expect(store.user.username).toBe('Updated User')
+      expect(store.user.email).toBe('updated@example.com')
+    })
+
+    it('should allow explicit empty workspaces to clear the workspace list', () => {
+      const store = useUserStore()
+
+      store.user.workspaces = [
+        { workspaceId: 'comp-456', workspaceName: 'Test Company', role: 'ROLE_USER' }
+      ]
+
+      store.setUser({
+        id: '123',
+        workspaces: []
+      })
+
+      expect(store.user.workspaces).toEqual([])
+    })
+
+    it('should detect multiple workspaces', () => {
       const store = useUserStore()
       
-      store.user.companies = [
-        { companyId: 'comp1', role: 'ROLE_ADMIN' },
-        { companyId: 'comp2', role: 'ROLE_USER' }
+      store.user.workspaces = [
+        { workspaceId: 'comp1', role: 'ROLE_ADMIN' },
+        { workspaceId: 'comp2', role: 'ROLE_USER' }
       ]
       
-      expect(store.hasMultipleCompanies).toBe(true)
+      expect(store.hasMultipleWorkspaces).toBe(true)
     })
 
     it('should identify admin role', () => {
@@ -244,36 +321,37 @@ describe('UserStore', () => {
     })
   })
 
-  describe('selectCompany', () => {
+  describe('selectWorkspace', () => {
     it('should call API and update state', async () => {
       const store = useUserStore()
-      const CompanyService = (await import('@/services/CompanyService')).default
-      
+      const WorkspaceService = (await import('@/services/WorkspaceService')).default
+
       const payload = {
         user_id: '123',
-        companyId: 'new-company',
-        userRole: 'ROLE_USER'
+        workspaceId: 'new-company',
+        tenantRole: 'ROLE_USER'
       }
       const encodedPayload = btoa(JSON.stringify(payload))
       const newToken = `header.${encodedPayload}.signature`
       
-      vi.mocked(CompanyService.selectCompany).mockResolvedValue({
+      vi.mocked(WorkspaceService.selectWorkspace).mockResolvedValue({
         data: {
           accessToken: newToken,
           refreshToken: 'new-refresh',
-          tenantRole: 'ROLE_USER'
+          tenantRole: 'ROLE_USER',
+          workspaceId: 'new-company'
         }
       })
       
-      store.user.companies = [
-        { companyId: 'new-company', companyName: 'New Corp', role: 'ROLE_USER' }
+      store.user.workspaces = [
+        { workspaceId: 'new-company', workspaceName: 'New Corp', role: 'ROLE_USER' }
       ]
-      
-      await store.selectCompany('new-company')
-      
+
+      await store.selectWorkspace('new-company')
+
       expect(store.token).toBe(newToken)
       expect(store.refreshToken).toBe('new-refresh')
-      expect(store.currentCompanyId).toBe('new-company')
+      expect(store.currentWorkspaceId).toBe('new-company')
       expect(store.tenantRole).toBe('ROLE_USER')
     })
   })
@@ -293,6 +371,58 @@ describe('UserStore', () => {
     })
   })
 
+  describe('Token Refresh', () => {
+    it('should preserve selected workspace context when refresh token response is not workspace-scoped', async () => {
+      const store = useUserStore()
+      const AuthService = (await import('@/services/AuthService')).default
+      const WorkspaceService = (await import('@/services/WorkspaceService')).default
+
+      store.refreshToken = 'refresh-123'
+      store.auth = true
+      store.user.workspaces = [
+        { workspaceId: 'ws-1', workspaceName: 'Workspace 1', role: 'ROLE_OWNER' }
+      ]
+      store.setCurrentWorkspace('ws-1', 'ROLE_OWNER', 'Workspace 1')
+
+      const payload = {
+        user_id: '123',
+        user_email: 'john@example.com',
+        user_language: 'EN',
+        workspaces: [
+          { workspaceId: 'ws-1', workspaceName: '', role: 'ROLE_OWNER' }
+        ]
+      }
+      const encodedPayload = btoa(JSON.stringify(payload))
+      const refreshedToken = `header.${encodedPayload}.signature`
+
+      vi.mocked(AuthService.refreshToken).mockResolvedValue({
+        data: {
+          accessToken: refreshedToken,
+          refreshToken: 'refresh-456'
+        }
+      })
+      vi.mocked(WorkspaceService.getDetails).mockResolvedValue({
+        data: {
+          workspaceId: 'ws-1',
+          name: 'Workspace 1'
+        }
+      })
+
+      const refreshed = await store.tryRefreshToken()
+
+      expect(refreshed).toBe(true)
+      expect(store.token).toBe(refreshedToken)
+      expect(store.refreshToken).toBe('refresh-456')
+      expect(store.currentWorkspaceId).toBe('ws-1')
+      expect(store.tenantRole).toBe('ROLE_OWNER')
+      expect(store.getWorkspaces[0]).toEqual({
+        workspaceId: 'ws-1',
+        workspaceName: 'Workspace 1',
+        role: 'ROLE_OWNER'
+      })
+    })
+  })
+
   describe('Logout', () => {
     it('should clear all state', () => {
       const store = useUserStore()
@@ -300,7 +430,7 @@ describe('UserStore', () => {
       store.token = 'token'
       store.refreshToken = 'refresh'
       store.auth = true
-      store.currentCompanyId = 'comp-123'
+      store.currentWorkspaceId = 'comp-123'
       store.saveState()
       
       store.logout()
@@ -308,7 +438,7 @@ describe('UserStore', () => {
       expect(store.token).toBeNull()
       expect(store.refreshToken).toBeNull()
       expect(store.auth).toBe(false)
-      expect(store.currentCompanyId).toBeNull()
+      expect(store.currentWorkspaceId).toBeNull()
       expect(sessionStorage.getItem('userStore')).toBeNull()
     })
   })

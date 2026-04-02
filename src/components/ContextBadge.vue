@@ -16,22 +16,22 @@ const userStore = useUserStore()
 const { t } = useI18n()
 
 const isTenantMode = computed(() => userStore.isTenantMode)
-const currentCompanyId = computed(() => userStore.getCurrentCompanyId)
-const companies = computed(() => userStore.getCompanies || [])
+const currentWorkspaceId = computed(() => userStore.getCurrentWorkspaceId)
+const workspaces = computed(() => userStore.getWorkspaces || [])
 const tenantRole = computed(() => userStore.getTenantRole || null)
 
-const currentCompanyName = computed(() => {
-  const company = companies.value.find((item: any) => item.companyId === currentCompanyId.value)
-  return company?.companyName || null
+const currentWorkspaceName = computed(() => {
+  const workspace = workspaces.value.find((item: any) => item.workspaceId === currentWorkspaceId.value)
+  return workspace?.workspaceName || null
 })
 
 const contextLabel = computed(() => {
-  if (!isTenantMode.value || !currentCompanyId.value) {
+  if (!isTenantMode.value || !currentWorkspaceId.value) {
     return t('context_badge.personal')
   }
 
-  return t('context_badge.company', {
-    company: currentCompanyName.value || currentCompanyId.value,
+  return t('context_badge.workspace', {
+    workspace: currentWorkspaceName.value || currentWorkspaceId.value,
     role: tenantRole.value ? ` (${tenantRole.value})` : ''
   })
 })

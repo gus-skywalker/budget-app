@@ -1336,14 +1336,14 @@ export default {
     },
     resolveBillingSubject() {
       const userStore = useUserStore()
-      const companyId = userStore.currentCompanyId
+      const workspaceId = userStore.getCurrentWorkspaceId
       const userId = userStore.user?.id
       const isTenantMode = userStore.isTenantMode
 
-      if (isTenantMode && companyId) {
+      if (isTenantMode && workspaceId) {
         return {
-          subjectType: 'COMPANY',
-          subjectId: String(companyId),
+          subjectType: 'WORKSPACE',
+          subjectId: String(workspaceId),
         }
       }
 
@@ -2240,21 +2240,6 @@ export default {
   color: #1a1a1a;
 }
 
-.cashflow-action-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
-}
-
-.projection-context {
-  margin-top: 6px;
-  color: #475569;
-  line-height: 1.45;
-}
-
-.v-theme--dark .projection-context {
-  color: #cbd5e1;
-}
 
 .v-theme--dark .decision-card__title {
   color: #ffffff;

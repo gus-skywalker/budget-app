@@ -9,19 +9,19 @@
 ## 2. Signup Flow
 1. Frontend calls `POST /api/auth/signup`.
 2. User is redirected to login flow and authenticates.
-3. `OnboardingOrchestrator` resolves post-auth path (`create-company`, `select-company`, or target route).
+3. `OnboardingOrchestrator` resolves post-auth path (`create-workspace`, `select-workspace`, or target route).
 
 ## 3. Onboarding Orchestration Flow
 1. Login/OAuth callback calls `OnboardingOrchestrator.resolvePostAuthRoute(...)`.
 2. Orchestrator normalizes `redirect` and optional `plan` into a canonical target path.
-3. If user has no company: route to `create-company`.
-4. If tenant context is required but not selected: route to `select-company`.
-5. If a single/preferred company is available: attempt automatic company selection.
+3. If user has no workspace: route to `create-workspace`.
+4. If tenant context is required but not selected: route to `select-workspace`.
+5. If a single/preferred workspace is available: attempt automatic workspace selection.
 6. Route user to final target (`/dashboard`, `/choose-plan?plan=...`, `/checkout?plan=...`).
 
 ## 4. Workspace Creation And Tenant Selection
-1. Frontend calls `POST /api/companies` on `budget-api`.
-2. User selects active company via `POST /api/auth/select-company`.
+1. Frontend calls `POST /api/workspaces` on `budget-api`.
+2. User selects active workspace via `POST /api/auth/select-workspace`.
 3. New tenant-scoped token is issued and used for workspace-scoped calls.
 4. Frontend resumes the canonical redirect target from onboarding context.
 
@@ -29,7 +29,7 @@
 1. `App.vue` renders `OnboardingStatusBanner` for authenticated sessions.
 2. Banner computes state via `OnboardingOrchestrator.resolveOnboardingBannerState(...)`.
 3. Banner exposes contextual CTA to unblock the next onboarding step.
-4. CTA routes to `create-company`, `select-company`, or `choose-plan` using canonical redirect.
+4. CTA routes to `create-workspace`, `select-workspace`, or `choose-plan` using canonical redirect.
 
 ## 6. Billing Upgrade Flow (Current Path)
 1. Frontend calls `/api/billing/decision` in `budget-api`.

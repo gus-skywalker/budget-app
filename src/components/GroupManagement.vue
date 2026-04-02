@@ -214,10 +214,10 @@ export default {
     },
     fetchGroups() {
       const userStore = useUserStore()
-      const companyId = userStore.getCurrentCompanyId
+      const workspaceId = userStore.getCurrentWorkspaceId
       const isTenantMode = userStore.isTenantMode
-      const request = isTenantMode && companyId
-        ? GroupService.fetchGroupsByCompany(companyId)
+      const request = isTenantMode && workspaceId
+        ? GroupService.fetchGroupsByWorkspace(workspaceId)
         : GroupService.fetchGroups()
 
       request

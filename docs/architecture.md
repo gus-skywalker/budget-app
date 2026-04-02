@@ -5,20 +5,20 @@
 - API access: Axios interceptor with centralized JWT/refresh handling
 - Main integration modules:
   - `AuthService` for `auth`
-  - `CompanyService`, `BillingDecisionService`, `BillingOrchestrationService` for `budget-api`
+  - `WorkspaceService`, `BillingDecisionService`, `BillingOrchestrationService` for `budget-api`
 
 ## Main Interaction Patterns
 - Authenticated requests use interceptor-injected `Authorization` header.
 - `401` handling triggers centralized refresh logic (`userStore.tryRefreshToken`).
-- Tenant context switching rehydrates tokens and company state.
+- Tenant context switching rehydrates tokens and workspace state.
 - Billing checkout uses decision + async orchestration endpoints in `budget-api`.
 - Post-auth onboarding routing is centralized in `OnboardingOrchestrator`.
 
 ## Onboarding Orchestrator
 - Canonical module: `src/services/OnboardingOrchestrator.ts`.
 - Centralizes post-auth decisions for:
-  - company required (`create-company`)
-  - company selection required (`select-company`)
+  - workspace required (`create-workspace`)
+  - workspace selection required (`select-workspace`)
   - direct continuation to target flow (`redirect` route)
 - Supports redirect canonicalization (`/path?plan=...`) to preserve business-plan intent across login and workspace selection flows.
 - Also exposes `resolveOnboardingBannerState(...)` consumed by global onboarding status UI.

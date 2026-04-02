@@ -1,8 +1,8 @@
-// src/types/CompanyCreateRequest.ts
+// src/types/WorkspaceCreateRequest.ts
 
-export type CompanyType = 'BR' | 'INTERNATIONAL'
+export type WorkspaceType = 'BR' | 'INTERNATIONAL'
 
-export interface CompanyCreateRequest {
+export interface WorkspaceCreateRequest {
   name: string
   description?: string
   legalDocument: string

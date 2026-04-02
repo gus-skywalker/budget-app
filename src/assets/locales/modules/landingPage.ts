@@ -110,7 +110,7 @@ const landingPageMessages = {
         perYear: 'ano',
         aiValueTitle: 'IA Financial Copilot incluída nos planos Premium',
         aiValueSubtitle:
-          'O CoBudget Premium desbloqueia recursos avançados de inteligência financeira para você ou sua empresa.',
+          'O CoBudget Premium desbloqueia recursos avançados de inteligência financeira para você ou seu workspace.',
         starterSubtitle: 'Para pequenos times começando o planejamento financeiro colaborativo.',
         starterFeature1: 'até 4 membros',
         starterFeature2: 'workspace financeiro compartilhado',
@@ -148,6 +148,22 @@ const landingPageMessages = {
           'Organize, projete e decida com confiança.\nCoBudget — Plataforma de decisão financeira colaborativa.',
         cta: 'Começar gratuitamente agora',
         copyright: '© 2024 CoBudget. Todos os direitos reservados. Powered by Les Monades'
+      },
+      workspaceSelector: {
+        title: 'Selecione um workspace',
+        desc: 'Escolha o workspace ativo para continuar.',
+        count_label: 'workspaces disponíveis',
+        empty: 'Você ainda não tem workspaces disponíveis.',
+        undefined_role: 'Sem papel definido',
+        roles: {
+          ROLE_OWNER: 'Proprietário',
+          ROLE_ADMIN: 'Administrador',
+          ROLE_MEMBER: 'Membro',
+          ROLE_USER: 'Usuário'
+        }
+      },
+      workspaceSwitcher: {
+        create_new_workspace: 'Criar novo workspace'
       }
     }
   },
@@ -258,7 +274,7 @@ const landingPageMessages = {
         perYear: 'year',
         aiValueTitle: 'AI Financial Copilot included in Premium plans',
         aiValueSubtitle:
-          'CoBudget Premium unlocks advanced financial intelligence features for you or your company.',
+          'CoBudget Premium unlocks advanced financial intelligence features for you or your workspace.',
         starterSubtitle: 'For small teams starting collaborative financial planning.',
         starterFeature1: 'up to 4 members',
         starterFeature2: 'shared financial workspace',
@@ -295,6 +311,22 @@ const landingPageMessages = {
         subtitle: 'Organize, forecast, and decide with confidence.\nCoBudget — Collaborative financial decision platform.',
         cta: 'Start for free now',
         copyright: '© 2024 CoBudget. All rights reserved. Powered by Les Monades'
+      },
+      workspaceSelector: {
+        title: 'Select a workspace',
+        desc: 'Choose the active workspace to continue.',
+        count_label: 'workspaces available',
+        empty: 'You do not have any workspaces yet.',
+        undefined_role: 'No role defined',
+        roles: {
+          ROLE_OWNER: 'Owner',
+          ROLE_ADMIN: 'Admin',
+          ROLE_MEMBER: 'Member',
+          ROLE_USER: 'User'
+        }
+      },
+      workspaceSwitcher: {
+        create_new_workspace: 'Create new workspace'
       }
     }
   },
@@ -319,18 +351,18 @@ const landingPageMessages = {
       pain: {
         title: 'Las decisiones financieras rara vez son individuales.',
         subtitle:
-          'Founders, socios y equipos toman decisiones financieras juntos todos los días — pero la mayoría de herramientas fue creada para control individual, no para planificación colaborativa.',
-        card1: 'Información financiera descentralizada',
-        card2: 'Falta de visibilidad financiera compartida',
+          'Founders, socios y equipos toman decisiones financieras juntos todos los días — pero la mayoría de las herramientas fue creada para el control individual, no para la planificación colaborativa.',
+        card1: 'Información financeira descentralizada',
+        card2: 'Falta de visibilidade financeira compartilhada',
         card3: 'Decisiones sin simulación de escenarios',
         card4: 'Planificación desconectada de la ejecución',
-        card5: 'Responsabilidades financieras poco claras'
+        card5: 'Responsabilidades financeiras pouco claras'
       },
       solution: {
-        title: 'Un workspace para planificación financiera.',
+        title: 'Un workspace para la planificación financiera.',
         card1: 'Presupuestos compartidos',
-        card2: 'Simulación de escenarios',
-        card3: 'Proyección financiera',
+        card2: 'Simulação de cenários',
+        card3: 'Projeção financeira',
         card4: 'Decisiones financieras colaborativas'
       },
       how: {
@@ -338,9 +370,9 @@ const landingPageMessages = {
         step1Title: 'Centraliza',
         step1Desc: 'Reúne ingresos, gastos y metas en un solo entorno.',
         step2Title: 'Comparte',
-        step2Desc: 'Invita miembros de tu equipo o socios de decisión.',
-        step3Title: 'Decide con inteligencia',
-        step3Desc: 'La IA de CoBudget analiza datos y sugiere acciones estratégicas.'
+        step2Desc: 'Invita a miembros de tu equipo o socios de decisión.',
+        step3Title: 'Decide com inteligência',
+        step3Desc: 'La IA de CoBudget analiza dados e sugere ações estratégicas.'
       },
       family: {
         title: 'También ideal para familias.',
@@ -349,7 +381,7 @@ const landingPageMessages = {
         card1: 'Cuentas centralizadas',
         card2: 'Metas compartidas',
         card3: 'Planificación de logros',
-        card4: 'Responsabilidad distribuida'
+        card4: 'Responsabilidade distribuída'
       },
       finalCta: {
         title: 'Las mejores decisiones financieras empiezan con claridad compartida.',
@@ -357,29 +389,29 @@ const landingPageMessages = {
       },
       ai: {
         title: 'Tu copiloto financiero.',
-        subtitle: 'CoBudget analiza patrones financieros y ayuda a tu equipo a anticipar riesgos antes de que ocurran.',
+        subtitle: 'CoBudget analiza padrões financeiros e ajuda a seu time a antecipar riscos antes de que ocorram.',
         bullet1: 'Predicción de gastos',
         bullet2: 'Detección de anomalías',
         bullet3: 'Categorización automática',
-        bullet4: 'Insights financieros',
+        bullet4: 'Insights financeiros',
         ctaPrimary: 'Ver IA en acción',
         ctaSecondary: 'Comenzar ahora',
-        card1Title: 'Predicción financiera',
-        card1Desc: 'Proyecta gastos e ingresos futuros con rangos de confianza.',
-        card1Tag: 'Visión hasta 12 meses',
+        card1Title: 'Predicción financeira',
+        card1Desc: 'Proyecta gastos e ingresos futuros com rangos de confiança.',
+        card1Tag: 'Visión até 12 meses',
         card2Title: 'Detección de anomalías',
-        card2Desc: 'Identifica automáticamente gastos fuera del comportamiento normal.',
-        card2Tag: 'Alertas proactivas',
-        card3Title: 'Automatización inteligente',
-        card3Desc: 'La categorización automática reduce hasta 80% del trabajo manual.',
-        card3Tag: 'Más eficiencia'
+        card2Desc: 'Identifica automáticamente gastos fora do comportamento normal.',
+        card2Tag: 'Alertas proativas',
+        card3Title: 'Automatização inteligente',
+        card3Desc: 'A categorização automática reduz até 80% do trabalho manual.',
+        card3Tag: 'Mais eficiência'
       },
       diff: {
         title: 'No es un ERP corporativo. No es una hoja improvisada. No es una app individual.',
-        subtitle: 'Es una plataforma estructurada para decisiones financieras compartidas.'
+        subtitle: 'Es uma plataforma estruturada para decisões financeiras compartilhadas.'
       },
       testimonials: {
-        title: 'Lo que dicen nuestros usuarios',
+        title: 'Lo que dicen nossos usuários',
         quote1:
           '"Finalmente logramos ver todo el presupuesto del hogar sin discusiones. En pocas semanas ya sabíamos dónde ahorrar."',
         author1: 'Pareja usuaria',
@@ -388,15 +420,15 @@ const landingPageMessages = {
         author2: 'Founder SaaS'
       },
       security: {
-        title: 'Seguridad al nivel que exigen las decisiones financieras',
-        item1: 'Cifrado avanzado',
-        item2: 'Autenticación en dos factores',
-        item3: 'Arquitectura segura',
-        item4: 'Control de acceso por perfil'
+        title: 'Segurança ao nível que exigem as decisões financeiras',
+        item1: 'Cifrado avançado',
+        item2: 'Autenticação em dois fatores',
+        item3: 'Arquitetura segura',
+        item4: 'Controle de acesso por perfil'
       },
       plans: {
         title: 'Elige el plan ideal para tu equipo.',
-        subtitle: 'Comienza organizando tus finanzas y evoluciona a decisiones asistidas por IA.',
+        subtitle: 'Comienza organizando tus finanzas y evoluciona hacia decisiones asistidas por IA.',
         starterTag: 'STARTER',
         starterName: 'STARTER',
         teamTag: 'TEAM',
@@ -405,24 +437,24 @@ const landingPageMessages = {
         perYear: 'año',
         aiValueTitle: 'AI Financial Copilot incluida en planes Premium',
         aiValueSubtitle:
-          'CoBudget Premium desbloquea recursos avanzados de inteligencia financiera para ti o tu empresa.',
-        starterSubtitle: 'Para equipos pequeños que inician la planificación financiera colaborativa.',
+          'CoBudget Premium desbloquea recursos avanzados de inteligencia financiera para ti o tu workspace.',
+        starterSubtitle: 'Para equipes pequenos que empiezan la planificación financeira colaborativa.',
         starterFeature1: 'hasta 4 miembros',
-        starterFeature2: 'workspace financiero compartido',
+        starterFeature2: 'workspace financeiro compartido',
         starterFeature3: 'planificación de presupuesto',
-        starterFeature4: 'metas financieras',
-        starterFeature5: 'simulación básica de escenarios',
+        starterFeature4: 'metas financeiras',
+        starterFeature5: 'simulação básica de cenários',
         starterMonthly: 'Comenzar STARTER Mensual',
         starterAnnual: 'Elegir STARTER Anual',
         teamPopular: '⭐ Más popular',
         teamSubtitle: 'Para startups que necesitan decisiones financieras más inteligentes.',
         teamFeature1: 'hasta 10 miembros',
         teamFeature2: 'AI Financial Copilot',
-        teamFeature3: 'simulación de escenarios',
-        teamFeature4: 'proyección financiera',
+        teamFeature3: 'simulação de cenários',
+        teamFeature4: 'proyección financeira',
         teamFeature5: 'decisiones financieras colaborativas',
         teamFeature6: 'colaboración entre miembros',
-        teamMonthly: 'Comenzar TEAM Mensual',
+        teamMonthly: 'Comenzar TEAM Mensal',
         teamAnnual: 'Elegir TEAM Anual'
       },
       contact: {
@@ -435,13 +467,29 @@ const landingPageMessages = {
         invalidEmail: 'Por favor, ingresa un correo válido.',
         success: '¡Mensaje enviado con éxito! Nos pondremos en contacto pronto.',
         errorDefault:
-          'Error al enviar mensaje. Inténtalo nuevamente o contáctanos en help@cobudget.app'
+          'Error al enviar el mensaje. Inténtalo nuevamente o contáctanos en help@cobudget.app'
       },
       footer: {
         title: 'La claridad no es lujo. Es responsabilidad.',
-        subtitle: 'Organiza, proyecta y decide con confianza.\nCoBudget — Plataforma de decisión financiera colaborativa.',
-        cta: 'Comenzar gratis ahora',
+        subtitle: 'Organiza, proyecta y decide con confianza.\nCoBudget — Plataforma de decisión financeira colaborativa.',
+        cta: 'Comenzar gratis agora',
         copyright: '© 2024 CoBudget. Todos los derechos reservados. Desarrollado por Les Monades'
+      },
+      workspaceSelector: {
+        title: 'Selecciona un workspace',
+        desc: 'Elige el workspace ativo para continuar.',
+        count_label: 'workspaces disponíveis',
+        empty: 'Todavía no tienes workspaces disponibles.',
+        undefined_role: 'Sin rol definido',
+        roles: {
+          ROLE_OWNER: 'Propietario',
+          ROLE_ADMIN: 'Administrador',
+          ROLE_MEMBER: 'Miembro',
+          ROLE_USER: 'Usuario'
+        }
+      },
+      workspaceSwitcher: {
+        create_new_workspace: 'Crear nuevo workspace'
       }
     }
   },
@@ -522,7 +570,7 @@ const landingPageMessages = {
         card3Tag: 'Plus d’efficacité'
       },
       diff: {
-        title: 'Ce n’est pas un ERP d’entreprise. Ce n’est pas un tableur bricolé. Ce n’est pas une appli individuelle.',
+        title: 'Ce n’est pas un ERP lourd. Ce n’est pas un tableur bricolé. Ce n’est pas une appli individuelle.',
         subtitle: 'C’est une plateforme structurée pour des décisions financières partagées.'
       },
       testimonials: {
@@ -552,7 +600,7 @@ const landingPageMessages = {
         perYear: 'an',
         aiValueTitle: 'AI Financial Copilot incluse dans les plans Premium',
         aiValueSubtitle:
-          'CoBudget Premium débloque des ressources avancées d’intelligence financière pour vous ou votre entreprise.',
+          'CoBudget Premium débloque des ressources avancées d’intelligence financière pour vous ou votre workspace.',
         starterSubtitle: 'Pour les petites équipes qui débutent la planification financière collaborative.',
         starterFeature1: 'jusqu’à 4 membres',
         starterFeature2: 'workspace financier partagé',
@@ -589,6 +637,22 @@ const landingPageMessages = {
         subtitle: 'Organisez, projetez et décidez avec confiance.\nCoBudget — Plateforme de décision financière collaborative.',
         cta: 'Commencer gratuitement maintenant',
         copyright: '© 2024 CoBudget. Tous droits réservés. Propulsé par Les Monades'
+      },
+      workspaceSelector: {
+        title: 'Sélectionnez un workspace',
+        desc: 'Choisissez le workspace actif pour continuer.',
+        count_label: 'workspaces disponibles',
+        empty: 'Vous n’avez encore aucun workspace.',
+        undefined_role: 'Aucun rôle défini',
+        roles: {
+          ROLE_OWNER: 'Propriétaire',
+          ROLE_ADMIN: 'Administrateur',
+          ROLE_MEMBER: 'Membre',
+          ROLE_USER: 'Utilisateur'
+        }
+      },
+      workspaceSwitcher: {
+        create_new_workspace: 'Créer un nouveau workspace'
       }
     }
   }

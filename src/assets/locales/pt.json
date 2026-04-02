@@ -219,7 +219,7 @@
     "already_premium": "Você já possui acesso premium.",
     "error_start_checkout": "Erro ao iniciar sessão de checkout:",
     "error_checkout_later": "Não foi possível iniciar o checkout. Tente novamente mais tarde.",
-    "admin_only_manage": "Somente o proprietário/admin da empresa pode gerenciar a assinatura.",
+    "admin_only_manage": "Somente o proprietário/admin do workspace pode gerenciar a assinatura.",
     "portal_unavailable": "Portal indisponível: {error}",
     "portal_preparing": "Solicitação enviada. O portal de cobrança ainda está sendo preparado.",
     "error_request_portal": "Erro ao solicitar portal de cobrança:",
@@ -259,7 +259,7 @@
     "no_entries": "Nenhum débito encontrado para este mês.",
     "no_uncategorized_entries": "Nenhuma despesa sem categoria encontrada neste período.",
     "uncategorized_only": "Sem categoria",
-    "share_with_members": "Compartilhar com membros da empresa",
+    "share_with_members": "Compartilhar com membros do workspace",
     "saved_successfully": "Despesa salva com sucesso!",
     "updated_successfully": "Despesa atualizada com sucesso!",
     "save_failed": "Falha ao salvar despesa.",
@@ -290,7 +290,7 @@
     "ai_reason_bank_mapping": "Encontramos um mapeamento bancário já conhecido para esta despesa.",
     "ai_reason_recent_history": "Encontramos despesas recentes parecidas já categorizadas.",
     "ai_reason_manual_feedback": "Encontramos uma categoria que você já confirmou manualmente antes.",
-    "ai_reason_repeated_history": "Encontramos esse padrão repetido no histórico categorizado da empresa.",
+    "ai_reason_repeated_history": "Encontramos esse padrão repetido no histórico categorizado do workspace.",
     "ai_reason_exact_match": "Encontramos uma descrição idêntica já categorizada antes.",
     "ai_reason_similar_match": "Encontramos uma descrição muito parecida no seu histórico.",
     "ai_reason_recurring_terms": "Encontramos termos recorrentes que costumam apontar para essa categoria.",
@@ -382,9 +382,9 @@
     "last_sync": "Última sync",
     "sync_automatic": "Automática",
     "sync_manual": "Manual",
-    "activity_title": "Atividade da empresa",
+    "activity_title": "Atividade do workspace",
     "activity_badge": "Linha de atividade compartilhada",
-    "activity_scope_note": "Aqui aparecem os principais movimentos colaborativos do contexto atual da empresa.",
+    "activity_scope_note": "Aqui aparecem os principais movimentos colaborativos do contexto atual do workspace.",
     "activity_loading": "Carregando atividade recente...",
     "activity_empty": "Nenhuma atividade compartilhada registrada ainda.",
     "activity_empty_filtered": "Nenhum evento encontrado para este filtro agora.",
@@ -530,13 +530,13 @@
     "no_top_categories": "Nenhuma categoria em destaque no momento."
   },
   "activity": {
-    "subtitle": "Acompanhe o que aconteceu no espaço compartilhado da empresa com mais contexto e continuidade.",
+    "subtitle": "Acompanhe o que aconteceu no espaço compartilhado do workspace com mais contexto e continuidade.",
     "back_to_dashboard": "Voltar ao dashboard",
     "view_all": "Ver tudo"
   },
   "transactionComments": {
     "title": "Comentários da movimentação",
-    "subtitle": "Use este espaço para alinhar contexto com a empresa sobre uma movimentação compartilhada.",
+    "subtitle": "Use este espaço para alinhar o contexto do workspace sobre uma movimentação compartilhada.",
     "loading": "Carregando comentários...",
     "empty": "Ainda não há comentários nesta movimentação.",
     "field": "Novo comentário",
@@ -863,18 +863,18 @@
     "success_message": "Operação concluída com sucesso.",
     "error_message": "Ocorreu um erro. Tente novamente."
   },
-  "create_company": {
+  "createWorkspace": {
     "title": "Crie seu Workspace",
     "description": "Para começar a usar o CoBudget, você precisa criar um workspace. Como administrador, você pode convidar outros usuários para colaborar.",
     "workspace_name": "Nome do Workspace",
     "workspace_placeholder": "Ex.: Operação Principal",
     "country_label": "País de registro",
     "description_optional": "Descrição (Opcional)",
-    "description_placeholder": "Descreva brevemente sua empresa...",
+    "description_placeholder": "Descreva brevemente seu workspace...",
     "create_button": "Criar Workspace",
     "view_premium_plans": "Ver planos Premium",
     "country_required": "Selecione o país de registro",
-    "workspace_name_required": "Nome da empresa é obrigatório",
+    "workspace_name_required": "Nome do workspace é obrigatório",
     "workspace_name_min": "Nome deve ter pelo menos 2 caracteres",
     "workspace_name_max": "Nome deve ter no máximo 100 caracteres",
     "tax_id_generic": "Número de identificação fiscal",
@@ -892,9 +892,9 @@
     "legal_document_bn": "BN deve ter 9 dígitos",
     "legal_document_invalid": "Número fiscal inválido",
     "description_max": "Descrição deve ter no máximo 200 caracteres",
-    "created_select_company": "Empresa criada. Selecione a empresa para continuar.",
-    "created_success": "Empresa criada com sucesso!",
-    "upgrade_limit_company": "Você atingiu o limite de empresas do STARTER. Faça upgrade para TEAM.",
+    "created_select_workspace": "Workspace criado. Selecione o workspace para continuar.",
+    "created_success": "Workspace criado com sucesso!",
+    "upgrade_limit_workspace": "Você atingiu o limite de workspaces do STARTER. Faça upgrade para TEAM.",
     "countries": {
       "br": "Brasil",
       "us": "Estados Unidos",
@@ -953,7 +953,7 @@
     "ai_reason_bank_mapping": "Encontramos um mapeamento bancário já conhecido para esta meta.",
     "ai_reason_recent_history": "Encontramos objetivos recentes parecidos no seu histórico.",
     "ai_reason_manual_feedback": "Encontramos uma categoria que você já confirmou manualmente antes.",
-    "ai_reason_repeated_history": "Encontramos esse padrão repetido no histórico categorizado da empresa.",
+    "ai_reason_repeated_history": "Encontramos esse padrão repetido no histórico categorizado do workspace.",
     "ai_reason_exact_match": "Encontramos uma descrição idêntica já categorizada antes.",
     "ai_reason_similar_match": "Encontramos uma descrição muito parecida no seu histórico.",
     "ai_reason_recurring_terms": "Encontramos termos recorrentes que costumam apontar para essa categoria.",
@@ -1022,7 +1022,7 @@
     },
     "hero": {
       "title": "Entre no CoBudget e recupere clareza financeira com mais contexto.",
-      "subtitle": "Centralize orçamento, fluxo de caixa, colaboração e decisões com uma experiência mais confiável para famílias, times e empresas em crescimento.",
+      "subtitle": "Centralize orçamento, fluxo de caixa, colaboração e decisões com uma experiência mais confiável para famílias, times e operações em crescimento.",
       "feature_security": "Acesso protegido e continuidade da sua operação financeira.",
       "feature_visibility": "Visibilidade clara sobre orçamento, gastos e metas em um único fluxo.",
       "feature_collaboration": "Colaboração organizada entre família, sócios e times com menos atrito."
@@ -1037,9 +1037,9 @@
       "login_terms_prefix": "Ao entrar, você concorda com os",
       "signup_terms_prefix": "Ao criar sua conta, você concorda com os",
       "test_area_title": "Acesso rápido para testes",
-      "test_no_company": "Simular usuário sem empresa",
-      "test_single_company": "Simular usuário com uma empresa",
-      "test_multiple_companies": "Simular usuário com múltiplas empresas"
+      "test_no_company": "Simular usuário sem workspace",
+      "test_single_company": "Simular usuário com um workspace",
+      "test_multiple_companies": "Simular usuário com múltiplos workspaces"
     },
     "forgot_password": {
       "title": "Recuperar acesso",
@@ -1090,27 +1090,27 @@
   },
   "transactionVisibility": {
     "label": "Visibilidade",
-    "hint": "Defina se esta movimentação é privada ou compartilhada com a empresa.",
-    "hintCompany": "Membros da empresa no mesmo contexto podem ver esta movimentação.",
-    "hintPrivate": "Só você verá esta movimentação; ela não entra nas leituras compartilhadas da empresa.",
-    "company": "Compartilhada com a empresa",
+    "hint": "Defina se esta movimentação é privada ou compartilhada com o workspace.",
+    "hintWorkspace": "Pessoas com acesso ao mesmo workspace podem ver esta movimentação.",
+    "hintPrivate": "Só você verá esta movimentação; ela não entra nas leituras compartilhadas do workspace.",
+    "workspace": "Compartilhada com o workspace",
     "private": "Privada",
     "filters": {
       "all": "Todas",
-      "company": "Empresa",
+      "workspace": "Workspace",
       "private": "Privadas"
     },
-    "dashboardBadge": "Painel compartilhado da empresa",
-    "cashflowBadge": "Cashflow compartilhado da empresa",
-    "cashflowScopeNote": "Esta leitura usa apenas movimentações compartilhadas com a empresa. Itens privados ficam fora do cálculo.",
-    "insightsBadge": "Insights compartilhados da empresa",
-    "insightsScopeNote": "Os insights desta área refletem apenas dados visíveis para a empresa no contexto atual.",
-    "reportScopeNote": "Os relatórios compartilhados usam apenas movimentações visíveis para a empresa. Itens privados ficam fora deste resultado.",
-    "reportFilter": "Escopo do relatório: empresa",
+    "dashboardBadge": "Painel compartilhado do workspace",
+    "cashflowBadge": "Cashflow compartilhado do workspace",
+    "cashflowScopeNote": "Esta leitura usa apenas movimentações compartilhadas com o workspace. Itens privados ficam fora do cálculo.",
+    "insightsBadge": "Insights compartilhados do workspace",
+    "insightsScopeNote": "Os insights desta área refletem apenas dados visíveis para o workspace no contexto atual.",
+    "reportScopeNote": "Os relatórios compartilhados usam apenas movimentações visíveis para o workspace. Itens privados ficam fora deste resultado.",
+    "reportFilter": "Escopo do relatório: workspace",
     "empty": {
-      "companyIncome": "Nenhuma entrada compartilhada com a empresa neste período.",
+      "workspaceIncome": "Nenhuma entrada compartilhada com o workspace neste período.",
       "privateIncome": "Nenhuma entrada privada neste período.",
-      "companyExpense": "Nenhuma despesa compartilhada com a empresa neste período.",
+      "workspaceExpense": "Nenhuma despesa compartilhada com o workspace neste período.",
       "privateExpense": "Nenhuma despesa privada neste período."
     }
   },
@@ -1182,19 +1182,19 @@
       "RESOLVED_CREATE_NEW": "Conflito resolvido"
     }
   },
-  "companySettings": {
-    "create_new_company": "Criar nova empresa",
-    "create_new_company_desc": "Crie sua empresa para ativar o contexto B2B, convidar membros e gerenciar permissões.",
-    "company_name": "Nome da empresa",
+  "workspaceSettings": {
+    "create_new_workspace": "Criar novo workspace",
+    "create_new_workspace_desc": "Crie seu workspace para ativar o contexto colaborativo, convidar membros e gerenciar permissões.",
+    "workspace_name": "Nome do workspace",
     "legal_document": "Documento legal",
-    "country": "País da empresa",
-    "description": "Descrição",
-    "create_company": "Criar empresa",
-    "personal_mode_alert": "Você está em modo pessoal. Crie uma empresa ou selecione uma existente para gerenciar dados da organização.",
-    "select_existing_company": "Selecionar empresa existente",
-    "only_admin_alert": "Apenas administradores podem alterar dados da empresa, convidar membros ou excluir a organização.",
-    "company_info": "Informações da Empresa",
-    "company_info_desc": "Atualize nome e descrição que serão exibidos para todos os membros.",
+    "country": "País de registro",
+    "description": "Descrição do workspace",
+    "create_workspace": "Criar workspace",
+    "personal_mode_alert": "Você está em modo pessoal. Crie um workspace ou selecione um existente para gerenciar o contexto compartilhado.",
+    "select_existing_workspace": "Selecionar workspace existente",
+    "only_admin_alert": "Apenas administradores podem alterar dados do workspace, convidar membros ou excluir este contexto.",
+    "workspace_info": "Informações do workspace",
+    "workspace_info_desc": "Atualize nome e descrição que serão exibidos para todos os membros.",
     "save_changes": "Salvar alterações",
     "invite_members": "Convidar membros",
     "invite_members_desc": "Envie convites por e-mail para adicionar novos usuários com a role adequada.",
@@ -1205,24 +1205,24 @@
     "invites_unavailable": "Convites indisponíveis no momento.",
     "no_pending_invites": "Nenhum convite pendente.",
     "current_members": "Membros atuais",
-    "current_members_desc": "Lista de usuários associados à empresa e suas permissões.",
+    "current_members_desc": "Lista de usuários associados ao workspace e suas permissões.",
     "no_members": "Nenhum membro encontrado.",
     "danger_zone": "Zona de perigo",
-    "danger_zone_desc": "Excluir a empresa remove todas as informações associadas. Esta ação não pode ser desfeita.",
-    "delete_company": "Excluir empresa",
+    "danger_zone_desc": "Excluir o workspace remove todas as informações associadas. Esta ação não pode ser desfeita.",
+    "delete_workspace": "Excluir workspace",
     "confirm_delete_title": "Confirmar exclusão",
-    "confirm_delete_desc": "Tem certeza? Digite <strong>{company}</strong> para confirmar.",
+    "confirm_delete_desc": "Tem certeza? Digite <strong>{workspace}</strong> para confirmar.",
     "cancel": "Cancelar",
     "confirm": "Excluir",
     "view_premium_plans": "Ver planos Premium",
     "required_field": "Campo obrigatório",
     "invalid_email": "E-mail inválido",
-    "success_company_created": "Empresa criada com sucesso.",
-    "success_company_updated": "Informações atualizadas.",
+    "success_workspace_created": "Workspace criado com sucesso.",
+    "success_workspace_updated": "Informações atualizadas.",
     "success_invite_sent_generic": "Convite enviado.",
     "success_cancel_invite": "Convite cancelado.",
-    "success_delete": "Empresa excluída.",
-    "upgrade_limit_company": "Você atingiu o limite de empresas do STARTER. Faça upgrade para TEAM.",
+    "success_delete": "Workspace excluído.",
+    "upgrade_limit_workspace": "Você atingiu o limite de workspaces do STARTER. Faça upgrade para TEAM.",
     "upgrade_limit_member": "Você atingiu o limite de membros do STARTER. Faça upgrade para TEAM.",
     "roles": {
       "ROLE_ADMIN": "Administrador",
@@ -1241,7 +1241,7 @@
       "fr": "França (FR)"
     }
   },
-  "companySwitcher": {
+  "workspaceSwitcher": {
     "create_new_workspace": "Criar Novo Workspace",
     "add_workspace": "Adicionar workspace ao seu perfil",
     "select_workspace": "Selecione um workspace",
@@ -1264,7 +1264,8 @@
     "send_invite": "Enviar Convite",
     "pending_title": "Convites Pendentes",
     "no_pending": "Nenhum convite pendente no momento.",
-    "select_company": "Selecione uma empresa antes de convidar usuários.",
+    "select_workspace": "Selecione um workspace antes de convidar usuários.",
+    "select_company": "Selecione um workspace antes de convidar usuários.",
     "invite_success": "Convite enviado com sucesso!",
     "invite_error": "Erro ao enviar convite",
     "cancel_success": "Convite cancelado",
@@ -1277,9 +1278,12 @@
     "client": "Gestor",
     "oauth2_user": "Usuário OAuth2"
   },
-  "companySelector": {
+  "workspaceSelector": {
     "title": "Selecione o Workspace",
     "desc": "Você tem acesso a múltiplos workspaces. Selecione o workspace com o qual deseja trabalhar:",
+    "count_label": "workspaces",
+    "empty": "Não encontramos nenhum workspace no seu perfil. Você pode criar um agora mesmo.",
+    "undefined_role": "Permissão não definida",
     "roles": {
       "ROLE_ADMIN": "Administrador",
       "ROLE_OWNER": "Proprietário",
@@ -1329,7 +1333,7 @@
     "payment_security_title": "Segurança e Privacidade no Pagamento",
     "payment_security_text": "Seus pagamentos são processados com segurança através do Stripe. Não armazenamos suas informações de pagamento e garantimos uma experiência segura com a mais alta tecnologia de criptografia.",
     "error_login_team": "Faça login para contratar um plano TEAM.",
-    "error_select_company_team": "Selecione ou crie uma empresa antes de contratar um plano TEAM.",
+    "error_select_company_team": "Selecione ou crie um workspace antes de contratar um plano TEAM.",
     "error_user_not_authenticated": "Usuário não autenticado",
     "error_unexpected_billing_action": "Ação de billing inesperada",
     "error_continue_process": "Não foi possível continuar com o processo"
@@ -1429,7 +1433,7 @@
     "shared_transaction_comment_title": "Novo comentário em movimentação compartilhada",
     "cashflow_signal_title": "Sinal de fluxo de caixa",
     "goal_signal_title": "Alerta de meta",
-    "shared_context_label": "Empresa",
+    "shared_context_label": "Workspace",
     "decision_context_label": "Decisão",
     "open_budget": "Abrir orçamento",
     "open_cashflow": "Abrir cashflow",
@@ -1437,7 +1441,8 @@
   },
   "context_badge": {
     "personal": "Contexto: Pessoal",
-    "company": "Contexto: Empresa - {company}{role}"
+    "workspace": "Contexto: Workspace - {workspace}{role}",
+    "company": "Contexto: Workspace - {workspace}{role}"
   },
   "ai": {
     "common": {

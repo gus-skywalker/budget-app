@@ -1,25 +1,25 @@
 <template>
-  <div class="create-company-container">
+  <div class="create-workspace-container">
     <v-container>
       <v-row justify="center">
         <v-col cols="12" sm="8" md="6">
           <v-card class="elevation-12 pa-6">
             <v-card-title class="headline text-center mb-6">
               <v-icon large color="primary" class="mr-2">mdi-office-building</v-icon>
-              {{ t('create_company.title') }}
+              {{ t('createWorkspace.title') }}
             </v-card-title>
 
             <v-card-text>
               <p class="text-body-1 mb-6 text-center">
-                {{ t('create_company.description') }}
+                {{ t('createWorkspace.description') }}
               </p>
 
-              <v-form ref="form" v-model="valid" @submit.prevent="createCompany">
+              <v-form ref="form" v-model="valid" @submit.prevent="createWorkspace">
                 <v-text-field
-                  v-model="companyName"
-                  :rules="companyNameRules"
-                  :label="t('create_company.workspace_name')"
-                  :placeholder="t('create_company.workspace_placeholder')"
+                  v-model="workspaceName"
+                  :rules="workspaceNameRules"
+                  :label="t('createWorkspace.workspace_name')"
+                  :placeholder="t('createWorkspace.workspace_placeholder')"
                   outlined
                   required
                   :loading="loading"
@@ -31,7 +31,7 @@
                   v-model="country"
                   :items="countryOptions"
                   :rules="countryRules"
-                  :label="t('create_company.country_label')"
+                  :label="t('createWorkspace.country_label')"
                   item-title="label"
                   item-value="code"
                   outlined
@@ -55,8 +55,8 @@
 
                 <v-textarea
                   v-model="description"
-                  :label="t('create_company.description_optional')"
-                  :placeholder="t('create_company.description_placeholder')"
+                  :label="t('createWorkspace.description_optional')"
+                  :placeholder="t('createWorkspace.description_placeholder')"
                   outlined
                   rows="3"
                   counter="200"
@@ -71,11 +71,11 @@
                 size="large"
                 :disabled="!valid"
                 :loading="loading"
-                @click="createCompany"
+                @click="createWorkspace"
                 class="px-8"
               >
                 <v-icon left>mdi-plus</v-icon>
-                {{ t('create_company.create_button') }}
+                {{ t('createWorkspace.create_button') }}
               </v-btn>
             </v-card-actions>
           </v-card>
@@ -102,7 +102,7 @@
       {{ upgradeMessage }}
       <template #actions>
         <v-btn variant="text" color="white" @click="goToUpgrade">
-          {{ t('create_company.view_premium_plans') }}
+          {{ t('createWorkspace.view_premium_plans') }}
         </v-btn>
       </template>
     </v-snackbar>
@@ -115,7 +115,7 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/plugins/userStore'
-import CompanyService from '@/services/CompanyService'
+import WorkspaceService from '@/services/WorkspaceService'
 import OnboardingOrchestrator from '@/services/OnboardingOrchestrator'
 import { getOrCreateCorrelationId } from '@/utils/correlation'
 import { getFreePlanLimitType, parseApiError } from '@/utils/errorHandler'
@@ -123,27 +123,27 @@ import { getFreePlanLimitType, parseApiError } from '@/utils/errorHandler'
 const { t } = useI18n()
 // Lista simplificada de países (pode ser expandida ou internacionalizada)
 const countryOptions = computed(() => [
-  { code: 'BR', label: t('create_company.countries.br') },
-  { code: 'US', label: t('create_company.countries.us') },
-  { code: 'AR', label: t('create_company.countries.ar') },
-  { code: 'PT', label: t('create_company.countries.pt') },
-  { code: 'ES', label: t('create_company.countries.es') },
-  { code: 'MX', label: t('create_company.countries.mx') },
-  { code: 'DE', label: t('create_company.countries.de') },
-  { code: 'FR', label: t('create_company.countries.fr') },
-  { code: 'CL', label: t('create_company.countries.cl') },
-  { code: 'CO', label: t('create_company.countries.co') },
-  { code: 'PE', label: t('create_company.countries.pe') },
-  { code: 'UK', label: t('create_company.countries.uk') },
-  { code: 'IT', label: t('create_company.countries.it') },
-  { code: 'CA', label: t('create_company.countries.ca') },
-  { code: 'OTHER', label: t('create_company.countries.other') }
+  { code: 'BR', label: t('createWorkspace.countries.br') },
+  { code: 'US', label: t('createWorkspace.countries.us') },
+  { code: 'AR', label: t('createWorkspace.countries.ar') },
+  { code: 'PT', label: t('createWorkspace.countries.pt') },
+  { code: 'ES', label: t('createWorkspace.countries.es') },
+  { code: 'MX', label: t('createWorkspace.countries.mx') },
+  { code: 'DE', label: t('createWorkspace.countries.de') },
+  { code: 'FR', label: t('createWorkspace.countries.fr') },
+  { code: 'CL', label: t('createWorkspace.countries.cl') },
+  { code: 'CO', label: t('createWorkspace.countries.co') },
+  { code: 'PE', label: t('createWorkspace.countries.pe') },
+  { code: 'UK', label: t('createWorkspace.countries.uk') },
+  { code: 'IT', label: t('createWorkspace.countries.it') },
+  { code: 'CA', label: t('createWorkspace.countries.ca') },
+  { code: 'OTHER', label: t('createWorkspace.countries.other') }
 ])
 
 const country = ref('BR')
 
 const countryRules = [
-  (v: string) => !!v || t('create_company.country_required')
+  (v: string) => !!v || t('createWorkspace.country_required')
 ]
 
 const router = useRouter()
@@ -160,7 +160,7 @@ const redirectTarget = computed(() =>
 const form = ref<any>(null)
 const valid = ref(false)
 const loading = ref(false)
-const companyName = ref('')
+const workspaceName = ref('')
 const description = ref('')
 const legalDocument = ref('')
 
@@ -173,10 +173,10 @@ const upgradeMessage = ref('')
 
 
 // Validation rules
-const companyNameRules = [
-  (v: string) => !!v || t('create_company.workspace_name_required'),
-  (v: string) => (v && v.length >= 2) || t('create_company.workspace_name_min'),
-  (v: string) => (v && v.length <= 100) || t('create_company.workspace_name_max')
+const workspaceNameRules = [
+  (v: string) => !!v || t('createWorkspace.workspace_name_required'),
+  (v: string) => (v && v.length >= 2) || t('createWorkspace.workspace_name_min'),
+  (v: string) => (v && v.length <= 100) || t('createWorkspace.workspace_name_max')
 ]
 
 
@@ -196,7 +196,7 @@ const legalDocumentLabel = computed(() => {
     case 'UK': return 'VAT';
     case 'IT': return 'VAT';
     case 'CA': return 'BN';
-    default: return t('create_company.tax_id_generic');
+    default: return t('createWorkspace.tax_id_generic');
   }
 })
 
@@ -216,46 +216,46 @@ const legalDocumentPlaceholder = computed(() => {
     case 'UK': return 'Digite o VAT';
     case 'IT': return 'Digite o VAT';
     case 'CA': return 'Digite o BN';
-    default: return t('create_company.tax_id_placeholder_generic');
+    default: return t('createWorkspace.tax_id_placeholder_generic');
   }
 })
 
 const legalDocumentRules = [
-  (v: string) => !!v || t('create_company.legal_document_required', { label: legalDocumentLabel.value }),
+  (v: string) => !!v || t('createWorkspace.legal_document_required', { label: legalDocumentLabel.value }),
   (v: string) => {
     switch (country.value) {
       case 'BR':
-        return /^\d{14}$/.test(v) || t('create_company.legal_document_cnpj');
+        return /^\d{14}$/.test(v) || t('createWorkspace.legal_document_cnpj');
       case 'US':
-        return /^\d{9}$/.test(v) || t('create_company.legal_document_ein');
+        return /^\d{9}$/.test(v) || t('createWorkspace.legal_document_ein');
       case 'AR':
-        return /^\d{11}$/.test(v) || t('create_company.legal_document_cuit');
+        return /^\d{11}$/.test(v) || t('createWorkspace.legal_document_cuit');
       case 'PT':
       case 'ES':
-        return /^\d{9}$/.test(v) || t('create_company.legal_document_nif');
+        return /^\d{9}$/.test(v) || t('createWorkspace.legal_document_nif');
       case 'MX':
-        return /^[A-Z0-9]{12,13}$/.test(v) || t('create_company.legal_document_rfc');
+        return /^[A-Z0-9]{12,13}$/.test(v) || t('createWorkspace.legal_document_rfc');
       case 'DE':
       case 'FR':
       case 'UK':
       case 'IT':
-        return v.length >= 8 && v.length <= 15 || t('create_company.legal_document_vat');
+        return v.length >= 8 && v.length <= 15 || t('createWorkspace.legal_document_vat');
       case 'CL':
-        return /^\d{7,8}-[\dkK]$/.test(v) || t('create_company.legal_document_rut');
+        return /^\d{7,8}-[\dkK]$/.test(v) || t('createWorkspace.legal_document_rut');
       case 'CO':
-        return /^\d{9,10}$/.test(v) || t('create_company.legal_document_nit');
+        return /^\d{9,10}$/.test(v) || t('createWorkspace.legal_document_nit');
       case 'PE':
-        return /^\d{11}$/.test(v) || t('create_company.legal_document_ruc');
+        return /^\d{11}$/.test(v) || t('createWorkspace.legal_document_ruc');
       case 'CA':
-        return /^\d{9}$/.test(v) || t('create_company.legal_document_bn');
+        return /^\d{9}$/.test(v) || t('createWorkspace.legal_document_bn');
       default:
-        return v.length >= 4 || t('create_company.legal_document_invalid');
+        return v.length >= 4 || t('createWorkspace.legal_document_invalid');
     }
   }
 ]
 
 const descriptionRules = [
-  (v: string) => !v || v.length <= 200 || t('create_company.description_max')
+  (v: string) => !v || v.length <= 200 || t('createWorkspace.description_max')
 ]
 
 const showSnackbar = (message: string, color: string = 'success') => {
@@ -268,65 +268,64 @@ const goToUpgrade = () => {
   upgradeSnackbar.value = false
   router.push({ name: 'choose-plan', query: { plan: 'BUSINESS_ANNUAL' } })
 }
-const createCompany = async () => {
+const createWorkspace = async () => {
   if (!form.value?.validate()) return
 
   try {
     loading.value = true
 
     // Gera correlationId para rastreabilidade cross-service
-    const correlationId = getOrCreateCorrelationId('companyCorrelationId')
+    const correlationId = getOrCreateCorrelationId('workspaceCorrelationId')
 
-    // Garante idempotência: messageId persistente por sessão/ação
-    const messageKey = `createCompany.messageId:${companyName.value}:${country.value}`
+    const messageKey = `createWorkspace.messageId:${workspaceName.value}:${country.value}`
     let messageId = sessionStorage.getItem(messageKey)
     if (!messageId) {
       messageId = createMessageId()
       sessionStorage.setItem(messageKey, messageId)
     }
     const payload = {
-      name: companyName.value,
+      name: workspaceName.value,
       description: description.value,
       legalDocument: legalDocument.value,
       country: country.value,
       messageId
     }
 
-    // 1) Create company in budget-api
-    const result = await CompanyService.create(payload, correlationId)
+    // 1) Create workspace in budget-api
+    const result = await WorkspaceService.create(payload, correlationId)
 
-    const createdCompany = result?.createdCompany
-    const companyId = createdCompany?.companyId ?? createdCompany?.id
-    if (!companyId) {
-      throw new Error('Resposta de criação sem companyId')
+    const createdWorkspace = result?.createdWorkspace
+    const workspaceId = createdWorkspace?.workspaceId ?? createdWorkspace?.id
+    if (!workspaceId) {
+      throw new Error('Resposta de criação sem workspaceId')
     }
 
-    // 2) Select tenant in auth-api (with retry/fallback handled by CompanyService.selectCompany)
+    // 2) Select tenant in auth-api (with retry/fallback handled by WorkspaceService.selectWorkspace)
     try {
-      await userStore.selectCompany(String(companyId))
+      await userStore.selectWorkspace(String(workspaceId))
     } catch (selectError) {
-      console.warn('Company criada, mas seleção automática falhou. Redirecionando para select-company.', selectError)
-      showSnackbar(t('create_company.created_select_company'), 'warning')
+      console.warn('Workspace criado, mas seleção automática falhou. Redirecionando para select-workspace.', selectError)
+      showSnackbar(t('createWorkspace.created_select_workspace'), 'warning')
       sessionStorage.removeItem(messageKey)
       setTimeout(() => {
-        router.push({ name: 'select-company', query: { redirect: redirectTarget.value } })
+        router.push({ name: 'select-workspace', query: { redirect: redirectTarget.value } })
       }, 1200)
       return
     }
 
-    // 3) Refresh company list in store immediately (avoids requiring logout/login)
+    // 3) Refresh workspace list in store immediately
     try {
-      const companiesRes = await CompanyService.getAll()
-      const companies = Array.isArray(companiesRes?.data) ? companiesRes.data : []
-      if (companies.length) {
-        userStore.setCompanies(companies)
-        await userStore.hydrateCompanyDetailsFromBudget(companies.map((company: any) => String(company.companyId)).filter(Boolean))
+      const workspacesRes = await WorkspaceService.getAll()
+      const workspaces = Array.isArray(workspacesRes?.data) ? workspacesRes.data : []
+      if (workspaces.length) {
+        userStore.setWorkspaces(workspaces)
+        await userStore.hydrateWorkspaceDetailsFromBudget(workspaces.map((workspace: any) => String(workspace.workspaceId)).filter(Boolean))
       }
     } catch (e) {
-      console.warn('Não foi possível atualizar lista de empresas imediatamente.', e)
+      console.warn('Não foi possível atualizar lista de workspaces imediatamente.', e)
     }
 
-    showSnackbar(t('create_company.created_success'), 'success')
+    showSnackbar(t('createWorkspace.created_success'), 'success')
     // Limpa o messageId da sessão após sucesso
     sessionStorage.removeItem(messageKey)
 
@@ -336,12 +335,12 @@ const createCompany = async () => {
     }, 1500)
 
   } catch (error) {
-    console.error('Error creating company:', error)
+    console.error('Error creating workspace:', error)
     const errorMessage = parseApiError(error)
     showSnackbar(errorMessage, 'error')
     const limitType = getFreePlanLimitType(error)
-    if (limitType === 'company') {
-      upgradeMessage.value = t('create_company.upgrade_limit_company')
+    if (limitType === 'workspace') {
+      upgradeMessage.value = t('createWorkspace.upgrade_limit_workspace')
       upgradeSnackbar.value = true
     }
   } finally {
@@ -351,7 +350,7 @@ const createCompany = async () => {
 </script>
 
 <style scoped>
-.create-company-container {
+.create-workspace-container {
   min-height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;

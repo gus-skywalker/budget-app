@@ -91,15 +91,15 @@ export default {
     async checkSubscriptionStatus() {
       const userStore = useUserStore();
       const userId = userStore.user?.id;
-      const companyId = userStore.currentCompanyId;
+      const workspaceId = userStore.getCurrentWorkspaceId;
       const isTenantMode = userStore.isTenantMode;
 
-      if (!userId && !(isTenantMode && companyId)) {
+      if (!userId && !(isTenantMode && workspaceId)) {
         throw new Error('Usuário não identificado');
       }
 
-      const subjectType = (isTenantMode && companyId) ? 'COMPANY' : 'USER';
-      const subjectId = subjectType === 'COMPANY' ? String(companyId) : String(userId);
+      const subjectType = (isTenantMode && workspaceId) ? 'WORKSPACE' : 'USER';
+      const subjectId = subjectType === 'WORKSPACE' ? String(workspaceId) : String(userId);
 
       // Poll budget-api until webhook projection becomes premium=true.
       const startedAt = Date.now();

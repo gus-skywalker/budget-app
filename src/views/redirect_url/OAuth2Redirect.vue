@@ -21,8 +21,6 @@ const extractTokenFromUrl = async () => {
   const redirect = urlParams.get('redirect')
   const plan = urlParams.get('plan')
 
-  console.log('OAuth2 callback - token:', token ? 'presente' : 'ausente')
-
   if (token && email) {
     try {
       userStore.setToken(token)
@@ -40,11 +38,11 @@ const extractTokenFromUrl = async () => {
         username: res.data.username,
         email: res.data.email,
         language: userLanguage,
-        companies: userStore.getCompanies
+        workspaces: userStore.getWorkspaces
       })
 
       await updateI18nLocale(userLanguage)
-      await userStore.hydrateCompanyDetailsFromBudget()
+      await userStore.hydrateWorkspaceDetailsFromBudget()
 
       const onboarding = await OnboardingOrchestrator.resolvePostAuthRoute({
         router,
@@ -59,7 +57,6 @@ const extractTokenFromUrl = async () => {
       router.push('/login')
     }
   } else {
-    console.log('OAuth2 falhou - token ou email ausente')
     router.push('/login')
   }
 }

@@ -1,7 +1,7 @@
 import axiosInterceptor from './axiosInterceptor'
 import type { SupportedCurrency } from '@/utils/pricing'
 
-export type BillingSubjectType = 'USER' | 'COMPANY'
+export type BillingSubjectType = 'USER' | 'WORKSPACE'
 export type BillingDecisionAction = 'START_SUBSCRIPTION' | 'NOOP_ALREADY_PREMIUM'
 
 export interface BillingDecisionRequest {
@@ -12,9 +12,9 @@ export interface BillingDecisionRequest {
   subjectType?: BillingSubjectType
   subjectId?: string
 
-  /** Backward-compatible fields */
+  /** Preferred identity fields */
   userId?: string | null
-  companyId?: string | null
+  workspaceId?: string | null
 
   /** Tracing (backend expects/accepts correlationId in body) */
   correlationId?: string
@@ -38,7 +38,7 @@ export interface BillingDecisionResponse {
   planTier?: 'STARTER' | 'TEAM'
   billingCycle?: 'MONTHLY' | 'ANNUAL'
   userId?: string | null
-  companyId?: string | null
+  workspaceId?: string | null
   resolvedCurrency?: SupportedCurrency
   resolvedPriceId?: string | null
   catalogVersion?: string | null

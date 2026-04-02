@@ -28,7 +28,7 @@
         </v-tab>
         <v-tab value="company" class="settings-tab">
           <v-icon class="tab-icon">mdi-office-building-cog</v-icon>
-          <span class="tab-text">Configurar empresa</span>
+          <span class="tab-text">Configurar workspace</span>
         </v-tab>
         <v-tab value="connections" class="settings-tab">
           <v-icon class="tab-icon">mdi-link-variant</v-icon>
@@ -360,7 +360,7 @@
 
         <!-- Tab: Empresa -->
         <v-window-item value="company">
-          <CompanySettings />
+          <WorkspaceSettings />
         </v-window-item>
 
         <!-- Tab: Conexões -->
@@ -450,7 +450,7 @@
                     Saúde operacional
                   </h2>
                   <p class="card-description">
-                    Visão rápida do estado atual do Open Finance para esta empresa.
+                    Visão rápida do estado atual do Open Finance para este workspace.
                   </p>
                 </div>
                 <div class="card-content">
@@ -917,7 +917,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useTheme } from 'vuetify';
 import { useUserStore } from '@/plugins/userStore';
 import SubscriptionManagement from '@/components/SubscriptionManagement.vue';
-import CompanySettings from '@/components/CompanySettings.vue';
+import WorkspaceSettings from '@/components/WorkspaceSettings.vue';
 import DataService from '@/services/DataService';
 import FinancialReadService from '@/services/FinancialReadService';
 import OpenFinanceService from '@/services/OpenFinanceService';
@@ -944,6 +944,7 @@ const { t, locale } = useI18n();
 // Tab ativa
 const activeTab = ref('profile')
 const validSettingsTabs = new Set(['profile', 'security', 'preferences', 'company', 'connections', 'subscription'])
+const isSettingsRoute = computed(() => route.name === 'settings')
 
 const resolveSettingsTab = (value: unknown) => {
   const tab = typeof value === 'string' ? value : ''
@@ -1023,12 +1024,18 @@ watch(locale, () => {
 watch(
   () => route.query.tab,
   (tab) => {
+    if (!isSettingsRoute.value) {
+      return
+    }
     activeTab.value = resolveSettingsTab(tab)
   },
   { immediate: true }
 )
 
 watch(activeTab, async (tab) => {
+  if (!isSettingsRoute.value) {
+    return
+  }
   if (route.query.tab === tab) {
     return
   }

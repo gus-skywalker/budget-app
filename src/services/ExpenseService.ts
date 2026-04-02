@@ -1,6 +1,12 @@
 import axiosInterceptor from './axiosInterceptor'
 import FinancialReadService, { getMonthDateRange } from './FinancialReadService'
-import type { TransactionAttachmentListItem, TransactionRequest, TransactionView } from '@/types/financialRead'
+import {
+  normalizeTransactionVisibilityScope,
+  toTransactionVisibilityScopeRequest,
+  type TransactionAttachmentListItem,
+  type TransactionRequest,
+  type TransactionView,
+} from '@/types/financialRead'
 
 const API_URL = `${import.meta.env.VITE_API_BASE_URL}/expenses`
 
@@ -56,7 +62,7 @@ const mapTransactionToExpense = (transaction: TransactionView) => ({
   reconciliationStatus: transaction.reconciliationStatus ?? null,
   reconciliationMatchedBy: transaction.reconciliationMatchedBy ?? null,
   reconciliationConflictReason: transaction.reconciliationConflictReason ?? null,
-  visibilityScope: transaction.visibilityScope ?? 'COMPANY',
+  visibilityScope: normalizeTransactionVisibilityScope(transaction.visibilityScope),
 })
 
 async function toExpenseTransactionRequest(data: any): Promise<TransactionRequest> {
@@ -75,7 +81,7 @@ async function toExpenseTransactionRequest(data: any): Promise<TransactionReques
         categoryId: data?.category ?? null,
       },
     ],
-    visibilityScope: data?.visibilityScope ?? 'COMPANY',
+    visibilityScope: toTransactionVisibilityScopeRequest(data?.visibilityScope),
   }
 }
 

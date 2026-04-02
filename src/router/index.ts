@@ -135,9 +135,9 @@ const router = createRouter({
       component: LoginView
     },
     {
-      path: '/create-company',
-      name: 'create-company',
-      component: () => import('@/views/CreateCompanyView.vue'),
+      path: '/create-workspace',
+      name: 'create-workspace',
+      component: () => import('@/views/CreateWorkspaceView.vue'),
       meta: { requiresAuth: true }
     },
     {
@@ -198,9 +198,9 @@ const router = createRouter({
       meta: { requiresAuth: true, requiresWorkspace: true }
     },
     {
-      path: '/select-company',
-      name: 'select-company',
-      component: () => import('@/views/SelectCompanyView.vue'),
+      path: '/select-workspace',
+      name: 'select-workspace',
+      component: () => import('@/views/SelectWorkspaceView.vue'),
       meta: { requiresAuth: true }
     }
   ]
@@ -209,16 +209,16 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
   const isAuthenticated = userStore.isAuthenticated
-  const companies = userStore.getCompanies || []
-  const hasCompanies = companies.length > 0
+  const workspaces = userStore.getWorkspaces || []
+  const hasWorkspaces = workspaces.length > 0
 
   if (to.name === 'landing' && isAuthenticated) {
-    if (!hasCompanies) {
-      next({ name: 'create-company', query: { redirect: '/dashboard' } })
+    if (!hasWorkspaces) {
+      next({ name: 'create-workspace', query: { redirect: '/dashboard' } })
       return
     }
     if (!userStore.isTenantMode) {
-      next({ name: 'select-company', query: { redirect: '/dashboard' } })
+      next({ name: 'select-workspace', query: { redirect: '/dashboard' } })
       return
     }
     next({ name: 'dashboard' })
@@ -239,19 +239,19 @@ router.beforeEach((to, from, next) => {
     return
   }
 
-  if (isAuthenticated && to.name === 'select-company' && !hasCompanies) {
-    next({ name: 'create-company', query: { redirect: (to.query.redirect as string) || '/dashboard' } })
+  if (isAuthenticated && to.name === 'select-workspace' && !hasWorkspaces) {
+    next({ name: 'create-workspace', query: { redirect: (to.query.redirect as string) || '/dashboard' } })
     return
   }
 
   // Workspace context is mandatory for main app flows.
   if (to.meta.requiresWorkspace && isAuthenticated) {
-    if (!hasCompanies) {
-      next({ name: 'create-company', query: { redirect: to.fullPath } })
+    if (!hasWorkspaces) {
+      next({ name: 'create-workspace', query: { redirect: to.fullPath } })
       return
     }
     if (!userStore.isTenantMode) {
-      next({ name: 'select-company', query: { redirect: to.fullPath } })
+      next({ name: 'select-workspace', query: { redirect: to.fullPath } })
       return
     }
   }
@@ -267,11 +267,11 @@ router.beforeEach((to, from, next) => {
   // Ensure tenant context where required
   if (to.meta.requiresTenant && isAuthenticated) {
     if (!userStore.isTenantMode) {
-      const hasCompanies = (userStore.getCompanies?.length || 0) > 0
-      if (hasCompanies) {
-        next({ name: 'select-company', query: { redirect: to.fullPath } })
+      const hasWorkspacesForTenant = (userStore.getWorkspaces?.length || 0) > 0
+      if (hasWorkspacesForTenant) {
+        next({ name: 'select-workspace', query: { redirect: to.fullPath } })
       } else {
-        next({ name: 'create-company', query: { redirect: to.fullPath } })
+        next({ name: 'create-workspace', query: { redirect: to.fullPath } })
       }
       return
     }

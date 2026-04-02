@@ -5,7 +5,7 @@ import { useTheme } from 'vuetify'
 import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/plugins/userStore'
 import type { Notification } from '@/services/NotificationService'
-import CompanySwitcher from '@/components/CompanySwitcher.vue'
+import WorkspaceSwitcher from '@/components/WorkspaceSwitcher.vue'
 
 // Import props and emits
 const props = defineProps<{
@@ -265,7 +265,7 @@ const navSections = computed(() => [
     <v-divider></v-divider>
 
     <div class="company-switcher-wrapper">
-      <CompanySwitcher />
+      <WorkspaceSwitcher />
     </div>
 
     <v-list density="compact" nav>

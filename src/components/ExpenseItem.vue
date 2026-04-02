@@ -145,7 +145,7 @@
       </div>
       <div class="expense-actions">
         <v-btn
-          v-if="expense.visibilityScope === 'COMPANY'"
+          v-if="expense.visibilityScope === 'WORKSPACE'"
           icon
           size="x-small"
           density="comfortable"
@@ -402,7 +402,7 @@ export default {
   emits: ['deleteExpense', 'removeAttachment', 'attachFiles', 'shareExpense', 'sendReminder', 'select', 'downloadAttachment', 'resolveConflict', 'suggestCategory', 'applySuggestion', 'openComments'],
   computed: {
     visibilityScopeLabel() {
-      const scope = this.expense?.visibilityScope === 'PRIVATE' ? 'private' : 'company'
+      const scope = this.expense?.visibilityScope === 'PRIVATE' ? 'private' : 'workspace'
       return this.$t(`transactionVisibility.${scope}`)
     },
     reconciliationLabel() {

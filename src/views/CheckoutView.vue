@@ -236,14 +236,14 @@ export default {
 
                 const correlationId = createCorrelationId()
                 const isTeamPlan = String(plan).startsWith('BUSINESS_')
-                const companyId = userStore.currentCompanyId
-                if (isTeamPlan && !companyId) {
-                    router.push({ name: 'select-company', query: { redirect: `/checkout?plan=${encodeURIComponent(String(plan))}` } })
+                const workspaceId = userStore.getCurrentWorkspaceId
+                if (isTeamPlan && !workspaceId) {
+                    router.push({ name: 'select-workspace', query: { redirect: `/checkout?plan=${encodeURIComponent(String(plan))}` } })
                     throw new Error('Selecione uma empresa para continuar com plano TEAM.')
                 }
 
-                const preferredSubjectType = (isTeamPlan && companyId) ? 'COMPANY' : 'USER'
-                const preferredSubjectId = preferredSubjectType === 'COMPANY' ? String(companyId) : String(user.id)
+                const preferredSubjectType = (isTeamPlan && workspaceId) ? 'WORKSPACE' : 'USER'
+                const preferredSubjectId = preferredSubjectType === 'WORKSPACE' ? String(workspaceId) : String(user.id)
 
                 const decisionResp = await BillingDecisionService.decide(
                     {
@@ -252,7 +252,7 @@ export default {
                         subjectType: preferredSubjectType,
                         subjectId: preferredSubjectId,
                         userId: preferredSubjectType === 'USER' ? String(user.id) : null,
-                        companyId: preferredSubjectType === 'COMPANY' ? String(companyId) : null,
+                        workspaceId: preferredSubjectType === 'WORKSPACE' ? String(workspaceId) : null,
                         ...getBillingContext()
                     },
                     correlationId

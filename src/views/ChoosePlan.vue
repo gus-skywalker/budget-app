@@ -279,10 +279,10 @@ export default {
         this.$router.push({ name: 'login', query: { redirect } })
         return
       }
-      if (!userStore.currentCompanyId) {
+      if (!userStore.getCurrentWorkspaceId) {
         alert(this.$t('choosePlan.error_select_company_team'))
         const redirect = OnboardingOrchestrator.buildRedirectPath('/choose-plan', { plan })
-        this.$router.push({ name: 'select-company', query: { redirect } })
+        this.$router.push({ name: 'select-workspace', query: { redirect } })
         return
       }
       this.redirectToCheckout(plan)
@@ -300,13 +300,13 @@ export default {
         const correlationId = createCorrelationId()
 
         const isTeamPlan = String(plan).startsWith('BUSINESS_')
-        const companyId = userStore.currentCompanyId
-        if (isTeamPlan && !companyId) {
+        const workspaceId = userStore.getCurrentWorkspaceId
+        if (isTeamPlan && !workspaceId) {
           throw new Error(this.$t('choosePlan.error_select_company_team'))
         }
 
-        const subjectType = isTeamPlan && userStore.isTenantMode && companyId ? 'COMPANY' : 'USER'
-        const subjectId = subjectType === 'COMPANY' ? String(companyId) : String(user.id)
+        const subjectType = isTeamPlan && userStore.isTenantMode && workspaceId ? 'WORKSPACE' : 'USER'
+        const subjectId = subjectType === 'WORKSPACE' ? String(workspaceId) : String(user.id)
 
         const decisionResp = await BillingDecisionService.decide(
           {
@@ -315,7 +315,7 @@ export default {
             subjectType,
             subjectId,
             userId: subjectType === 'USER' ? String(user.id) : null,
-            companyId: subjectType === 'COMPANY' ? String(companyId) : null,
+            workspaceId: subjectType === 'WORKSPACE' ? String(workspaceId) : null,
           },
           correlationId,
         )

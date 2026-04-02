@@ -1,8 +1,8 @@
 # Auth Contract (Frontend)
 
 ## Version
-- `v2026-03`
-- Source of truth in code: `src/services/AuthService.ts`, `src/services/CompanyService.ts`, `src/plugins/userStore.ts`
+- `v2026-04`
+- Source of truth in code: `src/services/AuthService.ts`, `src/services/WorkspaceService.ts`, `src/plugins/userStore.ts`
 
 ## Base URL
 - `VITE_AUTH_URL`
@@ -20,20 +20,21 @@
 - `PUT /api/auth/{userId}`
 - `DELETE /api/auth/{userId}`
 - `POST /api/auth/refresh`
-- `POST /api/auth/select-company`
-- `POST /api/auth/clear-company`
-- `GET /api/companies`
+- `POST /api/auth/select-workspace`
+- `POST /api/auth/clear-workspace`
+- `GET /api/workspaces`
 
 ## Token Contract
 - Access token is used as `Authorization: Bearer <token>`.
 - Refresh is called with body `{ "refreshToken": "..." }`.
 - Token claims used by frontend:
   - `user_id`
-  - `companyId` (when tenant-scoped)
+  - `workspaceId` (when tenant-scoped)
   - `tenantRole` (when tenant-scoped)
   - `userRoles`
-  - `companies`
+  - `workspaces`
 
 ## Notes
 - Paths without `/api` are non-canonical for current frontend integration.
-- Context switch (`select-company` / `clear-company`) must be followed by token replacement in client state.
+- Context switch (`select-workspace` / `clear-workspace`) must be followed by token replacement in client state.
+- Frontend canonical token and session parsing is workspace-first (`workspaceId`, `workspaces`).

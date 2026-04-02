@@ -1,6 +1,6 @@
 declare namespace _default {
     function fetchGroups(): Promise<import("axios").AxiosResponse<any, any>>;
-    function fetchGroupsByCompany(companyId: string): Promise<import("axios").AxiosResponse<any, any>>;
+    function fetchGroupsByWorkspace(workspaceId: string): Promise<import("axios").AxiosResponse<any, any>>;
     function createGroup(group: any): Promise<import("axios").AxiosResponse<any, any>>;
     function fetchGroupMembers(groupId: any): Promise<import("axios").AxiosResponse<any, any>>;
     function inviteMember(groupId: any, email: any): Promise<import("axios").AxiosResponse<any, any>>;

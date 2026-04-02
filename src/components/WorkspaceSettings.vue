@@ -1,73 +1,73 @@
 <template>
-  <div class="company-settings">
-    <template v-if="!currentCompanyId">
+  <div class="workspace-settings">
+    <template v-if="!currentWorkspaceId">
       <v-row dense>
         <v-col cols="12" md="7" lg="6">
           <v-card class="modern-card">
             <div class="card-header">
               <h3 class="card-title">
                 <v-icon color="primary" class="mr-2">mdi-office-building-plus</v-icon>
-                {{ $t('companySettings.create_new_company') }}
+                {{ $t('workspaceSettings.create_new_workspace') }}
               </h3>
               <p class="card-description">
-                {{ $t('companySettings.create_new_company_desc') }}
+                {{ $t('workspaceSettings.create_new_workspace_desc') }}
               </p>
             </div>
             <v-card-text>
-              <v-form ref="createCompanyFormRef" @submit.prevent="createCompany">
+              <v-form ref="createWorkspaceFormRef" @submit.prevent="createWorkspace">
                 <v-text-field
-                  v-model="createCompanyForm.name"
-                  :label="$t('companySettings.company_name')"
+                  v-model="createWorkspaceForm.name"
+                  :label="$t('workspaceSettings.workspace_name')"
                   variant="outlined"
                   density="comfortable"
                   prepend-inner-icon="mdi-office-building"
                   :rules="[requiredRule]"
-                  :disabled="creatingCompany"
+                  :disabled="creatingWorkspace"
                   class="mb-4"
                 />
                 <v-text-field
-                  v-model="createCompanyForm.legalDocument"
-                  :label="$t('companySettings.legal_document')"
+                  v-model="createWorkspaceForm.legalDocument"
+                  :label="$t('workspaceSettings.legal_document')"
                   variant="outlined"
                   density="comfortable"
                   prepend-inner-icon="mdi-card-account-details"
                   :rules="[requiredRule]"
-                  :disabled="creatingCompany"
+                  :disabled="creatingWorkspace"
                   class="mb-4"
                 />
                 <v-select
-                  v-model="createCompanyForm.country"
+                  v-model="createWorkspaceForm.country"
                   :items="countryOptions"
                   item-title="label"
                   item-value="value"
-                  :label="$t('companySettings.country')"
+                  :label="$t('workspaceSettings.country')"
                   variant="outlined"
                   density="comfortable"
                   prepend-inner-icon="mdi-earth"
                   :rules="[requiredRule]"
-                  :disabled="creatingCompany"
+                  :disabled="creatingWorkspace"
                   class="mb-4"
                 />
                 <v-textarea
-                  v-model="createCompanyForm.description"
-                  :label="$t('companySettings.description')"
+                  v-model="createWorkspaceForm.description"
+                  :label="$t('workspaceSettings.description')"
                   variant="outlined"
                   density="comfortable"
                   auto-grow
                   rows="3"
                   prepend-inner-icon="mdi-text"
-                  :disabled="creatingCompany"
+                  :disabled="creatingWorkspace"
                 />
                 <v-btn
                   type="submit"
                   color="primary"
                   class="mt-4"
                   block
-                  :loading="creatingCompany"
-                  :disabled="creatingCompany"
+                  :loading="creatingWorkspace"
+                  :disabled="creatingWorkspace"
                 >
                   <v-icon left>mdi-check-circle</v-icon>
-                  {{ $t('companySettings.create_company') }}
+                  {{ $t('workspaceSettings.create_workspace') }}
                 </v-btn>
               </v-form>
             </v-card-text>
@@ -76,16 +76,16 @@
 
         <v-col cols="12" md="5" lg="4">
           <v-alert type="info" variant="tonal" border="start" class="mb-4">
-            {{ $t('companySettings.personal_mode_alert') }}
+            {{ $t('workspaceSettings.personal_mode_alert') }}
           </v-alert>
           <v-btn
             color="primary"
             variant="tonal"
             block
-            @click="goToSelectCompany"
+            @click="goToSelectWorkspace"
           >
             <v-icon left>mdi-swap-horizontal</v-icon>
-            {{ $t('companySettings.select_existing_company') }}
+            {{ $t('workspaceSettings.select_existing_workspace') }}
           </v-btn>
         </v-col>
       </v-row>
@@ -93,13 +93,13 @@
 
     <template v-else>
       <v-alert
-        v-if="!canManageCompany"
+        v-if="!canManageWorkspace"
         type="warning"
         variant="tonal"
         border="start"
         class="mb-4"
       >
-        {{ $t('companySettings.only_admin_alert') }}
+        {{ $t('workspaceSettings.only_admin_alert') }}
       </v-alert>
 
       <v-row dense>
@@ -108,65 +108,65 @@
             <div class="card-header">
               <h3 class="card-title">
                 <v-icon color="primary" class="mr-2">mdi-office-building-cog</v-icon>
-                {{ $t('companySettings.company_info') }}
+                {{ $t('workspaceSettings.workspace_info') }}
               </h3>
               <p class="card-description">
-                {{ $t('companySettings.company_info_desc') }}
+                {{ $t('workspaceSettings.workspace_info_desc') }}
               </p>
             </div>
             <v-card-text>
-              <v-form ref="companyFormRef" @submit.prevent="updateCompany">
+              <v-form ref="workspaceFormRef" @submit.prevent="updateWorkspace">
                 <v-text-field
-                  v-model="companyForm.companyName"
-                  :label="$t('companySettings.company_name')"
+                  v-model="workspaceForm.workspaceName"
+                  :label="$t('workspaceSettings.workspace_name')"
                   variant="outlined"
                   density="comfortable"
                   prepend-inner-icon="mdi-office-building"
-                  :disabled="formLoading || !canManageCompany"
+                  :disabled="formLoading || !canManageWorkspace"
                   :rules="[requiredRule]"
                   class="mb-4"
                 />
                 <v-textarea
-                  v-model="companyForm.description"
-                  :label="$t('companySettings.description')"
+                  v-model="workspaceForm.description"
+                  :label="$t('workspaceSettings.description')"
                   variant="outlined"
                   density="comfortable"
                   auto-grow
                   rows="3"
                   prepend-inner-icon="mdi-text"
-                  :disabled="formLoading || !canManageCompany"
+                  :disabled="formLoading || !canManageWorkspace"
                 />
                 <v-btn
-                  v-if="canManageCompany"
+                  v-if="canManageWorkspace"
                   type="submit"
                   color="primary"
                   class="mt-4"
-                  :loading="savingCompany"
+                  :loading="savingWorkspace"
                   :disabled="formLoading"
                   block
                 >
                   <v-icon left>mdi-content-save</v-icon>
-                  {{ $t('companySettings.save_changes') }}
+                  {{ $t('workspaceSettings.save_changes') }}
                 </v-btn>
               </v-form>
             </v-card-text>
           </v-card>
 
-          <v-card v-if="canManageCompany" class="modern-card mt-6">
+          <v-card v-if="canManageWorkspace" class="modern-card mt-6">
             <div class="card-header">
               <h3 class="card-title">
                 <v-icon color="primary" class="mr-2">mdi-account-plus</v-icon>
-                {{ $t('companySettings.invite_members') }}
+                {{ $t('workspaceSettings.invite_members') }}
               </h3>
               <p class="card-description">
-                {{ $t('companySettings.invite_members_desc') }}
+                {{ $t('workspaceSettings.invite_members_desc') }}
               </p>
             </div>
             <v-card-text>
               <v-form ref="inviteFormRef" @submit.prevent="sendInvite">
                 <v-text-field
                   v-model="inviteForm.email"
-                  :label="$t('companySettings.invite_email')"
+                  :label="$t('workspaceSettings.invite_email')"
                   prepend-inner-icon="mdi-email"
                   type="email"
                   variant="outlined"
@@ -177,7 +177,7 @@
                 <v-select
                   v-model="inviteForm.role"
                   :items="roleOptions"
-                  :label="$t('companySettings.permission')"
+                  :label="$t('workspaceSettings.permission')"
                   item-title="label"
                   item-value="value"
                   prepend-inner-icon="mdi-shield-account"
@@ -192,20 +192,20 @@
                   :loading="inviteLoading"
                 >
                   <v-icon left>mdi-send</v-icon>
-                  {{ $t('companySettings.send_invite') }}
+                  {{ $t('workspaceSettings.send_invite') }}
                 </v-btn>
               </v-form>
 
               <v-divider class="my-4" />
 
-              <div class="section-title">{{ $t('companySettings.pending_invites') }}</div>
+              <div class="section-title">{{ $t('workspaceSettings.pending_invites') }}</div>
               <v-alert
                 v-if="!invitesAvailable"
                 type="info"
                 variant="tonal"
                 class="mt-2"
               >
-                {{ $t('companySettings.invites_unavailable') }}
+                {{ $t('workspaceSettings.invites_unavailable') }}
               </v-alert>
               <v-alert
                 v-else-if="!invites.length"
@@ -213,7 +213,7 @@
                 variant="tonal"
                 class="mt-2"
               >
-                {{ $t('companySettings.no_pending_invites') }}
+                {{ $t('workspaceSettings.no_pending_invites') }}
               </v-alert>
               <v-list v-else density="comfortable">
                 <v-list-item
@@ -234,14 +234,14 @@
         </v-col>
 
         <v-col cols="12" md="6">
-          <v-card v-if="canManageCompany" class="modern-card">
+          <v-card v-if="canManageWorkspace" class="modern-card">
             <div class="card-header">
               <h3 class="card-title">
                 <v-icon color="primary" class="mr-2">mdi-account-multiple</v-icon>
-                {{ $t('companySettings.current_members') }}
+                {{ $t('workspaceSettings.current_members') }}
               </h3>
               <p class="card-description">
-                {{ $t('companySettings.current_members_desc') }}
+                {{ $t('workspaceSettings.current_members_desc') }}
               </p>
             </div>
             <v-card-text>
@@ -250,7 +250,7 @@
                 type="info"
                 variant="tonal"
               >
-                {{ $t('companySettings.no_members') }}
+                {{ $t('workspaceSettings.no_members') }}
               </v-alert>
               <v-list v-else density="compact">
                 <v-list-item
@@ -274,14 +274,14 @@
             </v-card-text>
           </v-card>
 
-          <v-card v-if="canManageCompany" class="modern-card mt-6 danger-card">
+          <v-card v-if="canManageWorkspace" class="modern-card mt-6 danger-card">
             <div class="card-header">
               <h3 class="card-title danger-title">
                 <v-icon color="error" class="mr-2">mdi-alert</v-icon>
-                {{ $t('companySettings.danger_zone') }}
+                {{ $t('workspaceSettings.danger_zone') }}
               </h3>
               <p class="card-description">
-                {{ $t('companySettings.danger_zone_desc') }}
+                {{ $t('workspaceSettings.danger_zone_desc') }}
               </p>
             </div>
             <v-card-text>
@@ -292,7 +292,7 @@
                 @click="deleteDialog = true"
               >
                 <v-icon left>mdi-delete</v-icon>
-                {{ $t('companySettings.delete_company') }}
+                {{ $t('workspaceSettings.delete_workspace') }}
               </v-btn>
             </v-card-text>
           </v-card>
@@ -302,27 +302,27 @@
 
     <v-dialog v-model="deleteDialog" max-width="520">
       <v-card>
-        <v-card-title class="text-h6">{{ $t('companySettings.confirm_delete_title') }}</v-card-title>
+        <v-card-title class="text-h6">{{ $t('workspaceSettings.confirm_delete_title') }}</v-card-title>
         <v-card-text>
-          <p class="mb-4" v-html="$t('companySettings.confirm_delete_desc', { company: companyNameForDelete })"></p>
+          <p class="mb-4" v-html="$t('workspaceSettings.confirm_delete_desc', { workspace: workspaceNameForDelete })"></p>
           <v-text-field
             v-model="deleteConfirm"
-            :label="$t('companySettings.company_name')"
+            :label="$t('workspaceSettings.workspace_name')"
             variant="outlined"
             density="comfortable"
           />
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn variant="text" @click="closeDeleteDialog">{{ $t('companySettings.cancel') }}</v-btn>
+          <v-btn variant="text" @click="closeDeleteDialog">{{ $t('workspaceSettings.cancel') }}</v-btn>
           <v-btn
             color="error"
             variant="elevated"
-            :disabled="deleteConfirm !== companyNameForDelete"
+            :disabled="deleteConfirm !== workspaceNameForDelete"
             :loading="deleteLoading"
-            @click="deleteCompany"
+            @click="deleteWorkspace"
           >
-            {{ $t('companySettings.confirm') }}
+            {{ $t('workspaceSettings.confirm') }}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -336,7 +336,7 @@
       {{ upgradeMessage }}
       <template #actions>
         <v-btn variant="text" color="white" @click="goToUpgrade">
-          {{ $t('companySettings.view_premium_plans') }}
+          {{ $t('workspaceSettings.view_premium_plans') }}
         </v-btn>
       </template>
     </v-snackbar>
@@ -348,7 +348,7 @@ import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import CompanyService from '@/services/CompanyService'
+import WorkspaceService from '@/services/WorkspaceService'
 import InviteService from '@/services/InviteService'
 import { useUserStore } from '@/plugins/userStore'
 import { getFreePlanLimitType, parseApiError } from '@/utils/errorHandler'
@@ -358,23 +358,23 @@ import { createMessageId } from '@/utils/messageId'
 const userStore = useUserStore()
 const router = useRouter()
 
-const currentCompanyId = computed(() => userStore.getCurrentCompanyId)
-const canManageCompany = computed(() => userStore.isTenantAdmin)
+const currentWorkspaceId = computed(() => userStore.getCurrentWorkspaceId)
+const canManageWorkspace = computed(() => userStore.isTenantAdmin)
 
-const companyFormRef = ref()
-const companyForm = ref({ companyName: '', description: '' })
+const workspaceFormRef = ref()
+const workspaceForm = ref({ workspaceName: '', description: '' })
 const formLoading = ref(false)
-const savingCompany = ref(false)
-const createCompanyFormRef = ref()
-const createCompanyForm = ref({
+const savingWorkspace = ref(false)
+const createWorkspaceFormRef = ref()
+const createWorkspaceForm = ref({
   name: '',
   legalDocument: '',
   country: 'BR',
   description: ''
 })
-const creatingCompany = ref(false)
+const creatingWorkspace = ref(false)
 
-const companyNameForDelete = ref('')
+const workspaceNameForDelete = ref('')
 
 const inviteFormRef = ref()
 const inviteForm = ref({ email: '', role: 'ROLE_MEMBER' })
@@ -393,21 +393,21 @@ const upgradeSnackbar = ref(false)
 const upgradeMessage = ref('')
 
 const roleOptions = [
-  { label: t('companySettings.roles.ROLE_ADMIN'), value: 'ROLE_ADMIN' },
-  { label: t('companySettings.roles.ROLE_MEMBER'), value: 'ROLE_MEMBER' },
-  { label: t('companySettings.roles.ROLE_VIEWER'), value: 'ROLE_VIEWER' }
+  { label: t('workspaceSettings.roles.ROLE_ADMIN'), value: 'ROLE_ADMIN' },
+  { label: t('workspaceSettings.roles.ROLE_MEMBER'), value: 'ROLE_MEMBER' },
+  { label: t('workspaceSettings.roles.ROLE_VIEWER'), value: 'ROLE_VIEWER' }
 ]
 
 const countryOptions = [
-  { label: t('companySettings.countries.br'), value: 'BR' },
-  { label: t('companySettings.countries.us'), value: 'US' },
-  { label: t('companySettings.countries.pt'), value: 'PT' },
-  { label: t('companySettings.countries.es'), value: 'ES' },
-  { label: t('companySettings.countries.fr'), value: 'FR' }
+  { label: t('workspaceSettings.countries.br'), value: 'BR' },
+  { label: t('workspaceSettings.countries.us'), value: 'US' },
+  { label: t('workspaceSettings.countries.pt'), value: 'PT' },
+  { label: t('workspaceSettings.countries.es'), value: 'ES' },
+  { label: t('workspaceSettings.countries.fr'), value: 'FR' }
 ]
 
-const requiredRule = (v: string) => !!v || t('companySettings.required_field')
-const emailRule = (v: string) => /.+@.+\..+/.test(v) || t('companySettings.invalid_email')
+const requiredRule = (v: string) => !!v || t('workspaceSettings.required_field')
+const emailRule = (v: string) => /.+@.+\..+/.test(v) || t('workspaceSettings.invalid_email')
 
 const showSnackbar = (message: string, color: 'success' | 'error' | 'info' = 'success') => {
   snackbar.value = { show: true, message, color }
@@ -418,29 +418,29 @@ const goToUpgrade = () => {
   router.push({ name: 'choose-plan', query: { plan: 'BUSINESS_ANNUAL' } })
 }
 
-const goToSelectCompany = () => {
-  router.push({ name: 'select-company', query: { redirect: '/settings' } })
+const goToSelectWorkspace = () => {
+  router.push({ name: 'select-workspace', query: { redirect: '/settings' } })
 }
 
-const resetCompanyUiState = () => {
-  companyForm.value = { companyName: '', description: '' }
-  createCompanyForm.value = { name: '', legalDocument: '', country: 'BR', description: '' }
-  companyNameForDelete.value = ''
+const resetWorkspaceUiState = () => {
+  workspaceForm.value = { workspaceName: '', description: '' }
+  createWorkspaceForm.value = { name: '', legalDocument: '', country: 'BR', description: '' }
+  workspaceNameForDelete.value = ''
   members.value = []
   invites.value = []
   closeDeleteDialog()
 }
 
-const loadCompanyDetails = async () => {
-  if (!currentCompanyId.value) return
+const loadWorkspaceDetails = async () => {
+  if (!currentWorkspaceId.value) return
   formLoading.value = true
   try {
-    const companyRes = await CompanyService.getDetails(currentCompanyId.value)
-    const name = companyRes?.data?.companyName || companyRes?.data?.name || ''
-    const description = companyRes?.data?.description || ''
-    companyForm.value.companyName = name
-    companyForm.value.description = description
-    companyNameForDelete.value = name
+    const workspaceRes = await WorkspaceService.getDetails(currentWorkspaceId.value)
+    const name = workspaceRes?.data?.workspaceName || workspaceRes?.data?.name || ''
+    const description = workspaceRes?.data?.description || ''
+    workspaceForm.value.workspaceName = name
+    workspaceForm.value.description = description
+    workspaceNameForDelete.value = name
   } catch (error) {
     showSnackbar(parseApiError(error), 'error')
   } finally {
@@ -449,11 +449,11 @@ const loadCompanyDetails = async () => {
 }
 
 const loadMembersAndInvites = async () => {
-  if (!currentCompanyId.value) return
+  if (!currentWorkspaceId.value) return
   try {
     const [membersResult, invitesResult] = await Promise.allSettled([
-      CompanyService.listMembers(currentCompanyId.value),
-      InviteService.listInvites(currentCompanyId.value)
+      WorkspaceService.listMembers(currentWorkspaceId.value),
+      InviteService.listInvites(currentWorkspaceId.value)
     ])
 
     if (membersResult.status === 'fulfilled') {
@@ -474,18 +474,18 @@ const loadMembersAndInvites = async () => {
   }
 }
 
-const createCompany = async () => {
-  const form = createCompanyFormRef.value as any
+const createWorkspace = async () => {
+  const form = createWorkspaceFormRef.value as any
   if (form) {
     const result = await form.validate()
     const valid = typeof result === 'boolean' ? result : result?.valid
     if (!valid) return
   }
 
-  creatingCompany.value = true
+  creatingWorkspace.value = true
   try {
-    const correlationId = getOrCreateCorrelationId('companyCorrelationId')
-    const messageKey = `settings.createCompany.messageId:${createCompanyForm.value.name}:${createCompanyForm.value.country}`
+    const correlationId = getOrCreateCorrelationId('workspaceCorrelationId')
+    const messageKey = `settings.createWorkspace.messageId:${createWorkspaceForm.value.name}:${createWorkspaceForm.value.country}`
     let messageId = sessionStorage.getItem(messageKey)
     if (!messageId) {
       messageId = createMessageId()
@@ -493,82 +493,82 @@ const createCompany = async () => {
     }
 
     const payload = {
-      name: createCompanyForm.value.name.trim(),
-      description: createCompanyForm.value.description?.trim() || '',
-      legalDocument: createCompanyForm.value.legalDocument.trim(),
-      country: createCompanyForm.value.country,
+      name: createWorkspaceForm.value.name.trim(),
+      description: createWorkspaceForm.value.description?.trim() || '',
+      legalDocument: createWorkspaceForm.value.legalDocument.trim(),
+      country: createWorkspaceForm.value.country,
       messageId
     }
 
-    const result = await CompanyService.create(payload as any, correlationId)
-    const createdCompany = result?.createdCompany
-    const companyId = createdCompany?.companyId ?? createdCompany?.id
-    if (!companyId) {
-      throw new Error('Resposta de criação sem companyId')
+    const result = await WorkspaceService.create(payload as any, correlationId)
+    const createdWorkspace = result?.createdWorkspace
+    const workspaceId = createdWorkspace?.workspaceId ?? createdWorkspace?.id
+    if (!workspaceId) {
+      throw new Error('Resposta de criação sem workspaceId')
     }
 
-    await userStore.selectCompany(String(companyId))
+    await userStore.selectWorkspace(String(workspaceId))
 
     try {
-      const companiesRes = await CompanyService.getAll()
-      const companies = Array.isArray(companiesRes?.data) ? companiesRes.data : []
-      userStore.setCompanies(companies)
-      await userStore.hydrateCompanyDetailsFromBudget(
-        companies.map((company: any) => String(company.companyId)).filter(Boolean)
+      const workspacesRes = await WorkspaceService.getAll()
+      const workspaces = Array.isArray(workspacesRes?.data) ? workspacesRes.data : []
+      userStore.setWorkspaces(workspaces)
+      await userStore.hydrateWorkspaceDetailsFromBudget(
+        workspaces.map((workspace: any) => String(workspace.workspaceId)).filter(Boolean)
       )
     } catch {
       // best effort: tenant já selecionada
     }
 
     sessionStorage.removeItem(messageKey)
-    createCompanyForm.value = {
+    createWorkspaceForm.value = {
       name: '',
       legalDocument: '',
       country: 'BR',
       description: ''
     }
-    showSnackbar(t('companySettings.success_company_created'))
+    showSnackbar(t('workspaceSettings.success_workspace_created'))
   } catch (error) {
     showSnackbar(parseApiError(error), 'error')
     const limitType = getFreePlanLimitType(error)
-    if (limitType === 'company') {
-      upgradeMessage.value = t('companySettings.upgrade_limit_company')
+    if (limitType === 'workspace') {
+      upgradeMessage.value = t('workspaceSettings.upgrade_limit_workspace')
       upgradeSnackbar.value = true
     }
   } finally {
-    creatingCompany.value = false
+    creatingWorkspace.value = false
   }
 }
 
-const updateCompany = async () => {
-  if (!currentCompanyId.value) return
-  const form = companyFormRef.value as any
+const updateWorkspace = async () => {
+  if (!currentWorkspaceId.value) return
+  const form = workspaceFormRef.value as any
   if (form) {
     const result = await form.validate()
     const valid = typeof result === 'boolean' ? result : result?.valid
     if (!valid) return
   }
-  savingCompany.value = true
+  savingWorkspace.value = true
   try {
-    await CompanyService.update(currentCompanyId.value, {
-      companyName: companyForm.value.companyName,
-      description: companyForm.value.description
+    await WorkspaceService.update(currentWorkspaceId.value, {
+      workspaceName: workspaceForm.value.workspaceName,
+      description: workspaceForm.value.description
     })
 
-    companyNameForDelete.value = companyForm.value.companyName
-    userStore.updateCompanyName(currentCompanyId.value, companyForm.value.companyName)
-    showSnackbar(t('companySettings.success_company_updated'))
+    workspaceNameForDelete.value = workspaceForm.value.workspaceName
+    userStore.updateWorkspaceName(currentWorkspaceId.value, workspaceForm.value.workspaceName)
+    showSnackbar(t('workspaceSettings.success_workspace_updated'))
   } catch (error) {
     showSnackbar(parseApiError(error), 'error')
   } finally {
-    savingCompany.value = false
+    savingWorkspace.value = false
   }
 }
 
 const sendInvite = async () => {
-  if (!currentCompanyId.value) return
+  if (!currentWorkspaceId.value) return
   if (!invitesAvailable.value) {
-    showSnackbar(t('companySettings.invites_unavailable'), 'info')
+    showSnackbar(t('workspaceSettings.invites_unavailable'), 'info')
     return
   }
   const form = inviteFormRef.value as any
@@ -579,16 +579,16 @@ const sendInvite = async () => {
   }
   inviteLoading.value = true
   try {
-    await InviteService.inviteUser(currentCompanyId.value, inviteForm.value.email, inviteForm.value.role)
+    await InviteService.inviteUser(currentWorkspaceId.value, inviteForm.value.email, inviteForm.value.role)
     inviteForm.value.email = ''
     inviteForm.value.role = 'ROLE_MEMBER'
     await loadInvites()
-    showSnackbar(t('companySettings.success_invite_sent_generic'))
+    showSnackbar(t('workspaceSettings.success_invite_sent_generic'))
   } catch (error) {
     showSnackbar(parseApiError(error), 'error')
     const limitType = getFreePlanLimitType(error)
     if (limitType === 'member') {
-      upgradeMessage.value = t('companySettings.upgrade_limit_member')
+      upgradeMessage.value = t('workspaceSettings.upgrade_limit_member')
       upgradeSnackbar.value = true
     }
   } finally {
@@ -597,27 +597,27 @@ const sendInvite = async () => {
 }
 
 const loadInvites = async () => {
-  if (!currentCompanyId.value) return
+  if (!currentWorkspaceId.value) return
   if (!invitesAvailable.value) return
   try {
-    invites.value = await InviteService.listInvites(currentCompanyId.value)
+    invites.value = await InviteService.listInvites(currentWorkspaceId.value)
   } catch (error) {
     invitesAvailable.value = false
     invites.value = []
-    showSnackbar(t('companySettings.invites_unavailable'), 'info')
+    showSnackbar(t('workspaceSettings.invites_unavailable'), 'info')
   }
 }
 
 const cancelInvite = async (inviteId: string) => {
-  if (!currentCompanyId.value) return
+  if (!currentWorkspaceId.value) return
   if (!invitesAvailable.value) {
-    showSnackbar(t('companySettings.invites_unavailable'), 'info')
+    showSnackbar(t('workspaceSettings.invites_unavailable'), 'info')
     return
   }
   try {
-    await InviteService.cancelInvite(currentCompanyId.value, inviteId)
+    await InviteService.cancelInvite(currentWorkspaceId.value, inviteId)
     await loadInvites()
-    showSnackbar(t('companySettings.success_cancel_invite'), 'info')
+    showSnackbar(t('workspaceSettings.success_cancel_invite'), 'info')
   } catch (error) {
     showSnackbar(parseApiError(error), 'error')
   }
@@ -628,18 +628,18 @@ const closeDeleteDialog = () => {
   deleteConfirm.value = ''
 }
 
-const deleteCompany = async () => {
-  if (!currentCompanyId.value) return
-  if (deleteConfirm.value !== companyNameForDelete.value) return
-  const deletedCompanyId = currentCompanyId.value
+const deleteWorkspace = async () => {
+  if (!currentWorkspaceId.value) return
+  if (deleteConfirm.value !== workspaceNameForDelete.value) return
+  const deletedWorkspaceId = currentWorkspaceId.value
   deleteLoading.value = true
   try {
-    await CompanyService.deleteCompany(deletedCompanyId)
+    await WorkspaceService.deleteWorkspace(deletedWorkspaceId)
 
     // Limpa seleção de empresa e força atualização do usuário
     try {
-      await userStore.clearCompanySelection()
-      // Após limpar, força reload do usuário para garantir que companyId foi limpo
+      await userStore.clearWorkspaceSelection()
+      // Após limpar, força reload do usuário para garantir que o contexto ativo foi limpo
       await userStore.tryRefreshToken()
       // Alternativa: pode-se chamar um endpoint /users/me para garantir contexto atualizado
     } catch {
@@ -648,29 +648,28 @@ const deleteCompany = async () => {
       return
     }
 
-    let nextCompanies: Array<{ companyId: string; companyName?: string; role?: string | null }> = []
+    let nextWorkspaces: Array<{ workspaceId?: string; workspaceName?: string; role?: string | null }> = []
     try {
-      const companiesRes = await CompanyService.getAll()
-      nextCompanies = (companiesRes?.data || []) as Array<{ companyId: string; companyName?: string; role?: string | null }>
-      userStore.setCompanies(nextCompanies)
+      const workspacesRes = await WorkspaceService.getAll()
+      nextWorkspaces = (workspacesRes?.data || []) as Array<{ workspaceId?: string; workspaceName?: string; role?: string | null }>
+      userStore.setWorkspaces(nextWorkspaces as any)
     } catch {
       // fallback to local state if refresh fails
-      nextCompanies = ((userStore.getCompanies || []) as any[]).filter((c: any) => c?.companyId !== deletedCompanyId)
-      userStore.setCompanies(nextCompanies)
+      nextWorkspaces = ((userStore.getWorkspaces || []) as any[]).filter((workspace: any) => workspace?.workspaceId !== deletedWorkspaceId)
+      userStore.setWorkspaces(nextWorkspaces as any)
     }
 
     closeDeleteDialog()
-    showSnackbar(t('companySettings.success_delete'), 'info')
+    showSnackbar(t('workspaceSettings.success_delete'), 'info')
 
-    const hasOtherCompanies = (nextCompanies?.length || 0) > 0
-    // Força reload do contexto do usuário para garantir que companyId não está mais presente
-    if (!hasOtherCompanies) {
-      // Se não há mais empresas, redireciona para onboarding/criação
-      userStore.setCurrentCompany(null)
-      router.push('/create-company')
+    const hasOtherWorkspaces = (nextWorkspaces?.length || 0) > 0
+    if (!hasOtherWorkspaces) {
+      // Se não há mais workspaces, redireciona para onboarding/criação
+      userStore.setCurrentWorkspace(null)
+      router.push('/create-workspace')
     } else {
-      // Se há outras empresas, força seleção
-      router.push('/select-company')
+      // Se há outros workspaces, força seleção
+      router.push('/select-workspace')
     }
   } catch (error) {
     showSnackbar(parseApiError(error), 'error')
@@ -681,20 +680,20 @@ const deleteCompany = async () => {
 
 const getRoleLabel = (role: string) => {
   const normalized = (role || '').toUpperCase()
-  if (t(`companySettings.roles.${normalized}`) !== `companySettings.roles.${normalized}`) {
-    return t(`companySettings.roles.${normalized}`)
+  if (t(`workspaceSettings.roles.${normalized}`) !== `workspaceSettings.roles.${normalized}`) {
+    return t(`workspaceSettings.roles.${normalized}`)
   }
-  if (t(`companySettings.roles.${role}`) !== `companySettings.roles.${role}`) {
-    return t(`companySettings.roles.${role}`)
+  if (t(`workspaceSettings.roles.${role}`) !== `workspaceSettings.roles.${role}`) {
+    return t(`workspaceSettings.roles.${role}`)
   }
   return role
 }
 
-watch([currentCompanyId, canManageCompany], async ([companyId, canManage]) => {
-  resetCompanyUiState()
-  if (!companyId) return
+watch([currentWorkspaceId, canManageWorkspace], async ([workspaceId, canManage]) => {
+  resetWorkspaceUiState()
+  if (!workspaceId) return
 
-  await loadCompanyDetails()
+  await loadWorkspaceDetails()
   if (canManage) {
     await loadMembersAndInvites()
   }
@@ -702,7 +701,7 @@ watch([currentCompanyId, canManageCompany], async ([companyId, canManage]) => {
 </script>
 
 <style scoped>
-.company-settings {
+.workspace-settings {
   width: 100%;
 }
 

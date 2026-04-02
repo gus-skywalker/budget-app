@@ -8,7 +8,7 @@
  */
 // src/plugins/userStore.ts
 import { defineStore } from 'pinia'
-import CompanyService from '@/services/CompanyService'
+import WorkspaceService from '@/services/WorkspaceService'
 import AuthService from '@/services/AuthService'
 
 /**
@@ -46,11 +46,11 @@ function decodeJWT(token: string): any {
 
 const TENANT_ADMIN_ROLES = ['ROLE_OWNER', 'ROLE_ADMIN']
 const TENANT_WRITE_ROLES = ['ROLE_OWNER', 'ROLE_ADMIN', 'ROLE_MEMBER']
-const hasCompanyName = (value?: string) => Boolean(value && value.trim().length > 0)
+const hasWorkspaceName = (value?: string) => Boolean(value && value.trim().length > 0)
 
-interface Company {
-  companyId: string
-  companyName?: string
+type Workspace = {
+  workspaceId: string
+  workspaceName?: string
   role?: string | null
 }
 
@@ -60,26 +60,61 @@ interface User {
   email?: string
   avatar?: string
   language?: string
-  companies?: Company[]
+  workspaces?: Workspace[]
   userRoles?: string[]
 }
 
-function mergeCompanies(incoming: Company[], existing: Company[] = []): Company[] {
-  const existingById = new Map(existing.map((company) => [company.companyId, company]))
-  return incoming.map((company) => {
-    const previous = existingById.get(company.companyId)
+interface WorkspaceClaim {
+  workspaceId: string
+  workspaceName?: string
+  role?: string | null
+}
+
+const workspaceIdOf = (workspace?: Partial<Workspace> | null): string =>
+  String(workspace?.workspaceId ?? '')
+
+const workspaceNameOf = (workspace?: Partial<Workspace> | null): string | undefined =>
+  workspace?.workspaceName
+
+const workspaceRoleOf = (workspace?: Partial<Workspace> | null): string | null =>
+  workspace?.role ?? null
+
+const normalizeWorkspace = (workspace: WorkspaceClaim): Workspace => {
+  const workspaceId = workspace.workspaceId ?? ''
+  const workspaceName = workspace.workspaceName
+  return {
+    workspaceId,
+    workspaceName,
+    role: workspace.role ?? null
+  }
+}
+
+function mergeWorkspaces(incoming: Workspace[], existing: Workspace[] = []): Workspace[] {
+  const existingById = new Map(existing.map((workspace) => [workspaceIdOf(workspace), workspace]))
+  return incoming.map((workspace) => {
+    const id = workspaceIdOf(workspace)
+    const previous = existingById.get(id)
+    const workspaceName = hasWorkspaceName(workspaceNameOf(workspace))
+      ? workspaceNameOf(workspace)
+      : workspaceNameOf(previous)
+
     return {
-      companyId: company.companyId,
-      role: company.role ?? previous?.role ?? null,
-      companyName: hasCompanyName(company.companyName) ? company.companyName : previous?.companyName
+      workspaceId: id,
+      workspaceName,
+      role: workspace.role ?? previous?.role ?? null,
     }
   })
 }
 
-function getMissingCompanyNameIds(companies: Company[] = []): string[] {
-  return companies
-    .filter((company) => Boolean(company.companyId) && !hasCompanyName(company.companyName))
-    .map((company) => company.companyId)
+function getMissingWorkspaceNameIds(workspaces: Workspace[] = []): string[] {
+  return workspaces
+    .filter((workspace) => Boolean(workspaceIdOf(workspace)) && !hasWorkspaceName(workspaceNameOf(workspace)))
+    .map((workspace) => workspaceIdOf(workspace))
+}
+
+function findWorkspaceById(workspaces: Workspace[] = [], workspaceId?: string | null): Workspace | null {
+  if (!workspaceId) return null
+  return workspaces.find((workspace) => workspaceIdOf(workspace) === workspaceId) ?? null
 }
 
 type State = {
@@ -87,11 +122,11 @@ type State = {
   refreshToken: string | null
   auth: boolean
   user: User
-  currentCompanyId: string | null
+  currentWorkspaceId: string | null
   tenantRole: string | null
   language: string
   preferredMode: 'personal' | 'tenant' | null
-  preferredCompanyId: string | null
+  preferredWorkspaceId: string | null
 }
 
 export const useUserStore = defineStore({
@@ -102,11 +137,11 @@ export const useUserStore = defineStore({
     refreshToken: null,
     auth: false,
     user: {},
-    currentCompanyId: null,
+    currentWorkspaceId: null,
     tenantRole: null,
     language: 'PT',
     preferredMode: null,
-    preferredCompanyId: null
+    preferredWorkspaceId: null
   }),
 
   getters: {
@@ -114,24 +149,24 @@ export const useUserStore = defineStore({
     isAuthenticated: (state): boolean => state.auth,
     getToken: (state): string | null => state.token,
     getRefreshToken: (state): string | null => state.refreshToken,
-    getCurrentCompanyId: (state): string | null => state.currentCompanyId,
+    getCurrentWorkspaceId: (state): string | null => state.currentWorkspaceId,
     getCurrentRole: (state): string | null => state.tenantRole,
     getTenantRole: (state): string | null => state.tenantRole,
-    getCompanies: (state): Company[] => state.user.companies || [],
+    getWorkspaces: (state): Workspace[] => state.user.workspaces || [],
     getUserRoles: (state): string[] => state.user.userRoles || [],
-    hasMultipleCompanies: (state): boolean => (state.user.companies?.length || 0) > 1,
+    hasMultipleWorkspaces: (state): boolean => (state.user.workspaces?.length || 0) > 1,
     isAdmin: (state): boolean => TENANT_ADMIN_ROLES.includes((state.tenantRole || '').toUpperCase()),
-    isPersonalMode: (state): boolean => !state.currentCompanyId,
-    isTenantMode: (state): boolean => Boolean(state.currentCompanyId && state.tenantRole),
+    isPersonalMode: (state): boolean => !state.currentWorkspaceId,
+    isTenantMode: (state): boolean => Boolean(state.currentWorkspaceId && state.tenantRole),
     isTenantAdmin: (state): boolean => TENANT_ADMIN_ROLES.includes((state.tenantRole || '').toUpperCase()),
     canWrite: (state): boolean => TENANT_WRITE_ROLES.includes((state.tenantRole || '').toUpperCase()),
     getLanguage: (state): string => state.language,
     getPreferredMode: (state): 'personal' | 'tenant' | null => state.preferredMode,
-    getPreferredCompanyId: (state): string | null => state.preferredCompanyId,
+    getPreferredWorkspaceId: (state): string | null => state.preferredWorkspaceId,
     getApiLanguage: (state): string => {
       const lang = state.language.toLowerCase()
       return ['pt', 'en', 'fr'].includes(lang) ? lang : 'pt'
-    }
+    },
   },
 
   actions: {
@@ -140,7 +175,7 @@ export const useUserStore = defineStore({
         'userPreference',
         JSON.stringify({
           preferredMode: this.preferredMode,
-          preferredCompanyId: this.preferredCompanyId
+          preferredWorkspaceId: this.preferredWorkspaceId
         })
       )
     },
@@ -151,13 +186,13 @@ export const useUserStore = defineStore({
         if (!raw) return
         const parsed = JSON.parse(raw)
         const mode = parsed?.preferredMode
-        const companyId = parsed?.preferredCompanyId
+        const workspaceId = parsed?.preferredWorkspaceId
 
         if (mode === 'personal' || mode === 'tenant' || mode === null) {
           this.preferredMode = mode
         }
-        if (typeof companyId === 'string' || companyId === null) {
-          this.preferredCompanyId = companyId
+        if (typeof workspaceId === 'string' || workspaceId === null) {
+          this.preferredWorkspaceId = workspaceId
         }
       } catch {
         // ignore
@@ -166,13 +201,13 @@ export const useUserStore = defineStore({
 
     setPreferredPersonal() {
       this.preferredMode = 'personal'
-      this.preferredCompanyId = null
+      this.preferredWorkspaceId = null
       this.savePreference()
     },
 
-    setPreferredTenant(companyId: string) {
+    setPreferredWorkspace(workspaceId: string) {
       this.preferredMode = 'tenant'
-      this.preferredCompanyId = companyId
+      this.preferredWorkspaceId = workspaceId
       this.savePreference()
     },
 
@@ -192,10 +227,17 @@ export const useUserStore = defineStore({
     },
 
     setUser(user: User) {
+      const hasIncomingWorkspaces = Object.prototype.hasOwnProperty.call(user, 'workspaces')
+      const incomingWorkspaces = hasIncomingWorkspaces
+        ? (user.workspaces || []).map((workspace) => normalizeWorkspace(workspace as WorkspaceClaim))
+        : null
+      const mergedWorkspaces = incomingWorkspaces === null
+        ? (this.getWorkspaces || [])
+        : mergeWorkspaces(incomingWorkspaces, this.getWorkspaces || [])
       const nextUser: User = {
         ...this.user,
         ...user,
-        companies: user.companies ?? this.user.companies
+        workspaces: mergedWorkspaces
       }
       this.user = nextUser
       if (nextUser.language) {
@@ -209,40 +251,44 @@ export const useUserStore = defineStore({
       this.saveState()
     },
 
-    setCurrentCompany(companyId: string | null, role?: string | null, companyName?: string) {
-      this.currentCompanyId = companyId
-      this.tenantRole = role || null
+    setCurrentWorkspace(workspaceId: string | null, role?: string | null, workspaceName?: string) {
+      this.currentWorkspaceId = workspaceId
+      const matchingWorkspace = workspaceId ? findWorkspaceById(this.getWorkspaces || [], workspaceId) : null
+      this.tenantRole = role || workspaceRoleOf(matchingWorkspace)
 
-      if (companyId && companyName && this.user.companies) {
-        const company = this.user.companies.find(c => c.companyId === companyId)
-        if (company && !company.companyName) {
-          company.companyName = companyName
+      if (workspaceId && workspaceName) {
+        const workspaces = this.getWorkspaces || []
+        const workspace = workspaces.find((item: Workspace) => workspaceIdOf(item) === workspaceId)
+        if (workspace && !workspaceNameOf(workspace)) {
+          workspace.workspaceName = workspaceName
         }
+        this.user.workspaces = workspaces
       }
       this.saveState()
     },
 
-    setCompanies(companies: Company[]) {
-      const merged = mergeCompanies(companies || [], this.user.companies || [])
-      this.user.companies = merged
+    setWorkspaces(workspaces: Workspace[]) {
+      const merged = mergeWorkspaces((workspaces || []).map((workspace) => normalizeWorkspace(workspace as WorkspaceClaim)), this.getWorkspaces || [])
+      this.user.workspaces = merged
       this.saveState()
-      const missingNames = getMissingCompanyNameIds(merged)
+      const missingNames = getMissingWorkspaceNameIds(merged)
       if (missingNames.length && this.token) {
-        void this.hydrateCompanyDetailsFromBudget(missingNames)
+        void this.hydrateWorkspaceDetailsFromBudget(missingNames)
       }
     },
 
-    updateCompanyName(companyId: string, companyName: string) {
-      const companies = this.user.companies
-      if (!companies || !companyId) return
-      const company = companies.find((c) => c.companyId === companyId)
-      if (!company) return
-      company.companyName = companyName
+    updateWorkspaceName(workspaceId: string, workspaceName: string) {
+      const workspaces = [...(this.getWorkspaces || [])]
+      if (!workspaces.length || !workspaceId) return
+      const workspace = workspaces.find((item: Workspace) => workspaceIdOf(item) === workspaceId)
+      if (!workspace) return
+      workspace.workspaceName = workspaceName
+      this.user.workspaces = workspaces
       this.saveState()
     },
 
-    clearCurrentCompany() {
-      this.currentCompanyId = null
+    clearCurrentWorkspace() {
+      this.currentWorkspaceId = null
       this.tenantRole = null
       this.saveState()
     },
@@ -252,7 +298,7 @@ export const useUserStore = defineStore({
       this.refreshToken = null
       this.auth = false
       this.user = {}
-      this.currentCompanyId = null
+      this.currentWorkspaceId = null
       this.tenantRole = null
       this.language = 'PT'
       this.saveState()
@@ -264,7 +310,7 @@ export const useUserStore = defineStore({
         refreshToken: this.refreshToken,
         auth: this.auth,
         user: this.user,
-        currentCompanyId: this.currentCompanyId,
+        currentWorkspaceId: this.currentWorkspaceId,
         tenantRole: this.tenantRole,
         language: this.language
       }))
@@ -273,14 +319,25 @@ export const useUserStore = defineStore({
     loadState() {
       const saved = sessionStorage.getItem('userStore')
       if (saved) {
-        const state = JSON.parse(saved)
-        this.token = state.token
-        this.refreshToken = state.refreshToken
-        this.auth = state.auth
-        this.user = state.user
-        this.currentCompanyId = state.currentCompanyId
-        this.tenantRole = state.tenantRole
-        this.language = state.language || 'PT'
+        try {
+          const state = JSON.parse(saved)
+          this.token = state.token
+          this.refreshToken = state.refreshToken
+          this.auth = state.auth
+          this.user = {
+            ...(state.user || {}),
+            workspaces: (state.user?.workspaces || []).map((workspace: WorkspaceClaim) => normalizeWorkspace(workspace))
+          }
+          this.currentWorkspaceId = state.currentWorkspaceId ?? null
+          this.tenantRole = state.tenantRole
+          this.language = state.language || 'PT'
+
+          if (this.currentWorkspaceId && !this.tenantRole) {
+            this.tenantRole = workspaceRoleOf(findWorkspaceById(this.user.workspaces || [], this.currentWorkspaceId))
+          }
+        } catch {
+          sessionStorage.removeItem('userStore')
+        }
       }
 
       // Preference is intentionally stored in localStorage (survives sessions)
@@ -311,13 +368,9 @@ export const useUserStore = defineStore({
         this.user.language = decoded.user_language
       }
 
-      const companiesClaim = Array.isArray(decoded.companies) ? decoded.companies : []
-      if (companiesClaim.length) {
-        this.setCompanies(companiesClaim.map((company: Company) => ({
-          companyId: company.companyId,
-          companyName: company.companyName,
-          role: company.role ?? null
-        })))
+      const workspacesClaim = Array.isArray(decoded.workspaces) ? decoded.workspaces : []
+      if (workspacesClaim.length) {
+        this.setWorkspaces(workspacesClaim.map((workspace: WorkspaceClaim) => normalizeWorkspace(workspace)))
       }
 
       if (decoded.userRoles) {
@@ -328,69 +381,71 @@ export const useUserStore = defineStore({
         }
       }
 
-      if (decoded.companyId) {
-        this.currentCompanyId = decoded.companyId
+      if (decoded.workspaceId) {
+        this.currentWorkspaceId = decoded.workspaceId
       } else {
-        this.currentCompanyId = null
+        this.currentWorkspaceId = null
       }
 
       if (decoded.tenantRole || decoded.userRole || decoded.role) {
         this.tenantRole = decoded.tenantRole || decoded.userRole || decoded.role
-      } else if (!decoded.companyId) {
+      } else if (decoded.workspaceId) {
+        this.tenantRole = workspaceRoleOf(findWorkspaceById(this.getWorkspaces || [], decoded.workspaceId))
+      } else if (!decoded.workspaceId) {
         this.tenantRole = null
       }
 
       // Only update preference when token is explicitly tenant-scoped.
-      if (this.currentCompanyId) {
-        this.setPreferredTenant(this.currentCompanyId)
+      if (this.getCurrentWorkspaceId) {
+        this.setPreferredWorkspace(this.getCurrentWorkspaceId)
       }
 
       this.saveState()
     },
 
-    async hydrateCompanyDetailsFromBudget(companyIds?: string[]) {
-      const targetIds = (companyIds && companyIds.length
-        ? companyIds
+    async hydrateWorkspaceDetailsFromBudget(workspaceIds?: string[]) {
+      const targetIds = (workspaceIds && workspaceIds.length
+        ? workspaceIds
         : [
-            ...(this.user.companies || []).map((c) => c.companyId),
-            ...(this.currentCompanyId ? [this.currentCompanyId] : [])
+            ...(this.getWorkspaces || []).map((workspace: Workspace) => workspaceIdOf(workspace)),
+            ...(this.getCurrentWorkspaceId ? [this.getCurrentWorkspaceId] : [])
           ]).filter(Boolean) as string[]
 
       const uniqueIds = Array.from(new Set(targetIds))
       if (!uniqueIds.length) return
 
-      const byId = new Map((this.user.companies || []).map((c) => [c.companyId, { ...c }]))
+      const byId = new Map<string, Workspace>((this.getWorkspaces || []).map((workspace: Workspace) => [workspaceIdOf(workspace), { ...workspace }]))
 
       await Promise.all(
-        uniqueIds.map(async (companyId) => {
-          const existing = byId.get(companyId)
-          if (existing?.companyName && existing.companyName.trim().length > 0) {
+        uniqueIds.map(async (workspaceId) => {
+          const existing = byId.get(workspaceId)
+          if (existing?.workspaceName && existing.workspaceName.trim().length > 0) {
             return
           }
 
           try {
-            const response = await CompanyService.getDetails(companyId)
-            const companyName =
-              response?.data?.companyName ||
+            const response = await WorkspaceService.getDetails(workspaceId)
+            const workspaceName =
+              response?.data?.workspaceName ||
               response?.data?.name ||
               response?.data?.title ||
               null
 
-            if (!companyName) return
+            if (!workspaceName) return
 
-            byId.set(companyId, {
-              companyId,
+            byId.set(workspaceId, {
+              workspaceId,
+              workspaceName: String(workspaceName),
               role: existing?.role ?? null,
-              companyName: String(companyName)
             })
           } catch {
-            // Best effort only: company details may be unavailable for some IDs.
-            console.warn('Could not hydrate company details from budget-api for companyId=', companyId)
+            console.warn('Could not hydrate workspace details from budget-api for workspaceId=', workspaceId)
           }
         })
       )
 
-      this.user.companies = Array.from(byId.values())
+      const workspaces = Array.from(byId.values())
+      this.user.workspaces = workspaces
       this.saveState()
     },
 
@@ -429,7 +484,7 @@ export const useUserStore = defineStore({
         username: response.username,
         email: response.email,
         language: userLanguage,
-        companies: response.companies || this.user.companies || [],
+        workspaces: (response.workspaces || this.user.workspaces || []).map((workspace: WorkspaceClaim) => normalizeWorkspace(workspace)),
         userRoles: normalizedUserRoles
       })
 
@@ -437,33 +492,29 @@ export const useUserStore = defineStore({
         this.syncFromToken(accessToken)
       }
 
-      const companyId = response.companyId || this.currentCompanyId
+      const workspaceId = response.workspaceId || this.getCurrentWorkspaceId
       const tenantRole = response.tenantRole || this.tenantRole
 
-      if (companyId && tenantRole) {
-        const selectedCompany = this.user.companies?.find((c: Company) => c.companyId === companyId)
-        this.setCurrentCompany(companyId, tenantRole, selectedCompany?.companyName)
-        this.setPreferredTenant(companyId)
+      if (workspaceId && tenantRole) {
+        const selectedWorkspace = this.getWorkspaces?.find((workspace: Workspace) => workspaceIdOf(workspace) === workspaceId)
+        this.setCurrentWorkspace(workspaceId, tenantRole, workspaceNameOf(selectedWorkspace))
+        this.setPreferredWorkspace(workspaceId)
       }
 
-      const companies = this.user.companies || []
+      const workspaces = this.getWorkspaces || []
 
       return {
-        hasCompanies: companies.length > 0,
-        hasMultipleCompanies: companies.length > 1,
-        companyPreselected: Boolean(companyId && tenantRole),
-        companies
+        hasWorkspaces: workspaces.length > 0,
+        hasMultipleWorkspaces: workspaces.length > 1,
+        workspacePreselected: Boolean(workspaceId && tenantRole),
+        workspaces
       }
     },
 
-    /**
-     * Select company and update tokens
-     * Calls backend API and replaces tokens
-     */
-    async selectCompany(companyId: string) {
+    async selectWorkspace(workspaceId: string) {
       try {
-        const response = await CompanyService.selectCompany(companyId)
-        const { accessToken, refreshToken, tenantRole, companyId: resolvedCompanyId } = response.data
+        const response = await WorkspaceService.selectWorkspace(workspaceId)
+        const { accessToken, refreshToken, tenantRole, workspaceId: resolvedWorkspaceId } = response.data
 
         if (accessToken) {
           this.token = accessToken
@@ -476,23 +527,23 @@ export const useUserStore = defineStore({
 
         const decoded = accessToken ? decodeJWT(accessToken) : null
         const resolvedRole = tenantRole || decoded?.tenantRole
-        const effectiveCompanyId = resolvedCompanyId || decoded?.companyId || companyId
-        const companyName = this.user.companies?.find((c: Company) => c.companyId === effectiveCompanyId)?.companyName
+        const effectiveWorkspaceId = resolvedWorkspaceId || decoded?.workspaceId || workspaceId
+        const workspaceName = this.getWorkspaces?.find((workspace: Workspace) => workspaceIdOf(workspace) === effectiveWorkspaceId)?.workspaceName
 
-        this.setCurrentCompany(effectiveCompanyId, resolvedRole, companyName)
-        this.setPreferredTenant(effectiveCompanyId)
-        await this.hydrateCompanyDetailsFromBudget([effectiveCompanyId])
+        this.setCurrentWorkspace(effectiveWorkspaceId, resolvedRole, workspaceName)
+        this.setPreferredWorkspace(effectiveWorkspaceId)
+        await this.hydrateWorkspaceDetailsFromBudget([effectiveWorkspaceId])
 
         return true
       } catch (error) {
-        console.error('Error selecting company:', error)
+        console.error('Error selecting workspace:', error)
         throw error
       }
     },
 
-    async clearCompanySelection() {
+    async clearWorkspaceSelection() {
       try {
-        const response = await CompanyService.clearCompany()
+        const response = await WorkspaceService.clearWorkspace()
         const { accessToken, refreshToken } = response.data
 
         if (accessToken) {
@@ -504,14 +555,15 @@ export const useUserStore = defineStore({
           this.refreshToken = refreshToken
         }
 
-        this.clearCurrentCompany()
+        this.clearCurrentWorkspace()
         this.setPreferredPersonal()
         return true
       } catch (error) {
-        console.error('Error clearing company selection:', error)
+        console.error('Error clearing workspace selection:', error)
         throw error
       }
     },
+
 
     /**
      * Attempt to refresh access token using refresh token
@@ -520,12 +572,35 @@ export const useUserStore = defineStore({
     async tryRefreshToken() {
       if (!this.refreshToken) return false
       try {
+        const previousWorkspaceId = this.currentWorkspaceId
+        const previousTenantRole = this.tenantRole
+        const previousWorkspace = previousWorkspaceId
+          ? (this.getWorkspaces || []).find((workspace: Workspace) => workspaceIdOf(workspace) === previousWorkspaceId)
+          : null
+
         const response = await AuthService.refreshToken(this.refreshToken)
         const { accessToken, refreshToken } = response.data
         if (accessToken) {
           this.token = accessToken
           this.syncFromToken(accessToken)
-          await this.hydrateCompanyDetailsFromBudget()
+
+          if (previousWorkspaceId && !this.currentWorkspaceId) {
+            this.setCurrentWorkspace(
+              previousWorkspaceId,
+              previousWorkspace?.role ?? previousTenantRole ?? null,
+              previousWorkspace?.workspaceName
+            )
+          } else if (this.currentWorkspaceId && !this.tenantRole) {
+            const currentWorkspace = (this.getWorkspaces || []).find(
+              (workspace: Workspace) => workspaceIdOf(workspace) === this.currentWorkspaceId
+            )
+            if (currentWorkspace?.role || previousTenantRole) {
+              this.tenantRole = currentWorkspace?.role ?? previousTenantRole ?? null
+              this.saveState()
+            }
+          }
+
+          await this.hydrateWorkspaceDetailsFromBudget()
         }
         if (refreshToken) {
           this.refreshToken = refreshToken

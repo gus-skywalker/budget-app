@@ -95,7 +95,7 @@ import InviteService from '@/services/InviteService'
 const { t } = useI18n()
 
 const userStore = useUserStore()
-const currentCompanyId = computed(() => userStore.getCurrentCompanyId)
+const currentWorkspaceId = computed(() => userStore.getCurrentWorkspaceId)
 
 const inviteForm = ref(null)
 const valid = ref(false)
@@ -132,15 +132,15 @@ onMounted(() => {
 
 const sendInvite = async () => {
   if (!inviteForm.value.validate()) return
-  if (!currentCompanyId.value) {
-    showSnackbar(t('inviteManager.select_company'), 'error')
+  if (!currentWorkspaceId.value) {
+    showSnackbar(t('inviteManager.select_workspace'), 'error')
     return
   }
   
   try {
     loading.value = true
     await InviteService.inviteUser(
-      currentCompanyId.value,
+      currentWorkspaceId.value,
       inviteEmail.value,
       inviteRole.value
     )
@@ -159,10 +159,10 @@ const sendInvite = async () => {
 }
 
 const loadInvites = async () => {
-  if (!currentCompanyId.value) return
+  if (!currentWorkspaceId.value) return
   try {
     loadingInvites.value = true
-    pendingInvites.value = await InviteService.listInvites(currentCompanyId.value)
+    pendingInvites.value = await InviteService.listInvites(currentWorkspaceId.value)
   } catch (error) {
     console.error('Erro ao carregar convites:', error)
   } finally {
@@ -171,10 +171,10 @@ const loadInvites = async () => {
 }
 
 const cancelInvite = async (inviteId) => {
-  if (!currentCompanyId.value) return
+  if (!currentWorkspaceId.value) return
   try {
     cancellingInvite.value = inviteId
-    await InviteService.cancelInvite(currentCompanyId.value, inviteId)
+    await InviteService.cancelInvite(currentWorkspaceId.value, inviteId)
     showSnackbar(t('inviteManager.cancel_success'), 'info')
     loadInvites()
   } catch (error) {

@@ -1,6 +1,6 @@
 <!-- App.vue -->
 <script setup lang="ts">
-import { RouterView } from 'vue-router'
+import { RouterView, useRoute } from 'vue-router'
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import SideBar from './components/SideBar.vue'
 import ContextBadge from '@/components/ContextBadge.vue'
@@ -13,6 +13,8 @@ import type { Notification } from '@/services/NotificationService'
 
 // Access the Pinia store
 const userStore = useUserStore()
+const route = useRoute()
+const routeViewKey = computed(() => route.path)
 
 // Estado das notificações
 const notifications = ref<Notification[]>([])
@@ -45,8 +47,8 @@ function pollNotifications() {
   if (isAuthenticated.value) {
     NotificationService.getNotifications()
       .then((response) => {
-        console.log('Response data:', response.data)
-        notifications.value = response.data.map((notification: Notification) => ({
+        const items = Array.isArray(response.data) ? response.data : []
+        notifications.value = items.map((notification: Notification) => ({
           id: notification.id,
           destinationUser: notification.destinationUser,
           message: notification.message,
@@ -88,7 +90,7 @@ onUnmounted(() => {
         <ContextBadge />
       </div>
       <OnboardingStatusBanner v-if="isAuthenticated" />
-      <RouterView />
+      <RouterView :key="routeViewKey" />
     </v-main>
     <NotificationPopup :visible="showNotificationsPopup" :notifications="notifications"
       @close="toggleNotificationsPopup" @accept="accept" @decline="decline" />

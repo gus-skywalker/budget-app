@@ -13,18 +13,19 @@ import { useUserStore } from './plugins/userStore'
 const app = createApp(App)
 const pinia = createPinia()
 
-app.use(router)
 app.use(pinia)
-app.use(i18n)
-app.use(vuetify)
 
-// Initialize user store
-const userStore = useUserStore()
+// Restore persisted auth/workspace context before the router evaluates guards.
+const userStore = useUserStore(pinia)
 userStore.loadState()
 if (userStore.isAuthenticated) {
-  userStore.hydrateCompanyDetailsFromBudget().catch(() => {
-    // Best-effort hydration; app should continue even if company details fail.
+  userStore.hydrateWorkspaceDetailsFromBudget().catch(() => {
+    // Best-effort hydration; app should continue even if workspace details fail.
   })
 }
+
+app.use(router)
+app.use(i18n)
+app.use(vuetify)
 
 app.mount('#app')

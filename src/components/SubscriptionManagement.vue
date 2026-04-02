@@ -593,8 +593,8 @@ const loadSubscriptionDetails = async () => {
       return
     }
 
-    const subjectType = (isTenantMode.value && userStore.currentCompanyId) ? 'COMPANY' : 'USER'
-    const subjectId = subjectType === 'COMPANY' ? String(userStore.currentCompanyId) : actorUserId.value
+    const subjectType = (isTenantMode.value && userStore.getCurrentWorkspaceId) ? 'WORKSPACE' : 'USER'
+    const subjectId = subjectType === 'WORKSPACE' ? String(userStore.getCurrentWorkspaceId) : actorUserId.value
 
     const access = await BillingOrchestrationService.getPremiumAccess(subjectType as any, subjectId)
     hasPremiumAccess.value = Boolean(access.data?.hasPremiumAccess)
@@ -673,11 +673,10 @@ const startCheckoutSession = async () => {
     const correlationId = createCorrelationId()
 
     const plan = String(selectedPlan.value)
-    const isBusinessPlan = plan.startsWith('BUSINESS_')
-    const companyId = userStore.currentCompanyId
+    const workspaceId = userStore.getCurrentWorkspaceId
 
-    const subjectType = (isTenantMode.value && companyId) ? 'COMPANY' : 'USER'
-    const subjectId = subjectType === 'COMPANY' ? String(companyId) : actorUserId.value
+    const subjectType = (isTenantMode.value && workspaceId) ? 'WORKSPACE' : 'USER'
+    const subjectId = subjectType === 'WORKSPACE' ? String(workspaceId) : actorUserId.value
 
     // ADR-001/004: do not call payment-api; do not send PII.
     const decisionResp = await BillingDecisionService.decide(
@@ -687,7 +686,7 @@ const startCheckoutSession = async () => {
         subjectType,
         subjectId,
         userId: subjectType === 'USER' ? actorUserId.value : null,
-        companyId: subjectType === 'COMPANY' ? String(companyId) : null,
+        workspaceId: subjectType === 'WORKSPACE' ? String(workspaceId) : null,
         ...getBillingContext()
       },
       correlationId
@@ -727,9 +726,9 @@ const openBillingPortal = async (targetPlan?: PlanId) => {
     const correlationId = createCorrelationId()
 
     // Prefer company if tenant mode has company selected; else user.
-    const subjectType = (isTenantMode.value && userStore.currentCompanyId) ? 'COMPANY' : 'USER'
-    const subjectId = subjectType === 'COMPANY' ? String(userStore.currentCompanyId) : actorUserId.value
-    if (subjectType === 'COMPANY' && !userStore.isTenantAdmin) {
+    const subjectType = (isTenantMode.value && userStore.getCurrentWorkspaceId) ? 'WORKSPACE' : 'USER'
+    const subjectId = subjectType === 'WORKSPACE' ? String(userStore.getCurrentWorkspaceId) : actorUserId.value
+    if (subjectType === 'WORKSPACE' && !userStore.isTenantAdmin) {
       alert(t('subscription_management.admin_only_manage'));
       return;
     }
@@ -780,8 +779,8 @@ const openPlanDetails = () => {
     window.dispatchEvent(
       new CustomEvent('billing:plan-details-opened', {
         detail: {
-          subjectType: isTenantMode.value && userStore.currentCompanyId ? 'COMPANY' : 'USER',
-          subjectId: isTenantMode.value && userStore.currentCompanyId ? String(userStore.currentCompanyId) : actorUserId.value,
+          subjectType: isTenantMode.value && userStore.getCurrentWorkspaceId ? 'WORKSPACE' : 'USER',
+          subjectId: isTenantMode.value && userStore.getCurrentWorkspaceId ? String(userStore.getCurrentWorkspaceId) : actorUserId.value,
           currentPlan: currentPlan.value || currentPlanTier.value || 'FREE'
         }
       })
@@ -833,8 +832,8 @@ const cancelSubscription = async () => {
 
     const correlationId = createCorrelationId()
 
-    const subjectType = (isTenantMode.value && userStore.currentCompanyId) ? 'COMPANY' : 'USER'
-    const subjectId = subjectType === 'COMPANY' ? String(userStore.currentCompanyId) : actorUserId.value
+    const subjectType = (isTenantMode.value && userStore.getCurrentWorkspaceId) ? 'WORKSPACE' : 'USER'
+    const subjectId = subjectType === 'WORKSPACE' ? String(userStore.getCurrentWorkspaceId) : actorUserId.value
 
     const storageKey = `billing.cancel.messageId:${correlationId}:${subjectType}:${subjectId}`
     const existingMessageId = sessionStorage.getItem(storageKey)
@@ -861,7 +860,7 @@ const shouldLoad = computed(() => {
   if (!actorUserId.value) {
     return false;
   }
-  if (isTenantMode.value && !userStore.currentCompanyId) {
+  if (isTenantMode.value && !userStore.getCurrentWorkspaceId) {
     return false;
   }
   return true;
@@ -874,7 +873,7 @@ onMounted(() => {
 });
 
 watch(
-  () => [actorUserId.value, userStore.currentCompanyId, isTenantMode.value],
+  () => [actorUserId.value, userStore.getCurrentWorkspaceId, isTenantMode.value],
   () => {
     if (shouldLoad.value) {
       loadSubscriptionDetails();

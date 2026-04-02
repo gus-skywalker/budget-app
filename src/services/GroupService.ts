@@ -1,14 +1,14 @@
 import axiosInterceptor from './axiosInterceptor'
 
 const API_URL = `${import.meta.env.VITE_API_BASE_URL}/groups`
-const COMPANIES_API_URL = `${import.meta.env.VITE_API_BASE_URL}/companies`
+const WORKSPACES_API_URL = `${import.meta.env.VITE_API_BASE_URL}/workspaces`
 
 export default {
   fetchGroups(): Promise<any> {
     return axiosInterceptor.get(API_URL)
   },
-  fetchGroupsByCompany(companyId: string): Promise<any> {
-    return axiosInterceptor.get(`${COMPANIES_API_URL}/${companyId}/groups`)
+  fetchGroupsByWorkspace(workspaceId: string): Promise<any> {
+    return axiosInterceptor.get(`${WORKSPACES_API_URL}/${workspaceId}/groups`)
   },
   createGroup(group: any): Promise<any> {
     return axiosInterceptor.post(API_URL, group)

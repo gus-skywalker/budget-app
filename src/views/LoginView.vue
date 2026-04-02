@@ -166,9 +166,9 @@
 
             <div v-if="isDev" class="test-buttons">
               <h4>{{ $t('authentication.common.test_area_title') }}</h4>
-              <button @click="mockLogin('no-company')" class="btn-test">{{ $t('authentication.common.test_no_company') }}</button>
-              <button @click="mockLogin('single-company')" class="btn-test">{{ $t('authentication.common.test_single_company') }}</button>
-              <button @click="mockLogin('multiple-companies')" class="btn-test">{{ $t('authentication.common.test_multiple_companies') }}</button>
+              <button @click="mockLogin('no-workspace')" class="btn-test">{{ $t('authentication.common.test_no_company') }}</button>
+              <button @click="mockLogin('single-workspace')" class="btn-test">{{ $t('authentication.common.test_single_company') }}</button>
+              <button @click="mockLogin('multiple-workspaces')" class="btn-test">{{ $t('authentication.common.test_multiple_companies') }}</button>
             </div>
           </div>
 
@@ -319,9 +319,9 @@ const userLogin = async () => {
       updateI18nLocale(res.data.language || 'PT')
 
       try {
-        await store.hydrateCompanyDetailsFromBudget()
+        await store.hydrateWorkspaceDetailsFromBudget()
       } catch (hydrateError) {
-        console.warn('Não foi possível hidratar detalhes das empresas no login.', hydrateError)
+        console.warn('Não foi possível hidratar detalhes dos workspaces no login.', hydrateError)
       }
 
       const onboarding = await OnboardingOrchestrator.resolvePostAuthRoute({
@@ -362,59 +362,61 @@ const mockLogin = (scenario) => {
 
   const mockToken = 'mock.jwt.token'
 
-  let companies = []
+  let workspaces = []
 
   switch (scenario) {
-    case 'no-company':
-      companies = []
+    case 'no-workspace':
+      workspaces = []
       break
-    case 'single-company':
-      companies = [
+    case 'single-workspace':
+      workspaces = [
         {
-          companyId: 'company-1',
-          companyName: 'Minha Empresa',
+          workspaceId: 'workspace-1',
+          workspaceName: 'Meu Workspace',
           role: 'ROLE_ADMIN'
         }
       ]
       break
-    case 'multiple-companies':
-      companies = [
+    case 'multiple-workspaces':
+      workspaces = [
         {
-          companyId: 'company-1',
-          companyName: 'Tech Solutions LTDA',
+          workspaceId: 'workspace-1',
+          workspaceName: 'Tech Solutions LTDA',
           role: 'ROLE_ADMIN'
         },
         {
-          companyId: 'company-2',
-          companyName: 'Startup Inovadora',
+          workspaceId: 'workspace-2',
+          workspaceName: 'Startup Inovadora',
           role: 'ROLE_CLIENT'
         },
         {
-          companyId: 'company-3',
-          companyName: 'Consultoria Estratégica',
+          workspaceId: 'workspace-3',
+          workspaceName: 'Consultoria Estratégica',
           role: 'ROLE_USER'
         }
       ]
       break
+    default:
+      workspaces = []
   }
 
   store.$patch({
     user: {
       ...mockUser,
-      companies: companies
+      workspaces
     },
     token: mockToken,
     refreshToken: 'mock.refresh.token',
     auth: true
   })
 
-  store.setCompanies(companies)
+  store.setWorkspaces(workspaces)
 
-  if (companies.length > 1) {
+  if (workspaces.length > 1) {
     store.saveState()
-    router.push({ name: 'select-company', query: { redirect: '/dashboard' } })
-  } else if (companies.length === 1) {
-    store.setCurrentCompany(companies[0].companyId, companies[0].role, companies[0].companyName)
+    router.push({ name: 'select-workspace', query: { redirect: '/dashboard' } })
+  } else if (workspaces.length === 1) {
+    store.setCurrentWorkspace(workspaces[0].workspaceId, workspaces[0].role, workspaces[0].workspaceName)
     store.saveState()
     loginSuccess.value = t('authentication.messages.login_success')
     setTimeout(() => {
@@ -426,7 +428,7 @@ const mockLogin = (scenario) => {
     loginSuccess.value = t('authentication.messages.login_success')
     setTimeout(() => {
       loginSuccess.value = null
-      router.push('/create-company')
+      router.push('/create-workspace')
     }, 800)
   }
 }
