@@ -60,6 +60,48 @@
                 {{ t('subscription_management.payment_sync_unavailable_body') }}
               </div>
             </v-alert>
+            <div v-if="isWorkspaceBillingContext && workspaceQuota" class="workspace-quota mt-4">
+              <div class="workspace-quota__header">
+                <div class="trial-alert__title">{{ t('subscription_management.workspace_quota_title') }}</div>
+                <div class="workspace-quota__description">
+                  {{ t('subscription_management.workspace_quota_description') }}
+                </div>
+              </div>
+              <v-alert
+                v-if="!workspaceQuota.hasBillingAccount"
+                type="info"
+                variant="tonal"
+                class="mt-3"
+              >
+                <div class="trial-alert__title">{{ t('subscription_management.workspace_quota_unlinked_title') }}</div>
+                <div>
+                  {{ t('subscription_management.workspace_quota_unlinked_body') }}
+                </div>
+              </v-alert>
+              <div class="subscription-info-grid mt-4">
+                <div class="info-item">
+                  <div class="info-label">
+                    <v-icon size="20" color="#667eea">mdi-view-grid</v-icon>
+                    {{ t('subscription_management.active_workspaces_label') }}
+                  </div>
+                  <div class="info-value">{{ workspaceQuota.activeWorkspaceCount }}</div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">
+                    <v-icon size="20" color="#667eea">mdi-account-multiple</v-icon>
+                    {{ t('subscription_management.collaborative_workspaces_label') }}
+                  </div>
+                  <div class="info-value">{{ workspaceQuota.activeCollaborativeWorkspaceCount }}</div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">
+                    <v-icon size="20" color="#667eea">mdi-account</v-icon>
+                    {{ t('subscription_management.personal_workspaces_label') }}
+                  </div>
+                  <div class="info-value">{{ workspaceQuota.activePersonalWorkspaceCount }}</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -247,7 +289,7 @@
 
             <!-- Botão para gerenciar assinatura (sempre visível se não houver mudança pendente) -->
             <v-btn 
-              v-if="!selectedPlan || currentPlan === selectedPlan"
+              v-if="(!selectedPlan || currentPlan === selectedPlan) && isPremium"
               @click="openBillingPortal"
               variant="outlined"
               color="#667eea"
@@ -382,15 +424,23 @@ const actorUserId = computed(() => String(props.user.id || userStore.user?.id ||
 type MaybePlanId = PlanId | '';
 type PlanTier = 'FREE' | 'STARTER' | 'TEAM' | '';
 type BillingCycleUi = 'MONTHLY' | 'ANNUAL' | '';
+type BillingAccessWorkspaceQuota = {
+  hasBillingAccount: boolean
+  activeWorkspaceCount: number
+  activeCollaborativeWorkspaceCount: number
+  activePersonalWorkspaceCount: number
+}
 
 const currentPlan = ref<MaybePlanId>('');
 const currentPlanTier = ref<PlanTier>('');
 const currentBillingCycle = ref<BillingCycleUi>('');
+const currentBillingSubjectType = ref<'USER' | 'WORKSPACE'>('USER')
 const subscriptionStatus = ref('');
 const trialEndsAt = ref('');
 const nextBillingDate = ref('');
 const paymentProviderReachable = ref(true);
 const subscriptionDataSource = ref<'LOCAL' | 'PAYMENT_API' | 'LOCAL_FALLBACK'>('LOCAL');
+const workspaceQuota = ref<BillingAccessWorkspaceQuota | null>(null)
 const selectedPlan = ref<MaybePlanId>(''); // Para atualizar o plano
 const hasPremiumAccess = ref(false);
 const lastLoadedPlan = ref<MaybePlanId>('');
@@ -449,6 +499,10 @@ const discountPercent = (monthlyAmount: number, annualAmount: number) => {
 const mapPlanIdToTier = (planId: PlanId): Exclude<PlanTier, ''> => {
   return planId === 'BUSINESS_MONTHLY' || planId === 'BUSINESS_ANNUAL' ? 'TEAM' : 'STARTER';
 };
+
+const isWorkspacePlanId = (planId: PlanId) => {
+  return planId === 'BUSINESS_MONTHLY' || planId === 'BUSINESS_ANNUAL'
+}
 
 const mapPlanIdToCycle = (planId: PlanId): Exclude<BillingCycleUi, ''> => {
   return planId === 'BUSINESS_ANNUAL' || planId === 'ANNUAL' ? 'ANNUAL' : 'MONTHLY';
@@ -548,6 +602,7 @@ const isPremium = computed(() => {
 
 const isTrialing = computed(() => subscriptionStatus.value === 'TRIALING');
 const paymentSyncDegraded = computed(() => subscriptionDataSource.value === 'LOCAL_FALLBACK' || !paymentProviderReachable.value);
+const isWorkspaceBillingContext = computed(() => currentBillingSubjectType.value === 'WORKSPACE')
 
 const formatDateTime = (value: string) => {
   if (!value) return ''
@@ -587,6 +642,29 @@ const changePlanActionText = computed(() => {
   return `${base} (Portal)`;
 });
 
+const resolveBillingSubjectForPlan = (planId?: PlanId | '') => {
+  const workspaceId = userStore.getCurrentWorkspaceId
+  const effectivePlan = isPlanId(planId)
+    ? planId
+    : (isPlanId(currentPlan.value) ? currentPlan.value : null)
+
+  if (effectivePlan && isWorkspacePlanId(effectivePlan)) {
+    if (!workspaceId) {
+      throw new Error('Workspace não selecionado para plano TEAM')
+    }
+
+    return {
+      subjectType: 'WORKSPACE' as const,
+      subjectId: String(workspaceId)
+    }
+  }
+
+  return {
+    subjectType: 'USER' as const,
+    subjectId: actorUserId.value
+  }
+}
+
 const loadSubscriptionDetails = async () => {
   try {
     if (!actorUserId.value) {
@@ -597,6 +675,7 @@ const loadSubscriptionDetails = async () => {
     const subjectId = subjectType === 'WORKSPACE' ? String(userStore.getCurrentWorkspaceId) : actorUserId.value
 
     const access = await BillingOrchestrationService.getPremiumAccess(subjectType as any, subjectId)
+    currentBillingSubjectType.value = subjectType
     hasPremiumAccess.value = Boolean(access.data?.hasPremiumAccess)
     const resolvedStatus = access.data?.subscriptionStatus || (access.data?.hasPremiumAccess ? 'ACTIVE' : 'NONE')
     subscriptionStatus.value = String(resolvedStatus).toUpperCase()
@@ -604,6 +683,14 @@ const loadSubscriptionDetails = async () => {
     nextBillingDate.value = String(access.data?.nextBillingDate || '')
     paymentProviderReachable.value = access.data?.paymentProviderReachable !== false
     subscriptionDataSource.value = access.data?.subscriptionDataSource || 'LOCAL'
+    workspaceQuota.value = subjectType === 'WORKSPACE' && access.data?.workspaceQuota
+      ? {
+          hasBillingAccount: Boolean(access.data.workspaceQuota.hasBillingAccount),
+          activeWorkspaceCount: Number(access.data.workspaceQuota.activeWorkspaceCount || 0),
+          activeCollaborativeWorkspaceCount: Number(access.data.workspaceQuota.activeCollaborativeWorkspaceCount || 0),
+          activePersonalWorkspaceCount: Number(access.data.workspaceQuota.activePersonalWorkspaceCount || 0)
+        }
+      : null
 
     const rawPlanId = (access.data as any)?.currentPlanId
       || (access.data as any)?.planId
@@ -640,6 +727,7 @@ const loadSubscriptionDetails = async () => {
     }
     lastLoadedPlan.value = currentPlan.value
   } catch (error) {
+    workspaceQuota.value = null
     console.error(t('subscription_management.error_load_details'), error);
   }
 };
@@ -674,9 +762,7 @@ const startCheckoutSession = async () => {
 
     const plan = String(selectedPlan.value)
     const workspaceId = userStore.getCurrentWorkspaceId
-
-    const subjectType = (isTenantMode.value && workspaceId) ? 'WORKSPACE' : 'USER'
-    const subjectId = subjectType === 'WORKSPACE' ? String(workspaceId) : actorUserId.value
+    const { subjectType, subjectId } = resolveBillingSubjectForPlan(selectedPlan.value)
 
     // ADR-001/004: do not call payment-api; do not send PII.
     const decisionResp = await BillingDecisionService.decide(
@@ -725,9 +811,7 @@ const openBillingPortal = async (targetPlan?: PlanId) => {
 
     const correlationId = createCorrelationId()
 
-    // Prefer company if tenant mode has company selected; else user.
-    const subjectType = (isTenantMode.value && userStore.getCurrentWorkspaceId) ? 'WORKSPACE' : 'USER'
-    const subjectId = subjectType === 'WORKSPACE' ? String(userStore.getCurrentWorkspaceId) : actorUserId.value
+    const { subjectType, subjectId } = resolveBillingSubjectForPlan(targetPlan)
     if (subjectType === 'WORKSPACE' && !userStore.isTenantAdmin) {
       alert(t('subscription_management.admin_only_manage'));
       return;
@@ -738,7 +822,7 @@ const openBillingPortal = async (targetPlan?: PlanId) => {
     const messageId = existingMessageId || createMessageId()
     if (!existingMessageId) sessionStorage.setItem(storageKey, messageId)
 
-    const returnUrl = `${window.location.origin}/#/settings`
+    const returnUrl = `${window.location.origin}/settings`
 
     const payload: any = {
       actor: actorUserId.value,
@@ -955,6 +1039,16 @@ watch(
   background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
   border-radius: 12px;
   padding: 20px;
+}
+
+.workspace-quota__description {
+  margin-top: 6px;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.v-theme--dark .workspace-quota__description {
+  color: #b0b0b0;
 }
 
 .v-theme--dark .subscription-overview {

@@ -235,7 +235,14 @@
     "trial_active_generic": "Você tem acesso premium durante o período de avaliação.",
     "payment_sync_unavailable_title": "Serviço de pagamentos temporariamente indisponível",
     "payment_sync_unavailable_body": "Estamos mostrando a última informação de assinatura disponível no budget. Alterações de plano, portal e cancelamento ficam indisponíveis até a sincronização com o provedor voltar.",
-    "payment_sync_actions_disabled": "As ações de assinatura estão temporariamente indisponíveis enquanto o serviço de pagamentos estiver fora do ar."
+    "payment_sync_actions_disabled": "As ações de assinatura estão temporariamente indisponíveis enquanto o serviço de pagamentos estiver fora do ar.",
+    "workspace_quota_title": "Uso de workspaces",
+    "workspace_quota_description": "Este é o uso atual de workspaces vinculado à sua conta de cobrança.",
+    "workspace_quota_unlinked_title": "Conta de cobrança ainda não vinculada",
+    "workspace_quota_unlinked_body": "Ainda não conseguimos resolver uma conta de cobrança para este workspace, então o uso aparece como zero por enquanto.",
+    "active_workspaces_label": "Workspaces ativos",
+    "collaborative_workspaces_label": "Workspaces colaborativos",
+    "personal_workspaces_label": "Workspaces pessoais"
   },
   "budget": {
     "title": "Sua Contabilidade"

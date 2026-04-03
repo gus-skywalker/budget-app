@@ -88,7 +88,33 @@ export default {
   },
 
   methods: {
-    async checkSubscriptionStatus() {
+    resolveCheckoutSubject() {
+      const params = new URLSearchParams(window.location.search)
+      const subjectTypeFromUrl = params.get('subjectType')
+      const subjectIdFromUrl = params.get('subjectId')
+
+      if ((subjectTypeFromUrl === 'USER' || subjectTypeFromUrl === 'WORKSPACE') && subjectIdFromUrl) {
+        return {
+          subjectType: subjectTypeFromUrl,
+          subjectId: subjectIdFromUrl
+        }
+      }
+
+      try {
+        const saved = sessionStorage.getItem('billing.checkout.lastContext')
+        if (saved) {
+          const parsed = JSON.parse(saved)
+          if ((parsed?.subjectType === 'USER' || parsed?.subjectType === 'WORKSPACE') && parsed?.subjectId) {
+            return {
+              subjectType: parsed.subjectType,
+              subjectId: parsed.subjectId
+            }
+          }
+        }
+      } catch {
+        sessionStorage.removeItem('billing.checkout.lastContext')
+      }
+
       const userStore = useUserStore();
       const userId = userStore.user?.id;
       const workspaceId = userStore.getCurrentWorkspaceId;
@@ -98,8 +124,14 @@ export default {
         throw new Error('Usuário não identificado');
       }
 
-      const subjectType = (isTenantMode && workspaceId) ? 'WORKSPACE' : 'USER';
-      const subjectId = subjectType === 'WORKSPACE' ? String(workspaceId) : String(userId);
+      return {
+        subjectType: (isTenantMode && workspaceId) ? 'WORKSPACE' : 'USER',
+        subjectId: (isTenantMode && workspaceId) ? String(workspaceId) : String(userId)
+      }
+    },
+
+    async checkSubscriptionStatus() {
+      const { subjectType, subjectId } = this.resolveCheckoutSubject()
 
       // Poll budget-api until webhook projection becomes premium=true.
       const startedAt = Date.now();
@@ -110,6 +142,7 @@ export default {
         const response = await BillingOrchestrationService.getPremiumAccess(subjectType, subjectId);
         if (response.data?.hasPremiumAccess) {
           this.subscriptionDetails = response.data;
+          sessionStorage.removeItem('billing.checkout.lastContext')
           return;
         }
         await new Promise(resolve => setTimeout(resolve, intervalMs));

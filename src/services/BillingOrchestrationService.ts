@@ -69,6 +69,12 @@ export interface BillingAccessResponse {
   nextBillingDate?: string
   paymentProviderReachable?: boolean
   subscriptionDataSource?: 'LOCAL' | 'PAYMENT_API' | 'LOCAL_FALLBACK'
+  workspaceQuota?: {
+    hasBillingAccount: boolean
+    activeWorkspaceCount: number
+    activeCollaborativeWorkspaceCount: number
+    activePersonalWorkspaceCount: number
+  }
   checkedAt: string
 }
 

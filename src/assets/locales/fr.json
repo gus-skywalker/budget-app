@@ -235,7 +235,14 @@
     "trial_active_generic": "Vous disposez actuellement d'un accès premium pendant la période d'essai.",
     "payment_sync_unavailable_title": "Service de paiement temporairement indisponible",
     "payment_sync_unavailable_body": "Nous affichons les dernières informations d'abonnement disponibles dans Budget. Les changements de forfait, le portail de facturation et l'annulation resteront indisponibles jusqu'au retour de la synchronisation avec le fournisseur de paiement.",
-    "payment_sync_actions_disabled": "Les actions d'abonnement sont temporairement indisponibles tant que le service de paiement est hors ligne."
+    "payment_sync_actions_disabled": "Les actions d'abonnement sont temporairement indisponibles tant que le service de paiement est hors ligne.",
+    "workspace_quota_title": "Utilisation des workspaces",
+    "workspace_quota_description": "Voici l'utilisation actuelle des workspaces liée à votre compte de facturation.",
+    "workspace_quota_unlinked_title": "Compte de facturation pas encore lié",
+    "workspace_quota_unlinked_body": "Nous n'avons pas encore pu résoudre un compte de facturation pour ce workspace, donc l'utilisation est affichée à zéro pour le moment.",
+    "active_workspaces_label": "Workspaces actifs",
+    "collaborative_workspaces_label": "Workspaces collaboratifs",
+    "personal_workspaces_label": "Workspaces personnels"
   },
   "budget": {
     "title": "Votre comptabilité"

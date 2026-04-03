@@ -237,7 +237,14 @@
     "trial_active_generic": "You currently have premium access during the trial period.",
     "payment_sync_unavailable_title": "Payment service temporarily unavailable",
     "payment_sync_unavailable_body": "We are showing the latest subscription information available in Budget. Plan changes, billing portal, and cancellation stay unavailable until synchronization with the payment provider is restored.",
-    "payment_sync_actions_disabled": "Subscription actions are temporarily unavailable while the payment service is offline."
+    "payment_sync_actions_disabled": "Subscription actions are temporarily unavailable while the payment service is offline.",
+    "workspace_quota_title": "Workspace usage",
+    "workspace_quota_description": "This is the current workspace usage linked to your billing account.",
+    "workspace_quota_unlinked_title": "Billing account not linked yet",
+    "workspace_quota_unlinked_body": "We could not resolve a billing account for this workspace yet, so usage is currently shown as zero.",
+    "active_workspaces_label": "Active workspaces",
+    "collaborative_workspaces_label": "Collaborative workspaces",
+    "personal_workspaces_label": "Personal workspaces"
   },
 
   "budget": {
