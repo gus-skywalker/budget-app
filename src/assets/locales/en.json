@@ -105,8 +105,9 @@
       "profile": "Profile",
       "security": "Security",
       "preferences": "Preferences",
+      "workspace": "Workspace",
       "connections": "Connections",
-      "subscription": "Subscription"
+      "subscription": "Billing"
     },
     "profile": {
       "title": "Profile Information",
@@ -154,11 +155,11 @@
   },
 
   "subscription_management": {
-    "title": "Subscription Management",
+    "title": "Billing Overview",
     "current_plan": "Current Plan",
     "plan_label": "Plan",
     "status": "Status",
-    "change_plan_title": "Change Plan",
+    "change_plan_title": "Billing & Plan Actions",
     "details": "Details",
     "starter_group": "Starter",
     "team_group": "Team",
@@ -221,7 +222,7 @@
     "already_premium": "You already have premium access.",
     "error_start_checkout": "Error starting checkout session:",
     "error_checkout_later": "Could not start checkout. Please try again later.",
-    "admin_only_manage": "Only workspace owner/admin can manage subscription.",
+    "admin_only_manage": "Only the workspace owner/admin can manage the subscription.",
     "portal_unavailable": "Portal unavailable: {error}",
     "portal_preparing": "Request sent. Billing portal is still being prepared.",
     "error_request_portal": "Error requesting billing portal:",
@@ -237,7 +238,15 @@
     "trial_active_generic": "You currently have premium access during the trial period.",
     "payment_sync_unavailable_title": "Payment service temporarily unavailable",
     "payment_sync_unavailable_body": "We are showing the latest subscription information available in Budget. Plan changes, billing portal, and cancellation stay unavailable until synchronization with the payment provider is restored.",
-    "payment_sync_actions_disabled": "Subscription actions are temporarily unavailable while the payment service is offline."
+    "payment_sync_actions_disabled": "Subscription actions are temporarily unavailable while the payment service is offline.",
+    "global_billing_notice": "Billing is global to your account. The active workspace is used only as operational context to load limits and start billing actions.",
+    "workspace_quota_title": "Workspace usage",
+    "workspace_quota_description": "This is the current workspace usage linked to your billing account.",
+    "workspace_quota_unlinked_title": "Billing account not linked yet",
+    "workspace_quota_unlinked_body": "We could not resolve a billing account for this workspace yet, so usage is currently shown as zero.",
+    "active_workspaces_label": "Active workspaces",
+    "collaborative_workspaces_label": "Collaborative workspaces",
+    "personal_workspaces_label": "Personal workspaces"
   },
 
   "budget": {
@@ -293,7 +302,7 @@
     "ai_reason_bank_mapping": "We found a bank mapping already known for this expense.",
     "ai_reason_recent_history": "We found recent similar expenses that were already categorized.",
     "ai_reason_manual_feedback": "We found a category you manually confirmed before.",
-    "ai_reason_repeated_history": "We found this repeated pattern in your company's categorized history.",
+    "ai_reason_repeated_history": "We found this repeated pattern in your workspace's categorized history.",
     "ai_reason_exact_match": "We found an identical description that was categorized before.",
     "ai_reason_similar_match": "We found a very similar description in your history.",
     "ai_reason_recurring_terms": "We found recurring terms that usually point to this category.",
@@ -303,6 +312,28 @@
   "report_view": {
     "title": "Reports",
     "subtitle": "Generate expense and income reports with the filters that matter most."
+  },
+  "onboarding": {
+    "eyebrow": "Onboarding",
+    "step_badge": "Step {current}/3",
+    "auth": "Access",
+    "workspace": "Workspace",
+    "billing": "Plan",
+    "continue": "Continue",
+    "login_cta": "Sign in",
+    "create_workspace_cta": "Create workspace",
+    "select_workspace_cta": "Select workspace",
+    "choose_plan_cta": "Choose plan",
+    "auth_required_title": "Sign in to continue setup",
+    "auth_required_description": "Once your session is active, the flow moves straight into creating the first workspace.",
+    "workspace_required_title": "Create the first workspace to unlock the product",
+    "workspace_required_description": "Every plan needs at least one active workspace. Keep this step fast and low friction.",
+    "workspace_selection_title": "Choose which workspace you want to enter",
+    "workspace_selection_description": "You already have access to more than one workspace. Pick the right context before moving on.",
+    "billing_required_title": "Choose a plan before entering the dashboard",
+    "billing_required_description": "After the workspace context is ready, choose the plan you want to request. Billing remains global and is resolved by the backend.",
+    "ready_title": "Onboarding complete",
+    "ready_description": "Your access is ready and the initial flow has been completed."
   },
   "reportGenerator": {
     "title": "Generate reports",
@@ -536,13 +567,13 @@
     "no_top_categories": "No highlighted categories right now."
   },
   "activity": {
-    "subtitle": "Follow what happened in the company shared space with more context and continuity.",
+    "subtitle": "Follow what happened in the workspace shared space with more context and continuity.",
     "back_to_dashboard": "Back to dashboard",
     "view_all": "View all"
   },
   "transactionComments": {
     "title": "Transaction comments",
-    "subtitle": "Use this space to align company context around a shared transaction.",
+    "subtitle": "Use this space to align workspace context around a shared transaction.",
     "loading": "Loading comments...",
     "empty": "There are no comments on this transaction yet.",
     "field": "New comment",
@@ -879,57 +910,10 @@
     "success_message": "Operation completed successfully.",
     "error_message": "An error occurred. Please try again."
   },
-  "create_company": {
-    "title": "Create your Workspace",
-    "description": "To start using CoBudget, you need to create a workspace. As an administrator, you can invite other users to collaborate.",
-    "workspace_name": "Workspace Name",
-    "workspace_placeholder": "E.g.: Main Operation",
-    "country_label": "Registration Country",
-    "description_optional": "Description (Optional)",
-    "description_placeholder": "Briefly describe your company...",
-    "create_button": "Create Workspace",
-    "view_premium_plans": "View Premium plans",
-    "country_required": "Select the registration country",
-    "workspace_name_required": "Company name is required",
-    "workspace_name_min": "Name must have at least 2 characters",
-    "workspace_name_max": "Name must have at most 100 characters",
-    "tax_id_generic": "Tax identification number",
-    "tax_id_placeholder_generic": "Enter tax ID number",
-    "legal_document_required": "{label} is required",
-    "legal_document_cnpj": "CNPJ must have 14 digits",
-    "legal_document_ein": "EIN must have 9 digits",
-    "legal_document_cuit": "CUIT must have 11 digits",
-    "legal_document_nif": "NIF must have 9 digits",
-    "legal_document_rfc": "RFC must have 12 or 13 characters",
-    "legal_document_vat": "VAT must have between 8 and 15 characters",
-    "legal_document_rut": "RUT format must be 12345678-9",
-    "legal_document_nit": "NIT must have 9 or 10 digits",
-    "legal_document_ruc": "RUC must have 11 digits",
-    "legal_document_bn": "BN must have 9 digits",
-    "legal_document_invalid": "Invalid tax number",
-    "description_max": "Description must have at most 200 characters",
-    "created_select_company": "Company created. Select the company to continue.",
-    "created_success": "Company created successfully!",
-    "upgrade_limit_company": "You reached STARTER company limit. Upgrade to TEAM.",
-    "countries": {
-      "br": "Brazil",
-      "us": "United States",
-      "ar": "Argentina",
-      "pt": "Portugal",
-      "es": "Spain",
-      "mx": "Mexico",
-      "de": "Germany",
-      "fr": "France",
-      "cl": "Chile",
-      "co": "Colombia",
-      "pe": "Peru",
-      "uk": "United Kingdom",
-      "it": "Italy",
-      "ca": "Canada",
-      "other": "Other"
-    }
-  },
-  "create_workspace": {
+  "createWorkspace": {
+    "workspace_first_badge": "Workspace-first",
+    "workspace_first_note_title": "First access without friction",
+    "workspace_first_note_body": "Create at least one workspace to enter the product. If your plan allows more than one, the flow continues without extra redirects.",
     "title": "Create your Workspace",
     "description": "To start using CoBudget, you need to create a workspace. As an administrator, you can invite other users to collaborate.",
     "workspace_name": "Workspace Name",
@@ -945,6 +929,7 @@
     "workspace_name_max": "Name must have at most 100 characters",
     "tax_id_generic": "Tax identification number",
     "tax_id_placeholder_generic": "Enter tax ID number",
+    "legal_document_optional_hint": "Optional. Add a tax document only if this workspace represents a company.",
     "legal_document_required": "{label} is required",
     "legal_document_cnpj": "CNPJ must have 14 digits",
     "legal_document_ein": "EIN must have 9 digits",
@@ -958,9 +943,10 @@
     "legal_document_bn": "BN must have 9 digits",
     "legal_document_invalid": "Invalid tax number",
     "description_max": "Description must have at most 200 characters",
-    "created_select_company": "Workspace created. Select the workspace to continue.",
+    "created_select_workspace": "Workspace created. Select the workspace to continue.",
     "created_success": "Workspace created successfully!",
-    "upgrade_limit_company": "You reached the STARTER workspace limit. Upgrade to TEAM.",
+    "reached_limit_button": "Plan limit reached",
+    "upgrade_limit_workspace": "You reached the STARTER workspace limit. Upgrade to TEAM.",
     "countries": {
       "br": "Brazil",
       "us": "United States",
@@ -1017,7 +1003,7 @@
     "ai_reason_bank_mapping": "We found a bank mapping already known for this goal.",
     "ai_reason_recent_history": "We found recent similar items in your history.",
     "ai_reason_manual_feedback": "We found a category you manually confirmed before.",
-    "ai_reason_repeated_history": "We found this repeated pattern in your company's categorized history.",
+    "ai_reason_repeated_history": "We found this repeated pattern in your workspace's categorized history.",
     "ai_reason_exact_match": "We found an identical description that was categorized before.",
     "ai_reason_similar_match": "We found a very similar description in your history.",
     "ai_reason_recurring_terms": "We found recurring terms that usually point to this category.",
@@ -1078,6 +1064,7 @@
   "authentication": {
     "login": {
       "title": "Login",
+      "description": "Access your financial workspace with continuity, security, and clear operational context.",
       "email_label": "Email",
       "password_label": "Password",
       "login_button": "Login",
@@ -1087,11 +1074,41 @@
       "not_registered": "Don't have an account yet?",
       "create_account_link": "Create an account."
     },
+    "hero": {
+      "title": "Sign in to CoBudget and regain financial clarity with better context.",
+      "subtitle": "Bring budgeting, cash flow, collaboration, and decision-making into one more reliable experience for families, teams, and growing operations.",
+      "feature_security": "Protected access and continuity for your financial operation.",
+      "feature_visibility": "Clear visibility into budgets, spending, and goals in a single flow.",
+      "feature_collaboration": "Organized collaboration for households, partners, and teams with less friction."
+    },
+    "common": {
+      "or": "or",
+      "and": "and",
+      "show_password": "Show password",
+      "hide_password": "Hide password",
+      "terms_of_use": "Terms of use",
+      "privacy_policy": "Privacy policy",
+      "login_terms_prefix": "By signing in, you agree to the",
+      "signup_terms_prefix": "By creating your account, you agree to the",
+      "test_area_title": "Quick access for tests",
+      "test_no_workspace": "Simulate user without workspace",
+      "test_single_workspace": "Simulate user with one workspace",
+      "test_multiple_workspaces": "Simulate user with multiple workspaces"
+    },
     "forgot_password": {
+      "title": "Recover access",
+      "description": "Enter your email and we will send you a secure link to reset your password.",
+      "email_label": "Email",
+      "email_placeholder": "Enter your email",
+      "submit_button": "Send reset link",
+      "success_message": "If the email is registered, you will receive a link to reset your password.",
+      "invalid_email": "Please enter a valid email address.",
+      "generic_error": "Something went wrong. Please try again later.",
       "back_to_login": "Back to login"
     },
     "signup": {
       "title": "Sign Up",
+      "description": "Create your account to organize finances, automate routines, and move forward with more predictability.",
       "username_label": "Username",
       "email_label": "Email",
       "password_label": "Password",
@@ -1100,24 +1117,41 @@
       "already_registered": "Already have an account?",
       "login_here_link": "Login here."
     },
+    "reset_password": {
+      "title": "Set a new password",
+      "description": "Choose a new password to regain secure access to your account.",
+      "password_label": "New password",
+      "password_placeholder": "Enter your new password",
+      "confirm_password_label": "Confirm new password",
+      "confirm_password_placeholder": "Confirm your new password",
+      "submit_button": "Reset password",
+      "success_message": "Your password has been reset successfully. You can now sign in.",
+      "generic_error": "There was an error resetting your password. Please try again later.",
+      "missing_token": "Invalid or expired link. Request a new password reset.",
+      "back_to_login": "Back to login"
+    },
     "messages": {
       "login_success": "Login successful!",
       "login_failed": "Invalid credentials. Please try again.",
       "signup_success": "Account created successfully.",
+      "signup_success_ready": "Account created successfully. You can sign in now.",
       "signup_failed": "Error creating account. Please try again.",
-      "password_mismatch": "Passwords do not match. Please try again."
+      "password_mismatch": "Passwords do not match. Please try again.",
+      "network_error": "Could not connect to the server. Check your connection and try again.",
+      "server_unavailable": "The service is unavailable right now. Please try again shortly.",
+      "login_unavailable": "We could not complete the login right now. Please try again."
     }
   },
   "transactionVisibility": {
     "label": "Visibility",
     "hint": "Choose whether this transaction is private or shared with the workspace.",
-    "hintCompany": "People in the same workspace context can see this transaction.",
+    "hintWorkspace": "People in the same workspace context can see this transaction.",
     "hintPrivate": "Only you can see this transaction; it will not affect shared workspace views.",
-    "company": "Shared with workspace",
+    "workspace": "Shared with workspace",
     "private": "Private",
     "filters": {
       "all": "All",
-      "company": "Workspace",
+      "workspace": "Workspace",
       "private": "Private"
     },
     "dashboardBadge": "Workspace shared dashboard",
@@ -1128,9 +1162,9 @@
     "reportScopeNote": "Shared reports only use transactions visible to the workspace. Private items stay out of this output.",
     "reportFilter": "Report scope: workspace",
     "empty": {
-      "companyIncome": "No workspace-shared income in this period.",
+      "workspaceIncome": "No workspace-shared income in this period.",
       "privateIncome": "No private income in this period.",
-      "companyExpense": "No workspace-shared expenses in this period.",
+      "workspaceExpense": "No workspace-shared expenses in this period.",
       "privateExpense": "No private expenses in this period."
     }
   },
@@ -1202,19 +1236,19 @@
       "RESOLVED_CREATE_NEW": "Conflict resolved"
     }
   },
-  "companySettings": {
-    "create_new_company": "Create new company",
-    "create_new_company_desc": "Create your company to enable B2B context, invite members and manage permissions.",
-    "company_name": "Company name",
+  "workspaceSettings": {
+    "create_new_workspace": "Create new workspace",
+    "create_new_workspace_desc": "Create your workspace to enable the collaborative context, invite members, and manage permissions.",
+    "workspace_name": "Workspace name",
     "legal_document": "Legal document",
-    "country": "Company country",
-    "description": "Description",
-    "create_company": "Create company",
-    "personal_mode_alert": "You are in personal mode. Create a company or select an existing one to manage organization data.",
-    "select_existing_company": "Select existing company",
-    "only_admin_alert": "Only administrators can update company data, invite members, or delete the organization.",
-    "company_info": "Company Information",
-    "company_info_desc": "Update name and description visible to all members.",
+    "country": "Registration country",
+    "description": "Workspace description",
+    "create_workspace": "Create workspace",
+    "personal_mode_alert": "You are in personal mode. Create a workspace or select an existing one to manage the shared context.",
+    "select_existing_workspace": "Select existing workspace",
+    "only_admin_alert": "Only administrators can update workspace data, invite members, or delete this context.",
+    "workspace_info": "Workspace information",
+    "workspace_info_desc": "Update the name and description visible to all members.",
     "save_changes": "Save changes",
     "invite_members": "Invite members",
     "invite_members_desc": "Send email invites to add new users with the right role.",
@@ -1225,24 +1259,24 @@
     "invites_unavailable": "Invites are currently unavailable.",
     "no_pending_invites": "No pending invites.",
     "current_members": "Current members",
-    "current_members_desc": "List of users associated with the company and their permissions.",
+    "current_members_desc": "List of users associated with the workspace and their permissions.",
     "no_members": "No members found.",
     "danger_zone": "Danger zone",
-    "danger_zone_desc": "Deleting the company removes all associated information. This action cannot be undone.",
-    "delete_company": "Delete company",
+    "danger_zone_desc": "Deleting the workspace removes all associated information. This action cannot be undone.",
+    "delete_workspace": "Delete workspace",
     "confirm_delete_title": "Confirm deletion",
-    "confirm_delete_desc": "Are you sure? Type <strong>{company}</strong> to confirm.",
+    "confirm_delete_desc": "Are you sure? Type <strong>{workspace}</strong> to confirm.",
     "cancel": "Cancel",
     "confirm": "Delete",
     "view_premium_plans": "View Premium plans",
     "required_field": "Required field",
     "invalid_email": "Invalid email",
-    "success_company_created": "Company created successfully.",
-    "success_company_updated": "Information updated.",
+    "success_workspace_created": "Workspace created successfully.",
+    "success_workspace_updated": "Information updated.",
     "success_invite_sent_generic": "Invite sent.",
     "success_cancel_invite": "Invite canceled.",
-    "success_delete": "Company deleted.",
-    "upgrade_limit_company": "You reached STARTER company limit. Upgrade to TEAM.",
+    "success_delete": "Workspace deleted.",
+    "upgrade_limit_workspace": "You reached the STARTER workspace limit. Upgrade to TEAM.",
     "upgrade_limit_member": "You reached STARTER member limit. Upgrade to TEAM.",
     "roles": {
       "ROLE_ADMIN": "Administrator",
@@ -1259,80 +1293,6 @@
       "pt": "Portugal (PT)",
       "es": "Spain (ES)",
       "fr": "France (FR)"
-    }
-  },
-  "workspaceSettings": {
-    "create_new_company": "Create new workspace",
-    "create_new_company_desc": "Create your workspace to enable collaboration, invite members, and manage permissions.",
-    "company_name": "Workspace name",
-    "legal_document": "Legal document",
-    "country": "Workspace country",
-    "description": "Description",
-    "create_company": "Create workspace",
-    "personal_mode_alert": "You are in personal mode. Create a workspace or select an existing one to manage shared data.",
-    "select_existing_company": "Select existing workspace",
-    "only_admin_alert": "Only administrators can update workspace data, invite members, or delete the environment.",
-    "company_info": "Workspace Information",
-    "company_info_desc": "Update the name and description visible to all members.",
-    "save_changes": "Save changes",
-    "invite_members": "Invite members",
-    "invite_members_desc": "Send email invites to add new users with the right role.",
-    "invite_email": "Guest email",
-    "permission": "Permission",
-    "send_invite": "Send invite",
-    "pending_invites": "Pending invites",
-    "invites_unavailable": "Invites are currently unavailable.",
-    "no_pending_invites": "No pending invites.",
-    "current_members": "Current members",
-    "current_members_desc": "List of users associated with the workspace and their permissions.",
-    "no_members": "No members found.",
-    "danger_zone": "Danger zone",
-    "danger_zone_desc": "Deleting the workspace removes all associated information. This action cannot be undone.",
-    "delete_company": "Delete workspace",
-    "confirm_delete_title": "Confirm deletion",
-    "confirm_delete_desc": "Are you sure? Type <strong>{company}</strong> to confirm.",
-    "cancel": "Cancel",
-    "confirm": "Delete",
-    "view_premium_plans": "View Premium plans",
-    "required_field": "Required field",
-    "invalid_email": "Invalid email",
-    "success_company_created": "Workspace created successfully.",
-    "success_company_updated": "Information updated.",
-    "success_invite_sent_generic": "Invite sent.",
-    "success_cancel_invite": "Invite canceled.",
-    "success_delete": "Workspace deleted.",
-    "upgrade_limit_company": "You reached the STARTER workspace limit. Upgrade to TEAM.",
-    "upgrade_limit_member": "You reached the STARTER member limit. Upgrade to TEAM.",
-    "roles": {
-      "ROLE_ADMIN": "Administrator",
-      "ROLE_OWNER": "Owner",
-      "ROLE_MEMBER": "Member",
-      "ROLE_VIEWER": "Viewer",
-      "ROLE_USER": "User",
-      "ROLE_CLIENT": "Manager",
-      "OAUTH2_USER": "OAuth2 User"
-    },
-    "countries": {
-      "br": "Brazil (BR)",
-      "us": "United States (US)",
-      "pt": "Portugal (PT)",
-      "es": "Spain (ES)",
-      "fr": "France (FR)"
-    }
-  },
-  "companySwitcher": {
-    "create_new_workspace": "Create New Workspace",
-    "add_workspace": "Add workspace to your profile",
-    "select_workspace": "Select a workspace",
-    "error_switch": "Error switching workspace. Please try again.",
-    "roles": {
-      "ROLE_ADMIN": "Administrator",
-      "ROLE_OWNER": "Owner",
-      "ROLE_MEMBER": "Member",
-      "ROLE_VIEWER": "Viewer",
-      "ROLE_USER": "User",
-      "ROLE_CLIENT": "Manager",
-      "OAUTH2_USER": "OAuth2 User"
     }
   },
   "workspaceSwitcher": {
@@ -1358,7 +1318,7 @@
     "send_invite": "Send Invite",
     "pending_title": "Pending Invites",
     "no_pending": "No pending invites at the moment.",
-    "select_company": "Select a company before inviting users.",
+    "select_workspace": "Select a workspace before inviting users.",
     "invite_success": "Invite sent successfully!",
     "invite_error": "Failed to send invite.",
     "cancel_success": "Invite canceled.",
@@ -1370,51 +1330,20 @@
     "user": "User",
     "client": "Manager",
     "oauth2_user": "OAuth2 User"
-  },
-  "workspaceInviteManager": {
-    "title": "Manage workspace invites",
-    "email_label": "User email",
-    "email_placeholder": "user@example.com",
-    "role_label": "Role",
-    "send_invite": "Send Invite",
-    "pending_title": "Pending Invites",
-    "no_pending": "No pending invites at the moment.",
-    "select_company": "Select a workspace before inviting users.",
-    "invite_success": "Invite sent successfully!",
-    "invite_error": "Failed to send invite.",
-    "cancel_success": "Invite canceled.",
-    "cancel_error": "Failed to cancel invite.",
-    "admin": "Administrator",
-    "owner": "Owner",
-    "member": "Member",
-    "viewer": "Viewer",
-    "user": "User",
-    "client": "Manager",
-    "oauth2_user": "OAuth2 User"
-  },
-  "companySelector": {
-    "title": "Select Workspace",
-    "desc": "You have access to multiple workspaces. Select the workspace you want to use:",
-    "roles": {
-      "ROLE_ADMIN": "Administrator",
-      "ROLE_OWNER": "Owner",
-      "ROLE_MEMBER": "Member",
-      "ROLE_VIEWER": "Viewer",
-      "ROLE_CLIENT": "Manager",
-      "ROLE_USER": "User",
-      "OAUTH2_USER": "OAuth2 User"
-    }
   },
   "workspaceSelector": {
     "title": "Select Workspace",
     "desc": "You have access to multiple workspaces. Select the workspace you want to use:",
+    "count_label": "workspaces",
+    "empty": "We couldn't find any workspace in your profile yet. You can create one right now.",
+    "undefined_role": "Role not defined",
     "roles": {
       "ROLE_ADMIN": "Administrator",
       "ROLE_OWNER": "Owner",
       "ROLE_MEMBER": "Member",
       "ROLE_VIEWER": "Viewer",
-      "ROLE_CLIENT": "Manager",
       "ROLE_USER": "User",
+      "ROLE_CLIENT": "Manager",
       "OAUTH2_USER": "OAuth2 User"
     }
   },
@@ -1457,7 +1386,7 @@
     "payment_security_title": "Payment Security and Privacy",
     "payment_security_text": "Your payments are securely processed through Stripe. We do not store your payment details and ensure a secure experience with high-grade encryption.",
     "error_login_team": "Log in to subscribe to a TEAM plan.",
-    "error_select_company_team": "Select or create a workspace before subscribing to a TEAM plan.",
+    "error_select_workspace_team": "Select or create a workspace before subscribing to a TEAM plan.",
     "error_user_not_authenticated": "User not authenticated",
     "error_unexpected_billing_action": "Unexpected billing action",
     "error_continue_process": "Could not continue the process"
@@ -1565,7 +1494,7 @@
   },
   "context_badge": {
     "personal": "Context: Personal",
-    "company": "Context: Workspace - {company}{role}"
+    "workspace": "Context: Workspace - {workspace}{role}"
   },
   "ai": {
     "common": {

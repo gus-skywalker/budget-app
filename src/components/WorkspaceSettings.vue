@@ -7,17 +7,17 @@
             <div class="card-header">
               <h3 class="card-title">
                 <v-icon color="primary" class="mr-2">mdi-office-building-plus</v-icon>
-                {{ $t('workspaceSettings.create_new_company') }}
+                {{ $t('workspaceSettings.create_new_workspace') }}
               </h3>
               <p class="card-description">
-                {{ $t('workspaceSettings.create_new_company_desc') }}
+                {{ $t('workspaceSettings.create_new_workspace_desc') }}
               </p>
             </div>
             <v-card-text>
               <v-form ref="createWorkspaceFormRef" @submit.prevent="createWorkspace">
                 <v-text-field
                   v-model="createWorkspaceForm.name"
-                  :label="$t('workspaceSettings.company_name')"
+                  :label="$t('workspaceSettings.workspace_name')"
                   variant="outlined"
                   density="comfortable"
                   prepend-inner-icon="mdi-office-building"
@@ -67,7 +67,7 @@
                   :disabled="creatingWorkspace"
                 >
                   <v-icon left>mdi-check-circle</v-icon>
-                  {{ $t('workspaceSettings.create_company') }}
+                  {{ $t('workspaceSettings.create_workspace') }}
                 </v-btn>
               </v-form>
             </v-card-text>
@@ -85,7 +85,7 @@
             @click="goToSelectWorkspace"
           >
             <v-icon left>mdi-swap-horizontal</v-icon>
-            {{ $t('workspaceSettings.select_existing_company') }}
+            {{ $t('workspaceSettings.select_existing_workspace') }}
           </v-btn>
         </v-col>
       </v-row>
@@ -108,17 +108,17 @@
             <div class="card-header">
               <h3 class="card-title">
                 <v-icon color="primary" class="mr-2">mdi-office-building-cog</v-icon>
-                {{ $t('workspaceSettings.company_info') }}
+                {{ $t('workspaceSettings.workspace_info') }}
               </h3>
               <p class="card-description">
-                {{ $t('workspaceSettings.company_info_desc') }}
+                {{ $t('workspaceSettings.workspace_info_desc') }}
               </p>
             </div>
             <v-card-text>
               <v-form ref="workspaceFormRef" @submit.prevent="updateWorkspace">
                 <v-text-field
-                  v-model="workspaceForm.companyName"
-                  :label="$t('workspaceSettings.company_name')"
+                  v-model="workspaceForm.workspaceName"
+                  :label="$t('workspaceSettings.workspace_name')"
                   variant="outlined"
                   density="comfortable"
                   prepend-inner-icon="mdi-office-building"
@@ -292,7 +292,7 @@
                 @click="deleteDialog = true"
               >
                 <v-icon left>mdi-delete</v-icon>
-                {{ $t('workspaceSettings.delete_company') }}
+                {{ $t('workspaceSettings.delete_workspace') }}
               </v-btn>
             </v-card-text>
           </v-card>
@@ -304,10 +304,10 @@
       <v-card>
         <v-card-title class="text-h6">{{ $t('workspaceSettings.confirm_delete_title') }}</v-card-title>
         <v-card-text>
-          <p class="mb-4" v-html="$t('workspaceSettings.confirm_delete_desc', { company: workspaceNameForDelete })"></p>
+          <p class="mb-4" v-html="$t('workspaceSettings.confirm_delete_desc', { workspace: workspaceNameForDelete })"></p>
           <v-text-field
             v-model="deleteConfirm"
-            :label="$t('workspaceSettings.company_name')"
+            :label="$t('workspaceSettings.workspace_name')"
             variant="outlined"
             density="comfortable"
           />
@@ -344,17 +344,17 @@
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { useI18n } from 'vue-i18n'
 import WorkspaceService from '@/services/WorkspaceService'
-import WorkspaceInviteService from '@/services/WorkspaceInviteService'
+import InviteService from '@/services/InviteService'
 import { useUserStore } from '@/plugins/userStore'
 import { getFreePlanLimitType, parseApiError } from '@/utils/errorHandler'
 import { getOrCreateCorrelationId } from '@/utils/correlation'
 import { createMessageId } from '@/utils/messageId'
 
-const { t } = useI18n()
 const userStore = useUserStore()
 const router = useRouter()
 
@@ -362,7 +362,7 @@ const currentWorkspaceId = computed(() => userStore.getCurrentWorkspaceId)
 const canManageWorkspace = computed(() => userStore.isTenantAdmin)
 
 const workspaceFormRef = ref()
-const workspaceForm = ref({ companyName: '', description: '' })
+const workspaceForm = ref({ workspaceName: '', description: '' })
 const formLoading = ref(false)
 const savingWorkspace = ref(false)
 const createWorkspaceFormRef = ref()
@@ -423,7 +423,7 @@ const goToSelectWorkspace = () => {
 }
 
 const resetWorkspaceUiState = () => {
-  workspaceForm.value = { companyName: '', description: '' }
+  workspaceForm.value = { workspaceName: '', description: '' }
   createWorkspaceForm.value = { name: '', legalDocument: '', country: 'BR', description: '' }
   workspaceNameForDelete.value = ''
   members.value = []
@@ -435,10 +435,10 @@ const loadWorkspaceDetails = async () => {
   if (!currentWorkspaceId.value) return
   formLoading.value = true
   try {
-    const workspaceRes = await WorkspaceService.getWorkspaceDetails(currentWorkspaceId.value)
-    const name = workspaceRes?.data?.companyName || workspaceRes?.data?.name || ''
+    const workspaceRes = await WorkspaceService.getDetails(currentWorkspaceId.value)
+    const name = workspaceRes?.data?.workspaceName || workspaceRes?.data?.name || ''
     const description = workspaceRes?.data?.description || ''
-    workspaceForm.value.companyName = name
+    workspaceForm.value.workspaceName = name
     workspaceForm.value.description = description
     workspaceNameForDelete.value = name
   } catch (error) {
@@ -452,11 +452,15 @@ const loadMembersAndInvites = async () => {
   if (!currentWorkspaceId.value) return
   try {
     const [membersResult, invitesResult] = await Promise.allSettled([
-      WorkspaceService.listWorkspaceMembers(currentWorkspaceId.value),
-      WorkspaceInviteService.listWorkspaceInvites(currentWorkspaceId.value)
+      WorkspaceService.listMembers(currentWorkspaceId.value),
+      InviteService.listInvites(currentWorkspaceId.value)
     ])
 
-    members.value = membersResult.status === 'fulfilled' ? (membersResult.value?.data || []) : []
+    if (membersResult.status === 'fulfilled') {
+      members.value = membersResult.value?.data || []
+    } else {
+      members.value = []
+    }
 
     if (invitesResult.status === 'fulfilled') {
       invites.value = invitesResult.value || []
@@ -480,8 +484,8 @@ const createWorkspace = async () => {
 
   creatingWorkspace.value = true
   try {
-    const correlationId = getOrCreateCorrelationId('companyCorrelationId')
-    const messageKey = `settings.createCompany.messageId:${createWorkspaceForm.value.name}:${createWorkspaceForm.value.country}`
+    const correlationId = getOrCreateCorrelationId('workspaceCorrelationId')
+    const messageKey = `settings.createWorkspace.messageId:${createWorkspaceForm.value.name}:${createWorkspaceForm.value.country}`
     let messageId = sessionStorage.getItem(messageKey)
     if (!messageId) {
       messageId = createMessageId()
@@ -497,23 +501,23 @@ const createWorkspace = async () => {
     }
 
     const result = await WorkspaceService.create(payload as any, correlationId)
-    const createdWorkspace = result?.createdCompany
-    const workspaceId = createdWorkspace?.companyId ?? createdWorkspace?.id
+    const createdWorkspace = result?.createdWorkspace
+    const workspaceId = createdWorkspace?.workspaceId ?? createdWorkspace?.id
     if (!workspaceId) {
-      throw new Error('Resposta de criação sem companyId')
+      throw new Error('Resposta de criação sem workspaceId')
     }
 
     await userStore.selectWorkspace(String(workspaceId))
 
     try {
-      const companiesRes = await WorkspaceService.getAll()
-      const companies = Array.isArray(companiesRes?.data) ? companiesRes.data : []
-      userStore.setCompanies(companies)
-      await userStore.hydrateCompanyDetailsFromBudget(
-        companies.map((workspace: any) => String(workspace.companyId)).filter(Boolean)
+      const workspacesRes = await WorkspaceService.getAll()
+      const workspaces = Array.isArray(workspacesRes?.data) ? workspacesRes.data : []
+      userStore.setWorkspaces(workspaces)
+      await userStore.hydrateWorkspaceDetailsFromBudget(
+        workspaces.map((workspace: any) => String(workspace.workspaceId)).filter(Boolean)
       )
     } catch {
-      // best effort
+      // best effort: tenant já selecionada
     }
 
     sessionStorage.removeItem(messageKey)
@@ -523,12 +527,12 @@ const createWorkspace = async () => {
       country: 'BR',
       description: ''
     }
-    showSnackbar(t('workspaceSettings.success_company_created'))
+    showSnackbar(t('workspaceSettings.success_workspace_created'))
   } catch (error) {
     showSnackbar(parseApiError(error), 'error')
     const limitType = getFreePlanLimitType(error)
-    if (limitType === 'company') {
-      upgradeMessage.value = t('workspaceSettings.upgrade_limit_company')
+    if (limitType === 'workspace') {
+      upgradeMessage.value = t('workspaceSettings.upgrade_limit_workspace')
       upgradeSnackbar.value = true
     }
   } finally {
@@ -546,14 +550,14 @@ const updateWorkspace = async () => {
   }
   savingWorkspace.value = true
   try {
-    await WorkspaceService.updateWorkspace(currentWorkspaceId.value, {
-      companyName: workspaceForm.value.companyName,
+    await WorkspaceService.update(currentWorkspaceId.value, {
+      workspaceName: workspaceForm.value.workspaceName,
       description: workspaceForm.value.description
     })
 
-    workspaceNameForDelete.value = workspaceForm.value.companyName
-    userStore.updateWorkspaceName(currentWorkspaceId.value, workspaceForm.value.companyName)
-    showSnackbar(t('workspaceSettings.success_company_updated'))
+    workspaceNameForDelete.value = workspaceForm.value.workspaceName
+    userStore.updateWorkspaceName(currentWorkspaceId.value, workspaceForm.value.workspaceName)
+    showSnackbar(t('workspaceSettings.success_workspace_updated'))
   } catch (error) {
     showSnackbar(parseApiError(error), 'error')
   } finally {
@@ -575,7 +579,7 @@ const sendInvite = async () => {
   }
   inviteLoading.value = true
   try {
-    await WorkspaceInviteService.inviteWorkspaceUser(currentWorkspaceId.value, inviteForm.value.email, inviteForm.value.role)
+    await InviteService.inviteUser(currentWorkspaceId.value, inviteForm.value.email, inviteForm.value.role)
     inviteForm.value.email = ''
     inviteForm.value.role = 'ROLE_MEMBER'
     await loadInvites()
@@ -593,9 +597,10 @@ const sendInvite = async () => {
 }
 
 const loadInvites = async () => {
-  if (!currentWorkspaceId.value || !invitesAvailable.value) return
+  if (!currentWorkspaceId.value) return
+  if (!invitesAvailable.value) return
   try {
-    invites.value = await WorkspaceInviteService.listWorkspaceInvites(currentWorkspaceId.value)
+    invites.value = await InviteService.listInvites(currentWorkspaceId.value)
   } catch (error) {
     invitesAvailable.value = false
     invites.value = []
@@ -610,7 +615,7 @@ const cancelInvite = async (inviteId: string) => {
     return
   }
   try {
-    await WorkspaceInviteService.cancelWorkspaceInvite(currentWorkspaceId.value, inviteId)
+    await InviteService.cancelInvite(currentWorkspaceId.value, inviteId)
     await loadInvites()
     showSnackbar(t('workspaceSettings.success_cancel_invite'), 'info')
   } catch (error) {
@@ -631,33 +636,39 @@ const deleteWorkspace = async () => {
   try {
     await WorkspaceService.deleteWorkspace(deletedWorkspaceId)
 
+    // Limpa seleção de empresa e força atualização do usuário
     try {
       await userStore.clearWorkspaceSelection()
+      // Após limpar, força reload do usuário para garantir que o contexto ativo foi limpo
       await userStore.tryRefreshToken()
+      // Alternativa: pode-se chamar um endpoint /users/me para garantir contexto atualizado
     } catch {
       userStore.logout()
       router.push('/login')
       return
     }
 
-    let nextCompanies: Array<{ companyId: string; companyName?: string; role?: string | null }> = []
+    let nextWorkspaces: Array<{ workspaceId?: string; workspaceName?: string; role?: string | null }> = []
     try {
-      const companiesRes = await WorkspaceService.getAll()
-      nextCompanies = (companiesRes?.data || []) as Array<{ companyId: string; companyName?: string; role?: string | null }>
-      userStore.setCompanies(nextCompanies)
+      const workspacesRes = await WorkspaceService.getAll()
+      nextWorkspaces = (workspacesRes?.data || []) as Array<{ workspaceId?: string; workspaceName?: string; role?: string | null }>
+      userStore.setWorkspaces(nextWorkspaces as any)
     } catch {
-      nextCompanies = ((userStore.getCompanies || []) as any[]).filter((workspace: any) => workspace?.companyId !== deletedWorkspaceId)
-      userStore.setCompanies(nextCompanies)
+      // fallback to local state if refresh fails
+      nextWorkspaces = ((userStore.getWorkspaces || []) as any[]).filter((workspace: any) => workspace?.workspaceId !== deletedWorkspaceId)
+      userStore.setWorkspaces(nextWorkspaces as any)
     }
 
     closeDeleteDialog()
     showSnackbar(t('workspaceSettings.success_delete'), 'info')
 
-    const hasOtherCompanies = (nextCompanies?.length || 0) > 0
-    if (!hasOtherCompanies) {
-      userStore.clearCurrentWorkspace()
+    const hasOtherWorkspaces = (nextWorkspaces?.length || 0) > 0
+    if (!hasOtherWorkspaces) {
+      // Se não há mais workspaces, redireciona para onboarding/criação
+      userStore.setCurrentWorkspace(null)
       router.push('/create-workspace')
     } else {
+      // Se há outros workspaces, força seleção
       router.push('/select-workspace')
     }
   } catch (error) {

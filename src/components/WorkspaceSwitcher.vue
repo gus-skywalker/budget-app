@@ -15,15 +15,15 @@
     <v-list>
       <v-list-item
         v-for="workspace in workspaces"
-        :key="workspace.companyId"
+        :key="workspace.workspaceId"
         @click="switchWorkspace(workspace)"
-        :class="{ 'active-workspace': workspace.companyId === currentWorkspaceId }"
+        :class="{ 'active-workspace': workspace.workspaceId === currentWorkspaceId }"
         :disabled="isLoading"
       >
         <template v-slot:prepend>
-          <v-icon>{{ workspace.companyId === currentWorkspaceId ? 'mdi-check-circle' : 'mdi-office-building-outline' }}</v-icon>
+          <v-icon>{{ workspace.workspaceId === currentWorkspaceId ? 'mdi-check-circle' : 'mdi-office-building-outline' }}</v-icon>
         </template>
-        <v-list-item-title>{{ workspace.companyName || workspace.companyId }}</v-list-item-title>
+        <v-list-item-title>{{ workspace.workspaceName || workspace.workspaceId }}</v-list-item-title>
         <v-list-item-subtitle>{{ getRoleLabel(workspace.role) }}</v-list-item-subtitle>
       </v-list-item>
 
@@ -54,15 +54,16 @@ const workspaces = computed(() => userStore.getWorkspaces)
 const currentWorkspaceId = computed(() => userStore.getCurrentWorkspaceId)
 
 const currentWorkspaceName = computed(() => {
-  const current = workspaces.value.find((workspace) => workspace.companyId === currentWorkspaceId.value)
-  return current?.companyName || current?.companyId || t('workspaceSwitcher.select_workspace')
+  const current = workspaces.value.find((workspace) => workspace.workspaceId === currentWorkspaceId.value)
+  return current?.workspaceName || current?.workspaceId || t('workspaceSwitcher.select_workspace')
 })
 
 const switchWorkspace = async (workspace) => {
-  if (workspace.companyId !== currentWorkspaceId.value && !isLoading.value) {
+  const workspaceId = workspace.workspaceId
+  if (workspaceId !== currentWorkspaceId.value && !isLoading.value) {
     try {
       isLoading.value = true
-      await userStore.selectWorkspace(workspace.companyId)
+      await userStore.selectWorkspace(workspaceId)
       await router.push('/dashboard')
     } catch (err) {
       console.error('Erro ao trocar workspace:', err)

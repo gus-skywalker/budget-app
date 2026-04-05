@@ -11,5 +11,7 @@ Frontend billing orchestration uses `budget-api` decision and command endpoints 
 
 ## Consequences
 - UI depends on async command-status polling.
+- Async billing polling must treat `redirectUrl` as the canonical field returned by orchestration.
+- Frontend uses workspace only as operational context and does not know billing ownership.
 - Core-domain ownership checks are centralized server-side.
 - Legacy direct payment client code should be treated as compatibility-only until removed.

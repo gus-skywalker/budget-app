@@ -72,7 +72,7 @@
       </v-col>
       <v-col cols="3" md="4" class="d-flex justify-end align-center income-actions">
         <v-btn
-          v-if="income.visibilityScope === 'COMPANY'"
+          v-if="income.visibilityScope === 'WORKSPACE'"
           x-small
           icon
           height="32px"
@@ -144,7 +144,7 @@ export default {
   },
   computed: {
     visibilityScopeLabel() {
-      const scope = this.income?.visibilityScope === 'PRIVATE' ? 'private' : 'company'
+      const scope = this.income?.visibilityScope === 'PRIVATE' ? 'private' : 'workspace'
       return this.$t(`transactionVisibility.${scope}`)
     },
     reconciliationLabel() {

@@ -2,26 +2,28 @@
 
 ## 1. Authentication And Session Flow
 1. User submits credentials to `auth` (`/api/auth/signin`).
-2. Tokens are stored in client state.
+2. Frontend stores only access token in client state.
+3. Refresh token is managed as HttpOnly cookie by `auth` service.
 3. Interceptor appends bearer token to backend calls.
-4. On `401`, frontend attempts refresh using `/api/auth/refresh`.
+4. On `401`, frontend attempts refresh using `/api/auth/refresh` with credentials.
+5. On app startup without access token, frontend attempts session restore using `/api/auth/session/bootstrap`.
 
 ## 2. Signup Flow
 1. Frontend calls `POST /api/auth/signup`.
 2. User is redirected to login flow and authenticates.
-3. `OnboardingOrchestrator` resolves post-auth path (`create-company`, `select-company`, or target route).
+3. `OnboardingOrchestrator` resolves post-auth path (`create-workspace`, `select-workspace`, or target route).
 
 ## 3. Onboarding Orchestration Flow
 1. Login/OAuth callback calls `OnboardingOrchestrator.resolvePostAuthRoute(...)`.
 2. Orchestrator normalizes `redirect` and optional `plan` into a canonical target path.
-3. If user has no company: route to `create-company`.
-4. If tenant context is required but not selected: route to `select-company`.
-5. If a single/preferred company is available: attempt automatic company selection.
+3. If user has no workspace: route to `create-workspace`.
+4. If tenant context is required but not selected: route to `select-workspace`.
+5. If a single/preferred workspace is available: attempt automatic workspace selection.
 6. Route user to final target (`/dashboard`, `/choose-plan?plan=...`, `/checkout?plan=...`).
 
 ## 4. Workspace Creation And Tenant Selection
-1. Frontend calls `POST /api/companies` on `budget-api`.
-2. User selects active company via `POST /api/auth/select-company`.
+1. Frontend calls `POST /api/workspaces` on `budget-api`.
+2. User selects active workspace via `POST /api/auth/select-workspace`.
 3. New tenant-scoped token is issued and used for workspace-scoped calls.
 4. Frontend resumes the canonical redirect target from onboarding context.
 
@@ -29,13 +31,14 @@
 1. `App.vue` renders `OnboardingStatusBanner` for authenticated sessions.
 2. Banner computes state via `OnboardingOrchestrator.resolveOnboardingBannerState(...)`.
 3. Banner exposes contextual CTA to unblock the next onboarding step.
-4. CTA routes to `create-company`, `select-company`, or `choose-plan` using canonical redirect.
+4. CTA routes to `create-workspace`, `select-workspace`, or `choose-plan` using canonical redirect.
 
 ## 6. Billing Upgrade Flow (Current Path)
-1. Frontend calls `/api/billing/decision` in `budget-api`.
-2. If action is `START_SUBSCRIPTION`, frontend calls `/api/billing/subscriptions/start`.
-3. Frontend polls `/api/billing/operations/{messageId}` for checkout URL.
-4. After Stripe return, frontend polls `/api/billing/access` for premium activation.
+1. Frontend calls `/api/billing/decision` in `budget-api` with user intent plus allowed workspace context.
+2. Backend resolves the canonical billing account internally; frontend does not know ownership.
+3. If action is `START_SUBSCRIPTION`, frontend calls `/api/billing/subscriptions/start`.
+4. Frontend polls `/api/billing/operations/{messageId}` for `redirectUrl`.
+5. After Stripe return, frontend polls `/api/billing/access?workspaceId=...` for the canonical billing summary and premium activation.
 
 ```mermaid
 sequenceDiagram
@@ -50,7 +53,7 @@ sequenceDiagram
     Payment->>Stripe: Create checkout session
     Stripe-->>Payment: Checkout + webhook events
     Payment->>Budget: /api/webhooks/events (EVENT)
-    App->>Budget: GET /api/billing/access (poll)
+    App->>Budget: GET /api/billing/access?workspaceId=... (poll)
 ```
 
 ## 7. Deprecated Flow (Do Not Use)

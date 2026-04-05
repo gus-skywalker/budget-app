@@ -20,7 +20,8 @@ declare namespace _default {
     }): Promise<import("axios").AxiosResponse<any, any>>;
     function deleteUser(userId: string): Promise<import("axios").AxiosResponse<any, any>>;
     function userTokenInfo(): Promise<import("axios").AxiosResponse<any, any>>;
-    function refreshToken(refreshToken: string): Promise<import("axios").AxiosResponse<any, any>>;
+    function refreshToken(): Promise<import("axios").AxiosResponse<any, any>>;
+    function bootstrapSession(): Promise<import("axios").AxiosResponse<any, any>>;
     function getOAuthAuthorizationUrl(provider: "google" | "github"): string;
 }
 export default _default;

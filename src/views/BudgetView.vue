@@ -182,7 +182,7 @@
             <div class="transaction-filter-row">
               <v-chip-group v-model="incomeListFilter" mandatory selected-class="filter-chip-selected">
                 <v-chip size="small" value="all" variant="outlined">{{ $t('transactionVisibility.filters.all') }}</v-chip>
-                <v-chip size="small" value="company" variant="outlined">{{ $t('transactionVisibility.filters.company') }}</v-chip>
+                <v-chip size="small" value="workspace" variant="outlined">{{ $t('transactionVisibility.filters.workspace') }}</v-chip>
                 <v-chip size="small" value="private" variant="outlined">{{ $t('transactionVisibility.filters.private') }}</v-chip>
                 <v-chip size="small" value="open-finance" variant="outlined">Open Finance</v-chip>
                 <v-chip size="small" value="conflicts" variant="outlined">Conflitos</v-chip>
@@ -476,7 +476,7 @@
             <div class="transaction-filter-row">
               <v-chip-group v-model="expenseListFilter" mandatory selected-class="filter-chip-selected">
                 <v-chip size="small" value="all" variant="outlined">{{ $t('transactionVisibility.filters.all') }}</v-chip>
-                <v-chip size="small" value="company" variant="outlined">{{ $t('transactionVisibility.filters.company') }}</v-chip>
+                <v-chip size="small" value="workspace" variant="outlined">{{ $t('transactionVisibility.filters.workspace') }}</v-chip>
                 <v-chip size="small" value="private" variant="outlined">{{ $t('transactionVisibility.filters.private') }}</v-chip>
                 <v-chip size="small" value="open-finance" variant="outlined">Open Finance</v-chip>
                 <v-chip size="small" value="conflicts" variant="outlined">Conflitos</v-chip>
@@ -614,9 +614,9 @@ import OpenFinanceService from '@/services/OpenFinanceService'
 import DataService from '@/services/DataService'
 import AiService from '@/services/aiService'
 import FinancialReadService, { NO_FINANCIAL_ACCOUNT_ERROR_MESSAGE } from '@/services/FinancialReadService'
+import NotificationService from '@/services/NotificationService'
 import UsersService from '@/services/UsersService'
 import WorkspaceService from '@/services/WorkspaceService'
-import NotificationService from '@/services/NotificationService'
 import { useUserStore } from '@/plugins/userStore'
 
 const toLocalISODate = (date = new Date()) => {
@@ -742,7 +742,7 @@ export default {
         paymentMethod: null,
         isRecurring: false,
         accountId: null,
-        visibilityScope: 'COMPANY',
+        visibilityScope: 'WORKSPACE',
       },
       expense: {
         date: today,
@@ -753,7 +753,7 @@ export default {
         selectedUsers: [],
         accountId: null,
         openFinanceBankCategoryId: null,
-        visibilityScope: 'COMPANY',
+        visibilityScope: 'WORKSPACE',
       },
       categoryIcons: {
         groceries: 'mdi-cart',
@@ -782,7 +782,7 @@ export default {
         selectedLanguage: this.$i18n?.locale || 'pt',
       users: [],
       transactionVisibilityOptions: [
-        { titleKey: 'transactionVisibility.company', value: 'COMPANY' },
+        { titleKey: 'transactionVisibility.workspace', value: 'WORKSPACE' },
         { titleKey: 'transactionVisibility.private', value: 'PRIVATE' },
       ],
       openFinanceConflicts: [],
@@ -947,8 +947,8 @@ export default {
       if (this.expenseListFilter === 'open-finance') {
         return 'Somente Open Finance'
       }
-      if (this.expenseListFilter === 'company') {
-        return this.$t('transactionVisibility.filters.company')
+      if (this.expenseListFilter === 'workspace') {
+        return this.$t('transactionVisibility.filters.workspace')
       }
       if (this.expenseListFilter === 'private') {
         return this.$t('transactionVisibility.filters.private')
@@ -970,8 +970,8 @@ export default {
       if (this.incomeListFilter === 'open-finance') {
         return 'Nenhuma entrada Open Finance neste período.'
       }
-      if (this.incomeListFilter === 'company') {
-        return this.$t('transactionVisibility.empty.companyIncome')
+      if (this.incomeListFilter === 'workspace') {
+        return this.$t('transactionVisibility.empty.workspaceIncome')
       }
       if (this.incomeListFilter === 'private') {
         return this.$t('transactionVisibility.empty.privateIncome')
@@ -985,8 +985,8 @@ export default {
       if (this.expenseListFilter === 'open-finance') {
         return 'Nenhuma despesa Open Finance neste período.'
       }
-      if (this.expenseListFilter === 'company') {
-        return this.$t('transactionVisibility.empty.companyExpense')
+      if (this.expenseListFilter === 'workspace') {
+        return this.$t('transactionVisibility.empty.workspaceExpense')
       }
       if (this.expenseListFilter === 'private') {
         return this.$t('transactionVisibility.empty.privateExpense')
@@ -1021,6 +1021,9 @@ export default {
     },
     '$route.query': {
       handler() {
+        if (this.$route?.name !== 'budget') {
+          return
+        }
         this.applyBudgetQueryFilters()
         this.resetExpensePaginationAndFetch()
       },
@@ -1035,8 +1038,8 @@ export default {
       if (filter === 'open-finance') {
         return items.filter((item) => Boolean(item?.openFinance))
       }
-      if (filter === 'company') {
-        return items.filter((item) => (item?.visibilityScope || 'COMPANY') === 'COMPANY')
+      if (filter === 'workspace') {
+        return items.filter((item) => (item?.visibilityScope || 'WORKSPACE') === 'WORKSPACE')
       }
       if (filter === 'private') {
         return items.filter((item) => item?.visibilityScope === 'PRIVATE')
@@ -1068,6 +1071,9 @@ export default {
       const query = this.$route?.query || {}
       const month = Number(query.month)
       const year = Number(query.year)
+      const normalizedVisibility = typeof query.visibility === 'string'
+        ? String(query.visibility).trim().toLowerCase()
+        : null
 
       if (Number.isInteger(month) && month >= 1 && month <= 12) {
         this.selectedExpenseMonth = month
@@ -1079,7 +1085,26 @@ export default {
 
       this.routeExpenseAccountId = typeof query.accountId === 'string' ? query.accountId : null
       this.routeExpenseCategory = typeof query.category === 'string' ? query.category : null
-      this.expenseListFilter = query.openFinance === '1' ? 'open-finance' : 'all'
+      if (query.openFinance === '1') {
+        this.incomeListFilter = 'open-finance'
+        this.expenseListFilter = 'open-finance'
+        return
+      }
+
+      if (normalizedVisibility === 'workspace') {
+        this.incomeListFilter = 'workspace'
+        this.expenseListFilter = 'workspace'
+        return
+      }
+
+      if (normalizedVisibility === 'private') {
+        this.incomeListFilter = 'private'
+        this.expenseListFilter = 'private'
+        return
+      }
+
+      this.incomeListFilter = 'all'
+      this.expenseListFilter = 'all'
     },
     clearExpenseDrillDown() {
       this.$router.replace({
@@ -1094,7 +1119,7 @@ export default {
       if (scope === 'PRIVATE') {
         return this.$t('transactionVisibility.hintPrivate')
       }
-      return this.$t('transactionVisibility.hintCompany')
+      return this.$t('transactionVisibility.hintWorkspace')
     },
     enrichExpenseWithConflict(expense) {
       const conflict = this.openFinanceConflictMap[expense?.id]
@@ -1494,10 +1519,7 @@ export default {
       }
     },
         resolvePaymentMethodId(value) {
-          const logAndReturn = (resolved) => {
-            console.debug('[BudgetView] resolvePaymentMethodId', { input: value, resolved })
-            return resolved
-          }
+          const logAndReturn = (resolved) => resolved
 
           if (value === null || value === undefined) {
             return logAndReturn(null)
@@ -1543,10 +1565,7 @@ export default {
           return logAndReturn(null)
         },
         resolveCategoryId(value) {
-          const logAndReturn = (resolved) => {
-            console.debug('[BudgetView] resolveCategoryId', { input: value, resolved })
-            return resolved
-          }
+          const logAndReturn = (resolved) => resolved
 
           if (value === null || value === undefined) {
             return logAndReturn(null)
@@ -1701,14 +1720,14 @@ export default {
     fetchShareableUsers() {
       const userStore = useUserStore()
       const workspaceId = userStore.getCurrentWorkspaceId
-      const isWorkspaceMode = userStore.isWorkspaceMode
+      const isTenantMode = userStore.isTenantMode
 
-      if (!(isWorkspaceMode && workspaceId)) {
+      if (!(isTenantMode && workspaceId)) {
         this.users = []
         return
       }
 
-      WorkspaceService.listWorkspaceMembers(workspaceId)
+      WorkspaceService.listMembers(workspaceId)
         .then((response) => {
           const members = this.normalizeCollection(response?.data)
           this.users = members
@@ -1842,12 +1861,6 @@ export default {
         amount: parsedAmount
       })
 
-      console.info('[BudgetView] saveIncome', {
-        isEditing,
-        id: this.editingIncomeId,
-        payload
-      })
-
       const request = isEditing
         ? IncomeService.update(this.editingIncomeId, payload)
         : IncomeService.create(payload)
@@ -1912,12 +1925,6 @@ export default {
         amount: parsedAmount
       })
 
-      console.info('[BudgetView] saveExpense', {
-        isEditing,
-        id: this.editingExpenseId,
-        payload
-      })
-
       const request = isEditing
         ? ExpenseService.update(this.editingExpenseId, payload)
         : ExpenseService.create(payload)
@@ -1966,7 +1973,7 @@ export default {
         paymentMethod: null,
         isRecurring: false,
         accountId: this.getDefaultFinancialAccountId(),
-        visibilityScope: 'COMPANY',
+        visibilityScope: 'WORKSPACE',
       }
       this.isEditingIncome = false
       this.editingIncomeId = null
@@ -1981,7 +1988,7 @@ export default {
         selectedUsers: [],
         accountId: this.getDefaultFinancialAccountId(),
         openFinanceBankCategoryId: null,
-        visibilityScope: 'COMPANY',
+        visibilityScope: 'WORKSPACE',
       }
       this.isEditingExpense = false
       this.editingExpenseId = null
@@ -1989,8 +1996,6 @@ export default {
       this.expenseCategorySuggestion = null
     },
     toggleRecurring({ income, months }) {
-      console.log('Toggled income:', income)
-      console.log('Recurrence months:', months)
       IncomeService.toggleRecurring(income.id, months)
       .then(() => {
           const incomeIndex = this.monthlyIncomes.findIndex((item) => item.id === income.id)
@@ -2043,7 +2048,7 @@ export default {
       }
     },
     openTransactionComments(transaction) {
-      if (!transaction?.id || transaction.visibilityScope !== 'COMPANY') {
+      if (!transaction?.id || transaction.visibilityScope !== 'WORKSPACE') {
         return
       }
       this.transactionCommentsDialog.show = true
@@ -2086,7 +2091,6 @@ export default {
         })
     },
     startEditingIncome(income) {
-      console.debug('[BudgetView] startEditingIncome', income)
       this.isEditingIncome = true
       this.editingIncomeId = income.id
       this.income = {
@@ -2098,14 +2102,13 @@ export default {
         ),
         isRecurring: income.isRecurring ?? false,
         accountId: income.accountId ?? null,
-        visibilityScope: income.visibilityScope ?? 'COMPANY',
+        visibilityScope: income.visibilityScope ?? 'WORKSPACE',
       }
     },
     cancelIncomeEdit() {
       this.resetIncomeForm()
     },
     startEditingExpense(expense) {
-      console.debug('[BudgetView] startEditingExpense', expense)
       try {
         this.editingExpenseOriginal = JSON.parse(JSON.stringify(expense))
       } catch (parseError) {
@@ -2129,7 +2132,7 @@ export default {
           : [],
         accountId: expense.accountId ?? null,
         openFinanceBankCategoryId: expense.openFinanceBankCategoryId ?? null,
-        visibilityScope: expense.visibilityScope ?? 'COMPANY',
+        visibilityScope: expense.visibilityScope ?? 'WORKSPACE',
       }
       this.expenseCategorySuggestion = null
 
@@ -2258,14 +2261,8 @@ export default {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
-        onUploadProgress: (progressEvent) => {
-          const total = progressEvent.total || 1
-          const progress = Math.round((progressEvent.loaded * 100) / total)
-          console.log('Upload Progress: ' + progress + '%')
-        },
       })
         .then((response) => {
-          console.log('Arquivos anexados com sucesso')
           const updatedAttachments = Array.isArray(response?.data) ? response.data : []
           const expenseIndex = this.monthlyExpenses.findIndex((item) => item.id === expenseId)
           if (expenseIndex !== -1) {
@@ -2299,9 +2296,7 @@ export default {
 
       // Enviar o e-mail
       NotificationService.sendEmailWithAttachment(emailData)
-        .then(() => {
-          console.log('Email enviado com sucesso');
-        })
+        .then(() => {})
         .catch((error) => {
           console.error('Erro ao enviar o email:', error);
         });
@@ -2309,7 +2304,6 @@ export default {
     handleRemoveAttachment({ expenseId, attachmentId }) {
       ExpenseService.removeAttachment(expenseId, attachmentId)
         .then(() => {
-          console.log('Anexo removido com sucesso.')
           const expenseIndex = this.monthlyExpenses.findIndex((item) => item.id === expenseId)
           if (expenseIndex !== -1) {
             const currentAttachments = Array.isArray(this.monthlyExpenses[expenseIndex].attachments)
@@ -2359,7 +2353,6 @@ export default {
     async handleSendReminder(alertData) {
       const userStore = useUserStore();
 
-      console.log(alertData.isRecurring);
       const alarmData = {
         user: userStore.getUser,
         expense: alertData.expense,
@@ -2374,16 +2367,13 @@ export default {
         if (alertData.expense.alerts && alertData.expense.alerts.length > 0) {
 
           await NotificationService.updateExpenseAlert(alarmData);
-          console.log('Alerta atualizado com sucesso');
         } else {
 
           await NotificationService.scheduleExpenseAlert(alarmData);
-          console.log('Alerta criado com sucesso');
         }
       } catch (error) {
         console.error('Erro ao processar o alerta:', error);
       }
-      console.log(`Lembrete processado para a despesa: ${alertData.expense.description}`);
     },
     showToast(message, color = 'success') {
       this.snackbar.text = message;

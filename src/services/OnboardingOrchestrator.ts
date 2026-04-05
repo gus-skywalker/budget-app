@@ -7,15 +7,15 @@ const DEFAULT_REDIRECT = '/dashboard'
 const ABSOLUTE_URL_PATTERN = /^[a-zA-Z][a-zA-Z\d+\-.]*:/
 
 export type OnboardingState =
-  | 'COMPANY_REQUIRED'
-  | 'COMPANY_SELECTION_REQUIRED'
+  | 'WORKSPACE_REQUIRED'
+  | 'WORKSPACE_SELECTION_REQUIRED'
   | 'READY'
   | 'READY_BILLING_DECISION'
 
 export type OnboardingBannerPhase =
   | 'AUTH_REQUIRED'
-  | 'COMPANY_REQUIRED'
-  | 'COMPANY_SELECTION_REQUIRED'
+  | 'WORKSPACE_REQUIRED'
+  | 'WORKSPACE_SELECTION_REQUIRED'
   | 'BILLING_PLAN_REQUIRED'
   | 'READY'
 
@@ -25,20 +25,19 @@ export interface ResolvePostAuthRouteOptions {
   redirect?: unknown
   plan?: unknown
   defaultRedirect?: string
-  autoSelectPreferredCompany?: boolean
+  autoSelectPreferredWorkspace?: boolean
 }
 
 export interface OnboardingResolution {
   state: OnboardingState
   route: RouteLocationRaw
   targetPath: string
-  selectedCompanyId?: string
   selectedWorkspaceId?: string
 }
 
 export interface OnboardingBannerInput {
   isAuthenticated: boolean
-  hasCompanies: boolean
+  hasWorkspaces: boolean
   isTenantMode: boolean
   currentPath: string
   currentQuery?: Record<string, unknown>
@@ -125,14 +124,20 @@ const routeRequiresWorkspace = (router: Router, targetPath: string): boolean => 
   return resolved.matched.some((record) => Boolean(record.meta?.requiresWorkspace || record.meta?.requiresTenant))
 }
 
-const targetRequiresBusinessTenant = (_targetPath: string): boolean => false
+const targetRequiresBusinessTenant = (targetPath: string): boolean => {
+  const url = parseLocalPath(targetPath)
+  const path = url.pathname
+  const plan = url.searchParams.get('plan')
+  if (!isBusinessPlan(plan)) return false
+  return path === '/choose-plan' || path === '/checkout'
+}
 
-const createCompanyRoute = (targetPath: string): RouteLocationRaw => ({
+const createWorkspaceRoute = (targetPath: string): RouteLocationRaw => ({
   name: 'create-workspace',
   query: { redirect: targetPath }
 })
 
-const selectCompanyRoute = (targetPath: string): RouteLocationRaw => ({
+const selectWorkspaceRoute = (targetPath: string): RouteLocationRaw => ({
   name: 'select-workspace',
   query: { redirect: targetPath }
 })
@@ -147,30 +152,30 @@ export const resolvePostAuthRoute = async (
   })
 
   const { router, userStore } = options
-  const companies = userStore.getCompanies || []
-  const hasCompanies = companies.length > 0
+  const workspaces = userStore.getWorkspaces || []
+  const hasWorkspaces = workspaces.length > 0
   const requiresWorkspace = routeRequiresWorkspace(router, targetPath)
   const requiresBusinessTenant = targetRequiresBusinessTenant(targetPath)
   const requiresTenantContext = requiresWorkspace || requiresBusinessTenant
 
-  if (!hasCompanies) {
+  if (!hasWorkspaces) {
     return {
-      state: 'COMPANY_REQUIRED',
-      route: createCompanyRoute(targetPath),
+      state: 'WORKSPACE_REQUIRED',
+      route: createWorkspaceRoute(targetPath),
       targetPath
     }
   }
 
-  if (!userStore.isWorkspaceMode) {
+  if (!userStore.isTenantMode) {
     const preferredWorkspaceId = userStore.getPreferredWorkspaceId
-    const canAutoSelectPreferred = options.autoSelectPreferredCompany !== false
+    const canAutoSelectPreferred = options.autoSelectPreferredWorkspace ?? true
     const preferredIsAvailable =
       typeof preferredWorkspaceId === 'string' &&
-      companies.some((company) => company.companyId === preferredWorkspaceId)
+      workspaces.some((workspace) => workspace.workspaceId === preferredWorkspaceId)
 
     const autoSelectWorkspaceId =
-      companies.length === 1
-        ? companies[0].companyId
+      workspaces.length === 1
+        ? workspaces[0].workspaceId
         : canAutoSelectPreferred && preferredIsAvailable
           ? String(preferredWorkspaceId)
           : null
@@ -179,14 +184,14 @@ export const resolvePostAuthRoute = async (
       try {
         await userStore.selectWorkspace(autoSelectWorkspaceId)
       } catch {
-        // Fallback is deterministic routing to explicit company selection.
+        // Fallback is deterministic routing to explicit workspace selection.
       }
     }
 
-    if (!userStore.isWorkspaceMode && requiresTenantContext) {
+    if (!userStore.isTenantMode && requiresTenantContext) {
       return {
-        state: 'COMPANY_SELECTION_REQUIRED',
-        route: selectCompanyRoute(targetPath),
+        state: 'WORKSPACE_SELECTION_REQUIRED',
+        route: selectWorkspaceRoute(targetPath),
         targetPath
       }
     }
@@ -196,7 +201,6 @@ export const resolvePostAuthRoute = async (
     state: requiresBusinessTenant ? 'READY_BILLING_DECISION' : 'READY',
     route: { path: targetPath },
     targetPath,
-    selectedCompanyId: userStore.getCurrentCompanyId || undefined,
     selectedWorkspaceId: userStore.getCurrentWorkspaceId || undefined
   }
 }
@@ -210,7 +214,7 @@ export const resolveOnboardingBannerState = (input: OnboardingBannerInput): Onbo
 
   const steps = {
     auth: input.isAuthenticated,
-    workspace: input.hasCompanies && (!requiresTenantContext || input.isTenantMode),
+    workspace: input.hasWorkspaces && (!requiresTenantContext || input.isTenantMode),
     billing: !isBillingRoute || Boolean(plan)
   }
   const progress = [steps.auth, steps.workspace, steps.billing].filter(Boolean).length
@@ -229,16 +233,16 @@ export const resolveOnboardingBannerState = (input: OnboardingBannerInput): Onbo
     }
   }
 
-  if (!input.hasCompanies) {
+  if (!input.hasWorkspaces) {
     return {
       visible: true,
-      phase: 'COMPANY_REQUIRED',
+      phase: 'WORKSPACE_REQUIRED',
       title: 'Passo 1 de 3: crie seu workspace',
       description: 'Você precisa criar um workspace para começar a operar no CoBudget.',
       progress,
       targetPath,
       ctaLabel: 'Criar workspace',
-      ctaRoute: createCompanyRoute(targetPath),
+      ctaRoute: createWorkspaceRoute(targetPath),
       steps
     }
   }
@@ -246,13 +250,13 @@ export const resolveOnboardingBannerState = (input: OnboardingBannerInput): Onbo
   if (!input.isTenantMode && requiresTenantContext) {
     return {
       visible: true,
-      phase: 'COMPANY_SELECTION_REQUIRED',
+      phase: 'WORKSPACE_SELECTION_REQUIRED',
       title: 'Passo 2 de 3: selecione o workspace ativo',
       description: 'Este fluxo exige contexto de workspace ativo para continuar.',
       progress,
       targetPath,
       ctaLabel: 'Selecionar workspace',
-      ctaRoute: selectCompanyRoute(targetPath),
+      ctaRoute: selectWorkspaceRoute(targetPath),
       steps
     }
   }

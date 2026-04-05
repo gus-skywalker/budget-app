@@ -4,6 +4,7 @@ import router from '../router'
 import { computed } from 'vue'
 import { useUserStore } from '../plugins/userStore'
 import { useBankStore } from '@/plugins/bankStore'
+import { buildBudgetApiMockResponse, isBudgetApiRequest } from '@/utils/devBudgetApiMock'
 
 const access_token = computed(() => useUserStore().getToken)
 const nubankToken = computed(() => useBankStore().getNubankToken)
@@ -20,6 +21,10 @@ const axiosInstance = axios.create({
 
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    if (isBudgetApiRequest(config)) {
+      config.adapter = () => buildBudgetApiMockResponse(config)
+    }
+
     if (access_token.value) {
       config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${access_token.value}`;
@@ -65,12 +70,6 @@ axiosInstance.interceptors.response.use(
       originalRequest._retry = true
       isRefreshing = true
       const userStore = useUserStore()
-      const refreshToken = userStore.refreshToken
-      if (!refreshToken) {
-        userStore.resetUser()
-        router.push('/login')
-        return Promise.reject(error)
-      }
       try {
         // Use the userStore action for refresh logic
         const success = await userStore.tryRefreshToken()

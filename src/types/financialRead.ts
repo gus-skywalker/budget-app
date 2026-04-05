@@ -10,7 +10,8 @@ export interface AccountView {
 export type TransactionDirection = 'INFLOW' | 'OUTFLOW'
 export type TransactionSource = 'MANUAL' | 'OPEN_FINANCE' | 'SYSTEM'
 export type TransactionStatus = 'PENDING' | 'POSTED' | 'CANCELLED'
-export type TransactionVisibilityScope = 'PRIVATE' | 'COMPANY'
+export type CanonicalTransactionVisibilityScope = 'PRIVATE' | 'WORKSPACE'
+export type TransactionVisibilityScope = CanonicalTransactionVisibilityScope
 
 export interface TransactionView {
   id: string
@@ -87,4 +88,12 @@ export interface TransactionQueryParams {
   accountId?: string
   limit?: number
   offset?: number
+}
+
+export const normalizeTransactionVisibilityScope = (scope?: string | null): CanonicalTransactionVisibilityScope => {
+  return scope === 'PRIVATE' ? 'PRIVATE' : 'WORKSPACE'
+}
+
+export const toTransactionVisibilityScopeRequest = (scope?: string | null): CanonicalTransactionVisibilityScope => {
+  return scope === 'PRIVATE' ? 'PRIVATE' : 'WORKSPACE'
 }

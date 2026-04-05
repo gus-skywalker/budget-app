@@ -1,5 +1,4 @@
 // src/types/global.d.ts
-import type { WorkspaceMembership } from './workspace'
 
 // Language Types
 export type Language = 'PT' | 'EN' | 'FR' | 'ES' | 'DE'
@@ -13,13 +12,16 @@ export interface JWTClaims {
   user_fullname?: string
   user_language?: Language
   userRoles?: string[] | string
-  companies?: WorkspaceMembership[]
-  workspaceId?: string // Alias semântico futuro para companyId
-  companyId?: string  // Só presente após selecionar empresa
-  tenantRole?: string // Role canônica do tenant ativo
-  userRole?: string   // Retrocompatibilidade
-  role?: string       // Retrocompatibilidade
-  picture?: string    // Em login OAuth2
+  workspaces?: Array<{
+    workspaceId: string
+    workspaceName?: string
+    role?: string | null
+  }>
+  workspaceId?: string
+  tenantRole?: string
+  userRole?: string
+  role?: string
+  picture?: string
   exp?: number
   iat?: number
 }
@@ -35,10 +37,12 @@ export interface LoginResponse {
   userRoles?: string[]
   createdAt?: string
   accessToken: string
-  refreshToken: string
-  workspaceId?: string | null
-  companyId: string | null
-  companies: WorkspaceMembership[]
+  workspaceId: string | null
+  workspaces: Array<{
+    workspaceId: string
+    workspaceName: string
+    role?: string | null
+  }>
 }
 
 declare module './i18n' {

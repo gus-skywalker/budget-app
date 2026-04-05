@@ -84,13 +84,13 @@
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
-import ActivityService, { type CompanyActivityEvent } from '@/services/ActivityService'
+import ActivityService, { type WorkspaceActivityEvent } from '@/services/ActivityService'
 
 const { t, locale } = useI18n()
 const router = useRouter()
 
 const loading = ref(false)
-const recentActivity = ref<CompanyActivityEvent[]>([])
+const recentActivity = ref<WorkspaceActivityEvent[]>([])
 const selectedFilter = ref<'all' | 'transactions' | 'scenarios' | 'decisions'>('all')
 
 const activityFilters = computed<Array<{ title: string; value: 'all' | 'transactions' | 'scenarios' | 'decisions' }>>(() => [
@@ -125,7 +125,7 @@ const loadActivity = async () => {
   }
 }
 
-const activityFilterKey = (event: CompanyActivityEvent) => {
+const activityFilterKey = (event: WorkspaceActivityEvent) => {
   const type = String(event?.eventType || '')
   if (type.startsWith('TRANSACTION_SHARED_')) return 'transactions'
   if (type.startsWith('SCENARIO_')) return 'scenarios'
@@ -133,7 +133,7 @@ const activityFilterKey = (event: CompanyActivityEvent) => {
   return 'all'
 }
 
-const activityAccent = (event: CompanyActivityEvent) => {
+const activityAccent = (event: WorkspaceActivityEvent) => {
   const type = String(event?.eventType || '')
   if (type.startsWith('TRANSACTION_SHARED_')) return { icon: 'mdi-swap-horizontal-bold', color: '#667eea' }
   if (type.startsWith('SCENARIO_')) return { icon: 'mdi-chart-timeline-variant', color: '#7c3aed' }
@@ -158,7 +158,7 @@ const formatActivityTime = (value?: string) => {
   }).format(date)
 }
 
-const activityRoute = (event: CompanyActivityEvent) => {
+const activityRoute = (event: WorkspaceActivityEvent) => {
   const relatedType = String(event?.relatedEntityType || '')
   if (relatedType === 'TRANSACTION') return '/budget'
   if (relatedType === 'SCENARIO') return '/planning/scenarios'
@@ -166,11 +166,11 @@ const activityRoute = (event: CompanyActivityEvent) => {
   return null
 }
 
-const openActivity = async (event: CompanyActivityEvent) => {
+const openActivity = async (event: WorkspaceActivityEvent) => {
   const path = activityRoute(event)
   if (!path) return
   if (path === '/budget') {
-    await router.push({ path, query: { visibility: 'company' } })
+    await router.push({ path, query: { visibility: 'workspace' } })
     return
   }
   if (path === '/planning/scenarios' && event?.relatedEntityId) {

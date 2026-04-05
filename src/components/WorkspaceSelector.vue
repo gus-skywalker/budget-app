@@ -8,15 +8,15 @@
         <p class="mb-4">{{ $t('workspaceSelector.desc') }}</p>
         <v-list>
           <v-list-item
-            v-for="workspace in companies"
-            :key="workspace.companyId"
+            v-for="workspace in workspaces"
+            :key="workspace.workspaceId"
             @click="selectWorkspace(workspace)"
             class="workspace-item"
           >
             <template v-slot:prepend>
               <v-icon>mdi-office-building</v-icon>
             </template>
-            <v-list-item-title>{{ workspace.companyName || workspace.companyId }}</v-list-item-title>
+            <v-list-item-title>{{ workspace.workspaceName || workspace.workspaceId }}</v-list-item-title>
             <v-list-item-subtitle>{{ getRoleLabel(workspace.role) }}</v-list-item-subtitle>
             <template v-slot:append>
               <v-icon>mdi-chevron-right</v-icon>
@@ -30,13 +30,12 @@
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { computed } from 'vue'
-
 const { t } = useI18n()
+import { computed } from 'vue'
 
 const props = defineProps({
   modelValue: Boolean,
-  companies: {
+  workspaces: {
     type: Array,
     default: () => []
   }
@@ -48,6 +47,8 @@ const dialog = computed({
   get: () => props.modelValue,
   set: (value) => emit('update:modelValue', value)
 })
+
+const workspaces = computed(() => props.workspaces)
 
 const selectWorkspace = (workspace) => {
   emit('workspace-selected', workspace)

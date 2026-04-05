@@ -15,20 +15,18 @@ const userStore = useUserStore()
 
 const extractTokenFromUrl = async () => {
   const urlParams = new URLSearchParams(window.location.search)
-  const token = urlParams.get('accessToken')
-  const refreshToken = urlParams.get('refreshToken')
-  const email = urlParams.get('email')
+  let token = urlParams.get('accessToken')
   const redirect = urlParams.get('redirect')
   const plan = urlParams.get('plan')
 
-  console.log('OAuth2 callback - token:', token ? 'presente' : 'ausente')
+  try {
+    if (!token) {
+      const bootstrap = await AuthService.bootstrapSession()
+      token = bootstrap?.data?.accessToken || null
+    }
 
-  if (token && email) {
-    try {
+    if (token) {
       userStore.setToken(token)
-      if (refreshToken) {
-        userStore.setRefreshToken(refreshToken)
-      }
       userStore.setAuth(true)
       userStore.syncFromToken(token)
 
@@ -40,11 +38,11 @@ const extractTokenFromUrl = async () => {
         username: res.data.username,
         email: res.data.email,
         language: userLanguage,
-        companies: userStore.getCompanies
+        workspaces: userStore.getWorkspaces
       })
 
       await updateI18nLocale(userLanguage)
-      await userStore.hydrateCompanyDetailsFromBudget()
+      await userStore.hydrateWorkspaceDetailsFromBudget()
 
       const onboarding = await OnboardingOrchestrator.resolvePostAuthRoute({
         router,
@@ -54,12 +52,12 @@ const extractTokenFromUrl = async () => {
         defaultRedirect: '/dashboard'
       })
       router.push(onboarding.route)
-    } catch (error) {
-      console.error('Erro no OAuth2 redirect:', error)
-      router.push('/login')
+      return
     }
-  } else {
-    console.log('OAuth2 falhou - token ou email ausente')
+
+    router.push('/login')
+  } catch (error) {
+    console.error('Erro no OAuth2 redirect:', error)
     router.push('/login')
   }
 }

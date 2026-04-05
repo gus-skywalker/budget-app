@@ -1,6 +1,13 @@
 import axiosInterceptor from './axiosInterceptor'
-import type { CompanyCreateRequest } from '@/types/CompanyCreateRequest'
-
+import type { WorkspaceCreateRequest } from '../types/WorkspaceCreateRequest'
+import {
+  clearDevQuickAccessWorkspaceSelection,
+  createDevQuickAccessWorkspace,
+  getDevQuickAccessWorkspaceDetails,
+  isDevQuickAccessEnabled,
+  listDevQuickAccessWorkspaces,
+  selectDevQuickAccessWorkspace
+} from '@/utils/devQuickAccess'
 const rawAuthBase = String(import.meta.env.VITE_AUTH_URL || '').replace(/\/+$/, '')
 
 const normalizedAuthRoot = rawAuthBase
@@ -8,9 +15,9 @@ const normalizedAuthRoot = rawAuthBase
   .replace(/\/auth$/, '')
   .replace(/\/api$/, '')
 
-const AUTH_WORKSPACES_URL = `${normalizedAuthRoot}/api/companies`
+const AUTH_WORKSPACES_URL = `${normalizedAuthRoot}/api/workspaces`
 const AUTH_URL = `${normalizedAuthRoot}/api/auth`
-const BUDGET_WORKSPACES_URL = `${import.meta.env.VITE_API_BASE_URL}/companies`
+const BUDGET_WORKSPACES_URL = `${import.meta.env.VITE_API_BASE_URL}/workspaces`
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -21,66 +28,78 @@ const isRetryableStatus = (status?: number) =>
 const authSelectWorkspaceEndpoint = `${AUTH_URL}/select-workspace`
 const authClearWorkspaceEndpoint = `${AUTH_URL}/clear-workspace`
 
-const WorkspaceService = {
+export default {
   /**
-   * Criar novo workspace.
-   *
-   * Observacao semantica:
-   * o backend ainda expõe o recurso como `company`, mas no produto isso ja
-   * significa o workspace colaborativo do usuario.
-   *
-   * 1) POST budget-api /companies
-   * 2) Seleção do workspace é feita separadamente via userStore.selectWorkspace(workspaceId)
+   * Criar novo workspace
+   * 1) POST budget-api /workspaces
+   * 2) Seleção de tenant é feita separadamente via userStore.selectWorkspace(workspaceId)
    */
-  async create(payload: CompanyCreateRequest, correlationId?: string): Promise<any> {
+  async create(payload: WorkspaceCreateRequest, correlationId?: string): Promise<any> {
+    if (isDevQuickAccessEnabled()) {
+      return {
+        createdWorkspace: createDevQuickAccessWorkspace(payload)
+      }
+    }
+
+    // Inclui correlationId no payload, não mais no header
     const enrichedPayload = { ...payload, correlationId }
     const created = await axiosInterceptor.post(BUDGET_WORKSPACES_URL, enrichedPayload)
     return {
-      createdCompany: created?.data || null
+      createdWorkspace: created?.data || null
     }
   },
 
-  // Compat transport: budget-api ainda usa `company/companyId` em parte das rotas.
+  // --- endpoints abaixo ainda vivem no auth-api (compat). Podemos migrar depois.
 
   /**
-   * Listar workspaces do usuário.
-   * GET /companies
+   * Listar workspaces do usuário
+   * GET /api/workspaces
    */
   getAll(): Promise<any> {
+    if (isDevQuickAccessEnabled()) {
+      return Promise.resolve({
+        data: listDevQuickAccessWorkspaces()
+      })
+    }
+
     return axiosInterceptor.get(AUTH_WORKSPACES_URL)
   },
 
   /**
-   * Obter detalhes do workspace.
+   * Obter detalhes do workspace atual
    */
   getDetails(workspaceId: string): Promise<any> {
+    if (isDevQuickAccessEnabled()) {
+      return Promise.resolve({
+        data: getDevQuickAccessWorkspaceDetails(workspaceId)
+      })
+    }
+
     return axiosInterceptor.get(`${BUDGET_WORKSPACES_URL}/${workspaceId}`)
   },
 
-  getWorkspaceDetails(workspaceId: string): Promise<any> {
-    return this.getDetails(workspaceId)
-  },
-
   /**
-   * Atualizar informacoes do workspace.
+   * Atualizar informações do workspace
    */
-  update(workspaceId: string, payload: { companyName?: string; description?: string }): Promise<any> {
+  update(workspaceId: string, payload: { workspaceName?: string; description?: string }): Promise<any> {
     return axiosInterceptor.put(`${BUDGET_WORKSPACES_URL}/${workspaceId}`, {
-      name: payload.companyName,
+      name: payload.workspaceName,
       description: payload.description
     })
   },
 
-  updateWorkspace(workspaceId: string, payload: { companyName?: string; description?: string }): Promise<any> {
-    return this.update(workspaceId, payload)
-  },
-
   /**
-   * Selecionar workspace ativo.
-   *
-   * O frontend já usa o endpoint canônico `/select-workspace`.
+   * Selecionar workspace ativo
+   * POST /api/auth/select-workspace
+   * Retorna novos tokens (accessToken e refreshToken)
    */
   selectWorkspace(workspaceId: string): Promise<any> {
+    if (isDevQuickAccessEnabled()) {
+      return Promise.resolve({
+        data: selectDevQuickAccessWorkspace(workspaceId)
+      })
+    }
+
     const maxAttempts = 8
     let lastError: any = null
 
@@ -98,6 +117,7 @@ const WorkspaceService = {
           break
         }
 
+        // Eventual consistency após criação de workspace + membership async no auth.
         const isEventual = isEventualConsistencyStatus(status)
         await wait((isEventual ? 250 : 150) * attempt)
       }
@@ -108,15 +128,17 @@ const WorkspaceService = {
     return run()
   },
 
-  selectCompany(companyId: string): Promise<any> {
-    return this.selectWorkspace(companyId)
-  },
-
   /**
-   * Limpar workspace ativo (voltar ao modo pessoal).
+   * Limpar workspace ativo (voltar ao modo pessoal)
    * POST /api/auth/clear-workspace
    */
   clearWorkspace(): Promise<any> {
+    if (isDevQuickAccessEnabled()) {
+      return Promise.resolve({
+        data: clearDevQuickAccessWorkspaceSelection()
+      })
+    }
+
     const run = async () => {
       let lastError: any = null
       const maxAttempts = 3
@@ -138,32 +160,18 @@ const WorkspaceService = {
     return run()
   },
 
-  clearCompany(): Promise<any> {
-    return this.clearWorkspace()
-  },
-
   /**
-   * Listar membros do workspace.
-   * GET /companies/{companyId}/members
+   * Listar membros do workspace
+   * GET /workspaces/{workspaceId}/members
    */
   listMembers(workspaceId: string): Promise<any> {
     return axiosInterceptor.get(`${BUDGET_WORKSPACES_URL}/${workspaceId}/members`)
   },
 
-  listWorkspaceMembers(workspaceId: string): Promise<any> {
-    return this.listMembers(workspaceId)
-  },
-
   /**
-   * Remover workspace definitivamente.
+   * Remover workspace definitivamente
    */
   deleteWorkspace(workspaceId: string): Promise<any> {
     return axiosInterceptor.delete(`${BUDGET_WORKSPACES_URL}/${workspaceId}`)
-  },
-
-  deleteCompany(companyId: string): Promise<any> {
-    return this.deleteWorkspace(companyId)
   }
 }
-
-export default WorkspaceService

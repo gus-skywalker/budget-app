@@ -47,15 +47,18 @@ export function parseApiError(error: any): string {
   return 'An unexpected error occurred. Please try again.'
 }
 
-export type FreePlanLimitType = 'company' | 'member'
+export type FreePlanLimitType = 'workspace' | 'member'
 
 export function getFreePlanLimitType(error: any): FreePlanLimitType | null {
   const message = extractErrorMessage(error)
   if (!message) return null
 
   const normalized = message.toLowerCase()
-  if (normalized.includes('free plan limit reached') && normalized.includes('company')) {
-    return 'company'
+  if (
+    normalized.includes('free plan limit reached')
+    && normalized.includes('workspace')
+  ) {
+    return 'workspace'
   }
   if (normalized.includes('free plan member limit reached') || normalized.includes('member limit')) {
     return 'member'
@@ -67,11 +70,14 @@ function normalizeFreePlanLimitMessage(message: string): string {
   if (!message) return message
 
   const normalized = message.toLowerCase()
-  if (normalized.includes('free plan limit reached') && normalized.includes('company')) {
-    return 'Limite do plano gratuito: 1 empresa. Faça upgrade para Premium para criar mais empresas.'
+  if (
+    normalized.includes('free plan limit reached')
+    && normalized.includes('workspace')
+  ) {
+    return 'Limite do plano gratuito: 1 workspace. Faça upgrade para Premium para criar mais workspaces.'
   }
   if (normalized.includes('free plan member limit reached') || normalized.includes('member limit')) {
-    return 'Limite do plano gratuito: 20 membros por empresa. Faça upgrade para Premium para adicionar mais membros.'
+    return 'Limite do plano gratuito: 20 membros por workspace. Faça upgrade para Premium para adicionar mais membros.'
   }
 
   return message

@@ -59,7 +59,11 @@
 <script>
 import { useUserStore } from '@/plugins/userStore';
 import BillingOrchestrationService from '@/services/BillingOrchestrationService';
-import { resolveCanonicalBillingSubject } from '@/utils/billing'
+import {
+  clearBillingCheckoutContext,
+  readBillingCheckoutContext,
+  resolveAnyWorkspaceContext,
+} from '@/services/BillingWorkspaceContext'
 
 export default {
   name: 'StripeSuccess',
@@ -89,45 +93,23 @@ export default {
   },
 
   methods: {
-    resolveCheckoutContext() {
-      const fallbackContext = {
-        subjectType: null,
-        subjectId: null
+    resolveWorkspaceContext() {
+      const savedContext = readBillingCheckoutContext()
+      if (savedContext?.workspaceId) {
+        return savedContext
       }
 
-      try {
-        const raw = sessionStorage.getItem('billing.checkout.context')
-        if (!raw) {
-          return fallbackContext
-        }
-        const parsed = JSON.parse(raw)
-        return {
-          subjectType: typeof parsed?.subjectType === 'string' ? parsed.subjectType : null,
-          subjectId: typeof parsed?.subjectId === 'string' ? parsed.subjectId : null
-        }
-      } catch (error) {
-        console.warn('Não foi possível recuperar o contexto do checkout.', error)
-        return fallbackContext
+      const userStore = useUserStore();
+      const workspaceContext = resolveAnyWorkspaceContext(userStore)
+      if (!workspaceContext) {
+        throw new Error('Workspace não identificado');
       }
+
+      return workspaceContext
     },
 
     async checkSubscriptionStatus() {
-      const userStore = useUserStore();
-      const canonicalBillingSubject = resolveCanonicalBillingSubject(userStore);
-      const checkoutContext = this.resolveCheckoutContext()
-
-      if (!checkoutContext.subjectType || !checkoutContext.subjectId) {
-        if (!canonicalBillingSubject?.subjectId) {
-          throw new Error('Usuário não identificado');
-        }
-      }
-
-      const subjectType = checkoutContext.subjectType || canonicalBillingSubject?.subjectType || 'USER';
-      const subjectId = checkoutContext.subjectId || canonicalBillingSubject?.subjectId;
-
-      if (!subjectId) {
-        throw new Error('Usuário não identificado');
-      }
+      const { workspaceId } = this.resolveWorkspaceContext()
 
       // Poll budget-api until webhook projection becomes premium=true.
       const startedAt = Date.now();
@@ -135,10 +117,10 @@ export default {
       const intervalMs = 2000;
 
       while (Date.now() - startedAt < timeoutMs) {
-        const response = await BillingOrchestrationService.getPremiumAccess(subjectType, subjectId);
+        const response = await BillingOrchestrationService.getBillingSummary(workspaceId);
         if (response.data?.hasPremiumAccess) {
           this.subscriptionDetails = response.data;
-          sessionStorage.removeItem('billing.checkout.context');
+          clearBillingCheckoutContext()
           return;
         }
         await new Promise(resolve => setTimeout(resolve, intervalMs));

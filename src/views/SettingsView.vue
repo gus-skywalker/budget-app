@@ -26,9 +26,9 @@
           <v-icon class="tab-icon">mdi-cog</v-icon>
           <span class="tab-text">{{ $t('account_management.tabs.preferences') }}</span>
         </v-tab>
-        <v-tab value="company" class="settings-tab">
+        <v-tab value="workspace" class="settings-tab">
           <v-icon class="tab-icon">mdi-office-building-cog</v-icon>
-          <span class="tab-text">Configurar empresa</span>
+          <span class="tab-text">{{ $t('account_management.tabs.workspace') }}</span>
         </v-tab>
         <v-tab value="connections" class="settings-tab">
           <v-icon class="tab-icon">mdi-link-variant</v-icon>
@@ -359,7 +359,7 @@
         </v-window-item>
 
         <!-- Tab: Empresa -->
-        <v-window-item value="company">
+        <v-window-item value="workspace">
           <WorkspaceSettings />
         </v-window-item>
 
@@ -450,7 +450,7 @@
                     Saúde operacional
                   </h2>
                   <p class="card-description">
-                    Visão rápida do estado atual do Open Finance para esta empresa.
+                    Visão rápida do estado atual do Open Finance para este workspace.
                   </p>
                 </div>
                 <div class="card-content">
@@ -943,7 +943,8 @@ const { t, locale } = useI18n();
 
 // Tab ativa
 const activeTab = ref('profile')
-const validSettingsTabs = new Set(['profile', 'security', 'preferences', 'company', 'connections', 'subscription'])
+const validSettingsTabs = new Set(['profile', 'security', 'preferences', 'workspace', 'connections', 'subscription'])
+const isSettingsRoute = computed(() => route.name === 'settings')
 
 const resolveSettingsTab = (value: unknown) => {
   const tab = typeof value === 'string' ? value : ''
@@ -1023,12 +1024,18 @@ watch(locale, () => {
 watch(
   () => route.query.tab,
   (tab) => {
+    if (!isSettingsRoute.value) {
+      return
+    }
     activeTab.value = resolveSettingsTab(tab)
   },
   { immediate: true }
 )
 
 watch(activeTab, async (tab) => {
+  if (!isSettingsRoute.value) {
+    return
+  }
   if (route.query.tab === tab) {
     return
   }

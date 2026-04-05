@@ -5,7 +5,7 @@ const API_URL = `${AUTH_BASE_URL}/api/auth`
 
 export default {
   signIn(payload: { email: string; password: string }): Promise<any> {
-    return axios.post(`${API_URL}/signin`, payload)
+    return axios.post(`${API_URL}/signin`, payload, { withCredentials: true })
   },
 
   signUp(payload: { username: string; email: string; password: string; language?: string }): Promise<any> {
@@ -40,17 +40,13 @@ export default {
     return this.getUserInfo()
   },
 
-  refreshToken(refreshToken: string): Promise<any> {
+  refreshToken(): Promise<any> {
     // Usa axios direto para não passar pelo interceptor e evitar loops de refresh
-    return axios.post(
-      `${API_URL}/refresh`,
-      {
-        refreshToken
-      },
-      {
-        withCredentials: true
-      }
-    )
+    return axios.post(`${API_URL}/refresh`, {}, { withCredentials: true })
+  },
+
+  bootstrapSession(): Promise<any> {
+    return axios.post(`${API_URL}/session/bootstrap`, {}, { withCredentials: true })
   },
 
   getOAuthAuthorizationUrl(provider: 'google' | 'github'): string {

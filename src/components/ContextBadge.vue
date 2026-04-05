@@ -15,29 +15,29 @@ import { useI18n } from 'vue-i18n'
 const userStore = useUserStore()
 const { t } = useI18n()
 
-const isWorkspaceMode = computed(() => userStore.isWorkspaceMode)
+const isTenantMode = computed(() => userStore.isTenantMode)
 const currentWorkspaceId = computed(() => userStore.getCurrentWorkspaceId)
 const workspaces = computed(() => userStore.getWorkspaces || [])
 const tenantRole = computed(() => userStore.getTenantRole || null)
 
 const currentWorkspaceName = computed(() => {
-  const workspace = workspaces.value.find((item: any) => item.companyId === currentWorkspaceId.value)
-  return workspace?.companyName || null
+  const workspace = workspaces.value.find((item: any) => item.workspaceId === currentWorkspaceId.value)
+  return workspace?.workspaceName || null
 })
 
 const contextLabel = computed(() => {
-  if (!isWorkspaceMode.value || !currentWorkspaceId.value) {
+  if (!isTenantMode.value || !currentWorkspaceId.value) {
     return t('context_badge.personal')
   }
 
-  return t('context_badge.company', {
-    company: currentWorkspaceName.value || currentWorkspaceId.value,
+  return t('context_badge.workspace', {
+    workspace: currentWorkspaceName.value || currentWorkspaceId.value,
     role: tenantRole.value ? ` (${tenantRole.value})` : ''
   })
 })
 
-const chipColor = computed(() => (isWorkspaceMode.value ? 'primary' : 'teal'))
-const chipIcon = computed(() => (isWorkspaceMode.value ? 'mdi-domain' : 'mdi-account'))
+const chipColor = computed(() => (isTenantMode.value ? 'primary' : 'teal'))
+const chipIcon = computed(() => (isTenantMode.value ? 'mdi-domain' : 'mdi-account'))
 </script>
 
 <style scoped>

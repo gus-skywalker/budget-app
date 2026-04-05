@@ -1,6 +1,6 @@
 <!-- App.vue -->
 <script setup lang="ts">
-import { RouterView } from 'vue-router'
+import { RouterView, useRoute } from 'vue-router'
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import SideBar from './components/SideBar.vue'
 import ContextBadge from '@/components/ContextBadge.vue'
@@ -13,6 +13,9 @@ import type { Notification } from '@/services/NotificationService'
 
 // Access the Pinia store
 const userStore = useUserStore()
+const route = useRoute()
+const routeViewKey = computed(() => route.path)
+const focusedOnboardingRoutes = new Set(['create-workspace', 'select-workspace', 'choose-plan', 'checkout'])
 
 // Estado das notificações
 const notifications = ref<Notification[]>([])
@@ -20,6 +23,7 @@ const showNotificationsPopup = ref(false)
 
 // Computed property to check if the user is authenticated
 const isAuthenticated = computed(() => userStore.isAuthenticated)
+const showFocusedOnboardingChrome = computed(() => !focusedOnboardingRoutes.has(String(route.name || '')))
 
 // Função para alternar a exibição das notificações
 function toggleNotificationsPopup() {
@@ -45,8 +49,8 @@ function pollNotifications() {
   if (isAuthenticated.value) {
     NotificationService.getNotifications()
       .then((response) => {
-        console.log('Response data:', response.data)
-        notifications.value = response.data.map((notification: Notification) => ({
+        const items = Array.isArray(response.data) ? response.data : []
+        notifications.value = items.map((notification: Notification) => ({
           id: notification.id,
           destinationUser: notification.destinationUser,
           message: notification.message,
@@ -68,7 +72,7 @@ let pollingInterval: any
 onMounted(() => {
   // Iniciar polling
   pollNotifications()
-  pollingInterval = setInterval(pollNotifications, 9000) // Polling a cada 5 segundos
+  pollingInterval = setInterval(pollNotifications, 180000) // Polling a cada 3 minutos
 })
 
 onUnmounted(() => {
@@ -84,11 +88,11 @@ onUnmounted(() => {
     <SideBar v-if="isAuthenticated" :notifications="notifications"
       @toggle-notifications-popup="toggleNotificationsPopup" />
     <v-main>
-      <div v-if="isAuthenticated" class="global-context-container">
+      <div v-if="isAuthenticated && showFocusedOnboardingChrome" class="global-context-container">
         <ContextBadge />
       </div>
-      <OnboardingStatusBanner v-if="isAuthenticated" />
-      <RouterView />
+      <OnboardingStatusBanner v-if="isAuthenticated && showFocusedOnboardingChrome" />
+      <RouterView :key="routeViewKey" />
     </v-main>
     <NotificationPopup :visible="showNotificationsPopup" :notifications="notifications"
       @close="toggleNotificationsPopup" @accept="accept" @decline="decline" />

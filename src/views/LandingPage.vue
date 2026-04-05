@@ -1,376 +1,428 @@
-// LandingPage.vue
-<!-- eslint-disable @typescript-eslint/no-unused-vars -->
 <template>
-  <v-container id="color-setup">
-    <!-- Header -->
-    <header class="header">
-      <div class="logo">
-        <img src="/logo.jpg" alt="Logo" />
-      </div>
-      <nav class="nav">
-        <div class="menu-toggle" :aria-label="$t('landingPage.auth.login')" @click="toggleMenu">
-          <span class=" menu-icon"></span>
-          <span class="menu-icon"></span>
-          <span class="menu-icon"></span>
+  <v-container id="landing-page" fluid class="landing-page">
+    <header class="landing-header">
+      <div class="shell header-shell">
+        <button class="brand" type="button" @click="scrollToSection('top')">
+          <img src="/logo.jpg" alt="CoBudget" class="brand-logo" />
+          <span class="brand-copy">
+            <strong>CoBudget</strong>
+            <small>{{ $t('landingPage.hero.micro') }}</small>
+          </span>
+        </button>
+
+        <nav class="desktop-nav" aria-label="Primary">
+          <button
+            v-for="item in navItems"
+            :key="item.id"
+            type="button"
+            class="nav-link"
+            @click="handleNavClick(item.id)"
+          >
+            {{ $t(item.labelKey) }}
+          </button>
+        </nav>
+
+        <div class="header-actions">
+          <button class="btn btn-ghost" type="button" @click="navigateTo('login')">
+            {{ $t('landingPage.auth.login') }}
+          </button>
+          <button class="btn btn-primary" type="button" @click="navigateTo('choose-plan')">
+            {{ $t('landingPage.auth.signupNow') }}
+          </button>
+          <button
+            class="menu-toggle"
+            type="button"
+            :aria-expanded="isMenuOpen ? 'true' : 'false'"
+            :aria-label="$t('landingPage.auth.login')"
+            @click="toggleMenu"
+          >
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
         </div>
-        <ul :class="{ 'active': isMenuOpen }">
-          <li><a href="#">{{ $t('landingPage.nav.about') }}</a></li>
-          <li><a href="#benefits">{{ $t('landingPage.nav.benefits') }}</a></li>
-          <li><a href="#testimonials">{{ $t('landingPage.nav.testimonials') }}</a></li>
-          <li><a href="#security">{{ $t('landingPage.nav.security') }}</a></li>
-          <li><a href="#contact">{{ $t('landingPage.nav.contact') }}</a></li>
-        </ul>
-      </nav>
-      <div class="auth-buttons">
-        <button class="btn btn-primary login-btn" :aria-label="$t('landingPage.auth.login')"
-          @click.prevent="$router.push({ name: 'login' })">
-          {{ $t('landingPage.auth.login') }}
+      </div>
+
+      <div class="mobile-menu" :class="{ open: isMenuOpen }">
+        <button
+          v-for="item in navItems"
+          :key="`mobile-${item.id}`"
+          type="button"
+          class="mobile-link"
+          @click="handleNavClick(item.id)"
+        >
+          {{ $t(item.labelKey) }}
         </button>
-        <button class="btn btn-secondary signup-btn" :aria-label="$t('landingPage.auth.signupNow')"
-          @click.prevent="$router.push({ name: 'choose-plan' })">
-          {{ $t('landingPage.auth.signupNow') }}
-        </button>
+        <div class="mobile-actions">
+          <button class="btn btn-ghost" type="button" @click="navigateTo('login')">
+            {{ $t('landingPage.auth.login') }}
+          </button>
+          <button class="btn btn-primary" type="button" @click="navigateTo('choose-plan')">
+            {{ $t('landingPage.auth.signupNow') }}
+          </button>
+        </div>
       </div>
     </header>
 
-    <!-- HERO SECTION -->
-    <section class="hero">
-      <div class="hero-content">
-        <h1>{{ $t('landingPage.hero.title') }}</h1>
-        <p>{{ $t('landingPage.hero.subtitle') }}</p>
-        <p style="font-size:15px; color:#888; margin-bottom:8px;">
-          {{ $t('landingPage.hero.micro') }}
-        </p>
-        <button class="btn btn-primary cta-btn"
-          @click.prevent="$router.push({ name: 'login', query: { signup: 'true' } })">
-          {{ $t('landingPage.hero.cta') }}
-        </button>
-        <p class="micro-proof" style="margin-top:8px; font-size:13px; color:#888;">
-          {{ $t('landingPage.hero.proof') }}
-        </p>
-      </div>
-      <div class="hero-image">
-        <img src="/hero_image.jpg" :alt="$t('landingPage.hero.imageAlt')" />
-      </div>
-    </section>
+    <main>
+      <section id="top" class="hero-section section-offset">
+        <div class="shell hero-grid">
+          <div class="hero-copy">
+            <span class="eyebrow">{{ $t('landingPage.hero.micro') }}</span>
+            <h1>{{ $t('landingPage.hero.title') }}</h1>
+            <p class="hero-lead">{{ $t('landingPage.hero.subtitle') }}</p>
 
-    <!-- PROBLEM SECTION -->
-    <section class="section pain-section">
-      <h2 class="pain-title">{{ $t('landingPage.pain.title') }}</h2>
-      <p style="text-align:center; max-width:600px; margin:0 auto 32px; color:var(--dark-gray); font-size:18px;">
-        {{ $t('landingPage.pain.subtitle') }}
-      </p>
-      <div class="pain-list">
-        <div class="pain-card">
-          <span class="pain-icon">👁️</span>
-          <strong>{{ $t('landingPage.pain.card1') }}</strong>
-        </div>
-        <div class="pain-card">
-          <span class="pain-icon">📉</span>
-          <strong>{{ $t('landingPage.pain.card2') }}</strong>
-        </div>
-        <div class="pain-card">
-          <span class="pain-icon">🧮</span>
-          <strong>{{ $t('landingPage.pain.card3') }}</strong>
-        </div>
-        <div class="pain-card">
-          <span class="pain-icon">📅</span>
-          <strong>{{ $t('landingPage.pain.card4') }}</strong>
-        </div>
-        <div class="pain-card">
-          <span class="pain-icon">🔗</span>
-          <strong>{{ $t('landingPage.pain.card5') }}</strong>
-        </div>
-      </div>
-    </section>
+            <div class="hero-points">
+              <div v-for="item in solutionCards" :key="item.titleKey" class="hero-point">
+                <div class="icon-chip icon-chip-small">
+                  <v-icon size="18">{{ item.icon }}</v-icon>
+                </div>
+                <span>{{ $t(item.titleKey) }}</span>
+              </div>
+            </div>
 
-    <!-- SOLUTION SECTION -->
-    <section id="solution" class="section benefits-section">
-      <h2 style="text-align:center; color:var(--purple);">{{ $t('landingPage.solution.title') }}</h2>
-      <div class="benefits-list">
-        <div class="benefit-card">
-          <span class="benefit-icon">🤝</span>
-          <strong>{{ $t('landingPage.solution.card1') }}</strong>
-        </div>
-        <div class="benefit-card">
-          <span class="benefit-icon">🧮</span>
-          <strong>{{ $t('landingPage.solution.card2') }}</strong>
-        </div>
-        <div class="benefit-card">
-          <span class="benefit-icon">📈</span>
-          <strong>{{ $t('landingPage.solution.card3') }}</strong>
-        </div>
-        <div class="benefit-card">
-          <span class="benefit-icon">👥</span>
-          <strong>{{ $t('landingPage.solution.card4') }}</strong>
-        </div>
-      </div>
-    </section>
+            <div class="cta-row">
+              <button class="btn btn-primary btn-large" type="button" @click="navigateTo('choose-plan')">
+                {{ $t('landingPage.hero.cta') }}
+              </button>
+              <button class="btn btn-secondary btn-large" type="button" @click="scrollToSection('plans')">
+                {{ $t('landingPage.plans.title') }}
+              </button>
+            </div>
 
-    <!-- Como Funciona -->
-    <section class="section how-it-works">
-      <h2 style="text-align:center; color:var(--purple);">{{ $t('landingPage.how.title') }}</h2>
-      <div class="benefits-list" style="margin-top:32px;">
-        <div class="benefit-card">
-          <span class="benefit-icon">1️⃣</span>
-          <strong>{{ $t('landingPage.how.step1Title') }}</strong>
-          <p>{{ $t('landingPage.how.step1Desc') }}</p>
-        </div>
-        <div class="benefit-card">
-          <span class="benefit-icon">2️⃣</span>
-          <strong>{{ $t('landingPage.how.step2Title') }}</strong>
-          <p>{{ $t('landingPage.how.step2Desc') }}</p>
-        </div>
-        <div class="benefit-card">
-          <span class="benefit-icon">3️⃣</span>
-          <strong>{{ $t('landingPage.how.step3Title') }}</strong>
-          <p>{{ $t('landingPage.how.step3Desc') }}</p>
-        </div>
-      </div>
-    </section>
+            <p class="proof-copy">{{ $t('landingPage.hero.proof') }}</p>
+          </div>
 
-    <!-- FAMILY USE CASE (SECONDARY) -->
-    <section id="families" class="section benefits-section">
-      <h3 style="text-align:center; color:var(--purple);">{{ $t('landingPage.family.title') }}</h3>
-      <p style="text-align:center; max-width:600px; margin:0 auto 24px; color:var(--dark-gray); font-size:17px;">
-        {{ $t('landingPage.family.subtitle') }}
-      </p>
-      <div class="benefits-list">
-        <div class="benefit-card">
-          <span class="benefit-icon">🧾</span>
-          <strong>{{ $t('landingPage.family.card1') }}</strong>
-        </div>
-        <div class="benefit-card">
-          <span class="benefit-icon">👨‍👩‍👧‍👦</span>
-          <strong>{{ $t('landingPage.family.card2') }}</strong>
-        </div>
-        <div class="benefit-card">
-          <span class="benefit-icon">✈️</span>
-          <strong>{{ $t('landingPage.family.card3') }}</strong>
-        </div>
-        <div class="benefit-card">
-          <span class="benefit-icon">🤝</span>
-          <strong>{{ $t('landingPage.family.card4') }}</strong>
-        </div>
-      </div>
-    </section>
+          <div class="hero-visual">
+            <div class="hero-panel hero-panel-main">
+              <div class="hero-panel-head">
+                <span class="panel-label">{{ $t('landingPage.diff.subtitle') }}</span>
+                <strong>{{ $t('landingPage.ai.title') }}</strong>
+              </div>
 
-    <!-- FINAL CTA -->
-    <section class="section" style="background:linear-gradient(135deg,#f5f7ff 0%,#eef2ff 100%); padding:60px 20px;">
-      <h2 style="text-align:center; color:var(--purple);">{{ $t('landingPage.finalCta.title') }}</h2>
-      <div style="text-align:center; margin-top:32px;">
-        <button class="btn btn-primary cta-btn" style="font-size:1.25rem; padding:18px 40px;" @click.prevent="$router.push({ name: 'choose-plan' })">
-          {{ $t('landingPage.finalCta.button') }}
-        </button>
-      </div>
-    </section>
+              <div class="hero-insights">
+                <article v-for="item in aiCards" :key="item.titleKey" class="insight-card">
+                  <div class="icon-chip">
+                    <v-icon size="20">{{ item.icon }}</v-icon>
+                  </div>
+                  <div>
+                    <h3>{{ $t(item.titleKey) }}</h3>
+                    <p>{{ $t(item.descKey) }}</p>
+                    <span>{{ $t(item.tagKey) }}</span>
+                  </div>
+                </article>
+              </div>
+            </div>
 
-    <!-- AI SECTION -->
-    <section id="ai" class="section ai-section">
-      <div class="ai-content">
-        <div class="ai-text">
-          <h2>{{ $t('landingPage.ai.title') }}</h2>
-          <p>{{ $t('landingPage.ai.subtitle') }}</p>
-          <ul style="margin-bottom:24px;">
-            <li>{{ $t('landingPage.ai.bullet1') }}</li>
-            <li>{{ $t('landingPage.ai.bullet2') }}</li>
-            <li>{{ $t('landingPage.ai.bullet3') }}</li>
-            <li>{{ $t('landingPage.ai.bullet4') }}</li>
-          </ul>
-          <div class="ai-cta">
-            <button class="btn btn-primary" @click.prevent="$router.push({ name: 'dashboard' })">
-              {{ $t('landingPage.ai.ctaPrimary') }}
-            </button>
-            <button class="btn btn-secondary" @click.prevent="$router.push({ name: 'choose-plan' })">
-              {{ $t('landingPage.ai.ctaSecondary') }}
-            </button>
+            <div class="hero-panel hero-panel-image">
+              <img src="/hero_image.jpg" :alt="$t('landingPage.hero.imageAlt')" />
+            </div>
           </div>
         </div>
-        <div class="ai-highlights">
-          <article class="ai-card">
-            <h3>{{ $t('landingPage.ai.card1Title') }}</h3>
-            <p>{{ $t('landingPage.ai.card1Desc') }}</p>
-            <span>{{ $t('landingPage.ai.card1Tag') }}</span>
-          </article>
-          <article class="ai-card">
-            <h3>{{ $t('landingPage.ai.card2Title') }}</h3>
-            <p>{{ $t('landingPage.ai.card2Desc') }}</p>
-            <span>{{ $t('landingPage.ai.card2Tag') }}</span>
-          </article>
-          <article class="ai-card">
-            <h3>{{ $t('landingPage.ai.card3Title') }}</h3>
-            <p>{{ $t('landingPage.ai.card3Desc') }}</p>
-            <span>{{ $t('landingPage.ai.card3Tag') }}</span>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <!-- Benefícios -->
-    <!-- Diferenciação -->
-    <section id="benefits" class="section benefits-section">
-      <h2 style="text-align:center; color:var(--purple);">{{ $t('landingPage.diff.title') }}</h2>
-      <p style="text-align:center; max-width:600px; margin:24px auto 0; color:var(--dark-gray); font-size:18px;">
-        {{ $t('landingPage.diff.subtitle') }}
-      </p>
-    </section>
-
-    <!-- Testemunhos -->
-    <!-- Prova Social -->
-    <section id="testimonials" class="section testimonials-section">
-      <h2 style="text-align:center; color:var(--purple);">{{ $t('landingPage.testimonials.title') }}</h2>
-      <div class="testimonials-container">
-        <div class="testimonial-item">
-          <p>{{ $t('landingPage.testimonials.quote1') }}</p>
-          <h4>{{ $t('landingPage.testimonials.author1') }}</h4>
-        </div>
-        <div class="testimonial-item">
-          <p>{{ $t('landingPage.testimonials.quote2') }}</p>
-          <h4>{{ $t('landingPage.testimonials.author2') }}</h4>
-        </div>
-      </div>
-    </section>
-
-    <!-- Segurança -->
-    <!-- Segurança -->
-    <section id="security" class="section security-section">
-      <h2>{{ $t('landingPage.security.title') }}</h2>
-      <div class="security-content">
-        <ul>
-          <li>{{ $t('landingPage.security.item1') }}</li>
-          <li>{{ $t('landingPage.security.item2') }}</li>
-          <li>{{ $t('landingPage.security.item3') }}</li>
-          <li>{{ $t('landingPage.security.item4') }}</li>
-        </ul>
-      </div>
-    </section>
-
-    <!-- Seção de Planos -->
-    <!-- Planos (Conversão Direta) -->
-    <section id="plans" class="section plans-section">
-      <h2>{{ $t('landingPage.plans.title') }}</h2>
-      <p style="text-align:center; max-width:600px; margin:16px auto 32px; color:var(--dark-gray); font-size:18px;">
-        {{ $t('landingPage.plans.subtitle') }}
-      </p>
-
-      <section class="section ai-value" style="background: #f7f7ff; border-radius: 12px; padding: 24px 16px; margin-bottom: 32px;">
-        <h3 style="text-align:center; color:var(--purple); margin-bottom:8px;">{{ $t('landingPage.plans.aiValueTitle') }}</h3>
-        <p style="text-align:center; max-width:600px; margin:0 auto 0; color:var(--dark-gray); font-size:16px;">
-          {{ $t('landingPage.plans.aiValueSubtitle') }}
-        </p>
       </section>
 
-      <div class="plans-container">
-        <!-- Plano STARTER -->
-        <div class="plan-item starter-plan" style="border-top: 4px solid #f39c12;">
-          <span class="plan-label" style="background:#f39c12; color:#fff; padding:2px 10px; border-radius:6px; font-size:13px; font-weight:600; margin-bottom:8px; display:inline-block;">{{ $t('landingPage.plans.starterTag') }}</span>
-          <h3>{{ $t('landingPage.plans.starterName') }}</h3>
-          <p class="price">{{ formatPlanDisplay(planDetails.MONTHLY) }}</p>
-          <p class="price">{{ formatPlanDisplay(planDetails.ANNUAL) }}</p>
-          <p>{{ $t('landingPage.plans.starterSubtitle') }}</p>
-          <ul class="plan-benefits">
-            <li>{{ $t('landingPage.plans.starterFeature1') }}</li>
-            <li>{{ $t('landingPage.plans.starterFeature2') }}</li>
-            <li>{{ $t('landingPage.plans.starterFeature3') }}</li>
-            <li>{{ $t('landingPage.plans.starterFeature4') }}</li>
-            <li>{{ $t('landingPage.plans.starterFeature5') }}</li>
-          </ul>
-          <button class="btn btn-primary cta-btn" @click.prevent="redirectToCheckout('MONTHLY')">
-            {{ $t('landingPage.plans.starterMonthly') }}
-          </button>
-          <button class="btn btn-primary cta-btn" style="margin-top:10px; background:transparent; color:#f39c12; border:2px solid #f39c12;" @click.prevent="redirectToCheckout('ANNUAL')">
-            {{ $t('landingPage.plans.starterAnnual') }}
+      <section id="about" class="section-offset section-block section-light">
+        <div class="shell narrative-grid">
+          <div>
+            <span class="section-kicker">{{ $t('landingPage.nav.about') }}</span>
+            <h2>{{ $t('landingPage.pain.title') }}</h2>
+            <p class="section-intro">{{ $t('landingPage.pain.subtitle') }}</p>
+          </div>
+
+          <div class="card-grid card-grid-tight">
+            <article v-for="item in painCards" :key="item.titleKey" class="feature-card feature-card-pain">
+              <div class="icon-chip icon-chip-contrast">
+                <v-icon size="22">{{ item.icon }}</v-icon>
+              </div>
+              <strong>{{ $t(item.titleKey) }}</strong>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="benefits" class="section-offset section-block">
+        <div class="shell">
+          <div class="section-heading centered-heading">
+            <span class="section-kicker">{{ $t('landingPage.nav.benefits') }}</span>
+            <h2>{{ $t('landingPage.solution.title') }}</h2>
+            <p class="section-intro narrow">{{ $t('landingPage.diff.subtitle') }}</p>
+          </div>
+
+          <div class="card-grid card-grid-four">
+            <article v-for="item in solutionCards" :key="item.titleKey" class="feature-card">
+              <div class="icon-chip">
+                <v-icon size="22">{{ item.icon }}</v-icon>
+              </div>
+              <strong>{{ $t(item.titleKey) }}</strong>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-offset section-block section-soft-accent">
+        <div class="shell">
+          <div class="section-heading centered-heading">
+            <span class="section-kicker">{{ $t('landingPage.how.title') }}</span>
+            <h2>{{ $t('landingPage.finalCta.title') }}</h2>
+          </div>
+
+          <div class="timeline-grid">
+            <article v-for="(item, index) in howSteps" :key="item.titleKey" class="timeline-card">
+              <div class="timeline-step">0{{ index + 1 }}</div>
+              <div class="icon-chip icon-chip-small">
+                <v-icon size="18">{{ item.icon }}</v-icon>
+              </div>
+              <strong>{{ $t(item.titleKey) }}</strong>
+              <p>{{ $t(item.descKey) }}</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="ai" class="section-offset section-block section-airy">
+        <div class="shell ai-grid">
+          <div>
+            <span class="section-kicker">{{ $t('landingPage.ai.title') }}</span>
+            <h2>{{ $t('landingPage.ai.title') }}</h2>
+            <p class="section-intro">{{ $t('landingPage.ai.subtitle') }}</p>
+
+            <ul class="bullet-list">
+              <li v-for="item in aiBullets" :key="item.labelKey">
+                <v-icon size="18">{{ item.icon }}</v-icon>
+                <span>{{ $t(item.labelKey) }}</span>
+              </li>
+            </ul>
+
+            <div class="cta-row">
+              <button class="btn btn-primary btn-large" type="button" @click="scrollToSection('plans')">
+                {{ $t('landingPage.ai.ctaSecondary') }}
+              </button>
+              <button class="btn btn-secondary btn-large" type="button" @click="navigateTo('login')">
+                {{ $t('landingPage.ai.ctaPrimary') }}
+              </button>
+            </div>
+          </div>
+
+          <div class="ai-card-stack">
+            <article v-for="item in aiCards" :key="`stack-${item.titleKey}`" class="ai-showcase-card">
+              <div class="ai-card-head">
+                <div class="icon-chip icon-chip-contrast">
+                  <v-icon size="20">{{ item.icon }}</v-icon>
+                </div>
+                <span>{{ $t(item.tagKey) }}</span>
+              </div>
+              <h3>{{ $t(item.titleKey) }}</h3>
+              <p>{{ $t(item.descKey) }}</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-offset section-block section-light">
+        <div class="shell">
+          <div class="section-heading centered-heading">
+            <span class="section-kicker">{{ $t('landingPage.family.title') }}</span>
+            <h2>{{ $t('landingPage.family.subtitle') }}</h2>
+          </div>
+
+          <div class="card-grid card-grid-four">
+            <article v-for="item in familyCards" :key="item.titleKey" class="feature-card">
+              <div class="icon-chip icon-chip-warm">
+                <v-icon size="22">{{ item.icon }}</v-icon>
+              </div>
+              <strong>{{ $t(item.titleKey) }}</strong>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="testimonials" class="section-offset section-block">
+        <div class="shell">
+          <div class="section-heading centered-heading">
+            <span class="section-kicker">{{ $t('landingPage.nav.testimonials') }}</span>
+            <h2>{{ $t('landingPage.testimonials.title') }}</h2>
+            <p class="section-intro narrow">{{ $t('landingPage.diff.title') }}</p>
+          </div>
+
+          <div class="testimonial-grid">
+            <article v-for="item in testimonials" :key="item.quoteKey" class="testimonial-card">
+              <div class="testimonial-topline">
+                <div class="avatar-badge">{{ authorInitials($t(item.authorKey)) }}</div>
+                <div class="testimonial-rating">
+                  <v-icon v-for="star in 5" :key="star" size="16">mdi-star</v-icon>
+                </div>
+              </div>
+              <v-icon class="quote-icon" size="28">mdi-format-quote-open</v-icon>
+              <p>{{ $t(item.quoteKey) }}</p>
+              <strong>{{ $t(item.authorKey) }}</strong>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="security" class="section-offset section-block section-soft-accent">
+        <div class="shell">
+          <div class="section-heading centered-heading">
+            <span class="section-kicker">{{ $t('landingPage.nav.security') }}</span>
+            <h2>{{ $t('landingPage.security.title') }}</h2>
+          </div>
+
+          <div class="card-grid card-grid-four">
+            <article v-for="item in securityItems" :key="item.labelKey" class="security-card">
+              <div class="icon-chip icon-chip-contrast">
+                <v-icon size="22">{{ item.icon }}</v-icon>
+              </div>
+              <span>{{ $t(item.labelKey) }}</span>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="plans" class="section-offset section-block plans-section">
+        <div class="shell">
+          <div class="section-heading centered-heading">
+            <span class="section-kicker">{{ $t('landingPage.auth.signupNow') }}</span>
+            <h2>{{ $t('landingPage.plans.title') }}</h2>
+            <p class="section-intro narrow">{{ $t('landingPage.plans.subtitle') }}</p>
+          </div>
+
+          <div class="value-banner">
+            <div class="icon-chip icon-chip-dark">
+              <v-icon size="22">mdi-brain</v-icon>
+            </div>
+            <div>
+              <strong>{{ $t('landingPage.plans.aiValueTitle') }}</strong>
+              <p>{{ $t('landingPage.plans.aiValueSubtitle') }}</p>
+            </div>
+          </div>
+
+          <div class="plans-grid">
+            <article class="plan-card plan-card-starter">
+              <div class="plan-tag">{{ $t('landingPage.plans.starterTag') }}</div>
+              <h3>{{ $t('landingPage.plans.starterName') }}</h3>
+              <p class="plan-subtitle">{{ $t('landingPage.plans.starterSubtitle') }}</p>
+              <div class="price-stack">
+                <strong>{{ formatPlanDisplay(planDetails.MONTHLY) }}</strong>
+                <span>{{ formatPlanDisplay(planDetails.ANNUAL) }}</span>
+              </div>
+              <ul class="plan-benefits">
+                <li v-for="item in starterFeatures" :key="item">
+                  <v-icon size="18">mdi-check-circle</v-icon>
+                  <span>{{ $t(item) }}</span>
+                </li>
+              </ul>
+              <div class="plan-actions">
+                <button class="btn btn-primary" type="button" @click="redirectToCheckout('MONTHLY')">
+                  {{ $t('landingPage.plans.starterMonthly') }}
+                </button>
+                <button class="btn btn-secondary" type="button" @click="redirectToCheckout('ANNUAL')">
+                  {{ $t('landingPage.plans.starterAnnual') }}
+                </button>
+              </div>
+            </article>
+
+            <article class="plan-card plan-card-team">
+              <div class="plan-pill">{{ $t('landingPage.plans.teamPopular') }}</div>
+              <div class="plan-tag plan-tag-team">{{ $t('landingPage.plans.teamTag') }}</div>
+              <h3>{{ $t('landingPage.plans.teamName') }}</h3>
+              <p class="plan-subtitle">{{ $t('landingPage.plans.teamSubtitle') }}</p>
+              <div class="price-stack">
+                <strong>{{ formatPlanDisplay(planDetails.BUSINESS_MONTHLY) }}</strong>
+                <span>{{ formatPlanDisplay(planDetails.BUSINESS_ANNUAL) }}</span>
+              </div>
+              <ul class="plan-benefits">
+                <li v-for="item in teamFeatures" :key="item">
+                  <v-icon size="18">mdi-check-circle</v-icon>
+                  <span>{{ $t(item) }}</span>
+                </li>
+              </ul>
+              <div class="plan-actions">
+                <button class="btn btn-primary" type="button" @click="redirectToCheckout('BUSINESS_MONTHLY')">
+                  {{ $t('landingPage.plans.teamMonthly') }}
+                </button>
+                <button class="btn btn-dark-outline" type="button" @click="redirectToCheckout('BUSINESS_ANNUAL')">
+                  {{ $t('landingPage.plans.teamAnnual') }}
+                </button>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="contact" class="section-offset section-block section-light">
+        <div class="shell contact-grid">
+          <div>
+            <span class="section-kicker">{{ $t('landingPage.nav.contact') }}</span>
+            <h2>{{ $t('landingPage.contact.title') }}</h2>
+            <p class="section-intro">{{ $t('landingPage.footer.subtitle') }}</p>
+            <a class="contact-mail" href="mailto:contact@cobudget.app">contact@cobudget.app</a>
+          </div>
+
+          <form class="contact-form" @submit.prevent="handleSubmit">
+            <div class="form-group">
+              <label for="name">{{ $t('landingPage.contact.nameLabel') }}</label>
+              <input id="name" v-model="contactForm.name" type="text" required />
+            </div>
+            <div class="form-group">
+              <label for="email">{{ $t('landingPage.contact.emailLabel') }}</label>
+              <input id="email" v-model="contactForm.email" type="email" required />
+            </div>
+            <div class="form-group">
+              <label for="message">{{ $t('landingPage.contact.messageLabel') }}</label>
+              <textarea id="message" v-model="contactForm.message" rows="5" required></textarea>
+            </div>
+            <button class="btn btn-primary btn-large" type="submit" :disabled="isSubmitting">
+              {{ isSubmitting ? $t('landingPage.contact.sending') : $t('landingPage.contact.send') }}
+            </button>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <footer class="landing-footer">
+      <div class="shell footer-grid">
+        <div>
+          <h2>{{ $t('landingPage.footer.title') }}</h2>
+          <p>{{ $t('landingPage.footer.subtitle') }}</p>
+        </div>
+
+        <div class="footer-links">
+          <button
+            v-for="item in navItems"
+            :key="`footer-${item.id}`"
+            type="button"
+            class="footer-link"
+            @click="handleNavClick(item.id)"
+          >
+            {{ $t(item.labelKey) }}
           </button>
         </div>
-        <!-- Plano TEAM -->
-        <div class="plan-item team-plan" style="border-top: 4px solid var(--purple); background: #f7f3fa; box-shadow: 0 4px 24px rgba(142,68,173,0.13); width: 50%; position:relative;">
-          <div style="position:absolute;top:-32px;left:50%;transform:translateX(-50%);">
-            <span style="background:var(--yellow);color:var(--dark-purple);padding:6px 18px;border-radius:16px;font-size:15px;font-weight:700;box-shadow:0 2px 8px rgba(241,196,15,0.13);">{{ $t('landingPage.plans.teamPopular') }}</span>
-          </div>
-          <span class="plan-label" style="background:var(--purple); color:#fff; padding:2px 10px; border-radius:6px; font-size:13px; font-weight:600; margin-bottom:8px; display:inline-block;">{{ $t('landingPage.plans.teamTag') }}</span>
-          <h3 style="font-size:28px;">{{ $t('landingPage.plans.teamName') }}</h3>
-          <p class="price" style="color:var(--purple); font-weight:700;">{{ formatPlanDisplay(planDetails.BUSINESS_MONTHLY) }}</p>
-          <p class="price" style="color:var(--purple); font-weight:700;">{{ formatPlanDisplay(planDetails.BUSINESS_ANNUAL) }}</p>
-          <p>{{ $t('landingPage.plans.teamSubtitle') }}</p>
-          <ul class="plan-benefits">
-            <li>{{ $t('landingPage.plans.teamFeature1') }}</li>
-            <li>{{ $t('landingPage.plans.teamFeature2') }}</li>
-            <li>{{ $t('landingPage.plans.teamFeature3') }}</li>
-            <li>{{ $t('landingPage.plans.teamFeature4') }}</li>
-            <li>{{ $t('landingPage.plans.teamFeature5') }}</li>
-            <li>{{ $t('landingPage.plans.teamFeature6') }}</li>
-          </ul>
-          <button class="btn btn-primary cta-btn" style="background:var(--purple); border:none; font-size:1.15rem; padding:16px 32px;" @click.prevent="redirectToCheckout('BUSINESS_MONTHLY')">
-            {{ $t('landingPage.plans.teamMonthly') }}
-          </button>
-          <button class="btn btn-primary cta-btn" style="margin-top:10px; background:transparent; color:var(--purple); border:2px solid var(--purple);" @click.prevent="redirectToCheckout('BUSINESS_ANNUAL')">
-            {{ $t('landingPage.plans.teamAnnual') }}
-          </button>
-        </div>
-      </div>
-    </section>
 
-    <!-- Contato -->
-    <section id="contact" class="section contact-section">
-      <div class="contact-container">
-        <h2>{{ $t('landingPage.contact.title') }}</h2>
-        <p style="margin-bottom:18px; color:var(--purple); font-size:16px; font-weight:500;">
-          {{ $t('landingPage.contact.emailLabel') }} <a href="mailto:contact@cobudget.app" style="color:var(--dark-purple); font-weight:600; text-decoration:underline;">contact@cobudget.app</a>
-        </p>
-        <form class="contact-form" @submit.prevent="handleSubmit">
-          <div class="form-group">
-            <label for="name">{{ $t('landingPage.contact.nameLabel') }}</label>
-            <input type="text" id="name" v-model="contactForm.name" required />
-          </div>
-          <div class="form-group">
-            <label for="email">{{ $t('landingPage.contact.emailLabel') }}</label>
-            <input type="email" id="email" v-model="contactForm.email" required />
-          </div>
-          <div class="form-group">
-            <label for="message">{{ $t('landingPage.contact.messageLabel') }}</label>
-            <textarea id="message" v-model="contactForm.message" required></textarea>
-          </div>
-          <button type="submit" class="btn btn-primary" :disabled="isSubmitting">
-            {{ isSubmitting ? $t('landingPage.contact.sending') : $t('landingPage.contact.send') }}
-          </button>
-        </form>
-      </div>
-    </section>
-
-    <!-- Footer -->
-    <!-- CTA Final Forte -->
-    <footer class="footer">
-      <div class="footer-content">
-        <h2 style="color:var(--yellow); margin-bottom:16px;">{{ $t('landingPage.footer.title') }}</h2>
-        <p style="color:var(--white); font-size:18px; margin-bottom:24px; white-space: pre-line;">{{ $t('landingPage.footer.subtitle') }}</p>
-        <div class="footer-cta">
-          <button class="btn btn-primary cta-btn" @click.prevent="$router.push({ name: 'choose-plan' })">
+        <div class="footer-actions">
+          <button class="btn btn-primary" type="button" @click="navigateTo('choose-plan')">
             {{ $t('landingPage.footer.cta') }}
           </button>
-        </div>
-        <div class="footer-links">
-          <a href="#">{{ $t('landingPage.nav.about') }}</a>
-          <a href="#benefits">{{ $t('landingPage.nav.benefits') }}</a>
-          <a href="#testimonials">{{ $t('landingPage.nav.testimonials') }}</a>
-          <a href="#security">{{ $t('landingPage.nav.security') }}</a>
-          <a href="#contact">{{ $t('landingPage.nav.contact') }}</a>
-        </div>
-        <div class="footer-links footer-info">
-          <a @click.prevent="$router.push('/privacy-policy')">{{ $t('footer.privacy_policy') }}</a>
-          <a @click.prevent="$router.push('/terms-of-use')">{{ $t('footer.terms_of_use') }}</a>
-          <a @click.prevent="$router.push('/cookie-policy')">{{ $t('footer.cookie_policy') }}</a>
-        </div>
-        <div class="footer-info">
-          <p>{{ $t('landingPage.footer.copyright') }}</p>
+          <div class="footer-policy-links">
+            <button type="button" class="footer-link" @click="navigateToPath('/privacy-policy')">
+              {{ $t('footer.privacy_policy') }}
+            </button>
+            <button type="button" class="footer-link" @click="navigateToPath('/terms-of-use')">
+              {{ $t('footer.terms_of_use') }}
+            </button>
+            <button type="button" class="footer-link" @click="navigateToPath('/cookie-policy')">
+              {{ $t('footer.cookie_policy') }}
+            </button>
+          </div>
+          <p class="footer-copy">{{ $t('landingPage.footer.copyright') }}</p>
         </div>
       </div>
     </footer>
+
     <PrivacyControls />
   </v-container>
 </template>
 
 <script>
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import PrivacyControls from '@/components/compliance/PrivacyControls.vue'
 import { PLAN_DETAILS } from '@/constants/plans'
 import { useUserStore } from '@/plugins/userStore'
@@ -379,10 +431,10 @@ import OnboardingOrchestrator from '@/services/OnboardingOrchestrator'
 import { formatConvertedPriceFromBRL, resolvePricingCurrency } from '@/utils/pricing'
 
 export default {
+  name: 'LandingPage',
   components: {
     PrivacyControls,
   },
-  name: 'LandingPage',
   data() {
     return {
       isMenuOpen: false,
@@ -390,36 +442,157 @@ export default {
       contactForm: {
         name: '',
         email: '',
-        message: ''
+        message: '',
       },
-      isSubmitting: false
-    };
+      isSubmitting: false,
+      navItems: [
+        { id: 'about', labelKey: 'landingPage.nav.about' },
+        { id: 'benefits', labelKey: 'landingPage.nav.benefits' },
+        { id: 'testimonials', labelKey: 'landingPage.nav.testimonials' },
+        { id: 'security', labelKey: 'landingPage.nav.security' },
+        { id: 'contact', labelKey: 'landingPage.nav.contact' },
+      ],
+      painCards: [
+        { icon: 'mdi-file-cancel-outline', titleKey: 'landingPage.pain.card1' },
+        { icon: 'mdi-eye-off-outline', titleKey: 'landingPage.pain.card2' },
+        { icon: 'mdi-chart-timeline-variant', titleKey: 'landingPage.pain.card3' },
+        { icon: 'mdi-calendar-remove-outline', titleKey: 'landingPage.pain.card4' },
+        { icon: 'mdi-account-question-outline', titleKey: 'landingPage.pain.card5' },
+      ],
+      solutionCards: [
+        { icon: 'mdi-account-group-outline', titleKey: 'landingPage.solution.card1' },
+        { icon: 'mdi-chart-areaspline', titleKey: 'landingPage.solution.card2' },
+        { icon: 'mdi-finance', titleKey: 'landingPage.solution.card3' },
+        { icon: 'mdi-handshake-outline', titleKey: 'landingPage.solution.card4' },
+      ],
+      howSteps: [
+        { icon: 'mdi-database-outline', titleKey: 'landingPage.how.step1Title', descKey: 'landingPage.how.step1Desc' },
+        { icon: 'mdi-share-variant-outline', titleKey: 'landingPage.how.step2Title', descKey: 'landingPage.how.step2Desc' },
+        { icon: 'mdi-brain', titleKey: 'landingPage.how.step3Title', descKey: 'landingPage.how.step3Desc' },
+      ],
+      aiBullets: [
+        { icon: 'mdi-chart-bell-curve-cumulative', labelKey: 'landingPage.ai.bullet1' },
+        { icon: 'mdi-radar', labelKey: 'landingPage.ai.bullet2' },
+        { icon: 'mdi-tag-multiple-outline', labelKey: 'landingPage.ai.bullet3' },
+        { icon: 'mdi-lightbulb-on-outline', labelKey: 'landingPage.ai.bullet4' },
+      ],
+      aiCards: [
+        {
+          icon: 'mdi-chart-box-outline',
+          titleKey: 'landingPage.ai.card1Title',
+          descKey: 'landingPage.ai.card1Desc',
+          tagKey: 'landingPage.ai.card1Tag',
+        },
+        {
+          icon: 'mdi-bell-alert-outline',
+          titleKey: 'landingPage.ai.card2Title',
+          descKey: 'landingPage.ai.card2Desc',
+          tagKey: 'landingPage.ai.card2Tag',
+        },
+        {
+          icon: 'mdi-robot-outline',
+          titleKey: 'landingPage.ai.card3Title',
+          descKey: 'landingPage.ai.card3Desc',
+          tagKey: 'landingPage.ai.card3Tag',
+        },
+      ],
+      familyCards: [
+        { icon: 'mdi-receipt-text-outline', titleKey: 'landingPage.family.card1' },
+        { icon: 'mdi-home-heart', titleKey: 'landingPage.family.card2' },
+        { icon: 'mdi-airplane', titleKey: 'landingPage.family.card3' },
+        { icon: 'mdi-account-supervisor-circle-outline', titleKey: 'landingPage.family.card4' },
+      ],
+      testimonials: [
+        { quoteKey: 'landingPage.testimonials.quote1', authorKey: 'landingPage.testimonials.author1' },
+        { quoteKey: 'landingPage.testimonials.quote2', authorKey: 'landingPage.testimonials.author2' },
+      ],
+      securityItems: [
+        { icon: 'mdi-lock-check-outline', labelKey: 'landingPage.security.item1' },
+        { icon: 'mdi-two-factor-authentication', labelKey: 'landingPage.security.item2' },
+        { icon: 'mdi-server-security', labelKey: 'landingPage.security.item3' },
+        { icon: 'mdi-account-key-outline', labelKey: 'landingPage.security.item4' },
+      ],
+      starterFeatures: [
+        'landingPage.plans.starterFeature1',
+        'landingPage.plans.starterFeature2',
+        'landingPage.plans.starterFeature3',
+        'landingPage.plans.starterFeature4',
+        'landingPage.plans.starterFeature5',
+      ],
+      teamFeatures: [
+        'landingPage.plans.teamFeature1',
+        'landingPage.plans.teamFeature2',
+        'landingPage.plans.teamFeature3',
+        'landingPage.plans.teamFeature4',
+        'landingPage.plans.teamFeature5',
+        'landingPage.plans.teamFeature6',
+      ],
+    }
+  },
+  mounted() {
+    window.addEventListener('resize', this.handleResize)
+  },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.handleResize)
   },
   methods: {
-    toggleMenu(event) {
-      this.isMenuOpen = !this.isMenuOpen;
-      event.currentTarget.classList.toggle('active');
+    toggleMenu() {
+      this.isMenuOpen = !this.isMenuOpen
+    },
+    closeMenu() {
+      this.isMenuOpen = false
+    },
+    handleResize() {
+      if (window.innerWidth > 1024) {
+        this.closeMenu()
+      }
+    },
+    handleNavClick(sectionId) {
+      this.scrollToSection(sectionId)
+      this.closeMenu()
+    },
+    scrollToSection(sectionId) {
+      const target = document.getElementById(sectionId)
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    },
+    navigateTo(name, query) {
+      this.closeMenu()
+      this.$router.push(query ? { name, query } : { name })
+    },
+    navigateToPath(path) {
+      this.closeMenu()
+      this.$router.push(path)
+    },
+    authorInitials(author) {
+      return author
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase())
+        .join('')
     },
     async handleSubmit() {
       if (!this.contactForm.email.includes('@')) {
-        alert(this.$t('landingPage.contact.invalidEmail'));
-        return;
+        alert(this.$t('landingPage.contact.invalidEmail'))
+        return
       }
 
-      if (this.isSubmitting) return;
+      if (this.isSubmitting) return
 
-      this.isSubmitting = true;
+      this.isSubmitting = true
 
       try {
-        await NotificationService.sendContactForm(this.contactForm);
-        alert(this.$t('landingPage.contact.success'));
-        this.contactForm = { name: '', email: '', message: '' };
+        await NotificationService.sendContactForm(this.contactForm)
+        alert(this.$t('landingPage.contact.success'))
+        this.contactForm = { name: '', email: '', message: '' }
       } catch (error) {
-        console.error('Erro ao enviar mensagem:', error);
-        const errorMessage = error.response?.data?.error || this.$t('landingPage.contact.errorDefault');
-        alert(errorMessage);
+        console.error('Erro ao enviar mensagem:', error)
+        const errorMessage = error.response?.data?.error || this.$t('landingPage.contact.errorDefault')
+        alert(errorMessage)
       } finally {
-        this.isSubmitting = false;
+        this.isSubmitting = false
       }
     },
     getFormattingLocale() {
@@ -428,7 +601,7 @@ export default {
         pt: 'pt-BR',
         en: 'en-US',
         es: 'es-ES',
-        fr: 'fr-FR'
+        fr: 'fr-FR',
       }
       return localeMap[uiLocale] || 'pt-BR'
     },
@@ -437,13 +610,13 @@ export default {
       const browserLocale = typeof navigator !== 'undefined' ? navigator.language : null
       const currency = resolvePricingCurrency({
         locale: this.$i18n?.locale,
-        browserLocale
+        browserLocale,
       })
       const periodKey = plan?.billingPeriod === 'year' ? 'landingPage.plans.perYear' : 'landingPage.plans.perMonth'
       const formattedAmount = formatConvertedPriceFromBRL({
         amountInBRL: amount,
         targetCurrency: currency,
-        uiLocale: this.getFormattingLocale()
+        uiLocale: this.getFormattingLocale(),
       })
       return `${formattedAmount} / ${this.$t(periodKey)}`
     },
@@ -455,967 +628,978 @@ export default {
         this.$router.push({ name: 'login', query: { redirect } })
         return
       }
+
       this.$router.push({ name: 'choose-plan', query: { plan } })
-    }
+    },
   },
-};
+}
 </script>
 
 <style scoped>
-/* Importa fonte moderna para títulos e destaques */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Roboto:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Source+Sans+3:wght@400;500;600;700&display=swap');
 
-#color-setup {
-  --orange: #f39c12;
-  --dark-orange: #e67e22;
-  --yellow: #f1c40f;
-  --purple: #8e44ad;
-  --dark-purple: #5b2c6f;
-  --white: #ffffff;
-  --light-gray: #f8f9f9;
-  --dark-gray: #2c3e50;
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-.v-container {
+#landing-page {
+  --page-bg: #f5f1e8;
+  --surface: rgba(255, 255, 255, 0.82);
+  --surface-strong: #ffffff;
+  --surface-soft: #fcf8f1;
+  --surface-accent: #f2ece3;
+  --ink: #172033;
+  --ink-soft: #4c576d;
+  --line: rgba(23, 32, 51, 0.12);
+  --brand: #b6551f;
+  --brand-strong: #8e4318;
+  --accent: #205f63;
+  --accent-strong: #173f4b;
+  --plum: #69495f;
+  --shadow: 0 18px 38px rgba(23, 32, 51, 0.08);
+  --shadow-soft: 0 10px 22px rgba(23, 32, 51, 0.05);
+  background:
+    radial-gradient(circle at top left, rgba(32, 95, 99, 0.08), transparent 28%),
+    radial-gradient(circle at 85% 10%, rgba(182, 85, 31, 0.08), transparent 22%),
+    linear-gradient(180deg, #fbf8f2 0%, #f8f4ed 52%, #fdfaf5 100%);
+  color: var(--ink);
+  font-family: 'Source Sans 3', sans-serif;
   max-width: none !important;
   padding: 0 !important;
 }
 
-body {
-  font-family: 'Inter', 'Roboto', Arial, sans-serif;
+#landing-page :deep(*) {
+  box-sizing: border-box;
+}
+
+#landing-page :deep(.v-icon) {
+  color: inherit;
+}
+
+.landing-page {
   overflow-x: hidden;
-  color: var(--dark-gray);
-  background: #fafbfc;
-  letter-spacing: 0.01em;
 }
 
-/* Títulos principais */
-h1, .hero-content h1 {
-  font-family: 'Inter', 'Roboto', Arial, sans-serif;
-  font-weight: 900;
-  font-size: 2.8rem;
-  color: var(--purple);
-  letter-spacing: -0.5px;
-  line-height: 1.1;
-  margin-bottom: 12px;
-  text-shadow: 0 2px 12px rgba(142,68,173,0.07);
-}
-
-h2, .section h2 {
-  font-family: 'Inter', 'Roboto', Arial, sans-serif;
-  font-weight: 700;
-  font-size: 2.1rem;
-  color: var(--dark-purple);
-  letter-spacing: -0.2px;
-  margin-bottom: 10px;
-  line-height: 1.18;
-}
-
-h3, .section h3 {
-  font-family: 'Inter', 'Roboto', Arial, sans-serif;
-  font-weight: 600;
-  font-size: 1.35rem;
-  color: var(--purple);
-  margin-bottom: 8px;
-  letter-spacing: 0.01em;
-}
-
-h4, .benefit-item h4, .testimonial-item h4 {
-  font-family: 'Inter', 'Roboto', Arial, sans-serif;
-  font-weight: 600;
-  font-size: 1.08rem;
-  color: var(--dark-purple);
-  margin-bottom: 2px;
-}
-
-p, .section p, .benefit-item p, .testimonial-item p, .ai-text p {
-  font-family: 'Roboto', 'Inter', Arial, sans-serif;
-  font-size: 1.08rem;
-  color: var(--dark-gray);
-  line-height: 1.7;
-  margin-bottom: 8px;
-}
-
-ul, .section ul {
-  font-size: 1.08rem;
-  line-height: 1.7;
-  color: var(--dark-gray);
-  margin-bottom: 8px;
-}
-
-li {
-  margin-bottom: 6px;
-}
-
-.micro-proof {
-  font-size: 0.95rem !important;
-  color: #888 !important;
-  font-family: 'Inter', 'Roboto', Arial, sans-serif;
-  letter-spacing: 0.02em;
-}
-
-/* Dor - Cards */
-.pain-section {
-  background: #fff;
-  padding: 60px 20px;
-}
-.pain-title {
-  text-align: center;
-  color: var(--purple);
-  margin-bottom: 32px;
-}
-.pain-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 28px;
-  justify-content: center;
-  max-width: 900px;
+.shell {
+  width: min(1180px, calc(100vw - 32px));
   margin: 0 auto;
 }
-.pain-card {
-  background: #f8f9f9;
-  border-radius: 14px;
-  box-shadow: 0 2px 12px rgba(142,68,173,0.06);
-  padding: 32px 24px 22px 24px;
-  flex: 1 1 200px;
-  min-width: 200px;
-  max-width: 240px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
+
+.landing-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  backdrop-filter: blur(14px);
+  background: rgba(251, 248, 242, 0.82);
+  border-bottom: 1px solid rgba(23, 32, 51, 0.08);
+}
+
+.header-shell {
+  min-height: 88px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 24px;
   align-items: center;
 }
-.pain-icon {
-  font-size: 2.1rem;
-  margin-bottom: 12px;
-  display: block;
-}
-.pain-card strong {
-  color: var(--purple);
-  font-size: 1.13rem;
-  margin-bottom: 6px;
-}
-.pain-card p {
-  color: var(--dark-gray);
-  font-size: 1.01rem;
-  margin-bottom: 0;
-}
-.pain-bottom {
-  text-align: center;
-  margin-top: 32px;
-  color: #666;
-  font-size: 17px;
-}
 
-/* Suaviza o visual dos botões */
-
-.plan-benefits {
-  list-style-type: none;
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  background: transparent;
+  border: 0;
   padding: 0;
-  margin: 20px 0;
-  color: var(--dark-gray);
-  font-size: 14px;
+  color: inherit;
+  cursor: pointer;
 }
 
-.plan-benefits li {
-  margin: 5px 0;
+.brand-logo {
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  object-fit: cover;
+  box-shadow: var(--shadow-soft);
 }
-.btn, .cta-btn {
-  font-family: 'Inter', 'Roboto', Arial, sans-serif;
+
+.brand-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.brand-copy strong,
+h1,
+h2,
+h3 {
+  font-family: 'Manrope', sans-serif;
+}
+
+.brand-copy strong {
+  font-size: 1.02rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.brand-copy small {
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+
+.desktop-nav {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.nav-link,
+.footer-link,
+.mobile-link {
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  font: inherit;
+}
+
+.nav-link {
+  padding: 10px 14px;
+  border-radius: 999px;
   font-weight: 600;
-  font-size: 1.08rem;
-  letter-spacing: 0.01em;
-  border-radius: 7px;
-  box-shadow: 0 2px 8px rgba(243,156,18,0.07);
-  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.nav-link:hover,
+.footer-link:hover,
+.mobile-link:hover {
+  color: var(--brand-strong);
+}
+
+.nav-link:hover {
+  background: rgba(182, 85, 31, 0.08);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn {
+  min-height: 46px;
+  border-radius: 999px;
+  padding: 0 22px;
+  border: 1px solid transparent;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.98rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
 }
 
 .btn-primary {
-  background: var(--orange);
+  background: linear-gradient(135deg, var(--brand) 0%, #d16b31 100%);
   color: #fff;
-  border: none;
-  transition: background 0.2s;
+  box-shadow: 0 10px 18px rgba(182, 85, 31, 0.16);
 }
+
 .btn-primary:hover {
-  background: var(--dark-orange);
-  color: #fff;
-  box-shadow: 0 4px 16px rgba(243,156,18,0.13);
+  background: linear-gradient(135deg, var(--brand-strong) 0%, var(--brand) 100%);
 }
+
 .btn-secondary {
-  background: #fff;
-  color: var(--purple);
-  border: 2px solid var(--purple);
+  background: transparent;
+  border-color: rgba(32, 95, 99, 0.22);
+  color: var(--accent-strong);
 }
-.btn-secondary:hover {
-  background: var(--purple);
+
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.72);
+  border-color: rgba(23, 32, 51, 0.08);
+  color: var(--ink);
+}
+
+.btn-dark-outline {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.22);
   color: #fff;
 }
 
-.header {
-  background-color: var(--light-gray);
-  padding: 10px 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  top: 0;
-  left: 0;
-  right: 0;
-  max-width: 1200px;
-  margin: 0 auto;
-  box-sizing: border-box;
-  z-index: 10;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  height: 100px;
-  /* Ajuste a altura conforme necessário */
-  position: fixed;
-}
-
-.section {
-  scroll-margin-top: 80px;
-  /* Garante que o espaço seja respeitado ao rolar */
+.btn-large {
+  min-height: 54px;
+  padding: 0 26px;
 }
 
 .menu-toggle {
+  width: 46px;
+  height: 46px;
   display: none;
-  cursor: pointer;
   flex-direction: column;
-  gap: 5px;
-  position: relative;
-  width: 30px;
-  height: 25px;
-}
-
-.menu-icon {
-  width: 100%;
-  height: 3px;
-  background-color: var(--dark-gray);
-  border-radius: 5px;
-  position: absolute;
-  transition: all 0.3s ease-in-out;
-}
-
-.menu-icon:nth-child(1) {
-  top: 0;
-}
-
-.menu-icon:nth-child(2) {
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.menu-icon:nth-child(3) {
-  bottom: 0;
-}
-
-/* Animação do menu quando ativo */
-.menu-toggle.active .menu-icon:nth-child(1) {
-  transform: rotate(45deg);
-  top: 50%;
-}
-
-.menu-toggle.active .menu-icon:nth-child(2) {
-  opacity: 0;
-}
-
-.menu-toggle.active .menu-icon:nth-child(3) {
-  transform: rotate(-45deg);
-  bottom: 40%;
-}
-
-/* Para garantir que a largura total do body não exceda a largura da tela */
-body {
-  font-family: 'Roboto', sans-serif;
-  overflow-x: hidden;
-}
-
-/* Ajuste a largura do logo e navegação conforme necessário */
-.logo img {
-  width: 95px;
-  height: 95px;
-  margin-top: 17px;
-  border-radius: 50%;
-  /* Faz a imagem circular */
-  object-fit: cover;
-}
-
-.nav ul {
-  list-style: none;
-  display: flex;
-  gap: 15px;
-  transition: transform 0.3s ease;
-  margin: 0;
-}
-
-.nav ul {
-  display: flex;
-  /* Garante que o menu seja visível no modo desktop */
-  position: relative;
-  top: 0;
-  right: 0;
-  background-color: transparent;
-  /* Altere se precisar de fundo */
-  padding: 0;
-  /* Remove padding que pode estar causando o problema */
-  box-shadow: none;
-  /* Remove a sombra se não for necessária */
-}
-
-.nav ul.active {
-  display: flex;
-}
-
-.nav a {
-  color: var(--dark-gray);
-  text-decoration: none;
-  font-weight: 500;
-  padding: 5px 10px;
-  display: block;
-  /* Garante que os links ocupem o espaço necessário */
-}
-
-.nav a:hover {
-  color: var(--yellow);
-}
-
-.auth-buttons {
-  display: flex;
-  gap: 10px;
-}
-
-.login-btn {
-  background-color: var(--yellow);
-  color: var(--dark-gray);
-  padding: 8px 16px;
-  border-radius: 5px;
-}
-
-.signup-btn {
-  background-color: var(--purple);
-  color: var(--white);
-  padding: 8px 16px;
-  border-radius: 5px;
-}
-
-.cta-btn {
-  background-color: var(--orange);
-  color: var(--white);
-  padding: 12px 24px;
-  border-radius: 5px;
-}
-
-
-/* Hero Section */
-
-.hero {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 80px 40px;
-  margin-top: 20px;
-  background-color: var(--light-gray);
-  gap: 40px;
-}
-
-.hero-content {
-  flex: 1 1 40%;
-}
-
-.hero-image {
-  flex: 1 1 60%;
-  display: flex;
   justify-content: center;
-  min-width: 320px;
+  gap: 5px;
+  border-radius: 14px;
+  border: 1px solid rgba(23, 32, 51, 0.08);
+  background: rgba(255, 255, 255, 0.82);
 }
 
-.hero-content h1 {
-  font-size: 48px;
-  color: var(--dark-gray);
-}
-
-.hero-content p {
-  margin-top: 20px;
-  font-size: 18px;
-  color: var(--dark-gray);
-}
-
-.hero-image img {
-  width: 100%;
-  max-width: 520px;
-  height: auto;
-  border-radius: 10px;
-  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.08);
-}
-
-/* AI Section */
-.ai-section {
-  background: linear-gradient(135deg, #f5f7ff 0%, #eef2ff 100%);
-  padding: 80px 20px;
-}
-
-.ai-content {
-  max-width: 1200px;
+.menu-toggle span {
+  width: 18px;
+  height: 2px;
+  background: var(--ink);
   margin: 0 auto;
+  border-radius: 999px;
+}
+
+.mobile-menu {
+  display: none;
+}
+
+.section-offset {
+  scroll-margin-top: 106px;
+}
+
+.section-block {
+  padding: 96px 0;
+}
+
+.section-light {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0.12));
+}
+
+.section-soft-accent {
+  background: linear-gradient(180deg, rgba(245, 239, 231, 0.76), rgba(255, 255, 255, 0.1));
+}
+
+.section-airy {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.48), rgba(242, 236, 227, 0.5));
+}
+
+.hero-section {
+  padding: 56px 0 88px;
+}
+
+.hero-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 40px;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.95fr);
+  gap: 36px;
   align-items: center;
 }
 
-.ai-text .tag {
+.eyebrow,
+.section-kicker,
+.panel-label {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.84rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-size: 0.9rem;
-  color: #7c3aed;
+}
+
+.eyebrow,
+.section-kicker {
+  background: rgba(32, 95, 99, 0.1);
+  color: var(--accent-strong);
+}
+
+.section-kicker-dark,
+.panel-label {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.82);
+}
+
+h1 {
+  margin: 18px 0 16px;
+  font-size: clamp(2.7rem, 5vw, 4.8rem);
+  line-height: 0.98;
+  letter-spacing: -0.05em;
+}
+
+h2 {
+  margin: 16px 0 14px;
+  font-size: clamp(2rem, 3.5vw, 3.2rem);
+  line-height: 1.02;
+  letter-spacing: -0.045em;
+}
+
+h3 {
+  margin: 0;
+  font-size: 1.18rem;
+  line-height: 1.15;
+}
+
+p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 1.06rem;
+  line-height: 1.65;
+}
+
+.hero-lead,
+.section-intro {
+  max-width: 62ch;
+  font-size: 1.16rem;
+}
+
+.narrow {
+  margin-inline: auto;
+  max-width: 54ch;
+}
+
+.centered-heading {
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+.hero-points {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 28px 0 30px;
+}
+
+.hero-point {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(23, 32, 51, 0.08);
+  box-shadow: var(--shadow-soft);
+  color: var(--ink);
   font-weight: 600;
 }
 
-.ai-text h2 {
-  font-size: 2.5rem;
-  margin: 12px 0;
-  color: #1f2933;
-}
-
-.ai-text ul {
-  margin: 16px 0 24px;
-  padding-left: 20px;
-  color: #374151;
-}
-
-.ai-text li {
-  margin-bottom: 10px;
-}
-
-.ai-cta {
+.cta-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 20px;
-  justify-content: center;
+  gap: 14px;
   margin-top: 28px;
 }
 
-.ai-highlights {
+.proof-copy {
+  margin-top: 16px;
+  font-size: 0.95rem;
+}
+
+.hero-visual {
+  display: grid;
+  gap: 18px;
+}
+
+.hero-panel {
+  border-radius: 32px;
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(23, 32, 51, 0.08);
+  box-shadow: var(--shadow);
+}
+
+.hero-panel-main {
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-panel-main::after {
+  content: '';
+  position: absolute;
+  inset: auto -80px -80px auto;
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle, rgba(32, 95, 99, 0.1), transparent 72%);
+}
+
+.hero-panel-head {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.hero-insights {
+  display: grid;
+  gap: 14px;
+}
+
+.insight-card,
+.ai-showcase-card,
+.feature-card,
+.testimonial-card,
+.security-card,
+.timeline-card,
+.plan-card,
+.contact-form {
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-soft);
+}
+
+.insight-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.insight-card span {
+  display: inline-flex;
+  margin-top: 8px;
+  color: var(--brand-strong);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.hero-panel-image {
+  padding: 12px;
+}
+
+.hero-panel-image img {
+  display: block;
+  width: 100%;
+  min-height: 280px;
+  border-radius: 22px;
+  object-fit: cover;
+}
+
+.narrative-grid,
+.contact-grid,
+.ai-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 30px;
+  align-items: start;
+}
+
+.card-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.card-grid-tight {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.card-grid-four {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.feature-card,
+.security-card,
+.timeline-card,
+.testimonial-card,
+.ai-showcase-card {
+  border-radius: 26px;
+  padding: 24px;
+}
+
+.feature-card,
+.security-card {
+  min-height: 168px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.feature-card strong,
+.timeline-card strong,
+.testimonial-card strong,
+.security-card span,
+.value-banner strong,
+.plan-card h3 {
+  font-family: 'Manrope', sans-serif;
+  font-size: 1.18rem;
+  line-height: 1.18;
+}
+
+.feature-card-pain {
+  background: linear-gradient(180deg, #fff 0%, #faf3ee 100%);
+}
+
+.timeline-grid,
+.plans-grid,
+.testimonial-grid {
   display: grid;
   gap: 20px;
 }
-.ai-cta .btn-primary {
-  box-shadow: 0 4px 18px rgba(243,156,18,0.13), 0 1.5px 0 var(--orange);
-  font-size: 1.13rem;
-  padding: 14px 32px;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  border-radius: 8px;
-  transition: box-shadow 0.2s, background 0.2s;
-}
-.ai-cta .btn-primary:hover {
-  box-shadow: 0 8px 28px rgba(243,156,18,0.18), 0 2px 0 var(--dark-orange);
-  background: var(--dark-orange);
-}
-.ai-cta .btn-secondary {
-  font-size: 1.13rem;
-  padding: 14px 32px;
-  font-weight: 700;
-  border-radius: 8px;
-  border-width: 2px;
-  border-style: solid;
-  border-color: var(--purple);
-  color: var(--purple);
-  background: #fff;
-  transition: background 0.2s, color 0.2s, border-color 0.2s;
-}
-.ai-cta .btn-secondary:hover {
-  background: var(--purple);
-  color: #fff;
-  border-color: var(--dark-purple);
+
+.timeline-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.ai-card {
-  background: #fff;
-  padding: 24px;
-  border-radius: 16px;
-  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
-  border: 1px solid rgba(124, 58, 237, 0.12);
+.timeline-card {
+  display: grid;
+  gap: 16px;
+  align-content: start;
 }
 
-.ai-card h3 {
-  margin-bottom: 10px;
-  color: #111827;
+.timeline-step {
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--brand);
 }
 
-.ai-card span {
-  display: inline-block;
-  margin-top: 12px;
-  font-size: 0.85rem;
-  color: #6d28d9;
-  font-weight: 600;
+.bullet-list,
+.plan-benefits {
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
+.bullet-list {
+  display: grid;
+  gap: 12px;
+  margin: 28px 0 0;
+}
 
-/* Benefícios - Cards */
-.benefits-list {
+.bullet-list li,
+.plan-benefits li {
   display: flex;
-  flex-wrap: wrap;
-  gap: 28px;
-  justify-content: center;
-  max-width: 900px;
-  margin: 0 auto;
+  align-items: flex-start;
+  gap: 12px;
 }
-.benefit-card {
-  background: #f8f9f9;
-  border-radius: 14px;
-  box-shadow: 0 2px 12px rgba(142,68,173,0.06);
-  padding: 32px 24px 22px 24px;
-  flex: 1 1 200px;
-  min-width: 200px;
-  max-width: 240px;
-  text-align: center;
+
+.ai-card-stack {
+  display: grid;
+  gap: 18px;
+}
+
+.ai-showcase-card {
+  background: rgba(255, 255, 255, 0.94);
+  border-color: rgba(23, 32, 51, 0.08);
+}
+
+.ai-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.ai-card-head span {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--accent-strong);
+}
+
+.testimonial-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.testimonial-card {
+  position: relative;
+  min-height: 280px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-}
-.benefit-icon {
-  font-size: 2.1rem;
-  margin-bottom: 12px;
-  display: block;
-}
-.benefit-card strong {
-  color: var(--purple);
-  font-size: 1.13rem;
-  margin-bottom: 6px;
-}
-.benefit-card p {
-  color: var(--dark-gray);
-  font-size: 1.01rem;
-  margin-bottom: 0;
+  gap: 18px;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.78);
 }
 
-/* Testemunhos */
-.testimonials-section {
-  background-color: var(--white);
-  padding: 60px 40px;
-  text-align: center;
-}
-
-  .testimonials-container {
-    display: flex;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 20px;
-  }
-
-  .testimonial-item {
-    width: 30%;
-    min-width: 280px; /* Largura mínima para evitar boxes muito estreitos */
-    background-color: var(--light-gray);
-    padding: 20px;
-    border-radius: 10px;
-    text-align: center;
-    box-sizing: border-box; /* Garante que o padding não aumente a largura */
-    margin: 0 auto; /* Centraliza os items quando em coluna */
-  }  .testimonial-item img {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    margin-bottom: 15px;
-  }
-
-  .testimonial-item p {
-    font-style: italic;
-    color: var(--dark-gray);
-    margin-bottom: 10px;
-    word-wrap: break-word; /* Garante que palavras longas quebrem */
-    overflow-wrap: break-word; /* Suporte adicional para quebra de palavras */
-  }
-
-  .testimonial-item h4 {
-    color: var(--dark-gray);
-  }/* Segurança */
-.security-section {
-  background-color: var(--light-gray);
-  padding: 60px 40px;
-}
-
-.security-content {
-  max-width: 800px;
-  margin: 0 auto;
-  text-align: center;
-}
-
-.security-content ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-.security-content li {
-  font-size: 16px;
-  color: var(--dark-gray);
-  margin-bottom: 10px;
-}
-
-.plans-section {
-  background-color: var(--white);
-  padding: 60px 40px;
-  text-align: center;
-}
-
-.plans-container {
+.testimonial-topline {
   display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.avatar-badge {
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
+  border-radius: 16px;
+  background: rgba(32, 95, 99, 0.12);
+  color: var(--accent-strong);
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
+}
+
+.testimonial-rating {
+  display: inline-flex;
+  gap: 2px;
+  color: #d98d2c;
+}
+
+.quote-icon {
+  color: rgba(32, 95, 99, 0.22);
+}
+
+.security-card {
+  justify-content: center;
+}
+
+.value-banner {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 26px;
+  padding: 20px 22px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, rgba(32, 95, 99, 0.08) 0%, rgba(255, 255, 255, 0.92) 100%);
+  color: var(--ink);
+  border: 1px solid rgba(23, 32, 51, 0.08);
+  box-shadow: var(--shadow-soft);
+}
+
+.value-banner p {
+  color: var(--ink-soft);
+}
+
+.plans-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+}
+
+.plan-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
   gap: 20px;
-  flex-wrap: wrap;
+  padding: 28px;
+  border-radius: 28px;
 }
 
-.plan-item {
-  width: 45%;
-  background-color: var(--light-gray);
-  padding: 20px;
-  border-radius: 10px;
-  text-align: center;
+.plan-card-starter {
+  background: linear-gradient(180deg, #fff 0%, #fcf5ec 100%);
 }
 
-.plan-item h3 {
-  font-size: 24px;
-  color: var(--dark-gray);
+.plan-card-team {
+  background: linear-gradient(180deg, #fbf7ef 0%, #f4ece2 100%);
+  color: var(--ink);
+  border-color: rgba(32, 95, 99, 0.14);
+  box-shadow: 0 16px 34px rgba(32, 95, 99, 0.08);
 }
 
-.plan-item .price {
-  font-size: 32px;
-  color: var(--orange);
-  margin: 10px 0;
+.plan-card-team p,
+.plan-card-team li,
+.plan-card-team span,
+.plan-card-team h3,
+.plan-card-team strong {
+  color: inherit;
 }
 
-.plan-item p {
-  font-size: 16px;
-  color: var(--dark-gray);
+.plan-pill,
+.plan-tag {
+  display: inline-flex;
+  width: fit-content;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 800;
 }
 
-.cta-btn {
-  background-color: var(--orange);
-  color: var(--white);
-  padding: 12px 24px;
-  border-radius: 5px;
-  margin-top: 20px;
+.plan-tag {
+  background: rgba(182, 85, 31, 0.12);
+  color: var(--brand-strong);
 }
 
-.cta-btn:hover {
-  background-color: var(--dark-orange);
+.plan-tag-team {
+  background: rgba(32, 95, 99, 0.12);
+  color: var(--accent-strong);
 }
 
-/* Contato */
-.contact-section {
-  background-color: var(--white);
-  padding: 60px 40px;
-  text-align: center;
+.plan-pill {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  background: #f2c76d;
+  color: #3d2a10;
 }
 
-.contact-container {
-  max-width: 800px;
-  margin: 0 auto;
+.plan-subtitle {
+  min-height: 52px;
+}
+
+.price-stack {
+  display: grid;
+  gap: 6px;
+}
+
+.price-stack strong {
+  font-size: 1.7rem;
+}
+
+.price-stack span {
+  font-size: 1rem;
+  color: var(--ink-soft);
+}
+
+.plan-card-team .price-stack span {
+  color: var(--ink-soft);
+}
+
+.plan-benefits {
+  display: grid;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.plan-benefits .v-icon {
+  margin-top: 2px;
+  color: var(--brand);
+}
+
+.plan-card-team .plan-benefits .v-icon {
+  color: var(--accent-strong);
+}
+
+.plan-actions {
+  display: grid;
+  gap: 12px;
+  margin-top: auto;
+}
+
+.contact-mail {
+  display: inline-flex;
+  margin-top: 18px;
+  color: var(--brand-strong);
+  font-family: 'Manrope', sans-serif;
+  font-weight: 700;
+  text-decoration: none;
 }
 
 .contact-form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  border-radius: 30px;
+  padding: 28px;
 }
 
-.contact-form label {
-  display: block;
-  font-size: 16px;
-  color: var(--dark-gray);
+.form-group {
+  display: grid;
+  gap: 8px;
+}
+
+.form-group label {
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  border-radius: 18px;
+  border: 1px solid rgba(23, 32, 51, 0.12);
+  background: #fff;
+  padding: 14px 16px;
+  font: inherit;
+  color: var(--ink);
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: rgba(32, 95, 99, 0.45);
+  box-shadow: 0 0 0 4px rgba(32, 95, 99, 0.1);
+}
+
+.landing-footer {
+  padding: 52px 0;
+  background: linear-gradient(135deg, #22313b 0%, #283541 100%);
+  color: #f7efe7;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr 1fr;
+  gap: 26px;
+  align-items: start;
+}
+
+.footer-grid p,
+.footer-copy,
+.footer-link {
+  color: rgba(247, 239, 231, 0.76);
+}
+
+.footer-links,
+.footer-policy-links,
+.footer-actions {
+  display: grid;
+  gap: 12px;
+}
+
+.footer-link {
+  width: fit-content;
+  padding: 0;
   text-align: left;
 }
 
-.contact-form input,
-.contact-form textarea {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid var(--light-gray);
-  border-radius: 5px;
-  font-size: 16px;
+.footer-copy {
+  font-size: 0.92rem;
 }
 
-.contact-form button {
-  align-self: flex-start;
-  background-color: var(--orange);
-  color: var(--white);
-  padding: 12px 24px;
-  border: none;
-  border-radius: 5px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.contact-form button:hover {
-  background-color: var(--dark-orange);
-}
-
-/* Footer */
-.footer {
-  background-color: var(--dark-gray);
-  padding: 40px;
-  color: var(--white);
-  display: flex;
-  flex-direction: column;
+.icon-chip {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  text-align: center;
+  border-radius: 16px;
+  background: rgba(182, 85, 31, 0.1);
+  color: var(--brand-strong);
 }
 
-.footer-links a {
-  color: var(--white);
-  margin-right: 20px;
-  text-decoration: none;
-  justify-content: center;
-  cursor: pointer;
+.icon-chip-small {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
 }
 
-.footer-cta {
-  margin-top: 20px;
+.icon-chip-contrast {
+  background: rgba(32, 95, 99, 0.12);
+  color: var(--accent-strong);
 }
 
-.footer-info {
-  margin-top: 20px;
-  text-align: center;
+.icon-chip-dark {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
 }
 
-/* Botões com hover */
-.btn:hover {
-  filter: brightness(1.1);
-  transition: 0.3s ease;
+.icon-chip-warm {
+  background: rgba(217, 141, 44, 0.14);
+  color: #8c4f10;
 }
 
-/* Responsividade */
-@media (max-width: 768px) {
-  .header {
-    flex-direction: row;
-    align-items: center;
+@media (max-width: 1180px) {
+  .card-grid-four,
+  .timeline-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .footer-actions {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 1024px) {
+  .header-shell {
+    grid-template-columns: auto auto;
     justify-content: space-between;
-    /* Distribui os itens ao longo do header */
-    padding: 10px;
   }
 
-  .logo {
-    margin-top: 17px;
-    flex: 1;
-    /* Ajusta a largura da logo */
-    text-align: left;
+  .desktop-nav,
+  .header-actions .btn {
+    display: none;
   }
 
-  .logo img {
-    width: 80px;
-    height: 80px;
-  }
-
-  .menu-toggle {
-    display: flex;
-    position: absolute;
-    top: 50%;
-    right: 20px;
-    transform: translateY(-50%);
-    flex-direction: column;
-    gap: 5px;
-    order: 2;
-    z-index: 11; /* Garante que fique acima dos outros elementos */
-  }
-
-  .nav ul {
-    position: absolute;
-    top: 75px;
-    right: 5px;
-    background-color: var(--light-gray);
-    padding: 20px;
-    flex-direction: column;
-    width: 200px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-20px);
-    transition: all 0.3s ease-in-out;
-  }
-
-  .nav ul.active {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
+  .menu-toggle,
+  .mobile-menu.open {
     display: flex;
   }
 
-  .nav a {
-    padding: 10px 0;
-    text-align: center;
-    display: block;
-  }
-
-
-  .auth-buttons {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    gap: 6px;
-    margin-right: 8vw; /* Reduz o espaço para o menu sandwich */
-    z-index: 10;
-    flex-shrink: 0;
-  }
-
-  .login-btn,
-  .signup-btn {
-    padding: 6px 10px;
-    font-size: 13px;
-    min-width: 80px;
-    white-space: nowrap;
-    border-radius: 4px;
-  }
-
-  /* Garante que o menu-toggle fique acima dos botões */
-  .menu-toggle {
-    z-index: 20;
-  }
-
-  /* Evita sobreposição visual do menu-toggle com os botões */
-  .header {
-    position: relative;
-    min-height: 70px;
-    padding-right: 10vw;
-  }
-
-  .hero {
-    flex-direction: column;
-    align-items: center;
-    padding: 50px 20px;
-    text-align: center;
-    margin-top: 50px;
-  }
-
-  .hero-content {
-    width: 100%;
-    margin-bottom: 30px; /* Adiciona espaço entre o conteúdo e a imagem */
-  }
-
-  .hero-image {
-    width: 100%;
-  }
-
-  .hero-content h1 {
-    font-size: 34px;
-  }
-
-  .hero-content p {
-    font-size: 16px;
-    margin-top: 10px;
-  }
-
-  .hero-content .cta-btn {
-    margin-top: 20px; /* Adiciona espaço acima do botão */
-    margin-bottom: 20px; /* Adiciona espaço abaixo do botão */
-  }
-
-  .hero-image img {
-    width: 100%;
-    max-width: 90vw;
-    height: auto;
-  }
-
-  .benefits-container {
-    flex-direction: column;
-    gap: 20px;
-  }
-
-  .benefit-item {
-    width: 100%;
-    background-color: var(--light-gray);
-    padding: 20px;
-    border-radius: 10px;
-  }
-
-  .benefit-item img {
-    width: 180px;
-    height: 180px;
-  }
-
-  .testimonials-container {
-    flex-direction: column;
-    align-items: center;
-    gap: 30px;
-  }
-
-  .testimonial-item {
-    width: 100%;
-    max-width: 400px;
-    margin: 0 auto 20px;
-    padding: 25px 20px;
-  }
-
-  .testimonial-item p {
-    font-size: 14px;
-    padding: 0 10px;
-    margin-bottom: 15px;
-  }
-
-  .plan-item {
-    width: 100%;
-  }
-
-  .contact-form {
-    gap: 15px;
-  }
-
-  .contact-form input,
-  .contact-form textarea {
-    padding: 10px;
-    font-size: 14px;
-  }
-
-  .contact-form button {
-    padding: 10px 20px;
-    font-size: 14px;
-  }
-
-  .footer {
-    padding: 20px;
-    text-align: center;
-  }
-
-  .footer-links {
-    display: flex;
+  .mobile-menu {
+    display: none;
     flex-direction: column;
     gap: 10px;
-    margin-bottom: 20px;
+    width: min(1180px, calc(100vw - 32px));
+    margin: 0 auto 18px;
+    padding: 18px;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(23, 32, 51, 0.08);
+    box-shadow: var(--shadow-soft);
   }
 
-  .footer-links a {
-    margin: 0;
+  .mobile-link {
+    width: 100%;
+    text-align: left;
+    padding: 10px 4px;
+    font-weight: 700;
   }
 
-  .footer-cta {
-    margin-top: 10px;
+  .mobile-actions {
+    display: grid;
+    gap: 10px;
+    margin-top: 8px;
   }
 
-  .footer-info {
-    margin-top: 10px;
+  .mobile-actions .btn {
+    display: inline-flex;
+    justify-content: center;
   }
 
-  .ai-section {
-    padding: 60px 20px;
+  .hero-grid,
+  .narrative-grid,
+  .contact-grid,
+  .ai-grid,
+  .plans-grid,
+  .testimonial-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .shell {
+    width: min(100vw - 24px, 100%);
   }
 
-  .ai-content {
+  .section-block,
+  .hero-section {
+    padding: 76px 0;
+  }
+
+  .header-shell {
+    min-height: 76px;
+  }
+
+  .brand-copy small {
+    display: none;
+  }
+
+  h1 {
+    font-size: clamp(2.25rem, 12vw, 3.2rem);
+  }
+
+  h2 {
+    font-size: clamp(1.8rem, 9vw, 2.5rem);
+  }
+
+  .card-grid-tight,
+  .card-grid-four,
+  .timeline-grid {
     grid-template-columns: 1fr;
   }
 
-  .ai-text ul {
-    text-align: left;
+  .hero-point {
+    width: 100%;
   }
 
-  .ai-cta {
-    justify-content: center;
+  .hero-panel,
+  .feature-card,
+  .timeline-card,
+  .testimonial-card,
+  .plan-card,
+  .contact-form,
+  .ai-showcase-card {
+    border-radius: 22px;
+    padding: 20px;
+  }
+
+  .value-banner {
+    grid-template-columns: 1fr;
+  }
+
+  .footer-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .footer-link {
+    width: 100%;
   }
 }
 </style>

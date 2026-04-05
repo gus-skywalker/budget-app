@@ -1,25 +1,63 @@
 <template>
-  <div class="create-workspace-container">
-    <v-container>
-      <v-row justify="center">
-        <v-col cols="12" sm="8" md="6">
-          <v-card class="elevation-12 pa-6">
-            <v-card-title class="headline text-center mb-6">
-              <v-icon large color="primary" class="mr-2">mdi-office-building</v-icon>
-              {{ t('create_workspace.title') }}
+  <div id="create-workspace-page">
+    <section class="workspace-hero">
+      <div class="shell hero-grid">
+        <div class="hero-copy">
+          <span class="eyebrow">{{ t('createWorkspace.workspace_first_badge') }}</span>
+          <h1>{{ t('createWorkspace.title') }}</h1>
+          <p class="hero-subtitle">{{ t('createWorkspace.description') }}</p>
+
+          <div class="hero-notes">
+            <article class="note-card">
+              <div class="icon-chip icon-chip-contrast">
+                <v-icon size="20">mdi-rocket-launch-outline</v-icon>
+              </div>
+              <div>
+                <strong>{{ t('createWorkspace.workspace_first_note_title') }}</strong>
+                <p>{{ t('createWorkspace.workspace_first_note_body') }}</p>
+              </div>
+            </article>
+
+            <article class="note-card">
+              <div class="icon-chip icon-chip-warm">
+                <v-icon size="20">mdi-file-document-outline</v-icon>
+              </div>
+              <div>
+                <strong>{{ legalDocumentLabel }}</strong>
+                <p>{{ t('createWorkspace.legal_document_optional_hint') }}</p>
+              </div>
+            </article>
+
+            <v-alert
+              v-if="reachedWorkspaceLimit"
+              type="warning"
+              variant="tonal"
+              class="limit-alert"
+            >
+              {{ t('createWorkspace.upgrade_limit_workspace') }}
+            </v-alert>
+          </div>
+        </div>
+
+        <div class="hero-side">
+          <v-card class="workspace-card">
+            <v-card-title class="card-title-row">
+              <div>
+                <span class="section-kicker">{{ t('createWorkspace.workspace_name') }}</span>
+                <h2>{{ t('createWorkspace.title') }}</h2>
+              </div>
+              <div class="icon-chip icon-chip-soft">
+                <v-icon size="22">mdi-office-building-plus-outline</v-icon>
+              </div>
             </v-card-title>
 
             <v-card-text>
-              <p class="text-body-1 mb-6 text-center">
-                {{ t('create_workspace.description') }}
-              </p>
-
               <v-form ref="form" v-model="valid" @submit.prevent="createWorkspace">
                 <v-text-field
                   v-model="workspaceName"
                   :rules="workspaceNameRules"
-                  :label="t('create_workspace.workspace_name')"
-                  :placeholder="t('create_workspace.workspace_placeholder')"
+                  :label="t('createWorkspace.workspace_name')"
+                  :placeholder="t('createWorkspace.workspace_placeholder')"
                   outlined
                   required
                   :loading="loading"
@@ -30,7 +68,7 @@
                   v-model="country"
                   :items="countryOptions"
                   :rules="countryRules"
-                  :label="t('create_workspace.country_label')"
+                  :label="t('createWorkspace.country_label')"
                   item-title="label"
                   item-value="code"
                   outlined
@@ -45,15 +83,16 @@
                   :label="legalDocumentLabel"
                   :placeholder="legalDocumentPlaceholder"
                   outlined
-                  required
                   prepend-inner-icon="mdi-file-document-outline"
                   class="mb-2"
+                  :hint="t('createWorkspace.legal_document_optional_hint')"
+                  persistent-hint
                 />
 
                 <v-textarea
                   v-model="description"
-                  :label="t('create_workspace.description_optional')"
-                  :placeholder="t('create_workspace.description_placeholder')"
+                  :label="t('createWorkspace.description_optional')"
+                  :placeholder="t('createWorkspace.description_placeholder')"
                   outlined
                   rows="3"
                   counter="200"
@@ -62,24 +101,25 @@
               </v-form>
             </v-card-text>
 
-            <v-card-actions class="justify-center">
+            <v-card-actions class="justify-center action-row">
               <v-btn
                 color="primary"
                 size="large"
-                :disabled="!valid"
-                :loading="loading"
+                :disabled="!valid || isLoadingPlanAccess || reachedWorkspaceLimit"
+                :loading="loading || isLoadingPlanAccess"
                 @click="createWorkspace"
-                class="px-8"
+                class="cta-button"
               >
                 <v-icon left>mdi-plus</v-icon>
-                {{ t('create_workspace.create_button') }}
+                {{ reachedWorkspaceLimit ? t('createWorkspace.reached_limit_button') : t('createWorkspace.create_button') }}
               </v-btn>
             </v-card-actions>
           </v-card>
-        </v-col>
-      </v-row>
-    </v-container>
+        </div>
+      </div>
+    </section>
 
+    <!-- Success/Error Snackbar -->
     <v-snackbar
       v-model="snackbar"
       :color="snackbarColor"
@@ -98,7 +138,7 @@
       {{ upgradeMessage }}
       <template #actions>
         <v-btn variant="text" color="white" @click="goToUpgrade">
-          {{ t('create_workspace.view_premium_plans') }}
+          {{ t('createWorkspace.view_premium_plans') }}
         </v-btn>
       </template>
     </v-snackbar>
@@ -107,43 +147,49 @@
 
 <script setup lang="ts">
 import { createMessageId } from '@/utils/messageId'
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/plugins/userStore'
 import WorkspaceService from '@/services/WorkspaceService'
 import OnboardingOrchestrator from '@/services/OnboardingOrchestrator'
+import BillingOrchestrationService from '@/services/BillingOrchestrationService'
+import { resolveAnyWorkspaceContext } from '@/services/BillingWorkspaceContext'
 import { getOrCreateCorrelationId } from '@/utils/correlation'
 import { getFreePlanLimitType, parseApiError } from '@/utils/errorHandler'
 
 const { t } = useI18n()
-
+// Lista simplificada de países (pode ser expandida ou internacionalizada)
 const countryOptions = computed(() => [
-  { code: 'BR', label: t('create_workspace.countries.br') },
-  { code: 'US', label: t('create_workspace.countries.us') },
-  { code: 'AR', label: t('create_workspace.countries.ar') },
-  { code: 'PT', label: t('create_workspace.countries.pt') },
-  { code: 'ES', label: t('create_workspace.countries.es') },
-  { code: 'MX', label: t('create_workspace.countries.mx') },
-  { code: 'DE', label: t('create_workspace.countries.de') },
-  { code: 'FR', label: t('create_workspace.countries.fr') },
-  { code: 'CL', label: t('create_workspace.countries.cl') },
-  { code: 'CO', label: t('create_workspace.countries.co') },
-  { code: 'PE', label: t('create_workspace.countries.pe') },
-  { code: 'UK', label: t('create_workspace.countries.uk') },
-  { code: 'IT', label: t('create_workspace.countries.it') },
-  { code: 'CA', label: t('create_workspace.countries.ca') },
-  { code: 'OTHER', label: t('create_workspace.countries.other') }
+  { code: 'BR', label: t('createWorkspace.countries.br') },
+  { code: 'US', label: t('createWorkspace.countries.us') },
+  { code: 'AR', label: t('createWorkspace.countries.ar') },
+  { code: 'PT', label: t('createWorkspace.countries.pt') },
+  { code: 'ES', label: t('createWorkspace.countries.es') },
+  { code: 'MX', label: t('createWorkspace.countries.mx') },
+  { code: 'DE', label: t('createWorkspace.countries.de') },
+  { code: 'FR', label: t('createWorkspace.countries.fr') },
+  { code: 'CL', label: t('createWorkspace.countries.cl') },
+  { code: 'CO', label: t('createWorkspace.countries.co') },
+  { code: 'PE', label: t('createWorkspace.countries.pe') },
+  { code: 'UK', label: t('createWorkspace.countries.uk') },
+  { code: 'IT', label: t('createWorkspace.countries.it') },
+  { code: 'CA', label: t('createWorkspace.countries.ca') },
+  { code: 'OTHER', label: t('createWorkspace.countries.other') }
 ])
 
 const country = ref('BR')
+
 const countryRules = [
-  (v: string) => !!v || t('create_workspace.country_required')
+  (v: string) => !!v || t('createWorkspace.country_required')
 ]
 
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
+const currentWorkspaceCount = computed(() => userStore.getWorkspaces?.length || 0)
+const currentPlanTier = ref<'FREE' | 'STARTER' | 'TEAM' | null>(null)
+const isLoadingPlanAccess = ref(false)
 const redirectTarget = computed(() =>
   OnboardingOrchestrator.resolveOnboardingTargetPath({
     redirect: route.query.redirect,
@@ -151,6 +197,7 @@ const redirectTarget = computed(() =>
     defaultRedirect: '/dashboard'
   })
 )
+const reachedWorkspaceLimit = computed(() => currentPlanTier.value === 'FREE' && currentWorkspaceCount.value >= 1)
 
 const form = ref<any>(null)
 const valid = ref(false)
@@ -159,94 +206,99 @@ const workspaceName = ref('')
 const description = ref('')
 const legalDocument = ref('')
 
+// Snackbar state
 const snackbar = ref(false)
 const snackbarMessage = ref('')
 const snackbarColor = ref('success')
 const upgradeSnackbar = ref(false)
 const upgradeMessage = ref('')
 
+
+// Validation rules
 const workspaceNameRules = [
-  (v: string) => !!v || t('create_workspace.workspace_name_required'),
-  (v: string) => (v && v.length >= 2) || t('create_workspace.workspace_name_min'),
-  (v: string) => (v && v.length <= 100) || t('create_workspace.workspace_name_max')
+  (v: string) => !!v || t('createWorkspace.workspace_name_required'),
+  (v: string) => (v && v.length >= 2) || t('createWorkspace.workspace_name_min'),
+  (v: string) => (v && v.length <= 100) || t('createWorkspace.workspace_name_max')
 ]
+
 
 const legalDocumentLabel = computed(() => {
   switch (country.value) {
-    case 'BR': return 'CNPJ'
-    case 'US': return 'EIN'
-    case 'AR': return 'CUIT'
-    case 'PT': return 'NIF'
-    case 'ES': return 'NIF'
-    case 'MX': return 'RFC'
-    case 'DE': return 'USt-IdNr (VAT)'
-    case 'FR': return 'TVA (VAT)'
-    case 'CL': return 'RUT'
-    case 'CO': return 'NIT'
-    case 'PE': return 'RUC'
-    case 'UK': return 'VAT'
-    case 'IT': return 'VAT'
-    case 'CA': return 'BN'
-    default: return t('create_workspace.tax_id_generic')
+    case 'BR': return 'CNPJ';
+    case 'US': return 'EIN';
+    case 'AR': return 'CUIT';
+    case 'PT': return 'NIF';
+    case 'ES': return 'NIF';
+    case 'MX': return 'RFC';
+    case 'DE': return 'USt-IdNr (VAT)';
+    case 'FR': return 'TVA (VAT)';
+    case 'CL': return 'RUT';
+    case 'CO': return 'NIT';
+    case 'PE': return 'RUC';
+    case 'UK': return 'VAT';
+    case 'IT': return 'VAT';
+    case 'CA': return 'BN';
+    default: return t('createWorkspace.tax_id_generic');
   }
 })
 
 const legalDocumentPlaceholder = computed(() => {
   switch (country.value) {
-    case 'BR': return 'Digite o CNPJ (14 dígitos)'
-    case 'US': return 'Digite o EIN (9 dígitos)'
-    case 'AR': return 'Digite o CUIT'
-    case 'PT': return 'Digite o NIF'
-    case 'ES': return 'Digite o NIF'
-    case 'MX': return 'Digite o RFC'
-    case 'DE': return 'Digite o VAT'
-    case 'FR': return 'Digite o VAT'
-    case 'CL': return 'Digite o RUT'
-    case 'CO': return 'Digite o NIT'
-    case 'PE': return 'Digite o RUC'
-    case 'UK': return 'Digite o VAT'
-    case 'IT': return 'Digite o VAT'
-    case 'CA': return 'Digite o BN'
-    default: return t('create_workspace.tax_id_placeholder_generic')
+    case 'BR': return 'Digite o CNPJ (14 dígitos)';
+    case 'US': return 'Digite o EIN (9 dígitos)';
+    case 'AR': return 'Digite o CUIT';
+    case 'PT': return 'Digite o NIF';
+    case 'ES': return 'Digite o NIF';
+    case 'MX': return 'Digite o RFC';
+    case 'DE': return 'Digite o VAT';
+    case 'FR': return 'Digite o VAT';
+    case 'CL': return 'Digite o RUT';
+    case 'CO': return 'Digite o NIT';
+    case 'PE': return 'Digite o RUC';
+    case 'UK': return 'Digite o VAT';
+    case 'IT': return 'Digite o VAT';
+    case 'CA': return 'Digite o BN';
+    default: return t('createWorkspace.tax_id_placeholder_generic');
   }
 })
 
 const legalDocumentRules = [
-  (v: string) => !!v || t('create_workspace.legal_document_required', { label: legalDocumentLabel.value }),
   (v: string) => {
+    if (!v || !v.trim()) return true
+
     switch (country.value) {
       case 'BR':
-        return /^\d{14}$/.test(v) || t('create_workspace.legal_document_cnpj')
+        return /^\d{14}$/.test(v) || t('createWorkspace.legal_document_cnpj');
       case 'US':
-        return /^\d{9}$/.test(v) || t('create_workspace.legal_document_ein')
+        return /^\d{9}$/.test(v) || t('createWorkspace.legal_document_ein');
       case 'AR':
-        return /^\d{11}$/.test(v) || t('create_workspace.legal_document_cuit')
+        return /^\d{11}$/.test(v) || t('createWorkspace.legal_document_cuit');
       case 'PT':
       case 'ES':
-        return /^\d{9}$/.test(v) || t('create_workspace.legal_document_nif')
+        return /^\d{9}$/.test(v) || t('createWorkspace.legal_document_nif');
       case 'MX':
-        return /^[A-Z0-9]{12,13}$/.test(v) || t('create_workspace.legal_document_rfc')
+        return /^[A-Z0-9]{12,13}$/.test(v) || t('createWorkspace.legal_document_rfc');
       case 'DE':
       case 'FR':
       case 'UK':
       case 'IT':
-        return (v.length >= 8 && v.length <= 15) || t('create_workspace.legal_document_vat')
+        return v.length >= 8 && v.length <= 15 || t('createWorkspace.legal_document_vat');
       case 'CL':
-        return /^\d{7,8}-[\dkK]$/.test(v) || t('create_workspace.legal_document_rut')
+        return /^\d{7,8}-[\dkK]$/.test(v) || t('createWorkspace.legal_document_rut');
       case 'CO':
-        return /^\d{9,10}$/.test(v) || t('create_workspace.legal_document_nit')
+        return /^\d{9,10}$/.test(v) || t('createWorkspace.legal_document_nit');
       case 'PE':
-        return /^\d{11}$/.test(v) || t('create_workspace.legal_document_ruc')
+        return /^\d{11}$/.test(v) || t('createWorkspace.legal_document_ruc');
       case 'CA':
-        return /^\d{9}$/.test(v) || t('create_workspace.legal_document_bn')
+        return /^\d{9}$/.test(v) || t('createWorkspace.legal_document_bn');
       default:
-        return v.length >= 4 || t('create_workspace.legal_document_invalid')
+        return v.length >= 4 || t('createWorkspace.legal_document_invalid');
     }
   }
 ]
 
 const descriptionRules = [
-  (v: string) => !v || v.length <= 200 || t('create_workspace.description_max')
+  (v: string) => !v || v.length <= 200 || t('createWorkspace.description_max')
 ]
 
 const showSnackbar = (message: string, color: string = 'success') => {
@@ -260,40 +312,82 @@ const goToUpgrade = () => {
   router.push({ name: 'choose-plan', query: { plan: 'BUSINESS_ANNUAL' } })
 }
 
+const loadPlanAccess = async () => {
+  const workspaceContext = resolveAnyWorkspaceContext(userStore)
+  if (!workspaceContext) {
+    currentPlanTier.value = 'FREE'
+    return
+  }
+
+  try {
+    isLoadingPlanAccess.value = true
+    const access = await BillingOrchestrationService.getBillingSummary(workspaceContext.workspaceId)
+    const tier = String(access.data?.currentPlanTier || '').toUpperCase()
+    if (tier === 'FREE' || tier === 'STARTER' || tier === 'TEAM') {
+      currentPlanTier.value = tier
+      return
+    }
+
+    currentPlanTier.value = access.data?.hasPlanAccess ? 'STARTER' : 'FREE'
+  } catch (error) {
+    console.warn('Nao foi possivel carregar o plano atual para validacao de workspace.', error)
+  } finally {
+    isLoadingPlanAccess.value = false
+  }
+}
+
+onMounted(() => {
+  void loadPlanAccess()
+})
+
 const createWorkspace = async () => {
+  if (reachedWorkspaceLimit.value) {
+    upgradeMessage.value = t('createWorkspace.upgrade_limit_workspace')
+    upgradeSnackbar.value = true
+    return
+  }
+
+  if (isLoadingPlanAccess.value) return
+
   if (!form.value?.validate()) return
 
   try {
     loading.value = true
 
-    const correlationId = getOrCreateCorrelationId('companyCorrelationId')
-    const messageKey = `createCompany.messageId:${workspaceName.value}:${country.value}`
+    // Gera correlationId para rastreabilidade cross-service
+    const correlationId = getOrCreateCorrelationId('workspaceCorrelationId')
+
+    const messageKey = `createWorkspace.messageId:${workspaceName.value}:${country.value}`
     let messageId = sessionStorage.getItem(messageKey)
     if (!messageId) {
       messageId = createMessageId()
       sessionStorage.setItem(messageKey, messageId)
     }
-
     const payload = {
       name: workspaceName.value,
       description: description.value,
-      legalDocument: legalDocument.value,
+      legalDocument: legalDocument.value.trim() || undefined,
       country: country.value,
       messageId
     }
 
+    // 1) Create workspace in budget-api
     const result = await WorkspaceService.create(payload, correlationId)
-    const createdWorkspace = result?.createdCompany
-    const workspaceId = createdWorkspace?.companyId ?? createdWorkspace?.id
+
+    const createdWorkspace = result?.createdWorkspace
+    const workspaceId = createdWorkspace?.workspaceId ?? createdWorkspace?.id
     if (!workspaceId) {
-      throw new Error('Resposta de criação sem companyId')
+      showSnackbar('Resposta de criação sem workspaceId', 'error')
+      sessionStorage.removeItem(messageKey)
+      return
     }
 
+    // 2) Select tenant in auth-api (with retry/fallback handled by WorkspaceService.selectWorkspace)
     try {
       await userStore.selectWorkspace(String(workspaceId))
     } catch (selectError) {
-      console.warn('Workspace criado, mas seleção automática falhou. Redirecionando para seleção manual.', selectError)
-      showSnackbar(t('create_workspace.created_select_company'), 'warning')
+      console.warn('Workspace criado, mas seleção automática falhou. Redirecionando para select-workspace.', selectError)
+      showSnackbar(t('createWorkspace.created_select_workspace'), 'warning')
       sessionStorage.removeItem(messageKey)
       setTimeout(() => {
         router.push({ name: 'select-workspace', query: { redirect: redirectTarget.value } })
@@ -301,31 +395,34 @@ const createWorkspace = async () => {
       return
     }
 
+    // 3) Refresh workspace list in store immediately
     try {
-      const companiesRes = await WorkspaceService.getAll()
-      const companies = Array.isArray(companiesRes?.data) ? companiesRes.data : []
-      if (companies.length) {
-        userStore.setCompanies(companies)
-        await userStore.hydrateCompanyDetailsFromBudget(
-          companies.map((workspace: any) => String(workspace.companyId)).filter(Boolean)
-        )
+      const workspacesRes = await WorkspaceService.getAll()
+      const workspaces = Array.isArray(workspacesRes?.data) ? workspacesRes.data : []
+      if (workspaces.length) {
+        userStore.setWorkspaces(workspaces)
+        await userStore.hydrateWorkspaceDetailsFromBudget(workspaces.map((workspace: any) => String(workspace.workspaceId)).filter(Boolean))
       }
-    } catch (error) {
-      console.warn('Nao foi possivel atualizar a lista de workspaces imediatamente.', error)
+    } catch (e) {
+      console.warn('Não foi possível atualizar lista de workspaces imediatamente.', e)
     }
 
-    showSnackbar(t('create_workspace.created_success'), 'success')
+    showSnackbar(t('createWorkspace.created_success'), 'success')
+    // Limpa o messageId da sessão após sucesso
     sessionStorage.removeItem(messageKey)
 
+    // Redirect to dashboard
     setTimeout(() => {
       router.push({ path: redirectTarget.value })
     }, 1500)
+
   } catch (error) {
     console.error('Error creating workspace:', error)
-    showSnackbar(parseApiError(error), 'error')
+    const errorMessage = parseApiError(error)
+    showSnackbar(errorMessage, 'error')
     const limitType = getFreePlanLimitType(error)
-    if (limitType === 'company') {
-      upgradeMessage.value = t('create_workspace.upgrade_limit_company')
+    if (limitType === 'workspace') {
+      upgradeMessage.value = t('createWorkspace.upgrade_limit_workspace')
       upgradeSnackbar.value = true
     }
   } finally {
@@ -335,22 +432,207 @@ const createWorkspace = async () => {
 </script>
 
 <style scoped>
-.create-workspace-container {
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Source+Sans+3:wght@400;500;600;700&display=swap');
+
+#create-workspace-page {
+  --ink: #172033;
+  --ink-soft: #536177;
+  --line: rgba(23, 32, 51, 0.12);
+  --brand: #b6551f;
+  --brand-strong: #8e4318;
+  --accent: #205f63;
+  --accent-strong: #173f4b;
+  --surface: rgba(255, 255, 255, 0.9);
+  --shadow: 0 16px 34px rgba(23, 32, 51, 0.08);
+  background:
+    radial-gradient(circle at top left, rgba(32, 95, 99, 0.08), transparent 28%),
+    radial-gradient(circle at 85% 10%, rgba(182, 85, 31, 0.08), transparent 20%),
+    linear-gradient(180deg, #fbf8f2 0%, #f8f4ed 52%, #fdfaf5 100%);
+  color: var(--ink);
+  font-family: 'Source Sans 3', sans-serif;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
 }
 
-:deep(.v-card) {
-  background: rgba(255, 255, 255, 0.95);
+#create-workspace-page :deep(*) {
+  box-sizing: border-box;
+}
+
+#create-workspace-page :deep(.v-icon) {
+  color: inherit;
+}
+
+.shell {
+  width: min(1180px, calc(100vw - 32px));
+  margin: 0 auto;
+}
+
+.workspace-hero {
+  padding: 72px 0 44px;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
+  gap: 28px;
+  align-items: start;
+}
+
+.eyebrow,
+.section-kicker {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background: rgba(32, 95, 99, 0.1);
+  color: var(--accent-strong);
+}
+
+h1,
+h2,
+.cta-button {
+  font-family: 'Manrope', sans-serif;
+}
+
+h1 {
+  margin: 16px 0 14px;
+  font-size: clamp(2.5rem, 4.5vw, 4.2rem);
+  line-height: 0.98;
+  letter-spacing: -0.05em;
+}
+
+h2 {
+  margin: 10px 0 0;
+  font-size: clamp(1.5rem, 2.4vw, 2.3rem);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+}
+
+.hero-subtitle,
+.note-card p {
+  color: var(--ink-soft);
+  font-size: 1.12rem;
+  line-height: 1.65;
+}
+
+.hero-notes {
+  display: grid;
+  gap: 18px;
+  margin-top: 28px;
+}
+
+.note-card,
+.workspace-card {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: var(--shadow);
   backdrop-filter: blur(10px);
 }
 
-.headline {
-  color: #2c3e50;
-  font-weight: 600;
+.note-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  border-radius: 24px;
+  padding: 18px 20px;
+}
+
+.note-card strong {
+  display: block;
+  margin-bottom: 6px;
+  font-family: 'Manrope', sans-serif;
+  font-size: 1rem;
+}
+
+.icon-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+}
+
+.icon-chip-contrast {
+  background: rgba(32, 95, 99, 0.12);
+  color: var(--accent-strong);
+}
+
+.icon-chip-warm {
+  background: rgba(182, 85, 31, 0.12);
+  color: var(--brand-strong);
+}
+
+.icon-chip-soft {
+  background: rgba(23, 32, 51, 0.06);
+  color: var(--ink);
+}
+
+.workspace-card {
+  border-radius: 28px;
+  overflow: hidden;
+}
+
+.card-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 28px 28px 0;
+}
+
+.workspace-card :deep(.v-card-text) {
+  padding: 22px 28px 8px;
+}
+
+.workspace-card :deep(.v-field) {
+  border-radius: 16px;
+}
+
+.action-row {
+  padding: 0 28px 28px;
+}
+
+.cta-button {
+  min-width: 220px;
+  border-radius: 999px;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 700;
+}
+
+.limit-alert {
+  border-radius: 18px;
+}
+
+@media (max-width: 960px) {
+  .hero-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-hero {
+    padding: 42px 0 28px;
+  }
+}
+
+@media (max-width: 640px) {
+  .shell {
+    width: min(100vw - 24px, 1180px);
+  }
+
+  .card-title-row,
+  .workspace-card :deep(.v-card-text),
+  .action-row {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .note-card {
+    padding: 16px;
+  }
 }
 </style>

@@ -1,5 +1,4 @@
 import axiosInterceptor from './axiosInterceptor'
-import type { BillingSubjectType } from './BillingDecisionService'
 import type { SupportedCurrency } from '@/utils/pricing'
 
 interface PricingContextPayload {
@@ -12,8 +11,7 @@ interface PricingContextPayload {
 export interface StartSubscriptionRequest extends PricingContextPayload {
   plan: string
   actor: string
-  subjectType: BillingSubjectType
-  subjectId: string
+  workspaceId?: string | null
   correlationId: string
   /** Backend command idempotency key */
   messageId: string
@@ -21,16 +19,14 @@ export interface StartSubscriptionRequest extends PricingContextPayload {
 
 export interface CancelSubscriptionRequest {
   actor: string
-  subjectType: BillingSubjectType
-  subjectId: string
+  workspaceId?: string | null
   correlationId: string
   messageId: string
 }
 
 export interface OpenPortalRequest extends PricingContextPayload {
   actor: string
-  subjectType: BillingSubjectType
-  subjectId: string
+  workspaceId?: string | null
   correlationId: string
   messageId: string
   returnUrl?: string
@@ -51,14 +47,13 @@ export interface OperationStatusResponse {
   status: 'PENDING' | 'SENDING' | 'DISPATCHED' | 'FAILED'
   attempts: number
   lastError?: string | null
-  checkoutUrl?: string | null
+  redirectUrl?: string | null
   resolvedCurrency?: SupportedCurrency
   resolvedPriceId?: string | null
 }
 
-export interface BillingAccessResponse {
-  subjectType: BillingSubjectType
-  subjectId: string
+export interface BillingSummaryResponse {
+  workspaceId?: string | null
   hasPremiumAccess: boolean
   hasPlanAccess?: boolean
   subscriptionStatus?: 'NONE' | 'INCOMPLETE' | 'TRIALING' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED'
@@ -69,6 +64,12 @@ export interface BillingAccessResponse {
   nextBillingDate?: string
   paymentProviderReachable?: boolean
   subscriptionDataSource?: 'LOCAL' | 'PAYMENT_API' | 'LOCAL_FALLBACK'
+  workspaceQuota?: {
+    hasBillingAccount: boolean
+    activeWorkspaceCount: number
+    activeCollaborativeWorkspaceCount: number
+    activePersonalWorkspaceCount: number
+  }
   checkedAt: string
 }
 
@@ -89,11 +90,10 @@ export default {
     return axiosInterceptor.get<OperationStatusResponse>(`/billing/operations/${encodeURIComponent(messageId)}`)
   },
 
-  getPremiumAccess(subjectType: BillingSubjectType, subjectId: string) {
-    return axiosInterceptor.get<BillingAccessResponse>('/billing/access', {
+  getBillingSummary(workspaceId: string) {
+    return axiosInterceptor.get<BillingSummaryResponse>('/billing/access', {
       params: {
-        subjectType,
-        subjectId
+        workspaceId
       }
     })
   }

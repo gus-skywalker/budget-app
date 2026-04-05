@@ -150,7 +150,6 @@
                 variant="outlined"
                 v-model="chartType"
                 :items="chartTypes"
-                :disabled="chartLoading"
                 @update:modelValue="updateCharts"
                 class="modern-select"
                 color="#667eea"
@@ -162,7 +161,6 @@
                 variant="outlined"
                 v-model="selectedTimePeriod"
                 :items="timePeriods"
-                :disabled="chartLoading"
                 @update:modelValue="updateCharts"
                 class="modern-select"
                 color="#667eea"
@@ -177,7 +175,6 @@
                 item-title="name"
                 item-value="code"
                 clearable
-                :disabled="chartLoading"
                 @update:modelValue="updateCharts"
                 class="modern-select"
                 color="#667eea"
@@ -185,15 +182,6 @@
             </v-col>
           </v-row>
           <div class="chart-wrapper">
-            <div v-if="chartLoading" class="chart-loading-overlay">
-              <v-progress-circular
-                indeterminate
-                color="#667eea"
-                size="34"
-                width="4"
-              />
-              <span class="chart-loading-text">{{ $t('overview.activity_loading') }}</span>
-            </div>
             <canvas ref="trendsChart"></canvas>
           </div>
         </div>
@@ -683,8 +671,8 @@ import OpenFinanceService from '@/services/OpenFinanceService'
 import AiService from '@/services/aiService'
 import ActivityService from '@/services/ActivityService'
 import BillingOrchestrationService from '@/services/BillingOrchestrationService'
+import { resolveAnyWorkspaceContext } from '@/services/BillingWorkspaceContext'
 import { useUserStore } from '@/plugins/userStore'
-import { resolveCanonicalBillingSubject } from '@/utils/billing'
 import 'chartjs-adapter-moment'
 
 Chart.register(...registerables)
@@ -1160,10 +1148,6 @@ export default {
     const today = new Date();
     return {
       chart: null,
-      lastRenderedChartType: null,
-      chartRequestSequence: 0,
-      isUnmounting: false,
-      chartLoading: false,
       dashboardLoading: false,
       dashboardSummary: {
         totalBalance: 0,
@@ -1242,14 +1226,8 @@ export default {
     this.fetchPremiumFeatureSummaries()
     this.fetchGoalsAtRisk()
     this.fetchCategories()
+    this.createChart()
     this.fetchChartData()
-  },
-  beforeUnmount() {
-    this.isUnmounting = true
-    if (this.chart) {
-      this.chart.destroy()
-      this.chart = null
-    }
   },
   watch: {
     '$i18n.locale'(newLocale) {
@@ -1273,17 +1251,6 @@ export default {
         style: 'currency',
         currency: resolvedCurrency,
       })
-    },
-    formatDate(value) {
-      if (!value) return '-'
-
-      const date = new Date(value)
-      if (Number.isNaN(date.getTime())) return '-'
-
-      return new Intl.DateTimeFormat(this.getLocaleForFormatting(), {
-        dateStyle: 'short',
-        timeStyle: 'short',
-      }).format(date)
     },
     getMonthName(monthIndex) {
       const monthNames = [
@@ -1368,13 +1335,13 @@ export default {
           this.activityLoading = false
         })
     },
-    resolveBillingSubject() {
+    resolveBillingWorkspaceContext() {
       const userStore = useUserStore()
-      return resolveCanonicalBillingSubject(userStore)
+      return resolveAnyWorkspaceContext(userStore)
     },
     async fetchPremiumFeatureSummaries() {
-      const billingSubject = this.resolveBillingSubject()
-      if (!billingSubject) {
+      const workspaceContext = this.resolveBillingWorkspaceContext()
+      if (!workspaceContext) {
         this.hasPremiumAccess = false
         this.cashflowInsightsSummary = null
         this.expensePredictionSummary = null
@@ -1382,10 +1349,7 @@ export default {
       }
 
       try {
-        const response = await BillingOrchestrationService.getPremiumAccess(
-          billingSubject.subjectType,
-          billingSubject.subjectId
-        )
+        const response = await BillingOrchestrationService.getBillingSummary(workspaceContext.workspaceId)
         this.hasPremiumAccess = Boolean(response?.data?.hasPremiumAccess)
       } catch (error) {
         console.error('Error checking premium access:', error)
@@ -1440,7 +1404,7 @@ export default {
       const path = this.activityRoute(event)
       if (!path) return
       if (path === '/budget') {
-        this.$router.push({ path, query: { visibility: 'company' } })
+        this.$router.push({ path, query: { visibility: 'workspace' } })
         return
       }
       if (path === '/planning/scenarios' && event?.relatedEntityId) {
@@ -1511,83 +1475,37 @@ export default {
       if (!trendsCtx) {
         return
       }
-
-      const shouldRecreate = !this.chart || this.lastRenderedChartType !== this.chartType
-
-      if (shouldRecreate && this.chart) {
-        this.chart.destroy()
-        this.chart = null
-      }
-
-      if (shouldRecreate) {
-        this.chart = new Chart(trendsCtx, {
-          type: this.chartType,
-          data: {
-            labels: [...this.chartData.labels],
-            datasets: this.chartData.datasets.map((dataset) => ({
-              ...dataset,
-              data: [...dataset.data],
-            })),
-          },
-          options: {
-            responsive: true,
-            scales: {
-              x: {
-                type: 'time',
-                time: {
-                  unit: this.isYearly ? 'year' : 'month',
-                  displayFormats: {
-                    year: 'YYYY',
-                    month: 'MM-YYYY'
-                  },
-                  tooltipFormat: 'DD/MM/YYYY'
+      this.chart = new Chart(trendsCtx, {
+        type: this.chartType,
+        data: this.chartData,
+        options: {
+          responsive: true,
+          scales: {
+            x: {
+              type: 'time',
+              time: {
+                unit: this.isYearly ? 'year' : 'month',
+                displayFormats: {
+                  year: 'YYYY',
+                  month: 'MM-YYYY'
                 },
-                ticks: {
-                  source: 'labels'
-                }
+                tooltipFormat: 'DD/MM/YYYY'
               },
-              y: {
-                beginAtZero: true
+              ticks: {
+                source: 'labels'
               }
+            },
+            y: {
+              beginAtZero: true
             }
           }
-        })
-        this.lastRenderedChartType = this.chartType
-        return
-      }
-
-      this.chart.data.labels = [...this.chartData.labels]
-      this.chart.data.datasets = this.chartData.datasets.map((dataset) => ({
-        ...dataset,
-        data: [...dataset.data],
-      }))
-
-      if (this.chart.options?.scales?.x?.time) {
-        this.chart.options.scales.x.time.unit = this.isYearly ? 'year' : 'month'
-      }
-
-      this.chart.update()
-    },
-    normalizeChartData(rawData) {
-      const labels = Array.isArray(rawData?.labels) ? rawData.labels : []
-      const datasets = Array.isArray(rawData?.datasets) ? rawData.datasets : []
-      const incomeDataset = datasets[0]?.data ?? []
-      const expenseDataset = datasets[1]?.data ?? []
-
-      if (this.selectedTimePeriod.includes('m')) {
-        this.isYearly = false
-        this.chartData.labels = labels.map((label) =>
-          moment(label, ['YYYY-MM', 'MM-YYYY']).toISOString()
-        )
-      } else {
-        this.isYearly = true
-        this.chartData.labels = labels
-      }
-
-      this.chartData.datasets[0].data = Array.isArray(incomeDataset) ? incomeDataset : []
-      this.chartData.datasets[1].data = Array.isArray(expenseDataset) ? expenseDataset : []
+        }
+      })
     },
     updateCharts() {
+      if (this.chart) {
+        this.chart.destroy()
+      }
       this.fetchChartData()
     },
     normalizeTranslatedCollection(payload) {
@@ -1635,29 +1553,28 @@ export default {
         });
     },
     fetchChartData() {
-      const requestId = ++this.chartRequestSequence
-      this.chartLoading = true
-
       DataService.fetchChartData(this.selectedTimePeriod, this.selectedCategory)
         .then((response) => {
-          if (this.isUnmounting || requestId !== this.chartRequestSequence) {
-            return
+          const rawData = response.data
+
+          if (this.selectedTimePeriod.includes('m')) {
+            this.isYearly = false
+            this.chartData.labels = rawData.labels.map((label) =>
+              moment(label, ['YYYY-MM', 'MM-YYYY']).toISOString()
+            )
+            this.chartData.datasets[0].data = rawData.datasets[0].data
+            this.chartData.datasets[1].data = rawData.datasets[1].data
+          } else {
+            this.isYearly = true
+            this.chartData.labels = rawData.labels
+            this.chartData.datasets[0].data = rawData.datasets[0].data
+            this.chartData.datasets[1].data = rawData.datasets[1].data
           }
 
-          this.normalizeChartData(response?.data)
           this.createChart()
         })
         .catch((error) => {
-          if (this.isUnmounting || requestId !== this.chartRequestSequence) {
-            return
-          }
           console.error('Error fetching chart data:', error)
-        })
-        .finally(() => {
-          if (this.isUnmounting || requestId !== this.chartRequestSequence) {
-            return
-          }
-          this.chartLoading = false
         })
     },
     formatTransactionDate(value) {
@@ -2303,21 +2220,6 @@ export default {
   color: #1a1a1a;
 }
 
-.cashflow-action-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
-}
-
-.projection-context {
-  margin-top: 6px;
-  color: #475569;
-  line-height: 1.45;
-}
-
-.v-theme--dark .projection-context {
-  color: #cbd5e1;
-}
 
 .v-theme--dark .decision-card__title {
   color: #ffffff;
@@ -2608,7 +2510,7 @@ export default {
 }
 
 .modern-select {
-  background: rgb(var(--v-theme-surface));
+  background: rgba(255, 255, 255, 0.92);
 }
 
 /* Chart Wrapper */
@@ -2622,34 +2524,6 @@ export default {
 
 .v-theme--dark .chart-wrapper {
   background: #1e1e1e;
-}
-
-.chart-loading-overlay {
-  position: absolute;
-  inset: 20px;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(2px);
-}
-
-.v-theme--dark .chart-loading-overlay {
-  background: rgba(30, 30, 30, 0.72);
-}
-
-.chart-loading-text {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #475569;
-}
-
-.v-theme--dark .chart-loading-text {
-  color: #e2e8f0;
 }
 
 /* Goal Cards */
