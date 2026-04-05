@@ -56,7 +56,7 @@ export function getFreePlanLimitType(error: any): FreePlanLimitType | null {
   const normalized = message.toLowerCase()
   if (
     normalized.includes('free plan limit reached')
-    && (normalized.includes('company') || normalized.includes('workspace'))
+    && normalized.includes('workspace')
   ) {
     return 'workspace'
   }
@@ -72,7 +72,7 @@ function normalizeFreePlanLimitMessage(message: string): string {
   const normalized = message.toLowerCase()
   if (
     normalized.includes('free plan limit reached')
-    && (normalized.includes('company') || normalized.includes('workspace'))
+    && normalized.includes('workspace')
   ) {
     return 'Limite do plano gratuito: 1 workspace. Faça upgrade para Premium para criar mais workspaces.'
   }

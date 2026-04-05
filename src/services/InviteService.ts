@@ -39,18 +39,6 @@ export default {
   },
 
   /**
-   * (Opcional) Associar um group/workspace a um convite
-   * POST /workspaces/:workspaceId/invites/:inviteId/attach-group
-   */
-  attachGroup(workspaceId: string, inviteId: string, groupId: number): Promise<any> {
-    return axiosInterceptor.post(
-      `${API_URL}/${workspaceId}/invites/${inviteId}/attach-group`,
-      { groupId },
-      { timeout: 15000 }
-    )
-  },
-
-  /**
    * Validar token de convite
    * GET /invites/validate/:token
    *

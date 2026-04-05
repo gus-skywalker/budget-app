@@ -104,8 +104,9 @@
       "profile": "Perfil",
       "security": "Segurança",
       "preferences": "Preferências",
+      "workspace": "Workspace",
       "connections": "Conexões",
-      "subscription": "Assinatura"
+      "subscription": "Billing"
     },
     "profile": {
       "title": "Informações do Perfil",
@@ -152,11 +153,11 @@
     }
   },
   "subscription_management": {
-    "title": "Gerenciamento de Assinatura",
+    "title": "Visão geral de billing",
     "current_plan": "Plano Atual",
     "plan_label": "Plano",
     "status": "Status",
-    "change_plan_title": "Alterar plano",
+    "change_plan_title": "Ações de billing e plano",
     "details": "Detalhes",
     "starter_group": "Starter",
     "team_group": "Team",
@@ -236,6 +237,7 @@
     "payment_sync_unavailable_title": "Serviço de pagamentos temporariamente indisponível",
     "payment_sync_unavailable_body": "Estamos mostrando a última informação de assinatura disponível no budget. Alterações de plano, portal e cancelamento ficam indisponíveis até a sincronização com o provedor voltar.",
     "payment_sync_actions_disabled": "As ações de assinatura estão temporariamente indisponíveis enquanto o serviço de pagamentos estiver fora do ar.",
+    "global_billing_notice": "O billing é global da sua conta. O workspace ativo é usado apenas como contexto operacional para carregar limites e iniciar ações de billing.",
     "workspace_quota_title": "Uso de workspaces",
     "workspace_quota_description": "Este é o uso atual de workspaces vinculado à sua conta de cobrança.",
     "workspace_quota_unlinked_title": "Conta de cobrança ainda não vinculada",
@@ -307,6 +309,28 @@
   "report_view": {
     "title": "Relatórios",
     "subtitle": "Gere relatórios de receitas e despesas com os filtros mais importantes para a análise."
+  },
+  "onboarding": {
+    "eyebrow": "Onboarding",
+    "step_badge": "Etapa {current}/3",
+    "auth": "Acesso",
+    "workspace": "Workspace",
+    "billing": "Plano",
+    "continue": "Continuar",
+    "login_cta": "Fazer login",
+    "create_workspace_cta": "Criar workspace",
+    "select_workspace_cta": "Escolher workspace",
+    "choose_plan_cta": "Escolher plano",
+    "auth_required_title": "Entre para continuar sua configuração",
+    "auth_required_description": "Assim que sua sessão estiver ativa, seguimos para a criação do primeiro workspace.",
+    "workspace_required_title": "Crie o primeiro workspace para liberar o produto",
+    "workspace_required_description": "Todo plano precisa de pelo menos um workspace ativo. Mantenha esse passo rápido e sem burocracia.",
+    "workspace_selection_title": "Escolha em qual workspace você quer entrar",
+    "workspace_selection_description": "Você já tem acesso a mais de um workspace. Selecione o contexto certo para continuar com segurança.",
+    "billing_required_title": "Escolha um plano antes de seguir para o dashboard",
+    "billing_required_description": "Depois que o contexto de workspace estiver pronto, escolha o plano que deseja solicitar. O billing continua global e é resolvido pelo backend.",
+    "ready_title": "Onboarding concluído",
+    "ready_description": "Seu acesso está pronto e o fluxo inicial foi concluído."
   },
   "reportGenerator": {
     "title": "Gerar relatórios",
@@ -871,6 +895,9 @@
     "error_message": "Ocorreu um erro. Tente novamente."
   },
   "createWorkspace": {
+    "workspace_first_badge": "Workspace-first",
+    "workspace_first_note_title": "Primeiro acesso sem atrito",
+    "workspace_first_note_body": "Crie ao menos um workspace para entrar no produto. Se o seu plano permitir mais de um, o fluxo continua sem redirecionamentos extras.",
     "title": "Crie seu Workspace",
     "description": "Para começar a usar o CoBudget, você precisa criar um workspace. Como administrador, você pode convidar outros usuários para colaborar.",
     "workspace_name": "Nome do Workspace",
@@ -886,6 +913,7 @@
     "workspace_name_max": "Nome deve ter no máximo 100 caracteres",
     "tax_id_generic": "Número de identificação fiscal",
     "tax_id_placeholder_generic": "Digite o número fiscal",
+    "legal_document_optional_hint": "Opcional. Adicione o documento fiscal apenas se este workspace representar uma empresa.",
     "legal_document_required": "{label} é obrigatório",
     "legal_document_cnpj": "CNPJ deve ter 14 dígitos",
     "legal_document_ein": "EIN deve ter 9 dígitos",
@@ -901,6 +929,7 @@
     "description_max": "Descrição deve ter no máximo 200 caracteres",
     "created_select_workspace": "Workspace criado. Selecione o workspace para continuar.",
     "created_success": "Workspace criado com sucesso!",
+    "reached_limit_button": "Limite do plano atingido",
     "upgrade_limit_workspace": "Você atingiu o limite de workspaces do STARTER. Faça upgrade para TEAM.",
     "countries": {
       "br": "Brasil",
@@ -1044,9 +1073,9 @@
       "login_terms_prefix": "Ao entrar, você concorda com os",
       "signup_terms_prefix": "Ao criar sua conta, você concorda com os",
       "test_area_title": "Acesso rápido para testes",
-      "test_no_company": "Simular usuário sem workspace",
-      "test_single_company": "Simular usuário com um workspace",
-      "test_multiple_companies": "Simular usuário com múltiplos workspaces"
+      "test_no_workspace": "Simular usuário sem workspace",
+      "test_single_workspace": "Simular usuário com um workspace",
+      "test_multiple_workspaces": "Simular usuário com múltiplos workspaces"
     },
     "forgot_password": {
       "title": "Recuperar acesso",
@@ -1272,7 +1301,6 @@
     "pending_title": "Convites Pendentes",
     "no_pending": "Nenhum convite pendente no momento.",
     "select_workspace": "Selecione um workspace antes de convidar usuários.",
-    "select_company": "Selecione um workspace antes de convidar usuários.",
     "invite_success": "Convite enviado com sucesso!",
     "invite_error": "Erro ao enviar convite",
     "cancel_success": "Convite cancelado",
@@ -1340,7 +1368,7 @@
     "payment_security_title": "Segurança e Privacidade no Pagamento",
     "payment_security_text": "Seus pagamentos são processados com segurança através do Stripe. Não armazenamos suas informações de pagamento e garantimos uma experiência segura com a mais alta tecnologia de criptografia.",
     "error_login_team": "Faça login para contratar um plano TEAM.",
-    "error_select_company_team": "Selecione ou crie um workspace antes de contratar um plano TEAM.",
+    "error_select_workspace_team": "Selecione ou crie um workspace antes de contratar um plano TEAM.",
     "error_user_not_authenticated": "Usuário não autenticado",
     "error_unexpected_billing_action": "Ação de billing inesperada",
     "error_continue_process": "Não foi possível continuar com o processo"
@@ -1448,8 +1476,7 @@
   },
   "context_badge": {
     "personal": "Contexto: Pessoal",
-    "workspace": "Contexto: Workspace - {workspace}{role}",
-    "company": "Contexto: Workspace - {workspace}{role}"
+    "workspace": "Contexto: Workspace - {workspace}{role}"
   },
   "ai": {
     "common": {

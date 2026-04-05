@@ -11,7 +11,7 @@ export type TransactionDirection = 'INFLOW' | 'OUTFLOW'
 export type TransactionSource = 'MANUAL' | 'OPEN_FINANCE' | 'SYSTEM'
 export type TransactionStatus = 'PENDING' | 'POSTED' | 'CANCELLED'
 export type CanonicalTransactionVisibilityScope = 'PRIVATE' | 'WORKSPACE'
-export type TransactionVisibilityScope = CanonicalTransactionVisibilityScope | 'COMPANY'
+export type TransactionVisibilityScope = CanonicalTransactionVisibilityScope
 
 export interface TransactionView {
   id: string

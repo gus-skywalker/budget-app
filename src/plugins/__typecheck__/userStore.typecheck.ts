@@ -8,7 +8,6 @@ const store = useUserStore()
 
 // Basic getter type expectations
 const token: string | null = store.getToken
-const refreshToken: string | null = store.getRefreshToken
 const isAuth: boolean = store.isAuthenticated
 const workspaces = store.getWorkspaces
 
@@ -28,7 +27,6 @@ const firstWorkspaceId: string | undefined = workspaces[0]?.workspaceId
 const maybeVueRef: Ref<string> | undefined = undefined
 void maybeVueRef
 void token
-void refreshToken
 void isAuth
 void firstWorkspaceId
 

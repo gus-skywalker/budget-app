@@ -20,7 +20,6 @@ import CookiePolicy from '@/components/compliance/CookiePolicy.vue'
 import ForgotPassword from '@/views/ForgotPassword.vue'
 import ResetPassword from '@/views/ResetPassword.vue'
 import { useUserStore } from '@/plugins/userStore'
-import GroupView from '@/views/GroupView.vue'
 import GoalView from '@/views/GoalView.vue'
 import StripeSuccess from '@/views/redirect_url/StripeSuccess.vue'
 import StripeCancel from '@/views/redirect_url/StripeCancel.vue'
@@ -104,13 +103,7 @@ const router = createRouter({
       component: ActivityView,
       meta: { requiresAuth: true, requiresWorkspace: true }
     },
-    // GRUPOS E CATEGORIAS
-    {
-      path: '/group',
-      name: 'group',
-      component: GroupView,
-      meta: { requiresAuth: true, requiresWorkspace: true }
-    },
+    // CATEGORIAS
     {
       path: '/categories',
       name: 'categories',

@@ -947,7 +947,7 @@ export default {
       if (this.expenseListFilter === 'open-finance') {
         return 'Somente Open Finance'
       }
-      if (this.expenseListFilter === 'workspace' || this.expenseListFilter === 'company') {
+      if (this.expenseListFilter === 'workspace') {
         return this.$t('transactionVisibility.filters.workspace')
       }
       if (this.expenseListFilter === 'private') {
@@ -970,7 +970,7 @@ export default {
       if (this.incomeListFilter === 'open-finance') {
         return 'Nenhuma entrada Open Finance neste período.'
       }
-      if (this.incomeListFilter === 'workspace' || this.incomeListFilter === 'company') {
+      if (this.incomeListFilter === 'workspace') {
         return this.$t('transactionVisibility.empty.workspaceIncome')
       }
       if (this.incomeListFilter === 'private') {
@@ -985,7 +985,7 @@ export default {
       if (this.expenseListFilter === 'open-finance') {
         return 'Nenhuma despesa Open Finance neste período.'
       }
-      if (this.expenseListFilter === 'workspace' || this.expenseListFilter === 'company') {
+      if (this.expenseListFilter === 'workspace') {
         return this.$t('transactionVisibility.empty.workspaceExpense')
       }
       if (this.expenseListFilter === 'private') {
@@ -1038,7 +1038,7 @@ export default {
       if (filter === 'open-finance') {
         return items.filter((item) => Boolean(item?.openFinance))
       }
-      if (filter === 'workspace' || filter === 'company') {
+      if (filter === 'workspace') {
         return items.filter((item) => (item?.visibilityScope || 'WORKSPACE') === 'WORKSPACE')
       }
       if (filter === 'private') {
@@ -1071,6 +1071,9 @@ export default {
       const query = this.$route?.query || {}
       const month = Number(query.month)
       const year = Number(query.year)
+      const normalizedVisibility = typeof query.visibility === 'string'
+        ? String(query.visibility).trim().toLowerCase()
+        : null
 
       if (Number.isInteger(month) && month >= 1 && month <= 12) {
         this.selectedExpenseMonth = month
@@ -1082,7 +1085,26 @@ export default {
 
       this.routeExpenseAccountId = typeof query.accountId === 'string' ? query.accountId : null
       this.routeExpenseCategory = typeof query.category === 'string' ? query.category : null
-      this.expenseListFilter = query.openFinance === '1' ? 'open-finance' : 'all'
+      if (query.openFinance === '1') {
+        this.incomeListFilter = 'open-finance'
+        this.expenseListFilter = 'open-finance'
+        return
+      }
+
+      if (normalizedVisibility === 'workspace') {
+        this.incomeListFilter = 'workspace'
+        this.expenseListFilter = 'workspace'
+        return
+      }
+
+      if (normalizedVisibility === 'private') {
+        this.incomeListFilter = 'private'
+        this.expenseListFilter = 'private'
+        return
+      }
+
+      this.incomeListFilter = 'all'
+      this.expenseListFilter = 'all'
     },
     clearExpenseDrillDown() {
       this.$router.replace({

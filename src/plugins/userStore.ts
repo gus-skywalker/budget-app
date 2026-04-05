@@ -3,7 +3,8 @@
  *
  * - When an API call fails due to expired access token (401), call userStore.tryRefreshToken().
  * - If tryRefreshToken() succeeds, retry the original request.
- * - If tryRefreshToken() fails (refresh token expired/invalid), user is logged out automatically.
+ * - Refresh token is kept in HttpOnly cookie and never exposed to client JavaScript.
+ * - If tryRefreshToken() fails (cookie expired/invalid), user is logged out automatically.
  * - This ensures seamless session renewal and only logs out when both tokens are invalid.
  */
 // src/plugins/userStore.ts
@@ -119,7 +120,6 @@ function findWorkspaceById(workspaces: Workspace[] = [], workspaceId?: string | 
 
 type State = {
   token: string | null
-  refreshToken: string | null
   auth: boolean
   user: User
   currentWorkspaceId: string | null
@@ -134,7 +134,6 @@ export const useUserStore = defineStore({
   
   state: (): State => ({
     token: null,
-    refreshToken: null,
     auth: false,
     user: {},
     currentWorkspaceId: null,
@@ -148,7 +147,6 @@ export const useUserStore = defineStore({
     getUser: (state): User => state.user,
     isAuthenticated: (state): boolean => state.auth,
     getToken: (state): string | null => state.token,
-    getRefreshToken: (state): string | null => state.refreshToken,
     getCurrentWorkspaceId: (state): string | null => state.currentWorkspaceId,
     getCurrentRole: (state): string | null => state.tenantRole,
     getTenantRole: (state): string | null => state.tenantRole,
@@ -213,11 +211,6 @@ export const useUserStore = defineStore({
 
     setToken(token: string | null) {
       this.token = token
-      this.saveState()
-    },
-
-    setRefreshToken(token: string | null) {
-      this.refreshToken = token
       this.saveState()
     },
 
@@ -295,7 +288,6 @@ export const useUserStore = defineStore({
 
     resetUser() {
       this.token = null
-      this.refreshToken = null
       this.auth = false
       this.user = {}
       this.currentWorkspaceId = null
@@ -307,7 +299,6 @@ export const useUserStore = defineStore({
     saveState() {
       sessionStorage.setItem('userStore', JSON.stringify({
         token: this.token,
-        refreshToken: this.refreshToken,
         auth: this.auth,
         user: this.user,
         currentWorkspaceId: this.currentWorkspaceId,
@@ -322,7 +313,6 @@ export const useUserStore = defineStore({
         try {
           const state = JSON.parse(saved)
           this.token = state.token
-          this.refreshToken = state.refreshToken
           this.auth = state.auth
           this.user = {
             ...(state.user || {}),
@@ -455,18 +445,14 @@ export const useUserStore = defineStore({
      */
     handleSigninResponse(response: any) {
       const accessToken = response?.accessToken
-      const refreshToken = response?.refreshToken
 
-      if (!accessToken || !refreshToken) {
-        console.error('Invalid signin response: missing accessToken/refreshToken', response)
+      if (!accessToken) {
+        console.error('Invalid signin response: missing accessToken', response)
       }
 
       if (accessToken) {
         this.token = accessToken
         this.auth = true
-      }
-      if (refreshToken) {
-        this.refreshToken = refreshToken
       }
 
       const userLanguage = response.language || this.language || 'PT'
@@ -514,15 +500,11 @@ export const useUserStore = defineStore({
     async selectWorkspace(workspaceId: string) {
       try {
         const response = await WorkspaceService.selectWorkspace(workspaceId)
-        const { accessToken, refreshToken, tenantRole, workspaceId: resolvedWorkspaceId } = response.data
+        const { accessToken, tenantRole, workspaceId: resolvedWorkspaceId } = response.data
 
         if (accessToken) {
           this.token = accessToken
           this.syncFromToken(accessToken)
-        }
-
-        if (refreshToken) {
-          this.refreshToken = refreshToken
         }
 
         const decoded = accessToken ? decodeJWT(accessToken) : null
@@ -544,15 +526,11 @@ export const useUserStore = defineStore({
     async clearWorkspaceSelection() {
       try {
         const response = await WorkspaceService.clearWorkspace()
-        const { accessToken, refreshToken } = response.data
+        const { accessToken } = response.data
 
         if (accessToken) {
           this.token = accessToken
           this.syncFromToken(accessToken)
-        }
-
-        if (refreshToken) {
-          this.refreshToken = refreshToken
         }
 
         this.clearCurrentWorkspace()
@@ -570,7 +548,6 @@ export const useUserStore = defineStore({
      * Returns true if successful, false if refresh fails
      */
     async tryRefreshToken() {
-      if (!this.refreshToken) return false
       try {
         const previousWorkspaceId = this.currentWorkspaceId
         const previousTenantRole = this.tenantRole
@@ -578,8 +555,8 @@ export const useUserStore = defineStore({
           ? (this.getWorkspaces || []).find((workspace: Workspace) => workspaceIdOf(workspace) === previousWorkspaceId)
           : null
 
-        const response = await AuthService.refreshToken(this.refreshToken)
-        const { accessToken, refreshToken } = response.data
+        const response = await AuthService.refreshToken()
+        const { accessToken } = response.data
         if (accessToken) {
           this.token = accessToken
           this.syncFromToken(accessToken)
@@ -601,9 +578,8 @@ export const useUserStore = defineStore({
           }
 
           await this.hydrateWorkspaceDetailsFromBudget()
-        }
-        if (refreshToken) {
-          this.refreshToken = refreshToken
+        } else {
+          return false
         }
         this.auth = true
         this.saveState()

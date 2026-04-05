@@ -37,7 +37,6 @@ export interface LoginResponse {
   userRoles?: string[]
   createdAt?: string
   accessToken: string
-  refreshToken: string
   workspaceId: string | null
   workspaces: Array<{
     workspaceId: string

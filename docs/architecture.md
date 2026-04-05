@@ -9,9 +9,11 @@
 
 ## Main Interaction Patterns
 - Authenticated requests use interceptor-injected `Authorization` header.
-- `401` handling triggers centralized refresh logic (`userStore.tryRefreshToken`).
+- `401` handling triggers centralized refresh logic (`userStore.tryRefreshToken`) backed by HttpOnly refresh cookie.
+- Startup session restore uses `POST /api/auth/session/bootstrap` when no access token is present in memory/sessionStorage.
 - Tenant context switching rehydrates tokens and workspace state.
 - Billing checkout uses decision + async orchestration endpoints in `budget-api`.
+- Billing reads use a backend-provided summary from `budget-api`; frontend treats workspace as operational context only.
 - Post-auth onboarding routing is centralized in `OnboardingOrchestrator`.
 
 ## Onboarding Orchestrator
@@ -35,9 +37,13 @@
 - Canonical billing frontend path is:
   - `BillingDecisionService` -> `/api/billing/decision`
   - `BillingOrchestrationService` -> `/api/billing/subscriptions/*` and `/api/billing/operations/*`
+- Billing summary reads use `BillingOrchestrationService` -> `/api/billing/access?workspaceId=...`
+- Frontend does not know or send `billingAccountId`; ownership stays backend-internal.
+- `workspaceId` is passed only as UI/operational context when the backend requires it.
 - Legacy direct `payment-api` client was removed from frontend source.
 
 ## Documentation Audit Summary
 - Existing docs include valuable API contracts but are fragmented by topic.
 - Some docs still describe older direct billing interactions against `payment-api`.
 - Active billing flows use `BillingDecisionService` and `BillingOrchestrationService` only.
+- `docs/frontend/billing-and-workspace.md` is the canonical frontend wording baseline for billing/workspace separation.

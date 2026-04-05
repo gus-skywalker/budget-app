@@ -2,9 +2,11 @@
 
 ## 1. Authentication And Session Flow
 1. User submits credentials to `auth` (`/api/auth/signin`).
-2. Tokens are stored in client state.
+2. Frontend stores only access token in client state.
+3. Refresh token is managed as HttpOnly cookie by `auth` service.
 3. Interceptor appends bearer token to backend calls.
-4. On `401`, frontend attempts refresh using `/api/auth/refresh`.
+4. On `401`, frontend attempts refresh using `/api/auth/refresh` with credentials.
+5. On app startup without access token, frontend attempts session restore using `/api/auth/session/bootstrap`.
 
 ## 2. Signup Flow
 1. Frontend calls `POST /api/auth/signup`.
@@ -32,10 +34,11 @@
 4. CTA routes to `create-workspace`, `select-workspace`, or `choose-plan` using canonical redirect.
 
 ## 6. Billing Upgrade Flow (Current Path)
-1. Frontend calls `/api/billing/decision` in `budget-api`.
-2. If action is `START_SUBSCRIPTION`, frontend calls `/api/billing/subscriptions/start`.
-3. Frontend polls `/api/billing/operations/{messageId}` for checkout URL.
-4. After Stripe return, frontend polls `/api/billing/access` for premium activation.
+1. Frontend calls `/api/billing/decision` in `budget-api` with user intent plus allowed workspace context.
+2. Backend resolves the canonical billing account internally; frontend does not know ownership.
+3. If action is `START_SUBSCRIPTION`, frontend calls `/api/billing/subscriptions/start`.
+4. Frontend polls `/api/billing/operations/{messageId}` for `redirectUrl`.
+5. After Stripe return, frontend polls `/api/billing/access?workspaceId=...` for the canonical billing summary and premium activation.
 
 ```mermaid
 sequenceDiagram
@@ -50,7 +53,7 @@ sequenceDiagram
     Payment->>Stripe: Create checkout session
     Stripe-->>Payment: Checkout + webhook events
     Payment->>Budget: /api/webhooks/events (EVENT)
-    App->>Budget: GET /api/billing/access (poll)
+    App->>Budget: GET /api/billing/access?workspaceId=... (poll)
 ```
 
 ## 7. Deprecated Flow (Do Not Use)

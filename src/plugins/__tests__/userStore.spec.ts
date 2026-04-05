@@ -27,7 +27,6 @@ describe('UserStore', () => {
     it('should have correct initial state', () => {
       const store = useUserStore()
       expect(store.token).toBeNull()
-      expect(store.refreshToken).toBeNull()
       expect(store.auth).toBe(false)
       expect(store.currentWorkspaceId).toBeNull()
       expect(store.tenantRole).toBeNull()
@@ -42,11 +41,11 @@ describe('UserStore', () => {
       // Create a mock JWT token with base64 encoded payload
       const payload = {
         user_id: '123',
-        workspaceId: 'company-456',
+        workspaceId: 'workspace-456',
         tenantRole: 'ROLE_ADMIN',
         user_language: 'EN',
         workspaces: [
-          { workspaceId: 'company-456', workspaceName: 'Test Corp', role: 'ROLE_ADMIN' }
+          { workspaceId: 'workspace-456', workspaceName: 'Test Workspace', role: 'ROLE_ADMIN' }
         ]
       }
       
@@ -55,11 +54,11 @@ describe('UserStore', () => {
       
       store.syncFromToken(mockToken)
       
-      expect(store.currentWorkspaceId).toBe('company-456')
+      expect(store.currentWorkspaceId).toBe('workspace-456')
       expect(store.tenantRole).toBe('ROLE_ADMIN')
       expect(store.language).toBe('EN')
       expect(store.user.workspaces).toEqual([
-        { workspaceId: 'company-456', workspaceName: 'Test Corp', role: 'ROLE_ADMIN' }
+        { workspaceId: 'workspace-456', workspaceName: 'Test Workspace', role: 'ROLE_ADMIN' }
       ])
     })
 
@@ -87,7 +86,6 @@ describe('UserStore', () => {
         email: 'john@example.com',
         language: 'PT',
         accessToken: 'header.eyJ1c2VyX2lkIjoiMTIzIn0.signature',
-        refreshToken: 'refresh123',
         workspaceId: null,
         workspaces: []
       }
@@ -123,7 +121,6 @@ describe('UserStore', () => {
         email: 'john@example.com',
         language: 'EN',
         accessToken: mockToken,
-        refreshToken: 'refresh123',
         workspaceId: null,
         workspaces
       }
@@ -160,7 +157,6 @@ describe('UserStore', () => {
         email: 'john@example.com',
         language: 'PT',
         accessToken: mockToken,
-        refreshToken: 'refresh123',
         workspaceId: 'comp1',
         workspaces
       }
@@ -174,27 +170,23 @@ describe('UserStore', () => {
   })
 
   describe('Token Management', () => {
-    it('should set and persist tokens', () => {
+    it('should set and persist access token', () => {
       const store = useUserStore()
       
       store.setToken('access123')
-      store.setRefreshToken('refresh456')
       
       expect(store.token).toBe('access123')
-      expect(store.refreshToken).toBe('refresh456')
       
       // Check persistence
       const saved = sessionStorage.getItem('userStore')
       expect(saved).toBeTruthy()
       const parsed = JSON.parse(saved!)
       expect(parsed.token).toBe('access123')
-      expect(parsed.refreshToken).toBe('refresh456')
     })
 
     it('should load state from session storage', () => {
       const state = {
         token: 'saved-token',
-        refreshToken: 'saved-refresh',
         auth: true,
         user: { id: '123', email: 'test@test.com' },
         currentWorkspaceId: 'comp-123',
@@ -216,7 +208,6 @@ describe('UserStore', () => {
     it('should restore tenant role from stored workspace when session omits tenantRole', () => {
       const state = {
         token: 'saved-token',
-        refreshToken: 'saved-refresh',
         auth: true,
         user: {
           id: '123',
@@ -328,7 +319,7 @@ describe('UserStore', () => {
 
       const payload = {
         user_id: '123',
-        workspaceId: 'new-company',
+        workspaceId: 'new-workspace',
         tenantRole: 'ROLE_USER'
       }
       const encodedPayload = btoa(JSON.stringify(payload))
@@ -337,21 +328,19 @@ describe('UserStore', () => {
       vi.mocked(WorkspaceService.selectWorkspace).mockResolvedValue({
         data: {
           accessToken: newToken,
-          refreshToken: 'new-refresh',
           tenantRole: 'ROLE_USER',
-          workspaceId: 'new-company'
+          workspaceId: 'new-workspace'
         }
       })
       
       store.user.workspaces = [
-        { workspaceId: 'new-company', workspaceName: 'New Corp', role: 'ROLE_USER' }
+        { workspaceId: 'new-workspace', workspaceName: 'New Workspace', role: 'ROLE_USER' }
       ]
 
-      await store.selectWorkspace('new-company')
+      await store.selectWorkspace('new-workspace')
 
       expect(store.token).toBe(newToken)
-      expect(store.refreshToken).toBe('new-refresh')
-      expect(store.currentWorkspaceId).toBe('new-company')
+      expect(store.currentWorkspaceId).toBe('new-workspace')
       expect(store.tenantRole).toBe('ROLE_USER')
     })
   })
@@ -372,12 +361,11 @@ describe('UserStore', () => {
   })
 
   describe('Token Refresh', () => {
-    it('should preserve selected workspace context when refresh token response is not workspace-scoped', async () => {
+    it('should preserve selected workspace context when refreshed token response is not workspace-scoped', async () => {
       const store = useUserStore()
       const AuthService = (await import('@/services/AuthService')).default
       const WorkspaceService = (await import('@/services/WorkspaceService')).default
 
-      store.refreshToken = 'refresh-123'
       store.auth = true
       store.user.workspaces = [
         { workspaceId: 'ws-1', workspaceName: 'Workspace 1', role: 'ROLE_OWNER' }
@@ -397,8 +385,7 @@ describe('UserStore', () => {
 
       vi.mocked(AuthService.refreshToken).mockResolvedValue({
         data: {
-          accessToken: refreshedToken,
-          refreshToken: 'refresh-456'
+          accessToken: refreshedToken
         }
       })
       vi.mocked(WorkspaceService.getDetails).mockResolvedValue({
@@ -412,7 +399,6 @@ describe('UserStore', () => {
 
       expect(refreshed).toBe(true)
       expect(store.token).toBe(refreshedToken)
-      expect(store.refreshToken).toBe('refresh-456')
       expect(store.currentWorkspaceId).toBe('ws-1')
       expect(store.tenantRole).toBe('ROLE_OWNER')
       expect(store.getWorkspaces[0]).toEqual({
@@ -428,7 +414,6 @@ describe('UserStore', () => {
       const store = useUserStore()
       
       store.token = 'token'
-      store.refreshToken = 'refresh'
       store.auth = true
       store.currentWorkspaceId = 'comp-123'
       store.saveState()
@@ -436,7 +421,6 @@ describe('UserStore', () => {
       store.logout()
       
       expect(store.token).toBeNull()
-      expect(store.refreshToken).toBeNull()
       expect(store.auth).toBe(false)
       expect(store.currentWorkspaceId).toBeNull()
       expect(sessionStorage.getItem('userStore')).toBeNull()

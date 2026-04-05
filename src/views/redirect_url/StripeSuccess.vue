@@ -59,6 +59,11 @@
 <script>
 import { useUserStore } from '@/plugins/userStore';
 import BillingOrchestrationService from '@/services/BillingOrchestrationService';
+import {
+  clearBillingCheckoutContext,
+  readBillingCheckoutContext,
+  resolveAnyWorkspaceContext,
+} from '@/services/BillingWorkspaceContext'
 
 export default {
   name: 'StripeSuccess',
@@ -88,50 +93,23 @@ export default {
   },
 
   methods: {
-    resolveCheckoutSubject() {
-      const params = new URLSearchParams(window.location.search)
-      const subjectTypeFromUrl = params.get('subjectType')
-      const subjectIdFromUrl = params.get('subjectId')
-
-      if ((subjectTypeFromUrl === 'USER' || subjectTypeFromUrl === 'WORKSPACE') && subjectIdFromUrl) {
-        return {
-          subjectType: subjectTypeFromUrl,
-          subjectId: subjectIdFromUrl
-        }
-      }
-
-      try {
-        const saved = sessionStorage.getItem('billing.checkout.lastContext')
-        if (saved) {
-          const parsed = JSON.parse(saved)
-          if ((parsed?.subjectType === 'USER' || parsed?.subjectType === 'WORKSPACE') && parsed?.subjectId) {
-            return {
-              subjectType: parsed.subjectType,
-              subjectId: parsed.subjectId
-            }
-          }
-        }
-      } catch {
-        sessionStorage.removeItem('billing.checkout.lastContext')
+    resolveWorkspaceContext() {
+      const savedContext = readBillingCheckoutContext()
+      if (savedContext?.workspaceId) {
+        return savedContext
       }
 
       const userStore = useUserStore();
-      const userId = userStore.user?.id;
-      const workspaceId = userStore.getCurrentWorkspaceId;
-      const isTenantMode = userStore.isTenantMode;
-
-      if (!userId && !(isTenantMode && workspaceId)) {
-        throw new Error('Usuário não identificado');
+      const workspaceContext = resolveAnyWorkspaceContext(userStore)
+      if (!workspaceContext) {
+        throw new Error('Workspace não identificado');
       }
 
-      return {
-        subjectType: (isTenantMode && workspaceId) ? 'WORKSPACE' : 'USER',
-        subjectId: (isTenantMode && workspaceId) ? String(workspaceId) : String(userId)
-      }
+      return workspaceContext
     },
 
     async checkSubscriptionStatus() {
-      const { subjectType, subjectId } = this.resolveCheckoutSubject()
+      const { workspaceId } = this.resolveWorkspaceContext()
 
       // Poll budget-api until webhook projection becomes premium=true.
       const startedAt = Date.now();
@@ -139,10 +117,10 @@ export default {
       const intervalMs = 2000;
 
       while (Date.now() - startedAt < timeoutMs) {
-        const response = await BillingOrchestrationService.getPremiumAccess(subjectType, subjectId);
+        const response = await BillingOrchestrationService.getBillingSummary(workspaceId);
         if (response.data?.hasPremiumAccess) {
           this.subscriptionDetails = response.data;
-          sessionStorage.removeItem('billing.checkout.lastContext')
+          clearBillingCheckoutContext()
           return;
         }
         await new Promise(resolve => setTimeout(resolve, intervalMs));

@@ -264,7 +264,7 @@ const navSections = computed(() => [
 
     <v-divider></v-divider>
 
-    <div class="company-switcher-wrapper">
+    <div class="workspace-switcher-wrapper">
       <WorkspaceSwitcher />
     </div>
 
@@ -385,11 +385,11 @@ const navSections = computed(() => [
   width: 56px; /* Largura fixa do rail */
 }
 
-.company-switcher-wrapper {
+.workspace-switcher-wrapper {
   padding: 12px 16px;
 }
 
-.company-switcher-wrapper :deep(.company-switcher-btn) {
+.workspace-switcher-wrapper :deep(.workspace-switcher-btn) {
   width: 100%;
   justify-content: flex-start;
 }

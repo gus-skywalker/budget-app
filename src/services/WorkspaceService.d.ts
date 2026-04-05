@@ -21,7 +21,6 @@ export interface CreateWorkspaceResponse {
 export interface SelectWorkspaceResponse {
   message?: string
   accessToken: string
-  refreshToken: string
   workspaceId?: string | null
   tenantRole?: string | null
 }

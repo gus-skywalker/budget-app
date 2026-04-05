@@ -131,10 +131,10 @@
             </ul>
 
             <div class="plan-cta">
-              <button class="btn btn-outline team-outline" type="button" @click.prevent="handleTeamClick('BUSINESS_MONTHLY')">
+              <button class="btn btn-outline team-outline" type="button" @click.prevent="redirectToCheckout('BUSINESS_MONTHLY')">
                 {{ $t('choosePlan.monthly_short') }}
               </button>
-              <button class="btn btn-solid team-solid" type="button" @click.prevent="handleTeamClick('BUSINESS_ANNUAL')">
+              <button class="btn btn-solid team-solid" type="button" @click.prevent="redirectToCheckout('BUSINESS_ANNUAL')">
                 {{ $t('choosePlan.annual_short_discount') }}
               </button>
             </div>
@@ -177,9 +177,7 @@
 
 <script>
 import FAQ from '@/components/FAQ.vue'
-import BillingDecisionService from '@/services/BillingDecisionService'
 import OnboardingOrchestrator from '@/services/OnboardingOrchestrator'
-import { createCorrelationId } from '@/utils/correlation'
 import { PLAN_DETAILS } from '@/constants/plans'
 import { formatConvertedPriceFromBRL, resolvePricingCurrency } from '@/utils/pricing'
 import { useUserStore } from '@/plugins/userStore'
@@ -204,7 +202,6 @@ export default {
       ],
       selectedPlan: null,
       planDetails: PLAN_DETAILS,
-      isTenantMode: false,
       aiFeatures: [
         { icon: 'mdi-chart-box-outline', labelKey: 'choosePlan.ai_feature_1' },
         { icon: 'mdi-bell-alert-outline', labelKey: 'choosePlan.ai_feature_2' },
@@ -239,15 +236,9 @@ export default {
     },
   },
   mounted() {
-    try {
-      const userStore = useUserStore()
-      this.isTenantMode = userStore.isTenantMode
-      const preselectedPlan = this.$route?.query?.plan
-      if (typeof preselectedPlan === 'string' && preselectedPlan.trim()) {
-        this.redirectToCheckout(preselectedPlan.trim())
-      }
-    } catch (e) {
-      this.isTenantMode = false
+    const preselectedPlan = this.$route?.query?.plan
+    if (typeof preselectedPlan === 'string' && preselectedPlan.trim()) {
+      this.redirectToCheckout(preselectedPlan.trim())
     }
   },
   methods: {
@@ -265,81 +256,15 @@ export default {
           })
           return
         }
-        await this.processCheckout(plan)
-      } catch (error) {
-        this.handleError(error)
-      }
-    },
-
-    handleTeamClick(plan) {
-      const userStore = useUserStore()
-      if (!this.isAuthenticated) {
-        alert(this.$t('choosePlan.error_login_team'))
-        const redirect = OnboardingOrchestrator.buildRedirectPath('/choose-plan', { plan })
-        this.$router.push({ name: 'login', query: { redirect } })
-        return
-      }
-      if (!userStore.getCurrentWorkspaceId) {
-        alert(this.$t('choosePlan.error_select_company_team'))
-        const redirect = OnboardingOrchestrator.buildRedirectPath('/choose-plan', { plan })
-        this.$router.push({ name: 'select-workspace', query: { redirect } })
-        return
-      }
-      this.redirectToCheckout(plan)
-    },
-
-    async processCheckout(plan) {
-      try {
         const userStore = useUserStore()
-        const user = userStore.user
-
-        if (!user?.id) {
-          throw new Error(this.$t('choosePlan.error_user_not_authenticated'))
-        }
-
-        const correlationId = createCorrelationId()
-
-        const isTeamPlan = String(plan).startsWith('BUSINESS_')
-        const workspaceId = userStore.getCurrentWorkspaceId
-        if (isTeamPlan && !workspaceId) {
-          throw new Error(this.$t('choosePlan.error_select_company_team'))
-        }
-
-        const subjectType = isTeamPlan && userStore.isTenantMode && workspaceId ? 'WORKSPACE' : 'USER'
-        const subjectId = subjectType === 'WORKSPACE' ? String(workspaceId) : String(user.id)
-
-        const decisionResp = await BillingDecisionService.decide(
-          {
-            plan: String(plan),
-            actor: String(user.id),
-            subjectType,
-            subjectId,
-            userId: subjectType === 'USER' ? String(user.id) : null,
-            workspaceId: subjectType === 'WORKSPACE' ? String(workspaceId) : null,
-          },
-          correlationId,
-        )
-
-        const decision = decisionResp.data
-
-        if (decision.action === 'NOOP_ALREADY_PREMIUM') {
-          this.$router.push({ name: 'dashboard' })
-          return
-        }
-
-        if (decision.action !== 'START_SUBSCRIPTION') {
-          throw new Error(this.$t('choosePlan.error_unexpected_billing_action'))
-        }
-
-        this.$router.push({
-          name: 'checkout',
-          query: {
-            plan: String(plan),
-            subjectType: decision.subjectType,
-            subjectId: decision.subjectId,
-            correlationId: decision.correlationId || correlationId,
-          },
+        const resolution = await OnboardingOrchestrator.resolvePostAuthRoute({
+          router: this.$router,
+          userStore,
+          redirect: '/checkout',
+          plan: String(plan),
         })
+
+        await this.$router.push(resolution.route)
       } catch (error) {
         this.handleError(error)
       }

@@ -155,6 +155,11 @@ import { createMessageId } from '@/utils/messageId'
 import { buildBillingPricingContext, formatConvertedPriceFromBRL } from '@/utils/pricing'
 import BillingOrchestrationService from '@/services/BillingOrchestrationService'
 import BillingDecisionService from '@/services/BillingDecisionService'
+import {
+    clearBillingCheckoutContext,
+    requireActiveWorkspaceContext,
+    saveBillingCheckoutContext,
+} from '@/services/BillingWorkspaceContext'
 
 export default {
     name: 'CheckoutView',
@@ -200,8 +205,9 @@ export default {
                 const resp = await BillingOrchestrationService.getOperationStatus(messageId)
                 operationStatus.value = resp.data
 
-                if (resp.data.checkoutUrl) {
-                    window.location.href = resp.data.checkoutUrl
+                const redirectUrl = resp.data.redirectUrl
+                if (redirectUrl) {
+                    window.location.href = redirectUrl
                     return
                 }
 
@@ -225,34 +231,24 @@ export default {
             try {
                 const plan = route.query.plan;
                 if (!plan) {
-                    throw new Error('Nenhum plano selecionado');
+                    error.value = 'Nenhum plano selecionado';
+                    return
                 }
 
                 const user = userStore.user;
                 if (!user?.id) {
                     router.push({ name: 'login' });
-                    throw new Error('Usuário não autenticado');
+                    return
                 }
 
                 const correlationId = createCorrelationId()
-                const isTeamPlan = String(plan).startsWith('BUSINESS_')
-                const workspaceId = userStore.getCurrentWorkspaceId
-                if (isTeamPlan && !workspaceId) {
-                    router.push({ name: 'select-workspace', query: { redirect: `/checkout?plan=${encodeURIComponent(String(plan))}` } })
-                    throw new Error('Selecione uma empresa para continuar com plano TEAM.')
-                }
-
-                const preferredSubjectType = (isTeamPlan && workspaceId) ? 'WORKSPACE' : 'USER'
-                const preferredSubjectId = preferredSubjectType === 'WORKSPACE' ? String(workspaceId) : String(user.id)
+                const workspaceContext = requireActiveWorkspaceContext(userStore)
 
                 const decisionResp = await BillingDecisionService.decide(
                     {
                         plan: String(plan),
                         actor: String(user.id),
-                        subjectType: preferredSubjectType,
-                        subjectId: preferredSubjectId,
-                        userId: preferredSubjectType === 'USER' ? String(user.id) : null,
-                        workspaceId: preferredSubjectType === 'WORKSPACE' ? String(workspaceId) : null,
+                        workspaceId: workspaceContext.workspaceId,
                         ...getBillingContext()
                     },
                     correlationId
@@ -260,20 +256,17 @@ export default {
 
                 const decision = decisionResp.data
                 if (decision.action === 'NOOP_ALREADY_PREMIUM') {
+                    clearBillingCheckoutContext()
                     router.push({ name: 'dashboard' })
                     return
                 }
 
-                const subjectType = decision.subjectType
-                const subjectId = decision.subjectId
-
-                sessionStorage.setItem('billing.checkout.lastContext', JSON.stringify({
+                saveBillingCheckoutContext({
                     plan: String(plan),
-                    subjectType: String(subjectType),
-                    subjectId: String(subjectId),
+                    workspaceId: workspaceContext.workspaceId,
+                    workspaceName: workspaceContext.workspaceName,
                     correlationId: String(decision.correlationId || correlationId),
-                    storedAt: Date.now()
-                }))
+                })
 
                 // New checkout attempt must use a fresh command id.
                 // Reusing messageId can return stale/expired checkout URLs from old operations.
@@ -282,9 +275,8 @@ export default {
                 await BillingOrchestrationService.startSubscription({
                     plan: String(plan),
                     actor: String(user.id),
-                    subjectType: String(subjectType),
-                    subjectId: String(subjectId),
-                    correlationId: String(correlationId),
+                    workspaceId: workspaceContext.workspaceId,
+                    correlationId: String(decision.correlationId || correlationId),
                     messageId,
                     ...getBillingContext()
                 })

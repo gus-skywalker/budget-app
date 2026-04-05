@@ -166,9 +166,9 @@
 
             <div v-if="isDev" class="test-buttons">
               <h4>{{ $t('authentication.common.test_area_title') }}</h4>
-              <button @click="mockLogin('no-workspace')" class="btn-test">{{ $t('authentication.common.test_no_company') }}</button>
-              <button @click="mockLogin('single-workspace')" class="btn-test">{{ $t('authentication.common.test_single_company') }}</button>
-              <button @click="mockLogin('multiple-workspaces')" class="btn-test">{{ $t('authentication.common.test_multiple_companies') }}</button>
+              <button @click="mockLogin('no-workspace')" class="btn-test">{{ $t('authentication.common.test_no_workspace') }}</button>
+              <button @click="mockLogin('single-workspace')" class="btn-test">{{ $t('authentication.common.test_single_workspace') }}</button>
+              <button @click="mockLogin('multiple-workspaces')" class="btn-test">{{ $t('authentication.common.test_multiple_workspaces') }}</button>
             </div>
           </div>
 
@@ -258,6 +258,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { updateI18nLocale } from '@/i18n'
 import AuthService from '@/services/AuthService'
 import OnboardingOrchestrator from '@/services/OnboardingOrchestrator'
+import { activateDevQuickAccess, clearDevQuickAccess } from '@/utils/devQuickAccess'
 
 const router = useRouter()
 const route = useRoute()
@@ -315,6 +316,7 @@ const userLogin = async () => {
 
     const res = await AuthService.signIn(userData.value)
     if (res.data) {
+      clearDevQuickAccess()
       store.handleSigninResponse(res.data)
       updateI18nLocale(res.data.language || 'PT')
 
@@ -355,12 +357,13 @@ const mockLogin = (scenario) => {
   const store = useUserStore()
 
   const mockUser = {
-    id: 123,
+    id: 'dev-user-123',
     username: 'Usuario Teste',
-    email: 'teste@email.com'
+    email: 'teste@email.com',
+    language: String(locale.value || 'pt').slice(0, 2).toUpperCase()
   }
 
-  const mockToken = 'mock.jwt.token'
+  const mockToken = `dev.quick-access.${scenario}`
 
   let workspaces = []
 
@@ -400,31 +403,38 @@ const mockLogin = (scenario) => {
       workspaces = []
   }
 
-  store.$patch({
-    user: {
-      ...mockUser,
-      workspaces
-    },
-    token: mockToken,
-    refreshToken: 'mock.refresh.token',
-    auth: true
-  })
+  activateDevQuickAccess(scenario, workspaces)
 
+  store.$reset()
+  sessionStorage.removeItem('userStore')
+  localStorage.removeItem('userPreference')
+
+  store.setUser({
+    ...mockUser,
+    workspaces
+  })
+  store.setToken(mockToken)
+  store.setAuth(true)
   store.setWorkspaces(workspaces)
+  store.clearCurrentWorkspace()
 
   if (workspaces.length > 1) {
-    store.saveState()
+    store.preferredMode = null
+    store.preferredWorkspaceId = null
+    store.savePreference()
     router.push({ name: 'select-workspace', query: { redirect: '/dashboard' } })
   } else if (workspaces.length === 1) {
     store.setCurrentWorkspace(workspaces[0].workspaceId, workspaces[0].role, workspaces[0].workspaceName)
-    store.saveState()
+    store.setPreferredWorkspace(workspaces[0].workspaceId)
     loginSuccess.value = t('authentication.messages.login_success')
     setTimeout(() => {
       loginSuccess.value = null
       router.push('/dashboard')
     }, 800)
   } else {
-    store.saveState()
+    store.preferredMode = null
+    store.preferredWorkspaceId = null
+    store.savePreference()
     loginSuccess.value = t('authentication.messages.login_success')
     setTimeout(() => {
       loginSuccess.value = null
@@ -1081,7 +1091,7 @@ input:focus {
   }
 }
 
-.company-fields {
+.workspace-fields {
   margin-top: 12px;
   padding: 16px;
   background-color: rgba(32, 95, 99, 0.05);
@@ -1089,8 +1099,8 @@ input:focus {
   border: 1px solid rgba(32, 95, 99, 0.12);
 }
 
-.company-fields input.form-control,
-.company-fields input[type='text'] {
+.workspace-fields input.form-control,
+.workspace-fields input[type='text'] {
   width: 100%;
   padding: 12px 16px;
   border: 1px solid rgba(23, 32, 51, 0.14);
@@ -1103,13 +1113,13 @@ input:focus {
   margin-bottom: 8px;
 }
 
-.company-fields input:focus {
+.workspace-fields input:focus {
   outline: none;
   border-color: #205f63;
   box-shadow: 0 0 0 3px rgba(32, 95, 99, 0.1);
 }
 
-.company-fields small {
+.workspace-fields small {
   display: block;
   font-size: 0.85rem;
   color: #666;

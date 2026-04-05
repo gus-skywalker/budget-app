@@ -12,6 +12,9 @@
           <p class="card-description">{{ t('subscription_management.title') }}</p>
         </div>
         <div class="card-content">
+          <v-alert type="info" variant="tonal" class="mb-4">
+            {{ t('subscription_management.global_billing_notice') }}
+          </v-alert>
           <div class="subscription-overview">
             <div class="subscription-info-grid">
               <div class="info-item">
@@ -60,7 +63,7 @@
                 {{ t('subscription_management.payment_sync_unavailable_body') }}
               </div>
             </v-alert>
-            <div v-if="isWorkspaceBillingContext && workspaceQuota" class="workspace-quota mt-4">
+            <div v-if="hasWorkspaceQuota && workspaceQuota" class="workspace-quota mt-4">
               <div class="workspace-quota__header">
                 <div class="trial-alert__title">{{ t('subscription_management.workspace_quota_title') }}</div>
                 <div class="workspace-quota__description">
@@ -397,6 +400,11 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import BillingDecisionService from '@/services/BillingDecisionService'
 import BillingOrchestrationService from '@/services/BillingOrchestrationService'
+import {
+  requireActiveWorkspaceContext,
+  resolveAnyWorkspaceContext,
+  saveBillingCheckoutContext,
+} from '@/services/BillingWorkspaceContext'
 import { createCorrelationId } from '@/utils/correlation'
 import { PLAN_DETAILS, type PlanId } from '@/constants/plans';
 import { buildBillingPricingContext, formatConvertedPriceFromBRL, resolvePricingCurrency } from '@/utils/pricing'
@@ -434,7 +442,6 @@ type BillingAccessWorkspaceQuota = {
 const currentPlan = ref<MaybePlanId>('');
 const currentPlanTier = ref<PlanTier>('');
 const currentBillingCycle = ref<BillingCycleUi>('');
-const currentBillingSubjectType = ref<'USER' | 'WORKSPACE'>('USER')
 const subscriptionStatus = ref('');
 const trialEndsAt = ref('');
 const nextBillingDate = ref('');
@@ -500,9 +507,6 @@ const mapPlanIdToTier = (planId: PlanId): Exclude<PlanTier, ''> => {
   return planId === 'BUSINESS_MONTHLY' || planId === 'BUSINESS_ANNUAL' ? 'TEAM' : 'STARTER';
 };
 
-const isWorkspacePlanId = (planId: PlanId) => {
-  return planId === 'BUSINESS_MONTHLY' || planId === 'BUSINESS_ANNUAL'
-}
 
 const mapPlanIdToCycle = (planId: PlanId): Exclude<BillingCycleUi, ''> => {
   return planId === 'BUSINESS_ANNUAL' || planId === 'ANNUAL' ? 'ANNUAL' : 'MONTHLY';
@@ -602,7 +606,7 @@ const isPremium = computed(() => {
 
 const isTrialing = computed(() => subscriptionStatus.value === 'TRIALING');
 const paymentSyncDegraded = computed(() => subscriptionDataSource.value === 'LOCAL_FALLBACK' || !paymentProviderReachable.value);
-const isWorkspaceBillingContext = computed(() => currentBillingSubjectType.value === 'WORKSPACE')
+const hasWorkspaceQuota = computed(() => Boolean(workspaceQuota.value))
 
 const formatDateTime = (value: string) => {
   if (!value) return ''
@@ -642,40 +646,14 @@ const changePlanActionText = computed(() => {
   return `${base} (Portal)`;
 });
 
-const resolveBillingSubjectForPlan = (planId?: PlanId | '') => {
-  const workspaceId = userStore.getCurrentWorkspaceId
-  const effectivePlan = isPlanId(planId)
-    ? planId
-    : (isPlanId(currentPlan.value) ? currentPlan.value : null)
-
-  if (effectivePlan && isWorkspacePlanId(effectivePlan)) {
-    if (!workspaceId) {
-      throw new Error('Workspace não selecionado para plano TEAM')
-    }
-
-    return {
-      subjectType: 'WORKSPACE' as const,
-      subjectId: String(workspaceId)
-    }
-  }
-
-  return {
-    subjectType: 'USER' as const,
-    subjectId: actorUserId.value
-  }
-}
-
 const loadSubscriptionDetails = async () => {
   try {
-    if (!actorUserId.value) {
+    const workspaceContext = resolveAnyWorkspaceContext(userStore)
+    if (!actorUserId.value || !workspaceContext) {
       return
     }
 
-    const subjectType = (isTenantMode.value && userStore.getCurrentWorkspaceId) ? 'WORKSPACE' : 'USER'
-    const subjectId = subjectType === 'WORKSPACE' ? String(userStore.getCurrentWorkspaceId) : actorUserId.value
-
-    const access = await BillingOrchestrationService.getPremiumAccess(subjectType as any, subjectId)
-    currentBillingSubjectType.value = subjectType
+    const access = await BillingOrchestrationService.getBillingSummary(workspaceContext.workspaceId)
     hasPremiumAccess.value = Boolean(access.data?.hasPremiumAccess)
     const resolvedStatus = access.data?.subscriptionStatus || (access.data?.hasPremiumAccess ? 'ACTIVE' : 'NONE')
     subscriptionStatus.value = String(resolvedStatus).toUpperCase()
@@ -683,7 +661,7 @@ const loadSubscriptionDetails = async () => {
     nextBillingDate.value = String(access.data?.nextBillingDate || '')
     paymentProviderReachable.value = access.data?.paymentProviderReachable !== false
     subscriptionDataSource.value = access.data?.subscriptionDataSource || 'LOCAL'
-    workspaceQuota.value = subjectType === 'WORKSPACE' && access.data?.workspaceQuota
+    workspaceQuota.value = access.data?.workspaceQuota
       ? {
           hasBillingAccount: Boolean(access.data.workspaceQuota.hasBillingAccount),
           activeWorkspaceCount: Number(access.data.workspaceQuota.activeWorkspaceCount || 0),
@@ -751,28 +729,25 @@ const handlePlanChange = async () => {
 const startCheckoutSession = async () => {
   try {
     if (!actorUserId.value) {
-      throw new Error('Usuário não autenticado')
+      alert(t('subscription_management.error_checkout_later'))
+      return
     }
 
     if (!isPlanId(selectedPlan.value)) {
-      throw new Error('Plano inválido')
+      alert(t('subscription_management.error_invalid_plan'))
+      return
     }
 
     const correlationId = createCorrelationId()
 
     const plan = String(selectedPlan.value)
-    const workspaceId = userStore.getCurrentWorkspaceId
-    const { subjectType, subjectId } = resolveBillingSubjectForPlan(selectedPlan.value)
+    const workspaceContext = requireActiveWorkspaceContext(userStore)
 
-    // ADR-001/004: do not call payment-api; do not send PII.
     const decisionResp = await BillingDecisionService.decide(
       {
         plan,
         actor: actorUserId.value,
-        subjectType,
-        subjectId,
-        userId: subjectType === 'USER' ? actorUserId.value : null,
-        workspaceId: subjectType === 'WORKSPACE' ? String(workspaceId) : null,
+        workspaceId: workspaceContext.workspaceId,
         ...getBillingContext()
       },
       correlationId
@@ -782,15 +757,21 @@ const startCheckoutSession = async () => {
 
     if (decision.action === 'NOOP_ALREADY_PREMIUM') {
       alert(t('subscription_management.already_premium'))
+      await loadSubscriptionDetails()
       return
     }
+
+    saveBillingCheckoutContext({
+      workspaceId: workspaceContext.workspaceId,
+      workspaceName: workspaceContext.workspaceName,
+      plan,
+      correlationId: decision.correlationId || correlationId,
+    })
 
     await router.push({
       name: 'checkout',
       query: {
         plan,
-        subjectType: decision.subjectType,
-        subjectId: decision.subjectId,
         correlationId: decision.correlationId || correlationId
       }
     })
@@ -803,7 +784,10 @@ const startCheckoutSession = async () => {
 // Função para abrir o portal de faturamento
 const openBillingPortal = async (targetPlan?: PlanId) => {
   try {
-    if (!actorUserId.value) throw new Error('Usuário não autenticado')
+    if (!actorUserId.value) {
+      alert(t('subscription_management.error_portal_later'))
+      return
+    }
     if (paymentSyncDegraded.value) {
       alert(t('subscription_management.payment_sync_actions_disabled'))
       return
@@ -811,13 +795,9 @@ const openBillingPortal = async (targetPlan?: PlanId) => {
 
     const correlationId = createCorrelationId()
 
-    const { subjectType, subjectId } = resolveBillingSubjectForPlan(targetPlan)
-    if (subjectType === 'WORKSPACE' && !userStore.isTenantAdmin) {
-      alert(t('subscription_management.admin_only_manage'));
-      return;
-    }
+    const workspaceContext = requireActiveWorkspaceContext(userStore)
 
-    const storageKey = `billing.portal.messageId:${correlationId}:${subjectType}:${subjectId}`
+    const storageKey = `billing.portal.messageId:${correlationId}:${workspaceContext.workspaceId}`
     const existingMessageId = sessionStorage.getItem(storageKey)
     const messageId = existingMessageId || createMessageId()
     if (!existingMessageId) sessionStorage.setItem(storageKey, messageId)
@@ -826,8 +806,7 @@ const openBillingPortal = async (targetPlan?: PlanId) => {
 
     const payload: any = {
       actor: actorUserId.value,
-      subjectType: subjectType as any,
-      subjectId,
+      workspaceId: workspaceContext.workspaceId,
       correlationId,
       messageId,
       returnUrl,
@@ -860,11 +839,11 @@ const openBillingPortal = async (targetPlan?: PlanId) => {
 const openPlanDetails = () => {
   showPlanDetails.value = true;
   try {
+    const workspaceContext = resolveAnyWorkspaceContext(userStore)
     window.dispatchEvent(
       new CustomEvent('billing:plan-details-opened', {
         detail: {
-          subjectType: isTenantMode.value && userStore.getCurrentWorkspaceId ? 'WORKSPACE' : 'USER',
-          subjectId: isTenantMode.value && userStore.getCurrentWorkspaceId ? String(userStore.getCurrentWorkspaceId) : actorUserId.value,
+          workspaceId: workspaceContext?.workspaceId || null,
           currentPlan: currentPlan.value || currentPlanTier.value || 'FREE'
         }
       })
@@ -883,7 +862,7 @@ const pollPortalUrl = async (
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     try {
       const statusResp = await BillingOrchestrationService.getOperationStatus(messageId)
-      const url = statusResp.data?.checkoutUrl
+      const url = statusResp.data?.redirectUrl
       if (url) {
         return { url, lastError: null }
       }
@@ -905,7 +884,10 @@ const pollPortalUrl = async (
 // Função para cancelar a assinatura
 const cancelSubscription = async () => {
   try {
-    if (!actorUserId.value) throw new Error('Usuário não autenticado')
+    if (!actorUserId.value) {
+      alert(t('subscription_management.error_cancel_later'))
+      return
+    }
     if (paymentSyncDegraded.value) {
       alert(t('subscription_management.payment_sync_actions_disabled'))
       return
@@ -916,18 +898,16 @@ const cancelSubscription = async () => {
 
     const correlationId = createCorrelationId()
 
-    const subjectType = (isTenantMode.value && userStore.getCurrentWorkspaceId) ? 'WORKSPACE' : 'USER'
-    const subjectId = subjectType === 'WORKSPACE' ? String(userStore.getCurrentWorkspaceId) : actorUserId.value
+    const workspaceContext = requireActiveWorkspaceContext(userStore)
 
-    const storageKey = `billing.cancel.messageId:${correlationId}:${subjectType}:${subjectId}`
+    const storageKey = `billing.cancel.messageId:${correlationId}:${workspaceContext.workspaceId}`
     const existingMessageId = sessionStorage.getItem(storageKey)
     const messageId = existingMessageId || createMessageId()
     if (!existingMessageId) sessionStorage.setItem(storageKey, messageId)
 
     await BillingOrchestrationService.cancelSubscription({
       actor: actorUserId.value,
-      subjectType: subjectType as any,
-      subjectId,
+      workspaceId: workspaceContext.workspaceId,
       correlationId,
       messageId
     })
@@ -941,13 +921,7 @@ const cancelSubscription = async () => {
 };
 
 const shouldLoad = computed(() => {
-  if (!actorUserId.value) {
-    return false;
-  }
-  if (isTenantMode.value && !userStore.getCurrentWorkspaceId) {
-    return false;
-  }
-  return true;
+  return Boolean(actorUserId.value && resolveAnyWorkspaceContext(userStore));
 });
 
 onMounted(() => {

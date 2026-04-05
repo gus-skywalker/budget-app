@@ -15,18 +15,18 @@ const userStore = useUserStore()
 
 const extractTokenFromUrl = async () => {
   const urlParams = new URLSearchParams(window.location.search)
-  const token = urlParams.get('accessToken')
-  const refreshToken = urlParams.get('refreshToken')
-  const email = urlParams.get('email')
+  let token = urlParams.get('accessToken')
   const redirect = urlParams.get('redirect')
   const plan = urlParams.get('plan')
 
-  if (token && email) {
-    try {
+  try {
+    if (!token) {
+      const bootstrap = await AuthService.bootstrapSession()
+      token = bootstrap?.data?.accessToken || null
+    }
+
+    if (token) {
       userStore.setToken(token)
-      if (refreshToken) {
-        userStore.setRefreshToken(refreshToken)
-      }
       userStore.setAuth(true)
       userStore.syncFromToken(token)
 
@@ -52,11 +52,12 @@ const extractTokenFromUrl = async () => {
         defaultRedirect: '/dashboard'
       })
       router.push(onboarding.route)
-    } catch (error) {
-      console.error('Erro no OAuth2 redirect:', error)
-      router.push('/login')
+      return
     }
-  } else {
+
+    router.push('/login')
+  } catch (error) {
+    console.error('Erro no OAuth2 redirect:', error)
     router.push('/login')
   }
 }

@@ -671,6 +671,7 @@ import OpenFinanceService from '@/services/OpenFinanceService'
 import AiService from '@/services/aiService'
 import ActivityService from '@/services/ActivityService'
 import BillingOrchestrationService from '@/services/BillingOrchestrationService'
+import { resolveAnyWorkspaceContext } from '@/services/BillingWorkspaceContext'
 import { useUserStore } from '@/plugins/userStore'
 import 'chartjs-adapter-moment'
 
@@ -1334,31 +1335,13 @@ export default {
           this.activityLoading = false
         })
     },
-    resolveBillingSubject() {
+    resolveBillingWorkspaceContext() {
       const userStore = useUserStore()
-      const workspaceId = userStore.getCurrentWorkspaceId
-      const userId = userStore.user?.id
-      const isTenantMode = userStore.isTenantMode
-
-      if (isTenantMode && workspaceId) {
-        return {
-          subjectType: 'WORKSPACE',
-          subjectId: String(workspaceId),
-        }
-      }
-
-      if (userId) {
-        return {
-          subjectType: 'USER',
-          subjectId: String(userId),
-        }
-      }
-
-      return null
+      return resolveAnyWorkspaceContext(userStore)
     },
     async fetchPremiumFeatureSummaries() {
-      const billingSubject = this.resolveBillingSubject()
-      if (!billingSubject) {
+      const workspaceContext = this.resolveBillingWorkspaceContext()
+      if (!workspaceContext) {
         this.hasPremiumAccess = false
         this.cashflowInsightsSummary = null
         this.expensePredictionSummary = null
@@ -1366,10 +1349,7 @@ export default {
       }
 
       try {
-        const response = await BillingOrchestrationService.getPremiumAccess(
-          billingSubject.subjectType,
-          billingSubject.subjectId
-        )
+        const response = await BillingOrchestrationService.getBillingSummary(workspaceContext.workspaceId)
         this.hasPremiumAccess = Boolean(response?.data?.hasPremiumAccess)
       } catch (error) {
         console.error('Error checking premium access:', error)
@@ -1424,7 +1404,7 @@ export default {
       const path = this.activityRoute(event)
       if (!path) return
       if (path === '/budget') {
-        this.$router.push({ path, query: { visibility: 'company' } })
+        this.$router.push({ path, query: { visibility: 'workspace' } })
         return
       }
       if (path === '/planning/scenarios' && event?.relatedEntityId) {
@@ -2530,7 +2510,7 @@ export default {
 }
 
 .modern-select {
-  background: rgb(var(--v-theme-surface));
+  background: rgba(255, 255, 255, 0.92);
 }
 
 /* Chart Wrapper */

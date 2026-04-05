@@ -1,5 +1,13 @@
 import axiosInterceptor from './axiosInterceptor'
 import type { WorkspaceCreateRequest } from '../types/WorkspaceCreateRequest'
+import {
+  clearDevQuickAccessWorkspaceSelection,
+  createDevQuickAccessWorkspace,
+  getDevQuickAccessWorkspaceDetails,
+  isDevQuickAccessEnabled,
+  listDevQuickAccessWorkspaces,
+  selectDevQuickAccessWorkspace
+} from '@/utils/devQuickAccess'
 const rawAuthBase = String(import.meta.env.VITE_AUTH_URL || '').replace(/\/+$/, '')
 
 const normalizedAuthRoot = rawAuthBase
@@ -27,6 +35,12 @@ export default {
    * 2) Seleção de tenant é feita separadamente via userStore.selectWorkspace(workspaceId)
    */
   async create(payload: WorkspaceCreateRequest, correlationId?: string): Promise<any> {
+    if (isDevQuickAccessEnabled()) {
+      return {
+        createdWorkspace: createDevQuickAccessWorkspace(payload)
+      }
+    }
+
     // Inclui correlationId no payload, não mais no header
     const enrichedPayload = { ...payload, correlationId }
     const created = await axiosInterceptor.post(BUDGET_WORKSPACES_URL, enrichedPayload)
@@ -42,6 +56,12 @@ export default {
    * GET /api/workspaces
    */
   getAll(): Promise<any> {
+    if (isDevQuickAccessEnabled()) {
+      return Promise.resolve({
+        data: listDevQuickAccessWorkspaces()
+      })
+    }
+
     return axiosInterceptor.get(AUTH_WORKSPACES_URL)
   },
 
@@ -49,6 +69,12 @@ export default {
    * Obter detalhes do workspace atual
    */
   getDetails(workspaceId: string): Promise<any> {
+    if (isDevQuickAccessEnabled()) {
+      return Promise.resolve({
+        data: getDevQuickAccessWorkspaceDetails(workspaceId)
+      })
+    }
+
     return axiosInterceptor.get(`${BUDGET_WORKSPACES_URL}/${workspaceId}`)
   },
 
@@ -68,6 +94,12 @@ export default {
    * Retorna novos tokens (accessToken e refreshToken)
    */
   selectWorkspace(workspaceId: string): Promise<any> {
+    if (isDevQuickAccessEnabled()) {
+      return Promise.resolve({
+        data: selectDevQuickAccessWorkspace(workspaceId)
+      })
+    }
+
     const maxAttempts = 8
     let lastError: any = null
 
@@ -101,6 +133,12 @@ export default {
    * POST /api/auth/clear-workspace
    */
   clearWorkspace(): Promise<any> {
+    if (isDevQuickAccessEnabled()) {
+      return Promise.resolve({
+        data: clearDevQuickAccessWorkspaceSelection()
+      })
+    }
+
     const run = async () => {
       let lastError: any = null
       const maxAttempts = 3
