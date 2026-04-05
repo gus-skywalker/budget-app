@@ -72,7 +72,7 @@ let pollingInterval: any
 onMounted(() => {
   // Iniciar polling
   pollNotifications()
-  pollingInterval = setInterval(pollNotifications, 9000) // Polling a cada 5 segundos
+  pollingInterval = setInterval(pollNotifications, 180000) // Polling a cada 3 minutos
 })
 
 onUnmounted(() => {
