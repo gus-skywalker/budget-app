@@ -90,7 +90,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/plugins/userStore'
-import InviteService from '@/services/InviteService'
+import WorkspaceInviteService from '@/services/WorkspaceInviteService'
 
 const { t } = useI18n()
 
@@ -139,7 +139,7 @@ const sendInvite = async () => {
   
   try {
     loading.value = true
-    await InviteService.inviteUser(
+    await WorkspaceInviteService.inviteUser(
       currentWorkspaceId.value,
       inviteEmail.value,
       inviteRole.value
@@ -162,7 +162,7 @@ const loadInvites = async () => {
   if (!currentWorkspaceId.value) return
   try {
     loadingInvites.value = true
-    pendingInvites.value = await InviteService.listInvites(currentWorkspaceId.value)
+    pendingInvites.value = await WorkspaceInviteService.listInvites(currentWorkspaceId.value)
   } catch (error) {
     console.error('Erro ao carregar convites:', error)
   } finally {
@@ -174,7 +174,7 @@ const cancelInvite = async (inviteId) => {
   if (!currentWorkspaceId.value) return
   try {
     cancellingInvite.value = inviteId
-    await InviteService.cancelInvite(currentWorkspaceId.value, inviteId)
+    await WorkspaceInviteService.cancelInvite(currentWorkspaceId.value, inviteId)
     showSnackbar(t('inviteManager.cancel_success'), 'info')
     loadInvites()
   } catch (error) {

@@ -27,6 +27,8 @@ export interface BillingDecisionResponse {
   planTier?: 'STARTER' | 'TEAM'
   billingCycle?: 'MONTHLY' | 'ANNUAL'
   workspaceId?: string | null
+  /** Canonical backend owner identifier; response-only for frontend compatibility. */
+  billingAccountId?: string | null
   resolvedCurrency?: SupportedCurrency
   resolvedPriceId?: string | null
   catalogVersion?: string | null

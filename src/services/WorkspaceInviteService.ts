@@ -24,7 +24,7 @@ export default {
     const invites = Array.isArray(response.data) ? response.data : []
     return invites.map((invite: any) => ({
       ...invite,
-      workspaceId: invite?.workspaceId,
+      workspaceId: invite?.workspaceId || invite?.companyId,
       role: invite?.role || invite?.tenantRole || invite?.invitedTenantRole,
       createdAt: invite?.createdAt || invite?.created_at
     }))

@@ -11,8 +11,9 @@ export interface WorkspaceInviteRequest {
 export interface WorkspaceInvite {
   id?: string
   inviteId?: string
-  companyId: string
-  workspaceId?: string
+  workspaceId: string
+  /** @deprecated legacy compatibility alias */
+  companyId?: string
   email: string
   role: WorkspaceRole
   status?: 'pending' | 'accepted' | 'declined' | 'cancelled' | 'expired' | string
@@ -21,8 +22,9 @@ export interface WorkspaceInvite {
 
 export interface ValidateWorkspaceInviteResponse {
   valid: boolean
-  companyId?: string
   workspaceId?: string
+  /** @deprecated legacy compatibility alias */
+  companyId?: string
   email?: string
   role?: WorkspaceRole
   workspace?: WorkspaceMembership
@@ -31,11 +33,11 @@ export interface ValidateWorkspaceInviteResponse {
 
 declare const WorkspaceInviteService: {
   inviteWorkspaceUser(workspaceId: string, email: string, role: WorkspaceRole): Promise<{ data: WorkspaceInvite | any }>
-  inviteUser(companyId: string, email: string, role: WorkspaceRole): Promise<{ data: WorkspaceInvite | any }>
+  inviteUser(workspaceId: string, email: string, role: WorkspaceRole): Promise<{ data: WorkspaceInvite | any }>
   listWorkspaceInvites(workspaceId: string): Promise<WorkspaceInvite[]>
-  listInvites(companyId: string): Promise<WorkspaceInvite[]>
+  listInvites(workspaceId: string): Promise<WorkspaceInvite[]>
   cancelWorkspaceInvite(workspaceId: string, inviteId: string): Promise<any>
-  cancelInvite(companyId: string, inviteId: string): Promise<any>
+  cancelInvite(workspaceId: string, inviteId: string): Promise<any>
   validateInvite(token: string): Promise<ValidateWorkspaceInviteResponse | any>
 }
 

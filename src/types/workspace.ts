@@ -1,14 +1,20 @@
 export interface WorkspaceMembership {
-  companyId: string
-  workspaceId?: string
-  companyName?: string
+  workspaceId: string
+  workspaceName?: string
   role?: string | null
+
+  /** @deprecated legacy compatibility alias */
+  companyId?: string
+  /** @deprecated legacy compatibility alias */
+  companyName?: string
 }
 
 export type CompanyMembership = WorkspaceMembership
 
 export interface WorkspaceSelection {
   workspaceId?: string | null
-  companyId?: string | null
   tenantRole?: string | null
+
+  /** @deprecated legacy compatibility alias */
+  companyId?: string | null
 }

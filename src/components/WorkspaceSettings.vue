@@ -349,7 +349,7 @@ const { t } = useI18n()
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import WorkspaceService from '@/services/WorkspaceService'
-import InviteService from '@/services/InviteService'
+import WorkspaceInviteService from '@/services/WorkspaceInviteService'
 import { useUserStore } from '@/plugins/userStore'
 import { getFreePlanLimitType, parseApiError } from '@/utils/errorHandler'
 import { getOrCreateCorrelationId } from '@/utils/correlation'
@@ -453,7 +453,7 @@ const loadMembersAndInvites = async () => {
   try {
     const [membersResult, invitesResult] = await Promise.allSettled([
       WorkspaceService.listMembers(currentWorkspaceId.value),
-      InviteService.listInvites(currentWorkspaceId.value)
+      WorkspaceInviteService.listInvites(currentWorkspaceId.value)
     ])
 
     if (membersResult.status === 'fulfilled') {
@@ -579,7 +579,7 @@ const sendInvite = async () => {
   }
   inviteLoading.value = true
   try {
-    await InviteService.inviteUser(currentWorkspaceId.value, inviteForm.value.email, inviteForm.value.role)
+    await WorkspaceInviteService.inviteUser(currentWorkspaceId.value, inviteForm.value.email, inviteForm.value.role)
     inviteForm.value.email = ''
     inviteForm.value.role = 'ROLE_MEMBER'
     await loadInvites()
@@ -600,7 +600,7 @@ const loadInvites = async () => {
   if (!currentWorkspaceId.value) return
   if (!invitesAvailable.value) return
   try {
-    invites.value = await InviteService.listInvites(currentWorkspaceId.value)
+    invites.value = await WorkspaceInviteService.listInvites(currentWorkspaceId.value)
   } catch (error) {
     invitesAvailable.value = false
     invites.value = []
@@ -615,7 +615,7 @@ const cancelInvite = async (inviteId: string) => {
     return
   }
   try {
-    await InviteService.cancelInvite(currentWorkspaceId.value, inviteId)
+    await WorkspaceInviteService.cancelInvite(currentWorkspaceId.value, inviteId)
     await loadInvites()
     showSnackbar(t('workspaceSettings.success_cancel_invite'), 'info')
   } catch (error) {

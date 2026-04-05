@@ -54,6 +54,8 @@ export interface OperationStatusResponse {
 
 export interface BillingSummaryResponse {
   workspaceId?: string | null
+  /** Canonical backend owner identifier; response-only for frontend compatibility. */
+  billingAccountId?: string | null
   hasPremiumAccess: boolean
   hasPlanAccess?: boolean
   subscriptionStatus?: 'NONE' | 'INCOMPLETE' | 'TRIALING' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED'
