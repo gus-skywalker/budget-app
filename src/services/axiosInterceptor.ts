@@ -55,8 +55,13 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   async (error: AxiosError & { config: any }) => {
     const originalRequest = error.config
+    const status = error.response?.status
+    const errorBody = typeof error.response?.data === 'string'
+      ? error.response?.data
+      : JSON.stringify(error.response?.data || {})
+    const looksLikeExpiredJwt = /jwt.*(expired|no longer valid|expiration time|invalidjwt)/i.test(String(errorBody || ''))
     // Fluxo principal: 401 visível -> tenta refresh
-    if (error.response && error.response.status === 401 && !originalRequest._retry) {
+    if ((status === 401 || status === 403 || (status === 500 && looksLikeExpiredJwt)) && !originalRequest._retry) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject })

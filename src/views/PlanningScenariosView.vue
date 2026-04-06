@@ -16,7 +16,21 @@
           </h2>
         </div>
         <div class="card-content">
-          <div class="scenario-layout">
+          <div v-if="isBudgetLoading" class="empty-results">
+            <v-icon color="#94a3b8" size="28">mdi-timer-sand</v-icon>
+            <p>{{ t('planning.scenarios.loading_budget_baseline') }}</p>
+          </div>
+
+          <div v-else-if="!activeBudget" class="empty-results">
+            <v-icon color="#94a3b8" size="28">mdi-wallet-plus-outline</v-icon>
+            <p>{{ t('planning.scenarios.empty_no_budget_title') }}</p>
+            <v-btn color="#667eea" variant="tonal" @click="goToBudgetPlanning">
+              <v-icon start>mdi-wallet-outline</v-icon>
+              {{ t('planning.scenarios.empty_no_budget_cta') }}
+            </v-btn>
+          </div>
+
+          <div v-else class="scenario-layout">
             <section class="scenario-builder">
               <div class="scenario-intro">
                 <h3>{{ $t('planning.scenarios.builder_title') }}</h3>
@@ -70,6 +84,69 @@
                 hide-details="auto"
               />
 
+              <div class="builder-summary">
+                <div class="builder-summary__item">
+                  <span>{{ t('planning.scenarios.builder_summary_manual_changes') }}</span>
+                  <strong>{{ pendingManualChanges }}</strong>
+                </div>
+                <div class="builder-summary__item">
+                  <span>{{ t('planning.scenarios.builder_summary_baseline_adjustments') }}</span>
+                  <strong>{{ pendingBaselineAdjustments }}</strong>
+                </div>
+                <div class="builder-summary__item">
+                  <span>{{ t('planning.scenarios.builder_summary_estimated_monthly_delta') }}</span>
+                  <strong :class="{ 'positive-value': monthlyDeltaEstimate > 0, 'negative-value': monthlyDeltaEstimate < 0 }">
+                    {{ formatSignedCurrency(monthlyDeltaEstimate) }}
+                  </strong>
+                </div>
+              </div>
+
+              <div class="baseline-lines">
+                <div class="delta-section__header">
+                  <div>
+                    <h4>{{ t('planning.scenarios.baseline_lines_title') }}</h4>
+                    <p>{{ t('planning.scenarios.baseline_lines_subtitle') }}</p>
+                  </div>
+                </div>
+                <div v-if="scenarioLines.length" class="forecast-table">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>{{ t('planning.scenarios.baseline_table_category') }}</th>
+                        <th>{{ t('planning.scenarios.baseline_table_type') }}</th>
+                        <th>{{ t('planning.scenarios.baseline_table_original') }}</th>
+                        <th>{{ t('planning.scenarios.baseline_table_adjusted') }}</th>
+                        <th>{{ t('planning.scenarios.baseline_table_delta') }}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="(line, index) in scenarioLines" :key="`${line.category}-${line.type}-${index}`">
+                        <td>{{ line.category }}</td>
+                        <td>{{ line.type }}</td>
+                        <td>{{ formatCurrency(line.originalAmount) }}</td>
+                        <td class="line-adjusted-cell">
+                          <v-text-field
+                            v-model.number="line.adjustedAmount"
+                            type="number"
+                            min="0"
+                            density="compact"
+                            hide-details
+                            variant="outlined"
+                          />
+                        </td>
+                        <td :class="lineDeltaClass(line)">
+                          {{ formatSignedCurrency(lineDeltaValue(line)) }}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div v-else class="empty-deltas">
+                  <v-icon color="#94a3b8">mdi-playlist-plus</v-icon>
+                  <p>{{ t('planning.scenarios.baseline_empty') }}</p>
+                </div>
+              </div>
+
               <div class="delta-section">
                 <div class="delta-section__header">
                   <div>
@@ -78,7 +155,7 @@
                   </div>
                   <v-btn color="#667eea" variant="tonal" @click="addDelta">
                     <v-icon start>mdi-plus</v-icon>
-                    {{ $t('planning.scenarios.add_delta') }}
+                    {{ t('planning.scenarios.add_delta') }}
                   </v-btn>
                 </div>
 
@@ -155,7 +232,7 @@
                   <v-btn
                     color="#667eea"
                     size="large"
-                    :disabled="isLoading || !canSimulate"
+                    :disabled="isLoading || !canSimulate || !activeBudget"
                     @click="simulateScenario"
                   >
                     <v-icon start>mdi-chart-line-variant</v-icon>
@@ -164,7 +241,7 @@
                   <v-btn
                     variant="tonal"
                     size="large"
-                    :disabled="isSaving || !canSimulate"
+                    :disabled="isSaving || !canSimulate || !activeBudget"
                     @click="saveScenario()"
                   >
                     <v-icon start>mdi-content-save-outline</v-icon>
@@ -189,6 +266,16 @@
                     <v-icon start>mdi-content-copy</v-icon>
                     {{ $t('planning.scenarios.save_as_new') }}
                   </v-btn>
+                  <v-btn
+                    v-if="currentScenarioId"
+                    color="#4f46e5"
+                    size="large"
+                    :loading="isCreatingDecision"
+                    @click="createDecisionFromScenario"
+                  >
+                    <v-icon start>mdi-lightbulb-outline</v-icon>
+                    {{ t('planning.scenarios.create_decision_from_scenario') }}
+                  </v-btn>
                 </div>
                 <span v-if="currentScenarioId" class="builder-actions__context">
                   {{ $t('planning.scenarios.editing_saved', { name: scenarioName || $t('planning.scenarios.default_name') }) }}
@@ -205,6 +292,14 @@
               </div>
 
               <div v-if="result" class="results-content">
+                <div class="result-impact-highlight">
+                  <span class="result-impact-highlight__label">{{ t('planning.scenarios.results_impact_highlight') }}</span>
+                  <strong :class="{ 'positive-value': result.scenarioMonthlyImpact > 0, 'negative-value': result.scenarioMonthlyImpact < 0 }">
+                    {{ formatSignedCurrency(result.scenarioMonthlyImpact) }}
+                  </strong>
+                  <p>{{ resultConsequenceMessage }}</p>
+                </div>
+
                 <div class="results-grid">
                   <div class="result-card">
                     <span>{{ $t('planning.scenarios.current_balance') }}</span>
@@ -231,6 +326,13 @@
                 <div class="summary-callout">
                   <v-icon color="#667eea">mdi-lightbulb-outline</v-icon>
                   <span>{{ result.summary }}</span>
+                </div>
+
+                <div v-if="result.decisionStatus === 'ACTION_NEEDED'" class="risk-callout">
+                  <v-icon color="#b91c1c">mdi-alert-circle-outline</v-icon>
+                  <span>
+                    {{ t('planning.scenarios.results_risk_callout', { month: readableRiskMonth(result.firstRiskMonth) }) }}
+                  </span>
                 </div>
 
                 <div class="results-grid results-grid--secondary">
@@ -508,9 +610,20 @@
                       <span>{{ $t('planning.scenarios.compare_select') }}</span>
                     </div>
                     <p>{{ scenario.summary || scenario.description || $t('planning.scenarios.saved_no_summary') }}</p>
+                    <div class="saved-scenario-card__impact">
+                      <span>{{ t('planning.scenarios.saved_monthly_impact') }}</span>
+                      <strong
+                        :class="{
+                          'positive-value': Number(scenario.scenarioMonthlyImpact || 0) > 0,
+                          'negative-value': Number(scenario.scenarioMonthlyImpact || 0) < 0
+                        }"
+                      >
+                        {{ formatSignedCurrency(Number(scenario.scenarioMonthlyImpact || 0)) }}
+                      </strong>
+                    </div>
                     <div class="saved-scenario-card__meta">
                       <span v-if="scenario.scenarioMonthlyImpact !== undefined && scenario.scenarioMonthlyImpact !== null">
-                        {{ formatCurrency(scenario.scenarioMonthlyImpact) }}
+                        {{ t('planning.scenarios.monthly_impact') }}: {{ formatCurrency(scenario.scenarioMonthlyImpact) }}
                       </span>
                       <span v-if="scenario.impactedGoalsCount">
                         {{ $t('planning.scenarios.saved_impacted_goals', { count: scenario.impactedGoalsCount }) }}
@@ -535,7 +648,9 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
-import ScenarioService, { type SavedScenario, type SavedScenarioComparison, type ScenarioDeltaInput, type ScenarioDeltaType, type ScenarioSimulationResponse } from '@/services/ScenarioService'
+import ScenarioService, { type SavedScenario, type SavedScenarioComparison, type ScenarioDeltaInput, type ScenarioDeltaType, type ScenarioLineAdjustment, type ScenarioSimulationResponse } from '@/services/ScenarioService'
+import BudgetService, { type Budget } from '@/services/BudgetService'
+import DecisionService from '@/services/DecisionService'
 
 const { t, locale } = useI18n()
 const route = useRoute()
@@ -549,13 +664,18 @@ const months = ref(6)
 const isLoading = ref(false)
 const isSaving = ref(false)
 const isComparing = ref(false)
+const isBudgetLoading = ref(false)
+const isCreatingDecision = ref(false)
 const error = ref('')
 const successMessage = ref('')
 const result = ref<ScenarioSimulationResponse | null>(null)
+const activeBudget = ref<Budget | null>(null)
 const savedScenarios = ref<SavedScenario[]>([])
 const savedComparisons = ref<SavedScenarioComparison[]>([])
 const selectedScenarioIds = ref<string[]>([])
 const comparisonEntries = ref<Array<{ saved: SavedScenario; result: ScenarioSimulationResponse }>>([])
+type EditableScenarioLine = ScenarioLineAdjustment & { originalAmount: number }
+const scenarioLines = ref<EditableScenarioLine[]>([])
 const deltas = ref<ScenarioDeltaInput[]>([
   { label: '', type: 'MONTHLY_EXPENSE', amount: 0, startMonthOffset: 0 },
 ])
@@ -597,7 +717,16 @@ const scenarioTemplates = computed(() => [
 ])
 
 const canSimulate = computed(() =>
-  deltas.value.some((delta) => Number(delta.amount || 0) > 0)
+  deltas.value.some((delta) => Number(delta.amount || 0) > 0) ||
+  scenarioLines.value.some((line) => Number(line.adjustedAmount || 0) !== Number(line.originalAmount || 0))
+)
+
+const pendingManualChanges = computed(() =>
+  deltas.value.filter((delta) => Number(delta.amount || 0) > 0).length
+)
+
+const pendingBaselineAdjustments = computed(() =>
+  scenarioLines.value.filter((line) => Number(line.adjustedAmount || 0) !== Number(line.originalAmount || 0)).length
 )
 
 const decisionTone = computed(() => {
@@ -619,11 +748,94 @@ const predictionSubtitle = computed(() =>
     : t('planning.scenarios.results_subtitle')
 )
 
+const readableRiskMonth = (value?: string | null) => {
+  if (!value) return t('planning.scenarios.risk_month_fallback')
+  const [yearText, monthText] = value.split('-')
+  const year = Number(yearText)
+  const month = Number(monthText)
+  if (!year || !month) return value
+  const date = new Date(year, month - 1, 1)
+  return date.toLocaleDateString(
+    locale.value === 'en' ? 'en-US' : locale.value === 'fr' ? 'fr-FR' : locale.value === 'es' ? 'es-ES' : 'pt-BR',
+    { month: 'short', year: 'numeric' }
+  )
+}
+
 const formatCurrency = (value: number) =>
   Number(value || 0).toLocaleString(
     locale.value === 'en' ? 'en-US' : locale.value === 'fr' ? 'fr-FR' : locale.value === 'es' ? 'es-ES' : 'pt-BR',
     { style: 'currency', currency: 'BRL' }
   )
+
+const formatSignedCurrency = (value: number) => {
+  const absolute = formatCurrency(Math.abs(value))
+  return value > 0 ? `+${absolute}` : value < 0 ? `-${absolute}` : absolute
+}
+
+const monthlyDeltaEstimate = computed(() => {
+  const manualMonthly = deltas.value.reduce((total, delta) => {
+    const amount = Number(delta.amount || 0)
+    if (!amount) return total
+    if (delta.type === 'MONTHLY_INCOME') return total + amount
+    if (delta.type === 'MONTHLY_EXPENSE') return total - amount
+    return total
+  }, 0)
+
+  const baselineMonthly = buildLineDerivedDeltas().reduce((total, delta) => {
+    if (delta.type === 'MONTHLY_INCOME') return total + Number(delta.amount || 0)
+    if (delta.type === 'MONTHLY_EXPENSE') return total - Number(delta.amount || 0)
+    return total
+  }, 0)
+
+  return manualMonthly + baselineMonthly
+})
+
+const resultConsequenceMessage = computed(() => {
+  if (!result.value) return t('planning.scenarios.consequence_placeholder')
+  if (result.value.scenarioMonthlyImpact < 0) {
+    return t('planning.scenarios.consequence_negative', {
+      amount: formatCurrency(Math.abs(result.value.scenarioMonthlyImpact)),
+    })
+  }
+  if (result.value.scenarioMonthlyImpact > 0) {
+    return t('planning.scenarios.consequence_positive', {
+      amount: formatCurrency(result.value.scenarioMonthlyImpact),
+    })
+  }
+  return t('planning.scenarios.consequence_neutral')
+})
+
+const lineDeltaValue = (line: EditableScenarioLine) =>
+  Number(line.adjustedAmount || 0) - Number(line.originalAmount || 0)
+
+const lineDeltaClass = (line: EditableScenarioLine) => ({
+  'positive-value': lineDeltaValue(line) > 0,
+  'negative-value': lineDeltaValue(line) < 0,
+})
+
+const mapScenarioLines = (scenario?: SavedScenario | null) => {
+  if (Array.isArray(scenario?.lines) && scenario!.lines!.length) {
+    scenarioLines.value = scenario!.lines!.map((line) => ({
+      category: line.category,
+      type: line.type,
+      originalAmount: Number(line.originalAmount || 0),
+      adjustedAmount: Number(line.adjustedAmount || 0),
+    }))
+    return
+  }
+
+  if (activeBudget.value?.lines?.length) {
+    scenarioLines.value = activeBudget.value.lines.map((line) => ({
+      category: line.category,
+      type: line.type,
+      originalAmount: Number(line.plannedAmount || 0),
+      adjustedAmount: Number(line.plannedAmount || 0),
+    }))
+    return
+  }
+
+  scenarioLines.value = []
+}
 
 const addDelta = () => {
   deltas.value.push({ label: '', type: 'MONTHLY_EXPENSE', amount: 0, startMonthOffset: 0 })
@@ -678,6 +890,7 @@ const resetScenarioBuilder = () => {
   scenarioName.value = ''
   months.value = 6
   deltas.value = [{ label: '', type: 'MONTHLY_EXPENSE', amount: 0, startMonthOffset: 0 }]
+  mapScenarioLines(null)
   result.value = null
   error.value = ''
   successMessage.value = ''
@@ -686,6 +899,40 @@ const resetScenarioBuilder = () => {
 const removeDelta = (index: number) => {
   deltas.value.splice(index, 1)
 }
+
+const buildManualDeltas = () =>
+  deltas.value
+    .filter((delta) => Number(delta.amount || 0) > 0)
+    .map((delta) => ({
+      label: delta.label,
+      type: delta.type,
+      amount: Number(delta.amount),
+      startMonthOffset: Number(delta.startMonthOffset || 0),
+    }))
+
+const buildLineDerivedDeltas = () =>
+  scenarioLines.value
+    .map((line) => {
+      const delta = Number(line.adjustedAmount || 0) - Number(line.originalAmount || 0)
+      if (!delta) return null
+
+      if (line.type === 'INCOME') {
+        return {
+          label: t('planning.scenarios.baseline_adjustment_label', { category: line.category }),
+          type: delta > 0 ? 'MONTHLY_INCOME' : 'MONTHLY_EXPENSE',
+          amount: Math.abs(delta),
+          startMonthOffset: 0,
+        }
+      }
+
+      return {
+        label: t('planning.scenarios.baseline_adjustment_label', { category: line.category }),
+        type: delta > 0 ? 'MONTHLY_EXPENSE' : 'MONTHLY_INCOME',
+        amount: Math.abs(delta),
+        startMonthOffset: 0,
+      }
+    })
+    .filter((item): item is { label: string; type: ScenarioDeltaType; amount: number; startMonthOffset: number } => Boolean(item))
 
 const deltaTypeDescription = (type: ScenarioDeltaType) => {
   if (type === 'MONTHLY_INCOME') return t('planning.scenarios.delta_type_monthly_income_desc')
@@ -700,18 +947,7 @@ const simulateScenario = async () => {
   isLoading.value = true
 
   try {
-    const { data } = await ScenarioService.simulate({
-      name: scenarioName.value || t('planning.scenarios.default_name'),
-      months: months.value,
-      deltas: deltas.value
-        .filter((delta) => Number(delta.amount || 0) > 0)
-        .map((delta) => ({
-          label: delta.label,
-          type: delta.type,
-          amount: Number(delta.amount),
-          startMonthOffset: Number(delta.startMonthOffset || 0),
-        })),
-    })
+    const { data } = await ScenarioService.simulate(buildSimulationPayload())
     result.value = data
   } catch (simulationError) {
     console.error(simulationError)
@@ -723,17 +959,85 @@ const simulateScenario = async () => {
 
 const buildPayload = () => ({
   id: currentScenarioId.value || undefined,
+  budgetId: activeBudget.value?.id || undefined,
   name: scenarioName.value || t('planning.scenarios.default_name'),
   months: months.value,
-  deltas: deltas.value
-    .filter((delta) => Number(delta.amount || 0) > 0)
-    .map((delta) => ({
-      label: delta.label,
-      type: delta.type,
-      amount: Number(delta.amount),
-      startMonthOffset: Number(delta.startMonthOffset || 0),
-    })),
+  periodMonth: activeBudget.value?.periodMonth,
+  periodYear: activeBudget.value?.periodYear,
+  deltas: buildManualDeltas(),
+  lineAdjustments: scenarioLines.value.map((line) => ({
+    category: line.category,
+    type: line.type,
+    adjustedAmount: Number(line.adjustedAmount || 0),
+  })),
 })
+
+const buildSimulationPayload = () => {
+  const payload = buildPayload()
+  return {
+    ...payload,
+    deltas: [...payload.deltas, ...buildLineDerivedDeltas()],
+  }
+}
+
+const loadCurrentBudget = async () => {
+  isBudgetLoading.value = true
+  try {
+    const now = new Date()
+    const { data, status } = await BudgetService.getCurrent(now.getMonth() + 1, now.getFullYear())
+    if (status === 204 || !data || typeof data !== 'object' || !('id' in data)) {
+      activeBudget.value = null
+      return
+    }
+    activeBudget.value = data as Budget
+    mapScenarioLines(null)
+  } catch (budgetError) {
+    console.error(budgetError)
+    activeBudget.value = null
+    mapScenarioLines(null)
+  } finally {
+    isBudgetLoading.value = false
+  }
+}
+
+const createBaselineScenario = async () => {
+  if (!activeBudget.value) {
+    return
+  }
+  isSaving.value = true
+  try {
+    const payload = {
+      budgetId: activeBudget.value.id,
+      name: t('planning.scenarios.baseline_default_name'),
+      months: months.value,
+      deltas: [] as ScenarioDeltaInput[],
+      lineAdjustments: scenarioLines.value.map((line) => ({
+        category: line.category,
+        type: line.type,
+        adjustedAmount: Number(line.adjustedAmount || 0),
+      })),
+    }
+    const simulationPayload = {
+      ...payload,
+      deltas: buildLineDerivedDeltas(),
+    }
+    const [{ data: savedData }, { data: simulationData }] = await Promise.all([
+      ScenarioService.save(payload),
+      ScenarioService.simulate(simulationPayload),
+    ])
+    currentScenarioId.value = savedData.id
+    scenarioName.value = savedData.name || t('planning.scenarios.baseline_default_name')
+    result.value = simulationData
+    await refreshSavedScenarios()
+    const justCreated = savedScenarios.value.find((entry) => entry.id === savedData.id)
+    mapScenarioLines(justCreated || savedData)
+  } catch (createError) {
+    console.error(createError)
+    error.value = t('planning.scenarios.baseline_init_error')
+  } finally {
+    isSaving.value = false
+  }
+}
 
 const refreshSavedScenarios = async () => {
   try {
@@ -773,34 +1077,73 @@ const persistComparisonSelection = async () => {
 }
 
 const getSavedScenarioPayload = (scenario: SavedScenario) => ({
+  budgetId: scenario.budgetId || activeBudget.value?.id,
   name: scenario.name,
   months: scenario.months || 6,
-  deltas: (scenario.deltas || []).map((delta) => ({
-    label: delta.label,
-    type: delta.type,
-    amount: Number(delta.amount || 0),
-    startMonthOffset: Number(delta.startMonthOffset || 0),
+  deltas: [
+    ...(scenario.deltas || []).map((delta) => ({
+      label: delta.label,
+      type: delta.type,
+      amount: Number(delta.amount || 0),
+      startMonthOffset: Number(delta.startMonthOffset || 0),
+    })),
+    ...((scenario.lines || [])
+      .map((line) => {
+        const delta = Number(line.adjustedAmount || 0) - Number(line.originalAmount || 0)
+        if (!delta) return null
+        if (line.type === 'INCOME') {
+          return {
+            label: t('planning.scenarios.baseline_adjustment_label', { category: line.category }),
+            type: delta > 0 ? 'MONTHLY_INCOME' : 'MONTHLY_EXPENSE',
+            amount: Math.abs(delta),
+            startMonthOffset: 0,
+          }
+        }
+        return {
+          label: t('planning.scenarios.baseline_adjustment_label', { category: line.category }),
+          type: delta > 0 ? 'MONTHLY_EXPENSE' : 'MONTHLY_INCOME',
+          amount: Math.abs(delta),
+          startMonthOffset: 0,
+        }
+      })
+      .filter((item): item is { label: string; type: ScenarioDeltaType; amount: number; startMonthOffset: number } => Boolean(item))),
+  ],
+  lineAdjustments: (scenario.lines || []).map((line) => ({
+    category: line.category,
+    type: line.type,
+    adjustedAmount: Number(line.adjustedAmount || 0),
   })),
 })
 
 const saveScenario = async (saveAsNew = false) => {
+  if (!activeBudget.value) {
+    error.value = t('planning.scenarios.empty_no_budget_title')
+    return
+  }
+
   error.value = ''
   successMessage.value = ''
   isSaving.value = true
 
   try {
-    const payload = {
+    const savePayload = {
       ...buildPayload(),
       id: saveAsNew ? undefined : currentScenarioId.value || undefined,
     }
+    const simulationPayload = {
+      ...buildSimulationPayload(),
+      id: saveAsNew ? undefined : currentScenarioId.value || undefined,
+    }
     const [{ data: simulationData }, { data: savedData }] = await Promise.all([
-      ScenarioService.simulate(payload),
-      ScenarioService.save(payload),
+      ScenarioService.simulate(simulationPayload),
+      ScenarioService.save(savePayload),
     ])
     currentScenarioId.value = savedData.id
     result.value = simulationData
     successMessage.value = t('planning.scenarios.save_success', { name: savedData.name })
     await refreshSavedScenarios()
+    const savedScenario = savedScenarios.value.find((entry) => entry.id === savedData.id)
+    mapScenarioLines(savedScenario || savedData)
   } catch (saveError) {
     console.error(saveError)
     error.value = t('planning.scenarios.save_error')
@@ -813,6 +1156,7 @@ const loadSavedScenario = async (scenario: SavedScenario) => {
   currentScenarioId.value = scenario.id
   scenarioName.value = scenario.name || ''
   months.value = scenario.months || 6
+  mapScenarioLines(scenario)
   deltas.value = scenario.deltas?.length
     ? scenario.deltas.map((delta) => ({
         label: delta.label || '',
@@ -981,6 +1325,31 @@ const openInDecisions = async (scenarioIds: string[]) => {
   })
 }
 
+const createDecisionFromScenario = async () => {
+  if (!currentScenarioId.value) {
+    await saveScenario()
+  }
+  if (!currentScenarioId.value) {
+    return
+  }
+
+  isCreatingDecision.value = true
+  error.value = ''
+  try {
+    await DecisionService.createFromScenario(currentScenarioId.value)
+    await openInDecisions([currentScenarioId.value])
+  } catch (decisionError) {
+    console.error(decisionError)
+    error.value = 'Unable to create decision from scenario.'
+  } finally {
+    isCreatingDecision.value = false
+  }
+}
+
+const goToBudgetPlanning = async () => {
+  await router.push({ path: '/planning/budget' })
+}
+
 const winnerFor = (metric: 'finalBalance' | 'availableForGoals' | 'impactedGoals' | 'riskMonth') => {
   if (comparisonEntries.value.length !== 2) {
     return null
@@ -1097,7 +1466,13 @@ watch(selectedScenarioIds, () => {
 }, { deep: true })
 
 onMounted(async () => {
+  await loadCurrentBudget()
   await refreshSavedScenarios()
+
+  if (activeBudget.value && !savedScenarios.value.length) {
+    await createBaselineScenario()
+    await refreshSavedScenarios()
+  }
 
   const scenarioQuery = typeof route.query.scenarios === 'string' ? route.query.scenarios : ''
   if (scenarioQuery) {
@@ -1136,6 +1511,13 @@ onMounted(async () => {
   if (validIds.length === 2) {
     selectedScenarioIds.value = validIds
     await compareSelectedScenarios()
+    return
+  }
+
+  if (savedScenarios.value.length && !currentScenarioId.value) {
+    const firstScenario = savedScenarios.value[0]
+    await loadSavedScenario(firstScenario)
+    selectedScenarioIds.value = [firstScenario.id]
   }
 })
 </script>
@@ -1260,6 +1642,34 @@ onMounted(async () => {
 .delta-section {
   display: grid;
   gap: 14px;
+}
+
+.builder-summary {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.builder-summary__item {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(248, 250, 252, 0.9);
+}
+
+.builder-summary__item span {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.builder-summary__item strong {
+  font-size: 1.05rem;
+  color: #0f172a;
 }
 
 .scenario-templates {
@@ -1464,6 +1874,34 @@ onMounted(async () => {
   gap: 16px;
 }
 
+.result-impact-highlight {
+  display: grid;
+  gap: 6px;
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(102, 126, 234, 0.18);
+  background: rgba(102, 126, 234, 0.07);
+}
+
+.result-impact-highlight__label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.result-impact-highlight strong {
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  line-height: 1.1;
+}
+
+.result-impact-highlight p {
+  margin: 0;
+  color: #334155;
+  font-size: 0.95rem;
+}
+
 .results-grid {
   display: grid;
   gap: 12px;
@@ -1500,6 +1938,18 @@ onMounted(async () => {
   border-radius: 14px;
   background: rgba(102, 126, 234, 0.08);
   color: #334155;
+  line-height: 1.5;
+}
+
+.risk-callout {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.18);
+  color: #7f1d1d;
   line-height: 1.5;
 }
 
@@ -1759,6 +2209,30 @@ onMounted(async () => {
   font-size: 0.88rem;
 }
 
+.saved-scenario-card__impact {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.saved-scenario-card__impact span {
+  color: #64748b;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-weight: 700;
+}
+
+.saved-scenario-card__impact strong {
+  font-size: 1rem;
+  color: #0f172a;
+}
+
 .saved-comparison-card {
   display: grid;
   gap: 8px;
@@ -1822,6 +2296,19 @@ onMounted(async () => {
   color: #64748b;
 }
 
+.baseline-lines {
+  display: grid;
+  gap: 10px;
+}
+
+.line-adjusted-cell {
+  min-width: 170px;
+}
+
+.positive-value {
+  color: #15803d !important;
+}
+
 .negative-value {
   color: #b91c1c !important;
 }
@@ -1872,6 +2359,7 @@ onMounted(async () => {
 .v-theme--dark .scenario-templates__header p,
 .v-theme--dark .delta-section__header p,
 .v-theme--dark .delta-card__hint,
+.v-theme--dark .builder-summary__item span,
 .v-theme--dark .goal-tags__label,
 .v-theme--dark .result-card span,
 .v-theme--dark .forecast-table th,
@@ -1887,6 +2375,7 @@ onMounted(async () => {
 
 .v-theme--dark .delta-card,
 .v-theme--dark .result-card,
+.v-theme--dark .builder-summary__item,
 .v-theme--dark .empty-deltas,
 .v-theme--dark .empty-results,
 .v-theme--dark .scenario-template-card,
@@ -1897,6 +2386,30 @@ onMounted(async () => {
 .v-theme--dark .comparison-metric {
   background: rgba(51, 65, 85, 0.45);
   border-color: rgba(148, 163, 184, 0.22);
+}
+
+.v-theme--dark .result-impact-highlight {
+  background: rgba(102, 126, 234, 0.16);
+  border-color: rgba(102, 126, 234, 0.28);
+}
+
+.v-theme--dark .result-impact-highlight p {
+  color: #cbd5e1;
+}
+
+.v-theme--dark .risk-callout {
+  background: rgba(239, 68, 68, 0.16);
+  border-color: rgba(239, 68, 68, 0.28);
+  color: #fecaca;
+}
+
+.v-theme--dark .saved-scenario-card__impact {
+  background: rgba(15, 23, 42, 0.45);
+  border-color: rgba(148, 163, 184, 0.24);
+}
+
+.v-theme--dark .saved-scenario-card__impact strong {
+  color: #f8fafc;
 }
 
 .v-theme--dark .summary-callout {
@@ -1932,6 +2445,7 @@ onMounted(async () => {
 }
 
 @media (max-width: 760px) {
+  .builder-summary,
   .scenario-templates__grid,
   .delta-card__fields {
     grid-template-columns: 1fr;

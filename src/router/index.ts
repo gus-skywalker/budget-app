@@ -207,14 +207,14 @@ router.beforeEach((to, from, next) => {
 
   if (to.name === 'landing' && isAuthenticated) {
     if (!hasWorkspaces) {
-      next({ name: 'create-workspace', query: { redirect: '/dashboard' } })
+      next({ name: 'create-workspace', query: { redirect: '/decisions' } })
       return
     }
     if (!userStore.isTenantMode) {
-      next({ name: 'select-workspace', query: { redirect: '/dashboard' } })
+      next({ name: 'select-workspace', query: { redirect: '/decisions' } })
       return
     }
-    next({ name: 'dashboard' })
+    next({ name: 'decisions' })
     return
   }
 
@@ -233,7 +233,7 @@ router.beforeEach((to, from, next) => {
   }
 
   if (isAuthenticated && to.name === 'select-workspace' && !hasWorkspaces) {
-    next({ name: 'create-workspace', query: { redirect: (to.query.redirect as string) || '/dashboard' } })
+    next({ name: 'create-workspace', query: { redirect: (to.query.redirect as string) || '/decisions' } })
     return
   }
 
@@ -252,7 +252,7 @@ router.beforeEach((to, from, next) => {
   // Check admin role requirement
   if (to.meta.requiresAdmin && isAuthenticated) {
     if (!userStore.isTenantAdmin) {
-      next({ name: 'dashboard' })
+      next({ name: 'decisions' })
       return
     }
   }
@@ -273,7 +273,7 @@ router.beforeEach((to, from, next) => {
   // Se usuário está autenticado e tenta acessar login/oauth
   if (isAuthenticated && (to.name === 'login' || to.name === 'oauth2redirect')) {
     // Se há um redirecionamento especificado, use-o
-    const redirect = to.query.redirect || '/dashboard'
+    const redirect = to.query.redirect || '/decisions'
     const query = { ...to.query }
     delete query.redirect // Remove redirect da query
     next({ 

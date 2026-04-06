@@ -555,16 +555,19 @@
 
       <section class="section-block">
         <div class="section-header">
-          <h2 class="section-title">{{ $t('overview.insights_title') }}</h2>
+          <h2 class="section-title">Insights</h2>
         </div>
-        <div v-if="hasInsights" class="insights-grid">
-          <div v-for="insight in overviewInsights" :key="insight" class="insight-pill">
-            <v-icon size="18" color="#667eea">mdi-lightbulb-outline</v-icon>
-            <span>{{ insight }}</span>
+        <div v-if="financialInsightsLoading" class="projection-placeholder">
+          <p>Loading insights...</p>
+        </div>
+        <div v-else-if="hasRuleBasedInsights" class="insights-grid">
+          <div v-for="insight in financialInsights" :key="`${insight.type}-${insight.message}`" class="insight-pill">
+            <v-icon size="18" :color="insightColor(insight.type)">{{ insightIcon(insight.type) }}</v-icon>
+            <span :class="insightMessageClass(insight.type)">{{ insight.message }}</span>
           </div>
         </div>
         <div v-else class="projection-placeholder">
-          <p>{{ $t('overview.insights_placeholder') }}</p>
+          <p>No insights yet</p>
         </div>
       </section>
 
@@ -590,6 +593,117 @@
         <div v-else class="projection-placeholder">
           <p>{{ $t('overview.decisions_placeholder') }}</p>
         </div>
+      </section>
+
+      <section class="section-block">
+        <div class="section-header">
+          <h2 class="section-title">Impact of Decisions</h2>
+          <v-btn size="small" variant="text" @click="$router.push('/decisions')">
+            <v-icon start>mdi-open-in-new</v-icon>
+            Decisions
+          </v-btn>
+        </div>
+        <div v-if="approvedDecisionCards.length" class="decisions-grid">
+          <div v-for="decision in approvedDecisionCards" :key="decision.id" class="decision-card decision-card--opportunity">
+            <div class="decision-card__header">
+              <h3 class="decision-card__title">{{ decision.title }}</h3>
+              <v-chip size="x-small" variant="tonal" color="success">APPROVED</v-chip>
+            </div>
+            <p class="decision-card__description">{{ decision.scenarioLabel }}</p>
+            <div class="decision-card__meta">{{ decision.impactLabel }}</div>
+          </div>
+        </div>
+        <div v-else class="projection-placeholder">
+          <p>No approved decisions yet. Turn scenarios into team decisions.</p>
+        </div>
+        <div class="insight-pill mt-4">
+          <v-icon size="18" color="#667eea">mdi-chart-line</v-icon>
+          <span>{{ approvedImpactSummary }}</span>
+        </div>
+      </section>
+
+      <section class="section-block">
+        <div class="section-header">
+          <h2 class="section-title">Planned vs Actual</h2>
+        </div>
+
+        <div v-if="budgetComparisonLoading" class="projection-placeholder">
+          <p>Loading planned vs actual...</p>
+        </div>
+
+        <template v-else-if="budgetComparisonState === 'no-budget'">
+          <div class="projection-placeholder">
+            <p>Create a plan to start tracking performance</p>
+          </div>
+        </template>
+
+        <template v-else-if="budgetComparison">
+          <div class="projection-grid">
+            <div class="projection-card">
+              <div class="projection-label">Planned Net</div>
+              <div class="projection-value">{{ formatCurrency(budgetComparison.summary.plannedNet) }}</div>
+            </div>
+            <div class="projection-card">
+              <div class="projection-label">Actual Net</div>
+              <div class="projection-value">{{ formatCurrency(budgetComparison.summary.actualNet) }}</div>
+            </div>
+            <div class="projection-card">
+              <div class="projection-label">Difference</div>
+              <div class="projection-value" :class="budgetComparison.summary.netDelta < 0 ? 'delta-negative' : 'delta-positive'">
+                {{ formatCurrency(budgetComparison.summary.netDelta) }}
+              </div>
+            </div>
+          </div>
+
+          <div class="insight-pill mt-4">
+            <v-icon size="18" :color="budgetComparison.summary.netDelta < 0 ? '#ef4444' : '#16a34a'">mdi-information-outline</v-icon>
+            <span>{{ comparisonInsightText }}</span>
+          </div>
+
+          <div v-if="!hasComparisonActivity" class="projection-placeholder mt-4">
+            <p>No activity yet this month</p>
+          </div>
+          <div v-else class="comparison-table-wrap mt-4">
+            <v-table density="comfortable">
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th>Planned</th>
+                  <th>Actual</th>
+                  <th>Delta</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="line in displayedComparisonLines" :key="`${line.type}-${line.category}`">
+                  <td>
+                    {{ line.category }}
+                    <span class="line-type ml-1">{{ line.type }}</span>
+                  </td>
+                  <td>{{ formatCurrency(line.planned) }}</td>
+                  <td>{{ formatCurrency(line.actual) }}</td>
+                  <td :class="line.delta < 0 ? 'delta-negative' : 'delta-positive'">{{ formatCurrency(line.delta) }}</td>
+                  <td>
+                    <v-chip size="x-small" variant="tonal" :color="comparisonStatusColor(line.status)">
+                      {{ line.status }}
+                    </v-chip>
+                  </td>
+                </tr>
+              </tbody>
+            </v-table>
+
+            <div class="comparison-actions">
+              <v-btn
+                v-if="sortedComparisonLines.length > 5"
+                variant="text"
+                color="#667eea"
+                @click="showAllComparisonLines = !showAllComparisonLines"
+              >
+                {{ showAllComparisonLines ? 'Show Top 5' : 'View All' }}
+              </v-btn>
+            </div>
+          </div>
+        </template>
       </section>
     </v-container>
 
@@ -670,6 +784,9 @@ import FinancialGoalService from '@/services/FinancialGoalService'
 import OpenFinanceService from '@/services/OpenFinanceService'
 import AiService from '@/services/aiService'
 import ActivityService from '@/services/ActivityService'
+import ScenarioService from '@/services/ScenarioService'
+import DecisionService from '@/services/DecisionService'
+import BudgetService from '@/services/BudgetService'
 import BillingOrchestrationService from '@/services/BillingOrchestrationService'
 import { resolveAnyWorkspaceContext } from '@/services/BillingWorkspaceContext'
 import { useUserStore } from '@/plugins/userStore'
@@ -681,6 +798,28 @@ export default {
   computed: {
     netMonthlyCashflow() {
       return Number(this.dashboardSummary.monthlyIncome || 0) - Number(this.dashboardSummary.monthlyExpenses || 0)
+    },
+    comparisonInsightText() {
+      const netDelta = Number(this.budgetComparison?.summary?.netDelta || 0)
+      if (netDelta < 0) {
+        return "You're spending more than planned"
+      }
+      if (netDelta > 0) {
+        return "You're outperforming your plan"
+      }
+      return 'You are on plan this month'
+    },
+    sortedComparisonLines() {
+      const lines = Array.isArray(this.budgetComparison?.lines) ? this.budgetComparison.lines : []
+      return [...lines].sort((left, right) => Math.abs(Number(right.delta || 0)) - Math.abs(Number(left.delta || 0)))
+    },
+    displayedComparisonLines() {
+      return this.showAllComparisonLines ? this.sortedComparisonLines : this.sortedComparisonLines.slice(0, 5)
+    },
+    hasComparisonActivity() {
+      const summary = this.budgetComparison?.summary
+      if (!summary) return false
+      return Number(summary.actualIncome || 0) !== 0 || Number(summary.actualExpense || 0) !== 0
     },
     hasData() {
       return (
@@ -862,11 +1001,16 @@ export default {
     hasCashflowDecisionContext() {
       return Boolean(this.cashflowPrimaryDriver || this.cashflowRecommendedAction || this.cashflowOpportunityMessage)
     },
-    hasInsights() {
-      return this.overviewInsights.length > 0
+    hasRuleBasedInsights() {
+      return this.financialInsights.length > 0
     },
     hasDecisions() {
       return this.overviewDecisions.length > 0
+    },
+    approvedImpactSummary() {
+      const amount = this.formatCurrency(this.approvedDecisionImpactTotal || 0)
+      const direction = Number(this.approvedDecisionImpactTotal || 0) < 0 ? 'reduced' : 'increased'
+      return `Approved decisions ${direction} net by ${amount} this month`
     },
     overviewInsights() {
       const insights = []
@@ -1169,6 +1313,14 @@ export default {
       goalsAtRisk: [],
       goalOpportunities: [],
       upcomingExpenses: [],
+      approvedDecisionCards: [],
+      approvedDecisionImpactTotal: 0,
+      financialInsights: [],
+      financialInsightsLoading: false,
+      budgetComparison: null,
+      budgetComparisonLoading: false,
+      budgetComparisonState: 'idle',
+      showAllComparisonLines: false,
       hasPremiumAccess: false,
       cashflowInsightsSummary: null,
       expensePredictionSummary: null,
@@ -1224,6 +1376,9 @@ export default {
     this.fetchOpenFinanceObservabilitySummary()
     this.fetchRecentActivity()
     this.fetchPremiumFeatureSummaries()
+    this.fetchDecisionImpact()
+    this.fetchFinancialInsights()
+    this.fetchBudgetComparison()
     this.fetchGoalsAtRisk()
     this.fetchCategories()
     this.createChart()
@@ -1235,6 +1390,12 @@ export default {
         this.selectedLanguage = newLocale
         this.fetchCategories()
       }
+    },
+    '$route.query.refresh'() {
+      this.fetchDashboardSummary()
+      this.fetchDecisionImpact()
+      this.fetchFinancialInsights()
+      this.fetchBudgetComparison()
     }
   },
   methods: {
@@ -1251,6 +1412,104 @@ export default {
         style: 'currency',
         currency: resolvedCurrency,
       })
+    },
+    getScenarioNetDelta(scenario) {
+      if (Array.isArray(scenario?.lines) && scenario.lines.length) {
+        return scenario.lines.reduce((total, line) => {
+          const delta = Number(line?.delta || 0)
+          const type = String(line?.type || '')
+          return type === 'INCOME' ? total + delta : total - delta
+        }, 0)
+      }
+      return Number(scenario?.scenarioMonthlyImpact || 0)
+    },
+    fetchDecisionImpact() {
+      Promise.all([DecisionService.list(), ScenarioService.list()])
+        .then(([decisionsResponse, scenariosResponse]) => {
+          const decisions = Array.isArray(decisionsResponse?.data) ? decisionsResponse.data : []
+          const scenarios = Array.isArray(scenariosResponse?.data) ? scenariosResponse.data : []
+          const scenarioById = new Map(scenarios.map((scenario) => [scenario.id, scenario]))
+          const approved = decisions.filter((decision) => decision?.status === 'APPROVED')
+
+          this.approvedDecisionCards = approved.map((decision) => {
+            const scenario = scenarioById.get(decision.scenarioId)
+            const impact = this.getScenarioNetDelta(scenario)
+            return {
+              id: decision.id,
+              title: decision.title || 'Decision',
+              scenarioLabel: scenario?.name ? `Scenario: ${scenario.name}` : 'Scenario linked',
+              impact,
+              impactLabel: `Net impact: ${impact >= 0 ? '+' : '-'}${this.formatCurrency(Math.abs(impact))}`,
+            }
+          })
+
+          this.approvedDecisionImpactTotal = this.approvedDecisionCards.reduce(
+            (total, card) => total + Number(card.impact || 0),
+            0
+          )
+        })
+        .catch((error) => {
+          console.error('Error fetching approved decision impact:', error)
+          this.approvedDecisionCards = []
+          this.approvedDecisionImpactTotal = 0
+        })
+    },
+    insightColor(type) {
+      if (type === 'WARNING') return '#ef4444'
+      if (type === 'POSITIVE') return '#16a34a'
+      return '#2563eb'
+    },
+    insightIcon(type) {
+      if (type === 'WARNING') return 'mdi-alert-circle-outline'
+      if (type === 'POSITIVE') return 'mdi-check-circle-outline'
+      return 'mdi-information-outline'
+    },
+    insightMessageClass(type) {
+      if (type === 'WARNING') return 'insight-text--warning'
+      if (type === 'POSITIVE') return 'insight-text--positive'
+      return 'insight-text--info'
+    },
+    fetchFinancialInsights() {
+      this.financialInsightsLoading = true
+      BudgetService.getInsights(this.month, this.year)
+        .then((response) => {
+          const insights = Array.isArray(response?.data?.insights) ? response.data.insights : []
+          this.financialInsights = insights.slice(0, 5)
+        })
+        .catch((error) => {
+          console.error('Error fetching financial insights:', error)
+          this.financialInsights = []
+        })
+        .finally(() => {
+          this.financialInsightsLoading = false
+        })
+    },
+    comparisonStatusColor(status) {
+      if (status === 'OK') return 'success'
+      return 'error'
+    },
+    fetchBudgetComparison() {
+      this.budgetComparisonLoading = true
+      this.budgetComparisonState = 'idle'
+      this.showAllComparisonLines = false
+      BudgetService.getComparison(this.month, this.year)
+        .then((response) => {
+          this.budgetComparison = response.data
+          this.budgetComparisonState = 'ready'
+        })
+        .catch((error) => {
+          if (error?.response?.status === 404) {
+            this.budgetComparison = null
+            this.budgetComparisonState = 'no-budget'
+            return
+          }
+          console.error('Error fetching budget comparison:', error)
+          this.budgetComparison = null
+          this.budgetComparisonState = 'error'
+        })
+        .finally(() => {
+          this.budgetComparisonLoading = false
+        })
     },
     getMonthName(monthIndex) {
       const monthNames = [
@@ -1674,6 +1933,33 @@ export default {
   padding: 0 8px;
   flex-wrap: wrap;
   gap: 20px;
+}
+
+.comparison-table-wrap {
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.comparison-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 12px;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.line-type {
+  font-size: 0.72rem;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.delta-positive {
+  color: #15803d;
+}
+
+.delta-negative {
+  color: #dc2626;
 }
 
 .welcome-section .page-title {

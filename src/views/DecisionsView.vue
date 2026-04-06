@@ -21,6 +21,10 @@
               {{ decisionsSourceNote }}
             </p>
             <div class="decisions-toolbar__actions">
+              <v-btn color="#4f46e5" @click="newDecisionFromScenario">
+                <v-icon start>mdi-plus-circle-outline</v-icon>
+                New Decision from Scenario
+              </v-btn>
               <v-btn variant="text" color="#667eea" @click="goToScenarios">
                 <v-icon start>mdi-arrow-left</v-icon>
                 {{ $t('decisions.back_to_scenarios') }}
@@ -56,6 +60,17 @@
             <p>{{ error }}</p>
           </div>
 
+          <v-alert
+            v-if="successMessage"
+            type="success"
+            variant="tonal"
+            density="comfortable"
+            closable
+            @click:close="successMessage = ''"
+          >
+            {{ successMessage }}
+          </v-alert>
+
           <div v-else-if="decisionCards.length" class="decisions-grid">
             <div v-for="decision in decisionCards" :key="decision.scenarioId" class="decision-card">
               <div class="decision-card__header">
@@ -63,12 +78,72 @@
                   <h3 class="decision-card__title">{{ decision.title }}</h3>
                   <p class="decision-card__scenario">{{ decision.scenarioLabel }}</p>
                 </div>
-                <v-chip size="x-small" variant="tonal" :color="decision.statusColor">
+                <v-chip size="small" variant="tonal" :color="decision.statusColor" class="decision-status-chip">
                   {{ decision.status }}
                 </v-chip>
               </div>
 
-              <p class="decision-card__description">{{ decision.description }}</p>
+              <div class="decision-impact">
+                <div class="decision-impact__label">Impact</div>
+                <div class="decision-impact__value" :class="decision.impactTone">
+                  {{ decision.impactDisplay }}
+                </div>
+                <div class="decision-impact__subtitle">Impact on monthly cashflow</div>
+                <div class="decision-impact__details">
+                  <span>Projected final balance: <strong>{{ formatCurrency(decision.finalBalance) }}</strong></span>
+                  <span>First risk month: <strong>{{ decision.riskMonth }}</strong></span>
+                </div>
+              </div>
+
+              <p class="decision-card__description">{{ decision.consequenceMessage }}</p>
+
+              <div class="decision-votes decision-votes--featured" v-if="decision.decisionId">
+                <div class="decision-votes__summary">
+                  <strong>Team decision</strong>
+                  <span>{{ decision.approveVotes }} approvals • {{ decision.rejectVotes }} rejects</span>
+                </div>
+                <p v-if="decision.approveVotes + decision.rejectVotes === 0" class="decision-votes__hint">
+                  No votes yet — your input matters
+                </p>
+                <div class="decision-votes__actions">
+                  <v-btn
+                    variant="tonal"
+                    size="small"
+                    :color="decision.currentUserVote === 'APPROVE' ? 'success' : undefined"
+                    :loading="activeDecisionId === decision.decisionId && decisionAction === 'vote-approve'"
+                    class="decision-vote-btn"
+                    @click="voteDecision(decision.decisionId, 'APPROVE')"
+                  >
+                    <v-icon start size="18">mdi-thumb-up-outline</v-icon>
+                    {{ $t('decisions.vote_approve') }}
+                  </v-btn>
+                  <v-btn
+                    variant="tonal"
+                    size="small"
+                    :color="decision.currentUserVote === 'REJECT' ? 'error' : undefined"
+                    :loading="activeDecisionId === decision.decisionId && decisionAction === 'vote-reject'"
+                    class="decision-vote-btn"
+                    @click="voteDecision(decision.decisionId, 'REJECT')"
+                  >
+                    <v-icon start size="18">mdi-thumb-down-outline</v-icon>
+                    {{ $t('decisions.vote_reject') }}
+                  </v-btn>
+                  <v-btn
+                    v-if="decision.currentUserVote"
+                    variant="text"
+                    size="small"
+                    color="#667eea"
+                    :loading="activeDecisionId === decision.decisionId && decisionAction === 'vote-clear'"
+                    @click="clearDecisionVote(decision.decisionId)"
+                  >
+                    <v-icon start size="16">mdi-close-circle-outline</v-icon>
+                    {{ $t('decisions.vote_clear') }}
+                  </v-btn>
+                </div>
+                <p v-if="decision.currentUserVote" class="decision-votes__current">
+                  {{ $t('decisions.vote_current', { vote: decision.currentUserVote === 'APPROVE' ? $t('decisions.vote_approve') : $t('decisions.vote_reject') }) }}
+                </p>
+              </div>
 
               <div class="decision-card__metrics">
                 <div class="decision-metric">
@@ -86,141 +161,138 @@
               </div>
 
               <div class="decision-card__meta">
-                <span>{{ decision.impact }}</span>
                 <span>{{ decision.goalsImpact }}</span>
                 <span v-if="decision.persistedAt">{{ decision.persistedAt }}</span>
               </div>
 
-              <div v-if="decision.decisionId" class="decision-votes">
-                <div class="decision-votes__summary">
-                  <strong>{{ $t('decisions.votes_title') }}</strong>
-                  <span>{{ $t('decisions.votes_summary', { approve: decision.approveVotes, reject: decision.rejectVotes }) }}</span>
-                </div>
-
-                <div class="decision-votes__actions">
-                  <v-btn
-                    variant="tonal"
-                    color="success"
-                    :loading="activeDecisionId === decision.decisionId && decisionAction === 'vote-approve'"
-                    :disabled="decision.currentUserVote === 'APPROVE'"
-                    @click="voteDecision(decision.decisionId, 'APPROVE')"
-                  >
-                    <v-icon start>mdi-thumb-up-outline</v-icon>
-                    {{ $t('decisions.vote_approve') }}
-                  </v-btn>
-                  <v-btn
-                    variant="tonal"
-                    color="error"
-                    :loading="activeDecisionId === decision.decisionId && decisionAction === 'vote-reject'"
-                    :disabled="decision.currentUserVote === 'REJECT'"
-                    @click="voteDecision(decision.decisionId, 'REJECT')"
-                  >
-                    <v-icon start>mdi-thumb-down-outline</v-icon>
-                    {{ $t('decisions.vote_reject') }}
-                  </v-btn>
-                  <v-btn
-                    v-if="decision.currentUserVote"
-                    variant="text"
-                    color="#667eea"
-                    :loading="activeDecisionId === decision.decisionId && decisionAction === 'vote-clear'"
-                    @click="clearDecisionVote(decision.decisionId)"
-                  >
-                    <v-icon start>mdi-close-circle-outline</v-icon>
-                    {{ $t('decisions.vote_clear') }}
-                  </v-btn>
-                </div>
-
-                <p v-if="decision.currentUserVote" class="decision-votes__current">
-                  {{ $t('decisions.vote_current', { vote: decision.currentUserVote === 'APPROVE' ? $t('decisions.vote_approve') : $t('decisions.vote_reject') }) }}
-                </p>
-              </div>
-
               <div class="decision-card__actions">
-                <v-btn
-                  v-if="!decision.decisionId"
-                  variant="tonal"
-                  color="#667eea"
-                  :loading="activeDecisionId === decision.scenarioId && decisionAction === 'create'"
-                  @click="trackDecision(decision.scenarioId)"
-                >
-                  <v-icon start>mdi-bookmark-plus-outline</v-icon>
-                  {{ $t('decisions.track_decision') }}
-                </v-btn>
-                <template v-else>
+                <template v-if="!decision.decisionId">
                   <v-btn
-                    variant="text"
-                    color="success"
-                    :loading="activeDecisionId === decision.decisionId && decisionAction === 'approve'"
-                    @click="updateDecisionStatus(decision.decisionId, 'APPROVED')"
-                  >
-                    <v-icon start>mdi-check</v-icon>
-                    {{ $t('decisions.approve_action') }}
-                  </v-btn>
-                  <v-btn
-                    variant="text"
-                    color="error"
-                    :loading="activeDecisionId === decision.decisionId && decisionAction === 'reject'"
-                    @click="updateDecisionStatus(decision.decisionId, 'REJECTED')"
-                  >
-                    <v-icon start>mdi-close</v-icon>
-                    {{ $t('decisions.reject_action') }}
-                  </v-btn>
-                  <v-btn
-                    variant="text"
+                    variant="tonal"
                     color="#667eea"
-                    :loading="activeDecisionId === decision.decisionId && decisionAction === 'reopen'"
-                    @click="updateDecisionStatus(decision.decisionId, 'OPEN')"
+                    size="large"
+                    :loading="activeDecisionId === decision.scenarioId && decisionAction === 'create'"
+                    @click="trackDecision(decision.scenarioId)"
                   >
-                    <v-icon start>mdi-restore</v-icon>
-                    {{ $t('decisions.reopen_action') }}
+                    <v-icon start>mdi-bookmark-plus-outline</v-icon>
+                    {{ $t('decisions.track_decision') }}
                   </v-btn>
                 </template>
-                <v-btn variant="text" color="#667eea" @click="openScenario(decision.scenarioId)">
-                  <v-icon start>mdi-pencil-outline</v-icon>
-                  {{ $t('decisions.open_scenario') }}
-                </v-btn>
+                <template v-else>
+                  <v-tooltip
+                    v-if="decision.isOpenDecision && !decision.canApply"
+                    text="Not enough approvals yet"
+                    location="top"
+                  >
+                    <template #activator="{ props }">
+                      <span v-bind="props">
+                        <v-btn
+                          variant="flat"
+                          color="success"
+                          size="x-large"
+                          class="decision-card__execute-btn"
+                          disabled
+                        >
+                          <v-icon start>mdi-flash-outline</v-icon>
+                          Execute Decision
+                        </v-btn>
+                      </span>
+                    </template>
+                  </v-tooltip>
+                  <v-btn
+                    v-else-if="decision.isOpenDecision"
+                    variant="flat"
+                    color="success"
+                    size="x-large"
+                    class="decision-card__execute-btn"
+                    :loading="activeDecisionId === decision.decisionId && decisionAction === 'apply'"
+                    @click="applyDecision(decision.decisionId)"
+                  >
+                    <v-icon start>mdi-flash-outline</v-icon>
+                    Execute Decision
+                  </v-btn>
+                </template>
+                <div class="decision-card__secondary-actions">
+                  <v-btn
+                    v-if="decision.isOpenDecision"
+                    variant="outlined"
+                    size="small"
+                    color="error"
+                    :loading="activeDecisionId === decision.decisionId && decisionAction === 'reject'"
+                    @click="updateDecisionStatus(decision.decisionId || '', 'REJECTED')"
+                  >
+                    <v-icon start size="16">mdi-close</v-icon>
+                    {{ $t('decisions.reject_action') }}
+                  </v-btn>
+                  <v-btn variant="text" size="small" color="#667eea" @click="openScenario(decision.scenarioId)">
+                    <v-icon start size="16">mdi-pencil-outline</v-icon>
+                    {{ $t('decisions.open_scenario') }}
+                  </v-btn>
+                  <v-btn variant="text" size="small" color="#667eea" @click="viewImpact">
+                    <v-icon start size="16">mdi-chart-line</v-icon>
+                    View Impact
+                  </v-btn>
+                </div>
               </div>
 
               <div v-if="decision.decisionId" class="decision-comments">
-                <div class="decision-comments__header">
-                  <strong>{{ $t('decisions.comments_title') }}</strong>
-                  <span>{{ decision.comments.length }} {{ $t('decisions.comments_count') }}</span>
-                </div>
+                <v-expansion-panels variant="accordion" class="decision-discussion">
+                  <v-expansion-panel>
+                    <v-expansion-panel-title>
+                      <div class="decision-comments__header">
+                        <strong>Team discussion</strong>
+                        <span>{{ decision.comments.length }} comments</span>
+                      </div>
+                    </v-expansion-panel-title>
+                    <v-expansion-panel-text>
+                      <div v-if="decision.comments.length" class="decision-comments__list">
+                        <div
+                          v-for="comment in decision.comments"
+                          :key="comment.id"
+                          class="decision-comment"
+                        >
+                          <div class="decision-comment__avatar">{{ comment.initials }}</div>
+                          <div class="decision-comment__content">
+                            <p>{{ comment.body }}</p>
+                            <span v-if="comment.createdAt">{{ comment.authorLabel }} • {{ formatDate(comment.createdAt) }}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <p v-else class="decision-comments__empty">
+                        No comments yet — start the discussion
+                      </p>
 
-                <div v-if="decision.comments.length" class="decision-comments__list">
-                  <div
-                    v-for="comment in decision.comments"
-                    :key="comment.id"
-                    class="decision-comment"
-                  >
-                    <p>{{ comment.body }}</p>
-                    <span v-if="comment.createdAt">{{ formatDate(comment.createdAt) }}</span>
-                  </div>
-                </div>
-                <p v-else class="decision-comments__empty">
-                  {{ $t('decisions.comments_empty') }}
+                      <div class="decision-comments__composer">
+                        <v-text-field
+                          v-model="commentDrafts[decision.decisionId]"
+                          label="Add comment..."
+                          variant="outlined"
+                          density="comfortable"
+                          hide-details="auto"
+                          :disabled="!decision.isOpenDecision"
+                          @keyup.enter="addDecisionComment(decision.decisionId)"
+                        />
+                        <v-btn
+                          color="#667eea"
+                          variant="tonal"
+                          :disabled="!commentDrafts[decision.decisionId]?.trim() || !decision.isOpenDecision"
+                          :loading="activeDecisionId === decision.decisionId && decisionAction === 'comment'"
+                          @click="addDecisionComment(decision.decisionId)"
+                        >
+                          <v-icon start>mdi-comment-plus-outline</v-icon>
+                          {{ $t('decisions.add_comment') }}
+                        </v-btn>
+                      </div>
+                    </v-expansion-panel-text>
+                  </v-expansion-panel>
+                </v-expansion-panels>
+                <p v-if="!decision.isOpenDecision" class="decision-comments__hint">
+                  Discussion is closed for non-open decisions
                 </p>
-
-                <div class="decision-comments__composer">
-                  <v-textarea
-                    v-model="commentDrafts[decision.decisionId]"
-                    :label="$t('decisions.comment_label')"
-                    variant="outlined"
-                    density="comfortable"
-                    rows="2"
-                    hide-details="auto"
-                  />
-                  <v-btn
-                    color="#667eea"
-                    variant="tonal"
-                    :disabled="!commentDrafts[decision.decisionId]?.trim()"
-                    :loading="activeDecisionId === decision.decisionId && decisionAction === 'comment'"
-                    @click="addDecisionComment(decision.decisionId)"
-                  >
-                    <v-icon start>mdi-comment-plus-outline</v-icon>
-                    {{ $t('decisions.add_comment') }}
-                  </v-btn>
-                </div>
+              </div>
+              <div v-if="decision.decisionId && decision.isOpenDecision && !decision.canApply" class="decision-apply-hint">
+                <v-icon size="16" color="#ef4444">mdi-information-outline</v-icon>
+                <span>{{ decision.applyBlockedReason || 'Not enough approvals yet' }}</span>
               </div>
             </div>
           </div>
@@ -228,6 +300,10 @@
           <div v-else class="empty-state">
             <v-icon color="#94a3b8" size="28">mdi-lightbulb-auto-outline</v-icon>
             <p>{{ $t('decisions.empty') }}</p>
+            <v-btn color="#667eea" variant="tonal" @click="goToScenarios">
+              <v-icon start>mdi-layers-triple-outline</v-icon>
+              Turn scenarios into team decisions
+            </v-btn>
           </div>
         </div>
       </div>
@@ -239,7 +315,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
-import ScenarioService, { type SavedScenario, type ScenarioSimulationResponse } from '@/services/ScenarioService'
+import ScenarioService, { type SavedScenario, type ScenarioDeltaType, type ScenarioSimulationResponse } from '@/services/ScenarioService'
 import DecisionService, { type DecisionComment, type DecisionVoteValue, type PersistedDecision, type PersistedDecisionStatus } from '@/services/DecisionService'
 
 const { t, locale } = useI18n()
@@ -249,8 +325,9 @@ const DECISIONS_STORAGE_KEY = 'decisions-scenarios'
 
 const isLoading = ref(false)
 const error = ref('')
+const successMessage = ref('')
 const activeDecisionId = ref<string | null>(null)
-const decisionAction = ref<'create' | 'approve' | 'reject' | 'reopen' | 'comment' | 'vote-approve' | 'vote-reject' | 'vote-clear' | null>(null)
+const decisionAction = ref<'create' | 'apply' | 'reject' | 'comment' | 'vote-approve' | 'vote-reject' | 'vote-clear' | null>(null)
 const savedScenarios = ref<SavedScenario[]>([])
 const selectedScenarioIds = ref<string[]>([])
 const simulations = ref<Array<{ scenario: SavedScenario; result: ScenarioSimulationResponse }>>([])
@@ -263,6 +340,12 @@ const formatCurrency = (value: number) =>
     { style: 'currency', currency: 'BRL' }
   )
 
+const formatSignedCurrency = (value: number) => {
+  const formatted = formatCurrency(Math.abs(Number(value || 0)))
+  const compact = formatted.replace(/\s+/g, '')
+  return `${Number(value || 0) >= 0 ? '+' : '-'}${compact}`
+}
+
 const formatDate = (value?: string) =>
   value
     ? new Date(value).toLocaleDateString(
@@ -270,16 +353,45 @@ const formatDate = (value?: string) =>
       )
     : ''
 
+const getCommentInitials = (authorId?: string) => {
+  const label = String(authorId || '').trim()
+  if (!label) return 'U'
+  return label.slice(0, 2).toUpperCase()
+}
+
 const getSavedScenarioPayload = (scenario: SavedScenario) => ({
   id: scenario.id,
+  budgetId: scenario.budgetId,
   name: scenario.name,
   months: scenario.months || 6,
-  deltas: (scenario.deltas || []).map((delta) => ({
-    label: delta.label,
-    type: delta.type,
-    amount: Number(delta.amount || 0),
-    startMonthOffset: Number(delta.startMonthOffset || 0),
-  })),
+  deltas: [
+    ...(scenario.deltas || []).map((delta) => ({
+      label: delta.label,
+      type: delta.type,
+      amount: Number(delta.amount || 0),
+      startMonthOffset: Number(delta.startMonthOffset || 0),
+    })),
+    ...((scenario.lines || [])
+      .map((line) => {
+        const delta = Number(line.adjustedAmount || 0) - Number(line.originalAmount || 0)
+        if (!delta) return null
+        if (line.type === 'INCOME') {
+          return {
+            label: `Baseline adjustment: ${line.category}`,
+            type: (delta > 0 ? 'MONTHLY_INCOME' : 'MONTHLY_EXPENSE') as ScenarioDeltaType,
+            amount: Math.abs(delta),
+            startMonthOffset: 0,
+          }
+        }
+        return {
+          label: `Baseline adjustment: ${line.category}`,
+          type: (delta > 0 ? 'MONTHLY_EXPENSE' : 'MONTHLY_INCOME') as ScenarioDeltaType,
+          amount: Math.abs(delta),
+          startMonthOffset: 0,
+        }
+      })
+      .filter((item): item is { label: string; type: ScenarioDeltaType; amount: number; startMonthOffset: number } => Boolean(item))),
+  ],
 })
 
 const statusLabel = (scenarioStatus?: string, persistedStatus?: PersistedDecisionStatus) => {
@@ -295,10 +407,10 @@ const statusLabel = (scenarioStatus?: string, persistedStatus?: PersistedDecisio
 const statusColor = (scenarioStatus?: string, persistedStatus?: PersistedDecisionStatus) => {
   if (persistedStatus === 'APPROVED') return 'success'
   if (persistedStatus === 'REJECTED') return 'error'
-  if (persistedStatus === 'OPEN') return '#667eea'
+  if (persistedStatus === 'OPEN') return 'info'
   if (scenarioStatus === 'ACTION_NEEDED') return 'error'
   if (scenarioStatus === 'WATCH') return 'warning'
-  if (scenarioStatus === 'STABLE') return '#667eea'
+  if (scenarioStatus === 'STABLE') return 'info'
   return 'default'
 }
 
@@ -311,18 +423,32 @@ const decisionCards = computed(() =>
       title: scenario.name,
       scenarioLabel: t('decisions.scenario_label', { name: scenario.name }),
       status: statusLabel(result.decisionStatus, persisted?.status),
+      persistedStatus: persisted?.status || null,
       statusColor: statusColor(result.decisionStatus, persisted?.status),
-      description: persisted?.summary || result.summary || t('decisions.no_summary'),
+      consequenceMessage: result.scenarioMonthlyImpact < 0
+        ? `This decision will put you in deficit by ${result.firstRiskMonth || t('decisions.no_risk_month')}`
+        : result.scenarioMonthlyImpact > 0
+          ? 'This decision improves your monthly balance'
+          : 'This decision has low financial impact',
       finalBalance: result.projectedFinalBalance,
       availableForGoals: result.availableForGoals,
       riskMonth: result.firstRiskMonth || t('decisions.no_risk_month'),
-      impact: t('decisions.impact_label', { amount: formatCurrency(result.scenarioMonthlyImpact) }),
+      impactDisplay: formatSignedCurrency(result.scenarioMonthlyImpact),
+      impactTone: result.scenarioMonthlyImpact > 0 ? 'decision-impact--positive' : result.scenarioMonthlyImpact < 0 ? 'decision-impact--negative' : 'decision-impact--neutral',
       goalsImpact: t('decisions.goals_impact_label', { count: result.impactedGoalsCount }),
       persistedAt: persisted?.createdAt ? t('decisions.created_at_label', { date: new Date(persisted.createdAt).toLocaleDateString(locale.value === 'en' ? 'en-US' : locale.value === 'fr' ? 'fr-FR' : locale.value === 'es' ? 'es-ES' : 'pt-BR') }) : '',
-      comments: persisted?.comments || [],
+      comments: (persisted?.comments || []).map((comment) => ({
+        ...comment,
+        initials: getCommentInitials(comment.authorId),
+        authorLabel: `User ${String(comment.authorId || '').slice(0, 8)}`,
+      })),
       approveVotes: persisted?.approveVotes || 0,
       rejectVotes: persisted?.rejectVotes || 0,
+      voteSummaryText: `${persisted?.approveVotes || 0} approved • ${persisted?.rejectVotes || 0} rejected`,
       currentUserVote: persisted?.currentUserVote || null,
+      isOpenDecision: persisted?.status === 'OPEN',
+      canApply: Boolean(persisted?.canCurrentUserApply),
+      applyBlockedReason: persisted?.applyBlockedReason || null,
     }
   })
 )
@@ -420,9 +546,27 @@ const goToInsights = async () => {
   })
 }
 
+const viewImpact = async () => {
+  await router.push({ path: '/dashboard', query: { refresh: String(Date.now()) } })
+}
+
+const newDecisionFromScenario = async () => {
+  const preferredScenario =
+    simulations.value.find((entry) => selectedScenarioIds.value.includes(entry.scenario.id))?.scenario ||
+    simulations.value[0]?.scenario
+
+  if (!preferredScenario?.id) {
+    await goToScenarios()
+    return
+  }
+
+  await trackDecision(preferredScenario.id)
+}
+
 const trackDecision = async (scenarioId: string) => {
   activeDecisionId.value = scenarioId
   decisionAction.value = 'create'
+  successMessage.value = ''
   try {
     const { data } = await DecisionService.createFromScenario(scenarioId)
     persistedDecisions.value = [
@@ -440,7 +584,8 @@ const trackDecision = async (scenarioId: string) => {
 
 const updateDecisionStatus = async (decisionId: string, status: PersistedDecisionStatus) => {
   activeDecisionId.value = decisionId
-  decisionAction.value = status === 'APPROVED' ? 'approve' : status === 'REJECTED' ? 'reject' : 'reopen'
+  decisionAction.value = status === 'REJECTED' ? 'reject' : null
+  successMessage.value = ''
   try {
     const { data } = await DecisionService.updateStatus(decisionId, status)
     persistedDecisions.value = persistedDecisions.value.map((decision) =>
@@ -448,6 +593,27 @@ const updateDecisionStatus = async (decisionId: string, status: PersistedDecisio
     )
   } catch (statusError) {
     console.error(statusError)
+    error.value = t('decisions.persist_error')
+  } finally {
+    activeDecisionId.value = null
+    decisionAction.value = null
+  }
+}
+
+const applyDecision = async (decisionId: string) => {
+  activeDecisionId.value = decisionId
+  decisionAction.value = 'apply'
+  successMessage.value = ''
+  try {
+    const { data } = await DecisionService.applyDecision(decisionId)
+    persistedDecisions.value = persistedDecisions.value.map((decision) =>
+      decision.id === decisionId
+        ? { ...decision, status: data.status, appliedAt: data.appliedAt }
+        : decision
+    )
+    successMessage.value = `Decision applied. Updated budget net: ${formatCurrency(data.updatedBudget?.net || 0)}`
+  } catch (applyError) {
+    console.error(applyError)
     error.value = t('decisions.persist_error')
   } finally {
     activeDecisionId.value = null
@@ -483,13 +649,42 @@ const addDecisionComment = async (decisionId: string) => {
 const voteDecision = async (decisionId: string, voteValue: DecisionVoteValue) => {
   activeDecisionId.value = decisionId
   decisionAction.value = voteValue === 'APPROVE' ? 'vote-approve' : 'vote-reject'
+  const previous = [...persistedDecisions.value]
+  persistedDecisions.value = persistedDecisions.value.map((decision) => {
+    if (decision.id !== decisionId) return decision
+    const previousVote = decision.currentUserVote
+    let approveVotes = Number(decision.approveVotes || 0)
+    let rejectVotes = Number(decision.rejectVotes || 0)
+    if (previousVote === 'APPROVE') approveVotes -= 1
+    if (previousVote === 'REJECT') rejectVotes -= 1
+    if (voteValue === 'APPROVE') approveVotes += 1
+    if (voteValue === 'REJECT') rejectVotes += 1
+    return {
+      ...decision,
+      currentUserVote: voteValue,
+      approveVotes: Math.max(approveVotes, 0),
+      rejectVotes: Math.max(rejectVotes, 0),
+      canCurrentUserApply: decision.currentUserOwner ? true : approveVotes > rejectVotes,
+      applyBlockedReason: (decision.currentUserOwner || approveVotes > rejectVotes) ? null : 'Not enough approvals yet',
+    }
+  })
   try {
     const { data } = await DecisionService.vote(decisionId, voteValue)
     persistedDecisions.value = persistedDecisions.value.map((decision) =>
-      decision.id === decisionId ? data : decision
+      decision.id === decisionId
+        ? {
+            ...decision,
+            approveVotes: data.totalApproves,
+            rejectVotes: data.totalRejects,
+            currentUserVote: data.userVote,
+            canCurrentUserApply: decision.currentUserOwner ? true : data.totalApproves > data.totalRejects,
+            applyBlockedReason: (decision.currentUserOwner || data.totalApproves > data.totalRejects) ? null : 'Not enough approvals yet',
+          }
+        : decision
     )
   } catch (voteError) {
     console.error(voteError)
+    persistedDecisions.value = previous
     error.value = t('decisions.vote_error')
   } finally {
     activeDecisionId.value = null
@@ -500,13 +695,40 @@ const voteDecision = async (decisionId: string, voteValue: DecisionVoteValue) =>
 const clearDecisionVote = async (decisionId: string) => {
   activeDecisionId.value = decisionId
   decisionAction.value = 'vote-clear'
+  const previous = [...persistedDecisions.value]
+  persistedDecisions.value = persistedDecisions.value.map((decision) => {
+    if (decision.id !== decisionId) return decision
+    const previousVote = decision.currentUserVote
+    let approveVotes = Number(decision.approveVotes || 0)
+    let rejectVotes = Number(decision.rejectVotes || 0)
+    if (previousVote === 'APPROVE') approveVotes -= 1
+    if (previousVote === 'REJECT') rejectVotes -= 1
+    return {
+      ...decision,
+      currentUserVote: null,
+      approveVotes: Math.max(approveVotes, 0),
+      rejectVotes: Math.max(rejectVotes, 0),
+      canCurrentUserApply: decision.currentUserOwner ? true : approveVotes > rejectVotes,
+      applyBlockedReason: (decision.currentUserOwner || approveVotes > rejectVotes) ? null : 'Not enough approvals yet',
+    }
+  })
   try {
     const { data } = await DecisionService.removeVote(decisionId)
     persistedDecisions.value = persistedDecisions.value.map((decision) =>
-      decision.id === decisionId ? data : decision
+      decision.id === decisionId
+        ? {
+            ...decision,
+            approveVotes: data.totalApproves,
+            rejectVotes: data.totalRejects,
+            currentUserVote: data.userVote,
+            canCurrentUserApply: decision.currentUserOwner ? true : data.totalApproves > data.totalRejects,
+            applyBlockedReason: (decision.currentUserOwner || data.totalApproves > data.totalRejects) ? null : 'Not enough approvals yet',
+          }
+        : decision
     )
   } catch (voteError) {
     console.error(voteError)
+    persistedDecisions.value = previous
     error.value = t('decisions.vote_error')
   } finally {
     activeDecisionId.value = null
@@ -641,16 +863,18 @@ onMounted(async () => {
 
 .decision-card {
   border-radius: 14px;
-  padding: 18px;
-  background: rgba(102, 126, 234, 0.05);
-  border: 1px solid rgba(102, 126, 234, 0.12);
+  padding: 20px;
+  background: rgba(102, 126, 234, 0.04);
+  border: 1px solid rgba(102, 126, 234, 0.14);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.04);
   display: grid;
-  gap: 14px;
+  gap: 16px;
 }
 
 .v-theme--dark .decision-card {
   background: rgba(102, 126, 234, 0.14);
   border-color: rgba(102, 126, 234, 0.2);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
 }
 
 .decision-card__header {
@@ -680,6 +904,68 @@ onMounted(async () => {
   margin: 0;
   color: #667085;
   font-size: 0.9rem;
+}
+
+.decision-impact {
+  display: grid;
+  gap: 6px;
+  padding: 16px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.decision-impact__label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.decision-impact__value {
+  font-size: clamp(1.9rem, 4vw, 2.6rem);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.decision-impact__subtitle {
+  color: #64748b;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.decision-impact__details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  color: #475569;
+  font-size: 0.88rem;
+}
+
+.decision-impact__details strong {
+  color: #0f172a;
+}
+
+.decision-impact--positive {
+  color: #15803d;
+}
+
+.decision-impact--negative {
+  color: #dc2626;
+}
+
+.decision-impact--neutral {
+  color: #64748b;
+}
+
+.v-theme--dark .decision-impact {
+  background: rgba(15, 23, 42, 0.35);
+  border-color: rgba(148, 163, 184, 0.14);
+}
+
+.v-theme--dark .decision-impact__details strong {
+  color: #ffffff;
 }
 
 .decision-card__description {
@@ -731,9 +1017,30 @@ onMounted(async () => {
 
 .decision-card__actions {
   display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.decision-card__execute-btn {
+  width: 100%;
+  justify-content: flex-start;
+  min-height: 52px;
+  font-size: 1rem;
+  letter-spacing: 0.01em;
+  box-shadow: 0 10px 24px rgba(22, 163, 74, 0.18);
+}
+
+.decision-card__secondary-actions {
+  display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  justify-content: flex-end;
+  align-items: center;
+}
+
+.decision-status-chip {
+  font-weight: 700;
 }
 
 .decision-votes {
@@ -743,6 +1050,11 @@ onMounted(async () => {
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.62);
   border: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.decision-votes--featured {
+  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(102, 126, 234, 0.18);
 }
 
 .decision-votes__summary {
@@ -760,6 +1072,21 @@ onMounted(async () => {
   gap: 8px;
 }
 
+.decision-vote-btn {
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.decision-vote-btn:hover {
+  transform: translateY(-1px);
+}
+
+.decision-votes__hint {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
 .decision-votes__current {
   margin: 0;
   color: #64748b;
@@ -771,6 +1098,12 @@ onMounted(async () => {
   gap: 10px;
   padding-top: 8px;
   border-top: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.decision-discussion {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.2);
 }
 
 .decision-comments__header {
@@ -788,11 +1121,29 @@ onMounted(async () => {
 
 .decision-comment {
   display: grid;
-  gap: 4px;
+  grid-template-columns: 36px 1fr;
+  gap: 10px;
   padding: 10px 12px;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.72);
   border: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.decision-comment__avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(79, 70, 229, 0.12);
+  color: #4338ca;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.decision-comment__content {
+  display: grid;
+  gap: 4px;
 }
 
 .decision-comment p,
@@ -810,6 +1161,16 @@ onMounted(async () => {
 .decision-comments__composer {
   display: grid;
   gap: 10px;
+}
+
+.decision-comments__hint,
+.decision-apply-hint {
+  margin: 0;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  color: #b91c1c;
+  font-size: 0.85rem;
 }
 
 .empty-state {
@@ -839,6 +1200,15 @@ onMounted(async () => {
 
   .decision-card__metrics {
     grid-template-columns: 1fr;
+  }
+
+  .decision-card__actions {
+    align-items: stretch;
+  }
+
+  .decision-card__secondary-actions {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 </style>

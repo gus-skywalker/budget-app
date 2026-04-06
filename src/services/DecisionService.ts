@@ -10,10 +10,26 @@ export interface PersistedDecision {
   summary?: string
   status: PersistedDecisionStatus
   createdAt?: string
+  appliedAt?: string
   comments?: DecisionComment[]
   approveVotes: number
   rejectVotes: number
   currentUserVote?: DecisionVoteValue | null
+  currentUserOwner?: boolean
+  canCurrentUserApply?: boolean
+  applyBlockedReason?: string | null
+}
+
+export interface ApplyDecisionResponse {
+  decisionId: string
+  status: PersistedDecisionStatus
+  appliedAt?: string
+  updatedBudget: {
+    id: string
+    totalIncome: number
+    totalExpense: number
+    net: number
+  }
 }
 
 export interface DecisionComment {
@@ -22,6 +38,12 @@ export interface DecisionComment {
   authorId: string
   body: string
   createdAt?: string
+}
+
+export interface DecisionVoteSummary {
+  totalApproves: number
+  totalRejects: number
+  userVote?: DecisionVoteValue | null
 }
 
 export default {
@@ -34,16 +56,19 @@ export default {
   updateStatus(decisionId: string, status: PersistedDecisionStatus) {
     return axiosInterceptor.patch<PersistedDecision>(`/decisions/${decisionId}/status`, { status })
   },
+  applyDecision(decisionId: string) {
+    return axiosInterceptor.post<ApplyDecisionResponse>(`/decisions/${decisionId}/apply`)
+  },
   listComments(decisionId: string) {
     return axiosInterceptor.get<DecisionComment[]>(`/decisions/${decisionId}/comments`)
   },
   addComment(decisionId: string, body: string) {
-    return axiosInterceptor.post<DecisionComment>(`/decisions/${decisionId}/comments`, { body })
+    return axiosInterceptor.post<DecisionComment>(`/decisions/${decisionId}/comments`, { content: body })
   },
   vote(decisionId: string, voteValue: DecisionVoteValue) {
-    return axiosInterceptor.put<PersistedDecision>(`/decisions/${decisionId}/vote`, { voteValue })
+    return axiosInterceptor.post<DecisionVoteSummary>(`/decisions/${decisionId}/vote`, { vote: voteValue })
   },
   removeVote(decisionId: string) {
-    return axiosInterceptor.delete<PersistedDecision>(`/decisions/${decisionId}/vote`)
+    return axiosInterceptor.delete<DecisionVoteSummary>(`/decisions/${decisionId}/vote`)
   },
 }

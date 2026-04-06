@@ -6,6 +6,7 @@ import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/plugins/userStore'
 import type { Notification } from '@/services/NotificationService'
 import WorkspaceSwitcher from '@/components/WorkspaceSwitcher.vue'
+import type { RouteLocationRaw } from 'vue-router'
 
 // Import props and emits
 const props = defineProps<{
@@ -23,6 +24,21 @@ const userStore = useUserStore()
 const showLogoutDialog = ref(false)
 const expandOnHover = ref(true)
 const isMobile = ref(false)
+
+type NavItem = {
+  key: string
+  title: string
+  icon: string
+  to?: RouteLocationRaw
+  disabled: boolean
+  primary?: boolean
+}
+
+type NavSection = {
+  key: string
+  title: string
+  items: NavItem[]
+}
 
 // Função para verificar se é mobile
 const checkMobile = () => {
@@ -94,70 +110,31 @@ function navigateToAccountAdmin() {
   router.push({ name: 'settings' })
 }
 
-const navSections = computed(() => [
+const navSections = computed<NavSection[]>(() => [
   {
-    key: 'workspace',
-    title: t('sidebar.sections.workspace'),
+    key: 'decisions',
+    title: t('sidebar.sections.decisions'),
     items: [
       {
-        key: 'workspace-personal',
-        title: t('sidebar.workspace.personal_finance'),
-        icon: 'mdi-briefcase-outline',
-        disabled: true,
-        to: undefined,
-      },
-    ],
-  },
-  {
-    key: 'overview',
-    title: t('sidebar.sections.overview'),
-    items: [
-      {
-        key: 'overview',
-        title: t('sidebar.overview'),
-        icon: 'mdi-view-dashboard',
-        to: { name: 'dashboard' },
+        key: 'decisions',
+        title: t('sidebar.decisions'),
+        icon: 'mdi-lightbulb-outline',
+        to: { name: 'decisions' },
+        primary: true,
         disabled: false,
       },
       {
-        key: 'cashflow',
-        title: t('sidebar.cashflow'),
-        icon: 'mdi-chart-areaspline',
-        to: { name: 'cashflow' },
+        key: 'insights',
+        title: t('sidebar.insights'),
+        icon: 'mdi-brain',
+        to: { name: 'insights' },
         disabled: false,
       },
       {
-        key: 'home',
-        title: t('sidebar.home'),
-        icon: 'mdi-home',
-        to: { name: 'home' },
-        disabled: false,
-      },
-    ],
-  },
-  {
-    key: 'control',
-    title: t('sidebar.sections.control'),
-    items: [
-      {
-        key: 'transactions',
-        title: t('sidebar.transactions'),
-        icon: 'mdi-swap-horizontal',
-        to: { name: 'budget' },
-        disabled: false,
-      },
-      {
-        key: 'accounts',
-        title: t('sidebar.accounts'),
-        icon: 'mdi-bank-outline',
-        to: { name: 'accounts' },
-        disabled: false,
-      },
-      {
-        key: 'categories',
-        title: t('sidebar.categories'),
-        icon: 'mdi-shape-outline',
-        to: { name: 'categories' },
+        key: 'activity',
+        title: t('sidebar.activity'),
+        icon: 'mdi-timeline-text-outline',
+        to: { name: 'activity' },
         disabled: false,
       },
     ],
@@ -190,36 +167,23 @@ const navSections = computed(() => [
     ],
   },
   {
-    key: 'decisions',
-    title: t('sidebar.sections.decisions'),
+    key: 'dashboard',
+    title: t('sidebar.sections.overview'),
     items: [
       {
-        key: 'decisions',
-        title: t('sidebar.decisions'),
-        icon: 'mdi-lightbulb-outline',
-        to: { name: 'decisions' },
+        key: 'overview',
+        title: t('sidebar.overview'),
+        icon: 'mdi-view-dashboard',
+        to: { name: 'dashboard' },
         disabled: false,
       },
       {
-        key: 'insights',
-        title: t('sidebar.insights'),
-        icon: 'mdi-brain',
-        to: { name: 'insights' },
+        key: 'cashflow',
+        title: t('sidebar.cashflow'),
+        icon: 'mdi-chart-areaspline',
+        to: { name: 'cashflow' },
         disabled: false,
       },
-      {
-        key: 'activity',
-        title: t('sidebar.activity'),
-        icon: 'mdi-timeline-text-outline',
-        to: { name: 'activity' },
-        disabled: false,
-      },
-    ],
-  },
-  {
-    key: 'analytics',
-    title: t('sidebar.sections.analytics'),
-    items: [
       {
         key: 'report',
         title: t('sidebar.report'),
@@ -233,6 +197,41 @@ const navSections = computed(() => [
     key: 'system',
     title: t('sidebar.sections.system'),
     items: [
+      {
+        key: 'workspace-personal',
+        title: t('sidebar.workspace.personal_finance'),
+        icon: 'mdi-briefcase-outline',
+        disabled: true,
+        to: undefined,
+      },
+      {
+        key: 'home',
+        title: t('sidebar.home'),
+        icon: 'mdi-home',
+        to: { name: 'home' },
+        disabled: false,
+      },
+      {
+        key: 'transactions',
+        title: t('sidebar.transactions'),
+        icon: 'mdi-swap-horizontal',
+        to: { name: 'budget' },
+        disabled: false,
+      },
+      {
+        key: 'accounts',
+        title: t('sidebar.accounts'),
+        icon: 'mdi-bank-outline',
+        to: { name: 'accounts' },
+        disabled: false,
+      },
+      {
+        key: 'categories',
+        title: t('sidebar.categories'),
+        icon: 'mdi-shape-outline',
+        to: { name: 'categories' },
+        disabled: false,
+      },
       {
         key: 'settings',
         title: t('sidebar.settings'),
@@ -279,6 +278,7 @@ const navSections = computed(() => [
                   v-bind="props"
                   :prepend-icon="item.icon"
                   :title="item.title"
+                  :class="{ 'primary-nav-item': item.primary }"
                   v-if="item.to"
                   :to="item.to"
                   :disabled="item.disabled"
@@ -287,6 +287,7 @@ const navSections = computed(() => [
                   v-bind="props"
                   :prepend-icon="item.icon"
                   :title="item.title"
+                  :class="{ 'primary-nav-item': item.primary }"
                   v-else
                   :disabled="item.disabled"
                 ></v-list-item>
@@ -297,6 +298,7 @@ const navSections = computed(() => [
             <v-list-item
               :prepend-icon="item.icon"
               :title="item.title"
+              :class="{ 'primary-nav-item': item.primary }"
               v-if="item.to"
               :to="item.to"
               :disabled="item.disabled"
@@ -304,6 +306,7 @@ const navSections = computed(() => [
             <v-list-item
               :prepend-icon="item.icon"
               :title="item.title"
+              :class="{ 'primary-nav-item': item.primary }"
               v-else
               :disabled="item.disabled"
             ></v-list-item>
@@ -369,6 +372,18 @@ const navSections = computed(() => [
 
 .v-theme--dark .sidebar-section {
   color: rgba(255, 255, 255, 0.5);
+}
+
+.primary-nav-item {
+  background: rgba(79, 70, 229, 0.12);
+  border: 1px solid rgba(79, 70, 229, 0.28);
+  border-radius: 10px;
+  margin: 2px 6px;
+}
+
+.v-theme--dark .primary-nav-item {
+  background: rgba(99, 102, 241, 0.22);
+  border-color: rgba(129, 140, 248, 0.4);
 }
 </style>
 

@@ -17,9 +17,13 @@ export interface ScenarioDeltaInput {
 
 export interface ScenarioSimulationRequest {
   id?: string
+  budgetId?: string
   name?: string
   months?: number
+  periodMonth?: number
+  periodYear?: number
   deltas: ScenarioDeltaInput[]
+  lineAdjustments?: ScenarioLineAdjustment[]
 }
 
 export interface ScenarioForecastItem {
@@ -48,6 +52,7 @@ export interface ScenarioSimulationResponse {
 
 export interface SavedScenario {
   id: string
+  budgetId?: string
   name: string
   description?: string
   months?: number | null
@@ -58,6 +63,22 @@ export interface SavedScenario {
   impactedGoalsCount?: number | null
   createdAt?: string
   deltas: ScenarioDeltaInput[]
+  lines?: ScenarioLine[]
+}
+
+export interface ScenarioLine {
+  id: string
+  category: string
+  type: 'INCOME' | 'EXPENSE'
+  originalAmount: number
+  adjustedAmount: number
+  delta: number
+}
+
+export interface ScenarioLineAdjustment {
+  category: string
+  type: 'INCOME' | 'EXPENSE'
+  adjustedAmount: number
 }
 
 export interface SavedScenarioComparison {
