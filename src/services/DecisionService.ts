@@ -15,6 +15,8 @@ export interface PersistedDecision {
   approveVotes: number
   rejectVotes: number
   currentUserVote?: DecisionVoteValue | null
+  currentUserVoteJustification?: string | null
+  votes?: DecisionVote[]
   currentUserOwner?: boolean
   canCurrentUserApply?: boolean
   applyBlockedReason?: string | null
@@ -44,6 +46,16 @@ export interface DecisionVoteSummary {
   totalApproves: number
   totalRejects: number
   userVote?: DecisionVoteValue | null
+  userJustification?: string | null
+}
+
+export interface DecisionVote {
+  id: string
+  decisionId: string
+  userId: string
+  voteValue: DecisionVoteValue
+  justification?: string | null
+  createdAt?: string
 }
 
 export default {
@@ -65,8 +77,8 @@ export default {
   addComment(decisionId: string, body: string) {
     return axiosInterceptor.post<DecisionComment>(`/decisions/${decisionId}/comments`, { content: body })
   },
-  vote(decisionId: string, voteValue: DecisionVoteValue) {
-    return axiosInterceptor.post<DecisionVoteSummary>(`/decisions/${decisionId}/vote`, { vote: voteValue })
+  vote(decisionId: string, voteValue: DecisionVoteValue, justification?: string | null) {
+    return axiosInterceptor.post<DecisionVoteSummary>(`/decisions/${decisionId}/vote`, { vote: voteValue, justification })
   },
   removeVote(decisionId: string) {
     return axiosInterceptor.delete<DecisionVoteSummary>(`/decisions/${decisionId}/vote`)
