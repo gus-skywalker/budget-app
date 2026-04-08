@@ -127,6 +127,8 @@
       "email_hint": "Recibe alertas importantes por correo",
       "push_label": "Notificaciones push",
       "push_hint": "Recibe notificaciones en tu navegador",
+      "daily_digest_label": "Resumen diario por correo",
+      "daily_digest_hint": "Recibe un resumen diario con tus notificaciones no leídas",
       "alert_days_label": "Días de anticipación",
       "alert_days_hint": "Cuántos días antes quieres recibir alertas de gastos"
     },
@@ -1176,8 +1178,13 @@
     "messages": {
       "login_success": "¡Inicio de sesión exitoso!",
       "login_failed": "Credenciales inválidas. Inténtalo de nuevo.",
+      "email_not_verified": "Tu correo electrónico aún no está verificado. Verifícalo para continuar.",
+      "resend_verification": "Reenviar correo de verificación",
+      "resend_verification_success": "Correo de verificación enviado. Revisa tu bandeja de entrada.",
+      "resend_verification_failed": "No se pudo reenviar el correo de verificación. Inténtalo de nuevo.",
       "signup_success": "Cuenta creada con éxito.",
-      "signup_success_ready": "Cuenta creada con éxito. Ahora ya puedes iniciar sesión.",
+      "signup_success_ready": "Cuenta creada con éxito.",
+      "signup_verify_email_notice": "Cuenta creada. Verifica tu correo antes de iniciar sesión.",
       "signup_failed": "Error al crear la cuenta. Inténtalo de nuevo.",
       "password_mismatch": "La nueva contraseña y la confirmación no coinciden.",
       "network_error": "No se pudo conectar con el servidor. Verifica tu conexión e inténtalo de nuevo.",

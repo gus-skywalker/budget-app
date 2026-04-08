@@ -20,12 +20,15 @@ import TermsOfUse from '@/components/compliance/TermsOfUse.vue'
 import CookiePolicy from '@/components/compliance/CookiePolicy.vue'
 import ForgotPassword from '@/views/ForgotPassword.vue'
 import ResetPassword from '@/views/ResetPassword.vue'
+import VerifyEmailView from '@/views/VerifyEmailView.vue'
 import { useUserStore } from '@/plugins/userStore'
 import GoalView from '@/views/GoalView.vue'
 import StripeSuccess from '@/views/redirect_url/StripeSuccess.vue'
 import StripeCancel from '@/views/redirect_url/StripeCancel.vue'
 import ChoosePlan from '@/views/ChoosePlan.vue'
 import ReportView from '@/views/ReportView.vue'
+import InviteAcceptView from '@/views/InviteAcceptView.vue'
+import InviteDeclineView from '@/views/InviteDeclineView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -99,6 +102,18 @@ const router = createRouter({
       meta: { hideAppChrome: true }
     },
     {
+      path: '/invite/accept',
+      name: 'invite-accept',
+      component: InviteAcceptView,
+      meta: { hideAppChrome: true }
+    },
+    {
+      path: '/invite/decline',
+      name: 'invite-decline',
+      component: InviteDeclineView,
+      meta: { hideAppChrome: true }
+    },
+    {
       path: '/insights',
       name: 'insights',
       component: InsightsView,
@@ -155,6 +170,11 @@ const router = createRouter({
       path: '/reset-password',
       name: 'reset-password',
       component: ResetPassword
+    },
+    {
+      path: '/verify-email',
+      name: 'verify-email',
+      component: VerifyEmailView
     },
     {
       path: '/oauth2/redirect',

@@ -299,6 +299,20 @@
 
                   <v-divider class="my-4"></v-divider>
 
+                  <div class="setting-item">
+                    <div class="setting-info">
+                      <div class="setting-label">{{ $t('account_management.notifications.daily_digest_label') }}</div>
+                      <div class="setting-hint">{{ $t('account_management.notifications.daily_digest_hint') }}</div>
+                    </div>
+                    <v-switch
+                      v-model="dailyDigestEmail"
+                      color="#667eea"
+                      hide-details
+                    ></v-switch>
+                  </div>
+
+                  <v-divider class="my-4"></v-divider>
+
                   <div class="setting-item mb-4">
                     <div class="setting-info full-width">
                       <div class="setting-label">{{ $t('account_management.notifications.alert_days_label') }}</div>
@@ -922,7 +936,10 @@ import DataService from '@/services/DataService';
 import FinancialReadService from '@/services/FinancialReadService';
 import OpenFinanceService from '@/services/OpenFinanceService';
 import AuthService from '@/services/AuthService';
-import NotificationService, { type UserSettings } from '@/services/NotificationService';
+import NotificationService, {
+  type NotificationPreferenceMap,
+  type UserSettings
+} from '@/services/NotificationService';
 import type { AccountView } from '@/types/financialRead';
 import type {
   OpenFinanceBankCategory,
@@ -951,6 +968,8 @@ const resolveSettingsTab = (value: unknown) => {
   return validSettingsTabs.has(tab) ? tab : 'profile'
 }
 
+const DAILY_DIGEST_EVENT_TYPE = 'DAILY_DIGEST'
+
 const loadAlertSettings = async () => {
   try {
     const response = await NotificationService.getAlertSettings();
@@ -965,7 +984,17 @@ const loadAlertSettings = async () => {
     // Sincronizar com o tema atual do Vuetify
     darkTheme.value = theme.global.current.value.dark;
   } catch (error) {
-    console.error('Erro ao carregar configurações:', error);
+    // Endpoint legado pode não existir mais em alguns ambientes.
+    console.warn('Configurações legadas de alerta indisponíveis:', error);
+  }
+
+  try {
+    const preferencesResponse = await NotificationService.getPreferences()
+    const preferences: NotificationPreferenceMap = preferencesResponse.data || {}
+    const digestPreference = preferences[DAILY_DIGEST_EVENT_TYPE]
+    dailyDigestEmail.value = digestPreference?.emailEnabled ?? true
+  } catch (error) {
+    console.error('Erro ao carregar preferências de notificação:', error);
   }
 };
 
@@ -1008,6 +1037,7 @@ const profileLocale = ref(locale.value)
 // Preferências
 const notificationEmail = ref(true)
 const notificationPush = ref(true)
+const dailyDigestEmail = ref(true)
 const darkTheme = ref(false)
 const alertDays = ref(1);
 const alertOptions = [1, 2, 3, 5, 7, 10];
@@ -1858,9 +1888,22 @@ const saveAlertSettings = async () => {
       darkTheme: darkTheme.value,
     };
     await NotificationService.updateAlertSettings(settings);
+  } catch (error) {
+    // Mantemos o fluxo da UI funcional mesmo sem endpoint legado.
+    console.warn('Persistência legada de alertas indisponível:', error);
+  }
+
+  try {
+    await NotificationService.updatePreferences([
+      {
+        eventType: DAILY_DIGEST_EVENT_TYPE,
+        inboxEnabled: true,
+        emailEnabled: dailyDigestEmail.value,
+      },
+    ])
     console.log('Configurações salvas com sucesso!');
   } catch (error) {
-    console.error('Erro ao salvar configurações:', error);
+    console.error('Erro ao salvar preferências de notificação:', error);
   }
 };
 

@@ -20,6 +20,14 @@ export default {
     return axios.post(`${API_URL}/reset-password`, { token, newPassword })
   },
 
+  verifyEmail(token: string): Promise<any> {
+    return axios.post(`${API_URL}/verify-email`, null, { params: { token } })
+  },
+
+  resendVerification(email?: string): Promise<any> {
+    return axios.post(`${API_URL}/resend-verification`, email ? { email } : {})
+  },
+
   changePassword(currentPassword: string, newPassword: string): Promise<any> {
     return axiosInterceptor.post(`${API_URL}/change-password`, { currentPassword, newPassword })
   },

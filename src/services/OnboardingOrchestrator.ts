@@ -158,6 +158,16 @@ export const resolvePostAuthRoute = async (
   const requiresBusinessTenant = targetRequiresBusinessTenant(targetPath)
   const requiresTenantContext = requiresWorkspace || requiresBusinessTenant
 
+  // If target does not require tenant/workspace context (for example invite accept flow),
+  // let the user continue even without an existing workspace selected.
+  if (!hasWorkspaces && !requiresTenantContext) {
+    return {
+      state: requiresBusinessTenant ? 'READY_BILLING_DECISION' : 'READY',
+      route: { path: targetPath },
+      targetPath
+    }
+  }
+
   if (!hasWorkspaces) {
     return {
       state: 'WORKSPACE_REQUIRED',

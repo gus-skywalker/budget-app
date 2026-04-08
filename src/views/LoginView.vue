@@ -142,6 +142,19 @@
                 <span v-else>{{ $t('authentication.login.login_button') }}</span>
               </button>
 
+              <div v-if="emailNotVerified" class="verification-help">
+                <p class="verification-help-text">{{ $t('authentication.messages.email_not_verified') }}</p>
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  :disabled="isResendingVerification || !userData.email"
+                  @click="resendVerificationEmail"
+                >
+                  <span v-if="isResendingVerification" class="spinner"></span>
+                  <span v-else>{{ $t('authentication.messages.resend_verification') }}</span>
+                </button>
+              </div>
+
               <div class="divider">
                 <span>{{ $t('authentication.common.or') }}</span>
               </div>
@@ -269,6 +282,8 @@ const error = ref(null)
 const loginSuccess = ref(null)
 const signupError = ref(null)
 const signupSuccess = ref(null)
+const emailNotVerified = ref(false)
+const isResendingVerification = ref(false)
 const showSignupForm = ref(false)
 const isLoading = ref(false)
 const showPassword = ref(false)
@@ -285,9 +300,14 @@ onMounted(() => {
 const getLoginErrorMessage = (err) => {
   const status = err?.response?.status
   const data = err?.response?.data
+  const errorCode = typeof data === 'string' ? data : data?.error
 
   if (err?.code === 'ERR_NETWORK' || !err?.response) {
     return t('authentication.messages.network_error')
+  }
+
+  if (errorCode === 'EMAIL_NOT_VERIFIED') {
+    return t('authentication.messages.email_not_verified')
   }
 
   if (status === 401 || status === 403) {
@@ -312,6 +332,7 @@ const getLoginErrorMessage = (err) => {
 const userLogin = async () => {
   try {
     isLoading.value = true
+    emailNotVerified.value = false
     const store = useUserStore()
 
     const res = await AuthService.signIn(userData.value)
@@ -343,6 +364,11 @@ const userLogin = async () => {
   } catch (err) {
     console.error('Login error:', err)
     console.error('Store no momento do erro:', useUserStore())
+
+    const errorCode = typeof err?.response?.data === 'string'
+      ? err.response.data
+      : err?.response?.data?.error
+    emailNotVerified.value = errorCode === 'EMAIL_NOT_VERIFIED'
 
     error.value = getLoginErrorMessage(err)
     setTimeout(() => {
@@ -464,11 +490,18 @@ const userSignup = async () => {
     const res = await AuthService.signUp(requestData)
 
     if (res.status === 201) {
+      const createdEmail = signupData.value.email
       signupSuccess.value = t('authentication.messages.signup_success_ready')
       setTimeout(() => {
         signupSuccess.value = null
         clearSignupForm()
         toggleForm(false)
+        userData.value.email = createdEmail
+        emailNotVerified.value = true
+        loginSuccess.value = t('authentication.messages.signup_verify_email_notice')
+        setTimeout(() => {
+          loginSuccess.value = null
+        }, 7000)
       }, 3000)
     } else {
       signupError.value = t('authentication.messages.signup_failed')
@@ -485,6 +518,28 @@ const userSignup = async () => {
     }, 4000)
   } finally {
     isLoading.value = false
+  }
+}
+
+const resendVerificationEmail = async () => {
+  if (!userData.value.email) {
+    error.value = t('authentication.login.invalid_email')
+    return
+  }
+  try {
+    isResendingVerification.value = true
+    await AuthService.resendVerification(userData.value.email)
+    loginSuccess.value = t('authentication.messages.resend_verification_success')
+    setTimeout(() => {
+      loginSuccess.value = null
+    }, 4000)
+  } catch (err) {
+    error.value = t('authentication.messages.resend_verification_failed')
+    setTimeout(() => {
+      error.value = null
+    }, 4000)
+  } finally {
+    isResendingVerification.value = false
   }
 }
 
@@ -768,6 +823,32 @@ body:has(.login-page) .main-content {
   background: #ffffff;
   color: #172033;
   box-shadow: 0 6px 14px rgba(23, 32, 51, 0.06);
+}
+
+.verification-help {
+  margin-top: 14px;
+  margin-bottom: 14px;
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(37, 99, 235, 0.06);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+}
+
+.verification-help-text {
+  margin: 0 0 8px 0;
+  color: #1d4ed8;
+  font-size: 0.95rem;
+}
+
+.btn.btn-secondary {
+  width: 100%;
+  background: #ffffff;
+  color: #1d4ed8;
+  border: 1px solid rgba(37, 99, 235, 0.35);
+}
+
+.btn.btn-secondary:hover {
+  background: #eef4ff;
 }
 
 .auth-form {

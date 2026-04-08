@@ -127,6 +127,8 @@
       "email_hint": "Receba alertas importantes no seu email",
       "push_label": "Notificações Push",
       "push_hint": "Receba notificações no navegador",
+      "daily_digest_label": "Resumo diário por email",
+      "daily_digest_hint": "Receba um resumo com notificações não lidas uma vez por dia",
       "alert_days_label": "Dias de Antecedência",
       "alert_days_hint": "Quantos dias antes você quer ser alertado sobre despesas"
     },
@@ -1176,8 +1178,13 @@
     "messages": {
       "login_success": "Login realizado com sucesso!",
       "login_failed": "Credenciais inválidas. Por favor, tente novamente.",
+      "email_not_verified": "Seu e-mail ainda não foi verificado. Verifique para continuar.",
+      "resend_verification": "Reenviar e-mail de verificação",
+      "resend_verification_success": "E-mail de verificação enviado. Confira sua caixa de entrada.",
+      "resend_verification_failed": "Não foi possível reenviar o e-mail de verificação. Tente novamente.",
       "signup_success": "Conta criada com sucesso.",
-      "signup_success_ready": "Conta criada com sucesso. Agora você já pode entrar.",
+      "signup_success_ready": "Conta criada com sucesso.",
+      "signup_verify_email_notice": "Conta criada. Verifique seu e-mail antes de entrar.",
       "signup_failed": "Erro ao criar a conta. Por favor, tente novamente.",
       "password_mismatch": "As senhas não coincidem. Por favor, tente novamente.",
       "network_error": "Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.",

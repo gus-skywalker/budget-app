@@ -127,6 +127,8 @@
       "email_hint": "Recevez des alertes importantes par e-mail",
       "push_label": "Notifications push",
       "push_hint": "Recevez des notifications dans votre navigateur",
+      "daily_digest_label": "Récapitulatif quotidien par e-mail",
+      "daily_digest_hint": "Recevez un résumé quotidien avec vos notifications non lues",
       "alert_days_label": "Jours à l'avance",
       "alert_days_hint": "Combien de jours avant vous souhaitez être alerté des dépenses"
     },
@@ -1174,8 +1176,13 @@
     "messages": {
       "login_success": "Connexion réussie !",
       "login_failed": "Identifiants invalides. Veuillez réessayer.",
+      "email_not_verified": "Votre e-mail n'est pas encore vérifié. Veuillez le vérifier pour continuer.",
+      "resend_verification": "Renvoyer l'e-mail de vérification",
+      "resend_verification_success": "E-mail de vérification envoyé. Vérifiez votre boîte de réception.",
+      "resend_verification_failed": "Impossible de renvoyer l'e-mail de vérification. Veuillez réessayer.",
       "signup_success": "Compte créé avec succès.",
-      "signup_success_ready": "Compte créé avec succès. Vous pouvez maintenant vous connecter.",
+      "signup_success_ready": "Compte créé avec succès.",
+      "signup_verify_email_notice": "Compte créé. Vérifiez votre e-mail avant de vous connecter.",
       "signup_failed": "Erreur lors de la création du compte. Veuillez réessayer.",
       "password_mismatch": "Les mots de passe ne correspondent pas. Veuillez réessayer.",
       "network_error": "Impossible de se connecter au serveur. Vérifiez votre connexion et réessayez.",

@@ -18,6 +18,20 @@ export interface UserSettings {
   [key: string]: any;
 }
 
+export interface NotificationPreference {
+  eventType: string
+  inboxEnabled: boolean
+  emailEnabled: boolean
+}
+
+export type NotificationPreferenceMap = Record<string, NotificationPreference>
+
+export interface NotificationPreferenceUpdate {
+  eventType: string
+  inboxEnabled?: boolean
+  emailEnabled?: boolean
+}
+
 const API_URL = `${import.meta.env.VITE_API_BASE_URL}/notifications`
 
 const NotificationService = {
@@ -32,10 +46,10 @@ const NotificationService = {
   },
   // Legacy methods kept for compatibility with existing screens.
   updateAlertSettings(settings: any): Promise<any> {
-    return axiosInterceptor.put(`${API_URL}/alerts/settings`, settings)
+    return axiosInterceptor.put(`${API_URL}/settings`, settings)
   },
   getAlertSettings(): Promise<any> {
-    return axiosInterceptor.get(`${API_URL}/alerts/settings`)
+    return axiosInterceptor.get(`${API_URL}/settings`)
   },
   scheduleExpenseAlert(expenseRequest: any): Promise<any> {
     return axiosInterceptor.post(`${API_URL}/alerts/schedule`, expenseRequest)
@@ -51,6 +65,12 @@ const NotificationService = {
   },
   sendContactForm(contactData: { name: string; email: string; message: string }): Promise<any> {
     return axiosInterceptor.post(`${API_URL}/contact`, contactData)
+  },
+  getPreferences(): Promise<{ data: NotificationPreferenceMap }> {
+    return axiosInterceptor.get(`${API_URL}/preferences`)
+  },
+  updatePreferences(preferences: NotificationPreferenceUpdate[]): Promise<{ data: NotificationPreferenceMap }> {
+    return axiosInterceptor.put(`${API_URL}/preferences`, preferences)
   }
 }
 

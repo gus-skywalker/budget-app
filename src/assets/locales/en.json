@@ -128,6 +128,8 @@
       "email_hint": "Receive important alerts via email",
       "push_label": "Push Notifications",
       "push_hint": "Receive notifications in your browser",
+      "daily_digest_label": "Daily email digest",
+      "daily_digest_hint": "Receive a daily summary with your unread notifications",
       "alert_days_label": "Days in Advance",
       "alert_days_hint": "How many days before you want to be alerted about expenses"
     },
@@ -1194,8 +1196,13 @@
     "messages": {
       "login_success": "Login successful!",
       "login_failed": "Invalid credentials. Please try again.",
+      "email_not_verified": "Your email is not verified yet. Please verify it to continue.",
+      "resend_verification": "Resend verification email",
+      "resend_verification_success": "Verification email sent. Please check your inbox.",
+      "resend_verification_failed": "Could not resend verification email. Please try again.",
       "signup_success": "Account created successfully.",
-      "signup_success_ready": "Account created successfully. You can sign in now.",
+      "signup_success_ready": "Account created successfully.",
+      "signup_verify_email_notice": "Account created. Please verify your email before signing in.",
       "signup_failed": "Error creating account. Please try again.",
       "password_mismatch": "Passwords do not match. Please try again.",
       "network_error": "Could not connect to the server. Check your connection and try again.",

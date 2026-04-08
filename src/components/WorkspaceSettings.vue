@@ -579,11 +579,13 @@ const sendInvite = async () => {
   }
   inviteLoading.value = true
   try {
-    await WorkspaceInviteService.inviteUser(currentWorkspaceId.value, inviteForm.value.email, inviteForm.value.role)
+    const inviteEmail = inviteForm.value.email
+    const response = await WorkspaceInviteService.inviteUser(currentWorkspaceId.value, inviteEmail, inviteForm.value.role)
     inviteForm.value.email = ''
     inviteForm.value.role = 'ROLE_MEMBER'
     await loadInvites()
-    showSnackbar(t('workspaceSettings.success_invite_sent_generic'))
+    const backendMessage = response?.data?.message
+    showSnackbar(backendMessage || `${t('workspaceSettings.success_invite_sent_generic')} (${inviteEmail})`)
   } catch (error) {
     showSnackbar(parseApiError(error), 'error')
     const limitType = getFreePlanLimitType(error)
@@ -616,6 +618,7 @@ const cancelInvite = async (inviteId: string) => {
   }
   try {
     await WorkspaceInviteService.cancelInvite(currentWorkspaceId.value, inviteId)
+    invites.value = invites.value.filter((invite: any) => String(invite?.id) !== String(inviteId))
     await loadInvites()
     showSnackbar(t('workspaceSettings.success_cancel_invite'), 'info')
   } catch (error) {

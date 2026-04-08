@@ -35,12 +35,28 @@ declare module '@/services/NotificationService' {
     darkTheme: boolean
   }
 
+  export interface NotificationPreference {
+    eventType: string
+    inboxEnabled: boolean
+    emailEnabled: boolean
+  }
+
+  export type NotificationPreferenceMap = Record<string, NotificationPreference>
+
+  export interface NotificationPreferenceUpdate {
+    eventType: string
+    inboxEnabled?: boolean
+    emailEnabled?: boolean
+  }
+
   export function accept(notificationId: number): Promise<void>
   export function decline(notificationId: number): Promise<void>
   export function getNotifications(): Promise<{ data: any[] }>
   export function sendEmail(notification: ExpenseNotification): Promise<void>
   export function updateAlertSettings(settings: UserSettings): Promise<void>
   export function getAlertSettings(): Promise<UserSettings>
+  export function getPreferences(): Promise<{ data: NotificationPreferenceMap }>
+  export function updatePreferences(preferences: NotificationPreferenceUpdate[]): Promise<{ data: NotificationPreferenceMap }>
   export function scheduleExpenseAlert(notification: ExpenseNotification): Promise<void>
   export function updateExpenseAlert(notification: ExpenseNotification): Promise<void>
 }

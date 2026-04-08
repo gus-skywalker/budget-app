@@ -1,6 +1,7 @@
 import axiosInterceptor from './axiosInterceptor'
 
 const API_URL = `${import.meta.env.VITE_API_BASE_URL}/workspaces`
+const isPendingInvite = (status: unknown): boolean => String(status || '').toUpperCase() === 'PENDING'
 
 export default {
   /**
@@ -22,12 +23,15 @@ export default {
   async listInvites(workspaceId: string): Promise<any[]> {
     const response = await axiosInterceptor.get(`${API_URL}/${workspaceId}/invites`, { timeout: 15000 })
     const invites = Array.isArray(response.data) ? response.data : []
-    return invites.map((invite: any) => ({
-      ...invite,
-      workspaceId: invite?.workspaceId || invite?.companyId,
-      role: invite?.role || invite?.tenantRole || invite?.invitedTenantRole,
-      createdAt: invite?.createdAt || invite?.created_at
-    }))
+    return invites
+      .map((invite: any) => ({
+        ...invite,
+        workspaceId: invite?.workspaceId || invite?.companyId,
+        role: invite?.role || invite?.tenantRole || invite?.invitedTenantRole,
+        createdAt: invite?.createdAt || invite?.created_at,
+        status: String(invite?.status || '').toUpperCase()
+      }))
+      .filter((invite: any) => isPendingInvite(invite?.status))
   },
 
   /**
@@ -36,6 +40,36 @@ export default {
    */
   cancelInvite(workspaceId: string, inviteId: string): Promise<any> {
     return axiosInterceptor.delete(`${API_URL}/${workspaceId}/invites/${inviteId}`, { timeout: 15000 })
+  },
+
+  /**
+   * Aceitar convite por token
+   * POST /invites/accept?token=...
+   */
+  acceptInvite(token: string): Promise<any> {
+    return axiosInterceptor.post(
+      `${import.meta.env.VITE_API_BASE_URL}/invites/accept`,
+      null,
+      {
+        params: { token },
+        timeout: 15000
+      }
+    )
+  },
+
+  /**
+   * Recusar convite por token
+   * POST /invites/decline?token=...
+   */
+  declineInvite(token: string): Promise<any> {
+    return axiosInterceptor.post(
+      `${import.meta.env.VITE_API_BASE_URL}/invites/decline`,
+      null,
+      {
+        params: { token },
+        timeout: 15000
+      }
+    )
   },
 
   /**
@@ -53,7 +87,7 @@ export default {
       return response.data
     } catch (err: any) {
       if (err?.response?.status === 404) {
-        return { valid: false }
+        return { valid: false, requiresAuth: true }
       }
       throw err
     }
