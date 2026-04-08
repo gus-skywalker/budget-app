@@ -266,6 +266,16 @@
                 </template>
                 <div class="decision-card__secondary-actions">
                   <v-btn
+                    v-if="decision.decisionId"
+                    variant="text"
+                    size="small"
+                    color="#0ea5e9"
+                    @click="copyPublicDecisionLink(decision.decisionId)"
+                  >
+                    <v-icon start size="16">mdi-link-variant</v-icon>
+                    Copy public link
+                  </v-btn>
+                  <v-btn
                     v-if="decision.isOpenDecision"
                     variant="outlined"
                     size="small"
@@ -740,6 +750,27 @@ const applyDecision = async (decisionId: string) => {
   } finally {
     activeDecisionId.value = null
     decisionAction.value = null
+  }
+}
+
+const copyPublicDecisionLink = async (decisionId: string) => {
+  const publicUrl = `${window.location.origin}/decision/${decisionId}/public`
+  try {
+    await navigator.clipboard.writeText(publicUrl)
+    successMessage.value = 'Public link copied'
+  } catch (copyError) {
+    try {
+      const input = document.createElement('input')
+      input.value = publicUrl
+      document.body.appendChild(input)
+      input.select()
+      document.execCommand('copy')
+      document.body.removeChild(input)
+      successMessage.value = 'Public link copied'
+    } catch (fallbackError) {
+      console.error(copyError, fallbackError)
+      error.value = 'Could not copy public link'
+    }
   }
 }
 

@@ -4,18 +4,8 @@ import { useRouter } from 'vue-router'
 import { useTheme } from 'vuetify'
 import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/plugins/userStore'
-import type { Notification } from '@/services/NotificationService'
 import WorkspaceSwitcher from '@/components/WorkspaceSwitcher.vue'
 import type { RouteLocationRaw } from 'vue-router'
-
-// Import props and emits
-const props = defineProps<{
-  notifications: Notification[]
-}>()
-
-const notifications = computed(() => props.notifications)
-
-const emit = defineEmits(['toggle-notifications-popup'])
 
 const router = useRouter()
 const theme = useTheme()
@@ -99,11 +89,6 @@ function redirectToOAuth2LoginPage() {
 function toggleTheme() {
   const currentTheme = theme.global.current.value.dark ? 'light' : 'dark'
   theme.global.name.value = currentTheme
-}
-
-// Função para alternar a exibição das notificações
-function toggleNotifications() {
-  emit('toggle-notifications-popup', true)
 }
 
 function navigateToAccountAdmin() {
@@ -327,15 +312,6 @@ const navSections = computed<NavSection[]>(() => [
       </template>
     </v-tooltip>
 
-    <v-tooltip :text="$t('sidebar.notifications_tooltip')" location="end">
-      <template v-slot:activator="{ props }">
-        <div v-bind="props" class="notification-icon" @click="toggleNotifications">
-          <v-badge :content="notifications.length" color="red" overlap>
-            <v-icon>mdi-bell</v-icon>
-          </v-badge>
-        </div>
-      </template>
-    </v-tooltip>
   </v-navigation-drawer>
 
   <!-- Diálogo de confirmação de logout -->
@@ -389,17 +365,6 @@ const navSections = computed<NavSection[]>(() => [
 
 
 <style scoped>
-.notification-icon {
-  cursor: pointer;
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 16px;
-  margin: 8px 0;
-  width: 56px; /* Largura fixa do rail */
-}
-
 .workspace-switcher-wrapper {
   padding: 12px 16px;
 }
@@ -407,15 +372,6 @@ const navSections = computed<NavSection[]>(() => [
 .workspace-switcher-wrapper :deep(.workspace-switcher-btn) {
   width: 100%;
   justify-content: flex-start;
-}
-
-.notification-dropdown {
-  position: absolute;
-  top: 50px;
-  right: 0;
-  background: white;
-  border: 1px solid #ccc;
-  z-index: 1000;
 }
 
 .language-select {

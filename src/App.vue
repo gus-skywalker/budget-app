@@ -1,11 +1,11 @@
 <!-- App.vue -->
 <script setup lang="ts">
-import { RouterView, useRoute } from 'vue-router'
+import { RouterView, useRoute, useRouter } from 'vue-router'
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import SideBar from './components/SideBar.vue'
 import ContextBadge from '@/components/ContextBadge.vue'
 import OnboardingStatusBanner from '@/components/OnboardingStatusBanner.vue'
-import NotificationPopup from '@/components/NotificationPopup.vue'
+import NotificationBellDropdown from '@/components/NotificationBellDropdown.vue'
 import PrivacyControls from '@/components/compliance/PrivacyControls.vue'
 import { useUserStore } from '@/plugins/userStore'
 import NotificationService from '@/services/NotificationService'
@@ -14,35 +14,19 @@ import type { Notification } from '@/services/NotificationService'
 // Access the Pinia store
 const userStore = useUserStore()
 const route = useRoute()
+const router = useRouter()
 const routeViewKey = computed(() => route.path)
 const focusedOnboardingRoutes = new Set(['create-workspace', 'select-workspace', 'choose-plan', 'checkout'])
 
 // Estado das notificações
 const notifications = ref<Notification[]>([])
 const showNotificationsPopup = ref(false)
+const unreadCount = ref(0)
 
 // Computed property to check if the user is authenticated
 const isAuthenticated = computed(() => userStore.isAuthenticated)
 const showFocusedOnboardingChrome = computed(() => !focusedOnboardingRoutes.has(String(route.name || '')))
-
-// Função para alternar a exibição das notificações
-function toggleNotificationsPopup() {
-  showNotificationsPopup.value = !showNotificationsPopup.value
-}
-
-// Função para aceitar a notificação
-function accept(notificationId: number) {
-  NotificationService.accept(String(notificationId)).then(() => {
-    notifications.value = notifications.value.filter((n) => n.id !== String(notificationId))
-  })
-}
-
-// Função para declinar a notificação
-function decline(notificationId: number) {
-  NotificationService.decline(String(notificationId)).then(() => {
-    notifications.value = notifications.value.filter((n) => n.id !== String(notificationId))
-  })
-}
+const hideAppChrome = computed(() => Boolean(route.meta?.hideAppChrome))
 
 // Função para fazer polling de notificações
 function pollNotifications() {
@@ -50,21 +34,66 @@ function pollNotifications() {
     NotificationService.getNotifications()
       .then((response) => {
         const items = Array.isArray(response.data) ? response.data : []
-        notifications.value = items.map((notification: Notification) => ({
-          id: notification.id,
-          destinationUser: notification.destinationUser,
-          message: notification.message,
-          status: notification.status,
-          relatedEntityId: notification.relatedEntityId
-        }))
-        if (notifications.value.length > 0) {
-          showNotificationsPopup.value = true
-        }
+        notifications.value = items as Notification[]
       })
       .catch((error: any) => {
         console.error('Erro ao buscar notificações:', error)
       })
+    NotificationService.getUnreadCount()
+      .then((response) => {
+        unreadCount.value = Number(response?.data?.unreadCount || 0)
+      })
+      .catch((error: any) => {
+        console.error('Erro ao buscar total de não lidas:', error)
+      })
   }
+}
+
+async function openNotification(notification: Notification) {
+  const notificationId = String(notification.id)
+  if (!notification.read) {
+    try {
+      await NotificationService.markAsRead(notificationId)
+      notifications.value = notifications.value.map((item) => {
+        if (String(item.id) === notificationId) {
+          return { ...item, read: true }
+        }
+        return item
+      })
+      unreadCount.value = Math.max(0, unreadCount.value - 1)
+    } catch (error) {
+      console.error('Erro ao marcar notificação como lida:', error)
+    }
+  }
+
+  const decisionId = extractDecisionId(notification)
+  if (decisionId) {
+    await router.push({ name: 'decisions', query: { decisionId } })
+  } else {
+    await router.push({ name: 'decisions' })
+  }
+  showNotificationsPopup.value = false
+}
+
+function extractDecisionId(notification: Notification): string | null {
+  if (notification.metadata) {
+    try {
+      const parsed = JSON.parse(notification.metadata)
+      if (parsed && typeof parsed.decisionId === 'string' && parsed.decisionId.trim().length > 0) {
+        return parsed.decisionId
+      }
+    } catch (error) {
+      console.error('Erro ao interpretar metadata da notificação:', error)
+    }
+  }
+  const relatedEntity = (notification as any).relatedEntityId
+  if (typeof relatedEntity === 'string' && relatedEntity.includes(':')) {
+    const lastToken = relatedEntity.split(':').pop()
+    if (lastToken && lastToken.trim().length > 0) {
+      return lastToken
+    }
+  }
+  return null
 }
 
 let pollingInterval: any
@@ -85,17 +114,20 @@ onUnmounted(() => {
 
 <template>
   <v-app>
-    <SideBar v-if="isAuthenticated" :notifications="notifications"
-      @toggle-notifications-popup="toggleNotificationsPopup" />
+    <SideBar v-if="isAuthenticated && !hideAppChrome" />
     <v-main>
-      <div v-if="isAuthenticated && showFocusedOnboardingChrome" class="global-context-container">
+      <div v-if="isAuthenticated && showFocusedOnboardingChrome && !hideAppChrome" class="global-context-container">
+        <NotificationBellDropdown
+          v-model="showNotificationsPopup"
+          :notifications="notifications"
+          :unread-count="unreadCount"
+          @notification-click="openNotification"
+        />
         <ContextBadge />
       </div>
-      <OnboardingStatusBanner v-if="isAuthenticated && showFocusedOnboardingChrome" />
+      <OnboardingStatusBanner v-if="isAuthenticated && showFocusedOnboardingChrome && !hideAppChrome" />
       <RouterView :key="routeViewKey" />
     </v-main>
-    <NotificationPopup :visible="showNotificationsPopup" :notifications="notifications"
-      @close="toggleNotificationsPopup" @accept="accept" @decline="decline" />
     <PrivacyControls />
   </v-app>
 </template>
@@ -107,6 +139,8 @@ onUnmounted(() => {
   z-index: 5;
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
   padding: 8px 16px 0 16px;
 }
 </style>

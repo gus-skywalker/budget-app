@@ -12,6 +12,8 @@ import { defineStore } from 'pinia'
 import WorkspaceService from '@/services/WorkspaceService'
 import AuthService from '@/services/AuthService'
 
+let refreshTimer: number | null = null
+
 /**
  * Decode JWT token without external libraries
  */
@@ -127,6 +129,7 @@ type State = {
   language: string
   preferredMode: 'personal' | 'tenant' | null
   preferredWorkspaceId: string | null
+  refreshInFlight: boolean
 }
 
 export const useUserStore = defineStore({
@@ -140,7 +143,8 @@ export const useUserStore = defineStore({
     tenantRole: null,
     language: 'PT',
     preferredMode: null,
-    preferredWorkspaceId: null
+    preferredWorkspaceId: null,
+    refreshInFlight: false,
   }),
 
   getters: {
@@ -211,6 +215,7 @@ export const useUserStore = defineStore({
 
     setToken(token: string | null) {
       this.token = token
+      this.scheduleAccessTokenRefresh(token)
       this.saveState()
     },
 
@@ -287,12 +292,14 @@ export const useUserStore = defineStore({
     },
 
     resetUser() {
+      this.clearRefreshTimer()
       this.token = null
       this.auth = false
       this.user = {}
       this.currentWorkspaceId = null
       this.tenantRole = null
       this.language = 'PT'
+      this.refreshInFlight = false
       this.saveState()
     },
 
@@ -332,6 +339,10 @@ export const useUserStore = defineStore({
 
       // Preference is intentionally stored in localStorage (survives sessions)
       this.loadPreference()
+
+      if (this.token) {
+        this.scheduleAccessTokenRefresh(this.token)
+      }
     },
 
     /**
@@ -340,6 +351,8 @@ export const useUserStore = defineStore({
     syncFromToken(token: string) {
       const decoded = decodeJWT(token)
       if (!decoded) return
+
+      this.scheduleAccessTokenRefresh(token)
 
       if (decoded.user_id) {
         this.user.id = decoded.user_id
@@ -391,6 +404,32 @@ export const useUserStore = defineStore({
       }
 
       this.saveState()
+    },
+
+    clearRefreshTimer() {
+      if (refreshTimer) {
+        clearTimeout(refreshTimer)
+        refreshTimer = null
+      }
+    },
+
+    scheduleAccessTokenRefresh(token: string | null) {
+      this.clearRefreshTimer()
+      if (!token) return
+
+      const decoded = decodeJWT(token)
+      const expSeconds = decoded?.exp
+      if (!expSeconds || typeof expSeconds !== 'number') {
+        return
+      }
+
+      const expiresAtMs = expSeconds * 1000
+      const refreshAtMs = expiresAtMs - 60_000
+      const delayMs = Math.max(5_000, refreshAtMs - Date.now())
+
+      refreshTimer = window.setTimeout(async () => {
+        await this.tryRefreshToken()
+      }, delayMs)
     },
 
     async hydrateWorkspaceDetailsFromBudget(workspaceIds?: string[]) {
@@ -548,6 +587,10 @@ export const useUserStore = defineStore({
      * Returns true if successful, false if refresh fails
      */
     async tryRefreshToken() {
+      if (this.refreshInFlight) {
+        return true
+      }
+      this.refreshInFlight = true
       try {
         const previousWorkspaceId = this.currentWorkspaceId
         const previousTenantRole = this.tenantRole
@@ -584,9 +627,14 @@ export const useUserStore = defineStore({
         this.auth = true
         this.saveState()
         return true
-      } catch (error) {
+      } catch (error: any) {
+        const status = error?.response?.status
+        const body = error?.response?.data
+        console.warn('[auth] refresh failed', { status, body })
         this.logout()
         return false
+      } finally {
+        this.refreshInFlight = false
       }
     },
 

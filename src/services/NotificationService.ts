@@ -2,11 +2,15 @@
 import axiosInterceptor from './axiosInterceptor'
 
 export interface Notification {
-  id: string;
-  destinationUser: string;
-  message: string;
-  status: string;
-  relatedEntityId?: string;
+  id: string
+  userId: string
+  workspaceId: string
+  type: string
+  title: string
+  message: string
+  read: boolean
+  createdAt?: string
+  metadata?: string
 }
 
 export interface UserSettings {
@@ -20,18 +24,13 @@ const NotificationService = {
   getNotifications(): Promise<any> {
     return axiosInterceptor.get(`${API_URL}`)
   },
-  accept(notificationId: string): Promise<any> {
-    return axiosInterceptor.put(`${API_URL}/${notificationId}/accept`)
+  getUnreadCount(): Promise<any> {
+    return axiosInterceptor.get(`${API_URL}/unread-count`)
   },
-  decline(notificationId: string): Promise<any> {
-    return axiosInterceptor.put(`${API_URL}/${notificationId}/decline`)
+  markAsRead(notificationId: string): Promise<any> {
+    return axiosInterceptor.put(`${API_URL}/${notificationId}/read`)
   },
-  sendEmail(expenseRequest: any): Promise<any> {
-    return axiosInterceptor.post(`${API_URL}/sendEmail/html`, expenseRequest)
-  },
-  sendEmailWithAttachment(request: any): Promise<any> {
-    return axiosInterceptor.post(`${API_URL}/sendEmail/attachment`, request)
-  },
+  // Legacy methods kept for compatibility with existing screens.
   updateAlertSettings(settings: any): Promise<any> {
     return axiosInterceptor.put(`${API_URL}/alerts/settings`, settings)
   },
@@ -43,6 +42,12 @@ const NotificationService = {
   },
   updateExpenseAlert(expenseRequest: any): Promise<any> {
     return axiosInterceptor.put(`${API_URL}/alerts/update`, expenseRequest)
+  },
+  sendEmail(expenseRequest: any): Promise<any> {
+    return axiosInterceptor.post(`${API_URL}/sendEmail/html`, expenseRequest)
+  },
+  sendEmailWithAttachment(request: any): Promise<any> {
+    return axiosInterceptor.post(`${API_URL}/sendEmail/attachment`, request)
   },
   sendContactForm(contactData: { name: string; email: string; message: string }): Promise<any> {
     return axiosInterceptor.post(`${API_URL}/contact`, contactData)

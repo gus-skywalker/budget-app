@@ -11,6 +11,7 @@ import CashflowView from '@/views/CashflowView.vue'
 import PlanningBudgetView from '@/views/PlanningBudgetView.vue'
 import PlanningScenariosView from '@/views/PlanningScenariosView.vue'
 import DecisionsView from '@/views/DecisionsView.vue'
+import PublicDecisionView from '@/views/PublicDecisionView.vue'
 import InsightsView from '@/views/InsightsView.vue'
 import ActivityView from '@/views/ActivityView.vue'
 import OAuth2Redirect from '@/views/redirect_url/OAuth2Redirect.vue'
@@ -90,6 +91,12 @@ const router = createRouter({
       name: 'decisions',
       component: DecisionsView,
       meta: { requiresAuth: true, requiresWorkspace: true }
+    },
+    {
+      path: '/decision/:id/public',
+      name: 'public-decision',
+      component: PublicDecisionView,
+      meta: { hideAppChrome: true }
     },
     {
       path: '/insights',

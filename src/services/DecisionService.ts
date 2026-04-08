@@ -1,4 +1,5 @@
 import axiosInterceptor from './axiosInterceptor'
+import axios from 'axios'
 
 export type PersistedDecisionStatus = 'OPEN' | 'APPROVED' | 'REJECTED'
 export type DecisionVoteValue = 'APPROVE' | 'REJECT'
@@ -58,6 +59,32 @@ export interface DecisionVote {
   createdAt?: string
 }
 
+export interface PublicDecision {
+  decisionId: string
+  title: string
+  status: PersistedDecisionStatus
+  createdAt?: string
+  isPublic?: boolean
+  impact: {
+    monthlyImpact: number
+    projectedFinalBalance: number
+    firstRiskMonth?: string | null
+  }
+  summary: {
+    message: string
+  }
+  votes: {
+    approvals: number
+    rejections: number
+  }
+  justifications: Array<{
+    type: DecisionVoteValue
+    message: string
+  }>
+}
+
+const PUBLIC_BASE_URL = `${String(import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '')}/public`
+
 export default {
   list() {
     return axiosInterceptor.get<PersistedDecision[]>('/decisions')
@@ -82,5 +109,8 @@ export default {
   },
   removeVote(decisionId: string) {
     return axiosInterceptor.delete<DecisionVoteSummary>(`/decisions/${decisionId}/vote`)
+  },
+  getPublicDecision(decisionId: string) {
+    return axios.get<PublicDecision>(`${PUBLIC_BASE_URL}/decisions/${decisionId}`)
   },
 }
