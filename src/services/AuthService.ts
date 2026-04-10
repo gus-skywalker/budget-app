@@ -9,7 +9,7 @@ export default {
   },
 
   signUp(payload: { username: string; email: string; password: string; language?: string }): Promise<any> {
-    return axios.post(`${API_URL}/signup`, payload)
+    return axios.post(`${API_URL}/signup`, payload, { withCredentials: true })
   },
 
   forgotPassword(email: string): Promise<any> {
