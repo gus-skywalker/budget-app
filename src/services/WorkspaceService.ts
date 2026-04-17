@@ -1,12 +1,10 @@
 import axiosInterceptor from './axiosInterceptor'
 import type { WorkspaceCreateRequest } from '../types/WorkspaceCreateRequest'
 import {
-  clearDevQuickAccessWorkspaceSelection,
   createDevQuickAccessWorkspace,
   getDevQuickAccessWorkspaceDetails,
   isDevQuickAccessEnabled,
-  listDevQuickAccessWorkspaces,
-  selectDevQuickAccessWorkspace
+  listDevQuickAccessWorkspaces
 } from '@/utils/devQuickAccess'
 const rawAuthBase = String(import.meta.env.VITE_AUTH_URL || '').replace(/\/+$/, '')
 
@@ -16,17 +14,7 @@ const normalizedAuthRoot = rawAuthBase
   .replace(/\/api$/, '')
 
 const AUTH_WORKSPACES_URL = `${normalizedAuthRoot}/api/workspaces`
-const AUTH_URL = `${normalizedAuthRoot}/api/auth`
 const BUDGET_WORKSPACES_URL = `${import.meta.env.VITE_API_BASE_URL}/workspaces`
-
-const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
-
-const isEventualConsistencyStatus = (status?: number) => status === 403 || status === 404
-const isRetryableStatus = (status?: number) =>
-  status == null || status === 403 || status === 404 || status === 408 || status === 409 || status === 425 || status === 429 || status >= 500
-
-const authSelectWorkspaceEndpoint = `${AUTH_URL}/select-workspace`
-const authClearWorkspaceEndpoint = `${AUTH_URL}/clear-workspace`
 
 export default {
   /**
@@ -48,8 +36,6 @@ export default {
       createdWorkspace: created?.data || null
     }
   },
-
-  // --- endpoints abaixo ainda vivem no auth-api (compat). Podemos migrar depois.
 
   /**
    * Listar workspaces do usuário
@@ -86,78 +72,6 @@ export default {
       name: payload.workspaceName,
       description: payload.description
     })
-  },
-
-  /**
-   * Selecionar workspace ativo
-   * POST /api/auth/select-workspace
-   * Retorna novos tokens (accessToken e refreshToken)
-   */
-  selectWorkspace(workspaceId: string): Promise<any> {
-    if (isDevQuickAccessEnabled()) {
-      return Promise.resolve({
-        data: selectDevQuickAccessWorkspace(workspaceId)
-      })
-    }
-
-    const maxAttempts = 8
-    let lastError: any = null
-
-    const run = async () => {
-      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        try {
-          return await axiosInterceptor.post(authSelectWorkspaceEndpoint, { workspaceId })
-        } catch (error: any) {
-          lastError = error
-        }
-
-        const status = lastError?.response?.status
-        const shouldRetry = isRetryableStatus(status)
-        if (!shouldRetry || attempt === maxAttempts) {
-          break
-        }
-
-        // Eventual consistency após criação de workspace + membership async no auth.
-        const isEventual = isEventualConsistencyStatus(status)
-        await wait((isEventual ? 250 : 150) * attempt)
-      }
-
-      throw lastError
-    }
-
-    return run()
-  },
-
-  /**
-   * Limpar workspace ativo (voltar ao modo pessoal)
-   * POST /api/auth/clear-workspace
-   */
-  clearWorkspace(): Promise<any> {
-    if (isDevQuickAccessEnabled()) {
-      return Promise.resolve({
-        data: clearDevQuickAccessWorkspaceSelection()
-      })
-    }
-
-    const run = async () => {
-      let lastError: any = null
-      const maxAttempts = 3
-      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        try {
-          return await axiosInterceptor.post(authClearWorkspaceEndpoint)
-        } catch (error: any) {
-          lastError = error
-        }
-        const status = lastError?.response?.status
-        if (!isRetryableStatus(status) || attempt === maxAttempts) {
-          break
-        }
-        await wait(150 * attempt)
-      }
-      throw lastError
-    }
-
-    return run()
   },
 
   /**

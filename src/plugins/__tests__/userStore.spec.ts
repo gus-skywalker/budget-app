@@ -4,9 +4,7 @@ import { useUserStore } from '@/plugins/userStore'
 
 vi.mock('@/services/WorkspaceService', () => ({
   default: {
-    selectWorkspace: vi.fn(),
-    getDetails: vi.fn(),
-    clearWorkspace: vi.fn()
+    getDetails: vi.fn()
   }
 }))
 
@@ -313,33 +311,16 @@ describe('UserStore', () => {
   })
 
   describe('selectWorkspace', () => {
-    it('should call API and update state', async () => {
+    it('should update workspace selection locally using stored workspace list', async () => {
       const store = useUserStore()
-      const WorkspaceService = (await import('@/services/WorkspaceService')).default
-
-      const payload = {
-        user_id: '123',
-        workspaceId: 'new-workspace',
-        tenantRole: 'ROLE_USER'
-      }
-      const encodedPayload = btoa(JSON.stringify(payload))
-      const newToken = `header.${encodedPayload}.signature`
-      
-      vi.mocked(WorkspaceService.selectWorkspace).mockResolvedValue({
-        data: {
-          accessToken: newToken,
-          tenantRole: 'ROLE_USER',
-          workspaceId: 'new-workspace'
-        }
-      })
-      
+      store.token = 'header.eyJ1c2VyX2lkIjoiMTIzIn0.signature'
       store.user.workspaces = [
         { workspaceId: 'new-workspace', workspaceName: 'New Workspace', role: 'ROLE_USER' }
       ]
 
       await store.selectWorkspace('new-workspace')
 
-      expect(store.token).toBe(newToken)
+      expect(store.token).toBe('header.eyJ1c2VyX2lkIjoiMTIzIn0.signature')
       expect(store.currentWorkspaceId).toBe('new-workspace')
       expect(store.tenantRole).toBe('ROLE_USER')
     })

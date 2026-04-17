@@ -382,7 +382,7 @@ const createWorkspace = async () => {
       return
     }
 
-    // 2) Select tenant in auth-api (with retry/fallback handled by WorkspaceService.selectWorkspace)
+    // 2) Select active workspace locally (tenant context now flows via X-Workspace-Id header)
     try {
       await userStore.selectWorkspace(String(workspaceId))
     } catch (selectError) {

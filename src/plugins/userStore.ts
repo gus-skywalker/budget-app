@@ -384,18 +384,16 @@ export const useUserStore = defineStore({
         }
       }
 
+      // Workspace context is no longer sourced from JWT in the new cut-over.
+      // Keep local selection stable across token rotations.
       if (decoded.workspaceId) {
         this.currentWorkspaceId = decoded.workspaceId
-      } else {
-        this.currentWorkspaceId = null
       }
 
       if (decoded.tenantRole || decoded.userRole || decoded.role) {
         this.tenantRole = decoded.tenantRole || decoded.userRole || decoded.role
-      } else if (decoded.workspaceId) {
-        this.tenantRole = workspaceRoleOf(findWorkspaceById(this.getWorkspaces || [], decoded.workspaceId))
-      } else if (!decoded.workspaceId) {
-        this.tenantRole = null
+      } else if (this.currentWorkspaceId) {
+        this.tenantRole = workspaceRoleOf(findWorkspaceById(this.getWorkspaces || [], this.currentWorkspaceId))
       }
 
       // Only update preference when token is explicitly tenant-scoped.
