@@ -538,18 +538,13 @@ export const useUserStore = defineStore({
 
     async selectWorkspace(workspaceId: string) {
       try {
-        const response = await WorkspaceService.selectWorkspace(workspaceId)
-        const { accessToken, tenantRole, workspaceId: resolvedWorkspaceId } = response.data
-
-        if (accessToken) {
-          this.token = accessToken
-          this.syncFromToken(accessToken)
+        const workspace = this.getWorkspaces?.find((item: Workspace) => workspaceIdOf(item) === workspaceId)
+        if (!workspace) {
+          throw new Error(`Workspace not found for selection: ${workspaceId}`)
         }
-
-        const decoded = accessToken ? decodeJWT(accessToken) : null
-        const resolvedRole = tenantRole || decoded?.tenantRole
-        const effectiveWorkspaceId = resolvedWorkspaceId || decoded?.workspaceId || workspaceId
-        const workspaceName = this.getWorkspaces?.find((workspace: Workspace) => workspaceIdOf(workspace) === effectiveWorkspaceId)?.workspaceName
+        const effectiveWorkspaceId = workspaceId
+        const resolvedRole = workspace.role || null
+        const workspaceName = workspace.workspaceName
 
         this.setCurrentWorkspace(effectiveWorkspaceId, resolvedRole, workspaceName)
         this.setPreferredWorkspace(effectiveWorkspaceId)
@@ -564,14 +559,6 @@ export const useUserStore = defineStore({
 
     async clearWorkspaceSelection() {
       try {
-        const response = await WorkspaceService.clearWorkspace()
-        const { accessToken } = response.data
-
-        if (accessToken) {
-          this.token = accessToken
-          this.syncFromToken(accessToken)
-        }
-
         this.clearCurrentWorkspace()
         this.setPreferredPersonal()
         return true

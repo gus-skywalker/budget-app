@@ -8,6 +8,7 @@ import { buildBudgetApiMockResponse, isBudgetApiRequest } from '@/utils/devBudge
 
 const access_token = computed(() => useUserStore().getToken)
 const nubankToken = computed(() => useBankStore().getNubankToken)
+const workspaceId = computed(() => useUserStore().getCurrentWorkspaceId)
 const apiUrl = import.meta.env.VITE_API_BASE_URL
 
 const axiosInstance = axios.create({
@@ -28,6 +29,9 @@ axiosInstance.interceptors.request.use(
     if (access_token.value) {
       config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${access_token.value}`;
+      if (workspaceId.value) {
+        config.headers['X-Workspace-Id'] = String(workspaceId.value);
+      }
       if (nubankToken.value) {
         config.headers['X-Nubank-Token'] = String(nubankToken.value);
       }
