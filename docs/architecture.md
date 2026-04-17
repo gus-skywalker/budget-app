@@ -9,9 +9,10 @@
 
 ## Main Interaction Patterns
 - Authenticated requests use interceptor-injected `Authorization` header.
+- Workspace-scoped requests use `X-Workspace-Id` from selected workspace state.
 - `401` handling triggers centralized refresh logic (`userStore.tryRefreshToken`) backed by HttpOnly refresh cookie.
 - Startup session restore uses `POST /api/auth/session/bootstrap` when no access token is present in memory/sessionStorage.
-- Tenant context switching rehydrates tokens and workspace state.
+- Tenant context switching updates workspace state locally (`userStore`) without auth token reissue.
 - Billing checkout uses decision + async orchestration endpoints in `budget-api`.
 - Billing reads use a backend-provided summary from `budget-api`; frontend treats workspace as operational context only.
 - Post-auth onboarding routing is centralized in `OnboardingOrchestrator`.

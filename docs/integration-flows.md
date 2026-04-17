@@ -23,9 +23,10 @@
 
 ## 4. Workspace Creation And Tenant Selection
 1. Frontend calls `POST /api/workspaces` on `budget-api`.
-2. User selects active workspace via `POST /api/auth/select-workspace`.
-3. New tenant-scoped token is issued and used for workspace-scoped calls.
-4. Frontend resumes the canonical redirect target from onboarding context.
+2. Frontend updates active workspace in local state (`userStore.selectWorkspace(...)`).
+3. Axios interceptor sends `X-Workspace-Id` for workspace-scoped calls.
+4. Backend validates membership and role dynamically for each request.
+5. Frontend resumes the canonical redirect target from onboarding context.
 
 ## 5. Onboarding Status Banner Flow
 1. `App.vue` renders `OnboardingStatusBanner` for authenticated sessions.
