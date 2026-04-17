@@ -382,7 +382,27 @@ const createWorkspace = async () => {
       return
     }
 
-    // 2) Select active workspace locally (tenant context now flows via X-Workspace-Id header)
+    // 2) Refresh workspace list in store immediately (before selecting)
+    try {
+      const workspacesRes = await WorkspaceService.getAll()
+      const workspaces = Array.isArray(workspacesRes?.data) ? [...workspacesRes.data] : []
+      const createdWorkspaceId = String(workspaceId)
+      const hasCreatedWorkspace = workspaces.some((workspace: any) => String(workspace?.workspaceId) === createdWorkspaceId)
+      if (!hasCreatedWorkspace) {
+        // Eventual consistency guard: ensure the just-created workspace is selectable right away.
+        workspaces.push({
+          workspaceId: createdWorkspaceId,
+          workspaceName: createdWorkspace?.workspaceName || workspaceName.value,
+          role: createdWorkspace?.role || 'ROLE_OWNER'
+        })
+      }
+      userStore.setWorkspaces(workspaces)
+      await userStore.hydrateWorkspaceDetailsFromBudget(workspaces.map((workspace: any) => String(workspace.workspaceId)).filter(Boolean))
+    } catch (e) {
+      console.warn('Não foi possível atualizar lista de workspaces imediatamente.', e)
+    }
+
+    // 3) Select active workspace locally (tenant context now flows via X-Workspace-Id header)
     try {
       await userStore.selectWorkspace(String(workspaceId))
     } catch (selectError) {
@@ -393,18 +413,6 @@ const createWorkspace = async () => {
         router.push({ name: 'select-workspace', query: { redirect: redirectTarget.value } })
       }, 1200)
       return
-    }
-
-    // 3) Refresh workspace list in store immediately
-    try {
-      const workspacesRes = await WorkspaceService.getAll()
-      const workspaces = Array.isArray(workspacesRes?.data) ? workspacesRes.data : []
-      if (workspaces.length) {
-        userStore.setWorkspaces(workspaces)
-        await userStore.hydrateWorkspaceDetailsFromBudget(workspaces.map((workspace: any) => String(workspace.workspaceId)).filter(Boolean))
-      }
-    } catch (e) {
-      console.warn('Não foi possível atualizar lista de workspaces imediatamente.', e)
     }
 
     showSnackbar(t('createWorkspace.created_success'), 'success')
