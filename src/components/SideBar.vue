@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useTheme } from 'vuetify'
 import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/plugins/userStore'
@@ -8,6 +8,7 @@ import WorkspaceSwitcher from '@/components/WorkspaceSwitcher.vue'
 import type { RouteLocationRaw } from 'vue-router'
 
 const router = useRouter()
+const route = useRoute()
 const theme = useTheme()
 const { t } = useI18n()
 const userStore = useUserStore()
@@ -30,12 +31,10 @@ type NavSection = {
   items: NavItem[]
 }
 
-// Função para verificar se é mobile
 const checkMobile = () => {
   const width = window.innerWidth
   isMobile.value = width < 780
   expandOnHover.value = !isMobile.value
-  console.log('Width:', width, 'isMobile:', isMobile.value, 'expandOnHover:', expandOnHover.value)
 }
 
 onMounted(() => {
@@ -47,45 +46,27 @@ onUnmounted(() => {
   window.removeEventListener('resize', checkMobile)
 })
 
-// onMounted(() => {
-//   mql = window.matchMedia('(max-width: 1024px)')
-//   isMobile.value = mql.matches
-//   mql.addEventListener('change', handleMqlChange)
-// })
-
-// onUnmounted(() => {
-//   mql.removeEventListener('change', handleMqlChange)
-// })
-
-
-// Computed property para acessar o usuário da store
 const user = computed(() => userStore.getUser)
-
 const userAvatar = computed(() => user.value?.avatar || '/favicon.ico')
 
-// Método para fazer logout do usuário
 const logoutUser = () => {
   userStore.resetUser()
   router.push('/login')
 }
 
-// Método para abrir o diálogo de confirmação de logout
 const confirmLogout = () => {
   showLogoutDialog.value = true
 }
 
-// Método para cancelar o logout
 const cancelLogout = () => {
   showLogoutDialog.value = false
 }
 
-// Função para redirecionar os usuários para a página de login OAuth2
 function redirectToOAuth2LoginPage() {
   const authUrl = `${import.meta.env.VITE_API_BASE_URL}/login`
-  window.location.href = authUrl;
+  window.location.href = authUrl
 }
 
-// Função para alternar o tema
 function toggleTheme() {
   const currentTheme = theme.global.current.value.dark ? 'light' : 'dark'
   theme.global.name.value = currentTheme
@@ -95,9 +76,9 @@ function navigateToAccountAdmin() {
   router.push({ name: 'settings' })
 }
 
-const navSections = computed<NavSection[]>(() => [
+const mainNavSections = computed<NavSection[]>(() => [
   {
-    key: 'decisions',
+    key: 'decision',
     title: t('sidebar.sections.decisions'),
     items: [
       {
@@ -120,6 +101,40 @@ const navSections = computed<NavSection[]>(() => [
         title: t('sidebar.activity'),
         icon: 'mdi-timeline-text-outline',
         to: { name: 'activity' },
+        disabled: false,
+      },
+    ],
+  },
+  {
+    key: 'financials',
+    title: t('sidebar.sections.financials'),
+    items: [
+      {
+        key: 'overview',
+        title: t('sidebar.overview'),
+        icon: 'mdi-view-dashboard',
+        to: { name: 'dashboard' },
+        disabled: false,
+      },
+      {
+        key: 'transactions',
+        title: t('sidebar.transactions'),
+        icon: 'mdi-swap-horizontal',
+        to: { name: 'budget' },
+        disabled: false,
+      },
+      {
+        key: 'accounts',
+        title: t('sidebar.accounts'),
+        icon: 'mdi-bank-outline',
+        to: { name: 'accounts' },
+        disabled: false,
+      },
+      {
+        key: 'categories',
+        title: t('sidebar.categories'),
+        icon: 'mdi-shape-outline',
+        to: { name: 'categories' },
         disabled: false,
       },
     ],
@@ -151,96 +166,58 @@ const navSections = computed<NavSection[]>(() => [
       },
     ],
   },
+])
+
+const settingsItems = computed<NavItem[]>(() => [
   {
-    key: 'dashboard',
-    title: t('sidebar.sections.overview'),
-    items: [
-      {
-        key: 'overview',
-        title: t('sidebar.overview'),
-        icon: 'mdi-view-dashboard',
-        to: { name: 'dashboard' },
-        disabled: false,
-      },
-      {
-        key: 'cashflow',
-        title: t('sidebar.cashflow'),
-        icon: 'mdi-chart-areaspline',
-        to: { name: 'cashflow' },
-        disabled: false,
-      },
-      {
-        key: 'report',
-        title: t('sidebar.report'),
-        icon: 'mdi-file-chart',
-        to: { name: 'report' },
-        disabled: false,
-      },
-    ],
+    key: 'settings',
+    title: t('sidebar.settings'),
+    icon: 'mdi-cog-outline',
+    to: { name: 'settings' },
+    disabled: false,
   },
   {
-    key: 'system',
-    title: t('sidebar.sections.system'),
-    items: [
-      {
-        key: 'workspace-personal',
-        title: t('sidebar.workspace.personal_finance'),
-        icon: 'mdi-briefcase-outline',
-        disabled: true,
-        to: undefined,
-      },
-      {
-        key: 'home',
-        title: t('sidebar.home'),
-        icon: 'mdi-home',
-        to: { name: 'home' },
-        disabled: false,
-      },
-      {
-        key: 'transactions',
-        title: t('sidebar.transactions'),
-        icon: 'mdi-swap-horizontal',
-        to: { name: 'budget' },
-        disabled: false,
-      },
-      {
-        key: 'accounts',
-        title: t('sidebar.accounts'),
-        icon: 'mdi-bank-outline',
-        to: { name: 'accounts' },
-        disabled: false,
-      },
-      {
-        key: 'categories',
-        title: t('sidebar.categories'),
-        icon: 'mdi-shape-outline',
-        to: { name: 'categories' },
-        disabled: false,
-      },
-      {
-        key: 'settings',
-        title: t('sidebar.settings'),
-        icon: 'mdi-cog-outline',
-        to: { name: 'settings' },
-        disabled: false,
-      },
-    ],
+    key: 'workspace',
+    title: t('sidebar.workspace.label'),
+    icon: 'mdi-briefcase-outline',
+    to: userStore.hasMultipleWorkspaces ? { name: 'select-workspace' } : undefined,
+    disabled: !userStore.hasMultipleWorkspaces,
   },
 ])
+
+const legalItems = computed<NavItem[]>(() => [
+  {
+    key: 'privacy-policy',
+    title: t('sidebar.legal.privacy_policy'),
+    icon: 'mdi-shield-account-outline',
+    to: { name: 'privacy-policy' },
+    disabled: false,
+  },
+  {
+    key: 'terms-of-use',
+    title: t('sidebar.legal.terms_of_service'),
+    icon: 'mdi-file-document-outline',
+    to: { name: 'terms-of-use' },
+    disabled: false,
+  },
+])
+
+function isItemActive(item: NavItem): boolean {
+  if (!item.to) return false
+  const target = router.resolve(item.to)
+  return target.name === route.name
+}
 </script>
 
 <template>
-  <v-navigation-drawer 
-    app 
-    :expand-on-hover="expandOnHover" 
-    :rail="true"
-    permanent
-    ref="drawer"
-  >
+  <v-navigation-drawer app :expand-on-hover="expandOnHover" :rail="true" permanent ref="drawer">
     <v-list v-if="user">
-      <v-list-item :prepend-avatar="userAvatar" :subtitle="user.email" :title="user.username"
-        @click="navigateToAccountAdmin"></v-list-item>
-      <v-list-item @click="confirmLogout" :title="$t('sidebar.logout')" prepend-icon="mdi-logout"></v-list-item>
+      <v-list-item
+        :prepend-avatar="userAvatar"
+        :subtitle="user.email"
+        :title="user.username"
+        @click="navigateToAccountAdmin"
+      ></v-list-item>
     </v-list>
     <v-list v-else>
       <v-btn @click="redirectToOAuth2LoginPage">{{ $t('sidebar.login_oauth2') }}</v-btn>
@@ -252,69 +229,93 @@ const navSections = computed<NavSection[]>(() => [
       <WorkspaceSwitcher />
     </div>
 
-    <v-list density="compact" nav>
-      <template v-for="section in navSections" :key="section.key">
+    <v-list class="sidebar-main-list" density="compact" nav>
+      <template v-for="section in mainNavSections" :key="section.key">
         <v-list-subheader class="sidebar-section">{{ section.title }}</v-list-subheader>
-        <template v-for="item in section.items" :key="item.key">
-          <template v-if="isMobile">
-            <v-tooltip :text="item.title" location="end">
-              <template v-slot:activator="{ props }">
-                <v-list-item
-                  v-bind="props"
-                  :prepend-icon="item.icon"
-                  :title="item.title"
-                  :class="{ 'primary-nav-item': item.primary }"
-                  v-if="item.to"
-                  :to="item.to"
-                  :disabled="item.disabled"
-                ></v-list-item>
-                <v-list-item
-                  v-bind="props"
-                  :prepend-icon="item.icon"
-                  :title="item.title"
-                  :class="{ 'primary-nav-item': item.primary }"
-                  v-else
-                  :disabled="item.disabled"
-                ></v-list-item>
-              </template>
-            </v-tooltip>
-          </template>
-          <template v-else>
+        <v-tooltip v-for="item in section.items" :key="item.key" :text="item.title" location="end">
+          <template v-slot:activator="{ props }">
             <v-list-item
+              v-bind="props"
               :prepend-icon="item.icon"
               :title="item.title"
-              :class="{ 'primary-nav-item': item.primary }"
-              v-if="item.to"
               :to="item.to"
               :disabled="item.disabled"
-            ></v-list-item>
-            <v-list-item
-              :prepend-icon="item.icon"
-              :title="item.title"
-              :class="{ 'primary-nav-item': item.primary }"
-              v-else
-              :disabled="item.disabled"
+              :active="isItemActive(item)"
+              :class="{
+                'primary-nav-item': item.primary,
+                'active-nav-item': isItemActive(item),
+              }"
             ></v-list-item>
           </template>
-        </template>
+        </v-tooltip>
+        <v-divider class="section-divider"></v-divider>
       </template>
     </v-list>
 
-    <v-divider></v-divider>
+    <v-spacer></v-spacer>
 
-    <v-tooltip :text="$t('sidebar.toggle_theme_tooltip')" location="end">
-      <template v-slot:activator="{ props }">
-        <v-switch v-bind="props" @click="toggleTheme" hide-details class="ml-4 mt-2">
-          <template v-slot:prepend>
-            <v-icon>{{ theme.global.current.value.dark ? 'mdi-weather-night' : 'mdi-weather-sunny' }}</v-icon>
+    <div class="sidebar-settings">
+      <v-list density="compact" nav>
+        <v-list-subheader class="sidebar-section">{{ $t('sidebar.sections.settings') }}</v-list-subheader>
+        <v-tooltip v-for="item in settingsItems" :key="item.key" :text="item.title" location="end">
+          <template v-slot:activator="{ props }">
+            <v-list-item
+              v-bind="props"
+              :prepend-icon="item.icon"
+              :title="item.title"
+              :to="item.to"
+              :disabled="item.disabled"
+              :active="isItemActive(item)"
+              :class="{ 'active-nav-item': isItemActive(item) }"
+            ></v-list-item>
           </template>
-        </v-switch>
-      </template>
-    </v-tooltip>
+        </v-tooltip>
+        <v-list-group value="legal" prepend-icon="mdi-scale-balance">
+          <template v-slot:activator="{ props }">
+            <v-list-item v-bind="props" :title="$t('sidebar.legal.title')"></v-list-item>
+          </template>
+          <v-tooltip v-for="item in legalItems" :key="item.key" :text="item.title" location="end">
+            <template v-slot:activator="{ props }">
+              <v-list-item
+                v-bind="props"
+                :prepend-icon="item.icon"
+                :title="item.title"
+                :to="item.to"
+                :active="isItemActive(item)"
+                :class="{ 'active-nav-item': isItemActive(item) }"
+              ></v-list-item>
+            </template>
+          </v-tooltip>
+        </v-list-group>
+      </v-list>
 
+      <v-divider></v-divider>
+
+      <v-tooltip :text="$t('sidebar.toggle_theme')" location="end">
+        <template v-slot:activator="{ props }">
+          <v-switch v-bind="props" @click="toggleTheme" hide-details class="ml-4 mt-2 sidebar-theme-toggle">
+            <template v-slot:prepend>
+              <v-icon>{{ theme.global.current.value.dark ? 'mdi-weather-night' : 'mdi-weather-sunny' }}</v-icon>
+            </template>
+          </v-switch>
+        </template>
+      </v-tooltip>
+
+      <v-tooltip :text="$t('sidebar.logout')" location="end">
+        <template v-slot:activator="{ props }">
+          <v-list density="compact" nav>
+            <v-list-item
+              v-bind="props"
+              @click="confirmLogout"
+              :title="$t('sidebar.logout')"
+              prepend-icon="mdi-logout"
+            ></v-list-item>
+          </v-list>
+        </template>
+      </v-tooltip>
+    </div>
   </v-navigation-drawer>
 
-  <!-- Diálogo de confirmação de logout -->
   <v-dialog v-model="showLogoutDialog" max-width="400">
     <v-card>
       <v-card-title class="headline">
@@ -337,6 +338,23 @@ const navSections = computed<NavSection[]>(() => [
 </template>
 
 <style scoped>
+.sidebar-main-list {
+  padding-bottom: 4px;
+}
+
+.section-divider {
+  margin: 8px 14px 10px;
+  opacity: 0.35;
+}
+
+.sidebar-settings {
+  padding-bottom: 8px;
+}
+
+.sidebar-theme-toggle {
+  margin-bottom: 6px;
+}
+
 .sidebar-section {
   margin-top: 8px;
   font-size: 0.72rem;
@@ -350,6 +368,19 @@ const navSections = computed<NavSection[]>(() => [
   color: rgba(255, 255, 255, 0.5);
 }
 
+.active-nav-item {
+  border-radius: 10px;
+  transition: background-color 0.18s ease, border-color 0.18s ease;
+}
+
+.active-nav-item.v-list-item--active {
+  background: rgba(79, 70, 229, 0.1);
+}
+
+.v-theme--dark .active-nav-item.v-list-item--active {
+  background: rgba(99, 102, 241, 0.2);
+}
+
 .primary-nav-item {
   background: rgba(79, 70, 229, 0.12);
   border: 1px solid rgba(79, 70, 229, 0.28);
@@ -357,14 +388,15 @@ const navSections = computed<NavSection[]>(() => [
   margin: 2px 6px;
 }
 
+.primary-nav-item:hover {
+  background: rgba(79, 70, 229, 0.16);
+}
+
 .v-theme--dark .primary-nav-item {
   background: rgba(99, 102, 241, 0.22);
   border-color: rgba(129, 140, 248, 0.4);
 }
-</style>
 
-
-<style scoped>
 .workspace-switcher-wrapper {
   padding: 12px 16px;
 }

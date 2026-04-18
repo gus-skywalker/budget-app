@@ -37,10 +37,18 @@
       "control": "Financial Control",
       "planning": "Planning",
       "decisions": "Decisions",
+      "financials": "Financials",
+      "settings": "Settings",
       "analytics": "Analytics",
       "system": "System"
     },
+    "legal": {
+      "title": "Legal",
+      "privacy_policy": "Privacy Policy",
+      "terms_of_service": "Terms of Service"
+    },
     "workspace": {
+      "label": "Workspace",
       "personal_finance": "Personal Finance"
     }
   },

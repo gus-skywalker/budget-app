@@ -9,7 +9,8 @@ import AccountsView from '@/views/AccountsView.vue'
 import CategoriesView from '@/views/CategoriesView.vue'
 import CashflowView from '@/views/CashflowView.vue'
 import PlanningBudgetView from '@/views/PlanningBudgetView.vue'
-import PlanningScenariosView from '@/views/PlanningScenariosView.vue'
+import ScenarioBuilderView from '@/views/ScenarioBuilderView.vue'
+import ScenarioResultView from '@/views/ScenarioResultView.vue'
 import DecisionsView from '@/views/DecisionsView.vue'
 import PublicDecisionView from '@/views/PublicDecisionView.vue'
 import InsightsView from '@/views/InsightsView.vue'
@@ -80,7 +81,19 @@ const router = createRouter({
     {
       path: '/planning/scenarios',
       name: 'planning-scenarios',
-      component: PlanningScenariosView,
+      component: ScenarioBuilderView,
+      meta: { requiresAuth: true, requiresWorkspace: true }
+    },
+    {
+      path: '/planning/scenarios/new',
+      name: 'planning-scenarios-new',
+      component: ScenarioBuilderView,
+      meta: { requiresAuth: true, requiresWorkspace: true }
+    },
+    {
+      path: '/planning/scenarios/:id',
+      name: 'planning-scenarios-result',
+      component: ScenarioResultView,
       meta: { requiresAuth: true, requiresWorkspace: true }
     },
     {
@@ -93,6 +106,12 @@ const router = createRouter({
       path: '/decisions',
       name: 'decisions',
       component: DecisionsView,
+      meta: { requiresAuth: true, requiresWorkspace: true }
+    },
+    {
+      path: '/decision/:id',
+      name: 'decision-detail',
+      component: () => import('@/views/DecisionDetailView.vue'),
       meta: { requiresAuth: true, requiresWorkspace: true }
     },
     {

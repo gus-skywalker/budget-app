@@ -36,10 +36,18 @@
       "control": "Contrôle financier",
       "planning": "Planification",
       "decisions": "Décisions",
+      "financials": "Finances",
+      "settings": "Paramètres",
       "analytics": "Analytique",
       "system": "Système"
     },
+    "legal": {
+      "title": "Juridique",
+      "privacy_policy": "Politique de Confidentialité",
+      "terms_of_service": "Conditions d'Utilisation"
+    },
     "workspace": {
+      "label": "Espace de travail",
       "personal_finance": "Finance personnelle"
     }
   },
