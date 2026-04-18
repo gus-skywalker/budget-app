@@ -1203,11 +1203,13 @@
       "signup_success": "Account created successfully.",
       "signup_success_ready": "Account created successfully.",
       "signup_verify_email_notice": "Account created. Please verify your email before signing in.",
+      "reactivation_success_verify_email": "Account reactivated. Please verify your email before signing in.",
       "signup_failed": "Error creating account. Please try again.",
       "password_mismatch": "Passwords do not match. Please try again.",
       "network_error": "Could not connect to the server. Check your connection and try again.",
       "server_unavailable": "The service is unavailable right now. Please try again shortly.",
-      "login_unavailable": "We could not complete the login right now. Please try again."
+      "login_unavailable": "We could not complete the login right now. Please try again.",
+      "account_deleted_success": "Your account has been deleted successfully. A confirmation email was sent."
     }
   },
   "transactionVisibility": {

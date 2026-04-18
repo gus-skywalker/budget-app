@@ -1183,11 +1183,13 @@
       "signup_success": "Compte créé avec succès.",
       "signup_success_ready": "Compte créé avec succès.",
       "signup_verify_email_notice": "Compte créé. Vérifiez votre e-mail avant de vous connecter.",
+      "reactivation_success_verify_email": "Compte réactivé. Vérifiez votre e-mail avant de vous connecter.",
       "signup_failed": "Erreur lors de la création du compte. Veuillez réessayer.",
       "password_mismatch": "Les mots de passe ne correspondent pas. Veuillez réessayer.",
       "network_error": "Impossible de se connecter au serveur. Vérifiez votre connexion et réessayez.",
       "server_unavailable": "Le service est indisponible pour le moment. Veuillez réessayer dans un instant.",
-      "login_unavailable": "Nous n'avons pas pu terminer la connexion pour le moment. Veuillez réessayer."
+      "login_unavailable": "Nous n'avons pas pu terminer la connexion pour le moment. Veuillez réessayer.",
+      "account_deleted_success": "Votre compte a été supprimé avec succès. Un e-mail de confirmation a été envoyé."
     }
   },
   "transactionVisibility": {

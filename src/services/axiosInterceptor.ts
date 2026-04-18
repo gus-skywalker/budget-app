@@ -9,7 +9,16 @@ import { buildBudgetApiMockResponse, isBudgetApiRequest } from '@/utils/devBudge
 const access_token = computed(() => useUserStore().getToken)
 const nubankToken = computed(() => useBankStore().getNubankToken)
 const workspaceId = computed(() => useUserStore().getCurrentWorkspaceId)
-const apiUrl = import.meta.env.VITE_API_BASE_URL
+const apiUrl = String(import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '')
+
+const isAbsoluteUrl = (url?: string) => /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(String(url || ''))
+
+const isBudgetApiTarget = (config: AxiosRequestConfig): boolean => {
+  const rawUrl = String(config.url || '')
+  if (!rawUrl) return true
+  if (!isAbsoluteUrl(rawUrl)) return true
+  return rawUrl.startsWith(apiUrl)
+}
 
 const axiosInstance = axios.create({
   baseURL: apiUrl,
@@ -29,7 +38,7 @@ axiosInstance.interceptors.request.use(
     if (access_token.value) {
       config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${access_token.value}`;
-      if (workspaceId.value) {
+      if (workspaceId.value && isBudgetApiTarget(config)) {
         config.headers['X-Workspace-Id'] = String(workspaceId.value);
       }
       if (nubankToken.value) {

@@ -12,6 +12,10 @@ export default {
     return axios.post(`${API_URL}/signup`, payload, { withCredentials: true })
   },
 
+  reactivate(payload: { username?: string; email: string; password: string }): Promise<any> {
+    return axios.post(`${API_URL}/reactivate`, payload, { withCredentials: true })
+  },
+
   forgotPassword(email: string): Promise<any> {
     return axios.post(`${API_URL}/forgot-password`, { email })
   },

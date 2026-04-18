@@ -9,6 +9,11 @@ declare namespace _default {
         password: string;
         language?: string;
     }): Promise<import("axios").AxiosResponse<any, any>>;
+    function reactivate(payload: {
+        username?: string;
+        email: string;
+        password: string;
+    }): Promise<import("axios").AxiosResponse<any, any>>;
     function forgotPassword(email: string): Promise<import("axios").AxiosResponse<any, any>>;
     function resetPassword(token: string, newPassword: string): Promise<import("axios").AxiosResponse<any, any>>;
     function changePassword(currentPassword: string, newPassword: string): Promise<import("axios").AxiosResponse<any, any>>;

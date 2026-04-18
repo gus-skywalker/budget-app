@@ -1566,7 +1566,7 @@ const deleteAccount = async () => {
     await AuthService.deleteUser(String(userId))
     closeDeleteAccountDialog()
     userStore.logout()
-    await router.push('/login')
+    await router.push({ name: 'login', query: { accountDeleted: 'true' } })
   } catch (error: any) {
     const backendMessage =
       error?.response?.data?.message ||

@@ -105,7 +105,7 @@
               <v-btn
                 color="primary"
                 size="large"
-                :disabled="!valid || isLoadingPlanAccess || reachedWorkspaceLimit"
+                :disabled="!valid || loading || isLoadingPlanAccess || reachedWorkspaceLimit"
                 :loading="loading || isLoadingPlanAccess"
                 @click="createWorkspace"
                 class="cta-button"
@@ -341,6 +341,8 @@ onMounted(() => {
 })
 
 const createWorkspace = async () => {
+  if (loading.value) return
+
   if (reachedWorkspaceLimit.value) {
     upgradeMessage.value = t('createWorkspace.upgrade_limit_workspace')
     upgradeSnackbar.value = true
@@ -387,14 +389,23 @@ const createWorkspace = async () => {
       const workspacesRes = await WorkspaceService.getAll()
       const workspaces = Array.isArray(workspacesRes?.data) ? [...workspacesRes.data] : []
       const createdWorkspaceId = String(workspaceId)
-      const hasCreatedWorkspace = workspaces.some((workspace: any) => String(workspace?.workspaceId) === createdWorkspaceId)
-      if (!hasCreatedWorkspace) {
+      const createdWorkspaceIndex = workspaces.findIndex((workspace: any) => String(workspace?.workspaceId) === createdWorkspaceId)
+      if (createdWorkspaceIndex === -1) {
         // Eventual consistency guard: ensure the just-created workspace is selectable right away.
         workspaces.push({
           workspaceId: createdWorkspaceId,
           workspaceName: createdWorkspace?.workspaceName || workspaceName.value,
           role: createdWorkspace?.role || 'ROLE_OWNER'
         })
+      } else {
+        // Keep role/name usable for immediate selection even if auth projection is eventually consistent.
+        const candidate = workspaces[createdWorkspaceIndex] || {}
+        workspaces[createdWorkspaceIndex] = {
+          ...candidate,
+          workspaceId: createdWorkspaceId,
+          workspaceName: candidate.workspaceName || createdWorkspace?.workspaceName || workspaceName.value,
+          role: candidate.role || createdWorkspace?.role || 'ROLE_OWNER'
+        }
       }
       userStore.setWorkspaces(workspaces)
       await userStore.hydrateWorkspaceDetailsFromBudget(workspaces.map((workspace: any) => String(workspace.workspaceId)).filter(Boolean))

@@ -475,6 +475,8 @@ const loadMembersAndInvites = async () => {
 }
 
 const createWorkspace = async () => {
+  if (creatingWorkspace.value) return
+
   const form = createWorkspaceFormRef.value as any
   if (form) {
     const result = await form.validate()
@@ -507,18 +509,35 @@ const createWorkspace = async () => {
       throw new Error('Resposta de criação sem workspaceId')
     }
 
-    await userStore.selectWorkspace(String(workspaceId))
-
     try {
       const workspacesRes = await WorkspaceService.getAll()
-      const workspaces = Array.isArray(workspacesRes?.data) ? workspacesRes.data : []
+      const workspaces = Array.isArray(workspacesRes?.data) ? [...workspacesRes.data] : []
+      const createdWorkspaceId = String(workspaceId)
+      const createdWorkspaceIndex = workspaces.findIndex((workspace: any) => String(workspace?.workspaceId) === createdWorkspaceId)
+      if (createdWorkspaceIndex === -1) {
+        workspaces.push({
+          workspaceId: createdWorkspaceId,
+          workspaceName: createdWorkspace?.workspaceName || payload.name,
+          role: createdWorkspace?.role || 'ROLE_OWNER'
+        })
+      } else {
+        const candidate = workspaces[createdWorkspaceIndex] || {}
+        workspaces[createdWorkspaceIndex] = {
+          ...candidate,
+          workspaceId: createdWorkspaceId,
+          workspaceName: candidate.workspaceName || createdWorkspace?.workspaceName || payload.name,
+          role: candidate.role || createdWorkspace?.role || 'ROLE_OWNER'
+        }
+      }
       userStore.setWorkspaces(workspaces)
       await userStore.hydrateWorkspaceDetailsFromBudget(
         workspaces.map((workspace: any) => String(workspace.workspaceId)).filter(Boolean)
       )
     } catch {
-      // best effort: tenant já selecionada
+      // best effort: seleção ainda segue com fallback local
     }
+
+    await userStore.selectWorkspace(String(workspaceId))
 
     sessionStorage.removeItem(messageKey)
     createWorkspaceForm.value = {

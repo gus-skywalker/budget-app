@@ -1185,11 +1185,13 @@
       "signup_success": "Cuenta creada con éxito.",
       "signup_success_ready": "Cuenta creada con éxito.",
       "signup_verify_email_notice": "Cuenta creada. Verifica tu correo antes de iniciar sesión.",
+      "reactivation_success_verify_email": "Cuenta reactivada. Verifica tu correo antes de iniciar sesión.",
       "signup_failed": "Error al crear la cuenta. Inténtalo de nuevo.",
       "password_mismatch": "La nueva contraseña y la confirmación no coinciden.",
       "network_error": "No se pudo conectar con el servidor. Verifica tu conexión e inténtalo de nuevo.",
       "server_unavailable": "El servicio no está disponible en este momento. Inténtalo de nuevo en breve.",
-      "login_unavailable": "No pudimos completar el inicio de sesión ahora. Inténtalo de nuevo."
+      "login_unavailable": "No pudimos completar el inicio de sesión ahora. Inténtalo de nuevo.",
+      "account_deleted_success": "Tu cuenta se eliminó correctamente. Enviamos un correo de confirmación."
     }
   },
   "transactionVisibility": {

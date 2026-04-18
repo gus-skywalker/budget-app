@@ -295,6 +295,15 @@ onMounted(() => {
   if (route.query && route.query.signup === 'true') {
     toggleForm(true)
   }
+  if (route.query && route.query.accountDeleted === 'true') {
+    loginSuccess.value = t('authentication.messages.account_deleted_success')
+    setTimeout(() => {
+      loginSuccess.value = null
+    }, 7000)
+    const cleanedQuery = { ...route.query }
+    delete cleanedQuery.accountDeleted
+    router.replace({ query: cleanedQuery })
+  }
 })
 
 const getLoginErrorMessage = (err) => {
@@ -512,6 +521,40 @@ const userSignup = async () => {
 
   } catch (err) {
     console.error('Signup error:', err)
+    const backendMessage = typeof err?.response?.data === 'string'
+      ? err.response.data
+      : err?.response?.data?.message
+
+    const shouldReactivate = typeof backendMessage === 'string'
+      && backendMessage.toLowerCase().includes('account canceled')
+
+    if (shouldReactivate) {
+      try {
+        await AuthService.reactivate({
+          username: signupData.value.username,
+          email: signupData.value.email,
+          password: signupData.value.password
+        })
+
+        const reactivatedEmail = signupData.value.email
+        signupSuccess.value = t('authentication.messages.signup_success_ready')
+        setTimeout(() => {
+          signupSuccess.value = null
+          clearSignupForm()
+          toggleForm(false)
+          userData.value.email = reactivatedEmail
+          emailNotVerified.value = true
+          loginSuccess.value = t('authentication.messages.reactivation_success_verify_email')
+          setTimeout(() => {
+            loginSuccess.value = null
+          }, 7000)
+        }, 1200)
+        return
+      } catch (reactivationError) {
+        console.error('Reactivation error:', reactivationError)
+      }
+    }
+
     signupError.value = t('authentication.messages.signup_failed')
     setTimeout(() => {
       signupError.value = null

@@ -13,6 +13,12 @@
 2. User is redirected to login flow and authenticates.
 3. `OnboardingOrchestrator` resolves post-auth path (`create-workspace`, `select-workspace`, or target route).
 
+## 2.1 Reactivation Flow (Canceled Account)
+1. Frontend calls `POST /api/auth/signup`.
+2. If `auth` returns canceled-account conflict, frontend calls explicit `POST /api/auth/reactivate`.
+3. Reactivation preserves account identity/data and requires email verification again.
+4. User returns to login and continues normal onboarding orchestration.
+
 ## 3. Onboarding Orchestration Flow
 1. Login/OAuth callback calls `OnboardingOrchestrator.resolvePostAuthRoute(...)`.
 2. Orchestrator normalizes `redirect` and optional `plan` into a canonical target path.
