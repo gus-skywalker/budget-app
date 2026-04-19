@@ -96,7 +96,7 @@ const getRoleLabel = (role) => {
 }
 
 .active-workspace {
-  background-color: #f5f5f5;
+  background-color: rgba(15, 23, 42, 0.06);
   font-weight: bold;
 }
 </style>

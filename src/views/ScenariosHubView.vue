@@ -380,4 +380,22 @@ onMounted(() => {
   padding: 40px 16px;
   text-align: center;
 }
+
+.v-theme--dark .saved-scenarios-panel {
+  background: rgba(17, 24, 39, 0.9);
+  border-color: rgba(148, 163, 184, 0.16);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.24);
+}
+
+.v-theme--dark .saved-scenarios-panel__header p,
+.v-theme--dark .saved-scenario-card__meta,
+.v-theme--dark .empty-results {
+  color: #cbd5e1;
+}
+
+.v-theme--dark .saved-scenario-card {
+  background: rgba(30, 41, 59, 0.78);
+  border-color: rgba(148, 163, 184, 0.2);
+  color: #f8fafc;
+}
 </style>

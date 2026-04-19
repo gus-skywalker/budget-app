@@ -211,10 +211,32 @@
     padding: 20px;
 }
 
-h1,
-h2,
-h3 {
-    color: #333;
+.terms-container h1 {
+    color: #2f4d73;
+    font-size: clamp(2rem, 4vw, 2.8rem);
+    line-height: 1.02;
+    letter-spacing: -0.04em;
+    margin-bottom: 24px;
+    font-weight: 800;
+}
+
+.terms-container h2 {
+    color: #446487;
+    font-size: 1.9rem;
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+    margin-top: 34px;
+    margin-bottom: 12px;
+    font-weight: 800;
+}
+
+.terms-container h3 {
+    color: #5a7797;
+    font-size: 1.15rem;
+    line-height: 1.2;
+    margin-top: 22px;
+    margin-bottom: 10px;
+    font-weight: 800;
 }
 
 p {
@@ -234,5 +256,17 @@ li {
 
 .contact a {
     color: inherit;
+}
+
+.v-theme--dark .terms-container h1 {
+    color: #8fb2d8;
+}
+
+.v-theme--dark .terms-container h2 {
+    color: #a5c1de;
+}
+
+.v-theme--dark .terms-container h3 {
+    color: #b7cde3;
 }
 </style>

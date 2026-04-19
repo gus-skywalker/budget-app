@@ -600,4 +600,27 @@ onMounted(() => {
 .warning-value {
   color: #b45309;
 }
+
+.v-theme--dark .result-shell {
+  background: rgba(17, 24, 39, 0.9);
+  border-color: rgba(148, 163, 184, 0.16);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.24);
+}
+
+.v-theme--dark .metric-card {
+  background: rgba(30, 41, 59, 0.76);
+  border-color: rgba(148, 163, 184, 0.18);
+  color: #f8fafc;
+}
+
+.v-theme--dark .metric-card span,
+.v-theme--dark .empty-results {
+  color: #cbd5e1;
+}
+
+.v-theme--dark .forecast-table th,
+.v-theme--dark .forecast-table td {
+  border-bottom-color: rgba(148, 163, 184, 0.18);
+  color: #e5eefb;
+}
 </style>

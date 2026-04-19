@@ -624,6 +624,40 @@ watch(
   color: #b91c1c;
 }
 
+.v-theme--dark .wizard-shell {
+  background: rgba(17, 24, 39, 0.9);
+  border-color: rgba(148, 163, 184, 0.16);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.24);
+}
+
+.v-theme--dark .wizard-step,
+.v-theme--dark .impact-estimate,
+.v-theme--dark .empty-results,
+.v-theme--dark .metric-card span,
+.v-theme--dark .review-box span {
+  color: #cbd5e1;
+}
+
+.v-theme--dark .metric-card,
+.v-theme--dark .review-box > div,
+.v-theme--dark .adjustment-card {
+  background: rgba(30, 41, 59, 0.76);
+  border-color: rgba(148, 163, 184, 0.18);
+  color: #f8fafc;
+}
+
+.v-theme--dark .template-card {
+  background: rgba(30, 41, 59, 0.78);
+  border-color: rgba(129, 140, 248, 0.24);
+  color: #f8fafc;
+}
+
+.v-theme--dark .template-card:hover,
+.v-theme--dark .template-card--active {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: rgba(129, 140, 248, 0.4);
+}
+
 @media (max-width: 720px) {
   .adjustment-row,
   .adjustment-row--numbers {

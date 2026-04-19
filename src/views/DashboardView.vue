@@ -2796,6 +2796,28 @@ export default {
   background: rgba(255, 255, 255, 0.92);
 }
 
+.modern-select :deep(.v-field) {
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 12px;
+}
+
+.v-theme--dark .modern-select {
+  background: transparent;
+}
+
+.v-theme--dark .modern-select :deep(.v-field) {
+  background: rgba(17, 24, 39, 0.88);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+}
+
+.v-theme--dark .modern-select :deep(.v-field__input),
+.v-theme--dark .modern-select :deep(.v-label),
+.v-theme--dark .modern-select :deep(.v-select__selection-text),
+.v-theme--dark .modern-select :deep(.v-icon) {
+  color: #e5eefc;
+}
+
 /* Chart Wrapper */
 .chart-wrapper {
   position: relative;

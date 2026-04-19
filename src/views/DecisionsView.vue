@@ -1271,6 +1271,15 @@ onMounted(async () => {
   font-size: 1rem;
 }
 
+.v-theme--dark .decision-metric {
+  background: rgba(15, 23, 42, 0.42);
+  border-color: rgba(148, 163, 184, 0.16);
+}
+
+.v-theme--dark .decision-metric strong {
+  color: #f8fafc;
+}
+
 .decision-card__meta {
   display: flex;
   flex-direction: column;
@@ -1321,6 +1330,16 @@ onMounted(async () => {
   border-color: rgba(102, 126, 234, 0.18);
 }
 
+.v-theme--dark .decision-votes {
+  background: rgba(15, 23, 42, 0.42);
+  border-color: rgba(148, 163, 184, 0.16);
+}
+
+.v-theme--dark .decision-votes--featured {
+  background: rgba(15, 23, 42, 0.58);
+  border-color: rgba(129, 140, 248, 0.24);
+}
+
 .decision-votes__summary {
   display: flex;
   justify-content: space-between;
@@ -1364,6 +1383,11 @@ onMounted(async () => {
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.72);
   border: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.v-theme--dark .decision-reasoning {
+  background: rgba(15, 23, 42, 0.42);
+  border-color: rgba(148, 163, 184, 0.16);
 }
 
 .decision-reasoning__header {
@@ -1410,6 +1434,13 @@ onMounted(async () => {
   color: #334155;
   font-size: 0.9rem;
   line-height: 1.4;
+}
+
+.v-theme--dark .decision-reasoning__header,
+.v-theme--dark .decision-reasoning__empty,
+.v-theme--dark .decision-reasoning__group-title,
+.v-theme--dark .decision-reasoning__line {
+  color: #cbd5e1;
 }
 
 .decision-reasoning__vote {
@@ -1474,6 +1505,11 @@ onMounted(async () => {
   border: 1px solid rgba(148, 163, 184, 0.14);
 }
 
+.v-theme--dark .decision-comment {
+  background: rgba(15, 23, 42, 0.42);
+  border-color: rgba(148, 163, 184, 0.16);
+}
+
 .decision-comment__avatar {
   width: 36px;
   height: 36px;
@@ -1503,6 +1539,13 @@ onMounted(async () => {
   color: #64748b;
 }
 
+.v-theme--dark .decision-comment p,
+.v-theme--dark .decision-comment span,
+.v-theme--dark .decision-comments__empty,
+.v-theme--dark .decision-comments__header {
+  color: #cbd5e1;
+}
+
 .decision-comments__composer {
   display: grid;
   gap: 10px;
@@ -1530,6 +1573,12 @@ onMounted(async () => {
   color: #64748b;
 }
 
+.v-theme--dark .empty-state {
+  background: rgba(15, 23, 42, 0.38);
+  border-color: rgba(148, 163, 184, 0.24);
+  color: #cbd5e1;
+}
+
 .empty-state--error {
   color: #b91c1c;
 }
@@ -1554,10 +1603,20 @@ onMounted(async () => {
   cursor: pointer;
 }
 
+.v-theme--dark .decision-create-item {
+  background: rgba(15, 23, 42, 0.42);
+  border-color: rgba(148, 163, 184, 0.2);
+  color: #f8fafc;
+}
+
 .decision-create-item p {
   margin: 4px 0 0;
   color: #64748b;
   font-size: 0.86rem;
+}
+
+.v-theme--dark .decision-create-item p {
+  color: #cbd5e1;
 }
 
 @media (max-width: 900px) {

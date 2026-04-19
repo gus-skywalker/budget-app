@@ -654,4 +654,60 @@ h2 {
     padding: 16px;
   }
 }
+
+.v-theme--dark #create-workspace-page {
+  --ink: #f8fafc;
+  --ink-soft: #cbd5e1;
+  --line: rgba(148, 163, 184, 0.18);
+  --surface: rgba(17, 24, 39, 0.9);
+  --shadow: 0 20px 40px rgba(0, 0, 0, 0.28);
+  background:
+    radial-gradient(circle at top left, rgba(32, 95, 99, 0.18), transparent 28%),
+    radial-gradient(circle at 85% 10%, rgba(182, 85, 31, 0.16), transparent 20%),
+    linear-gradient(180deg, #141414 0%, #181818 52%, #101010 100%);
+}
+
+.v-theme--dark #create-workspace-page .eyebrow,
+.v-theme--dark #create-workspace-page .section-kicker {
+  background: rgba(125, 211, 252, 0.12);
+  color: #c7ecff;
+}
+
+.v-theme--dark #create-workspace-page .icon-chip-soft {
+  background: rgba(148, 163, 184, 0.14);
+  color: #f8fafc;
+}
+
+.v-theme--dark #create-workspace-page .icon-chip-contrast {
+  background: rgba(32, 95, 99, 0.18);
+  color: #b9f3f2;
+}
+
+.v-theme--dark #create-workspace-page .icon-chip-warm {
+  background: rgba(182, 85, 31, 0.18);
+  color: #ffd0b8;
+}
+
+.v-theme--dark #create-workspace-page .workspace-card :deep(.v-field) {
+  background: rgba(15, 23, 42, 0.78);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.v-theme--dark #create-workspace-page .workspace-card :deep(.v-field__input),
+.v-theme--dark #create-workspace-page .workspace-card :deep(.v-label),
+.v-theme--dark #create-workspace-page .workspace-card :deep(.v-select__selection-text),
+.v-theme--dark #create-workspace-page .workspace-card :deep(.v-icon),
+.v-theme--dark #create-workspace-page .workspace-card :deep(textarea) {
+  color: #f8fafc;
+}
+
+.v-theme--dark #create-workspace-page .workspace-card :deep(.v-messages__message),
+.v-theme--dark #create-workspace-page .workspace-card :deep(.v-counter),
+.v-theme--dark #create-workspace-page .workspace-card :deep(.v-field__hint) {
+  color: #cbd5e1;
+}
+
+.v-theme--dark #create-workspace-page .workspace-card :deep(.v-field__outline) {
+  --v-field-border-opacity: 0;
+}
 </style>
