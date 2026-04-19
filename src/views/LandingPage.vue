@@ -65,12 +65,12 @@
     </header>
 
     <main>
-      <section id="top" class="hero-section section-offset">
-        <div class="shell hero-grid">
-          <div class="hero-copy">
+      <section id="top" class="hero-section-test section-offset">
+        <div class="shell hero-container-test">
+          <div class="hero-content-test">
             <span class="eyebrow">{{ $t('landingPage.hero.micro') }}</span>
-            <h1>{{ $t('landingPage.hero.title') }}</h1>
-            <p class="hero-lead">{{ $t('landingPage.hero.subtitle') }}</p>
+            <h1 class="hero-headline-test">{{ $t('landingPage.hero.title') }}</h1>
+            <p class="hero-subheadline-test">{{ $t('landingPage.hero.subtitle') }}</p>
 
             <div class="hero-points">
               <div v-for="item in solutionCards" :key="item.titleKey" class="hero-point">
@@ -93,49 +93,48 @@
             <p class="proof-copy">{{ $t('landingPage.hero.proof') }}</p>
           </div>
 
-          <div class="hero-visual">
-            <div class="hero-panel hero-panel-main">
-              <div class="hero-panel-head">
-                <span class="panel-label">{{ $t('landingPage.diff.subtitle') }}</span>
-                <strong>{{ $t('landingPage.ai.title') }}</strong>
+          <div class="hero-image-wrapper-test">
+            <img
+              src="/landing-assets/hero-decision-impact.png"
+              :alt="$t('landingPage.hero.imageAlt')"
+              class="hero-image-test"
+            />
+            <div class="hero-overlay-card-test">
+              <div class="overlay-label-test">{{ $t('landingPage.hero.micro') }}</div>
+              <div class="overlay-value-test">+R$8,000</div>
+              <div class="overlay-details-test">
+                <div>Projected balance: <span class="overlay-detail-value-test">R$59,639</span></div>
+                <div>Status: <span class="overlay-detail-status-test">Stable</span></div>
+                <div>Available: <span class="overlay-detail-value-test">R$8,969</span></div>
               </div>
-
-              <div class="hero-insights">
-                <article v-for="item in aiCards" :key="item.titleKey" class="insight-card">
-                  <div class="icon-chip">
-                    <v-icon size="20">{{ item.icon }}</v-icon>
-                  </div>
-                  <div>
-                    <h3>{{ $t(item.titleKey) }}</h3>
-                    <p>{{ $t(item.descKey) }}</p>
-                    <span>{{ $t(item.tagKey) }}</span>
-                  </div>
-                </article>
-              </div>
-            </div>
-
-            <div class="hero-panel hero-panel-image">
-              <img src="/hero_image.jpg" :alt="$t('landingPage.hero.imageAlt')" />
             </div>
           </div>
         </div>
       </section>
 
       <section id="about" class="section-offset section-block section-light">
-        <div class="shell narrative-grid">
-          <div>
+        <div class="shell section-media-grid">
+          <div class="section-media-copy">
             <span class="section-kicker">{{ $t('landingPage.nav.about') }}</span>
             <h2>{{ $t('landingPage.pain.title') }}</h2>
             <p class="section-intro">{{ $t('landingPage.pain.subtitle') }}</p>
+
+            <div class="card-grid card-grid-compact">
+              <article v-for="item in painCards.slice(0, 2)" :key="item.titleKey" class="feature-card feature-card-pain">
+                <div class="icon-chip icon-chip-contrast">
+                  <v-icon size="22">{{ item.icon }}</v-icon>
+                </div>
+                <strong>{{ $t(item.titleKey) }}</strong>
+              </article>
+            </div>
           </div>
 
-          <div class="card-grid card-grid-tight">
-            <article v-for="item in painCards" :key="item.titleKey" class="feature-card feature-card-pain">
-              <div class="icon-chip icon-chip-contrast">
-                <v-icon size="22">{{ item.icon }}</v-icon>
-              </div>
-              <strong>{{ $t(item.titleKey) }}</strong>
-            </article>
+          <div class="section-media-visual">
+            <img
+              src="/landing-assets/problem-financial-doubt.png"
+              :alt="$t('landingPage.pain.title')"
+              class="section-media-image"
+            />
           </div>
         </div>
       </section>
@@ -180,8 +179,8 @@
       </section>
 
       <section id="ai" class="section-offset section-block section-airy">
-        <div class="shell ai-grid">
-          <div>
+        <div class="shell section-media-grid">
+          <div class="section-media-copy">
             <span class="section-kicker">{{ $t('landingPage.ai.title') }}</span>
             <h2>{{ $t('landingPage.ai.title') }}</h2>
             <p class="section-intro">{{ $t('landingPage.ai.subtitle') }}</p>
@@ -203,35 +202,38 @@
             </div>
           </div>
 
-          <div class="ai-card-stack">
-            <article v-for="item in aiCards" :key="`stack-${item.titleKey}`" class="ai-showcase-card">
-              <div class="ai-card-head">
-                <div class="icon-chip icon-chip-contrast">
-                  <v-icon size="20">{{ item.icon }}</v-icon>
-                </div>
-                <span>{{ $t(item.tagKey) }}</span>
-              </div>
-              <h3>{{ $t(item.titleKey) }}</h3>
-              <p>{{ $t(item.descKey) }}</p>
-            </article>
+          <div class="section-media-visual">
+            <img
+              src="/landing-assets/insight-moment.png"
+              :alt="$t('landingPage.ai.title')"
+              class="section-media-image"
+            />
           </div>
         </div>
       </section>
 
       <section class="section-offset section-block section-light">
-        <div class="shell">
-          <div class="section-heading centered-heading">
+        <div class="shell section-media-grid">
+          <div class="section-media-copy">
             <span class="section-kicker">{{ $t('landingPage.family.title') }}</span>
             <h2>{{ $t('landingPage.family.subtitle') }}</h2>
+
+            <div class="card-grid card-grid-compact">
+              <article v-for="item in familyCards.slice(0, 2)" :key="item.titleKey" class="feature-card">
+                <div class="icon-chip icon-chip-warm">
+                  <v-icon size="22">{{ item.icon }}</v-icon>
+                </div>
+                <strong>{{ $t(item.titleKey) }}</strong>
+              </article>
+            </div>
           </div>
 
-          <div class="card-grid card-grid-four">
-            <article v-for="item in familyCards" :key="item.titleKey" class="feature-card">
-              <div class="icon-chip icon-chip-warm">
-                <v-icon size="22">{{ item.icon }}</v-icon>
-              </div>
-              <strong>{{ $t(item.titleKey) }}</strong>
-            </article>
+          <div class="section-media-visual">
+            <img
+              src="/landing-assets/financial-relief.png"
+              :alt="$t('landingPage.family.subtitle')"
+              class="section-media-image"
+            />
           </div>
         </div>
       </section>
@@ -638,6 +640,161 @@ export default {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Source+Sans+3:wght@400;500;600;700&display=swap');
 
+.hero-section-test {
+  padding: 56px 0 88px;
+}
+
+.hero-container-test {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+  align-items: center;
+  gap: 34px;
+}
+
+.hero-content-test {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.hero-headline-test {
+  margin-top: 14px;
+}
+
+.hero-subheadline-test {
+  margin-bottom: 4px;
+}
+
+.hero-image-wrapper-test {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-image-test {
+  width: 100%;
+  border-radius: 28px;
+  display: block;
+  box-shadow: var(--shadow);
+  object-fit: cover;
+  min-height: 440px;
+}
+
+.hero-overlay-card-test {
+  position: absolute;
+  bottom: 28px;
+  right: 28px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 18px 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  min-width: 240px;
+  max-width: min(90%, 320px);
+  opacity: 0;
+  animation: fadeInCardTest 0.28s ease 0.1s forwards;
+  z-index: 2;
+  backdrop-filter: blur(6px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+}
+
+.hero-overlay-card-test::before {
+  content: "";
+  display: block;
+  position: absolute;
+  left: 50%;
+  bottom: -18px;
+  width: 32px;
+  height: 1px;
+  background: rgba(31, 41, 55, 0.10);
+  transform: translateX(-50%);
+  border-radius: 1px;
+  pointer-events: none;
+}
+
+@keyframes fadeInCardTest {
+  from { opacity: 0; transform: translateY(16px);}
+  to { opacity: 1; transform: translateY(0);}
+}
+
+.overlay-label-test {
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #6b7280;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.overlay-value-test {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #1f7a45;
+  margin-bottom: 18px;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+
+.overlay-details-test {
+  font-size: 0.98rem;
+  color: #6b7280;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  line-height: 1.5;
+}
+
+.overlay-detail-value-test {
+  color: #18181b;
+  font-weight: 700;
+}
+
+.overlay-detail-status-test {
+  color: #1f7a45;
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .hero-container-test {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    align-items: stretch;
+  }
+
+  .hero-image-test {
+    min-height: 380px;
+  }
+}
+
+@media (max-width: 600px) {
+  .hero-section-test {
+    padding: 44px 0 74px;
+  }
+
+  .hero-content-test {
+    max-width: 100%;
+  }
+
+  .hero-overlay-card-test {
+    bottom: 10px;
+    right: 10px;
+    padding: 14px 12px;
+    min-width: 0;
+    font-size: 0.98rem;
+  }
+  .hero-overlay-card-test::before {
+    width: 18px;
+    bottom: -10px;
+  }
+
+  .hero-headline-test {
+    margin-top: 12px;
+  }
+}
 #landing-page {
   --page-bg: #f5f1e8;
   --surface: rgba(255, 255, 255, 0.82);
@@ -1076,6 +1233,36 @@ p {
   align-items: start;
 }
 
+.section-media-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.95fr);
+  gap: 34px;
+  align-items: center;
+}
+
+.section-media-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.section-media-copy .card-grid {
+  margin-top: 24px;
+}
+
+.section-media-visual {
+  width: 100%;
+}
+
+.section-media-image {
+  width: 100%;
+  display: block;
+  border-radius: 28px;
+  object-fit: cover;
+  box-shadow: var(--shadow);
+  min-height: 360px;
+}
+
 .card-grid {
   display: grid;
   gap: 18px;
@@ -1083,6 +1270,11 @@ p {
 
 .card-grid-tight {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.card-grid-compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
 }
 
 .card-grid-four {
@@ -1534,7 +1726,9 @@ p {
   }
 
   .hero-grid,
+  .hero-container-test,
   .narrative-grid,
+  .section-media-grid,
   .contact-grid,
   .ai-grid,
   .plans-grid,
@@ -1570,6 +1764,7 @@ p {
   }
 
   .card-grid-tight,
+  .card-grid-compact,
   .card-grid-four,
   .timeline-grid {
     grid-template-columns: 1fr;
@@ -1592,6 +1787,11 @@ p {
 
   .value-banner {
     grid-template-columns: 1fr;
+  }
+
+  .section-media-image,
+  .hero-image-test {
+    min-height: 300px;
   }
 
   .footer-grid {
