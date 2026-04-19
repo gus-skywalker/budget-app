@@ -147,7 +147,7 @@ const landingPageMessages = {
         subtitle:
           'Organize, projete e decida com confiança.\nCoBudget — Plataforma de decisão financeira colaborativa.',
         cta: 'Começar gratuitamente agora',
-        copyright: '© 2026 CoBudget App Todos os direitos reservados. Powered by Les Monades'
+        copyright: '© 2026 CoBudget App. Todos os direitos reservados. Powered by Les Monades'
       },
       workspaceSelector: {
         title: 'Selecione um workspace',
@@ -310,7 +310,7 @@ const landingPageMessages = {
         title: 'Clarity is not a luxury. It is responsibility.',
         subtitle: 'Organize, forecast, and decide with confidence.\nCoBudget — Collaborative financial decision platform.',
         cta: 'Start for free now',
-        copyright: '© 2026 CoBudget App All rights reserved. Powered by Les Monades'
+        copyright: '© 2026 CoBudget App. All rights reserved. Powered by Les Monades'
       },
       workspaceSelector: {
         title: 'Select a workspace',
@@ -473,7 +473,7 @@ const landingPageMessages = {
         title: 'La claridad no es lujo. Es responsabilidad.',
         subtitle: 'Organiza, proyecta y decide con confianza.\nCoBudget — Plataforma de decisión financeira colaborativa.',
         cta: 'Comenzar gratis agora',
-        copyright: '© 2026 CoBudget App Todos los derechos reservados. Desarrollado por Les Monades'
+        copyright: '© 2026 CoBudget App. Todos los derechos reservados. Desarrollado por Les Monades'
       },
       workspaceSelector: {
         title: 'Selecciona un workspace',
@@ -636,7 +636,7 @@ const landingPageMessages = {
         title: 'La clarté n’est pas un luxe. C’est une responsabilité.',
         subtitle: 'Organisez, projetez et décidez avec confiance.\nCoBudget — Plateforme de décision financière collaborative.',
         cta: 'Commencer gratuitement maintenant',
-        copyright: '© 2026 CoBudget App Tous droits réservés. Propulsé par Les Monades'
+        copyright: '© 2026 CoBudget App. Tous droits réservés. Propulsé par Les Monades'
       },
       workspaceSelector: {
         title: 'Sélectionnez un workspace',
