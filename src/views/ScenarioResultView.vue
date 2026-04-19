@@ -2,8 +2,23 @@
   <div class="planning-page">
     <v-container class="modern-container scenario-result">
       <div class="page-header">
+        <v-btn
+          class="back-btn"
+          variant="text"
+          color="primary"
+          @click="router.back()"
+          style="min-width:0;padding:0 4px 0 0;margin-bottom:4px;"
+        >
+          <v-icon start size="20">mdi-arrow-left</v-icon>
+          {{ t('common.back', 'Voltar') }}
+        </v-btn>
         <div>
-          <h1 class="page-title">Scenario results</h1>
+          <h1 class="page-title">
+            Scenario results
+            <span v-if="result && result.scenarioName" class="scenario-name-badge">
+              — {{ result.scenarioName }}
+            </span>
+          </h1>
           <p class="page-subtitle">Decision-focused outcome from your simulation</p>
         </div>
       </div>
