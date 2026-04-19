@@ -144,17 +144,48 @@ export const buildSimulationPayload = (snapshot: ScenarioWizardSnapshot): Scenar
 export const mapDeltasToSimpleAdjustments = (deltas: ScenarioDeltaInput[] = []): SimpleScenarioAdjustment[] => {
   if (!deltas.length) return [createAdjustment()]
 
-  return deltas.map((delta, index) => {
+  const meaningfulDeltas = deltas.filter((delta) => !String(delta.label || '').startsWith('Baseline adjustment:'))
+  if (!meaningfulDeltas.length) return [createAdjustment()]
+
+  const grouped = new Map<string, { label: string; flow: AdjustmentFlow; monthlyChange: number; oneTimeChange: number }>()
+
+  meaningfulDeltas.forEach((delta, index) => {
     const flow = typeToFlow(delta.type)
     const isMonthly = delta.type === 'MONTHLY_INCOME' || delta.type === 'MONTHLY_EXPENSE'
-    return createAdjustment({
-      id: `${index + 1}`,
-      label: delta.label || '',
+    const label = String(delta.label || '').trim()
+    const hasGeneratedSuffix = /\((monthly|one-time)\)\s*$/i.test(label)
+    const baseLabel = label.replace(/\s*\((monthly|one-time)\)\s*$/i, '').trim()
+    const key = hasGeneratedSuffix
+      ? `${flow}:${baseLabel || 'change'}`
+      : `${flow}:${baseLabel || `delta-${index + 1}`}:${isMonthly ? 'm' : 'o'}`
+
+    const existing = grouped.get(key)
+    if (existing) {
+      if (isMonthly) {
+        existing.monthlyChange += Number(delta.amount || 0)
+      } else {
+        existing.oneTimeChange += Number(delta.amount || 0)
+      }
+      return
+    }
+
+    grouped.set(key, {
+      label: baseLabel,
       flow,
       monthlyChange: isMonthly ? Number(delta.amount || 0) : 0,
       oneTimeChange: isMonthly ? 0 : Number(delta.amount || 0),
     })
   })
+
+  return Array.from(grouped.values()).map((item, index) =>
+    createAdjustment({
+      id: `${index + 1}`,
+      label: item.label,
+      flow: item.flow,
+      monthlyChange: item.monthlyChange,
+      oneTimeChange: item.oneTimeChange,
+    }),
+  )
 }
 
 export const snapshotFromSavedScenario = (

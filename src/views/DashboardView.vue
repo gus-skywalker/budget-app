@@ -1655,7 +1655,7 @@ export default {
     activityRoute(event) {
       const relatedType = String(event?.relatedEntityType || '')
       if (relatedType === 'TRANSACTION') return '/budget'
-      if (relatedType === 'SCENARIO') return '/planning/scenarios'
+      if (relatedType === 'SCENARIO') return '/planning/scenarios/:id'
       if (relatedType === 'DECISION') return '/decisions'
       return null
     },
@@ -1666,12 +1666,9 @@ export default {
         this.$router.push({ path, query: { visibility: 'workspace' } })
         return
       }
-      if (path === '/planning/scenarios' && event?.relatedEntityId) {
-        this.$router.push({ path, query: { scenarios: event.relatedEntityId } })
+      if (path === '/planning/scenarios/:id' && event?.relatedEntityId) {
+        this.$router.push({ name: 'planning-scenarios-result', params: { id: event.relatedEntityId } })
         return
-      }
-      if (path === '/decisions' && event?.relatedEntityId) {
-        window.localStorage.setItem('decisions-scenarios', '')
       }
       this.$router.push(path)
     },

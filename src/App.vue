@@ -68,7 +68,7 @@ async function openNotification(notification: Notification) {
 
   const decisionId = extractDecisionId(notification)
   if (decisionId) {
-    await router.push({ name: 'decisions', query: { decisionId } })
+    await router.push({ name: 'decision-detail', params: { id: decisionId } })
   } else {
     await router.push({ name: 'decisions' })
   }

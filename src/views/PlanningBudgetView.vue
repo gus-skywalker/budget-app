@@ -139,9 +139,9 @@
             </div>
 
             <div class="flow-action">
-              <v-btn color="#667eea" size="large" @click="goToScenarios">
+              <v-btn color="#667eea" size="large" @click="goToScenarioCreation">
                 <v-icon start>mdi-chart-timeline-variant</v-icon>
-                Simulate Scenario
+                Create Scenario
               </v-btn>
             </div>
           </template>
@@ -277,7 +277,7 @@ const createMinimalBudget = async () => {
     })
 
     if (!createdBudget?.id) {
-      await goToScenarios()
+      await goToScenarioCreation()
       return
     }
 
@@ -288,7 +288,7 @@ const createMinimalBudget = async () => {
 
     await BudgetService.activate(createdBudget.id)
     await loadCurrentBudget()
-    await goToScenarios()
+    await goToScenarioCreation()
   } catch (error) {
     console.error(error)
   } finally {
@@ -296,11 +296,8 @@ const createMinimalBudget = async () => {
   }
 }
 
-const goToScenarios = async () => {
-  await router.push({
-    path: '/planning/scenarios',
-    query: activeBudget.value?.id ? { budgetId: activeBudget.value.id } : undefined,
-  })
+const goToScenarioCreation = async () => {
+  await router.push({ name: 'planning-scenarios-new' })
 }
 
 const confidenceColor = (confidence?: string) => {

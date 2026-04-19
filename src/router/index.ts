@@ -9,8 +9,10 @@ import AccountsView from '@/views/AccountsView.vue'
 import CategoriesView from '@/views/CategoriesView.vue'
 import CashflowView from '@/views/CashflowView.vue'
 import PlanningBudgetView from '@/views/PlanningBudgetView.vue'
+import ScenariosHubView from '@/views/ScenariosHubView.vue'
 import ScenarioBuilderView from '@/views/ScenarioBuilderView.vue'
 import ScenarioResultView from '@/views/ScenarioResultView.vue'
+import ScenarioEditorView from '@/views/ScenarioEditorView.vue'
 import DecisionsView from '@/views/DecisionsView.vue'
 import PublicDecisionView from '@/views/PublicDecisionView.vue'
 import InsightsView from '@/views/InsightsView.vue'
@@ -81,13 +83,19 @@ const router = createRouter({
     {
       path: '/planning/scenarios',
       name: 'planning-scenarios',
-      component: ScenarioBuilderView,
+      component: ScenariosHubView,
       meta: { requiresAuth: true, requiresWorkspace: true }
     },
     {
       path: '/planning/scenarios/new',
       name: 'planning-scenarios-new',
       component: ScenarioBuilderView,
+      meta: { requiresAuth: true, requiresWorkspace: true }
+    },
+    {
+      path: '/planning/scenarios/:id/edit',
+      name: 'planning-scenarios-edit',
+      component: ScenarioEditorView,
       meta: { requiresAuth: true, requiresWorkspace: true }
     },
     {

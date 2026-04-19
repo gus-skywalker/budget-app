@@ -81,16 +81,6 @@ export interface ScenarioLineAdjustment {
   adjustedAmount: number
 }
 
-export interface SavedScenarioComparison {
-  id: string
-  name: string
-  leftScenarioId: string
-  rightScenarioId: string
-  leftScenarioName?: string | null
-  rightScenarioName?: string | null
-  createdAt?: string
-}
-
 export default {
   simulate(payload: ScenarioSimulationRequest) {
     return axiosInterceptor.post<ScenarioSimulationResponse>(`${SCENARIOS_API_URL}/simulate`, payload)
@@ -100,15 +90,6 @@ export default {
   },
   remove(id: string) {
     return axiosInterceptor.delete(`${SCENARIOS_API_URL}/${id}`)
-  },
-  listComparisons() {
-    return axiosInterceptor.get<SavedScenarioComparison[]>(`${SCENARIOS_API_URL}/comparisons`)
-  },
-  saveComparison(payload: { name?: string; scenarioIds: string[] }) {
-    return axiosInterceptor.post<SavedScenarioComparison>(`${SCENARIOS_API_URL}/comparisons`, payload)
-  },
-  removeComparison(id: string) {
-    return axiosInterceptor.delete(`${SCENARIOS_API_URL}/comparisons/${id}`)
   },
   list() {
     return axiosInterceptor.get<SavedScenario[]>(`${SCENARIOS_API_URL}`)

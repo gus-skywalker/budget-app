@@ -114,7 +114,6 @@ const { t, locale } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const INSIGHTS_STORAGE_KEY = 'insights-scenarios'
-const DECISIONS_STORAGE_KEY = 'decisions-scenarios'
 
 const isLoading = ref(false)
 const error = ref('')
@@ -142,8 +141,7 @@ const getSavedScenarioPayload = (scenario: SavedScenario) => ({
 const resolveSelectedIds = () => {
   const fromQuery = typeof route.query.scenarios === 'string' ? route.query.scenarios : ''
   const fromInsights = window.localStorage.getItem(INSIGHTS_STORAGE_KEY) || ''
-  const fromDecisions = window.localStorage.getItem(DECISIONS_STORAGE_KEY) || ''
-  const raw = fromQuery || fromInsights || fromDecisions
+  const raw = fromQuery || fromInsights
   if (!raw) return []
   return raw
     .split(',')
@@ -323,7 +321,6 @@ const loadInsights = async () => {
     if (selectedScenarioIds.value.length) {
       const joined = selectedScenarioIds.value.join(',')
       window.localStorage.setItem(INSIGHTS_STORAGE_KEY, joined)
-      window.localStorage.setItem(DECISIONS_STORAGE_KEY, joined)
       await router.replace({
         query: {
           ...route.query,
@@ -357,18 +354,17 @@ const goToDecisions = async () => {
 }
 
 const goToScenarios = async () => {
-  const query = selectedScenarioIds.value.length
-    ? { scenarios: selectedScenarioIds.value.join(',') }
-    : undefined
-  await router.push({ path: '/planning/scenarios', query })
+  const scenarioId = selectedScenarioIds.value[0]
+  if (scenarioId) {
+    await router.push({ name: 'planning-scenarios-result', params: { id: scenarioId } })
+    return
+  }
+  await router.push({ name: 'planning-scenarios' })
 }
 
 const openScenario = async (scenarioId: string) => {
   window.localStorage.setItem(INSIGHTS_STORAGE_KEY, scenarioId)
-  await router.push({
-    path: '/planning/scenarios',
-    query: { scenarios: scenarioId },
-  })
+  await router.push({ name: 'planning-scenarios-result', params: { id: scenarioId } })
 }
 
 watch(

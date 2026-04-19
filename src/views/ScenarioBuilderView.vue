@@ -6,9 +6,33 @@
           <h1 class="page-title">{{ t('planning.scenarios.title') }}</h1>
           <p class="page-subtitle">{{ t('planning.scenarios.subtitle') }}</p>
         </div>
+        <div class="page-header__actions">
+          <v-btn
+            v-if="cameFromHub"
+            variant="text"
+            color="#667eea"
+            @click="router.push({ name: 'planning-scenarios' })"
+          >
+            <v-icon start>mdi-arrow-left</v-icon>
+            Scenario list
+          </v-btn>
+          <v-btn variant="tonal" color="#667eea" @click="startNewScenario()">
+            <v-icon start>mdi-file-plus-outline</v-icon>
+            {{ t('planning.scenarios.new_scenario') }}
+          </v-btn>
+        </div>
       </div>
 
       <div class="wizard-shell">
+        <v-alert
+          v-if="showImmutableNotice"
+          type="info"
+          variant="tonal"
+          density="comfortable"
+        >
+          This scenario already has team votes. We created a new version draft so the original decision trail stays intact.
+        </v-alert>
+
         <div class="wizard-steps">
           <span class="wizard-step">Step {{ step }} of 4</span>
           <v-progress-linear :model-value="(step / 4) * 100" color="#667eea" height="8" rounded></v-progress-linear>
@@ -198,68 +222,6 @@
           <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
         </template>
       </div>
-
-      <div class="saved-scenarios-panel">
-        <div class="saved-scenarios-panel__header">
-          <div>
-            <h3>{{ t('planning.scenarios.saved_title') }}</h3>
-            <p>{{ t('planning.scenarios.saved_subtitle') }}</p>
-          </div>
-        </div>
-
-        <div v-if="isLoadingSavedScenarios" class="empty-results">
-          <v-icon color="#94a3b8">mdi-timer-sand</v-icon>
-          <p>{{ t('planning.scenarios.comparing') }}</p>
-        </div>
-
-        <div v-else-if="savedScenarios.length" class="saved-scenarios-list">
-          <button
-            v-for="scenario in savedScenarios"
-            :key="scenario.id"
-            type="button"
-            class="saved-scenario-card"
-            @click="openResult(scenario.id)"
-          >
-            <div class="saved-scenario-card__header">
-              <strong>{{ scenario.name }}</strong>
-              <span :class="['status-chip', scenarioTone(scenario)]">{{ scenarioLabel(scenario) }}</span>
-            </div>
-
-            <p>{{ scenario.summary || scenario.description || t('planning.scenarios.saved_no_summary') }}</p>
-
-            <div class="saved-scenario-card__meta">
-              <span>{{ t('planning.scenarios.monthly_impact') }}: {{ formatCurrency(Number(scenario.scenarioMonthlyImpact || 0)) }}</span>
-            </div>
-
-            <div class="saved-scenario-card__actions">
-              <v-btn
-                variant="text"
-                density="comfortable"
-                size="small"
-                @click.stop="editScenario(scenario)"
-              >
-                <v-icon start>mdi-pencil-outline</v-icon>
-                {{ t('planning.scenarios.edit_action') }}
-              </v-btn>
-              <v-btn
-                variant="text"
-                density="comfortable"
-                size="small"
-                color="error"
-                @click.stop="deleteScenario(scenario)"
-              >
-                <v-icon start>mdi-delete-outline</v-icon>
-                {{ t('planning.scenarios.delete_action') }}
-              </v-btn>
-            </div>
-          </button>
-        </div>
-
-        <div v-else class="empty-results">
-          <v-icon color="#94a3b8">mdi-content-save-outline</v-icon>
-          <p>{{ t('planning.scenarios.saved_placeholder') }}</p>
-        </div>
-      </div>
     </v-container>
   </div>
 </template>
@@ -267,12 +229,13 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import BudgetService, { type Budget } from '@/services/BudgetService'
-import ScenarioService, { type SavedScenario } from '@/services/ScenarioService'
+import ScenarioService from '@/services/ScenarioService'
 import {
   buildScenarioLinesFromBudget,
   buildSimulationPayload,
+  clearWizardSnapshot,
   createAdjustment,
   hasAnyScenarioChange,
   loadWizardSnapshot,
@@ -286,15 +249,14 @@ import {
 
 const { t, locale } = useI18n()
 const router = useRouter()
+const route = useRoute()
 
 const step = ref(1)
 const isBudgetLoading = ref(false)
 const isSimulating = ref(false)
-const isLoadingSavedScenarios = ref(false)
 const errorMessage = ref('')
 const activeBudget = ref<Budget | null>(null)
 const selectedTemplate = ref<keyof typeof templateDeltas | null>(null)
-const savedScenarios = ref<SavedScenario[]>([])
 
 const snapshot = reactive<ScenarioWizardSnapshot>({
   scenarioName: '',
@@ -308,28 +270,34 @@ const templates = computed(() => [
   {
     key: 'reduce_costs' as const,
     icon: 'mdi-scissors-cutting',
-    title: 'Reduce costs',
-    description: 'Lower recurring and operational expenses.',
+    title: t('planning.scenarios.template_cost_cut_title'),
+    description: t('planning.scenarios.template_cost_cut_desc'),
+    months: 6,
   },
   {
     key: 'increase_revenue' as const,
     icon: 'mdi-chart-line',
-    title: 'Increase revenue',
-    description: 'Test growth initiatives and expected uplift.',
+    title: t('planning.scenarios.template_marketing_title'),
+    description: t('planning.scenarios.template_marketing_desc'),
+    months: 6,
   },
   {
     key: 'hiring' as const,
     icon: 'mdi-account-plus-outline',
-    title: 'Hiring',
-    description: 'Add team capacity and evaluate budget pressure.',
+    title: t('planning.scenarios.template_hiring_title'),
+    description: t('planning.scenarios.template_hiring_desc'),
+    months: 12,
   },
   {
     key: 'investment' as const,
     icon: 'mdi-rocket-launch-outline',
-    title: 'Investment',
-    description: 'Simulate upfront investment and expected return.',
+    title: t('planning.scenarios.template_investment_title'),
+    description: t('planning.scenarios.template_investment_desc'),
+    months: 9,
   },
 ])
+const showImmutableNotice = computed(() => String(route.query.locked || '') === '1')
+const cameFromHub = computed(() => String(route.query.from || '') === 'hub')
 
 const estimatedImpact = computed(() => monthlyImpactEstimate(snapshot))
 const canSimulate = computed(() => hasAnyScenarioChange(snapshot))
@@ -363,11 +331,30 @@ const removeAdjustment = (id: string) => {
 const selectTemplate = (templateKey: keyof typeof templateDeltas) => {
   selectedTemplate.value = templateKey
   snapshot.currentScenarioId = null
-  if (!snapshot.scenarioName.trim()) {
-    const template = templates.value.find((item) => item.key === templateKey)
-    snapshot.scenarioName = template?.title || t('planning.scenarios.default_name')
-  }
+  const template = templates.value.find((item) => item.key === templateKey)
+  snapshot.scenarioName = template?.title || t('planning.scenarios.default_name')
+  snapshot.months = Number(template?.months || 6)
   snapshot.adjustments = mapDeltasToSimpleAdjustments(templateDeltas[templateKey])
+}
+
+const startNewScenario = (budgetOverride?: Budget | null, persist = true) => {
+  const budget = budgetOverride || activeBudget.value
+  if (!budget) return
+
+  snapshot.scenarioName = ''
+  snapshot.months = 6
+  snapshot.currentScenarioId = null
+  snapshot.budgetId = budget.id
+  snapshot.periodMonth = budget.periodMonth
+  snapshot.periodYear = budget.periodYear
+  snapshot.adjustments = [createAdjustment()]
+  snapshot.scenarioLines = buildScenarioLinesFromBudget(budget)
+  selectedTemplate.value = null
+  step.value = 1
+
+  if (persist) {
+    saveWizardSnapshot(snapshot)
+  }
 }
 
 const loadBudget = async () => {
@@ -381,73 +368,43 @@ const loadBudget = async () => {
     }
 
     activeBudget.value = data
+
+    const cloneFromId = typeof route.query.cloneFrom === 'string' ? route.query.cloneFrom : ''
+    if (cloneFromId) {
+      const { data: scenarios } = await ScenarioService.list()
+      const source = (Array.isArray(scenarios) ? scenarios : []).find((item) => item.id === cloneFromId)
+      if (source) {
+        Object.assign(snapshot, snapshotFromSavedScenario(source, data))
+        snapshot.currentScenarioId = null
+        snapshot.scenarioName = source.name ? `${source.name} (new)` : t('planning.scenarios.default_name')
+        step.value = 3
+        saveWizardSnapshot(snapshot)
+        return
+      }
+    }
+
+    // "/planning/scenarios/new" must always start a clean scenario unless resume is explicit.
+    const shouldStartFresh =
+      route.name === 'planning-scenarios-new' &&
+      String(route.query.resume || '') !== '1'
+    if (shouldStartFresh) {
+      clearWizardSnapshot()
+      startNewScenario(data)
+      return
+    }
+
     const restored = loadWizardSnapshot()
     if (restored?.budgetId && restored.budgetId === data.id) {
       Object.assign(snapshot, restored)
       return
     }
 
-    snapshot.budgetId = data.id
-    snapshot.periodMonth = data.periodMonth
-    snapshot.periodYear = data.periodYear
-    snapshot.scenarioLines = buildScenarioLinesFromBudget(data)
+    startNewScenario(data, false)
   } catch (e) {
     console.error(e)
     activeBudget.value = null
   } finally {
     isBudgetLoading.value = false
-  }
-}
-
-const refreshSavedScenarios = async () => {
-  isLoadingSavedScenarios.value = true
-  try {
-    const { data } = await ScenarioService.list()
-    savedScenarios.value = Array.isArray(data) ? data : []
-  } catch (e) {
-    console.error(e)
-    savedScenarios.value = []
-  } finally {
-    isLoadingSavedScenarios.value = false
-  }
-}
-
-const scenarioTone = (scenario: SavedScenario) => {
-  if (scenario.decisionStatus === 'ACTION_NEEDED') return 'status-chip--danger'
-  if (scenario.decisionStatus === 'WATCH') return 'status-chip--warning'
-  return 'status-chip--success'
-}
-
-const scenarioLabel = (scenario: SavedScenario) => {
-  if (scenario.decisionStatus === 'ACTION_NEEDED') return t('planning.scenarios.status_action_needed')
-  if (scenario.decisionStatus === 'WATCH') return t('planning.scenarios.status_watch')
-  if (scenario.decisionStatus === 'STABLE') return t('planning.scenarios.status_stable')
-  return t('planning.scenarios.status_no_data')
-}
-
-const openResult = async (scenarioId: string) => {
-  await router.push({ name: 'planning-scenarios-result', params: { id: scenarioId } })
-}
-
-const editScenario = async (scenario: SavedScenario) => {
-  const rebuilt = snapshotFromSavedScenario(scenario, activeBudget.value || undefined)
-  Object.assign(snapshot, rebuilt)
-  step.value = 3
-  selectedTemplate.value = null
-  saveWizardSnapshot(snapshot)
-}
-
-const deleteScenario = async (scenario: SavedScenario) => {
-  const confirmed = window.confirm(t('planning.scenarios.delete_confirm', { name: scenario.name }))
-  if (!confirmed) return
-
-  errorMessage.value = ''
-  try {
-    await ScenarioService.remove(scenario.id)
-    await refreshSavedScenarios()
-  } catch (e) {
-    console.error(e)
-    errorMessage.value = t('planning.scenarios.delete_error')
   }
 }
 
@@ -459,8 +416,18 @@ const simulate = async () => {
     const payload = buildSimulationPayload(snapshot)
     const { data } = await ScenarioService.simulate(payload)
     saveWizardSnapshot(snapshot)
-    window.sessionStorage.setItem('planning-scenario-latest-result', JSON.stringify(data))
-    await router.push({ name: 'planning-scenarios-result', params: { id: snapshot.currentScenarioId || 'preview' } })
+    window.sessionStorage.setItem(
+      'planning-scenario-latest-result',
+      JSON.stringify({
+        scenarioId: snapshot.currentScenarioId || 'preview',
+        result: data,
+      }),
+    )
+    await router.push({
+      name: 'planning-scenarios-result',
+      params: { id: snapshot.currentScenarioId || 'preview' },
+      query: { simulatedAt: String(Date.now()) },
+    })
   } catch (e) {
     console.error(e)
     errorMessage.value = t('planning.scenarios.error')
@@ -480,13 +447,34 @@ watch(
 
 onMounted(() => {
   void loadBudget()
-  void refreshSavedScenarios()
 })
+
+watch(
+  () => route.query.cloneFrom,
+  () => {
+    if (activeBudget.value) {
+      clearWizardSnapshot()
+      void loadBudget()
+    }
+  },
+)
 </script>
 
 <style scoped>
 .scenario-wizard {
   max-width: 1080px;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.page-header__actions {
+  display: flex;
+  gap: 8px;
 }
 
 .wizard-shell {
@@ -616,81 +604,6 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   gap: 8px;
-}
-
-.saved-scenarios-panel {
-  background: #fff;
-  border-radius: 16px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  padding: 20px;
-  margin-top: 16px;
-}
-
-.saved-scenarios-panel__header h3 {
-  margin: 0;
-}
-
-.saved-scenarios-panel__header p {
-  color: #64748b;
-  margin-top: 4px;
-}
-
-.saved-scenarios-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
-  gap: 12px;
-}
-
-.saved-scenario-card {
-  border: 1px solid rgba(15, 23, 42, 0.1);
-  border-radius: 12px;
-  padding: 12px;
-  text-align: left;
-  background: #fff;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.saved-scenario-card__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.saved-scenario-card__meta {
-  color: #64748b;
-  font-size: 0.86rem;
-}
-
-.saved-scenario-card__actions {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-
-.status-chip {
-  border-radius: 999px;
-  padding: 2px 10px;
-  font-size: 0.72rem;
-  font-weight: 700;
-}
-
-.status-chip--danger {
-  color: #991b1b;
-  background: rgba(185, 28, 28, 0.15);
-}
-
-.status-chip--warning {
-  color: #92400e;
-  background: rgba(217, 119, 6, 0.15);
-}
-
-.status-chip--success {
-  color: #166534;
-  background: rgba(22, 163, 74, 0.16);
 }
 
 .empty-results {

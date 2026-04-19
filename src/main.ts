@@ -47,6 +47,7 @@ async function restoreSession() {
   }
 
   if (userStore.isAuthenticated) {
+    await userStore.reconcileWorkspaceContext()
     userStore.hydrateWorkspaceDetailsFromBudget().catch(() => {
       // Best-effort hydration; app should continue even if workspace details fail.
     })

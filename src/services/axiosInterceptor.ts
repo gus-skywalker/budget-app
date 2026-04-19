@@ -97,14 +97,16 @@ axiosInstance.interceptors.response.use(
           return axiosInstance(originalRequest)
         } else {
           processQueue('Refresh failed', null)
-          userStore.resetUser()
-          router.push('/login')
+          if (!userStore.isAuthenticated) {
+            router.push('/login')
+          }
           return Promise.reject(error)
         }
       } catch (refreshError) {
         processQueue(refreshError, null)
-        userStore.resetUser()
-        router.push('/login')
+        if (!userStore.isAuthenticated) {
+          router.push('/login')
+        }
         return Promise.reject(refreshError)
       } finally {
         isRefreshing = false

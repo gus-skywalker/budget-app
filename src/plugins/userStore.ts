@@ -477,6 +477,66 @@ export const useUserStore = defineStore({
     },
 
     /**
+     * Reconcile workspace context after app restore/refresh.
+     * Keeps local context stable and only pulls from auth when local list is empty.
+     */
+    async reconcileWorkspaceContext() {
+      if (!this.isAuthenticated) return
+
+      let workspaces = this.getWorkspaces || []
+
+      // Recover workspace membership from auth service when local state is empty.
+      if (!workspaces.length) {
+        try {
+          const response = await WorkspaceService.getAll()
+          const fetched = Array.isArray(response?.data)
+            ? response.data.map((workspace: WorkspaceClaim) => normalizeWorkspace(workspace))
+            : []
+          if (fetched.length) {
+            this.setWorkspaces(fetched)
+            workspaces = this.getWorkspaces || []
+          }
+        } catch (error) {
+          console.warn('Could not reconcile workspaces from auth service during session restore.', error)
+        }
+      }
+
+      if (!workspaces.length) {
+        this.clearCurrentWorkspace()
+        return
+      }
+
+      const currentWorkspace = this.getCurrentWorkspaceId
+        ? findWorkspaceById(workspaces, this.getCurrentWorkspaceId)
+        : null
+
+      if (currentWorkspace) {
+        if (!this.tenantRole) {
+          this.setCurrentWorkspace(
+            currentWorkspace.workspaceId,
+            currentWorkspace.role ?? null,
+            currentWorkspace.workspaceName
+          )
+        }
+        return
+      }
+
+      const preferredWorkspace = this.getPreferredWorkspaceId
+        ? findWorkspaceById(workspaces, this.getPreferredWorkspaceId)
+        : null
+      const fallbackWorkspace = preferredWorkspace || (workspaces.length === 1 ? workspaces[0] : null)
+
+      if (fallbackWorkspace) {
+        this.setCurrentWorkspace(
+          fallbackWorkspace.workspaceId,
+          fallbackWorkspace.role ?? null,
+          fallbackWorkspace.workspaceName
+        )
+        this.setPreferredWorkspace(fallbackWorkspace.workspaceId)
+      }
+    },
+
+    /**
      * Handle signin response from backend
      * Implements B2B multi-tenant flow decision logic
      */
@@ -616,7 +676,11 @@ export const useUserStore = defineStore({
         const status = error?.response?.status
         const body = error?.response?.data
         console.warn('[auth] refresh failed', { status, body })
-        this.logout()
+        // Only clear session when backend explicitly says refresh token is invalid/forbidden.
+        // For transient outages (server down/network), keep local workspace context.
+        if (status === 401 || status === 403) {
+          this.logout()
+        }
         return false
       } finally {
         this.refreshInFlight = false

@@ -21,7 +21,18 @@
               {{ decisionsSourceNote }}
             </p>
             <div class="decisions-toolbar__actions">
-              <v-btn color="#4f46e5" @click="newDecisionFromScenario">
+              <v-btn-toggle
+                v-model="decisionFilter"
+                mandatory
+                divided
+                color="#667eea"
+                class="decisions-filter-toggle"
+              >
+                <v-btn value="open">Open ({{ openDecisionCount }})</v-btn>
+                <v-btn value="withDecision">With decision ({{ withDecisionCount }})</v-btn>
+                <v-btn value="closed">Closed ({{ closedDecisionCount }})</v-btn>
+              </v-btn-toggle>
+              <v-btn variant="tonal" color="#4f46e5" @click="openDecisionCreationDialog">
                 <v-icon start>mdi-plus-circle-outline</v-icon>
                 {{ $t('decisions.new_from_scenario') }}
               </v-btn>
@@ -33,7 +44,7 @@
                 v-if="selectedScenarioIds.length"
                 variant="tonal"
                 color="#667eea"
-                @click="goToScenarios"
+                @click="reviewSelectedScenario"
               >
                 <v-icon start>mdi-chart-timeline-variant</v-icon>
                 {{ $t('decisions.review_in_scenarios') }}
@@ -71,8 +82,8 @@
             {{ successMessage }}
           </v-alert>
 
-          <div v-else-if="decisionCards.length" class="decisions-grid">
-            <div v-for="decision in decisionCards" :key="decision.scenarioId" class="decision-card">
+          <div v-if="!isLoading && !error && filteredDecisionCards.length" class="decisions-grid">
+            <div v-for="decision in filteredDecisionCards" :key="decision.scenarioId" class="decision-card">
               <div class="decision-card__header">
                 <div class="decision-card__title-wrap">
                   <h3 class="decision-card__title">{{ decision.title }}</h3>
@@ -359,9 +370,9 @@
             </div>
           </div>
 
-          <div v-else class="empty-state">
+          <div v-else-if="!isLoading && !error" class="empty-state">
             <v-icon color="#94a3b8" size="28">mdi-lightbulb-auto-outline</v-icon>
-            <p>{{ $t('decisions.empty') }}</p>
+            <p>{{ emptyDecisionMessage }}</p>
             <v-btn color="#667eea" variant="tonal" @click="goToScenarios">
               <v-icon start>mdi-layers-triple-outline</v-icon>
               {{ $t('decisions.empty_cta') }}
@@ -399,6 +410,46 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <v-dialog v-model="decisionCreationDialogOpen" max-width="640">
+      <v-card>
+        <v-card-title>Choose a scenario</v-card-title>
+        <v-card-text>
+          <div v-if="availableScenariosForDecision.length" class="decision-create-list">
+            <button
+              v-for="scenario in availableScenariosForDecision"
+              :key="scenario.id"
+              type="button"
+              class="decision-create-item"
+              @click="selectedScenarioToCreate = scenario.id"
+            >
+              <div>
+                <strong>{{ scenario.name }}</strong>
+                <p>{{ scenario.summary || t('decisions.scenario_label', { name: scenario.name }) }}</p>
+              </div>
+              <v-icon v-if="selectedScenarioToCreate === scenario.id" color="#4f46e5">mdi-check-circle</v-icon>
+            </button>
+          </div>
+          <div v-else class="empty-state">
+            <v-icon color="#94a3b8" size="28">mdi-lightbulb-auto-outline</v-icon>
+            <p>No available scenarios without decision.</p>
+          </div>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="closeDecisionCreationDialog">Cancel</v-btn>
+          <v-btn
+            color="#4f46e5"
+            variant="flat"
+            :disabled="!selectedScenarioToCreate"
+            :loading="Boolean(selectedScenarioToCreate) && activeDecisionId === selectedScenarioToCreate && decisionAction === 'create'"
+            @click="createDecisionFromSelectedScenario"
+          >
+            Create decision
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -412,7 +463,7 @@ import DecisionService, { type DecisionComment, type DecisionVote, type Decision
 const { t, locale } = useI18n()
 const route = useRoute()
 const router = useRouter()
-const DECISIONS_STORAGE_KEY = 'decisions-scenarios'
+const DECISIONS_FLASH_SUCCESS_KEY = 'decisions-flash-success'
 
 const isLoading = ref(false)
 const error = ref('')
@@ -425,6 +476,9 @@ const simulations = ref<Array<{ scenario: SavedScenario; result: ScenarioSimulat
 const persistedDecisions = ref<PersistedDecision[]>([])
 const commentDrafts = ref<Record<string, string>>({})
 const expandedJustifications = ref<Record<string, boolean>>({})
+const decisionFilter = ref<'open' | 'withDecision' | 'closed'>('open')
+const decisionCreationDialogOpen = ref(false)
+const selectedScenarioToCreate = ref<string | null>(null)
 const voteDialog = ref<{
   open: boolean
   decisionId: string | null
@@ -581,16 +635,58 @@ const decisionCards = computed(() =>
   })
 )
 
+const withDecisionCount = computed(() =>
+  decisionCards.value.filter((decision) => Boolean(decision.decisionId)).length
+)
+
+const openDecisionCount = computed(() =>
+  decisionCards.value.filter((decision) => decision.persistedStatus === 'OPEN').length
+)
+
+const closedDecisionCount = computed(() =>
+  decisionCards.value.filter((decision) => Boolean(decision.persistedStatus) && decision.persistedStatus !== 'OPEN').length
+)
+
+const filteredDecisionCards = computed(() => {
+  if (decisionFilter.value === 'open') {
+    return decisionCards.value.filter((decision) => decision.persistedStatus === 'OPEN')
+  }
+  if (decisionFilter.value === 'withDecision') {
+    return decisionCards.value.filter((decision) => Boolean(decision.decisionId))
+  }
+  if (decisionFilter.value === 'closed') {
+    return decisionCards.value.filter((decision) => Boolean(decision.persistedStatus) && decision.persistedStatus !== 'OPEN')
+  }
+  return []
+})
+
+const emptyDecisionMessage = computed(() => {
+  if (decisionFilter.value === 'open') {
+    return 'No open decisions right now.'
+  }
+  if (decisionFilter.value === 'withDecision') {
+    return 'No persisted decisions yet. Create one from a scenario.'
+  }
+  if (decisionFilter.value === 'closed') {
+    return 'No closed decisions yet.'
+  }
+  return t('decisions.empty')
+})
+
 const decisionsSourceNote = computed(() =>
   selectedScenarioIds.value.length
     ? t('decisions.source_selected', { count: selectedScenarioIds.value.length })
     : t('decisions.source_recent')
 )
 
+const availableScenariosForDecision = computed(() => {
+  const scenarioIdsWithDecision = new Set(persistedDecisions.value.map((decision) => decision.scenarioId))
+  return savedScenarios.value.filter((scenario) => !scenarioIdsWithDecision.has(scenario.id))
+})
+
 const resolveSelectedIds = () => {
   const fromQuery = typeof route.query.scenarios === 'string' ? route.query.scenarios : ''
-  const fromStorage = window.localStorage.getItem(DECISIONS_STORAGE_KEY) || ''
-  const raw = fromQuery || fromStorage
+  const raw = fromQuery
   if (!raw) return []
   return raw
     .split(',')
@@ -609,22 +705,44 @@ const loadDecisionCards = async () => {
     await loadPersistedDecisions()
 
     const preferredIds = resolveSelectedIds()
-    const picked = preferredIds.length
-      ? preferredIds
-          .map((id) => savedScenarios.value.find((scenario) => scenario.id === id))
-          .filter((scenario): scenario is SavedScenario => Boolean(scenario))
-      : savedScenarios.value.slice(0, 3)
+    const scenarioById = new Map(savedScenarios.value.map((scenario) => [scenario.id, scenario]))
+    const persistedDecisionScenarioIds = [...persistedDecisions.value]
+      .sort((a, b) => {
+        const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0
+        const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0
+        return bTime - aTime
+      })
+      .map((decision) => decision.scenarioId)
+      .filter(Boolean)
+
+    // Keep selected scenario(s) first, then append scenarios already turned into decisions,
+    // then fill with a few recent drafts for quick follow-up.
+    const recentScenarioIds = savedScenarios.value.map((scenario) => scenario.id).slice(0, 6)
+    const candidateScenarioIds = Array.from(new Set([
+      ...preferredIds,
+      ...persistedDecisionScenarioIds,
+      ...recentScenarioIds,
+    ]))
+
+    const picked = candidateScenarioIds
+      .map((id) => scenarioById.get(id))
+      .filter((scenario): scenario is SavedScenario => Boolean(scenario))
 
     selectedScenarioIds.value = picked.map((scenario) => scenario.id)
 
     if (selectedScenarioIds.value.length) {
-      window.localStorage.setItem(DECISIONS_STORAGE_KEY, selectedScenarioIds.value.join(','))
       await router.replace({
         query: {
           ...route.query,
           scenarios: selectedScenarioIds.value.join(','),
         },
       })
+    } else {
+      if (route.query.scenarios) {
+        const nextQuery = { ...route.query }
+        delete nextQuery.scenarios
+        await router.replace({ query: nextQuery })
+      }
     }
 
     const responses = await Promise.all(
@@ -650,28 +768,28 @@ const loadPersistedDecisions = async () => {
 }
 
 const goToScenarios = async () => {
-  const nextQuery = selectedScenarioIds.value.length
-    ? { scenarios: selectedScenarioIds.value.join(',') }
-    : undefined
   await router.push({
     path: '/planning/scenarios',
-    query: nextQuery,
   })
 }
 
+const reviewSelectedScenario = async () => {
+  const scenarioId = selectedScenarioIds.value[0]
+  if (!scenarioId) {
+    await goToScenarios()
+    return
+  }
+  await router.push({ name: 'planning-scenarios-result', params: { id: scenarioId } })
+}
+
 const openScenario = async (scenarioId: string) => {
-  window.localStorage.setItem(DECISIONS_STORAGE_KEY, scenarioId)
-  await router.push({
-    path: '/planning/scenarios',
-    query: { scenarios: scenarioId },
-  })
+  await router.push({ name: 'planning-scenarios-result', params: { id: scenarioId } })
 }
 
 const goToInsights = async () => {
   if (!selectedScenarioIds.value.length) {
     return
   }
-  window.localStorage.setItem(DECISIONS_STORAGE_KEY, selectedScenarioIds.value.join(','))
   await router.push({
     path: '/insights',
     query: { scenarios: selectedScenarioIds.value.join(',') },
@@ -682,17 +800,20 @@ const viewImpact = async () => {
   await router.push({ path: '/dashboard', query: { refresh: String(Date.now()) } })
 }
 
-const newDecisionFromScenario = async () => {
-  const preferredScenario =
-    simulations.value.find((entry) => selectedScenarioIds.value.includes(entry.scenario.id))?.scenario ||
-    simulations.value[0]?.scenario
+const openDecisionCreationDialog = () => {
+  selectedScenarioToCreate.value = availableScenariosForDecision.value[0]?.id || null
+  decisionCreationDialogOpen.value = true
+}
 
-  if (!preferredScenario?.id) {
-    await goToScenarios()
-    return
-  }
+const closeDecisionCreationDialog = () => {
+  decisionCreationDialogOpen.value = false
+  selectedScenarioToCreate.value = null
+}
 
-  await trackDecision(preferredScenario.id)
+const createDecisionFromSelectedScenario = async () => {
+  if (!selectedScenarioToCreate.value) return
+  await trackDecision(selectedScenarioToCreate.value)
+  closeDecisionCreationDialog()
 }
 
 const trackDecision = async (scenarioId: string) => {
@@ -705,6 +826,10 @@ const trackDecision = async (scenarioId: string) => {
       ...persistedDecisions.value.filter((decision) => decision.id !== data.id),
       data,
     ]
+    const scenarioName = savedScenarios.value.find((scenario) => scenario.id === scenarioId)?.name || ''
+    successMessage.value = scenarioName
+      ? `Decision created from "${scenarioName}".`
+      : 'Decision created successfully.'
   } catch (trackError) {
     console.error(trackError)
     error.value = t('decisions.persist_error')
@@ -866,6 +991,19 @@ watch(
 )
 
 onMounted(async () => {
+  const rawFlash = window.sessionStorage.getItem(DECISIONS_FLASH_SUCCESS_KEY)
+  if (rawFlash) {
+    window.sessionStorage.removeItem(DECISIONS_FLASH_SUCCESS_KEY)
+    try {
+      const parsed = JSON.parse(rawFlash) as { scenarioName?: string }
+      const scenarioName = String(parsed?.scenarioName || '').trim()
+      successMessage.value = scenarioName
+        ? `Decision created from "${scenarioName}".`
+        : 'Decision created successfully.'
+    } catch {
+      successMessage.value = 'Decision created successfully.'
+    }
+  }
   await loadDecisionCards()
 })
 </script>
@@ -968,6 +1106,10 @@ onMounted(async () => {
   flex-wrap: wrap;
   gap: 8px;
   justify-content: flex-end;
+}
+
+.decisions-filter-toggle {
+  margin-right: 4px;
 }
 
 .decisions-note {
@@ -1390,6 +1532,32 @@ onMounted(async () => {
 
 .empty-state--error {
   color: #b91c1c;
+}
+
+.decision-create-list {
+  display: grid;
+  gap: 10px;
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+.decision-create-item {
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 12px;
+  padding: 12px;
+  background: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.decision-create-item p {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-size: 0.86rem;
 }
 
 @media (max-width: 900px) {

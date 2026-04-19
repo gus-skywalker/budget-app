@@ -161,7 +161,7 @@ const formatActivityTime = (value?: string) => {
 const activityRoute = (event: WorkspaceActivityEvent) => {
   const relatedType = String(event?.relatedEntityType || '')
   if (relatedType === 'TRANSACTION') return '/budget'
-  if (relatedType === 'SCENARIO') return '/planning/scenarios'
+  if (relatedType === 'SCENARIO') return '/planning/scenarios/:id'
   if (relatedType === 'DECISION') return '/decisions'
   return null
 }
@@ -173,8 +173,8 @@ const openActivity = async (event: WorkspaceActivityEvent) => {
     await router.push({ path, query: { visibility: 'workspace' } })
     return
   }
-  if (path === '/planning/scenarios' && event?.relatedEntityId) {
-    await router.push({ path, query: { scenarios: event.relatedEntityId } })
+  if (path === '/planning/scenarios/:id' && event?.relatedEntityId) {
+    await router.push({ name: 'planning-scenarios-result', params: { id: event.relatedEntityId } })
     return
   }
   await router.push(path)

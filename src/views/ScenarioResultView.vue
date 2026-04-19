@@ -9,6 +9,24 @@
       </div>
 
       <div class="result-shell" v-if="result">
+        <v-alert
+          v-if="isScenarioLockedForEdit"
+          type="warning"
+          variant="tonal"
+          density="comfortable"
+          class="mb-3"
+        >
+          This scenario already has decision activity (votes or final status). Editing is locked to preserve history. Create a new version instead.
+        </v-alert>
+        <v-alert
+          v-if="isShowingSavedSnapshot"
+          type="info"
+          variant="tonal"
+          density="comfortable"
+          class="mb-3"
+        >
+          Showing saved snapshot values. Use "Recalculate" to refresh with current baseline data.
+        </v-alert>
         <div class="hero-card">
           <span class="hero-card__label">Monthly impact</span>
           <strong :class="{ 'positive-value': result.scenarioMonthlyImpact > 0, 'negative-value': result.scenarioMonthlyImpact < 0 }">
@@ -79,17 +97,32 @@
         </v-expansion-panels>
 
         <div class="result-actions">
-          <v-btn variant="tonal" color="#667eea" :loading="isSaving" @click="saveScenario">
+          <v-btn
+            variant="tonal"
+            color="#667eea"
+            :loading="isSaving"
+            :disabled="isSaving || isScenarioLockedForEdit"
+            @click="saveScenario"
+          >
             <v-icon start>mdi-content-save-outline</v-icon>
             {{ t('planning.scenarios.save') }}
           </v-btn>
-          <v-btn color="#4f46e5" :loading="isCreatingDecision" :disabled="!scenarioId" @click="createDecisionFromScenario">
+          <v-btn variant="text" :loading="isRecalculating" :disabled="isRecalculating" @click="recalculateResult">
+            <v-icon start>mdi-refresh</v-icon>
+            Recalculate
+          </v-btn>
+          <v-btn
+            color="#4f46e5"
+            :loading="isCreatingDecision"
+            :disabled="isCreatingDecision || isSaving || (isScenarioLockedForEdit && Boolean(scenarioId))"
+            @click="createDecisionFromScenario"
+          >
             <v-icon start>mdi-lightbulb-outline</v-icon>
-            Create decision
+            {{ createDecisionLabel }}
           </v-btn>
           <v-btn variant="text" @click="editScenario">
             <v-icon start>mdi-pencil-outline</v-icon>
-            Edit previous step
+            {{ editActionLabel }}
           </v-btn>
           <v-btn variant="text" @click="newScenario">
             <v-icon start>mdi-file-plus-outline</v-icon>
@@ -133,13 +166,17 @@ import {
 const route = useRoute()
 const router = useRouter()
 const { t, locale } = useI18n()
+const DECISIONS_FLASH_SUCCESS_KEY = 'decisions-flash-success'
 
 const result = ref<ScenarioSimulationResponse | null>(null)
 const scenarioId = ref<string | null>(null)
 const isSaving = ref(false)
 const isCreatingDecision = ref(false)
+const isRecalculating = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
+const isShowingSavedSnapshot = ref(false)
+const isScenarioLockedForEdit = ref(false)
 
 const snapshot = reactive<ScenarioWizardSnapshot>({
   scenarioName: '',
@@ -188,9 +225,67 @@ const consequenceMessage = computed(() => {
   return t('planning.scenarios.consequence_neutral')
 })
 
+const extractErrorStatus = (error: unknown): number =>
+  Number((error as { response?: { status?: number } })?.response?.status || 0)
+
+const buildVersionedScenarioName = (name?: string): string => {
+  const base = String(name || '').trim() || t('planning.scenarios.default_name')
+  if (!/\(new\)$/i.test(base)) return `${base} (new)`
+  return `${base} ${new Date().toISOString().slice(11, 19)}`
+}
+
+const createDecisionLabel = computed(() =>
+  scenarioId.value ? 'Create decision' : 'Save and create decision'
+)
+
+const editActionLabel = computed(() =>
+  isScenarioLockedForEdit.value ? 'Create new version' : 'Edit'
+)
+
+const refreshScenarioGovernance = async (targetScenarioId: string | null) => {
+  if (!targetScenarioId) {
+    isScenarioLockedForEdit.value = false
+    return
+  }
+  try {
+    const { data } = await DecisionService.list()
+    const decisions = Array.isArray(data) ? data : []
+    const linkedDecision = decisions.find((decision) => decision.scenarioId === targetScenarioId)
+    const totalVotes = Number(linkedDecision?.approveVotes || 0) + Number(linkedDecision?.rejectVotes || 0)
+    const decisionStatus = String(linkedDecision?.status || '').toUpperCase()
+    isScenarioLockedForEdit.value = totalVotes > 0 || Boolean(decisionStatus && decisionStatus !== 'OPEN')
+  } catch {
+    // Keep editing available if we cannot determine lock status.
+    isScenarioLockedForEdit.value = false
+  }
+}
+
+const buildResultFromSavedScenario = (saved: SavedScenario): ScenarioSimulationResponse => ({
+  scenarioName: saved.name || t('planning.scenarios.default_name'),
+  months: Number(saved.months || 6),
+  currentBalance: 0,
+  baselineMonthlyNet: 0,
+  scenarioMonthlyImpact: Number(saved.scenarioMonthlyImpact || 0),
+  projectedFinalBalance: Number(saved.projectedFinalBalance || 0),
+  decisionStatus:
+    saved.decisionStatus === 'ACTION_NEEDED' ||
+    saved.decisionStatus === 'WATCH' ||
+    saved.decisionStatus === 'STABLE'
+      ? saved.decisionStatus
+      : 'NO_DATA',
+  firstRiskMonth: null,
+  availableForGoals: Math.max(0, Number(saved.projectedFinalBalance || 0)),
+  impactedGoalsCount: Number(saved.impactedGoalsCount || 0),
+  summary: saved.summary || '',
+  forecast: [],
+  impactedGoalNames: [],
+})
+
 const loadResult = async () => {
   const routeId = String(route.params.id || '')
+  isScenarioLockedForEdit.value = false
   const latestResult = window.sessionStorage.getItem('planning-scenario-latest-result')
+  const hasFreshSimulationHint = typeof route.query.simulatedAt === 'string' && route.query.simulatedAt.length > 0
   const restored = loadWizardSnapshot()
 
   if (restored) {
@@ -198,9 +293,30 @@ const loadResult = async () => {
     scenarioId.value = restored.currentScenarioId
   }
 
-  if (routeId === 'preview' && latestResult) {
-    result.value = JSON.parse(latestResult) as ScenarioSimulationResponse
-    return
+  if (latestResult) {
+    try {
+      const parsed = JSON.parse(latestResult) as
+        | ScenarioSimulationResponse
+        | { scenarioId?: string; result?: ScenarioSimulationResponse }
+      const parsedScenarioId = 'scenarioId' in parsed ? String(parsed.scenarioId || '') : ''
+      const parsedResult = 'result' in parsed ? parsed.result : (parsed as ScenarioSimulationResponse)
+      if (
+        parsedResult &&
+        (
+          routeId === 'preview' ||
+          (hasFreshSimulationHint && parsedScenarioId === routeId)
+        )
+      ) {
+        result.value = parsedResult
+        isShowingSavedSnapshot.value = false
+        if (parsedScenarioId && parsedScenarioId !== 'preview') {
+          scenarioId.value = parsedScenarioId
+        }
+        return
+      }
+    } catch (error) {
+      console.warn('Could not parse latest simulation payload', error)
+    }
   }
 
   if (!routeId) return
@@ -215,6 +331,7 @@ const loadResult = async () => {
     if (!saved) return
 
     scenarioId.value = saved.id
+    await refreshScenarioGovernance(saved.id)
 
     const currentBudget = status !== 204 && budget && typeof budget === 'object' && 'id' in budget ? budget : null
     const rebuilt = snapshotFromSavedScenario(saved as SavedScenario, currentBudget || undefined)
@@ -223,13 +340,66 @@ const loadResult = async () => {
     }
 
     Object.assign(snapshot, rebuilt)
-    const { data } = await ScenarioService.simulate(buildSimulationPayload(snapshot))
-    result.value = data
+    result.value = buildResultFromSavedScenario(saved)
+    isShowingSavedSnapshot.value = true
     saveWizardSnapshot(snapshot)
-    window.sessionStorage.setItem('planning-scenario-latest-result', JSON.stringify(data))
   } catch (e) {
     console.error(e)
     errorMessage.value = t('planning.scenarios.error')
+  }
+}
+
+const recalculateResult = async () => {
+  if (!snapshot.budgetId && !snapshot.currentScenarioId) return
+  isRecalculating.value = true
+  errorMessage.value = ''
+  try {
+    const { data } = await ScenarioService.simulate(buildSimulationPayload(snapshot))
+    result.value = data
+    isShowingSavedSnapshot.value = false
+    window.sessionStorage.setItem(
+      'planning-scenario-latest-result',
+      JSON.stringify({
+        scenarioId: snapshot.currentScenarioId || String(route.params.id || ''),
+        result: data,
+      }),
+    )
+  } catch (e) {
+    console.error(e)
+    errorMessage.value = t('planning.scenarios.error')
+  } finally {
+    isRecalculating.value = false
+  }
+}
+
+const ensureScenarioPersisted = async (): Promise<string> => {
+  const payload = {
+    ...buildScenarioPayload(snapshot),
+    id: snapshot.currentScenarioId || undefined,
+  }
+  try {
+    const { data } = await ScenarioService.save(payload)
+    snapshot.currentScenarioId = data.id
+    scenarioId.value = data.id
+    snapshot.scenarioName = data.name || snapshot.scenarioName
+    saveWizardSnapshot(snapshot)
+    return data.id
+  } catch (error) {
+    if (extractErrorStatus(error) !== 409) {
+      throw error
+    }
+
+    const conflictSafeName = buildVersionedScenarioName(snapshot.scenarioName)
+    const { data } = await ScenarioService.save({
+      ...payload,
+      id: undefined,
+      name: conflictSafeName,
+    })
+    snapshot.currentScenarioId = data.id
+    scenarioId.value = data.id
+    snapshot.scenarioName = data.name || conflictSafeName
+    saveWizardSnapshot(snapshot)
+    return data.id
   }
 }
 
@@ -238,16 +408,17 @@ const saveScenario = async () => {
   successMessage.value = ''
   isSaving.value = true
   try {
-    const { data } = await ScenarioService.save({
-      ...buildScenarioPayload(snapshot),
-      id: snapshot.currentScenarioId || undefined,
-    })
-    snapshot.currentScenarioId = data.id
-    scenarioId.value = data.id
+    const persistedId = await ensureScenarioPersisted()
+    snapshot.currentScenarioId = persistedId
+    scenarioId.value = persistedId
+    await refreshScenarioGovernance(persistedId)
     saveWizardSnapshot(snapshot)
-    successMessage.value = t('planning.scenarios.save_success', { name: data.name })
-    if (route.params.id !== data.id) {
-      await router.replace({ name: 'planning-scenarios-result', params: { id: data.id } })
+    isShowingSavedSnapshot.value = true
+    successMessage.value = t('planning.scenarios.save_success', {
+      name: snapshot.scenarioName || t('planning.scenarios.default_name'),
+    })
+    if (route.params.id !== persistedId) {
+      await router.replace({ name: 'planning-scenarios-result', params: { id: persistedId } })
     }
   } catch (e) {
     console.error(e)
@@ -258,22 +429,18 @@ const saveScenario = async () => {
 }
 
 const createDecisionFromScenario = async () => {
-  if (!scenarioId.value) {
-    errorMessage.value = 'Save scenario before creating decision.'
-    return
-  }
-
   isCreatingDecision.value = true
   errorMessage.value = ''
   try {
-    const { data } = await DecisionService.createFromScenario(scenarioId.value)
-    // Redireciona para a tela de detalhe da decisão (privada). Se não existir, pode usar a pública como fallback.
-    if (data && data.id) {
-      await router.push({ name: 'decision-detail', params: { id: data.id } })
-    } else {
-      // fallback: vai para lista de decisões
-      await router.push({ name: 'decisions', query: { scenarios: scenarioId.value } })
-    }
+    const persistedScenarioId = await ensureScenarioPersisted()
+    await DecisionService.createFromScenario(persistedScenarioId)
+    window.sessionStorage.setItem(
+      DECISIONS_FLASH_SUCCESS_KEY,
+      JSON.stringify({
+        scenarioName: snapshot.scenarioName || t('planning.scenarios.default_name'),
+      }),
+    )
+    await router.push({ name: 'decisions', query: { scenarios: persistedScenarioId } })
   } catch (e) {
     console.error(e)
     errorMessage.value = t('planning.scenarios.error')
@@ -284,7 +451,23 @@ const createDecisionFromScenario = async () => {
 
 const editScenario = async () => {
   saveWizardSnapshot(snapshot)
-  await router.push({ name: 'planning-scenarios-new' })
+  if (isScenarioLockedForEdit.value) {
+    await router.push({
+      name: 'planning-scenarios-new',
+      query: { cloneFrom: scenarioId.value || snapshot.currentScenarioId || String(route.params.id || ''), locked: '1' },
+    })
+    return
+  }
+  const routeScenarioId = String(route.params.id || '')
+  const editId =
+    scenarioId.value ||
+    snapshot.currentScenarioId ||
+    (routeScenarioId && routeScenarioId !== 'preview' ? routeScenarioId : null)
+  if (!editId) {
+    await router.push({ name: 'planning-scenarios-new' })
+    return
+  }
+  await router.push({ name: 'planning-scenarios-edit', params: { id: editId } })
 }
 
 const newScenario = async () => {
