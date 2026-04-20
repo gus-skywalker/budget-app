@@ -79,33 +79,44 @@ defineEmits(['update:label', 'update:flow', 'update:monthlyChange', 'update:oneT
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 24px;
-  background: #fff;
+  background: rgb(var(--v-theme-surface), #181c24);
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
+
 .segmented-control {
   display: flex;
   border-radius: 8px;
   overflow: hidden;
-  border: 1px solid #e0e7ef;
+  border: 1.5px solid #a3aed6;
   margin-bottom: 0;
   width: 100%;
   max-width: 320px;
+  background: rgb(var(--v-theme-surface), #181c24);
 }
+
 
 .segment {
   flex: 1;
   padding: 8px 0;
-  background: #f3f4f6;
+  background: transparent;
   border: none;
-  color: #475569;
+  color: #cbd5e1;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background 0.15s, color 0.15s;
   outline: none;
+  border-right: 1.5px solid #a3aed6;
+}
+.segment:last-child {
+  border-right: none;
+}
+.segment:not(.active) {
+  background: transparent;
+  color: #cbd5e1;
 }
 .segment.active {
   background: #667eea;
