@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import HeroNarrative from '@/components/landing/HeroNarrative.vue'
+
 const quickActions = [
   {
     title: 'Open the onboarding hub',
@@ -35,6 +37,10 @@ const quickActions = [
         <strong>Home as start screen</strong>
         <p>Use esta area para priorizar o primeiro passo que o usuario deve tomar ao entrar no produto.</p>
       </div>
+    </section>
+
+    <section class="home-narrative" aria-label="CoBudget narrative preview">
+      <HeroNarrative />
     </section>
 
     <section class="actions-grid">
@@ -126,6 +132,12 @@ const quickActions = [
   margin: 16px 0 10px;
   font-size: 1.4rem;
   color: #172033;
+}
+
+.home-narrative {
+  display: flex;
+  justify-content: center;
+  margin: 22px 0 30px;
 }
 
 .actions-grid {
