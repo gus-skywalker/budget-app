@@ -20,6 +20,20 @@ const isBudgetApiTarget = (config: AxiosRequestConfig): boolean => {
   return rawUrl.startsWith(apiUrl)
 }
 
+const extractWorkspaceIdFromRequest = (config: AxiosRequestConfig): string | null => {
+  try {
+    const rawUrl = String(config.url || '')
+    if (!rawUrl) return null
+    const base = String((config as any).baseURL || apiUrl || window.location.origin)
+    const resolved = isAbsoluteUrl(rawUrl) ? rawUrl : new URL(rawUrl, base).toString()
+    const path = new URL(resolved).pathname
+    const match = path.match(/\/(?:api\/)?workspaces\/([0-9a-fA-F-]{36})(?:\/|$)/)
+    return match?.[1] ? String(match[1]) : null
+  } catch {
+    return null
+  }
+}
+
 const axiosInstance = axios.create({
   baseURL: apiUrl,
   timeout: 300000,
@@ -38,8 +52,14 @@ axiosInstance.interceptors.request.use(
     if (access_token.value) {
       config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${access_token.value}`;
-      if (workspaceId.value && isBudgetApiTarget(config)) {
-        config.headers['X-Workspace-Id'] = String(workspaceId.value);
+      if (isBudgetApiTarget(config)) {
+        // Some endpoints (e.g. GET /workspaces/:id) require workspace context even before
+        // the store has the current workspace selected. Infer it from the URL when needed.
+        const inferredWorkspaceId = extractWorkspaceIdFromRequest(config)
+        const headerWorkspaceId = inferredWorkspaceId || workspaceId.value
+        if (headerWorkspaceId) {
+          config.headers['X-Workspace-Id'] = String(headerWorkspaceId);
+        }
       }
       if (nubankToken.value) {
         config.headers['X-Nubank-Token'] = String(nubankToken.value);

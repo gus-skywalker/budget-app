@@ -64,75 +64,7 @@
         </div>
       </div>
 
-      <section class="section-block">
-        <div class="section-header">
-          <h2 class="section-title">{{ $t('overview.activity_title') }}</h2>
-          <v-btn size="small" variant="text" @click="$router.push('/activity')">
-            <v-icon start>mdi-open-in-new</v-icon>
-            {{ $t('activity.view_all') }}
-          </v-btn>
-        </div>
-        <div class="modern-card">
-          <div class="card-content">
-            <div class="scope-badge-row">
-              <v-chip size="small" color="#667eea" variant="outlined">
-                <v-icon start size="14">mdi-account-group-outline</v-icon>
-                {{ $t('overview.activity_badge') }}
-              </v-chip>
-              <span class="scope-badge-note">{{ $t('overview.activity_scope_note') }}</span>
-            </div>
-            <div class="activity-filters">
-              <v-chip
-                v-for="filter in activityFilters"
-                :key="filter.value"
-                size="small"
-                :variant="selectedActivityFilter === filter.value ? 'flat' : 'outlined'"
-                :color="selectedActivityFilter === filter.value ? '#667eea' : undefined"
-                @click="selectedActivityFilter = filter.value"
-              >
-                {{ filter.title }}
-              </v-chip>
-            </div>
-            <div v-if="activityLoading" class="empty-state">
-              <p>{{ $t('overview.activity_loading') }}</p>
-            </div>
-            <div v-else-if="filteredRecentActivity.length" class="activity-feed">
-              <div
-                v-for="event in filteredRecentActivity"
-                :key="event.id"
-                class="activity-row"
-              >
-                <div class="activity-row__icon">
-                  <v-icon :color="activityAccent(event).color">{{ activityAccent(event).icon }}</v-icon>
-                </div>
-                <div class="activity-row__content">
-                  <div class="activity-row__header">
-                    <strong>{{ activityTitle(event) }}</strong>
-                    <span class="activity-row__time">{{ formatActivityTime(event.createdAt) }}</span>
-                  </div>
-                  <p class="activity-row__description">{{ activityDescription(event) }}</p>
-                  <div class="activity-row__meta">
-                    <span>{{ activityActorLabel(event.actorUserId) }}</span>
-                    <v-btn
-                      v-if="activityRoute(event)"
-                      size="x-small"
-                      variant="text"
-                      color="#667eea"
-                      @click="openActivity(event)"
-                    >
-                      <v-icon start size="14">mdi-open-in-new</v-icon>
-                      {{ $t('overview.activity_open') }}
-                    </v-btn>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div v-else class="empty-state">
-              <p>{{ selectedActivityFilter === 'all' ? $t('overview.activity_empty') : $t('overview.activity_empty_filtered') }}</p>
-            </div>
-          </div>
-        </div>
-      </section>
+      <!-- Activity section removida do dashboard. Acesse pelo menu lateral. -->
 
       <!-- Trends Over Time -->
       <div class="modern-card trends-section">
@@ -795,6 +727,7 @@ import 'chartjs-adapter-moment'
 Chart.register(...registerables)
 
 export default {
+  name: 'DashboardView',
   computed: {
     netMonthlyCashflow() {
       return Number(this.dashboardSummary.monthlyIncome || 0) - Number(this.dashboardSummary.monthlyExpenses || 0)
@@ -962,20 +895,7 @@ export default {
         .slice(0, 5)
         .map(([category]) => category)
     },
-    activityFilters() {
-      return [
-        { title: this.$t('overview.activity_filter_all'), value: 'all' },
-        { title: this.$t('overview.activity_filter_transactions'), value: 'transactions' },
-        { title: this.$t('overview.activity_filter_scenarios'), value: 'scenarios' },
-        { title: this.$t('overview.activity_filter_decisions'), value: 'decisions' },
-      ]
-    },
-    filteredRecentActivity() {
-      if (this.selectedActivityFilter === 'all') {
-        return this.recentActivity
-      }
-      return this.recentActivity.filter((event) => this.activityFilterKey(event) === this.selectedActivityFilter)
-    },
+    // activityFilters e filteredRecentActivity removidos pois Activity não está mais no dashboard
     upcomingExpensesDisplay() {
       return Array.isArray(this.upcomingExpenses) ? this.upcomingExpenses.slice(0, 5) : []
     },
@@ -1287,11 +1207,17 @@ export default {
 
       return Array.from(grouped.values()).sort((left, right) => right.totalAmount - left.totalAmount)
     },
+    currentWorkspaceId() {
+      // When workspace changes, vue-router may reuse the component instance. We watch this to refresh data.
+      return useUserStore().currentWorkspaceId
+    },
   },
   data() {
     const today = new Date();
     return {
       chart: null,
+      refreshing: false,
+      requestTokens: {},
       dashboardLoading: false,
       dashboardSummary: {
         totalBalance: 0,
@@ -1308,8 +1234,7 @@ export default {
       openFinanceObservabilitySummary: null,
       openFinanceConflictCount: 0,
       activityLoading: false,
-      recentActivity: [],
-      selectedActivityFilter: 'all',
+      // recentActivity e selectedActivityFilter removidos pois Activity não está mais no dashboard
       goalsAtRisk: [],
       goalOpportunities: [],
       upcomingExpenses: [],
@@ -1369,20 +1294,11 @@ export default {
     }
   },
   mounted() {
-    this.fetchDashboardSummary()
-    this.fetchAccounts()
-    this.fetchMonthTransactions()
-    this.fetchOpenFinanceConflicts()
-    this.fetchOpenFinanceObservabilitySummary()
-    this.fetchRecentActivity()
-    this.fetchPremiumFeatureSummaries()
-    this.fetchDecisionImpact()
-    this.fetchFinancialInsights()
-    this.fetchBudgetComparison()
-    this.fetchGoalsAtRisk()
-    this.fetchCategories()
-    this.createChart()
-    this.fetchChartData()
+    this.refreshDashboard('mounted')
+  },
+  activated() {
+    // When cached via <KeepAlive>, refresh in the background without wiping the current UI.
+    this.refreshDashboard('activated')
   },
   watch: {
     '$i18n.locale'(newLocale) {
@@ -1392,13 +1308,48 @@ export default {
       }
     },
     '$route.query.refresh'() {
-      this.fetchDashboardSummary()
-      this.fetchDecisionImpact()
-      this.fetchFinancialInsights()
-      this.fetchBudgetComparison()
-    }
+      this.refreshDashboard('route-refresh')
+    },
+    currentWorkspaceId(next, prev) {
+      if (next && next !== prev) {
+        this.refreshDashboard('workspace-change')
+      }
+    },
   },
   methods: {
+    beginRequest(key) {
+      const next = Number(this.requestTokens?.[key] || 0) + 1
+      this.requestTokens[key] = next
+      return next
+    },
+    isLatestRequest(key, token) {
+      return Number(this.requestTokens?.[key] || 0) === Number(token || 0)
+    },
+    async refreshDashboard(reason = 'manual') {
+      const refreshToken = this.beginRequest('refreshDashboard')
+      this.refreshing = true
+
+      await Promise.allSettled([
+        this.fetchDashboardSummary(),
+        this.fetchAccounts(),
+        this.fetchMonthTransactions(),
+        this.fetchOpenFinanceConflicts(),
+        this.fetchOpenFinanceObservabilitySummary(),
+        this.fetchRecentActivity(),
+        this.fetchPremiumFeatureSummaries(),
+        this.fetchDecisionImpact(),
+        this.fetchFinancialInsights(),
+        this.fetchBudgetComparison(),
+        this.fetchGoalsAtRisk(),
+        this.fetchCategories(),
+        this.fetchChartData(),
+      ])
+
+      if (!this.isLatestRequest('refreshDashboard', refreshToken)) {
+        return
+      }
+      this.refreshing = false
+    },
     getLocaleForFormatting() {
       const locale = this.$i18n?.locale || 'pt'
       if (locale === 'en') return 'en-US'
@@ -1424,8 +1375,10 @@ export default {
       return Number(scenario?.scenarioMonthlyImpact || 0)
     },
     fetchDecisionImpact() {
-      Promise.all([DecisionService.list(), ScenarioService.list()])
+      const requestToken = this.beginRequest('decisionImpact')
+      return Promise.all([DecisionService.list(), ScenarioService.list()])
         .then(([decisionsResponse, scenariosResponse]) => {
+          if (!this.isLatestRequest('decisionImpact', requestToken)) return
           const decisions = Array.isArray(decisionsResponse?.data) ? decisionsResponse.data : []
           const scenarios = Array.isArray(scenariosResponse?.data) ? scenariosResponse.data : []
           const scenarioById = new Map(scenarios.map((scenario) => [scenario.id, scenario]))
@@ -1450,6 +1403,7 @@ export default {
         })
         .catch((error) => {
           console.error('Error fetching approved decision impact:', error)
+          if (!this.isLatestRequest('decisionImpact', requestToken)) return
           this.approvedDecisionCards = []
           this.approvedDecisionImpactTotal = 0
         })
@@ -1470,17 +1424,21 @@ export default {
       return 'insight-text--info'
     },
     fetchFinancialInsights() {
+      const requestToken = this.beginRequest('financialInsights')
       this.financialInsightsLoading = true
-      BudgetService.getInsights(this.month, this.year)
+      return BudgetService.getInsights(this.month, this.year)
         .then((response) => {
+          if (!this.isLatestRequest('financialInsights', requestToken)) return
           const insights = Array.isArray(response?.data?.insights) ? response.data.insights : []
           this.financialInsights = insights.slice(0, 5)
         })
         .catch((error) => {
           console.error('Error fetching financial insights:', error)
+          if (!this.isLatestRequest('financialInsights', requestToken)) return
           this.financialInsights = []
         })
         .finally(() => {
+          if (!this.isLatestRequest('financialInsights', requestToken)) return
           this.financialInsightsLoading = false
         })
     },
@@ -1489,25 +1447,30 @@ export default {
       return 'error'
     },
     fetchBudgetComparison() {
+      const requestToken = this.beginRequest('budgetComparison')
       this.budgetComparisonLoading = true
       this.budgetComparisonState = 'idle'
       this.showAllComparisonLines = false
-      BudgetService.getComparison(this.month, this.year)
+      return BudgetService.getComparison(this.month, this.year)
         .then((response) => {
+          if (!this.isLatestRequest('budgetComparison', requestToken)) return
           this.budgetComparison = response.data
           this.budgetComparisonState = 'ready'
         })
         .catch((error) => {
           if (error?.response?.status === 404) {
+            if (!this.isLatestRequest('budgetComparison', requestToken)) return
             this.budgetComparison = null
             this.budgetComparisonState = 'no-budget'
             return
           }
           console.error('Error fetching budget comparison:', error)
+          if (!this.isLatestRequest('budgetComparison', requestToken)) return
           this.budgetComparison = null
           this.budgetComparisonState = 'error'
         })
         .finally(() => {
+          if (!this.isLatestRequest('budgetComparison', requestToken)) return
           this.budgetComparisonLoading = false
         })
     },
@@ -1519,78 +1482,97 @@ export default {
       return monthNames[monthIndex];
     },
     fetchDashboardSummary() {
+      const requestToken = this.beginRequest('dashboardSummary')
       this.dashboardLoading = true
-      FinancialReadService.fetchDashboard()
+      return FinancialReadService.fetchDashboard()
         .then((response) => {
+          if (!this.isLatestRequest('dashboardSummary', requestToken)) return
           this.dashboardSummary = response.data
         })
         .catch((error) => {
           console.error('Error fetching dashboard summary:', error)
         })
         .finally(() => {
+          if (!this.isLatestRequest('dashboardSummary', requestToken)) return
           this.dashboardLoading = false
         })
     },
     fetchAccounts() {
-      FinancialReadService.fetchAccounts()
+      const requestToken = this.beginRequest('accounts')
+      return FinancialReadService.fetchAccounts()
         .then((response) => {
+          if (!this.isLatestRequest('accounts', requestToken)) return
           this.accounts = Array.isArray(response?.data) ? response.data : []
         })
         .catch((error) => {
           console.error('Error fetching accounts:', error)
+          if (!this.isLatestRequest('accounts', requestToken)) return
           this.accounts = []
         })
     },
     fetchMonthTransactions() {
+      const requestToken = this.beginRequest('monthTransactions')
       const currentMonth = new Date()
       const fromDate = moment(currentMonth).startOf('month').format('YYYY-MM-DD')
       const toDate = moment(currentMonth).endOf('month').format('YYYY-MM-DD')
 
-      FinancialReadService.fetchTransactions({
+      return FinancialReadService.fetchTransactions({
         fromDate,
         toDate,
         limit: 200,
         offset: 0,
       })
         .then((response) => {
+          if (!this.isLatestRequest('monthTransactions', requestToken)) return
           this.monthTransactions = Array.isArray(response?.data?.items) ? response.data.items : []
         })
         .catch((error) => {
           console.error('Error fetching month transactions:', error)
+          if (!this.isLatestRequest('monthTransactions', requestToken)) return
           this.monthTransactions = []
         })
     },
     fetchOpenFinanceConflicts() {
-      OpenFinanceService.listReconciliationConflicts()
+      const requestToken = this.beginRequest('openFinanceConflicts')
+      return OpenFinanceService.listReconciliationConflicts()
         .then((response) => {
+          if (!this.isLatestRequest('openFinanceConflicts', requestToken)) return
           this.openFinanceConflictCount = Array.isArray(response?.data) ? response.data.length : 0
         })
         .catch((error) => {
           console.error('Error fetching Open Finance conflicts:', error)
+          if (!this.isLatestRequest('openFinanceConflicts', requestToken)) return
           this.openFinanceConflictCount = 0
         })
     },
     fetchOpenFinanceObservabilitySummary() {
-      OpenFinanceService.getObservabilitySummary()
+      const requestToken = this.beginRequest('openFinanceObservability')
+      return OpenFinanceService.getObservabilitySummary()
         .then((response) => {
+          if (!this.isLatestRequest('openFinanceObservability', requestToken)) return
           this.openFinanceObservabilitySummary = response.data || null
         })
         .catch((error) => {
           console.error('Error fetching Open Finance observability summary:', error)
+          if (!this.isLatestRequest('openFinanceObservability', requestToken)) return
           this.openFinanceObservabilitySummary = null
         })
     },
     fetchRecentActivity() {
+      const requestToken = this.beginRequest('recentActivity')
       this.activityLoading = true
-      ActivityService.list(8)
+      return ActivityService.list(8)
         .then((response) => {
+          if (!this.isLatestRequest('recentActivity', requestToken)) return
           this.recentActivity = Array.isArray(response?.data) ? response.data : []
         })
         .catch((error) => {
           console.error('Error fetching recent activity:', error)
+          if (!this.isLatestRequest('recentActivity', requestToken)) return
           this.recentActivity = []
         })
         .finally(() => {
+          if (!this.isLatestRequest('recentActivity', requestToken)) return
           this.activityLoading = false
         })
     },
@@ -1599,8 +1581,10 @@ export default {
       return resolveAnyWorkspaceContext(userStore)
     },
     async fetchPremiumFeatureSummaries() {
+      const requestToken = this.beginRequest('premiumFeatureSummaries')
       const workspaceContext = this.resolveBillingWorkspaceContext()
       if (!workspaceContext) {
+        if (!this.isLatestRequest('premiumFeatureSummaries', requestToken)) return
         this.hasPremiumAccess = false
         this.cashflowInsightsSummary = null
         this.expensePredictionSummary = null
@@ -1609,13 +1593,16 @@ export default {
 
       try {
         const response = await BillingOrchestrationService.getBillingSummary(workspaceContext.workspaceId)
+        if (!this.isLatestRequest('premiumFeatureSummaries', requestToken)) return
         this.hasPremiumAccess = Boolean(response?.data?.hasPremiumAccess)
       } catch (error) {
         console.error('Error checking premium access:', error)
+        if (!this.isLatestRequest('premiumFeatureSummaries', requestToken)) return
         this.hasPremiumAccess = false
       }
 
       if (!this.hasPremiumAccess) {
+        if (!this.isLatestRequest('premiumFeatureSummaries', requestToken)) return
         this.cashflowInsightsSummary = null
         this.expensePredictionSummary = null
         return
@@ -1731,6 +1718,9 @@ export default {
       if (!trendsCtx) {
         return
       }
+      if (this.chart) {
+        this.chart.destroy()
+      }
       this.chart = new Chart(trendsCtx, {
         type: this.chartType,
         data: this.chartData,
@@ -1759,9 +1749,6 @@ export default {
       })
     },
     updateCharts() {
-      if (this.chart) {
-        this.chart.destroy()
-      }
       this.fetchChartData()
     },
     normalizeTranslatedCollection(payload) {
@@ -1776,10 +1763,12 @@ export default {
       return []
     },
     fetchCategories() {
+      const requestToken = this.beginRequest('categories')
       const language = this.$i18n?.locale || this.selectedLanguage || 'en'
       this.selectedLanguage = language
-      DataService.fetchCategories(language)
+      return DataService.fetchCategories(language)
         .then((response) => {
+          if (!this.isLatestRequest('categories', requestToken)) return
           const categories = this.normalizeTranslatedCollection(response?.data)
           this.expenseCategories = categories
             .map((category) => {
@@ -1809,8 +1798,10 @@ export default {
         });
     },
     fetchChartData() {
-      DataService.fetchChartData(this.selectedTimePeriod, this.selectedCategory)
+      const requestToken = this.beginRequest('chartData')
+      return DataService.fetchChartData(this.selectedTimePeriod, this.selectedCategory)
         .then((response) => {
+          if (!this.isLatestRequest('chartData', requestToken)) return
           const rawData = response.data
 
           if (this.selectedTimePeriod.includes('m')) {

@@ -1,6 +1,7 @@
 <!-- App.vue -->
 <script setup lang="ts">
 import { RouterView, useRoute, useRouter } from 'vue-router'
+import { KeepAlive } from 'vue'
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import SideBar from './components/SideBar.vue'
 import ContextBadge from '@/components/ContextBadge.vue'
@@ -15,7 +16,6 @@ import type { Notification } from '@/services/NotificationService'
 const userStore = useUserStore()
 const route = useRoute()
 const router = useRouter()
-const routeViewKey = computed(() => route.path)
 const focusedOnboardingRoutes = new Set(['create-workspace', 'select-workspace', 'choose-plan', 'checkout'])
 
 // Estado das notificações
@@ -126,7 +126,12 @@ onUnmounted(() => {
         <ContextBadge />
       </div>
       <OnboardingStatusBanner v-if="isAuthenticated && showFocusedOnboardingChrome && !hideAppChrome" />
-      <RouterView :key="routeViewKey" />
+      <RouterView v-slot="{ Component, route: viewRoute }">
+        <KeepAlive include="DashboardView">
+          <component :is="Component" v-if="viewRoute.meta?.keepAlive" />
+        </KeepAlive>
+        <component :is="Component" v-if="!viewRoute.meta?.keepAlive" />
+      </RouterView>
     </v-main>
     <PrivacyControls />
   </v-app>

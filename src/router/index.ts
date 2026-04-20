@@ -42,7 +42,7 @@ const router = createRouter({
       path: '/dashboard',
       name: 'dashboard',
       component: DashboardView,
-      meta: { requiresAuth: true, requiresWorkspace: true }
+      meta: { requiresAuth: true, requiresWorkspace: true, keepAlive: true }
     },
     {
       path: '/budget',

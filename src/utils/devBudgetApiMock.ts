@@ -61,10 +61,22 @@ const createPagedTransactionsResponse = (config: AxiosRequestConfig) => ({
 const createDashboardResponse = () => ({
   totalBalance: 0,
   monthlyIncome: 0,
-  monthlyExpense: 0,
-  balanceTrend: [],
-  expenseByCategory: [],
-  incomeByCategory: []
+  monthlyExpenses: 0,
+  recentTransactions: [],
+  topCategories: []
+})
+
+const createMonthOverviewResponse = () => ({
+  totalIncome: 0,
+  totalExpense: 0
+})
+
+const createDashboardChartResponse = () => ({
+  labels: [],
+  datasets: [
+    { label: 'Income', data: [] },
+    { label: 'Expenses', data: [] }
+  ]
 })
 
 const createObservabilitySummary = () => ({
@@ -169,12 +181,16 @@ const buildDataForRequest = (config: AxiosRequestConfig) => {
     }
   }
 
-  if (path === '/dashboard' || path === '/dashboard/overview') {
+  if (path === '/dashboard') {
     return createDashboardResponse()
   }
 
   if (path === '/dashboard/chart') {
-    return []
+    return createDashboardChartResponse()
+  }
+
+  if (path === '/dashboard/overview') {
+    return createMonthOverviewResponse()
   }
 
   if (path === '/categories' || path === '/categories/translated') {
