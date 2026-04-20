@@ -103,6 +103,7 @@
               variant="outlined"
               density="comfortable"
               hide-details="auto"
+              class="wizard-input"
             />
 
             <v-text-field
@@ -114,60 +115,51 @@
               variant="outlined"
               density="comfortable"
               hide-details="auto"
+              class="wizard-input"
             />
 
             <div class="adjustments-list">
-              <div v-for="adjustment in snapshot.adjustments" :key="adjustment.id" class="adjustment-card">
-                <div class="adjustment-row">
-                  <v-text-field
-                    v-model="adjustment.label"
-                    label="Label (optional)"
-                    variant="outlined"
-                    density="comfortable"
-                    hide-details="auto"
-                  />
-                  <v-btn-toggle v-model="adjustment.flow" mandatory divided color="#667eea">
-                    <v-btn value="INCOME">Income</v-btn>
-                    <v-btn value="EXPENSE">Expense</v-btn>
-                  </v-btn-toggle>
-                </div>
-
-                <div class="adjustment-row adjustment-row--numbers">
-                  <v-text-field
-                    v-model.number="adjustment.monthlyChange"
-                    label="Monthly change"
-                    type="number"
-                    min="0"
-                    variant="outlined"
-                    density="comfortable"
-                    hide-details="auto"
-                  />
-                  <v-text-field
-                    v-model.number="adjustment.oneTimeChange"
-                    label="One-time change"
-                    type="number"
-                    min="0"
-                    variant="outlined"
-                    density="comfortable"
-                    hide-details="auto"
-                  />
-                  <v-btn icon variant="text" color="error" @click="removeAdjustment(adjustment.id)">
-                    <v-icon>mdi-delete-outline</v-icon>
-                  </v-btn>
-                </div>
-              </div>
+              <ScenarioChangeCard
+                v-for="(adjustment, idx) in snapshot.adjustments"
+                :key="adjustment.id"
+                :adjustment="adjustment"
+                @update:label="val => snapshot.adjustments[idx].label = val"
+                @update:flow="val => snapshot.adjustments[idx].flow = val"
+                @update:monthlyChange="val => snapshot.adjustments[idx].monthlyChange = val"
+                @update:oneTimeChange="val => snapshot.adjustments[idx].oneTimeChange = val"
+                @remove="removeAdjustment(adjustment.id)"
+              />
             </div>
 
-            <div class="wizard-inline-actions">
-              <v-btn variant="tonal" color="#667eea" @click="addAdjustment">
-                <v-icon start>mdi-plus</v-icon>
-                Add change
-              </v-btn>
+            <div class="wizard-inline-actions new-layout">
+              <div>
+                <v-btn
+                  variant="tonal"
+                  color="#667eea"
+                  @click="addAdjustment"
+                  class="add-change-btn"
+                >
+                  <v-icon start>mdi-plus</v-icon>
+                  Add change
+                </v-btn>
+              </div>
               <div class="impact-estimate">
                 <span>Estimated monthly impact</span>
                 <strong :class="{ 'positive-value': estimatedImpact > 0, 'negative-value': estimatedImpact < 0 }">
                   {{ formatSignedCurrency(estimatedImpact) }}
                 </strong>
+              </div>
+              <div class="wizard-next-btn">
+                <v-btn
+                  color="#667eea"
+                  variant="tonal"
+                  :disabled="step === 4 || isSimulating"
+                  @click="step = Math.min(4, step + 1)"
+                  class="primary-next-btn"
+                >
+                  Next
+                  <v-icon end>mdi-arrow-right</v-icon>
+                </v-btn>
               </div>
             </div>
           </section>
@@ -246,6 +238,8 @@ import {
   templateDeltas,
   type ScenarioWizardSnapshot,
 } from '@/utils/scenarioWizard'
+
+import ScenarioChangeCard from '@/components/ScenarioChangeCard.vue'
 
 const { t, locale } = useI18n()
 const router = useRouter()
@@ -559,45 +553,40 @@ watch(
   margin-bottom: 6px;
 }
 
+
 .adjustments-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 24px;
+  margin-bottom: 24px;
 }
 
-.adjustment-card {
-  border: 1px solid rgba(15, 23, 42, 0.1);
-  border-radius: 12px;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.adjustment-row {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 10px;
-  align-items: center;
-}
-
-.adjustment-row--numbers {
-  grid-template-columns: 1fr 1fr auto;
-}
-
-.wizard-inline-actions {
+.wizard-inline-actions.new-layout {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
+  gap: 24px;
   flex-wrap: wrap;
+  margin-top: 24px;
 }
 
-.impact-estimate {
-  display: flex;
-  flex-direction: column;
-  text-align: right;
-  color: #475569;
+.add-change-btn {
+  border-radius: 10px;
+}
+
+.primary-next-btn {
+  border-radius: 10px;
+  font-weight: 700;
+  min-width: 120px;
+}
+
+.wizard-next-btn {
+  margin-left: auto;
+}
+
+.wizard-input {
+  border-radius: 8px;
+  margin-bottom: 12px;
 }
 
 .wizard-footer {
