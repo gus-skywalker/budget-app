@@ -61,6 +61,11 @@ export default {
     return axios.post(`${API_URL}/session/bootstrap`, {}, { withCredentials: true })
   },
 
+  logout(): Promise<any> {
+    // Usa axios direto para invalidar a sessao mesmo quando o access token expirou.
+    return axios.post(`${API_URL}/logout`, {}, { withCredentials: true })
+  },
+
   getOAuthAuthorizationUrl(provider: 'google' | 'github'): string {
     return `${AUTH_BASE_URL}/oauth2/authorization/${provider}`
   }

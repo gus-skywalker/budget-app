@@ -690,8 +690,12 @@ export const useUserStore = defineStore({
     /**
      * Logout and clear all state
      */
-    logout() {
-        // TODO: Invalidar o refresh token no backend ao fazer logout (Spring Boot API)
+    async logout() {
+      try {
+        await AuthService.logout()
+      } catch (e) {
+        // Ignora erro de rede/backend para garantir limpeza local
+      }
       // Limpa o estado do usuário e remove do sessionStorage
       this.clearRefreshTimer()
       this.token = null

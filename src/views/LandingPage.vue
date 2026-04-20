@@ -401,7 +401,7 @@
         </div>
 
         <div class="footer-actions">
-          <button class="btn btn-primary" type="button" @click="navigateTo('choose-plan')">
+          <button class="btn btn-primary" type="button" @click="navigateToPath('/login')">
             {{ $t('landingPage.footer.cta') }}
           </button>
           <div class="footer-policy-links">

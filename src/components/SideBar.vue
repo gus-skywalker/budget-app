@@ -49,9 +49,10 @@ onUnmounted(() => {
 const user = computed(() => userStore.getUser)
 const userAvatar = computed(() => user.value?.avatar || '/favicon.ico')
 
-const logoutUser = () => {
-  userStore.resetUser()
-  router.push('/login')
+const logoutUser = async () => {
+  showLogoutDialog.value = false
+  await userStore.logout()
+  await router.push('/login')
 }
 
 const confirmLogout = () => {
