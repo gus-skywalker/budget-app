@@ -22,12 +22,17 @@
 - `POST /api/auth/refresh`
 - `POST /api/auth/session/bootstrap`
 - `GET /api/workspaces`
+- `GET /api/auth/mobile/oauth2/authorization/{provider}?redirect_uri=...`
+- `POST /api/auth/mobile/session/exchange`
+- `POST /api/auth/mobile/refresh`
+- `POST /api/auth/mobile/logout`
 
 ## Token Contract
 - Access token is used as `Authorization: Bearer <token>`.
 - Refresh token is stored by backend in HttpOnly cookie and is never read by frontend code.
 - Refresh call is `POST /api/auth/refresh` with empty body and `withCredentials: true`.
 - Session restore on app startup uses `POST /api/auth/session/bootstrap` with `withCredentials: true`.
+- Mobile/native clients should use one-time code exchange and body-based refresh instead of cookie bootstrap.
 - Token claims used by frontend:
   - `user_id`
   - `userRoles`
@@ -42,3 +47,4 @@
 - Paths without `/api` are non-canonical for current frontend integration.
 - Frontend canonical token and session parsing is identity-first (`user_id`, `userRoles`, `workspaces`).
 - Active workspace in frontend state is operational context only; it must not be treated as billing ownership information.
+- Web keeps using cookie-backed bootstrap; mobile should use the new explicit mobile OAuth contract.

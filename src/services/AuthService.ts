@@ -61,6 +61,18 @@ export default {
     return axios.post(`${API_URL}/session/bootstrap`, {}, { withCredentials: true })
   },
 
+  exchangeMobileOAuthCode(code: string): Promise<any> {
+    return axios.post(`${API_URL}/mobile/session/exchange`, { code })
+  },
+
+  refreshMobileToken(refreshToken: string): Promise<any> {
+    return axios.post(`${API_URL}/mobile/refresh`, { refreshToken })
+  },
+
+  logoutMobile(refreshToken?: string): Promise<any> {
+    return axios.post(`${API_URL}/mobile/logout`, refreshToken ? { refreshToken } : {})
+  },
+
   logout(): Promise<any> {
     // Usa axios direto para invalidar a sessao mesmo quando o access token expirou.
     return axios.post(`${API_URL}/logout`, {}, { withCredentials: true })
@@ -68,5 +80,10 @@ export default {
 
   getOAuthAuthorizationUrl(provider: 'google' | 'github'): string {
     return `${AUTH_BASE_URL}/oauth2/authorization/${provider}`
+  },
+
+  getMobileOAuthAuthorizationUrl(provider: 'google' | 'github', redirectUri: string): string {
+    const encodedRedirectUri = encodeURIComponent(redirectUri)
+    return `${API_URL}/mobile/oauth2/authorization/${provider}?redirect_uri=${encodedRedirectUri}`
   }
 }
