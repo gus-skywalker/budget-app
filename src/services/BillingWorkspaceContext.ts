@@ -12,6 +12,7 @@ export interface ActiveWorkspaceContext {
 export interface BillingCheckoutContext {
   workspaceId: string
   workspaceName?: string | null
+  billingAccountId?: string | null
   plan?: string | null
   correlationId?: string | null
   storedAt: number
@@ -69,6 +70,7 @@ export const saveBillingCheckoutContext = (context: Omit<BillingCheckoutContext,
   const payload: BillingCheckoutContext = {
     workspaceId,
     workspaceName: context.workspaceName ?? null,
+    billingAccountId: context.billingAccountId ?? null,
     plan: context.plan ?? null,
     correlationId: context.correlationId ?? null,
     storedAt: context.storedAt ?? Date.now(),
@@ -94,6 +96,7 @@ export const readBillingCheckoutContext = (): BillingCheckoutContext | null => {
     return {
       workspaceId,
       workspaceName: parsed?.workspaceName ? String(parsed.workspaceName) : null,
+      billingAccountId: parsed?.billingAccountId ? String(parsed.billingAccountId) : null,
       plan: parsed?.plan ? String(parsed.plan) : null,
       correlationId: parsed?.correlationId ? String(parsed.correlationId) : null,
       storedAt: Number(parsed?.storedAt || Date.now()),

@@ -11,7 +11,7 @@ interface PricingContextPayload {
 export interface StartSubscriptionRequest extends PricingContextPayload {
   plan: string
   actor: string
-  workspaceId?: string | null
+  billingAccountId?: string | null
   correlationId: string
   /** Backend command idempotency key */
   messageId: string
@@ -19,14 +19,14 @@ export interface StartSubscriptionRequest extends PricingContextPayload {
 
 export interface CancelSubscriptionRequest {
   actor: string
-  workspaceId?: string | null
+  billingAccountId?: string | null
   correlationId: string
   messageId: string
 }
 
 export interface OpenPortalRequest extends PricingContextPayload {
   actor: string
-  workspaceId?: string | null
+  billingAccountId?: string | null
   correlationId: string
   messageId: string
   returnUrl?: string

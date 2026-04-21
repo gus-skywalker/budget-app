@@ -448,6 +448,7 @@ const nextBillingDate = ref('');
 const paymentProviderReachable = ref(true);
 const subscriptionDataSource = ref<'LOCAL' | 'PAYMENT_API' | 'LOCAL_FALLBACK'>('LOCAL');
 const workspaceQuota = ref<BillingAccessWorkspaceQuota | null>(null)
+const billingAccountId = ref<string | null>(null)
 const selectedPlan = ref<MaybePlanId>(''); // Para atualizar o plano
 const hasPremiumAccess = ref(false);
 const lastLoadedPlan = ref<MaybePlanId>('');
@@ -654,6 +655,7 @@ const loadSubscriptionDetails = async () => {
     }
 
     const access = await BillingOrchestrationService.getBillingSummary(workspaceContext.workspaceId)
+    billingAccountId.value = access.data?.billingAccountId || null
     hasPremiumAccess.value = Boolean(access.data?.hasPremiumAccess)
     const resolvedStatus = access.data?.subscriptionStatus || (access.data?.hasPremiumAccess ? 'ACTIVE' : 'NONE')
     subscriptionStatus.value = String(resolvedStatus).toUpperCase()
@@ -747,7 +749,7 @@ const startCheckoutSession = async () => {
       {
         plan,
         actor: actorUserId.value,
-        workspaceId: workspaceContext.workspaceId,
+        billingAccountId: billingAccountId.value,
         ...getBillingContext()
       },
       correlationId
@@ -764,6 +766,7 @@ const startCheckoutSession = async () => {
     saveBillingCheckoutContext({
       workspaceId: workspaceContext.workspaceId,
       workspaceName: workspaceContext.workspaceName,
+      billingAccountId: decision.billingAccountId || billingAccountId.value,
       plan,
       correlationId: decision.correlationId || correlationId,
     })
@@ -806,7 +809,7 @@ const openBillingPortal = async (targetPlan?: PlanId) => {
 
     const payload: any = {
       actor: actorUserId.value,
-      workspaceId: workspaceContext.workspaceId,
+      billingAccountId: billingAccountId.value,
       correlationId,
       messageId,
       returnUrl,
@@ -907,7 +910,7 @@ const cancelSubscription = async () => {
 
     await BillingOrchestrationService.cancelSubscription({
       actor: actorUserId.value,
-      workspaceId: workspaceContext.workspaceId,
+      billingAccountId: billingAccountId.value,
       correlationId,
       messageId
     })

@@ -1199,7 +1199,10 @@
       "network_error": "Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.",
       "server_unavailable": "O serviço está indisponível no momento. Tente novamente em instantes.",
       "login_unavailable": "Não foi possível concluir o login agora. Tente novamente.",
-      "account_deleted_success": "Sua conta foi excluída com sucesso. Enviamos um e-mail de confirmação."
+      "account_deleted_success": "Sua conta foi excluída com sucesso. Enviamos um e-mail de confirmação.",
+      "oauth_login_failed": "Não foi possível concluir o login com Google. Tente novamente.",
+      "oauth_account_deleted_pending_purge": "Sua conta está excluída e aguardando purge definitivo. Se precisar, entre em contato com o suporte.",
+      "oauth_account_deleted_pending_purge_with_date": "Sua conta está excluída e aguardando purge definitivo em {purgeAfter}. Se precisar, entre em contato com o suporte."
     }
   },
   "transactionVisibility": {

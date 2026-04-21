@@ -6,7 +6,7 @@ export type BillingDecisionAction = 'START_SUBSCRIPTION' | 'NOOP_ALREADY_PREMIUM
 export interface BillingDecisionRequest {
   plan: string
   actor: string
-  workspaceId?: string | null
+  billingAccountId?: string | null
 
   /** Tracing (backend expects/accepts correlationId in body) */
   correlationId?: string

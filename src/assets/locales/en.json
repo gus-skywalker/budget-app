@@ -1217,7 +1217,10 @@
       "network_error": "Could not connect to the server. Check your connection and try again.",
       "server_unavailable": "The service is unavailable right now. Please try again shortly.",
       "login_unavailable": "We could not complete the login right now. Please try again.",
-      "account_deleted_success": "Your account has been deleted successfully. A confirmation email was sent."
+      "account_deleted_success": "Your account has been deleted successfully. A confirmation email was sent.",
+      "oauth_login_failed": "We could not complete Google sign-in. Please try again.",
+      "oauth_account_deleted_pending_purge": "Your account is deleted and pending permanent purge. If needed, contact support.",
+      "oauth_account_deleted_pending_purge_with_date": "Your account is deleted and pending permanent purge at {purgeAfter}. If needed, contact support."
     }
   },
   "transactionVisibility": {

@@ -295,6 +295,27 @@ onMounted(() => {
   if (route.query && route.query.signup === 'true') {
     toggleForm(true)
   }
+  if (route.query && typeof route.query.oauthError === 'string') {
+    const oauthError = route.query.oauthError
+    const purgeAfter = typeof route.query.purgeAfter === 'string' ? route.query.purgeAfter : null
+
+    if (oauthError === 'account_deleted_pending_purge') {
+      error.value = purgeAfter
+        ? t('authentication.messages.oauth_account_deleted_pending_purge_with_date', { purgeAfter })
+        : t('authentication.messages.oauth_account_deleted_pending_purge')
+    } else {
+      error.value = t('authentication.messages.oauth_login_failed')
+    }
+
+    setTimeout(() => {
+      error.value = null
+    }, 8000)
+
+    const cleanedQuery = { ...route.query }
+    delete cleanedQuery.oauthError
+    delete cleanedQuery.purgeAfter
+    router.replace({ query: cleanedQuery })
+  }
   if (route.query && route.query.accountDeleted === 'true') {
     loginSuccess.value = t('authentication.messages.account_deleted_success')
     setTimeout(() => {

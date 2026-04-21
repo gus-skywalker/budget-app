@@ -1197,7 +1197,10 @@
       "network_error": "Impossible de se connecter au serveur. Vérifiez votre connexion et réessayez.",
       "server_unavailable": "Le service est indisponible pour le moment. Veuillez réessayer dans un instant.",
       "login_unavailable": "Nous n'avons pas pu terminer la connexion pour le moment. Veuillez réessayer.",
-      "account_deleted_success": "Votre compte a été supprimé avec succès. Un e-mail de confirmation a été envoyé."
+      "account_deleted_success": "Votre compte a été supprimé avec succès. Un e-mail de confirmation a été envoyé.",
+      "oauth_login_failed": "Nous n'avons pas pu terminer la connexion Google. Veuillez réessayer.",
+      "oauth_account_deleted_pending_purge": "Votre compte est supprimé et en attente de purge définitive. Si nécessaire, contactez le support.",
+      "oauth_account_deleted_pending_purge_with_date": "Votre compte est supprimé et en attente de purge définitive à {purgeAfter}. Si nécessaire, contactez le support."
     }
   },
   "transactionVisibility": {

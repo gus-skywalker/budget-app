@@ -157,6 +157,7 @@ import BillingOrchestrationService from '@/services/BillingOrchestrationService'
 import BillingDecisionService from '@/services/BillingDecisionService'
 import {
     clearBillingCheckoutContext,
+    readBillingCheckoutContext,
     requireActiveWorkspaceContext,
     saveBillingCheckoutContext,
 } from '@/services/BillingWorkspaceContext'
@@ -248,7 +249,7 @@ export default {
                     {
                         plan: String(plan),
                         actor: String(user.id),
-                        workspaceId: workspaceContext.workspaceId,
+                        billingAccountId: readBillingCheckoutContext()?.billingAccountId || null,
                         ...getBillingContext()
                     },
                     correlationId
@@ -265,6 +266,7 @@ export default {
                     plan: String(plan),
                     workspaceId: workspaceContext.workspaceId,
                     workspaceName: workspaceContext.workspaceName,
+                    billingAccountId: decision.billingAccountId || null,
                     correlationId: String(decision.correlationId || correlationId),
                 })
 
@@ -275,7 +277,7 @@ export default {
                 await BillingOrchestrationService.startSubscription({
                     plan: String(plan),
                     actor: String(user.id),
-                    workspaceId: workspaceContext.workspaceId,
+                    billingAccountId: decision.billingAccountId || null,
                     correlationId: String(decision.correlationId || correlationId),
                     messageId,
                     ...getBillingContext()

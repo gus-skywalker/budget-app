@@ -15,9 +15,22 @@ const userStore = useUserStore()
 
 const extractTokenFromUrl = async () => {
   const urlParams = new URLSearchParams(window.location.search)
+  const oauthError = urlParams.get('error')
+  const purgeAfter = urlParams.get('purgeAfter')
   let token = urlParams.get('accessToken')
   const redirect = urlParams.get('redirect')
   const plan = urlParams.get('plan')
+
+  if (oauthError) {
+    await router.replace({
+      name: 'login',
+      query: {
+        oauthError,
+        purgeAfter: purgeAfter || undefined
+      }
+    })
+    return
+  }
 
   try {
     if (!token) {
