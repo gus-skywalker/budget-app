@@ -1300,6 +1300,14 @@ export default {
     // When cached via <KeepAlive>, refresh in the background without wiping the current UI.
     this.refreshDashboard('activated')
   },
+  deactivated() {
+    // KeepAlive preserves component state, but we rebuild the chart when returning
+    // to avoid reusing a stale canvas context after multiple navigations.
+    if (this.chart) {
+      this.chart.destroy()
+      this.chart = null
+    }
+  },
   watch: {
     '$i18n.locale'(newLocale) {
       if (newLocale && newLocale !== this.selectedLanguage) {
@@ -1330,7 +1338,7 @@ export default {
       this.refreshing = true
 
       await Promise.allSettled([
-        this.fetchDashboardSummary(),
+        this.fetchOverviewCoreSnapshot(),
         this.fetchAccounts(),
         this.fetchMonthTransactions(),
         this.fetchOpenFinanceConflicts(),
@@ -1342,7 +1350,6 @@ export default {
         this.fetchBudgetComparison(),
         this.fetchGoalsAtRisk(),
         this.fetchCategories(),
-        this.fetchChartData(),
       ])
 
       if (!this.isLatestRequest('refreshDashboard', refreshToken)) {
@@ -1481,19 +1488,89 @@ export default {
       ];
       return monthNames[monthIndex];
     },
-    fetchDashboardSummary() {
-      const requestToken = this.beginRequest('dashboardSummary')
+    isCurrentOverviewContext(workspaceId, selectedTimePeriod, selectedCategory) {
+      const currentWorkspaceId = this.currentWorkspaceId || null
+      const currentCategory = this.selectedCategory || ''
+      return (
+        currentWorkspaceId === (workspaceId || null) &&
+        this.selectedTimePeriod === selectedTimePeriod &&
+        currentCategory === (selectedCategory || '')
+      )
+    },
+    normalizeDashboardSummary(payload) {
+      const base = payload && typeof payload === 'object' ? payload : {}
+      return {
+        ...base,
+        totalBalance: Number(base.totalBalance || 0),
+        monthlyIncome: Number(base.monthlyIncome || 0),
+        monthlyExpenses: Number(base.monthlyExpenses || 0),
+        topCategories: Array.isArray(base.topCategories) ? base.topCategories : [],
+      }
+    },
+    buildChartState(rawData, selectedTimePeriod) {
+      const safeData = rawData && typeof rawData === 'object' ? rawData : {}
+      const rawLabels = Array.isArray(safeData.labels) ? safeData.labels : []
+      const rawDatasets = Array.isArray(safeData.datasets) ? safeData.datasets : []
+      const incomePoints = Array.isArray(rawDatasets[0]?.data) ? rawDatasets[0].data : []
+      const expensePoints = Array.isArray(rawDatasets[1]?.data) ? rawDatasets[1].data : []
+      const isYearly = !String(selectedTimePeriod || '').includes('m')
+      const labels = isYearly
+        ? rawLabels
+        : rawLabels.map((label) => moment(label, ['YYYY-MM', 'MM-YYYY']).toISOString())
+
+      return {
+        isYearly,
+        chartData: {
+          labels,
+          datasets: [
+            {
+              label: 'Income',
+              backgroundColor: 'rgba(75, 192, 192, 0.2)',
+              borderColor: 'rgba(75, 192, 192, 1)',
+              borderWidth: 1,
+              data: incomePoints,
+            },
+            {
+              label: 'Expenses',
+              backgroundColor: 'rgba(255, 99, 132, 0.2)',
+              borderColor: 'rgba(255, 99, 132, 1)',
+              borderWidth: 1,
+              data: expensePoints,
+            },
+          ],
+        },
+      }
+    },
+    applyChartState(nextChartState) {
+      if (!nextChartState) return
+      this.isYearly = Boolean(nextChartState.isYearly)
+      this.chartData = nextChartState.chartData
+      this.createChart()
+    },
+    fetchOverviewCoreSnapshot() {
+      const requestToken = this.beginRequest('overviewCore')
       this.dashboardLoading = true
-      return FinancialReadService.fetchDashboard()
-        .then((response) => {
-          if (!this.isLatestRequest('dashboardSummary', requestToken)) return
-          this.dashboardSummary = response.data
+      const workspaceId = this.currentWorkspaceId || null
+      const selectedTimePeriod = this.selectedTimePeriod
+      const selectedCategory = this.selectedCategory || ''
+
+      return Promise.all([
+        FinancialReadService.fetchDashboard(),
+        DataService.fetchChartData(selectedTimePeriod, selectedCategory),
+      ])
+        .then(([summaryResponse, chartResponse]) => {
+          if (!this.isLatestRequest('overviewCore', requestToken)) return
+          if (!this.isCurrentOverviewContext(workspaceId, selectedTimePeriod, selectedCategory)) return
+
+          this.dashboardSummary = this.normalizeDashboardSummary(summaryResponse?.data)
+          const nextChartState = this.buildChartState(chartResponse?.data, selectedTimePeriod)
+          this.applyChartState(nextChartState)
         })
         .catch((error) => {
-          console.error('Error fetching dashboard summary:', error)
+          console.error('Error fetching overview core snapshot:', error)
         })
         .finally(() => {
-          if (!this.isLatestRequest('dashboardSummary', requestToken)) return
+          if (!this.isLatestRequest('overviewCore', requestToken)) return
           this.dashboardLoading = false
         })
     },
@@ -1799,26 +1876,15 @@ export default {
     },
     fetchChartData() {
       const requestToken = this.beginRequest('chartData')
-      return DataService.fetchChartData(this.selectedTimePeriod, this.selectedCategory)
+      const workspaceId = this.currentWorkspaceId || null
+      const selectedTimePeriod = this.selectedTimePeriod
+      const selectedCategory = this.selectedCategory || ''
+      return DataService.fetchChartData(selectedTimePeriod, selectedCategory)
         .then((response) => {
           if (!this.isLatestRequest('chartData', requestToken)) return
-          const rawData = response.data
-
-          if (this.selectedTimePeriod.includes('m')) {
-            this.isYearly = false
-            this.chartData.labels = rawData.labels.map((label) =>
-              moment(label, ['YYYY-MM', 'MM-YYYY']).toISOString()
-            )
-            this.chartData.datasets[0].data = rawData.datasets[0].data
-            this.chartData.datasets[1].data = rawData.datasets[1].data
-          } else {
-            this.isYearly = true
-            this.chartData.labels = rawData.labels
-            this.chartData.datasets[0].data = rawData.datasets[0].data
-            this.chartData.datasets[1].data = rawData.datasets[1].data
-          }
-
-          this.createChart()
+          if (!this.isCurrentOverviewContext(workspaceId, selectedTimePeriod, selectedCategory)) return
+          const nextChartState = this.buildChartState(response?.data, selectedTimePeriod)
+          this.applyChartState(nextChartState)
         })
         .catch((error) => {
           console.error('Error fetching chart data:', error)
