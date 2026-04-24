@@ -269,6 +269,7 @@ import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/plugins/userStore'
 import { useRouter, useRoute } from 'vue-router'
 import { updateI18nLocale } from '@/i18n'
+import { readInviteAcceptanceContext } from '@/utils/inviteAcceptanceContext'
 import AuthService from '@/services/AuthService'
 import OnboardingOrchestrator from '@/services/OnboardingOrchestrator'
 import { activateDevQuickAccess, clearDevQuickAccess } from '@/utils/devQuickAccess'
@@ -372,15 +373,16 @@ const userLogin = async () => {
       updateI18nLocale(res.data.language || 'PT')
 
       try {
+        await store.reconcileWorkspaceContext()
         await store.hydrateWorkspaceDetailsFromBudget()
       } catch (hydrateError) {
-        console.warn('Não foi possível hidratar detalhes dos workspaces no login.', hydrateError)
+        console.warn('Não foi possível reconciliar/hidratar workspaces no login.', hydrateError)
       }
 
       const onboarding = await OnboardingOrchestrator.resolvePostAuthRoute({
         router,
         userStore: store,
-        redirect: route.query.redirect,
+        redirect: route.query.redirect || readInviteAcceptanceContext()?.redirect,
         plan: route.query.plan,
         defaultRedirect: '/dashboard'
       })

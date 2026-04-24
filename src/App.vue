@@ -66,6 +66,21 @@ async function openNotification(notification: Notification) {
     }
   }
 
+  const notificationTarget = extractNotificationTarget(notification)
+  if (notificationTarget?.workspaceId) {
+    try {
+      await userStore.selectWorkspace(notificationTarget.workspaceId)
+    } catch (error) {
+      console.error('Erro ao selecionar workspace da notificação:', error)
+    }
+  }
+
+  if (notificationTarget?.path) {
+    await router.push(notificationTarget.path)
+    showNotificationsPopup.value = false
+    return
+  }
+
   const decisionId = extractDecisionId(notification)
   if (decisionId) {
     await router.push({ name: 'decision-detail', params: { id: decisionId } })
@@ -94,6 +109,24 @@ function extractDecisionId(notification: Notification): string | null {
     }
   }
   return null
+}
+
+function extractNotificationTarget(notification: Notification): { path: string | null, workspaceId: string | null } | null {
+  if (!notification.metadata) return null
+  try {
+    const parsed = JSON.parse(notification.metadata)
+    const path = typeof parsed?.targetPath === 'string' && parsed.targetPath.trim().length > 0
+      ? parsed.targetPath.trim()
+      : null
+    const workspaceId = typeof parsed?.targetWorkspaceId === 'string' && parsed.targetWorkspaceId.trim().length > 0
+      ? parsed.targetWorkspaceId.trim()
+      : (typeof parsed?.workspaceId === 'string' && parsed.workspaceId.trim().length > 0 ? parsed.workspaceId.trim() : null)
+    if (!path && !workspaceId) return null
+    return { path, workspaceId }
+  } catch (error) {
+    console.error('Erro ao interpretar target da notificação:', error)
+    return null
+  }
 }
 
 let pollingInterval: any

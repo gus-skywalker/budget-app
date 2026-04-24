@@ -83,11 +83,13 @@ function normalizeType(type?: string): string {
   const normalized = String(type || '')
     .trim()
     .toLowerCase()
-  if (normalized === 'decision_created') return 'decision_created'
-  if (normalized === 'vote_added') return 'vote_added'
-  if (normalized === 'comment_added') return 'comment_added'
-  if (normalized === 'decision_applied') return 'decision_applied'
-  return 'decision_created'
+  if (normalized === 'decision_created') return 'new decision'
+  if (normalized === 'vote_added') return 'new vote'
+  if (normalized === 'comment_added') return 'new comment'
+  if (normalized === 'decision_applied') return 'decision applied'
+  if (normalized === 'workspace_welcome') return 'workspace welcome'
+  if (normalized === 'workspace_exited') return 'workspace exit'
+  return 'workspace update'
 }
 
 function formatTimestamp(value?: string): string {

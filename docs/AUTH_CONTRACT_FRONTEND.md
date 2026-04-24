@@ -21,8 +21,14 @@
 - `DELETE /api/auth/{userId}`
 - `POST /api/auth/refresh`
 - `POST /api/auth/session/bootstrap`
-- `GET /api/workspaces`
 - `GET /oauth2/authorization/{provider}`
+
+## Workspace Endpoints Used By Frontend
+- `GET {VITE_API_BASE_URL}/workspaces`
+- `POST {VITE_API_BASE_URL}/workspaces`
+- `GET {VITE_API_BASE_URL}/workspaces/{workspaceId}`
+- `PUT {VITE_API_BASE_URL}/workspaces/{workspaceId}`
+- `DELETE {VITE_API_BASE_URL}/workspaces/{workspaceId}`
 
 ## Token Contract
 - Access token is used as `Authorization: Bearer <token>`.
@@ -32,15 +38,20 @@
 - Token claims used by frontend:
   - `user_id`
   - `userRoles`
-  - `workspaces`
+
+## Explicit Non-Responsibilities Of Auth
+- `auth` is not the source of truth for workspace lists, memberships, tenant roles, invites, or active workspace selection.
+- `auth` login/session responses are identity-focused and may omit workspace context entirely.
+- Workspace-related events may still arrive during migration, but `auth` should treat them as legacy/no-op inputs.
 
 ## Workspace Context Contract
 - Frontend sends `X-Workspace-Id` in API requests when a workspace is selected in local store.
+- Workspace membership and role list are resolved from `budget-api`, not from `auth`.
 - Workspace context is not switched by auth endpoints and is not sourced from JWT claims.
 - Selected workspace is maintained in frontend state (`userStore`) and validated server-side per request.
 
 ## Notes
 - Paths without `/api` are non-canonical for current frontend integration.
-- Frontend canonical token and session parsing is identity-first (`user_id`, `userRoles`, `workspaces`).
+- Frontend canonical token and session parsing is identity-first (`user_id`, `userRoles`).
 - Active workspace in frontend state is operational context only; it must not be treated as billing ownership information.
 - OAuth login starts on the auth host and returns to the frontend callback route `/oauth2/redirect`.

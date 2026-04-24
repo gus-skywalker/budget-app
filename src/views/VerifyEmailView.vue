@@ -18,6 +18,7 @@
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AuthService from '@/services/AuthService'
+import { readInviteAcceptanceContext } from '@/utils/inviteAcceptanceContext'
 
 const route = useRoute()
 const router = useRouter()
@@ -49,7 +50,13 @@ onMounted(async () => {
 })
 
 const goToLogin = () => {
-  router.push({ name: 'login' })
+  const inviteContext = readInviteAcceptanceContext()
+  router.push({
+    name: 'login',
+    query: inviteContext?.redirect
+      ? { redirect: inviteContext.redirect }
+      : undefined
+  })
 }
 </script>
 
@@ -107,4 +114,3 @@ p {
   background: #1d4ed8;
 }
 </style>
-

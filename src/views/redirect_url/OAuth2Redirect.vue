@@ -9,6 +9,7 @@ import { useRouter } from 'vue-router'
 import AuthService from '@/services/AuthService'
 import { updateI18nLocale } from '@/i18n'
 import OnboardingOrchestrator from '@/services/OnboardingOrchestrator'
+import { readInviteAcceptanceContext } from '@/utils/inviteAcceptanceContext'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -18,7 +19,8 @@ const extractTokenFromUrl = async () => {
   const oauthError = urlParams.get('error')
   const purgeAfter = urlParams.get('purgeAfter')
   let token = urlParams.get('accessToken')
-  const redirect = urlParams.get('redirect')
+  const inviteContext = readInviteAcceptanceContext()
+  const redirect = urlParams.get('redirect') || inviteContext?.redirect || null
   const plan = urlParams.get('plan')
 
   if (oauthError) {
@@ -55,6 +57,13 @@ const extractTokenFromUrl = async () => {
       })
 
       await updateI18nLocale(userLanguage)
+
+      if (inviteContext?.token && inviteContext?.redirect) {
+        await router.replace(inviteContext.redirect)
+        return
+      }
+
+      await userStore.reconcileWorkspaceContext()
       await userStore.hydrateWorkspaceDetailsFromBudget()
 
       const onboarding = await OnboardingOrchestrator.resolvePostAuthRoute({

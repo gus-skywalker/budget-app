@@ -234,6 +234,57 @@
         </v-col>
 
         <v-col cols="12" md="6">
+          <v-card class="modern-card">
+            <div class="card-header">
+              <h3 class="card-title">
+                <v-icon color="primary" class="mr-2">mdi-account-check</v-icon>
+                {{ $t('workspaceSettings.your_membership') }}
+              </h3>
+              <p class="card-description">
+                {{ $t('workspaceSettings.your_membership_desc') }}
+              </p>
+            </div>
+            <v-card-text>
+              <div class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4">
+                <div>
+                  <div class="section-title">{{ workspaceNameForDelete || $t('workspaceSettings.workspace_name') }}</div>
+                  <div class="text-medium-emphasis">{{ $t('workspaceSettings.current_access_label') }}</div>
+                </div>
+                <v-chip size="small" color="primary" variant="tonal">
+                  {{ currentRoleLabel }}
+                </v-chip>
+              </div>
+
+              <v-alert
+                v-if="isCurrentOwner"
+                type="info"
+                variant="tonal"
+                class="mb-4"
+              >
+                {{ $t('workspaceSettings.leave_workspace_owner_hint') }}
+              </v-alert>
+              <v-alert
+                v-else
+                type="info"
+                variant="tonal"
+                class="mb-4"
+              >
+                {{ $t('workspaceSettings.leave_workspace_hint') }}
+              </v-alert>
+
+              <v-btn
+                color="warning"
+                variant="outlined"
+                block
+                :loading="leaveLoading"
+                @click="leaveDialog = true"
+              >
+                <v-icon left>mdi-exit-to-app</v-icon>
+                {{ $t('workspaceSettings.leave_workspace') }}
+              </v-btn>
+            </v-card-text>
+          </v-card>
+
           <v-card v-if="canManageWorkspace" class="modern-card">
             <div class="card-header">
               <h3 class="card-title">
@@ -328,6 +379,27 @@
       </v-card>
     </v-dialog>
 
+    <v-dialog v-model="leaveDialog" max-width="520">
+      <v-card>
+        <v-card-title class="text-h6">{{ $t('workspaceSettings.confirm_leave_title') }}</v-card-title>
+        <v-card-text>
+          <p class="mb-0" v-html="$t('workspaceSettings.confirm_leave_desc', { workspace: workspaceNameForDelete || 'workspace' })"></p>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="closeLeaveDialog">{{ $t('workspaceSettings.cancel') }}</v-btn>
+          <v-btn
+            color="warning"
+            variant="elevated"
+            :loading="leaveLoading"
+            @click="leaveWorkspace"
+          >
+            {{ $t('workspaceSettings.confirm_leave_action') }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="4000">
       {{ snackbar.message }}
     </v-snackbar>
@@ -346,7 +418,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import WorkspaceService from '@/services/WorkspaceService'
 import WorkspaceInviteService from '@/services/WorkspaceInviteService'
@@ -360,6 +432,9 @@ const router = useRouter()
 
 const currentWorkspaceId = computed(() => userStore.getCurrentWorkspaceId)
 const canManageWorkspace = computed(() => userStore.isTenantAdmin)
+const currentRole = computed(() => userStore.getCurrentRole)
+const isCurrentOwner = computed(() => String(currentRole.value || '').toUpperCase() === 'ROLE_OWNER')
+const currentRoleLabel = computed(() => getRoleLabel(String(currentRole.value || 'ROLE_MEMBER')))
 
 const workspaceFormRef = ref()
 const workspaceForm = ref({ workspaceName: '', description: '' })
@@ -383,10 +458,13 @@ const inviteLoading = ref(false)
 const members = ref<any[]>([])
 const invites = ref<any[]>([])
 const invitesAvailable = ref(true)
+let membersAndInvitesPollingTimer: number | null = null
 
 const deleteDialog = ref(false)
 const deleteConfirm = ref('')
 const deleteLoading = ref(false)
+const leaveDialog = ref(false)
+const leaveLoading = ref(false)
 
 const snackbar = ref({ show: false, message: '', color: 'success' as 'success' | 'error' | 'info' })
 const upgradeSnackbar = ref(false)
@@ -472,6 +550,25 @@ const loadMembersAndInvites = async () => {
   } catch (error) {
     showSnackbar(parseApiError(error), 'error')
   }
+}
+
+const stopMembersAndInvitesPolling = () => {
+  if (membersAndInvitesPollingTimer) {
+    window.clearInterval(membersAndInvitesPollingTimer)
+    membersAndInvitesPollingTimer = null
+  }
+}
+
+const startMembersAndInvitesPolling = () => {
+  stopMembersAndInvitesPolling()
+  if (!currentWorkspaceId.value || !canManageWorkspace.value) return
+  membersAndInvitesPollingTimer = window.setInterval(async () => {
+    if (!currentWorkspaceId.value || !canManageWorkspace.value) {
+      stopMembersAndInvitesPolling()
+      return
+    }
+    await loadMembersAndInvites()
+  }, 8000)
 }
 
 const createWorkspace = async () => {
@@ -602,6 +699,8 @@ const sendInvite = async () => {
     const response = await WorkspaceInviteService.inviteUser(currentWorkspaceId.value, inviteEmail, inviteForm.value.role)
     inviteForm.value.email = ''
     inviteForm.value.role = 'ROLE_MEMBER'
+    await nextTick()
+    ;(inviteFormRef.value as any)?.resetValidation?.()
     await loadInvites()
     const backendMessage = response?.data?.message
     showSnackbar(backendMessage || `${t('workspaceSettings.success_invite_sent_generic')} (${inviteEmail})`)
@@ -648,6 +747,10 @@ const cancelInvite = async (inviteId: string) => {
 const closeDeleteDialog = () => {
   deleteDialog.value = false
   deleteConfirm.value = ''
+}
+
+const closeLeaveDialog = () => {
+  leaveDialog.value = false
 }
 
 const deleteWorkspace = async () => {
@@ -700,6 +803,48 @@ const deleteWorkspace = async () => {
   }
 }
 
+const leaveWorkspace = async () => {
+  if (!currentWorkspaceId.value) return
+  const previousWorkspaceId = currentWorkspaceId.value
+  leaveLoading.value = true
+  try {
+    await WorkspaceService.leaveWorkspace(previousWorkspaceId)
+
+    let nextWorkspaces: Array<{ workspaceId?: string; workspaceName?: string; role?: string | null }> = []
+    try {
+      const workspacesRes = await WorkspaceService.getAll()
+      nextWorkspaces = (workspacesRes?.data || []) as Array<{ workspaceId?: string; workspaceName?: string; role?: string | null }>
+    } catch {
+      nextWorkspaces = ((userStore.getWorkspaces || []) as any[]).filter(
+        (workspace: any) => workspace?.workspaceId !== previousWorkspaceId
+      )
+    }
+
+    userStore.setWorkspaces(nextWorkspaces as any)
+    closeLeaveDialog()
+    showSnackbar(t('workspaceSettings.success_leave'), 'info')
+
+    if (!nextWorkspaces.length) {
+      await userStore.clearWorkspaceSelection()
+      await router.replace({ name: 'settings', query: { tab: 'workspace' } })
+      return
+    }
+
+    if (nextWorkspaces.length === 1) {
+      await userStore.selectWorkspace(String(nextWorkspaces[0]?.workspaceId || ''))
+      await router.replace({ name: 'settings', query: { tab: 'workspace' } })
+      return
+    }
+
+    userStore.clearCurrentWorkspace()
+    await router.push({ name: 'select-workspace', query: { redirect: '/settings?tab=workspace' } })
+  } catch (error) {
+    showSnackbar(parseApiError(error), 'error')
+  } finally {
+    leaveLoading.value = false
+  }
+}
+
 const getRoleLabel = (role: string) => {
   const normalized = (role || '').toUpperCase()
   if (t(`workspaceSettings.roles.${normalized}`) !== `workspaceSettings.roles.${normalized}`) {
@@ -712,14 +857,20 @@ const getRoleLabel = (role: string) => {
 }
 
 watch([currentWorkspaceId, canManageWorkspace], async ([workspaceId, canManage]) => {
+  stopMembersAndInvitesPolling()
   resetWorkspaceUiState()
   if (!workspaceId) return
 
   await loadWorkspaceDetails()
   if (canManage) {
     await loadMembersAndInvites()
+    startMembersAndInvitesPolling()
   }
 }, { immediate: true })
+
+onUnmounted(() => {
+  stopMembersAndInvitesPolling()
+})
 </script>
 
 <style scoped>

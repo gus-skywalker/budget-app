@@ -6,14 +6,6 @@ import {
   isDevQuickAccessEnabled,
   listDevQuickAccessWorkspaces
 } from '@/utils/devQuickAccess'
-const rawAuthBase = String(import.meta.env.VITE_AUTH_URL || '').replace(/\/+$/, '')
-
-const normalizedAuthRoot = rawAuthBase
-  .replace(/\/api\/auth$/, '')
-  .replace(/\/auth$/, '')
-  .replace(/\/api$/, '')
-
-const AUTH_WORKSPACES_URL = `${normalizedAuthRoot}/api/workspaces`
 const BUDGET_WORKSPACES_URL = `${import.meta.env.VITE_API_BASE_URL}/workspaces`
 
 export default {
@@ -38,8 +30,8 @@ export default {
   },
 
   /**
-   * Listar workspaces do usuário
-   * GET /api/workspaces
+   * Listar workspaces do usuário a partir do domínio canônico do produto
+   * GET budget-api /workspaces
    */
   getAll(): Promise<any> {
     if (isDevQuickAccessEnabled()) {
@@ -48,7 +40,7 @@ export default {
       })
     }
 
-    return axiosInterceptor.get(AUTH_WORKSPACES_URL)
+    return axiosInterceptor.get(BUDGET_WORKSPACES_URL)
   },
 
   /**
@@ -80,6 +72,13 @@ export default {
    */
   listMembers(workspaceId: string): Promise<any> {
     return axiosInterceptor.get(`${BUDGET_WORKSPACES_URL}/${workspaceId}/members`)
+  },
+
+  /**
+   * Sair do workspace atual
+   */
+  leaveWorkspace(workspaceId: string): Promise<any> {
+    return axiosInterceptor.delete(`${BUDGET_WORKSPACES_URL}/${workspaceId}/members/me`)
   },
 
   /**

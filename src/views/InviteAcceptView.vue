@@ -5,6 +5,10 @@ import { useUserStore } from '@/plugins/userStore'
 import WorkspaceInviteService from '@/services/WorkspaceInviteService'
 import WorkspaceService from '@/services/WorkspaceService'
 import OnboardingOrchestrator from '@/services/OnboardingOrchestrator'
+import {
+  clearInviteAcceptanceContext,
+  saveInviteAcceptanceContext
+} from '@/utils/inviteAcceptanceContext'
 
 const route = useRoute()
 const router = useRouter()
@@ -60,18 +64,31 @@ async function syncWorkspacesAfterAccept() {
 async function processInviteAccept() {
   if (!token.value) {
     errorMessage.value = 'Invite token not found.'
+    clearInviteAcceptanceContext()
     loading.value = false
     return
   }
   try {
+    saveInviteAcceptanceContext({
+      token: token.value,
+      redirect: inviteRedirectPath.value
+    })
+
     const inviteValidation = await WorkspaceInviteService.validateInvite(token.value)
     const inviteStatus = String(inviteValidation?.status || '').toUpperCase()
     const isRecoverable = !inviteStatus || inviteStatus === 'PENDING' || inviteStatus === 'ACCEPTED'
 
     if (!inviteValidation?.valid || !isRecoverable) {
       errorMessage.value = 'This invitation is invalid, expired, or no longer pending.'
+      clearInviteAcceptanceContext()
       return
     }
+
+    saveInviteAcceptanceContext({
+      token: token.value,
+      redirect: inviteRedirectPath.value,
+      invitedEmail: String(inviteValidation?.email || '').trim() || null
+    })
 
     const requiresAuth = inviteValidation?.requiresAuth !== false
     if (requiresAuth && !userStore.isAuthenticated) {
@@ -85,8 +102,39 @@ async function processInviteAccept() {
     }
 
     const acceptResponse = await WorkspaceInviteService.acceptInvite(token.value)
+    const membershipMaterialized = acceptResponse?.data?.membershipMaterialized !== false
+    if (!membershipMaterialized) {
+      throw new Error('Invite accepted, but workspace membership is not available yet.')
+    }
     acceptedWorkspaceId.value = String(acceptResponse?.data?.workspaceId || '').trim()
+    const acceptedRole = String(acceptResponse?.data?.tenantRole || '').trim() || null
+    const acceptedWorkspaceName = String(acceptResponse?.data?.workspaceName || '').trim()
+    if (acceptedWorkspaceId.value) {
+      const existingWorkspaces = [...(userStore.getWorkspaces || [])]
+      const index = existingWorkspaces.findIndex((workspace: any) => String(workspace?.workspaceId || '').trim() === acceptedWorkspaceId.value)
+      const acceptedWorkspace = {
+        workspaceId: acceptedWorkspaceId.value,
+        workspaceName: acceptedWorkspaceName || undefined,
+        role: acceptedRole
+      }
+
+      if (index >= 0) {
+        existingWorkspaces[index] = {
+          ...existingWorkspaces[index],
+          ...acceptedWorkspace
+        }
+      } else {
+        existingWorkspaces.push(acceptedWorkspace)
+      }
+
+      userStore.setWorkspaces(existingWorkspaces as any)
+      if (acceptedRole) {
+        userStore.setCurrentWorkspace(acceptedWorkspaceId.value, acceptedRole, acceptedWorkspaceName || undefined)
+        userStore.setPreferredWorkspace(acceptedWorkspaceId.value)
+      }
+    }
     await syncWorkspacesAfterAccept()
+    clearInviteAcceptanceContext()
     done.value = true
   } catch (error: any) {
     const status = Number(error?.response?.status || 0)
