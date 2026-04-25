@@ -1531,6 +1531,48 @@ export default {
         topCategories: Array.isArray(base.topCategories) ? base.topCategories : [],
       }
     },
+    summaryHasMaterialData(summary = null) {
+      const target = summary && typeof summary === 'object' ? summary : this.dashboardSummary
+      return (
+        Number(target?.totalBalance || 0) !== 0 ||
+        Number(target?.monthlyIncome || 0) !== 0 ||
+        Number(target?.monthlyExpenses || 0) !== 0
+      )
+    },
+    deriveSummaryFromLocalReadModels() {
+      const derivedBalance = (Array.isArray(this.accounts) ? this.accounts : []).reduce(
+        (total, account) => total + Number(account?.balance || 0),
+        0
+      )
+      const txs = Array.isArray(this.monthTransactions) ? this.monthTransactions : []
+      const derivedIncome = txs
+        .filter((transaction) => String(transaction?.direction || '').toUpperCase() === 'INFLOW')
+        .reduce((total, transaction) => total + Number(transaction?.amount || 0), 0)
+      const derivedExpenses = txs
+        .filter((transaction) => String(transaction?.direction || '').toUpperCase() === 'OUTFLOW')
+        .reduce((total, transaction) => total + Math.abs(Number(transaction?.amount || 0)), 0)
+
+      return {
+        totalBalance: Number(derivedBalance || 0),
+        monthlyIncome: Number(derivedIncome || 0),
+        monthlyExpenses: Number(derivedExpenses || 0),
+      }
+    },
+    reconcileDashboardSummaryFromLocalReadModels() {
+      if (this.summaryHasMaterialData()) {
+        return
+      }
+      const derived = this.deriveSummaryFromLocalReadModels()
+      if (!this.summaryHasMaterialData(derived)) {
+        return
+      }
+      this.dashboardSummary = {
+        ...this.dashboardSummary,
+        totalBalance: derived.totalBalance,
+        monthlyIncome: derived.monthlyIncome,
+        monthlyExpenses: derived.monthlyExpenses,
+      }
+    },
     buildChartState(rawData, selectedTimePeriod) {
       const safeData = rawData && typeof rawData === 'object' ? rawData : {}
       const rawLabels = Array.isArray(safeData.labels) ? safeData.labels : []
@@ -1587,6 +1629,7 @@ export default {
 
           if (this.isCurrentWorkspaceContext(workspaceId)) {
             this.dashboardSummary = this.normalizeDashboardSummary(summaryResponse?.data)
+            this.reconcileDashboardSummaryFromLocalReadModels()
           }
 
           if (this.isCurrentOverviewContext(workspaceId, selectedTimePeriod, selectedCategory)) {
@@ -1608,11 +1651,13 @@ export default {
         .then((response) => {
           if (!this.isLatestRequest('accounts', requestToken)) return
           this.accounts = Array.isArray(response?.data) ? response.data : []
+          this.reconcileDashboardSummaryFromLocalReadModels()
         })
         .catch((error) => {
           console.error('Error fetching accounts:', error)
           if (!this.isLatestRequest('accounts', requestToken)) return
           this.accounts = []
+          this.reconcileDashboardSummaryFromLocalReadModels()
         })
     },
     fetchMonthTransactions() {
@@ -1630,11 +1675,13 @@ export default {
         .then((response) => {
           if (!this.isLatestRequest('monthTransactions', requestToken)) return
           this.monthTransactions = Array.isArray(response?.data?.items) ? response.data.items : []
+          this.reconcileDashboardSummaryFromLocalReadModels()
         })
         .catch((error) => {
           console.error('Error fetching month transactions:', error)
           if (!this.isLatestRequest('monthTransactions', requestToken)) return
           this.monthTransactions = []
+          this.reconcileDashboardSummaryFromLocalReadModels()
         })
     },
     fetchOpenFinanceConflicts() {
