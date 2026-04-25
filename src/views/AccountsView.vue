@@ -17,6 +17,32 @@
         </v-alert>
       </div>
 
+      <div class="modern-card optout-story-card mb-6">
+        <div class="card-header">
+          <h2 class="card-title">
+            <v-icon color="#667eea" class="mr-2">mdi-shield-account-outline</v-icon>
+            Controle de conexão e opt-out
+          </h2>
+        </div>
+        <div class="card-content">
+          <p class="story-text">
+            Se você quiser sair do Open Finance, o caminho é simples: vá em Conexões, desconecte o banco e a sincronização automática é interrompida.
+          </p>
+          <p class="story-text">
+            O histórico já importado pode continuar disponível para auditoria; a gestão de retenção e exclusão deve seguir as políticas legais abaixo.
+          </p>
+          <div class="story-actions">
+            <v-btn color="#667eea" variant="tonal" @click="goToConnections">
+              <v-icon start>mdi-link-variant-off</v-icon>
+              Ir para Conexões
+            </v-btn>
+            <v-btn variant="text" @click="openLegalDoc('privacy-policy')">Política de Privacidade</v-btn>
+            <v-btn variant="text" @click="openLegalDoc('terms-of-use')">Termos de Uso</v-btn>
+            <v-btn variant="text" @click="openLegalDoc('cookie-policy')">Política de Cookies</v-btn>
+          </div>
+        </div>
+      </div>
+
       <div class="modern-card">
         <div class="card-header">
           <h2 class="card-title">
@@ -53,11 +79,13 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import FinancialReadService from '@/services/FinancialReadService'
 import OpenFinanceService from '@/services/OpenFinanceService'
 import type { AccountView } from '@/types/financialRead'
 
 const { locale } = useI18n()
+const router = useRouter()
 
 const accounts = ref<AccountView[]>([])
 const loading = ref(false)
@@ -91,6 +119,15 @@ const fetchAccounts = async () => {
   } finally {
     loading.value = false
   }
+}
+
+const goToConnections = () => {
+  router.push({ name: 'settings', query: { tab: 'connections' } })
+}
+
+const openLegalDoc = (routeName: 'privacy-policy' | 'terms-of-use' | 'cookie-policy') => {
+  const resolved = router.resolve({ name: routeName })
+  window.open(resolved.href, '_blank', 'noopener,noreferrer')
 }
 
 onMounted(fetchAccounts)
@@ -152,6 +189,26 @@ onMounted(fetchAccounts)
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   overflow: hidden;
   border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.optout-story-card {
+  margin-top: 0;
+}
+
+.story-text {
+  margin: 0 0 10px;
+  color: #4b5563;
+}
+
+.v-theme--dark .story-text {
+  color: #cbd5e1;
+}
+
+.story-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
 }
 
 .v-theme--dark .modern-card {
