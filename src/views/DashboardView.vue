@@ -1497,13 +1497,37 @@ export default {
         currentCategory === (selectedCategory || '')
       )
     },
+    isCurrentWorkspaceContext(workspaceId) {
+      const currentWorkspaceId = this.currentWorkspaceId || null
+      return currentWorkspaceId === (workspaceId || null)
+    },
+    unwrapDashboardSummaryPayload(payload) {
+      if (!payload || typeof payload !== 'object') return {}
+      const direct = payload
+      const candidates = [direct.data, direct.summary, direct.dashboard, direct.payload]
+      for (const candidate of candidates) {
+        if (candidate && typeof candidate === 'object') {
+          return candidate
+        }
+      }
+      return direct
+    },
     normalizeDashboardSummary(payload) {
-      const base = payload && typeof payload === 'object' ? payload : {}
+      const base = this.unwrapDashboardSummaryPayload(payload)
+      const readNumber = (...values) => {
+        for (const value of values) {
+          const numeric = Number(value)
+          if (Number.isFinite(numeric)) {
+            return numeric
+          }
+        }
+        return 0
+      }
       return {
         ...base,
-        totalBalance: Number(base.totalBalance || 0),
-        monthlyIncome: Number(base.monthlyIncome || 0),
-        monthlyExpenses: Number(base.monthlyExpenses || 0),
+        totalBalance: readNumber(base.totalBalance, base.total_balance),
+        monthlyIncome: readNumber(base.monthlyIncome, base.monthly_income),
+        monthlyExpenses: readNumber(base.monthlyExpenses, base.monthly_expenses),
         topCategories: Array.isArray(base.topCategories) ? base.topCategories : [],
       }
     },
@@ -1560,11 +1584,15 @@ export default {
       ])
         .then(([summaryResponse, chartResponse]) => {
           if (!this.isLatestRequest('overviewCore', requestToken)) return
-          if (!this.isCurrentOverviewContext(workspaceId, selectedTimePeriod, selectedCategory)) return
 
-          this.dashboardSummary = this.normalizeDashboardSummary(summaryResponse?.data)
-          const nextChartState = this.buildChartState(chartResponse?.data, selectedTimePeriod)
-          this.applyChartState(nextChartState)
+          if (this.isCurrentWorkspaceContext(workspaceId)) {
+            this.dashboardSummary = this.normalizeDashboardSummary(summaryResponse?.data)
+          }
+
+          if (this.isCurrentOverviewContext(workspaceId, selectedTimePeriod, selectedCategory)) {
+            const nextChartState = this.buildChartState(chartResponse?.data, selectedTimePeriod)
+            this.applyChartState(nextChartState)
+          }
         })
         .catch((error) => {
           console.error('Error fetching overview core snapshot:', error)

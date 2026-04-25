@@ -54,8 +54,8 @@
           <div v-if="loading" class="loading-state">
             <v-progress-circular indeterminate color="#667eea" size="40" />
           </div>
-          <div v-else-if="accounts.length" class="accounts-grid">
-            <div v-for="account in accounts" :key="account.id" class="account-card">
+          <div v-else-if="visibleAccounts.length" class="accounts-grid">
+            <div v-for="account in visibleAccounts" :key="account.id" class="account-card">
               <div class="account-card__header">
                 <div>
                   <h3 class="account-card__title">{{ account.name }}</h3>
@@ -77,12 +77,13 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import FinancialReadService from '@/services/FinancialReadService'
 import OpenFinanceService from '@/services/OpenFinanceService'
 import type { AccountView } from '@/types/financialRead'
+import type { OpenFinanceConnection } from '@/types/openFinance'
 
 const { locale } = useI18n()
 const router = useRouter()
@@ -90,6 +91,32 @@ const router = useRouter()
 const accounts = ref<AccountView[]>([])
 const loading = ref(false)
 const conflictCount = ref(0)
+const openFinanceConnections = ref<OpenFinanceConnection[]>([])
+const ACTIVE_OPEN_FINANCE_STATUSES = new Set(['CONNECTED', 'ERROR'])
+
+const activeOpenFinanceInstitutionNames = computed(() => {
+  return openFinanceConnections.value
+    .filter((connection) => ACTIVE_OPEN_FINANCE_STATUSES.has(String(connection.status || '').toUpperCase()))
+    .map((connection) => String(connection.institutionName || '').trim())
+    .filter((name) => name.length > 0)
+})
+
+const visibleAccounts = computed(() => {
+  const activeInstitutions = activeOpenFinanceInstitutionNames.value
+  if (!activeInstitutions.length) {
+    return accounts.value.filter((account) => String(account.provider || '').toUpperCase() !== 'OPEN_FINANCE')
+  }
+
+  return accounts.value.filter((account) => {
+    const provider = String(account.provider || '').toUpperCase()
+    if (provider !== 'OPEN_FINANCE') {
+      return true
+    }
+
+    const accountName = String(account.name || '')
+    return activeInstitutions.some((institutionName) => accountName.startsWith(`${institutionName} - `))
+  })
+})
 
 const getLocaleForFormatting = () => {
   if (locale.value === 'en') return 'en-US'
@@ -108,12 +135,14 @@ const formatCurrency = (value: number, currency = 'BRL') => {
 const fetchAccounts = async () => {
   loading.value = true
   try {
-    const [accountsResponse, conflictsResponse] = await Promise.all([
+    const [accountsResponse, conflictsResponse, connectionsResponse] = await Promise.all([
       FinancialReadService.fetchAccounts(),
       OpenFinanceService.listReconciliationConflicts(),
+      OpenFinanceService.listConnections(),
     ])
     accounts.value = accountsResponse.data || []
     conflictCount.value = Array.isArray(conflictsResponse.data) ? conflictsResponse.data.length : 0
+    openFinanceConnections.value = Array.isArray(connectionsResponse.data) ? connectionsResponse.data : []
   } catch (error) {
     console.error('Erro ao carregar contas:', error)
   } finally {
