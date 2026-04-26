@@ -89,6 +89,9 @@ function normalizeType(type?: string): string {
   if (normalized === 'decision_applied') return 'decision applied'
   if (normalized === 'workspace_welcome') return 'workspace welcome'
   if (normalized === 'workspace_exited') return 'workspace exit'
+  if (normalized === 'invite_accepted') return 'invite accepted'
+  if (normalized === 'invite_declined') return 'invite declined'
+  if (normalized === 'invite_expired') return 'invite expired'
   return 'workspace update'
 }
 
