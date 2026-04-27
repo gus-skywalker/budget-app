@@ -16,7 +16,12 @@ import type { Notification } from '@/services/NotificationService'
 const userStore = useUserStore()
 const route = useRoute()
 const router = useRouter()
-const focusedOnboardingRoutes = new Set(['create-workspace', 'select-workspace', 'choose-plan', 'checkout'])
+const focusedOnboardingRoutes = new Set([
+  'create-workspace',
+  'select-workspace',
+  'choose-plan',
+  'checkout'
+])
 
 // Estado das notificações
 const notifications = ref<Notification[]>([])
@@ -25,7 +30,9 @@ const unreadCount = ref(0)
 
 // Computed property to check if the user is authenticated
 const isAuthenticated = computed(() => userStore.isAuthenticated)
-const showFocusedOnboardingChrome = computed(() => !focusedOnboardingRoutes.has(String(route.name || '')))
+const showFocusedOnboardingChrome = computed(
+  () => !focusedOnboardingRoutes.has(String(route.name || ''))
+)
 const hideAppChrome = computed(() => Boolean(route.meta?.hideAppChrome))
 
 // Função para fazer polling de notificações
@@ -111,16 +118,22 @@ function extractDecisionId(notification: Notification): string | null {
   return null
 }
 
-function extractNotificationTarget(notification: Notification): { path: string | null, workspaceId: string | null } | null {
+function extractNotificationTarget(
+  notification: Notification
+): { path: string | null; workspaceId: string | null } | null {
   if (!notification.metadata) return null
   try {
     const parsed = JSON.parse(notification.metadata)
-    const path = typeof parsed?.targetPath === 'string' && parsed.targetPath.trim().length > 0
-      ? parsed.targetPath.trim()
-      : null
-    const workspaceId = typeof parsed?.targetWorkspaceId === 'string' && parsed.targetWorkspaceId.trim().length > 0
-      ? parsed.targetWorkspaceId.trim()
-      : (typeof parsed?.workspaceId === 'string' && parsed.workspaceId.trim().length > 0 ? parsed.workspaceId.trim() : null)
+    const path =
+      typeof parsed?.targetPath === 'string' && parsed.targetPath.trim().length > 0
+        ? parsed.targetPath.trim()
+        : null
+    const workspaceId =
+      typeof parsed?.targetWorkspaceId === 'string' && parsed.targetWorkspaceId.trim().length > 0
+        ? parsed.targetWorkspaceId.trim()
+        : typeof parsed?.workspaceId === 'string' && parsed.workspaceId.trim().length > 0
+          ? parsed.workspaceId.trim()
+          : null
     if (!path && !workspaceId) return null
     return { path, workspaceId }
   } catch (error) {
@@ -149,7 +162,10 @@ onUnmounted(() => {
   <v-app>
     <SideBar v-if="isAuthenticated && !hideAppChrome" />
     <v-main>
-      <div v-if="isAuthenticated && showFocusedOnboardingChrome && !hideAppChrome" class="global-context-container">
+      <div
+        v-if="isAuthenticated && showFocusedOnboardingChrome && !hideAppChrome"
+        class="global-context-container"
+      >
         <NotificationBellDropdown
           v-model="showNotificationsPopup"
           :notifications="notifications"
@@ -158,7 +174,9 @@ onUnmounted(() => {
         />
         <ContextBadge />
       </div>
-      <OnboardingStatusBanner v-if="isAuthenticated && showFocusedOnboardingChrome && !hideAppChrome" />
+      <OnboardingStatusBanner
+        v-if="isAuthenticated && showFocusedOnboardingChrome && !hideAppChrome"
+      />
       <RouterView v-slot="{ Component, route: viewRoute }">
         <KeepAlive include="DashboardView">
           <component :is="Component" v-if="viewRoute.meta?.keepAlive" />
@@ -180,6 +198,15 @@ onUnmounted(() => {
   align-items: center;
   gap: 8px;
   padding: 8px 16px 0 16px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 600px) {
+  .global-context-container {
+    gap: 4px;
+    padding: 8px 12px 0 12px;
+  }
 }
 </style>
 

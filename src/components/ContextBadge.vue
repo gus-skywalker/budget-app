@@ -21,7 +21,9 @@ const workspaces = computed(() => userStore.getWorkspaces || [])
 const tenantRole = computed(() => userStore.getTenantRole || null)
 
 const currentWorkspaceName = computed(() => {
-  const workspace = workspaces.value.find((item: any) => item.workspaceId === currentWorkspaceId.value)
+  const workspace = workspaces.value.find(
+    (item: any) => item.workspaceId === currentWorkspaceId.value
+  )
   return workspace?.workspaceName || null
 })
 
@@ -44,9 +46,20 @@ const chipIcon = computed(() => (isTenantMode.value ? 'mdi-domain' : 'mdi-accoun
 .context-badge {
   display: flex;
   align-items: center;
+  min-width: 0;
 }
 
 .context-chip {
   font-weight: 600;
+  max-width: min(100%, 28rem);
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px) {
+  .context-badge {
+    display: none;
+  }
 }
 </style>

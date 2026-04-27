@@ -122,6 +122,7 @@ export const buildScenarioPayload = (snapshot: ScenarioWizardSnapshot): Scenario
   id: snapshot.currentScenarioId || undefined,
   budgetId: snapshot.budgetId,
   name: snapshot.scenarioName,
+  sourceType: 'BUDGET_BASED',
   months: snapshot.months,
   periodMonth: snapshot.periodMonth,
   periodYear: snapshot.periodYear,

@@ -1,12 +1,7 @@
 <template>
   <v-menu offset-y>
     <template v-slot:activator="{ props }">
-      <v-btn
-        v-bind="props"
-        variant="text"
-        class="workspace-switcher-btn"
-        :loading="isLoading"
-      >
+      <v-btn v-bind="props" variant="text" class="workspace-switcher-btn" :loading="isLoading">
         <v-icon left>mdi-office-building</v-icon>
         <span class="ml-2">{{ currentWorkspaceName }}</span>
         <v-icon right>mdi-chevron-down</v-icon>
@@ -21,9 +16,15 @@
         :disabled="isLoading"
       >
         <template v-slot:prepend>
-          <v-icon>{{ workspace.workspaceId === currentWorkspaceId ? 'mdi-check-circle' : 'mdi-office-building-outline' }}</v-icon>
+          <v-icon>{{
+            workspace.workspaceId === currentWorkspaceId
+              ? 'mdi-check-circle'
+              : 'mdi-office-building-outline'
+          }}</v-icon>
         </template>
-        <v-list-item-title>{{ workspace.workspaceName || workspace.workspaceId }}</v-list-item-title>
+        <v-list-item-title>{{
+          workspace.workspaceName || workspace.workspaceId
+        }}</v-list-item-title>
         <v-list-item-subtitle>{{ getRoleLabel(workspace.role) }}</v-list-item-subtitle>
       </v-list-item>
 
@@ -54,7 +55,9 @@ const workspaces = computed(() => userStore.getWorkspaces)
 const currentWorkspaceId = computed(() => userStore.getCurrentWorkspaceId)
 
 const currentWorkspaceName = computed(() => {
-  const current = workspaces.value.find((workspace) => workspace.workspaceId === currentWorkspaceId.value)
+  const current = workspaces.value.find(
+    (workspace) => workspace.workspaceId === currentWorkspaceId.value
+  )
   return current?.workspaceName || current?.workspaceId || t('workspaceSwitcher.select_workspace')
 })
 
@@ -93,6 +96,17 @@ const getRoleLabel = (role) => {
 <style scoped>
 .workspace-switcher-btn {
   text-transform: none;
+  max-width: 100%;
+}
+
+.workspace-switcher-btn :deep(.v-btn__content) {
+  min-width: 0;
+}
+
+.workspace-switcher-btn span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .active-workspace {

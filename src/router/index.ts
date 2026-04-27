@@ -94,9 +94,21 @@ const router = createRouter({
       meta: { requiresAuth: true, requiresWorkspace: true }
     },
     {
+      path: '/planning/scenarios/debt/new',
+      name: 'planning-scenarios-debt-new',
+      component: () => import('@/views/DebtScenarioBuilderView.vue'),
+      meta: { requiresAuth: true, requiresWorkspace: true }
+    },
+    {
       path: '/planning/scenarios/:id/edit',
       name: 'planning-scenarios-edit',
       component: ScenarioEditorView,
+      meta: { requiresAuth: true, requiresWorkspace: true }
+    },
+    {
+      path: '/planning/scenarios/debt/:id/edit',
+      name: 'planning-scenarios-debt-edit',
+      component: () => import('@/views/DebtScenarioBuilderView.vue'),
       meta: { requiresAuth: true, requiresWorkspace: true }
     },
     {

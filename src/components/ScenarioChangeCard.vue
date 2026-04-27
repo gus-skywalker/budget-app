@@ -1,15 +1,21 @@
 <template>
   <div class="scenario-change-card">
-    <v-text-field
-      :model-value="adjustment.label ?? ''"
-      @update:model-value="$emit('update:label', $event)"
-      label="Label (optional)"
-      variant="outlined"
-      density="comfortable"
-      hide-details="auto"
-      class="change-label"
-      :style="{ borderRadius: '8px' }"
-    />
+    <div class="scenario-change-card__top">
+      <v-text-field
+        :model-value="adjustment.label ?? ''"
+        @update:model-value="$emit('update:label', $event)"
+        label="Label (optional)"
+        variant="outlined"
+        density="comfortable"
+        hide-details="auto"
+        class="change-label"
+        :style="{ borderRadius: '8px' }"
+      />
+
+      <button class="remove-btn" type="button" @click="$emit('remove')" aria-label="Remove change">
+        <v-icon size="20">mdi-delete-outline</v-icon>
+      </button>
+    </div>
 
     <div class="segmented-control">
       <button
@@ -49,15 +55,6 @@
         :style="{ borderRadius: '8px' }"
       />
     </div>
-
-    <button
-      class="remove-btn"
-      type="button"
-      @click="$emit('remove')"
-      aria-label="Remove change"
-    >
-      <v-icon size="20">mdi-delete-outline</v-icon>
-    </button>
   </div>
 </template>
 
@@ -70,7 +67,13 @@ defineProps<{
     oneTimeChange: number
   }
 }>()
-defineEmits(['update:label', 'update:flow', 'update:monthlyChange', 'update:oneTimeChange', 'remove'])
+defineEmits([
+  'update:label',
+  'update:flow',
+  'update:monthlyChange',
+  'update:oneTimeChange',
+  'remove'
+])
 </script>
 
 <style scoped>
@@ -86,6 +89,16 @@ defineEmits(['update:label', 'update:flow', 'update:monthlyChange', 'update:oneT
   gap: 16px;
 }
 
+.scenario-change-card__top {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.change-label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
 
 .segmented-control {
   display: flex;
@@ -94,10 +107,8 @@ defineEmits(['update:label', 'update:flow', 'update:monthlyChange', 'update:oneT
   border: 1.5px solid #a3aed6;
   margin-bottom: 0;
   width: 100%;
-  max-width: 320px;
   background: rgb(var(--v-theme-surface), #181c24);
 }
-
 
 .segment {
   flex: 1;
@@ -107,7 +118,9 @@ defineEmits(['update:label', 'update:flow', 'update:monthlyChange', 'update:oneT
   color: #cbd5e1;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
   outline: none;
   border-right: 1.5px solid #a3aed6;
 }
@@ -135,18 +148,32 @@ defineEmits(['update:label', 'update:flow', 'update:monthlyChange', 'update:oneT
 }
 
 .remove-btn {
-  position: absolute;
-  top: 16px;
-  right: 16px;
   background: none;
   border: none;
   color: #b91c1c;
   border-radius: 10px;
-  padding: 4px;
+  padding: 8px;
   cursor: pointer;
   transition: background 0.15s;
+  flex: 0 0 auto;
 }
 .remove-btn:hover {
   background: #fef2f2;
+}
+
+@media (max-width: 600px) {
+  .scenario-change-card {
+    padding: 14px;
+    gap: 14px;
+  }
+
+  .scenario-change-card__top {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .remove-btn {
+    align-self: flex-end;
+  }
 }
 </style>

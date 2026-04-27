@@ -4,16 +4,10 @@
     location="bottom end"
     :close-on-content-click="false"
     max-width="420"
-    min-width="360"
     @update:model-value="emit('update:modelValue', $event)"
   >
     <template #activator="{ props }">
-      <v-btn
-        icon
-        variant="text"
-        class="notification-bell"
-        v-bind="props"
-      >
+      <v-btn icon variant="text" class="notification-bell" v-bind="props">
         <v-badge
           :model-value="unreadCount > 0"
           :content="unreadCount > 99 ? '99+' : unreadCount"
@@ -27,9 +21,7 @@
     </template>
 
     <v-card class="notification-card">
-      <v-card-title class="notification-title">
-        Notifications
-      </v-card-title>
+      <v-card-title class="notification-title"> Notifications </v-card-title>
       <v-divider />
       <v-list v-if="latestNotifications.length" density="comfortable" class="notification-list">
         <v-list-item
@@ -47,9 +39,7 @@
           </v-list-item-subtitle>
         </v-list-item>
       </v-list>
-      <div v-else class="notification-empty">
-        No notifications yet
-      </div>
+      <div v-else class="notification-empty">No notifications yet</div>
     </v-card>
   </v-menu>
 </template>
@@ -115,6 +105,8 @@ function formatTimestamp(value?: string): string {
 
 .notification-card {
   border: 1px solid #e2e8f0;
+  width: min(420px, calc(100vw - 96px));
+  max-width: calc(100vw - 96px);
 }
 
 .notification-title {
@@ -151,5 +143,24 @@ function formatTimestamp(value?: string): string {
   padding: 16px;
   color: #64748b;
   font-size: 0.9rem;
+}
+
+@media (max-width: 600px) {
+  .notification-card {
+    width: min(360px, calc(100vw - 84px));
+    max-width: calc(100vw - 84px);
+  }
+
+  .notification-meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 430px) {
+  .notification-card {
+    width: min(320px, calc(100vw - 72px));
+    max-width: calc(100vw - 72px);
+  }
 }
 </style>

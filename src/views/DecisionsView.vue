@@ -528,7 +528,10 @@ const getSavedScenarioPayload = (scenario: SavedScenario) => ({
   id: scenario.id,
   budgetId: scenario.budgetId,
   name: scenario.name,
+  scenarioType: scenario.scenarioType,
+  sourceType: scenario.sourceType,
   months: scenario.months || 6,
+  debtInput: scenario.debtInput || undefined,
   deltas: [
     ...(scenario.deltas || []).map((delta) => ({
       label: delta.label,

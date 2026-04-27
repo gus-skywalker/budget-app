@@ -11,6 +11,10 @@
             <v-icon start>mdi-plus-circle-outline</v-icon>
             {{ t('planning.scenarios.new_scenario') }}
           </v-btn>
+          <v-btn variant="tonal" color="#0f766e" @click="createDebtScenario">
+            <v-icon start>mdi-credit-card-fast-outline</v-icon>
+            Debt payment decision
+          </v-btn>
         </div>
       </div>
 
@@ -38,15 +42,28 @@
             <div class="saved-scenario-card__header">
               <strong>{{ scenario.name }}</strong>
               <div class="saved-scenario-card__header-tags">
-                <span :class="['status-chip', scenarioTone(scenario)]">{{ scenarioLabel(scenario) }}</span>
-                <span v-if="isScenarioLockedForEdit(scenario.id)" class="status-chip status-chip--locked">Votes locked</span>
+                <span :class="['status-chip', scenarioTone(scenario)]">{{
+                  scenarioLabel(scenario)
+                }}</span>
+                <span
+                  v-if="isScenarioLockedForEdit(scenario.id)"
+                  class="status-chip status-chip--locked"
+                  >Votes locked</span
+                >
               </div>
             </div>
 
-            <p>{{ scenario.summary || scenario.description || t('planning.scenarios.saved_no_summary') }}</p>
+            <p>
+              {{
+                scenario.summary || scenario.description || t('planning.scenarios.saved_no_summary')
+              }}
+            </p>
 
             <div class="saved-scenario-card__meta">
-              <span>{{ t('planning.scenarios.monthly_impact') }}: {{ formatCurrency(Number(scenario.scenarioMonthlyImpact || 0)) }}</span>
+              <span
+                >{{ t('planning.scenarios.monthly_impact') }}:
+                {{ formatCurrency(Number(scenario.scenarioMonthlyImpact || 0)) }}</span
+              >
             </div>
 
             <div class="saved-scenario-card__actions">
@@ -78,7 +95,14 @@
                 <v-icon start>mdi-pencil-outline</v-icon>
                 {{ editActionLabel(scenario.id) }}
               </v-btn>
-              <v-btn variant="text" density="comfortable" size="small" color="#4f46e5" :loading="creatingDecisionId === scenario.id" @click.stop="createDecisionFromScenario(scenario)">
+              <v-btn
+                variant="text"
+                density="comfortable"
+                size="small"
+                color="#4f46e5"
+                :loading="creatingDecisionId === scenario.id"
+                @click.stop="createDecisionFromScenario(scenario)"
+              >
                 <v-icon start>mdi-lightbulb-outline</v-icon>
                 {{ t('planning.scenarios.create_decision_from_scenario') }}
               </v-btn>
@@ -89,13 +113,7 @@
               >
                 <template #activator="{ props }">
                   <span v-bind="props" class="disabled-action-wrap" @click.stop>
-                    <v-btn
-                      variant="text"
-                      density="comfortable"
-                      size="small"
-                      color="error"
-                      disabled
-                    >
+                    <v-btn variant="text" density="comfortable" size="small" color="error" disabled>
                       <v-icon start>mdi-delete-outline</v-icon>
                       {{ t('planning.scenarios.delete_action') }}
                     </v-btn>
@@ -152,8 +170,14 @@ const scenariosWithAnyDecision = ref<Set<string>>(new Set())
 
 const formatCurrency = (value: number) =>
   Number(value || 0).toLocaleString(
-    locale.value === 'en' ? 'en-US' : locale.value === 'fr' ? 'fr-FR' : locale.value === 'es' ? 'es-ES' : 'pt-BR',
-    { style: 'currency', currency: 'BRL' },
+    locale.value === 'en'
+      ? 'en-US'
+      : locale.value === 'fr'
+        ? 'fr-FR'
+        : locale.value === 'es'
+          ? 'es-ES'
+          : 'pt-BR',
+    { style: 'currency', currency: 'BRL' }
   )
 
 const scenarioTone = (scenario: SavedScenario) => {
@@ -163,7 +187,8 @@ const scenarioTone = (scenario: SavedScenario) => {
 }
 
 const scenarioLabel = (scenario: SavedScenario) => {
-  if (scenario.decisionStatus === 'ACTION_NEEDED') return t('planning.scenarios.status_action_needed')
+  if (scenario.decisionStatus === 'ACTION_NEEDED')
+    return t('planning.scenarios.status_action_needed')
   if (scenario.decisionStatus === 'WATCH') return t('planning.scenarios.status_watch')
   if (scenario.decisionStatus === 'STABLE') return t('planning.scenarios.status_stable')
   return t('planning.scenarios.status_no_data')
@@ -175,7 +200,7 @@ const loadSavedScenarios = async () => {
   try {
     const [{ data }, { data: decisions }] = await Promise.all([
       ScenarioService.list(),
-      DecisionService.list(),
+      DecisionService.list()
     ])
     savedScenarios.value = Array.isArray(data) ? data : []
     const nextLocked = new Set<string>()
@@ -207,19 +232,32 @@ const createScenario = async () => {
   await router.push({ name: 'planning-scenarios-new', query: { from: 'hub' } })
 }
 
+const createDebtScenario = async () => {
+  await router.push({ name: 'planning-scenarios-debt-new', query: { from: 'hub' } })
+}
+
 const openResult = async (scenarioId: string) => {
   await router.push({ name: 'planning-scenarios-result', params: { id: scenarioId } })
 }
 
 const editScenario = async (scenarioId: string) => {
+  const scenario = savedScenarios.value.find((item) => item.id === scenarioId)
+  const debtScenario = scenario?.sourceType === 'MANUAL_TYPED'
   if (isScenarioLockedForEdit(scenarioId)) {
-    await router.push({ name: 'planning-scenarios-new', query: { cloneFrom: scenarioId, locked: '1' } })
+    await router.push({
+      name: debtScenario ? 'planning-scenarios-debt-new' : 'planning-scenarios-new',
+      query: { cloneFrom: scenarioId, locked: '1' }
+    })
     return
   }
-  await router.push({ name: 'planning-scenarios-edit', params: { id: scenarioId } })
+  await router.push({
+    name: debtScenario ? 'planning-scenarios-debt-edit' : 'planning-scenarios-edit',
+    params: { id: scenarioId }
+  })
 }
 
-const isScenarioLockedForEdit = (scenarioId: string) => scenariosLockedForMutation.value.has(scenarioId)
+const isScenarioLockedForEdit = (scenarioId: string) =>
+  scenariosLockedForMutation.value.has(scenarioId)
 const hasScenarioDecision = (scenarioId: string) => scenariosWithAnyDecision.value.has(scenarioId)
 
 const editActionLabel = (scenarioId: string) =>
@@ -249,7 +287,7 @@ const createDecisionFromScenario = async (scenario: SavedScenario) => {
     await DecisionService.createFromScenario(scenario.id)
     window.sessionStorage.setItem(
       DECISIONS_FLASH_SUCCESS_KEY,
-      JSON.stringify({ scenarioName: scenario.name || t('planning.scenarios.default_name') }),
+      JSON.stringify({ scenarioName: scenario.name || t('planning.scenarios.default_name') })
     )
     await router.push({ name: 'decisions', query: { scenarios: scenario.id } })
   } catch (e) {
@@ -279,11 +317,14 @@ onMounted(() => {
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+  min-width: 0;
 }
 
 .page-header__actions {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .saved-scenarios-panel__header h3 {
@@ -299,6 +340,7 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 12px;
+  min-width: 0;
 }
 
 .saved-scenario-card {
@@ -311,6 +353,8 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .saved-scenario-card__header {
@@ -331,6 +375,7 @@ onMounted(() => {
 .saved-scenario-card__meta {
   color: #64748b;
   font-size: 0.86rem;
+  min-width: 0;
 }
 
 .saved-scenario-card__actions {
@@ -338,6 +383,7 @@ onMounted(() => {
   gap: 4px;
   align-items: center;
   flex-wrap: wrap;
+  min-width: 0;
 }
 
 .disabled-action-wrap {
@@ -397,5 +443,49 @@ onMounted(() => {
   background: rgba(30, 41, 59, 0.78);
   border-color: rgba(148, 163, 184, 0.2);
   color: #f8fafc;
+}
+
+@media (max-width: 960px) {
+  .page-header {
+    flex-direction: column;
+  }
+
+  .page-header__actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 600px) {
+  .saved-scenarios-panel {
+    padding: 16px;
+  }
+
+  .page-header__actions,
+  .saved-scenario-card__header,
+  .saved-scenario-card__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .page-header__actions :deep(.v-btn),
+  .saved-scenario-card__actions :deep(.v-btn) {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .saved-scenario-card__header-tags {
+    justify-content: flex-start;
+  }
+
+  .saved-scenarios-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 430px) {
+  .saved-scenario-card {
+    padding: 10px;
+  }
 }
 </style>

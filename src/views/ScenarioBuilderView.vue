@@ -24,18 +24,19 @@
       </div>
 
       <div class="wizard-shell">
-        <v-alert
-          v-if="showImmutableNotice"
-          type="info"
-          variant="tonal"
-          density="comfortable"
-        >
-          This scenario already has team votes. We created a new version draft so the original decision trail stays intact.
+        <v-alert v-if="showImmutableNotice" type="info" variant="tonal" density="comfortable">
+          This scenario already has team votes. We created a new version draft so the original
+          decision trail stays intact.
         </v-alert>
 
         <div class="wizard-steps">
           <span class="wizard-step">Step {{ step }} of 4</span>
-          <v-progress-linear :model-value="(step / 4) * 100" color="#667eea" height="8" rounded></v-progress-linear>
+          <v-progress-linear
+            :model-value="(step / 4) * 100"
+            color="#667eea"
+            height="8"
+            rounded
+          ></v-progress-linear>
         </div>
 
         <div v-if="isBudgetLoading" class="empty-results">
@@ -67,7 +68,9 @@
               </div>
               <div class="metric-card">
                 <span>Net</span>
-                <strong :class="{ 'negative-value': activeBudget.net < 0 }">{{ formatCurrency(activeBudget.net) }}</strong>
+                <strong :class="{ 'negative-value': activeBudget.net < 0 }">{{
+                  formatCurrency(activeBudget.net)
+                }}</strong>
               </div>
             </div>
           </section>
@@ -123,10 +126,10 @@
                 v-for="(adjustment, idx) in snapshot.adjustments"
                 :key="adjustment.id"
                 :adjustment="adjustment"
-                @update:label="val => snapshot.adjustments[idx].label = val"
-                @update:flow="val => snapshot.adjustments[idx].flow = val"
-                @update:monthlyChange="val => snapshot.adjustments[idx].monthlyChange = val"
-                @update:oneTimeChange="val => snapshot.adjustments[idx].oneTimeChange = val"
+                @update:label="(val) => (snapshot.adjustments[idx].label = val)"
+                @update:flow="(val) => (snapshot.adjustments[idx].flow = val)"
+                @update:monthlyChange="(val) => (snapshot.adjustments[idx].monthlyChange = val)"
+                @update:oneTimeChange="(val) => (snapshot.adjustments[idx].oneTimeChange = val)"
                 @remove="removeAdjustment(adjustment.id)"
               />
             </div>
@@ -145,7 +148,12 @@
               </div>
               <div class="impact-estimate">
                 <span>Estimated monthly impact</span>
-                <strong :class="{ 'positive-value': estimatedImpact > 0, 'negative-value': estimatedImpact < 0 }">
+                <strong
+                  :class="{
+                    'positive-value': estimatedImpact > 0,
+                    'negative-value': estimatedImpact < 0
+                  }"
+                >
                   {{ formatSignedCurrency(estimatedImpact) }}
                 </strong>
               </div>
@@ -196,7 +204,11 @@
           </section>
 
           <div class="wizard-footer">
-            <v-btn variant="text" :disabled="step === 1 || isSimulating" @click="step = Math.max(1, step - 1)">
+            <v-btn
+              variant="text"
+              :disabled="step === 1 || isSimulating"
+              @click="step = Math.max(1, step - 1)"
+            >
               <v-icon start>mdi-arrow-left</v-icon>
               Back
             </v-btn>
@@ -236,7 +248,7 @@ import {
   saveWizardSnapshot,
   snapshotFromSavedScenario,
   templateDeltas,
-  type ScenarioWizardSnapshot,
+  type ScenarioWizardSnapshot
 } from '@/utils/scenarioWizard'
 
 import ScenarioChangeCard from '@/components/ScenarioChangeCard.vue'
@@ -257,7 +269,7 @@ const snapshot = reactive<ScenarioWizardSnapshot>({
   months: 6,
   currentScenarioId: null,
   adjustments: [createAdjustment()],
-  scenarioLines: [],
+  scenarioLines: []
 })
 
 const templates = computed(() => [
@@ -266,43 +278,52 @@ const templates = computed(() => [
     icon: 'mdi-scissors-cutting',
     title: t('planning.scenarios.template_cost_cut_title'),
     description: t('planning.scenarios.template_cost_cut_desc'),
-    months: 6,
+    months: 6
   },
   {
     key: 'increase_revenue' as const,
     icon: 'mdi-chart-line',
     title: t('planning.scenarios.template_marketing_title'),
     description: t('planning.scenarios.template_marketing_desc'),
-    months: 6,
+    months: 6
   },
   {
     key: 'hiring' as const,
     icon: 'mdi-account-plus-outline',
     title: t('planning.scenarios.template_hiring_title'),
     description: t('planning.scenarios.template_hiring_desc'),
-    months: 12,
+    months: 12
   },
   {
     key: 'investment' as const,
     icon: 'mdi-rocket-launch-outline',
     title: t('planning.scenarios.template_investment_title'),
     description: t('planning.scenarios.template_investment_desc'),
-    months: 9,
-  },
+    months: 9
+  }
 ])
 const showImmutableNotice = computed(() => String(route.query.locked || '') === '1')
 const cameFromHub = computed(() => String(route.query.from || '') === 'hub')
 
 const estimatedImpact = computed(() => monthlyImpactEstimate(snapshot))
 const canSimulate = computed(() => hasAnyScenarioChange(snapshot))
-const activeChangesCount = computed(() =>
-  snapshot.adjustments.filter((item) => Number(item.monthlyChange || 0) > 0 || Number(item.oneTimeChange || 0) > 0).length,
+const activeChangesCount = computed(
+  () =>
+    snapshot.adjustments.filter(
+      (item) => Number(item.monthlyChange || 0) > 0 || Number(item.oneTimeChange || 0) > 0
+    ).length
 )
 
 const formatCurrency = (value: number) =>
   Number(value || 0).toLocaleString(
-    locale.value === 'en' ? 'en-US' : locale.value === 'fr' ? 'fr-FR' : locale.value === 'es' ? 'es-ES' : 'pt-BR',
-    { style: 'currency', currency: 'BRL' },
+    locale.value === 'en'
+      ? 'en-US'
+      : locale.value === 'fr'
+        ? 'fr-FR'
+        : locale.value === 'es'
+          ? 'es-ES'
+          : 'pt-BR',
+    { style: 'currency', currency: 'BRL' }
   )
 
 const formatSignedCurrency = (value: number) => {
@@ -366,11 +387,15 @@ const loadBudget = async () => {
     const cloneFromId = typeof route.query.cloneFrom === 'string' ? route.query.cloneFrom : ''
     if (cloneFromId) {
       const { data: scenarios } = await ScenarioService.list()
-      const source = (Array.isArray(scenarios) ? scenarios : []).find((item) => item.id === cloneFromId)
+      const source = (Array.isArray(scenarios) ? scenarios : []).find(
+        (item) => item.id === cloneFromId
+      )
       if (source) {
         Object.assign(snapshot, snapshotFromSavedScenario(source, data))
         snapshot.currentScenarioId = null
-        snapshot.scenarioName = source.name ? `${source.name} (new)` : t('planning.scenarios.default_name')
+        snapshot.scenarioName = source.name
+          ? `${source.name} (new)`
+          : t('planning.scenarios.default_name')
         step.value = 3
         saveWizardSnapshot(snapshot)
         return
@@ -379,8 +404,7 @@ const loadBudget = async () => {
 
     // "/planning/scenarios/new" must always start a clean scenario unless resume is explicit.
     const shouldStartFresh =
-      route.name === 'planning-scenarios-new' &&
-      String(route.query.resume || '') !== '1'
+      route.name === 'planning-scenarios-new' && String(route.query.resume || '') !== '1'
     if (shouldStartFresh) {
       clearWizardSnapshot()
       startNewScenario(data)
@@ -414,13 +438,13 @@ const simulate = async () => {
       'planning-scenario-latest-result',
       JSON.stringify({
         scenarioId: snapshot.currentScenarioId || 'preview',
-        result: data,
-      }),
+        result: data
+      })
     )
     await router.push({
       name: 'planning-scenarios-result',
       params: { id: snapshot.currentScenarioId || 'preview' },
-      query: { simulatedAt: String(Date.now()) },
+      query: { simulatedAt: String(Date.now()) }
     })
   } catch (e) {
     console.error(e)
@@ -436,7 +460,7 @@ watch(
     if (!activeBudget.value) return
     saveWizardSnapshot(snapshot)
   },
-  { deep: true },
+  { deep: true }
 )
 
 onMounted(() => {
@@ -450,7 +474,7 @@ watch(
       clearWizardSnapshot()
       void loadBudget()
     }
-  },
+  }
 )
 </script>
 
@@ -464,11 +488,14 @@ watch(
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+  min-width: 0;
 }
 
 .page-header__actions {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .wizard-shell {
@@ -479,6 +506,7 @@ watch(
   display: flex;
   flex-direction: column;
   gap: 20px;
+  min-width: 0;
 }
 
 .wizard-step {
@@ -500,6 +528,7 @@ watch(
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 12px;
+  min-width: 0;
 }
 
 .metric-card,
@@ -527,6 +556,7 @@ watch(
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 12px;
+  min-width: 0;
 }
 
 .template-card {
@@ -537,6 +567,8 @@ watch(
   padding: 14px;
   cursor: pointer;
   transition: all 0.2s ease;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .template-card:hover,
@@ -552,7 +584,6 @@ watch(
   font-weight: 700;
   margin-bottom: 6px;
 }
-
 
 .adjustments-list {
   display: flex;
@@ -593,6 +624,7 @@ watch(
   display: flex;
   justify-content: space-between;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .empty-results {
@@ -647,10 +679,72 @@ watch(
   border-color: rgba(129, 140, 248, 0.4);
 }
 
-@media (max-width: 720px) {
+@media (max-width: 960px) {
+  .page-header {
+    flex-direction: column;
+  }
+
+  .page-header__actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .wizard-inline-actions.new-layout {
+    gap: 16px;
+  }
+
+  .impact-estimate {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .scenario-wizard {
+    padding-inline: 0;
+  }
+
+  .wizard-shell {
+    padding: 16px;
+  }
+
+  .metrics-grid,
+  .review-box,
+  .template-grid,
   .adjustment-row,
   .adjustment-row--numbers {
     grid-template-columns: 1fr;
+  }
+
+  .page-header__actions,
+  .wizard-inline-actions.new-layout,
+  .wizard-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .page-header__actions :deep(.v-btn),
+  .wizard-inline-actions.new-layout :deep(.v-btn),
+  .wizard-footer :deep(.v-btn) {
+    width: 100%;
+  }
+
+  .wizard-next-btn {
+    margin-left: 0;
+  }
+
+  .impact-estimate {
+    width: 100%;
+  }
+}
+
+@media (max-width: 430px) {
+  .wizard-step {
+    font-size: 0.78rem;
+  }
+
+  .metric-card strong,
+  .review-box strong {
+    font-size: 1.08rem;
   }
 }
 </style>

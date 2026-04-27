@@ -7,7 +7,7 @@
           variant="text"
           color="primary"
           @click="router.back()"
-          style="min-width:0;padding:0 4px 0 0;margin-bottom:4px;"
+          style="min-width: 0; padding: 0 4px 0 0; margin-bottom: 4px"
         >
           <v-icon start size="20">mdi-arrow-left</v-icon>
           {{ t('common.back', 'Voltar') }}
@@ -31,7 +31,8 @@
           density="comfortable"
           class="mb-3"
         >
-          This scenario already has decision activity (votes or final status). Editing is locked to preserve history. Create a new version instead.
+          This scenario already has decision activity (votes or final status). Editing is locked to
+          preserve history. Create a new version instead.
         </v-alert>
         <v-alert
           v-if="isShowingSavedSnapshot"
@@ -44,16 +45,109 @@
         </v-alert>
         <div class="hero-card">
           <span class="hero-card__label">Monthly impact</span>
-          <strong :class="{ 'positive-value': result.scenarioMonthlyImpact > 0, 'negative-value': result.scenarioMonthlyImpact < 0 }">
+          <strong
+            :class="{
+              'positive-value': result.scenarioMonthlyImpact > 0,
+              'negative-value': result.scenarioMonthlyImpact < 0
+            }"
+          >
             {{ formatSignedCurrency(result.scenarioMonthlyImpact) }}
           </strong>
           <p>{{ result.summary || consequenceMessage }}</p>
         </div>
 
-        <div class="metrics-grid">
+        <div v-if="isManualTypedScenario && result.debtComparison" class="debt-comparison">
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <span>Cheapest option</span>
+              <strong>{{ result.debtComparison.cheapestOption || '—' }}</strong>
+            </div>
+            <div class="metric-card">
+              <span>Safest option</span>
+              <strong>{{ result.debtComparison.safestOption || '—' }}</strong>
+            </div>
+            <div class="metric-card">
+              <span>Recommended option</span>
+              <strong>{{ result.debtComparison.recommendedOption || '—' }}</strong>
+            </div>
+          </div>
+
+          <v-alert type="info" variant="tonal" density="comfortable">
+            {{
+              result.debtComparison.recommendationReason || result.debtComparison.tradeOffSummary
+            }}
+          </v-alert>
+
+          <div class="debt-options-grid">
+            <div
+              v-for="option in result.debtComparison.options"
+              :key="option.name"
+              class="debt-option-card"
+            >
+              <div class="debt-option-card__header">
+                <strong>{{ option.name }}</strong>
+                <v-chip
+                  size="small"
+                  variant="tonal"
+                  :color="
+                    option.name === result.debtComparison.recommendedOption
+                      ? 'success'
+                      : option.name === result.debtComparison.cheapestOption
+                        ? 'primary'
+                        : 'warning'
+                  "
+                >
+                  {{
+                    option.name === result.debtComparison.recommendedOption
+                      ? 'Recommended'
+                      : option.name === result.debtComparison.cheapestOption
+                        ? 'Cheapest'
+                        : option.name === result.debtComparison.safestOption
+                          ? 'Safest'
+                          : option.predictabilityLevel
+                  }}
+                </v-chip>
+              </div>
+              <p>{{ option.explanation }}</p>
+              <div class="debt-option-card__metrics">
+                <span
+                  >Total paid: <strong>{{ formatCurrency(option.totalPaid) }}</strong></span
+                >
+                <span
+                  >Extra cost: <strong>{{ formatCurrency(option.totalExtraCost) }}</strong></span
+                >
+                <span
+                  >Monthly impact: <strong>{{ formatCurrency(option.monthlyImpact) }}</strong></span
+                >
+                <span
+                  >Risk: <strong>{{ option.riskLevel }}</strong></span
+                >
+                <span
+                  >Predictability: <strong>{{ option.predictabilityLevel }}</strong></span
+                >
+              </div>
+              <v-alert v-if="option.warning" type="warning" variant="tonal" density="comfortable">
+                {{ option.warning }}
+              </v-alert>
+            </div>
+          </div>
+
+          <v-alert
+            v-if="result.debtComparison.warnings?.length"
+            type="warning"
+            variant="tonal"
+            density="comfortable"
+          >
+            {{ result.debtComparison.warnings[0] }}
+          </v-alert>
+        </div>
+
+        <div v-else class="metrics-grid">
           <div class="metric-card">
             <span>{{ t('planning.scenarios.final_balance') }}</span>
-            <strong :class="{ 'negative-value': result.projectedFinalBalance < 0 }">{{ formatCurrency(result.projectedFinalBalance) }}</strong>
+            <strong :class="{ 'negative-value': result.projectedFinalBalance < 0 }">{{
+              formatCurrency(result.projectedFinalBalance)
+            }}</strong>
           </div>
           <div class="metric-card">
             <span>{{ t('planning.scenarios.status') }}</span>
@@ -65,7 +159,7 @@
           </div>
         </div>
 
-        <v-expansion-panels variant="accordion">
+        <v-expansion-panels v-if="!isManualTypedScenario" variant="accordion">
           <v-expansion-panel>
             <v-expansion-panel-title>Forecast details</v-expansion-panel-title>
             <v-expansion-panel-text>
@@ -81,10 +175,19 @@
                   </thead>
                   <tbody>
                     <tr v-for="item in result.forecast" :key="item.month">
-                      <td>{{ item.month }}</td>
-                      <td>{{ formatCurrency(item.baselineProjectedBalance) }}</td>
-                      <td>{{ formatCurrency(item.scenarioProjectedBalance) }}</td>
-                      <td :class="{ 'negative-value': item.deltaImpact < 0 }">{{ formatCurrency(item.deltaImpact) }}</td>
+                      <td :data-label="t('planning.scenarios.table_month')">{{ item.month }}</td>
+                      <td :data-label="t('planning.scenarios.table_baseline')">
+                        {{ formatCurrency(item.baselineProjectedBalance) }}
+                      </td>
+                      <td :data-label="t('planning.scenarios.table_scenario')">
+                        {{ formatCurrency(item.scenarioProjectedBalance) }}
+                      </td>
+                      <td
+                        :data-label="t('planning.scenarios.table_delta')"
+                        :class="{ 'negative-value': item.deltaImpact < 0 }"
+                      >
+                        {{ formatCurrency(item.deltaImpact) }}
+                      </td>
                     </tr>
                   </tbody>
                 </table>
@@ -113,6 +216,19 @@
 
         <div class="result-actions">
           <v-btn
+            class="result-action result-action--primary"
+            color="#4f46e5"
+            :loading="isCreatingDecision"
+            :disabled="
+              isCreatingDecision || isSaving || (isScenarioLockedForEdit && Boolean(scenarioId))
+            "
+            @click="createDecisionFromScenario"
+          >
+            <v-icon start>mdi-lightbulb-outline</v-icon>
+            {{ createDecisionLabel }}
+          </v-btn>
+          <v-btn
+            class="result-action"
             variant="tonal"
             color="#667eea"
             :loading="isSaving"
@@ -122,24 +238,21 @@
             <v-icon start>mdi-content-save-outline</v-icon>
             {{ t('planning.scenarios.save') }}
           </v-btn>
-          <v-btn variant="text" :loading="isRecalculating" :disabled="isRecalculating" @click="recalculateResult">
+          <v-btn
+            class="result-action"
+            variant="text"
+            :loading="isRecalculating"
+            :disabled="isRecalculating"
+            @click="recalculateResult"
+          >
             <v-icon start>mdi-refresh</v-icon>
             Recalculate
           </v-btn>
-          <v-btn
-            color="#4f46e5"
-            :loading="isCreatingDecision"
-            :disabled="isCreatingDecision || isSaving || (isScenarioLockedForEdit && Boolean(scenarioId))"
-            @click="createDecisionFromScenario"
-          >
-            <v-icon start>mdi-lightbulb-outline</v-icon>
-            {{ createDecisionLabel }}
-          </v-btn>
-          <v-btn variant="text" @click="editScenario">
+          <v-btn class="result-action" variant="text" @click="editScenario">
             <v-icon start>mdi-pencil-outline</v-icon>
             {{ editActionLabel }}
           </v-btn>
-          <v-btn variant="text" @click="newScenario">
+          <v-btn class="result-action" variant="text" @click="newScenario">
             <v-icon start>mdi-file-plus-outline</v-icon>
             {{ t('planning.scenarios.new_scenario') }}
           </v-btn>
@@ -152,7 +265,11 @@
       <div class="empty-results" v-else>
         <v-icon color="#94a3b8" size="28">mdi-chart-timeline-variant</v-icon>
         <p>{{ t('planning.scenarios.results_placeholder') }}</p>
-        <v-btn color="#667eea" variant="tonal" @click="router.push({ name: 'planning-scenarios-new' })">
+        <v-btn
+          color="#667eea"
+          variant="tonal"
+          @click="router.push({ name: 'planning-scenarios-new' })"
+        >
           Build scenario
         </v-btn>
       </div>
@@ -165,7 +282,10 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import DecisionService from '@/services/DecisionService'
-import ScenarioService, { type SavedScenario, type ScenarioSimulationResponse } from '@/services/ScenarioService'
+import ScenarioService, {
+  type SavedScenario,
+  type ScenarioSimulationResponse
+} from '@/services/ScenarioService'
 import BudgetService from '@/services/BudgetService'
 import {
   buildScenarioPayload,
@@ -175,8 +295,16 @@ import {
   loadWizardSnapshot,
   saveWizardSnapshot,
   snapshotFromSavedScenario,
-  type ScenarioWizardSnapshot,
+  type ScenarioWizardSnapshot
 } from '@/utils/scenarioWizard'
+import {
+  buildDebtScenarioPayload,
+  clearDebtSnapshot,
+  loadDebtSnapshot,
+  saveDebtSnapshot,
+  snapshotFromSavedDebtScenario,
+  type DebtScenarioSnapshot
+} from '@/utils/debtScenario'
 
 const route = useRoute()
 const router = useRouter()
@@ -192,13 +320,14 @@ const errorMessage = ref('')
 const successMessage = ref('')
 const isShowingSavedSnapshot = ref(false)
 const isScenarioLockedForEdit = ref(false)
+const debtSnapshot = ref<DebtScenarioSnapshot | null>(null)
 
 const snapshot = reactive<ScenarioWizardSnapshot>({
   scenarioName: '',
   months: 6,
   currentScenarioId: null,
   adjustments: [],
-  scenarioLines: [],
+  scenarioLines: []
 })
 
 const decisionTone = computed(() => {
@@ -207,8 +336,14 @@ const decisionTone = computed(() => {
   return 'positive-value'
 })
 
+const isManualTypedScenario = computed(
+  () =>
+    result.value?.sourceType === 'MANUAL_TYPED' || debtSnapshot.value?.sourceType === 'MANUAL_TYPED'
+)
+
 const decisionLabel = computed(() => {
-  if (result.value?.decisionStatus === 'ACTION_NEEDED') return t('planning.scenarios.status_action_needed')
+  if (result.value?.decisionStatus === 'ACTION_NEEDED')
+    return t('planning.scenarios.status_action_needed')
   if (result.value?.decisionStatus === 'WATCH') return t('planning.scenarios.status_watch')
   if (result.value?.decisionStatus === 'STABLE') return t('planning.scenarios.status_stable')
   return t('planning.scenarios.status_no_data')
@@ -216,8 +351,14 @@ const decisionLabel = computed(() => {
 
 const formatCurrency = (value: number) =>
   Number(value || 0).toLocaleString(
-    locale.value === 'en' ? 'en-US' : locale.value === 'fr' ? 'fr-FR' : locale.value === 'es' ? 'es-ES' : 'pt-BR',
-    { style: 'currency', currency: 'BRL' },
+    locale.value === 'en'
+      ? 'en-US'
+      : locale.value === 'fr'
+        ? 'fr-FR'
+        : locale.value === 'es'
+          ? 'es-ES'
+          : 'pt-BR',
+    { style: 'currency', currency: 'BRL' }
   )
 
 const formatSignedCurrency = (value: number) => {
@@ -229,12 +370,12 @@ const consequenceMessage = computed(() => {
   if (!result.value) return ''
   if (result.value.scenarioMonthlyImpact < 0) {
     return t('planning.scenarios.consequence_negative', {
-      amount: formatCurrency(Math.abs(result.value.scenarioMonthlyImpact)),
+      amount: formatCurrency(Math.abs(result.value.scenarioMonthlyImpact))
     })
   }
   if (result.value.scenarioMonthlyImpact > 0) {
     return t('planning.scenarios.consequence_positive', {
-      amount: formatCurrency(result.value.scenarioMonthlyImpact),
+      amount: formatCurrency(result.value.scenarioMonthlyImpact)
     })
   }
   return t('planning.scenarios.consequence_neutral')
@@ -266,9 +407,11 @@ const refreshScenarioGovernance = async (targetScenarioId: string | null) => {
     const { data } = await DecisionService.list()
     const decisions = Array.isArray(data) ? data : []
     const linkedDecision = decisions.find((decision) => decision.scenarioId === targetScenarioId)
-    const totalVotes = Number(linkedDecision?.approveVotes || 0) + Number(linkedDecision?.rejectVotes || 0)
+    const totalVotes =
+      Number(linkedDecision?.approveVotes || 0) + Number(linkedDecision?.rejectVotes || 0)
     const decisionStatus = String(linkedDecision?.status || '').toUpperCase()
-    isScenarioLockedForEdit.value = totalVotes > 0 || Boolean(decisionStatus && decisionStatus !== 'OPEN')
+    isScenarioLockedForEdit.value =
+      totalVotes > 0 || Boolean(decisionStatus && decisionStatus !== 'OPEN')
   } catch {
     // Keep editing available if we cannot determine lock status.
     isScenarioLockedForEdit.value = false
@@ -277,6 +420,8 @@ const refreshScenarioGovernance = async (targetScenarioId: string | null) => {
 
 const buildResultFromSavedScenario = (saved: SavedScenario): ScenarioSimulationResponse => ({
   scenarioName: saved.name || t('planning.scenarios.default_name'),
+  scenarioType: saved.scenarioType,
+  sourceType: saved.sourceType,
   months: Number(saved.months || 6),
   currentBalance: 0,
   baselineMonthlyNet: 0,
@@ -294,18 +439,25 @@ const buildResultFromSavedScenario = (saved: SavedScenario): ScenarioSimulationR
   summary: saved.summary || '',
   forecast: [],
   impactedGoalNames: [],
+  debtComparison: saved.debtComparison || null
 })
 
 const loadResult = async () => {
   const routeId = String(route.params.id || '')
   isScenarioLockedForEdit.value = false
   const latestResult = window.sessionStorage.getItem('planning-scenario-latest-result')
-  const hasFreshSimulationHint = typeof route.query.simulatedAt === 'string' && route.query.simulatedAt.length > 0
+  const hasFreshSimulationHint =
+    typeof route.query.simulatedAt === 'string' && route.query.simulatedAt.length > 0
   const restored = loadWizardSnapshot()
+  const restoredDebt = loadDebtSnapshot()
 
   if (restored) {
     Object.assign(snapshot, restored)
     scenarioId.value = restored.currentScenarioId
+  }
+  if (restoredDebt) {
+    debtSnapshot.value = restoredDebt
+    scenarioId.value = restoredDebt.currentScenarioId
   }
 
   if (latestResult) {
@@ -314,13 +466,11 @@ const loadResult = async () => {
         | ScenarioSimulationResponse
         | { scenarioId?: string; result?: ScenarioSimulationResponse }
       const parsedScenarioId = 'scenarioId' in parsed ? String(parsed.scenarioId || '') : ''
-      const parsedResult = 'result' in parsed ? parsed.result : (parsed as ScenarioSimulationResponse)
+      const parsedResult =
+        'result' in parsed ? parsed.result : (parsed as ScenarioSimulationResponse)
       if (
         parsedResult &&
-        (
-          routeId === 'preview' ||
-          (hasFreshSimulationHint && parsedScenarioId === routeId)
-        )
+        (routeId === 'preview' || (hasFreshSimulationHint && parsedScenarioId === routeId))
       ) {
         result.value = parsedResult
         isShowingSavedSnapshot.value = false
@@ -339,7 +489,7 @@ const loadResult = async () => {
   try {
     const [{ data: scenarios }, { data: budget, status }] = await Promise.all([
       ScenarioService.list(),
-      BudgetService.getCurrent(new Date().getMonth() + 1, new Date().getFullYear()),
+      BudgetService.getCurrent(new Date().getMonth() + 1, new Date().getFullYear())
     ])
 
     const saved = (Array.isArray(scenarios) ? scenarios : []).find((item) => item.id === routeId)
@@ -348,16 +498,21 @@ const loadResult = async () => {
     scenarioId.value = saved.id
     await refreshScenarioGovernance(saved.id)
 
-    const currentBudget = status !== 204 && budget && typeof budget === 'object' && 'id' in budget ? budget : null
-    const rebuilt = snapshotFromSavedScenario(saved as SavedScenario, currentBudget || undefined)
-    if (currentBudget && !rebuilt.scenarioLines.length) {
-      rebuilt.scenarioLines = buildScenarioLinesFromBudget(currentBudget)
+    const currentBudget =
+      status !== 204 && budget && typeof budget === 'object' && 'id' in budget ? budget : null
+    if (saved.sourceType === 'MANUAL_TYPED') {
+      debtSnapshot.value = snapshotFromSavedDebtScenario(saved)
+      saveDebtSnapshot(debtSnapshot.value)
+    } else {
+      const rebuilt = snapshotFromSavedScenario(saved as SavedScenario, currentBudget || undefined)
+      if (currentBudget && !rebuilt.scenarioLines.length) {
+        rebuilt.scenarioLines = buildScenarioLinesFromBudget(currentBudget)
+      }
+      Object.assign(snapshot, rebuilt)
+      saveWizardSnapshot(snapshot)
     }
-
-    Object.assign(snapshot, rebuilt)
     result.value = buildResultFromSavedScenario(saved)
     isShowingSavedSnapshot.value = true
-    saveWizardSnapshot(snapshot)
   } catch (e) {
     console.error(e)
     errorMessage.value = t('planning.scenarios.error')
@@ -365,19 +520,24 @@ const loadResult = async () => {
 }
 
 const recalculateResult = async () => {
-  if (!snapshot.budgetId && !snapshot.currentScenarioId) return
+  if (isManualTypedScenario.value && !debtSnapshot.value) return
+  if (!isManualTypedScenario.value && !snapshot.budgetId && !snapshot.currentScenarioId) return
   isRecalculating.value = true
   errorMessage.value = ''
   try {
-    const { data } = await ScenarioService.simulate(buildSimulationPayload(snapshot))
+    const payload =
+      isManualTypedScenario.value && debtSnapshot.value
+        ? buildDebtScenarioPayload(debtSnapshot.value)
+        : buildSimulationPayload(snapshot)
+    const { data } = await ScenarioService.simulate(payload)
     result.value = data
     isShowingSavedSnapshot.value = false
     window.sessionStorage.setItem(
       'planning-scenario-latest-result',
       JSON.stringify({
         scenarioId: snapshot.currentScenarioId || String(route.params.id || ''),
-        result: data,
-      }),
+        result: data
+      })
     )
   } catch (e) {
     console.error(e)
@@ -388,16 +548,25 @@ const recalculateResult = async () => {
 }
 
 const ensureScenarioPersisted = async (): Promise<string> => {
-  const payload = {
-    ...buildScenarioPayload(snapshot),
-    id: snapshot.currentScenarioId || undefined,
-  }
+  const payload =
+    isManualTypedScenario.value && debtSnapshot.value
+      ? buildDebtScenarioPayload(debtSnapshot.value)
+      : {
+          ...buildScenarioPayload(snapshot),
+          id: snapshot.currentScenarioId || undefined
+        }
   try {
     const { data } = await ScenarioService.save(payload)
     snapshot.currentScenarioId = data.id
     scenarioId.value = data.id
     snapshot.scenarioName = data.name || snapshot.scenarioName
-    saveWizardSnapshot(snapshot)
+    if (debtSnapshot.value) {
+      debtSnapshot.value.currentScenarioId = data.id
+      debtSnapshot.value.scenarioName = data.name || debtSnapshot.value.scenarioName
+      saveDebtSnapshot(debtSnapshot.value)
+    } else {
+      saveWizardSnapshot(snapshot)
+    }
     return data.id
   } catch (error) {
     if (extractErrorStatus(error) !== 409) {
@@ -408,12 +577,18 @@ const ensureScenarioPersisted = async (): Promise<string> => {
     const { data } = await ScenarioService.save({
       ...payload,
       id: undefined,
-      name: conflictSafeName,
+      name: conflictSafeName
     })
     snapshot.currentScenarioId = data.id
     scenarioId.value = data.id
     snapshot.scenarioName = data.name || conflictSafeName
-    saveWizardSnapshot(snapshot)
+    if (debtSnapshot.value) {
+      debtSnapshot.value.currentScenarioId = data.id
+      debtSnapshot.value.scenarioName = data.name || conflictSafeName
+      saveDebtSnapshot(debtSnapshot.value)
+    } else {
+      saveWizardSnapshot(snapshot)
+    }
     return data.id
   }
 }
@@ -427,10 +602,15 @@ const saveScenario = async () => {
     snapshot.currentScenarioId = persistedId
     scenarioId.value = persistedId
     await refreshScenarioGovernance(persistedId)
-    saveWizardSnapshot(snapshot)
+    if (debtSnapshot.value) {
+      debtSnapshot.value.currentScenarioId = persistedId
+      saveDebtSnapshot(debtSnapshot.value)
+    } else {
+      saveWizardSnapshot(snapshot)
+    }
     isShowingSavedSnapshot.value = true
     successMessage.value = t('planning.scenarios.save_success', {
-      name: snapshot.scenarioName || t('planning.scenarios.default_name'),
+      name: snapshot.scenarioName || t('planning.scenarios.default_name')
     })
     if (route.params.id !== persistedId) {
       await router.replace({ name: 'planning-scenarios-result', params: { id: persistedId } })
@@ -452,8 +632,11 @@ const createDecisionFromScenario = async () => {
     window.sessionStorage.setItem(
       DECISIONS_FLASH_SUCCESS_KEY,
       JSON.stringify({
-        scenarioName: snapshot.scenarioName || t('planning.scenarios.default_name'),
-      }),
+        scenarioName:
+          debtSnapshot.value?.scenarioName ||
+          snapshot.scenarioName ||
+          t('planning.scenarios.default_name')
+      })
     )
     await router.push({ name: 'decisions', query: { scenarios: persistedScenarioId } })
   } catch (e) {
@@ -465,11 +648,18 @@ const createDecisionFromScenario = async () => {
 }
 
 const editScenario = async () => {
-  saveWizardSnapshot(snapshot)
+  if (debtSnapshot.value) {
+    saveDebtSnapshot(debtSnapshot.value)
+  } else {
+    saveWizardSnapshot(snapshot)
+  }
   if (isScenarioLockedForEdit.value) {
     await router.push({
-      name: 'planning-scenarios-new',
-      query: { cloneFrom: scenarioId.value || snapshot.currentScenarioId || String(route.params.id || ''), locked: '1' },
+      name: isManualTypedScenario.value ? 'planning-scenarios-debt-new' : 'planning-scenarios-new',
+      query: {
+        cloneFrom: scenarioId.value || snapshot.currentScenarioId || String(route.params.id || ''),
+        locked: '1'
+      }
     })
     return
   }
@@ -479,16 +669,24 @@ const editScenario = async () => {
     snapshot.currentScenarioId ||
     (routeScenarioId && routeScenarioId !== 'preview' ? routeScenarioId : null)
   if (!editId) {
-    await router.push({ name: 'planning-scenarios-new' })
+    await router.push({
+      name: isManualTypedScenario.value ? 'planning-scenarios-debt-new' : 'planning-scenarios-new'
+    })
     return
   }
-  await router.push({ name: 'planning-scenarios-edit', params: { id: editId } })
+  await router.push({
+    name: isManualTypedScenario.value ? 'planning-scenarios-debt-edit' : 'planning-scenarios-edit',
+    params: { id: editId }
+  })
 }
 
 const newScenario = async () => {
   clearWizardSnapshot()
+  clearDebtSnapshot()
   window.sessionStorage.removeItem('planning-scenario-latest-result')
-  await router.push({ name: 'planning-scenarios-new' })
+  await router.push({
+    name: isManualTypedScenario.value ? 'planning-scenarios-debt-new' : 'planning-scenarios-new'
+  })
 }
 
 onMounted(() => {
@@ -509,6 +707,7 @@ onMounted(() => {
   border: 1px solid rgba(15, 23, 42, 0.08);
   border-radius: 16px;
   padding: 20px;
+  min-width: 0;
 }
 
 .hero-card {
@@ -519,6 +718,44 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.debt-comparison {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.debt-options-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+  min-width: 0;
+}
+
+.debt-option-card {
+  border-radius: 16px;
+  padding: 16px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.debt-option-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.debt-option-card__metrics {
+  display: grid;
+  gap: 6px;
+  color: #475569;
 }
 
 .hero-card__label {
@@ -537,6 +774,7 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 12px;
+  min-width: 0;
 }
 
 .metric-card {
@@ -546,6 +784,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-width: 0;
 }
 
 .metric-card span {
@@ -563,6 +802,10 @@ onMounted(() => {
   gap: 10px;
 }
 
+.result-action {
+  min-width: 0;
+}
+
 .forecast-table {
   overflow-x: auto;
 }
@@ -570,6 +813,7 @@ onMounted(() => {
 .forecast-table table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 .forecast-table th,
@@ -622,5 +866,96 @@ onMounted(() => {
 .v-theme--dark .forecast-table td {
   border-bottom-color: rgba(148, 163, 184, 0.18);
   color: #e5eefb;
+}
+
+@media (max-width: 960px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 600px) {
+  .scenario-result {
+    padding-inline: 0;
+  }
+
+  .result-shell {
+    padding: 16px;
+  }
+
+  .hero-card strong {
+    font-size: 1.6rem;
+  }
+
+  .metrics-grid,
+  .debt-options-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .debt-option-card__header,
+  .result-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .result-actions :deep(.v-btn) {
+    width: 100%;
+  }
+
+  .scenario-name-badge {
+    display: block;
+    margin-left: 0;
+    margin-top: 8px;
+  }
+
+  .forecast-table {
+    overflow-x: visible;
+  }
+
+  .forecast-table table,
+  .forecast-table tbody,
+  .forecast-table tr,
+  .forecast-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .forecast-table thead {
+    display: none;
+  }
+
+  .forecast-table tr {
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 10px;
+    background: rgba(248, 250, 252, 0.9);
+  }
+
+  .forecast-table td {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 6px 0;
+    text-align: right;
+  }
+
+  .forecast-table td::before {
+    content: attr(data-label);
+    text-align: left;
+    color: #64748b;
+    font-weight: 600;
+  }
+}
+
+@media (max-width: 430px) {
+  .hero-card {
+    padding: 16px;
+  }
+
+  .hero-card strong {
+    font-size: 1.45rem;
+  }
 }
 </style>
