@@ -314,16 +314,14 @@
                 role="status"
                 aria-live="polite"
               >
-                <strong>Inscricao registrada com sucesso.</strong>
-                <p>{{ newsletterSuccessMessage }}</p>
-                <div class="newsletter-confirmation__meta">
-                  <span><strong>E-mail:</strong> {{ newsletterConfirmation.email }}</span>
-                  <span><strong>Protocolo:</strong> #{{ newsletterConfirmation.submissionId }}</span>
-                  <span><strong>Origem:</strong> {{ newsletterConfirmation.originLabel }}</span>
-                  <span><strong>Status:</strong> {{ newsletterConfirmation.emailDeliveryStatus }}</span>
-                  <span>
-                    <strong>Recebido em:</strong>
-                    {{ formatSubmissionDate(newsletterConfirmation.submittedAt) }}
+                <div class="newsletter-confirmation__pulse" aria-hidden="true">
+                  <span class="newsletter-confirmation__icon">✓</span>
+                </div>
+                <div class="newsletter-confirmation__content">
+                  <strong>Tudo certo por aqui.</strong>
+                  <p>{{ newsletterSuccessMessage }}</p>
+                  <span class="newsletter-confirmation__hint">
+                    Quando publicarmos algo novo, voce vai saber primeiro.
                   </span>
                 </div>
               </div>
@@ -498,15 +496,6 @@ async function handleNewsletterSubmit() {
   }
 }
 
-function formatSubmissionDate(value?: string | null): string {
-  if (!value) return 'agora'
-  const parsed = new Date(value)
-  if (Number.isNaN(parsed.getTime())) return 'agora'
-  return new Intl.DateTimeFormat('pt-BR', {
-    dateStyle: 'short',
-    timeStyle: 'short'
-  }).format(parsed)
-}
 </script>
 
 <style scoped>
@@ -965,23 +954,48 @@ h3 {
 }
 
 .newsletter-confirmation {
-  display: grid;
-  gap: 10px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
   padding: 16px 18px;
-  border-radius: 18px;
-  border: 1px solid rgba(15, 118, 110, 0.22);
-  background: rgba(240, 253, 250, 0.9);
+  border-radius: 20px;
+  border: 1px solid rgba(15, 118, 110, 0.16);
+  background: linear-gradient(135deg, rgba(240, 253, 250, 0.96), rgba(236, 253, 245, 0.92));
   color: #134e4a;
+  animation: newsletter-confirmation-enter 220ms ease-out;
 }
 
 .newsletter-confirmation p {
   margin: 0;
 }
 
-.newsletter-confirmation__meta {
+.newsletter-confirmation__pulse {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(15, 118, 110, 0.12);
+  box-shadow: 0 0 0 0 rgba(15, 118, 110, 0.22);
+  animation: newsletter-confirmation-pulse 1.8s ease-out 1;
+}
+
+.newsletter-confirmation__icon {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f766e;
+}
+
+.newsletter-confirmation__content {
   display: grid;
   gap: 6px;
+}
+
+.newsletter-confirmation__hint {
   font-size: 0.92rem;
+  color: rgba(19, 78, 74, 0.78);
 }
 
 .newsletter-feedback--success {
@@ -1005,6 +1019,31 @@ h3 {
 .newsletter-form input:focus {
   outline: 2px solid rgba(79, 70, 229, 0.12);
   border-color: var(--brand);
+}
+
+@keyframes newsletter-confirmation-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes newsletter-confirmation-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(15, 118, 110, 0.22);
+    transform: scale(0.94);
+  }
+  45% {
+    box-shadow: 0 0 0 12px rgba(15, 118, 110, 0);
+    transform: scale(1);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(15, 118, 110, 0);
+  }
 }
 
 .sr-only {
