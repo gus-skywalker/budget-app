@@ -14,12 +14,12 @@
         </v-btn>
         <div>
           <h1 class="page-title">
-            Scenario results
+            {{ t('contentExperience.planning.scenarioResult.title') }}
             <span v-if="result && result.scenarioName" class="scenario-name-badge">
               — {{ result.scenarioName }}
             </span>
           </h1>
-          <p class="page-subtitle">Decision-focused outcome from your simulation</p>
+          <p class="page-subtitle">{{ t('contentExperience.planning.scenarioResult.subtitle') }}</p>
         </div>
       </div>
 
@@ -31,8 +31,7 @@
           density="comfortable"
           class="mb-3"
         >
-          This scenario already has decision activity (votes or final status). Editing is locked to
-          preserve history. Create a new version instead.
+          {{ t('contentExperience.planning.scenarioResult.lockedNotice') }}
         </v-alert>
         <v-alert
           v-if="isShowingSavedSnapshot"
@@ -41,10 +40,12 @@
           density="comfortable"
           class="mb-3"
         >
-          Showing saved snapshot values. Use "Recalculate" to refresh with current baseline data.
+          {{ t('contentExperience.planning.scenarioResult.savedSnapshotNotice') }}
         </v-alert>
         <div class="hero-card">
-          <span class="hero-card__label">Monthly impact</span>
+          <span class="hero-card__label">{{
+            t('contentExperience.planning.scenarioResult.monthlyImpact')
+          }}</span>
           <strong
             :class="{
               'positive-value': result.scenarioMonthlyImpact > 0,
@@ -59,15 +60,15 @@
         <div v-if="isManualTypedScenario && result.debtComparison" class="debt-comparison">
           <div class="metrics-grid">
             <div class="metric-card">
-              <span>Cheapest option</span>
+              <span>{{ t('contentExperience.planning.scenarioResult.cheapestOption') }}</span>
               <strong>{{ result.debtComparison.cheapestOption || '—' }}</strong>
             </div>
             <div class="metric-card">
-              <span>Safest option</span>
+              <span>{{ t('contentExperience.planning.scenarioResult.safestOption') }}</span>
               <strong>{{ result.debtComparison.safestOption || '—' }}</strong>
             </div>
             <div class="metric-card">
-              <span>Recommended option</span>
+              <span>{{ t('contentExperience.planning.scenarioResult.recommendedOption') }}</span>
               <strong>{{ result.debtComparison.recommendedOption || '—' }}</strong>
             </div>
           </div>
@@ -99,11 +100,11 @@
                 >
                   {{
                     option.name === result.debtComparison.recommendedOption
-                      ? 'Recommended'
+                      ? t('contentExperience.planning.scenarioResult.recommendedBadge')
                       : option.name === result.debtComparison.cheapestOption
-                        ? 'Cheapest'
+                        ? t('contentExperience.planning.scenarioResult.cheapestBadge')
                         : option.name === result.debtComparison.safestOption
-                          ? 'Safest'
+                          ? t('contentExperience.planning.scenarioResult.safestBadge')
                           : option.predictabilityLevel
                   }}
                 </v-chip>
@@ -111,19 +112,24 @@
               <p>{{ option.explanation }}</p>
               <div class="debt-option-card__metrics">
                 <span
-                  >Total paid: <strong>{{ formatCurrency(option.totalPaid) }}</strong></span
+                  >{{ t('contentExperience.planning.scenarioResult.totalPaid') }}:
+                  <strong>{{ formatCurrency(option.totalPaid) }}</strong></span
                 >
                 <span
-                  >Extra cost: <strong>{{ formatCurrency(option.totalExtraCost) }}</strong></span
+                  >{{ t('contentExperience.planning.scenarioResult.extraCost') }}:
+                  <strong>{{ formatCurrency(option.totalExtraCost) }}</strong></span
                 >
                 <span
-                  >Monthly impact: <strong>{{ formatCurrency(option.monthlyImpact) }}</strong></span
+                  >{{ t('contentExperience.planning.scenarioResult.monthlyImpactMetric') }}:
+                  <strong>{{ formatCurrency(option.monthlyImpact) }}</strong></span
                 >
                 <span
-                  >Risk: <strong>{{ option.riskLevel }}</strong></span
+                  >{{ t('contentExperience.planning.scenarioResult.risk') }}:
+                  <strong>{{ option.riskLevel }}</strong></span
                 >
                 <span
-                  >Predictability: <strong>{{ option.predictabilityLevel }}</strong></span
+                  >{{ t('contentExperience.planning.scenarioResult.predictability') }}:
+                  <strong>{{ option.predictabilityLevel }}</strong></span
                 >
               </div>
               <v-alert v-if="option.warning" type="warning" variant="tonal" density="comfortable">
@@ -161,7 +167,9 @@
 
         <v-expansion-panels v-if="!isManualTypedScenario" variant="accordion">
           <v-expansion-panel>
-            <v-expansion-panel-title>Forecast details</v-expansion-panel-title>
+            <v-expansion-panel-title>{{
+              t('contentExperience.planning.scenarioResult.forecastDetails')
+            }}</v-expansion-panel-title>
             <v-expansion-panel-text>
               <div class="forecast-table">
                 <table>
@@ -195,7 +203,9 @@
             </v-expansion-panel-text>
           </v-expansion-panel>
           <v-expansion-panel>
-            <v-expansion-panel-title>Impacted goals</v-expansion-panel-title>
+            <v-expansion-panel-title>{{
+              t('contentExperience.planning.scenarioResult.impactedGoals')
+            }}</v-expansion-panel-title>
             <v-expansion-panel-text>
               <div v-if="result.impactedGoalNames?.length" class="goal-tags">
                 <v-chip
@@ -209,7 +219,7 @@
                   {{ goal }}
                 </v-chip>
               </div>
-              <p v-else>No impacted goals found for this simulation.</p>
+              <p v-else>{{ t('contentExperience.planning.scenarioResult.noImpactedGoals') }}</p>
             </v-expansion-panel-text>
           </v-expansion-panel>
         </v-expansion-panels>
@@ -246,7 +256,7 @@
             @click="recalculateResult"
           >
             <v-icon start>mdi-refresh</v-icon>
-            Recalculate
+            {{ t('contentExperience.planning.scenarioResult.recalculate') }}
           </v-btn>
           <v-btn class="result-action" variant="text" @click="editScenario">
             <v-icon start>mdi-pencil-outline</v-icon>
@@ -270,7 +280,7 @@
           variant="tonal"
           @click="router.push({ name: 'planning-scenarios-new' })"
         >
-          Build scenario
+            {{ t('contentExperience.planning.scenarioResult.buildScenario') }}
         </v-btn>
       </div>
     </v-container>
@@ -391,11 +401,15 @@ const buildVersionedScenarioName = (name?: string): string => {
 }
 
 const createDecisionLabel = computed(() =>
-  scenarioId.value ? 'Create decision' : 'Save and create decision'
+  scenarioId.value
+    ? t('contentExperience.planning.scenarioResult.createDecision')
+    : t('contentExperience.planning.scenarioResult.saveAndCreateDecision')
 )
 
 const editActionLabel = computed(() =>
-  isScenarioLockedForEdit.value ? 'Create new version' : 'Edit'
+  isScenarioLockedForEdit.value
+    ? t('contentExperience.planning.scenarioResult.createNewVersion')
+    : t('contentExperience.planning.scenarioResult.edit')
 )
 
 const refreshScenarioGovernance = async (targetScenarioId: string | null) => {

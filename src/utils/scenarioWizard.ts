@@ -1,5 +1,6 @@
 import type { Budget } from '@/services/BudgetService'
 import type { SavedScenario, ScenarioDeltaInput, ScenarioDeltaType, ScenarioLine, ScenarioLineAdjustment, ScenarioSimulationRequest } from '@/services/ScenarioService'
+import i18n from '@/i18n'
 
 export type AdjustmentFlow = 'INCOME' | 'EXPENSE'
 
@@ -193,7 +194,8 @@ export const snapshotFromSavedScenario = (
   savedScenario: SavedScenario,
   budget?: Budget | null,
 ): ScenarioWizardSnapshot => ({
-  scenarioName: savedScenario.name || 'Scenario',
+  scenarioName:
+    savedScenario.name || (String(i18n.global.locale.value).startsWith('en') ? 'New scenario' : 'Novo cenário'),
   months: Number(savedScenario.months || 6),
   currentScenarioId: savedScenario.id,
   budgetId: savedScenario.budgetId || budget?.id,

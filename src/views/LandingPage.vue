@@ -23,7 +23,9 @@
         </nav>
 
         <div class="header-actions">
-          <button class="btn btn-ghost" type="button" @click="navigateTo('blog')">Blog</button>
+          <button class="btn btn-ghost" type="button" @click="navigateTo('blog')">
+            {{ $t('contentExperience.common.blog') }}
+          </button>
           <button class="btn btn-ghost" type="button" @click="navigateTo('login')">
             {{ $t('landingPage.auth.login') }}
           </button>
@@ -55,7 +57,9 @@
           {{ $t(item.labelKey) }}
         </button>
         <div class="mobile-actions">
-          <button class="btn btn-ghost" type="button" @click="navigateTo('blog')">Blog</button>
+          <button class="btn btn-ghost" type="button" @click="navigateTo('blog')">
+            {{ $t('contentExperience.common.blog') }}
+          </button>
           <button class="btn btn-ghost" type="button" @click="navigateTo('login')">
             {{ $t('landingPage.auth.login') }}
           </button>
@@ -114,10 +118,19 @@
               <div class="overlay-value-test">+R$8,000</div>
               <div class="overlay-details-test">
                 <div>
-                  Projected balance: <span class="overlay-detail-value-test">R$59,639</span>
+                  {{ $t('contentExperience.landing.projectedBalance') }}:
+                  <span class="overlay-detail-value-test">R$59,639</span>
                 </div>
-                <div>Status: <span class="overlay-detail-status-test">Stable</span></div>
-                <div>Available: <span class="overlay-detail-value-test">R$8,969</span></div>
+                <div>
+                  {{ $t('contentExperience.landing.status') }}:
+                  <span class="overlay-detail-status-test">{{
+                    $t('contentExperience.landing.stable')
+                  }}</span>
+                </div>
+                <div>
+                  {{ $t('contentExperience.landing.available') }}:
+                  <span class="overlay-detail-value-test">R$8,969</span>
+                </div>
               </div>
             </div>
           </div>
@@ -447,7 +460,9 @@
         </div>
 
         <div class="footer-actions">
-          <button class="btn btn-ghost" type="button" @click="navigateTo('blog')">Blog</button>
+          <button class="btn btn-ghost" type="button" @click="navigateTo('blog')">
+            {{ $t('contentExperience.common.blog') }}
+          </button>
           <button class="btn btn-primary" type="button" @click="navigateToPath('/login')">
             {{ $t('landingPage.footer.cta') }}
           </button>

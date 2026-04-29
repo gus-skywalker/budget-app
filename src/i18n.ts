@@ -4,16 +4,17 @@ import pt from './assets/locales/pt.json'
 import fr from './assets/locales/fr.json'
 import es from './assets/locales/es.json'
 import landingPageMessages from './assets/locales/modules/landingPage'
+import contentExperienceMessages from './assets/locales/modules/contentExperience'
 import { useUserStore } from './plugins/userStore'
 import { toUiLocale, type UiLocale } from './utils/languageUtils'
 
 type Locale = UiLocale
 
 const messages: Record<Locale, any> = {
-  en: { ...en, ...landingPageMessages.en },
-  pt: { ...pt, ...landingPageMessages.pt },
-  fr: { ...fr, ...landingPageMessages.fr },
-  es: { ...es, ...landingPageMessages.es }
+  en: { ...en, ...landingPageMessages.en, ...contentExperienceMessages.en },
+  pt: { ...pt, ...landingPageMessages.pt, ...contentExperienceMessages.pt },
+  fr: { ...fr, ...landingPageMessages.fr, ...contentExperienceMessages.fr },
+  es: { ...es, ...landingPageMessages.es, ...contentExperienceMessages.es }
 }
 
 /**

@@ -22,7 +22,9 @@
 
         <v-card class="content-template__prompt-card" rounded="xl" elevation="0">
           <v-card-text>
-            <span class="content-template__eyebrow">Prompt do hero</span>
+            <span class="content-template__eyebrow">{{
+              t('contentExperience.blog.template.heroPrompt')
+            }}</span>
             <p>{{ entry.heroPrompt }}</p>
           </v-card-text>
         </v-card>
@@ -30,8 +32,10 @@
 
       <section class="content-template__section">
         <div class="content-template__heading">
-          <span class="content-template__eyebrow">Resumo editorial</span>
-          <h2>Bloco de abertura</h2>
+          <span class="content-template__eyebrow">{{
+            t('contentExperience.blog.template.editorialSummary')
+          }}</span>
+          <h2>{{ t('contentExperience.blog.template.openingBlock') }}</h2>
         </div>
         <v-card class="content-template__block" rounded="xl" elevation="0">
           <v-card-text>
@@ -42,8 +46,10 @@
 
       <section class="content-template__section">
         <div class="content-template__heading">
-          <span class="content-template__eyebrow">Takeaways</span>
-          <h2>Mensagens que o texto precisa entregar</h2>
+          <span class="content-template__eyebrow">{{
+            t('contentExperience.blog.template.takeaways')
+          }}</span>
+          <h2>{{ t('contentExperience.blog.template.takeawaysTitle') }}</h2>
         </div>
 
         <v-row dense>
@@ -57,8 +63,10 @@
 
       <section class="content-template__section">
         <div class="content-template__heading">
-          <span class="content-template__eyebrow">Estrutura</span>
-          <h2>Template do artigo</h2>
+          <span class="content-template__eyebrow">{{
+            t('contentExperience.blog.template.structure')
+          }}</span>
+          <h2>{{ t('contentExperience.blog.template.articleTemplate') }}</h2>
         </div>
 
         <div class="content-template__blocks">
@@ -84,8 +92,10 @@
         <v-card class="content-template__cta" rounded="xl" elevation="0">
           <v-card-text class="content-template__cta-content">
             <div>
-              <span class="content-template__eyebrow">CTA do artigo</span>
-              <h2>Conectar conteudo com acao dentro do produto</h2>
+              <span class="content-template__eyebrow">{{
+                t('contentExperience.blog.template.articleCta')
+              }}</span>
+              <h2>{{ t('contentExperience.blog.template.articleCtaTitle') }}</h2>
             </div>
             <v-btn color="primary" size="large" @click="goToCta">
               {{ entry.ctaLabel }}
@@ -98,6 +108,7 @@
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import type { BlogTemplateEntry } from '@/content/blogTemplates'
 
@@ -107,6 +118,7 @@ const props = defineProps<{
 }>()
 
 const router = useRouter()
+const { t } = useI18n()
 
 function goToCta() {
   void router.push(props.entry.ctaPath)

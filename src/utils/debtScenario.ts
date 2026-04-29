@@ -7,6 +7,7 @@ import {
   type ScenarioSimulationRequest,
   type SavedScenario
 } from '@/services/ScenarioService'
+import i18n from '@/i18n'
 
 export type DebtScenarioSnapshot = {
   scenarioType: typeof DEBT_PAYMENT_SCENARIO_TYPE
@@ -75,22 +76,39 @@ export const normalizeDebtSnapshot = (
 }
 
 export const validateDebtSnapshot = (snapshot: DebtScenarioSnapshot): string[] => {
+  const isEnglish = String(i18n.global.locale.value).startsWith('en')
   const errors: string[] = []
   if (!String(snapshot.scenarioName || snapshot.debtInput.title || '').trim()) {
-    errors.push('Title is required.')
+    errors.push(isEnglish ? 'Title is required.' : 'O título é obrigatório.')
   }
   if (Number(snapshot.debtInput.totalAmount || 0) <= 0) {
-    errors.push('Total amount must be greater than zero.')
+    errors.push(
+      isEnglish
+        ? 'Total amount must be greater than zero.'
+        : 'O valor total deve ser maior que zero.',
+    )
   }
   if (Number(snapshot.debtInput.availableCash || 0) < 0) {
-    errors.push('Available cash cannot be negative.')
+    errors.push(
+      isEnglish
+        ? 'Available cash cannot be negative.'
+        : 'O caixa disponível não pode ser negativo.',
+    )
   }
   if (!Array.isArray(snapshot.debtInput.options) || snapshot.debtInput.options.length < 2) {
-    errors.push('Add at least two payment options.')
+    errors.push(
+      isEnglish
+        ? 'Add at least two payment options.'
+        : 'Adicione pelo menos duas opções de pagamento.',
+    )
   }
   snapshot.debtInput.options.forEach((option, index) => {
     if (!String(option.name || '').trim()) {
-      errors.push(`Option ${index + 1} needs a name.`)
+      errors.push(
+        isEnglish
+          ? `Option ${index + 1} needs a name.`
+          : `A opção ${index + 1} precisa de um nome.`,
+      )
     }
   })
   return errors

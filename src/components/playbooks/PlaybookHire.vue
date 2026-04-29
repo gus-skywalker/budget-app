@@ -4,50 +4,44 @@
       <section class="playbook-hero">
         <div class="playbook-hero__copy">
           <v-chip size="small" color="error" variant="tonal" class="playbook-badge">
-            Decisao critica
+            {{ t('contentExperience.playbooks.hire.badge') }}
           </v-chip>
-          <h1 class="playbook-title">Posso contratar agora?</h1>
+          <h1 class="playbook-title">{{ t('contentExperience.playbooks.hire.title') }}</h1>
           <p class="playbook-subtitle">
-            Entenda o impacto real de uma nova contratacao antes de tomar a decisao.
+            {{ t('contentExperience.playbooks.hire.subtitle') }}
           </p>
         </div>
 
         <v-card class="playbook-summary" rounded="xl" elevation="0">
           <v-card-text>
-            <span class="playbook-summary__eyebrow">Decisao orientada por caixa</span>
-            <strong
-              >Contratar so faz sentido quando o caixa suporta o custo fixo com margem.</strong
-            >
+            <span class="playbook-summary__eyebrow">{{
+              t('contentExperience.playbooks.hire.summaryEyebrow')
+            }}</span>
+            <strong>{{ t('contentExperience.playbooks.hire.summaryTitle') }}</strong>
           </v-card-text>
         </v-card>
       </section>
 
       <section class="playbook-section">
         <div class="section-heading">
-          <span class="section-kicker">Contexto</span>
-          <h2>Quando essa decisao aparece</h2>
+          <span class="section-kicker">{{ t('contentExperience.playbooks.hire.contextKicker') }}</span>
+          <h2>{{ t('contentExperience.playbooks.hire.contextTitle') }}</h2>
         </div>
-        <p class="section-copy">
-          Esse momento aparece quando a operacao esta crescendo, a equipe esta sobrecarregada ou
-          existe uma oportunidade clara de acelerar entrega, vendas ou atendimento.
-        </p>
+        <p class="section-copy">{{ t('contentExperience.playbooks.hire.contextBody') }}</p>
       </section>
 
       <section class="playbook-section">
         <div class="section-heading">
-          <span class="section-kicker">Enquadramento</span>
-          <h2>A pergunta real nao e sobre vontade. E sobre sustentabilidade.</h2>
+          <span class="section-kicker">{{ t('contentExperience.playbooks.hire.framingKicker') }}</span>
+          <h2>{{ t('contentExperience.playbooks.hire.framingTitle') }}</h2>
         </div>
-        <p class="section-copy">
-          A contratacao adiciona custo recorrente, onboarding e mais dependencia do fluxo de caixa.
-          O ponto central e saber se a empresa continua saudavel mesmo com essa nova pressao mensal.
-        </p>
+        <p class="section-copy">{{ t('contentExperience.playbooks.hire.framingBody') }}</p>
       </section>
 
       <section class="playbook-section">
         <div class="section-heading">
-          <span class="section-kicker">Impacto financeiro</span>
-          <h2>O que muda quando voce contrata</h2>
+          <span class="section-kicker">{{ t('contentExperience.playbooks.hire.impactKicker') }}</span>
+          <h2>{{ t('contentExperience.playbooks.hire.impactTitle') }}</h2>
         </div>
 
         <v-row class="impact-grid" dense>
@@ -65,10 +59,10 @@
 
       <v-row class="decision-columns" dense>
         <v-col cols="12" md="6">
-          <v-card class="decision-card decision-card--positive" rounded="xl" elevation="0">
-            <v-card-text>
-              <span class="section-kicker">Faz sentido quando</span>
-              <h2>Existem sinais concretos de que o caixa aguenta.</h2>
+            <v-card class="decision-card decision-card--positive" rounded="xl" elevation="0">
+              <v-card-text>
+              <span class="section-kicker">{{ t('contentExperience.playbooks.hire.makesSenseKicker') }}</span>
+              <h2>{{ t('contentExperience.playbooks.hire.makesSenseTitle') }}</h2>
               <ul class="decision-list">
                 <li v-for="item in makesSenseItems" :key="item">{{ item }}</li>
               </ul>
@@ -77,10 +71,12 @@
         </v-col>
 
         <v-col cols="12" md="6">
-          <v-card class="decision-card decision-card--warning" rounded="xl" elevation="0">
-            <v-card-text>
-              <span class="section-kicker">Nao faz sentido quando</span>
-              <h2>O time esta tentando resolver incerteza com aumento de custo.</h2>
+            <v-card class="decision-card decision-card--warning" rounded="xl" elevation="0">
+              <v-card-text>
+              <span class="section-kicker">{{
+                t('contentExperience.playbooks.hire.notMakesSenseKicker')
+              }}</span>
+              <h2>{{ t('contentExperience.playbooks.hire.notMakesSenseTitle') }}</h2>
               <ul class="decision-list">
                 <li v-for="item in doesNotMakeSenseItems" :key="item">{{ item }}</li>
               </ul>
@@ -91,24 +87,21 @@
 
       <section class="playbook-section playbook-section--transition">
         <div class="section-heading">
-          <span class="section-kicker">Transicao</span>
-          <h2>Nao decida no feeling</h2>
+          <span class="section-kicker">{{ t('contentExperience.playbooks.hire.transitionKicker') }}</span>
+          <h2>{{ t('contentExperience.playbooks.hire.transitionTitle') }}</h2>
         </div>
-        <p class="section-copy">
-          Simule a contratacao antes de aprovar. Compare o custo mensal, o impacto no caixa e a
-          folga necessaria para sustentar a nova estrutura.
-        </p>
+        <p class="section-copy">{{ t('contentExperience.playbooks.hire.transitionBody') }}</p>
       </section>
 
       <div class="playbook-cta">
         <v-card class="playbook-cta__card" rounded="xl" elevation="0">
           <v-card-text class="playbook-cta__content">
             <div>
-              <span class="section-kicker">Proximo passo</span>
-              <h2>Criar o cenario antes de decidir reduz improviso.</h2>
+              <span class="section-kicker">{{ t('contentExperience.playbooks.hire.nextStepKicker') }}</span>
+              <h2>{{ t('contentExperience.playbooks.hire.nextStepTitle') }}</h2>
             </div>
             <v-btn color="primary" size="large" class="playbook-cta__button" @click="goToScenario">
-              Criar cenario de contratacao
+              {{ t('contentExperience.playbooks.hire.cta') }}
             </v-btn>
           </v-card-text>
         </v-card>
@@ -118,44 +111,38 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
+const { t, tm } = useI18n()
 
-const impactCards = [
+const impactCards = computed(() => [
   {
     icon: '💸',
-    title: 'Custo fixo aumenta',
-    description:
-      'Salario, encargos, ferramentas e adaptacao entram como compromissos recorrentes no mes.'
+    title: t('contentExperience.playbooks.hire.impactCards.fixedCostTitle'),
+    description: t('contentExperience.playbooks.hire.impactCards.fixedCostDescription')
   },
   {
     icon: '📉',
-    title: 'Pressao no caixa',
-    description:
-      'Mesmo com boa expectativa de retorno, o caixa sente a contratacao antes de capturar resultado.'
+    title: t('contentExperience.playbooks.hire.impactCards.pressureTitle'),
+    description: t('contentExperience.playbooks.hire.impactCards.pressureDescription')
   },
   {
     icon: '📈',
-    title: 'Potencial de crescimento',
-    description:
-      'A nova capacidade pode acelerar receita, entrega ou retencao, se houver demanda real.'
+    title: t('contentExperience.playbooks.hire.impactCards.growthTitle'),
+    description: t('contentExperience.playbooks.hire.impactCards.growthDescription')
   }
-]
+])
 
-const makesSenseItems = [
-  'Existe demanda clara que a equipe atual nao consegue absorver sem perder qualidade.',
-  'O caixa suporta o aumento de custo por varios meses, mesmo sem retorno imediato.',
-  'A contratacao destrava uma alavanca importante de receita, operacao ou retencao.',
-  'Voce consegue simular o impacto e ainda manter margem de seguranca.'
-]
+const makesSenseItems = computed(
+  () => tm('contentExperience.playbooks.hire.makesSenseItems') as string[]
+)
 
-const doesNotMakeSenseItems = [
-  'O caixa ja esta apertado e depende de um mes excepcional para fechar bem.',
-  'A contratacao esta sendo usada para compensar falta de processo ou prioridade.',
-  'Ainda nao existe clareza sobre funcao, entregas ou retorno esperado.',
-  'O negocio perde flexibilidade financeira demais se a pessoa entrar agora.'
-]
+const doesNotMakeSenseItems = computed(
+  () => tm('contentExperience.playbooks.hire.notMakesSenseItems') as string[]
+)
 
 function goToScenario() {
   void router.push('/planning/scenarios/new?template=hire')

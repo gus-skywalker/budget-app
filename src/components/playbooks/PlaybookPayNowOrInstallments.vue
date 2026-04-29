@@ -4,48 +4,44 @@
       <section class="playbook-hero">
         <div class="playbook-hero__copy">
           <v-chip size="small" color="warning" variant="tonal" class="playbook-badge">
-            Decisao sensivel
+            {{ t('contentExperience.playbooks.payNow.badge') }}
           </v-chip>
-          <h1 class="playbook-title">Vale parcelar ou pagar agora?</h1>
+          <h1 class="playbook-title">{{ t('contentExperience.playbooks.payNow.title') }}</h1>
           <p class="playbook-subtitle">
-            Compare custo, previsibilidade e impacto no caixa antes de decidir como quitar.
+            {{ t('contentExperience.playbooks.payNow.subtitle') }}
           </p>
         </div>
 
         <v-card class="playbook-summary" rounded="xl" elevation="0">
           <v-card-text>
-            <span class="playbook-summary__eyebrow">Trade-off real</span>
-            <strong>Pagar barato agora nem sempre e melhor se isso estrangula o caixa.</strong>
+            <span class="playbook-summary__eyebrow">{{
+              t('contentExperience.playbooks.payNow.summaryEyebrow')
+            }}</span>
+            <strong>{{ t('contentExperience.playbooks.payNow.summaryTitle') }}</strong>
           </v-card-text>
         </v-card>
       </section>
 
       <section class="playbook-section">
         <div class="section-heading">
-          <span class="section-kicker">Contexto</span>
-          <h2>Quando essa decisao aparece</h2>
+          <span class="section-kicker">{{ t('contentExperience.playbooks.payNow.contextKicker') }}</span>
+          <h2>{{ t('contentExperience.playbooks.payNow.contextTitle') }}</h2>
         </div>
-        <p class="section-copy">
-          Esse tipo de decisao surge quando existe uma conta relevante, uma fatura, uma compra maior
-          ou uma renegociacao e voce precisa escolher entre sair do caixa agora ou ganhar prazo.
-        </p>
+        <p class="section-copy">{{ t('contentExperience.playbooks.payNow.contextBody') }}</p>
       </section>
 
       <section class="playbook-section">
         <div class="section-heading">
-          <span class="section-kicker">Enquadramento</span>
-          <h2>A pergunta certa e sobre custo total com seguranca de caixa.</h2>
+          <span class="section-kicker">{{ t('contentExperience.playbooks.payNow.framingKicker') }}</span>
+          <h2>{{ t('contentExperience.playbooks.payNow.framingTitle') }}</h2>
         </div>
-        <p class="section-copy">
-          Parcelar pode proteger liquidez, mas adiciona juros e alonga compromisso. Pagar agora pode
-          ser mais barato, mas reduzir demais sua margem operacional nas proximas semanas.
-        </p>
+        <p class="section-copy">{{ t('contentExperience.playbooks.payNow.framingBody') }}</p>
       </section>
 
       <section class="playbook-section">
         <div class="section-heading">
-          <span class="section-kicker">Impacto financeiro</span>
-          <h2>O que voce precisa comparar</h2>
+          <span class="section-kicker">{{ t('contentExperience.playbooks.payNow.impactKicker') }}</span>
+          <h2>{{ t('contentExperience.playbooks.payNow.impactTitle') }}</h2>
         </div>
 
         <v-row class="impact-grid" dense>
@@ -63,10 +59,10 @@
 
       <v-row class="decision-columns" dense>
         <v-col cols="12" md="6">
-          <v-card class="decision-card decision-card--positive" rounded="xl" elevation="0">
-            <v-card-text>
-              <span class="section-kicker">Faz sentido parcelar quando</span>
-              <h2>Preservar liquidez vale mais do que o desconto imediato.</h2>
+            <v-card class="decision-card decision-card--positive" rounded="xl" elevation="0">
+              <v-card-text>
+              <span class="section-kicker">{{ t('contentExperience.playbooks.payNow.makesSenseKicker') }}</span>
+              <h2>{{ t('contentExperience.playbooks.payNow.makesSenseTitle') }}</h2>
               <ul class="decision-list">
                 <li v-for="item in makesSenseItems" :key="item">{{ item }}</li>
               </ul>
@@ -75,10 +71,12 @@
         </v-col>
 
         <v-col cols="12" md="6">
-          <v-card class="decision-card decision-card--warning" rounded="xl" elevation="0">
-            <v-card-text>
-              <span class="section-kicker">Nao faz sentido parcelar quando</span>
-              <h2>O prazo so mascara um custo ruim ou uma decisao precipitada.</h2>
+            <v-card class="decision-card decision-card--warning" rounded="xl" elevation="0">
+              <v-card-text>
+              <span class="section-kicker">{{
+                t('contentExperience.playbooks.payNow.notMakesSenseKicker')
+              }}</span>
+              <h2>{{ t('contentExperience.playbooks.payNow.notMakesSenseTitle') }}</h2>
               <ul class="decision-list">
                 <li v-for="item in doesNotMakeSenseItems" :key="item">{{ item }}</li>
               </ul>
@@ -89,24 +87,21 @@
 
       <section class="playbook-section playbook-section--transition">
         <div class="section-heading">
-          <span class="section-kicker">Transicao</span>
-          <h2>Nao escolha so pelo valor da parcela</h2>
+          <span class="section-kicker">{{ t('contentExperience.playbooks.payNow.transitionKicker') }}</span>
+          <h2>{{ t('contentExperience.playbooks.payNow.transitionTitle') }}</h2>
         </div>
-        <p class="section-copy">
-          Simule pagar agora, parcelar e outras alternativas. O melhor caminho combina custo total,
-          previsibilidade e capacidade real de manter o caixa saudavel.
-        </p>
+        <p class="section-copy">{{ t('contentExperience.playbooks.payNow.transitionBody') }}</p>
       </section>
 
       <div class="playbook-cta">
         <v-card class="playbook-cta__card" rounded="xl" elevation="0">
           <v-card-text class="playbook-cta__content">
             <div>
-              <span class="section-kicker">Proximo passo</span>
-              <h2>Compare as opcoes antes de assumir um custo que parece pequeno.</h2>
+              <span class="section-kicker">{{ t('contentExperience.playbooks.payNow.nextStepKicker') }}</span>
+              <h2>{{ t('contentExperience.playbooks.payNow.nextStepTitle') }}</h2>
             </div>
             <v-btn color="primary" size="large" class="playbook-cta__button" @click="goToScenario">
-              Criar cenario de pagamento
+              {{ t('contentExperience.playbooks.payNow.cta') }}
             </v-btn>
           </v-card-text>
         </v-card>
@@ -116,44 +111,38 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
+const { t, tm } = useI18n()
 
-const impactCards = [
+const impactCards = computed(() => [
   {
     icon: '💰',
-    title: 'Custo total muda',
-    description:
-      'Parcelar pode aumentar bastante o valor final pago por causa de juros, taxas e prazo.'
+    title: t('contentExperience.playbooks.payNow.impactCards.totalTitle'),
+    description: t('contentExperience.playbooks.payNow.impactCards.totalDescription')
   },
   {
     icon: '🧯',
-    title: 'Caixa ganha ou perde folga',
-    description:
-      'Pagar agora reduz o saldo imediatamente; parcelar preserva caixa no curto prazo, mas cria pressao recorrente.'
+    title: t('contentExperience.playbooks.payNow.impactCards.cashTitle'),
+    description: t('contentExperience.playbooks.payNow.impactCards.cashDescription')
   },
   {
     icon: '📊',
-    title: 'Previsibilidade importa',
-    description:
-      'A decisao boa nao e so a mais barata: e a que combina melhor com a estabilidade da sua receita.'
+    title: t('contentExperience.playbooks.payNow.impactCards.predictabilityTitle'),
+    description: t('contentExperience.playbooks.payNow.impactCards.predictabilityDescription')
   }
-]
+])
 
-const makesSenseItems = [
-  'Voce precisa preservar liquidez para operacao, folha ou compromissos mais urgentes.',
-  'O parcelamento mantem previsibilidade sem comprometer demais os proximos meses.',
-  'Existe incerteza de receita e segurar caixa reduz risco operacional.',
-  'Mesmo parcelando, o custo extra ainda fica dentro de uma faixa aceitavel.'
-]
+const makesSenseItems = computed(
+  () => tm('contentExperience.playbooks.payNow.makesSenseItems') as string[]
+)
 
-const doesNotMakeSenseItems = [
-  'Os juros tornam o parcelamento claramente pior sem oferecer alivio real no caixa.',
-  'Voce consegue pagar agora e ainda manter uma boa margem de seguranca.',
-  'A parcela parece pequena, mas se soma a outros compromissos fixos ja pesados.',
-  'A decisao esta sendo tomada por impulso, sem comparar alternativas com clareza.'
-]
+const doesNotMakeSenseItems = computed(
+  () => tm('contentExperience.playbooks.payNow.notMakesSenseItems') as string[]
+)
 
 function goToScenario() {
   void router.push('/planning/scenarios/debt/new?template=pay-now-or-installments')

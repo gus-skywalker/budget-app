@@ -10,7 +10,11 @@
       <div class="blog-article-view__topbar">
         <v-btn variant="text" color="primary" @click="goBack">
           <v-icon start>mdi-arrow-left</v-icon>
-          {{ isInAppShell ? 'Voltar ao Content Center' : 'Voltar ao blog' }}
+          {{
+            isInAppShell
+              ? t('contentExperience.blog.article.backApp')
+              : t('contentExperience.blog.article.backPublic')
+          }}
         </v-btn>
       </div>
 
@@ -22,8 +26,8 @@
 
       <v-card v-else class="blog-article-view__empty" rounded="xl" elevation="0">
         <v-card-text>
-          <h1>Template nao encontrado</h1>
-          <p>Esse slug ainda nao foi configurado no catalogo editorial.</p>
+          <h1>{{ t('contentExperience.blog.article.emptyTitle') }}</h1>
+          <p>{{ t('contentExperience.blog.article.emptyDescription') }}</p>
         </v-card-text>
       </v-card>
     </div>
@@ -32,14 +36,16 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import ContentArticleTemplate from '@/components/content/ContentArticleTemplate.vue'
 import { getBlogTemplateEntry } from '@/content/blogTemplates'
 
 const route = useRoute()
 const router = useRouter()
+const { t, locale } = useI18n()
 
-const entry = computed(() => getBlogTemplateEntry(String(route.params.slug || '')))
+const entry = computed(() => getBlogTemplateEntry(String(route.params.slug || ''), locale.value))
 const isInAppShell = computed(() => Boolean(route.meta?.requiresAuth))
 
 function goBack() {

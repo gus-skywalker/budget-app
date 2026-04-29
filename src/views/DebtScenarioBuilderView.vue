@@ -3,31 +3,28 @@
     <v-container class="modern-container debt-scenario-builder">
       <div class="page-header">
         <div>
-          <h1 class="page-title">Debt payment decision</h1>
-          <p class="page-subtitle">
-            Compare paying now versus splitting the remaining balance with clear cost and risk
-            trade-offs.
-          </p>
+          <h1 class="page-title">{{ t('contentExperience.planning.debtBuilder.title') }}</h1>
+          <p class="page-subtitle">{{ t('contentExperience.planning.debtBuilder.subtitle') }}</p>
         </div>
         <v-btn variant="text" color="#667eea" @click="router.push({ name: 'planning-scenarios' })">
           <v-icon start>mdi-arrow-left</v-icon>
-          Scenario list
+          {{ t('contentExperience.planning.scenarioBuilder.backToList') }}
         </v-btn>
       </div>
 
       <div class="wizard-shell">
         <div class="wizard-steps">
-          <span class="wizard-step">UC01 flow</span>
+          <span class="wizard-step">{{ t('contentExperience.planning.debtBuilder.stepFlow') }}</span>
           <v-progress-linear :model-value="progress" color="#667eea" height="8" rounded />
         </div>
 
         <section class="wizard-panel">
-          <h2>Step 1. Debt context</h2>
-          <p>Start with the obligation and the cash you already have available.</p>
+          <h2>{{ t('contentExperience.planning.debtBuilder.step1Title') }}</h2>
+          <p>{{ t('contentExperience.planning.debtBuilder.step1Description') }}</p>
 
           <v-text-field
             v-model="snapshot.scenarioName"
-            label="Title"
+            :label="t('contentExperience.planning.debtBuilder.titleField')"
             variant="outlined"
             density="comfortable"
             hide-details="auto"
@@ -35,7 +32,7 @@
           <div class="wizard-grid">
             <v-text-field
               v-model.number="snapshot.debtInput.totalAmount"
-              label="Total amount"
+              :label="t('contentExperience.planning.debtBuilder.totalAmount')"
               type="number"
               min="0"
               variant="outlined"
@@ -44,7 +41,7 @@
             />
             <v-text-field
               v-model.number="snapshot.debtInput.availableCash"
-              label="Available cash"
+              :label="t('contentExperience.planning.debtBuilder.availableCash')"
               type="number"
               min="0"
               variant="outlined"
@@ -57,12 +54,12 @@
         <section class="wizard-panel">
           <div class="panel-header">
             <div>
-              <h2>Step 2. Payment options</h2>
-              <p>Add at least two alternatives to compare cost, safety, and predictability.</p>
+              <h2>{{ t('contentExperience.planning.debtBuilder.step2Title') }}</h2>
+              <p>{{ t('contentExperience.planning.debtBuilder.step2Description') }}</p>
             </div>
             <v-btn variant="tonal" color="#667eea" @click="addOption">
               <v-icon start>mdi-plus</v-icon>
-              Add option
+              {{ t('contentExperience.planning.debtBuilder.addOption') }}
             </v-btn>
           </div>
 
@@ -73,7 +70,7 @@
               class="option-card"
             >
               <div class="option-card__header">
-                <strong>Option {{ index + 1 }}</strong>
+                <strong>{{ t('contentExperience.planning.debtBuilder.optionLabel', { index: index + 1 }) }}</strong>
                 <v-btn
                   v-if="snapshot.debtInput.options.length > 2"
                   icon
@@ -88,7 +85,7 @@
               <div class="wizard-grid">
                 <v-text-field
                   v-model="option.name"
-                  label="Option name"
+                  :label="t('contentExperience.planning.debtBuilder.optionName')"
                   variant="outlined"
                   density="comfortable"
                   hide-details="auto"
@@ -96,14 +93,14 @@
                 <v-select
                   v-model="option.type"
                   :items="optionTypes"
-                  label="Option type"
+                  :label="t('contentExperience.planning.debtBuilder.optionType')"
                   variant="outlined"
                   density="comfortable"
                   hide-details="auto"
                 />
                 <v-text-field
                   v-model.number="option.financedAmount"
-                  label="Financed amount"
+                  :label="t('contentExperience.planning.debtBuilder.financedAmount')"
                   type="number"
                   min="0"
                   variant="outlined"
@@ -112,7 +109,7 @@
                 />
                 <v-text-field
                   v-model.number="option.installments"
-                  label="Installments"
+                  :label="t('contentExperience.planning.debtBuilder.installments')"
                   type="number"
                   min="0"
                   variant="outlined"
@@ -121,7 +118,7 @@
                 />
                 <v-text-field
                   v-model.number="option.monthlyInterestRate"
-                  label="Monthly interest rate (%)"
+                  :label="t('contentExperience.planning.debtBuilder.monthlyInterestRate')"
                   type="number"
                   min="0"
                   step="0.01"
@@ -141,7 +138,7 @@
                 />
                 <v-text-field
                   v-model.number="option.totalInstallmentAmount"
-                  label="Total amount paid"
+                  :label="t('contentExperience.planning.debtBuilder.totalAmountPaid')"
                   type="number"
                   min="0"
                   step="0.01"
@@ -151,7 +148,7 @@
                 />
                 <v-text-field
                   v-model.number="option.expectedPayoffDays"
-                  label="Expected payoff days"
+                  :label="t('contentExperience.planning.debtBuilder.expectedPayoffDays')"
                   type="number"
                   min="0"
                   variant="outlined"
@@ -161,7 +158,7 @@
                 <v-select
                   v-model="option.liquidityCertainty"
                   :items="liquidityOptions"
-                  label="Liquidity certainty"
+                  :label="t('contentExperience.planning.debtBuilder.liquidityCertainty')"
                   variant="outlined"
                   density="comfortable"
                   hide-details="auto"
@@ -170,7 +167,7 @@
 
               <v-textarea
                 v-model="option.notes"
-                label="Notes"
+                :label="t('contentExperience.planning.debtBuilder.notes')"
                 rows="2"
                 variant="outlined"
                 density="comfortable"
@@ -181,14 +178,11 @@
         </section>
 
         <section class="wizard-panel">
-          <h2>Step 3. Compare</h2>
-          <p>
-            Run the simulation to see the cheapest option, the safest option, and the recommended
-            trade-off.
-          </p>
+          <h2>{{ t('contentExperience.planning.debtBuilder.step3Title') }}</h2>
+          <p>{{ t('contentExperience.planning.debtBuilder.step3Description') }}</p>
           <div class="compare-preview">
             <div class="summary-item">
-              <span>Debt remaining after cash</span>
+              <span>{{ t('contentExperience.planning.debtBuilder.debtRemainingAfterCash') }}</span>
               <strong>{{
                 formatCurrency(
                   Math.max(
@@ -200,18 +194,15 @@
               }}</strong>
             </div>
             <div class="summary-item">
-              <span>Options configured</span>
+              <span>{{ t('contentExperience.planning.debtBuilder.optionsConfigured') }}</span>
               <strong>{{ snapshot.debtInput.options.length }}</strong>
             </div>
           </div>
         </section>
 
         <section class="wizard-panel">
-          <h2>Step 4. Create decision</h2>
-          <p>
-            The result screen lets you save the scenario and create the decision using the existing
-            Decision flow.
-          </p>
+          <h2>{{ t('contentExperience.planning.debtBuilder.step4Title') }}</h2>
+          <p>{{ t('contentExperience.planning.debtBuilder.step4Description') }}</p>
         </section>
 
         <v-alert
@@ -225,11 +216,11 @@
 
         <div class="wizard-footer">
           <v-btn variant="text" @click="router.push({ name: 'planning-scenarios' })">
-            Cancel
+            {{ t('contentExperience.planning.debtBuilder.cancel') }}
           </v-btn>
           <v-btn color="#667eea" size="large" :loading="isSimulating" @click="simulate">
             <v-icon start>mdi-scale-balance</v-icon>
-            Compare options
+            {{ t('contentExperience.planning.debtBuilder.compareOptions') }}
           </v-btn>
         </div>
       </div>
@@ -239,6 +230,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import BudgetService from '@/services/BudgetService'
 import ScenarioService from '@/services/ScenarioService'
@@ -258,6 +250,7 @@ import {
 
 const router = useRouter()
 const route = useRoute()
+const { t, locale } = useI18n()
 
 const isSimulating = ref(false)
 const validationErrors = ref<string[]>([])
@@ -270,19 +263,31 @@ const requestedTemplate = computed(() =>
 )
 
 const optionTypes = [
-  { title: 'Installment', value: 'INSTALLMENT' },
-  { title: 'Short-term credit', value: 'SHORT_TERM_CREDIT' },
-  { title: 'Manual', value: 'MANUAL' }
+  {
+    title: t('contentExperience.planning.debtBuilder.optionTypes.installment'),
+    value: 'INSTALLMENT'
+  },
+  {
+    title: t('contentExperience.planning.debtBuilder.optionTypes.shortTermCredit'),
+    value: 'SHORT_TERM_CREDIT'
+  },
+  { title: t('contentExperience.planning.debtBuilder.optionTypes.manual'), value: 'MANUAL' }
 ]
 
 const liquidityOptions = [
-  { title: 'Certain', value: 'CERTAIN' },
-  { title: 'Uncertain', value: 'UNCERTAIN' },
-  { title: 'None', value: 'NONE' }
+  { title: t('contentExperience.planning.debtBuilder.liquidity.certain'), value: 'CERTAIN' },
+  {
+    title: t('contentExperience.planning.debtBuilder.liquidity.uncertain'),
+    value: 'UNCERTAIN'
+  },
+  { title: t('contentExperience.planning.debtBuilder.liquidity.none'), value: 'NONE' }
 ]
 
 const formatCurrency = (value: number) =>
-  Number(value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+  Number(value || 0).toLocaleString(locale.value === 'en' ? 'en-US' : 'pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  })
 
 const addOption = () => {
   snapshot.debtInput.options.push(createDebtOption())

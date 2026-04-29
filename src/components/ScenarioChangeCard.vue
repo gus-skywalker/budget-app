@@ -4,7 +4,7 @@
       <v-text-field
         :model-value="adjustment.label ?? ''"
         @update:model-value="$emit('update:label', $event)"
-        label="Label (optional)"
+        :label="t('contentExperience.planning.adjustmentCard.label')"
         variant="outlined"
         density="comfortable"
         hide-details="auto"
@@ -12,20 +12,29 @@
         :style="{ borderRadius: '8px' }"
       />
 
-      <button class="remove-btn" type="button" @click="$emit('remove')" aria-label="Remove change">
+      <button
+        class="remove-btn"
+        type="button"
+        @click="$emit('remove')"
+        :aria-label="t('contentExperience.planning.adjustmentCard.remove')"
+      >
         <v-icon size="20">mdi-delete-outline</v-icon>
       </button>
     </div>
 
     <div class="segmented-control">
       <button
-        v-for="option in ['INCOME', 'EXPENSE']"
+        v-for="option in flowOptions"
         :key="option"
         :class="['segment', { active: adjustment.flow === option }]"
         @click="$emit('update:flow', option)"
         type="button"
       >
-        {{ option.charAt(0) + option.slice(1).toLowerCase() }}
+        {{
+          option === 'INCOME'
+            ? t('contentExperience.planning.adjustmentCard.income')
+            : t('contentExperience.planning.adjustmentCard.expense')
+        }}
       </button>
     </div>
 
@@ -33,7 +42,7 @@
       <v-text-field
         :model-value="adjustment.monthlyChange"
         @update:model-value="$emit('update:monthlyChange', $event)"
-        label="Monthly change"
+        :label="t('contentExperience.planning.adjustmentCard.monthlyChange')"
         type="number"
         min="0"
         variant="outlined"
@@ -45,7 +54,7 @@
       <v-text-field
         :model-value="adjustment.oneTimeChange"
         @update:model-value="$emit('update:oneTimeChange', $event)"
-        label="One-time change"
+        :label="t('contentExperience.planning.adjustmentCard.oneTimeChange')"
         type="number"
         min="0"
         variant="outlined"
@@ -59,6 +68,8 @@
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
 defineProps<{
   adjustment: {
     label?: string
@@ -67,6 +78,8 @@ defineProps<{
     oneTimeChange: number
   }
 }>()
+const { t } = useI18n()
+const flowOptions = ['INCOME', 'EXPENSE'] as const
 defineEmits([
   'update:label',
   'update:flow',

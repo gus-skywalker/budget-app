@@ -10,11 +10,11 @@
           <img src="/logo.jpg" alt="CoBudget" class="brand-logo" />
           <span class="brand-copy">
             <strong>CoBudget</strong>
-            <small>Blog</small>
+            <small>{{ t('contentExperience.common.blog') }}</small>
           </span>
         </button>
 
-        <nav class="blog-nav" aria-label="Blog">
+        <nav class="blog-nav" :aria-label="t('contentExperience.common.blog')">
           <button
             v-for="item in headerLinks"
             :key="item.id"
@@ -28,10 +28,10 @@
 
         <div class="blog-header__actions">
           <button class="btn btn-ghost" type="button" @click="navigateToPath('/login')">
-            Entrar
+            {{ t('landingPage.auth.login') }}
           </button>
           <button class="btn btn-primary" type="button" @click="navigateToPath('/choose-plan')">
-            Comecar
+            {{ t('contentExperience.common.start') }}
           </button>
         </div>
       </div>
@@ -46,13 +46,10 @@
         <div class="shell">
           <div class="section-heading section-heading--split">
             <div>
-              <span class="section-kicker">Playbooks</span>
-              <h2>Fluxos guiados para decisoes importantes</h2>
+              <span class="section-kicker">{{ t('contentExperience.blog.playbooks.kicker') }}</span>
+              <h2>{{ t('contentExperience.blog.playbooks.title') }}</h2>
             </div>
-            <p>
-              Nao e um blog tradicional. Aqui o conteudo existe para ajudar voce a sair da leitura e
-              entrar numa simulacao ou numa decisao real.
-            </p>
+            <p>{{ t('contentExperience.blog.playbooks.description') }}</p>
           </div>
 
           <div class="playbook-grid">
@@ -62,7 +59,7 @@
               <p>{{ item.description }}</p>
               <div class="playbook-card__actions">
                 <button class="btn btn-primary" type="button" @click="navigateToPath(item.path)">
-                  Abrir playbook
+                  {{ t('contentExperience.common.playbook') }}
                 </button>
               </div>
             </article>
@@ -74,20 +71,22 @@
         <div class="shell hero__grid">
           <div class="hero__copy">
             <span class="eyebrow">{{
-              isInAppShell ? 'Biblioteca CoBudget' : 'Inbound em construcao'
+              isInAppShell
+                ? t('contentExperience.blog.hero.eyebrowApp')
+                : t('contentExperience.blog.hero.eyebrowPublic')
             }}</span>
             <h1>
               {{
                 isInAppShell
-                  ? 'Aprenda dentro do produto e avance com mais clareza nas proximas decisoes.'
-                  : 'Conteudo para quem precisa tomar decisoes financeiras melhores, com menos ruído.'
+                  ? t('contentExperience.blog.hero.titleApp')
+                  : t('contentExperience.blog.hero.titlePublic')
               }}
             </h1>
             <p class="hero__lead">
               {{
                 isInAppShell
-                  ? 'Aqui o blog funciona como centro de conteudo do CoBudget: artigos, guias e playbooks para usar melhor cenarios, decisoes e rituais financeiros no dia a dia.'
-                  : 'O blog do CoBudget nasce para educar, gerar demanda e mostrar como planejamento, cenarios e decisoes podem virar uma rotina mais clara para times e familias.'
+                  ? t('contentExperience.blog.hero.leadApp')
+                  : t('contentExperience.blog.hero.leadPublic')
               }}
             </p>
 
@@ -99,14 +98,22 @@
                   isInAppShell ? navigateToPath('/planning/scenarios') : scrollToSection('featured')
                 "
               >
-                {{ isInAppShell ? 'Ir para cenarios' : 'Ler destaque' }}
+                {{
+                  isInAppShell
+                    ? t('contentExperience.blog.hero.ctaPrimaryApp')
+                    : t('contentExperience.blog.hero.ctaPrimaryPublic')
+                }}
               </button>
               <button
                 class="btn btn-secondary btn-large"
                 type="button"
                 @click="isInAppShell ? navigateToPath('/decisions') : scrollToSection('posts')"
               >
-                {{ isInAppShell ? 'Abrir decisoes' : 'Ver artigos' }}
+                {{
+                  isInAppShell
+                    ? t('contentExperience.blog.hero.ctaSecondaryApp')
+                    : t('contentExperience.blog.hero.ctaSecondaryPublic')
+                }}
               </button>
             </div>
 
@@ -118,31 +125,35 @@
           <div class="hero__panel">
             <div class="hero__panel-card hero__panel-card--accent">
               <span class="panel-label">{{
-                isInAppShell ? 'Agora no produto' : 'Serie editorial'
+                isInAppShell
+                  ? t('contentExperience.blog.panel.labelApp')
+                  : t('contentExperience.blog.panel.labelPublic')
               }}</span>
               <strong>{{
                 isInAppShell
-                  ? 'Conteudo conectado ao uso do app'
-                  : 'Decisoes melhores em 10 minutos'
+                  ? t('contentExperience.blog.panel.titleApp')
+                  : t('contentExperience.blog.panel.titlePublic')
               }}</strong>
               <p>
                 {{
                   isInAppShell
-                    ? 'Recomendacoes objetivas para sair da leitura e aplicar no fluxo de cenarios, decisoes e planejamento.'
-                    : 'Guias praticos para transformar duvidas financeiras em proximos passos claros.'
+                    ? t('contentExperience.blog.panel.bodyApp')
+                    : t('contentExperience.blog.panel.bodyPublic')
                 }}
               </p>
             </div>
             <div class="hero__panel-card">
-              <span class="panel-label">Formato</span>
+              <span class="panel-label">{{ t('contentExperience.blog.panel.format') }}</span>
               <strong>{{
-                isInAppShell ? 'Guias aplicados ao produto' : 'Guias, comparativos e playbooks'
+                isInAppShell
+                  ? t('contentExperience.blog.panel.formatTitleApp')
+                  : t('contentExperience.blog.panel.formatTitlePublic')
               }}</strong>
               <p>
                 {{
                   isInAppShell
-                    ? 'Leituras curtas para orientar a proxima acao dentro da conta.'
-                    : 'Conteudo curto, visual e com linguagem de produto.'
+                    ? t('contentExperience.blog.panel.formatBodyApp')
+                    : t('contentExperience.blog.panel.formatBodyPublic')
                 }}
               </p>
             </div>
@@ -159,12 +170,16 @@
       <section id="featured" class="section-spacing">
         <div class="shell">
           <div class="section-heading">
-            <span class="section-kicker">{{ isInAppShell ? 'Guia recomendado' : 'Destaque' }}</span>
+            <span class="section-kicker">{{
+              isInAppShell
+                ? t('contentExperience.blog.featured.kickerApp')
+                : t('contentExperience.blog.featured.kickerPublic')
+            }}</span>
             <h2>
               {{
                 isInAppShell
-                  ? 'Um ponto de partida para usar cenarios e decisoes com mais confianca'
-                  : 'O primeiro grande bloco editorial do CoBudget'
+                  ? t('contentExperience.blog.featured.titleApp')
+                  : t('contentExperience.blog.featured.titlePublic')
               }}
             </h2>
           </div>
@@ -181,17 +196,16 @@
               </div>
 
               <button class="btn btn-primary" type="button" @click="openArticle(featuredPost.slug)">
-                Abrir template
+                {{ t('contentExperience.common.contentTemplate') }}
               </button>
             </div>
 
             <div class="featured-story__rail">
               <div class="quote-card">
-                <span class="quote-card__label">Angulo editorial</span>
-                <p>
-                  “Em vez de falar apenas sobre controle financeiro, vamos mostrar como decidir com
-                  mais contexto, mais colaboracao e menos impulso.”
-                </p>
+                <span class="quote-card__label">{{
+                  t('contentExperience.blog.featured.quoteLabel')
+                }}</span>
+                <p>{{ t('contentExperience.blog.featured.quote') }}</p>
               </div>
 
               <div class="mini-stack">
@@ -210,21 +224,23 @@
           <div class="section-heading section-heading--split">
             <div>
               <span class="section-kicker">{{
-                isInAppShell ? 'Leituras praticas' : 'Biblioteca inicial'
+                isInAppShell
+                  ? t('contentExperience.blog.posts.kickerApp')
+                  : t('contentExperience.blog.posts.kickerPublic')
               }}</span>
               <h2>
                 {{
-                  isInAppShell
-                    ? 'Artigos para aprofundar o uso do produto'
-                    : 'Uma grade de conteudo pronta para crescer'
-                }}
+                isInAppShell
+                  ? t('contentExperience.blog.posts.titleApp')
+                  : t('contentExperience.blog.posts.titlePublic')
+              }}
               </h2>
             </div>
             <p>
               {{
                 isInAppShell
-                  ? 'Conteudo pensado para onboarding continuo, educacao de funcionalidades e melhor tomada de decisao.'
-                  : 'Pensada para SEO, educacao de produto e captacao de pessoas que ainda estao entendendo o problema.'
+                  ? t('contentExperience.blog.posts.descriptionApp')
+                  : t('contentExperience.blog.posts.descriptionPublic')
               }}
             </p>
           </div>
@@ -239,7 +255,7 @@
                 <span>{{ post.stage }}</span>
               </div>
               <button class="post-card__link" type="button" @click="openArticle(post.slug)">
-                Abrir template
+                {{ t('contentExperience.common.contentTemplate') }}
               </button>
             </article>
           </div>
@@ -250,13 +266,15 @@
         <div class="shell">
           <div class="section-heading">
             <span class="section-kicker">{{
-              isInAppShell ? 'O que voce vai aprender aqui' : 'Pilares de conteudo'
+              isInAppShell
+                ? t('contentExperience.blog.pillars.kickerApp')
+                : t('contentExperience.blog.pillars.kickerPublic')
             }}</span>
             <h2>
               {{
                 isInAppShell
-                  ? 'Os temas que mais ajudam a transformar uso em clareza'
-                  : 'O que esse blog vai ensinar com consistencia'
+                  ? t('contentExperience.blog.pillars.titleApp')
+                  : t('contentExperience.blog.pillars.titlePublic')
               }}
             </h2>
           </div>
@@ -278,35 +296,43 @@
           <div class="newsletter-card">
             <div>
               <span class="section-kicker">{{
-                isInAppShell ? 'Aprendizado continuo' : 'Captura de demanda'
+                isInAppShell
+                  ? t('contentExperience.blog.newsletter.kickerApp')
+                  : t('contentExperience.blog.newsletter.kickerPublic')
               }}</span>
               <h2>
                 {{
-                  isInAppShell
-                    ? 'Salve seu interesse para os proximos guias e novidades do produto'
-                    : 'Receba os proximos artigos e playbooks do CoBudget'
+                isInAppShell
+                    ? t('contentExperience.blog.newsletter.titleApp')
+                    : t('contentExperience.blog.newsletter.titlePublic')
                 }}
               </h2>
               <p>
                 {{
-                  isInAppShell
-                    ? 'No app, essa area pode evoluir para recomendacoes, novidades e conteudo orientado ao que a pessoa ainda nao explorou.'
-                    : 'A ideia aqui e transformar a pagina de blog numa maquina simples de descoberta, recorrencia e confianca.'
+                isInAppShell
+                    ? t('contentExperience.blog.newsletter.descriptionApp')
+                    : t('contentExperience.blog.newsletter.descriptionPublic')
                 }}
               </p>
             </div>
 
             <form class="newsletter-form" @submit.prevent="handleNewsletterSubmit">
-              <label class="sr-only" for="newsletter-email">Seu melhor e-mail</label>
+              <label class="sr-only" for="newsletter-email">{{
+                t('contentExperience.blog.newsletter.emailLabel')
+              }}</label>
               <input
                 id="newsletter-email"
                 v-model="newsletterEmail"
                 type="email"
-                placeholder="Seu melhor e-mail"
+                :placeholder="t('contentExperience.blog.newsletter.emailPlaceholder')"
                 required
               />
               <button class="btn btn-primary" type="submit" :disabled="isSubmittingNewsletter">
-                {{ isSubmittingNewsletter ? 'Enviando...' : 'Quero acompanhar' }}
+                {{
+                  isSubmittingNewsletter
+                    ? t('contentExperience.blog.newsletter.submitting')
+                    : t('contentExperience.blog.newsletter.cta')
+                }}
               </button>
               <div
                 v-if="newsletterConfirmation"
@@ -318,10 +344,10 @@
                   <span class="newsletter-confirmation__icon">✓</span>
                 </div>
                 <div class="newsletter-confirmation__content">
-                  <strong>Tudo certo por aqui.</strong>
+                  <strong>{{ t('contentExperience.blog.newsletter.successTitle') }}</strong>
                   <p>{{ newsletterSuccessMessage }}</p>
                   <span class="newsletter-confirmation__hint">
-                    Quando publicarmos algo novo, voce vai saber primeiro.
+                    {{ t('contentExperience.blog.newsletter.successHint') }}
                   </span>
                 </div>
               </div>
@@ -341,16 +367,18 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import {
-  blogTemplateEntries,
   featuredBlogTemplateSlug,
+  getBlogTemplateEntries,
   getBlogTemplateEntry
 } from '@/content/blogTemplates'
 import NotificationService, { type ContactSubmissionResponse } from '@/services/NotificationService'
 
 const router = useRouter()
 const route = useRoute()
+const { t, locale } = useI18n()
 const newsletterEmail = ref('')
 const isSubmittingNewsletter = ref(false)
 const newsletterSuccessMessage = ref('')
@@ -358,35 +386,44 @@ const newsletterErrorMessage = ref('')
 const newsletterConfirmation = ref<ContactSubmissionResponse | null>(null)
 const isInAppShell = computed(() => Boolean(route.meta?.requiresAuth))
 
-const headerLinks = [
-  { id: 'featured', label: 'Destaque' },
-  { id: 'posts', label: 'Artigos' },
-  { id: 'pillars', label: 'Pilares' },
-  { id: 'newsletter', label: 'Newsletter' }
-]
+const headerLinks = computed(() => [
+  { id: 'featured', label: t('contentExperience.blog.headerLinks.featured') },
+  { id: 'posts', label: t('contentExperience.blog.headerLinks.posts') },
+  { id: 'pillars', label: t('contentExperience.blog.headerLinks.pillars') },
+  { id: 'newsletter', label: t('contentExperience.blog.headerLinks.newsletter') }
+])
 
-const topicChips = ['Planejamento', 'Cenarios', 'Decisoes', 'Fluxo de caixa', 'Familias', 'Times']
+const topicChips = computed(() => [
+  t('contentExperience.blog.topics.planning'),
+  t('contentExperience.blog.topics.scenarios'),
+  t('contentExperience.blog.topics.decisions'),
+  t('contentExperience.blog.topics.cashflow'),
+  t('contentExperience.blog.topics.families'),
+  t('contentExperience.blog.topics.teams')
+])
 
 const metrics = computed(() => [
-  { label: 'Temas centrais', value: '6' },
-  { label: 'Artigos iniciais', value: '8' },
+  { label: t('contentExperience.blog.metrics.themes'), value: '6' },
+  { label: t('contentExperience.blog.metrics.articles'), value: '8' },
   {
-    label: 'Objetivo',
-    value: isInAppShell.value ? 'Ativacao + educacao' : 'Descoberta + confianca'
+    label: t('contentExperience.blog.metrics.goal'),
+    value: isInAppShell.value
+      ? t('contentExperience.blog.metrics.goalApp')
+      : t('contentExperience.blog.metrics.goalPublic')
   }
 ])
 
 const featuredPost = computed(
   () =>
-    getBlogTemplateEntry(featuredBlogTemplateSlug) || {
+    getBlogTemplateEntry(featuredBlogTemplateSlug, locale.value) || {
       slug: 'template',
-      category: 'Template',
-      title: 'Template de destaque',
-      excerpt: 'Defina aqui o template editorial que deve aparecer em destaque.',
-      readTime: '0 min',
-      stage: 'Planejamento',
-      audience: 'Equipe de conteudo',
-      ctaLabel: 'Abrir template',
+      category: t('contentExperience.blog.fallback.category'),
+      title: t('contentExperience.blog.fallback.title'),
+      excerpt: t('contentExperience.blog.fallback.excerpt'),
+      readTime: t('contentExperience.blog.fallback.readTime'),
+      stage: t('contentExperience.blog.fallback.stage'),
+      audience: t('contentExperience.blog.fallback.audience'),
+      ctaLabel: t('contentExperience.common.contentTemplate'),
       ctaPath: '/blog',
       heroPrompt: '',
       summaryPrompt: '',
@@ -395,54 +432,55 @@ const featuredPost = computed(
     }
 )
 
-const featuredSupporting = [
-  { category: 'Cenario', title: 'Quando simular antes de decidir muda completamente o resultado' },
+const featuredSupporting = computed(() => [
   {
-    category: 'Metodo',
-    title: 'O erro de comparar opcao barata com opcao segura como se fossem iguais'
+    category: t('contentExperience.blog.supporting.firstCategory'),
+    title: t('contentExperience.blog.supporting.firstTitle')
   },
   {
-    category: 'Colaboracao',
-    title: 'Como alinhar uma decisao financeira sem virar reuniao infinita'
+    category: t('contentExperience.blog.supporting.secondCategory'),
+    title: t('contentExperience.blog.supporting.secondTitle')
+  },
+  {
+    category: t('contentExperience.blog.supporting.thirdCategory'),
+    title: t('contentExperience.blog.supporting.thirdTitle')
   }
-]
+])
 
-const posts = computed(() => blogTemplateEntries)
+const posts = computed(() => getBlogTemplateEntries(locale.value))
 
-const pillars = [
+const pillars = computed(() => [
   {
     icon: 'mdi-lightbulb-on-outline',
-    title: 'Decisoes antes de automacao',
-    description:
-      'Explicacoes praticas para quem precisa decidir melhor antes de sofisticar ferramentas.'
+    title: t('contentExperience.blog.pillarsCards.firstTitle'),
+    description: t('contentExperience.blog.pillarsCards.firstDescription')
   },
   {
     icon: 'mdi-chart-timeline-variant',
-    title: 'Cenarios que ajudam a enxergar risco',
-    description: 'Conteudo que ensina a comparar caminhos e a antecipar impacto mensal com clareza.'
+    title: t('contentExperience.blog.pillarsCards.secondTitle'),
+    description: t('contentExperience.blog.pillarsCards.secondDescription')
   },
   {
     icon: 'mdi-account-group-outline',
-    title: 'Colaboracao financeira sem caos',
-    description:
-      'Materiais sobre alinhamento entre socios, equipes e familias ao redor da mesma decisao.'
+    title: t('contentExperience.blog.pillarsCards.thirdTitle'),
+    description: t('contentExperience.blog.pillarsCards.thirdDescription')
   }
-]
+])
 
-const playbookEntries = [
+const playbookEntries = computed(() => [
   {
-    category: 'Contratacao',
-    title: 'Posso contratar agora?',
-    description: 'Veja se seu caixa suporta uma nova contratacao antes de decidir.',
+    category: t('contentExperience.blog.playbookCards.hireCategory'),
+    title: t('contentExperience.blog.playbookCards.hireTitle'),
+    description: t('contentExperience.blog.playbookCards.hireDescription'),
     path: '/app/blog/playbooks/hire'
   },
   {
-    category: 'Parcelamento',
-    title: 'Vale parcelar ou pagar agora?',
-    description: 'Compare custo, liquidez e previsibilidade antes de escolher como quitar.',
+    category: t('contentExperience.blog.playbookCards.payCategory'),
+    title: t('contentExperience.blog.playbookCards.payTitle'),
+    description: t('contentExperience.blog.playbookCards.payDescription'),
     path: '/app/blog/playbooks/pay-now-or-installments'
   }
-]
+])
 
 function navigateToPath(path: string) {
   void router.push(path)
@@ -465,7 +503,7 @@ async function handleNewsletterSubmit() {
   newsletterConfirmation.value = null
 
   if (!newsletterEmail.value.includes('@')) {
-    newsletterErrorMessage.value = 'Informe um e-mail valido para acompanhar os proximos conteudos.'
+    newsletterErrorMessage.value = t('contentExperience.blog.newsletter.invalidEmail')
     return
   }
 
@@ -485,12 +523,14 @@ async function handleNewsletterSubmit() {
       contextPath: route.fullPath
     })
     newsletterConfirmation.value = response.data
-    newsletterSuccessMessage.value = `Obrigado! Vamos avisar em ${newsletterEmail.value.trim()} quando os proximos conteudos sairem.`
+    newsletterSuccessMessage.value = t('contentExperience.blog.newsletter.successMessage', {
+      email: newsletterEmail.value.trim()
+    })
     newsletterEmail.value = ''
   } catch (error: any) {
     console.error('Erro ao enviar inscricao do blog:', error)
     newsletterErrorMessage.value =
-      error?.response?.data?.error || 'Nao foi possivel registrar seu interesse agora.'
+      error?.response?.data?.error || t('contentExperience.blog.newsletter.error')
   } finally {
     isSubmittingNewsletter.value = false
   }

@@ -14,7 +14,7 @@
             @click="router.push({ name: 'planning-scenarios' })"
           >
             <v-icon start>mdi-arrow-left</v-icon>
-            Scenario list
+            {{ t('contentExperience.planning.scenarioBuilder.backToList') }}
           </v-btn>
           <v-btn variant="tonal" color="#667eea" @click="startNewScenario()">
             <v-icon start>mdi-file-plus-outline</v-icon>
@@ -25,12 +25,13 @@
 
       <div class="wizard-shell">
         <v-alert v-if="showImmutableNotice" type="info" variant="tonal" density="comfortable">
-          This scenario already has team votes. We created a new version draft so the original
-          decision trail stays intact.
+          {{ t('contentExperience.planning.scenarioBuilder.immutableNotice') }}
         </v-alert>
 
         <div class="wizard-steps">
-          <span class="wizard-step">Step {{ step }} of 4</span>
+          <span class="wizard-step">{{
+            t('contentExperience.planning.scenarioBuilder.stepCounter', { step })
+          }}</span>
           <v-progress-linear
             :model-value="(step / 4) * 100"
             color="#667eea"
@@ -55,19 +56,19 @@
 
         <template v-else>
           <section v-show="step === 1" class="wizard-panel">
-            <h2>Current budget context</h2>
-            <p>Use this as a baseline. Changes are configured in the next steps.</p>
+            <h2>{{ t('contentExperience.planning.scenarioBuilder.currentBudgetTitle') }}</h2>
+            <p>{{ t('contentExperience.planning.scenarioBuilder.currentBudgetDescription') }}</p>
             <div class="metrics-grid">
               <div class="metric-card">
-                <span>Total income</span>
+                <span>{{ t('contentExperience.planning.scenarioBuilder.totalIncome') }}</span>
                 <strong>{{ formatCurrency(activeBudget.totalIncome) }}</strong>
               </div>
               <div class="metric-card">
-                <span>Total expense</span>
+                <span>{{ t('contentExperience.planning.scenarioBuilder.totalExpense') }}</span>
                 <strong>{{ formatCurrency(activeBudget.totalExpense) }}</strong>
               </div>
               <div class="metric-card">
-                <span>Net</span>
+                <span>{{ t('contentExperience.planning.scenarioBuilder.net') }}</span>
                 <strong :class="{ 'negative-value': activeBudget.net < 0 }">{{
                   formatCurrency(activeBudget.net)
                 }}</strong>
@@ -76,8 +77,8 @@
           </section>
 
           <section v-show="step === 2" class="wizard-panel">
-            <h2>Choose your intent</h2>
-            <p>Pick one template to pre-fill your scenario.</p>
+            <h2>{{ t('contentExperience.planning.scenarioBuilder.chooseIntentTitle') }}</h2>
+            <p>{{ t('contentExperience.planning.scenarioBuilder.chooseIntentDescription') }}</p>
             <div class="template-grid">
               <button
                 v-for="template in templates"
@@ -97,8 +98,8 @@
           </section>
 
           <section v-show="step === 3" class="wizard-panel">
-            <h2>Simple adjustments</h2>
-            <p>Set only what changes. No technical fields required.</p>
+            <h2>{{ t('contentExperience.planning.scenarioBuilder.simpleAdjustmentsTitle') }}</h2>
+            <p>{{ t('contentExperience.planning.scenarioBuilder.simpleAdjustmentsDescription') }}</p>
 
             <v-text-field
               v-model="snapshot.scenarioName"
@@ -143,11 +144,11 @@
                   class="add-change-btn"
                 >
                   <v-icon start>mdi-plus</v-icon>
-                  Add change
+                  {{ t('contentExperience.planning.scenarioBuilder.addChange') }}
                 </v-btn>
               </div>
               <div class="impact-estimate">
-                <span>Estimated monthly impact</span>
+                <span>{{ t('contentExperience.planning.scenarioBuilder.estimatedMonthlyImpact') }}</span>
                 <strong
                   :class="{
                     'positive-value': estimatedImpact > 0,
@@ -165,7 +166,7 @@
                   @click="step = Math.min(4, step + 1)"
                   class="primary-next-btn"
                 >
-                  Next
+                  {{ t('contentExperience.planning.scenarioBuilder.next') }}
                   <v-icon end>mdi-arrow-right</v-icon>
                 </v-btn>
               </div>
@@ -173,20 +174,24 @@
           </section>
 
           <section v-show="step === 4" class="wizard-panel">
-            <h2>Ready to simulate</h2>
-            <p>We will run your scenario and show the decision-focused result.</p>
+            <h2>{{ t('contentExperience.planning.scenarioBuilder.readyTitle') }}</h2>
+            <p>{{ t('contentExperience.planning.scenarioBuilder.readyDescription') }}</p>
 
             <div class="review-box">
               <div>
-                <span>Scenario</span>
+                <span>{{ t('contentExperience.planning.scenarioBuilder.reviewScenario') }}</span>
                 <strong>{{ snapshot.scenarioName || t('planning.scenarios.default_name') }}</strong>
               </div>
               <div>
-                <span>Time horizon</span>
-                <strong>{{ snapshot.months }} months</strong>
+                <span>{{ t('contentExperience.planning.scenarioBuilder.reviewTimeHorizon') }}</span>
+                <strong>{{
+                  t('contentExperience.planning.scenarioBuilder.monthsLabel', {
+                    count: snapshot.months
+                  })
+                }}</strong>
               </div>
               <div>
-                <span>Active changes</span>
+                <span>{{ t('contentExperience.planning.scenarioBuilder.reviewActiveChanges') }}</span>
                 <strong>{{ activeChangesCount }}</strong>
               </div>
             </div>
@@ -199,7 +204,7 @@
               @click="simulate"
             >
               <v-icon start>mdi-chart-line-variant</v-icon>
-              Simulate scenario
+              {{ t('contentExperience.planning.scenarioBuilder.simulate') }}
             </v-btn>
           </section>
 
@@ -210,7 +215,7 @@
               @click="step = Math.max(1, step - 1)"
             >
               <v-icon start>mdi-arrow-left</v-icon>
-              Back
+              {{ t('contentExperience.planning.scenarioBuilder.back') }}
             </v-btn>
             <v-btn
               color="#667eea"
@@ -218,7 +223,7 @@
               :disabled="step === 4 || isSimulating"
               @click="step = Math.min(4, step + 1)"
             >
-              Next
+              {{ t('contentExperience.planning.scenarioBuilder.next') }}
               <v-icon end>mdi-arrow-right</v-icon>
             </v-btn>
           </div>
