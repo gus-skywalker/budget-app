@@ -32,6 +32,25 @@ export interface NotificationPreferenceUpdate {
   emailEnabled?: boolean
 }
 
+export interface ContactFormRequest {
+  name: string
+  email: string
+  message: string
+  source?: string
+  originLabel?: string
+  contextPath?: string
+}
+
+export interface ContactSubmissionResponse {
+  submissionId: number
+  email: string
+  source: string
+  originLabel?: string | null
+  emailDeliveryStatus: string
+  submittedAt?: string | null
+  message: string
+}
+
 const API_URL = `${import.meta.env.VITE_API_BASE_URL}/notifications`
 
 const NotificationService = {
@@ -63,7 +82,7 @@ const NotificationService = {
   sendEmailWithAttachment(request: any): Promise<any> {
     return axiosInterceptor.post(`${API_URL}/sendEmail/attachment`, request)
   },
-  sendContactForm(contactData: { name: string; email: string; message: string }): Promise<any> {
+  sendContactForm(contactData: ContactFormRequest): Promise<{ data: ContactSubmissionResponse }> {
     return axiosInterceptor.post(`${API_URL}/contact`, contactData)
   },
   getPreferences(): Promise<{ data: NotificationPreferenceMap }> {

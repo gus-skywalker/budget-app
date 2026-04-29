@@ -49,10 +49,30 @@ declare module '@/services/NotificationService' {
     emailEnabled?: boolean
   }
 
+  export interface ContactFormRequest {
+    name: string
+    email: string
+    message: string
+    source?: string
+    originLabel?: string
+    contextPath?: string
+  }
+
+  export interface ContactSubmissionResponse {
+    submissionId: number
+    email: string
+    source: string
+    originLabel?: string | null
+    emailDeliveryStatus: string
+    submittedAt?: string | null
+    message: string
+  }
+
   export function accept(notificationId: number): Promise<void>
   export function decline(notificationId: number): Promise<void>
   export function getNotifications(): Promise<{ data: any[] }>
   export function sendEmail(notification: ExpenseNotification): Promise<void>
+  export function sendContactForm(contactData: ContactFormRequest): Promise<{ data: ContactSubmissionResponse }>
   export function updateAlertSettings(settings: UserSettings): Promise<void>
   export function getAlertSettings(): Promise<UserSettings>
   export function getPreferences(): Promise<{ data: NotificationPreferenceMap }>

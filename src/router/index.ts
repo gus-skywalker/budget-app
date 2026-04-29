@@ -1,5 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import LandingPage from '@/views/LandingPage.vue'
+import BlogView from '@/views/BlogView.vue'
+import BlogArticleView from '@/views/BlogArticleView.vue'
+import PlaybookHire from '@/components/playbooks/PlaybookHire.vue'
+import PlaybookPayNowOrInstallments from '@/components/playbooks/PlaybookPayNowOrInstallments.vue'
 import HomeView from '@/views/HomeView.vue'
 import WelcomeView from '@/views/WelcomeView.vue'
 import BudgetView from '@/views/BudgetView.vue'
@@ -179,6 +183,45 @@ const router = createRouter({
       component: LandingPage
     },
     {
+      path: '/landing',
+      name: 'landing-alias',
+      component: LandingPage
+    },
+    {
+      path: '/blog',
+      name: 'blog',
+      component: BlogView
+    },
+    {
+      path: '/blog/articles/:slug',
+      name: 'blog-article',
+      component: BlogArticleView
+    },
+    {
+      path: '/app/blog',
+      name: 'blog-app',
+      component: BlogView,
+      meta: { requiresAuth: true, requiresWorkspace: true }
+    },
+    {
+      path: '/app/blog/articles/:slug',
+      name: 'blog-app-article',
+      component: BlogArticleView,
+      meta: { requiresAuth: true, requiresWorkspace: true }
+    },
+    {
+      path: '/app/blog/playbooks/hire',
+      name: 'blog-playbook-hire',
+      component: PlaybookHire,
+      meta: { requiresAuth: true, requiresWorkspace: true }
+    },
+    {
+      path: '/app/blog/playbooks/pay-now-or-installments',
+      name: 'blog-playbook-pay-now-or-installments',
+      component: PlaybookPayNowOrInstallments,
+      meta: { requiresAuth: true, requiresWorkspace: true }
+    },
+    {
       path: '/home',
       name: 'home',
       component: HomeView,
@@ -298,7 +341,7 @@ router.beforeEach((to, from, next) => {
     if (to.path !== '/login') {
       query.redirect = to.path
     }
-    next({ 
+    next({
       name: 'login',
       query: query
     })
@@ -306,7 +349,10 @@ router.beforeEach((to, from, next) => {
   }
 
   if (isAuthenticated && to.name === 'select-workspace' && !hasWorkspaces) {
-    next({ name: 'create-workspace', query: { redirect: (to.query.redirect as string) || '/decisions' } })
+    next({
+      name: 'create-workspace',
+      query: { redirect: (to.query.redirect as string) || '/decisions' }
+    })
     return
   }
 
@@ -349,7 +395,7 @@ router.beforeEach((to, from, next) => {
     const redirect = to.query.redirect || '/decisions'
     const query = { ...to.query }
     delete query.redirect // Remove redirect da query
-    next({ 
+    next({
       path: redirect as string,
       query: query
     })

@@ -247,6 +247,7 @@ import {
   clearDebtSnapshot,
   createDebtOption,
   createDebtSnapshot,
+  debtScenarioTemplates,
   loadDebtSnapshot,
   normalizeDebtSnapshot,
   saveDebtSnapshot,
@@ -262,6 +263,11 @@ const isSimulating = ref(false)
 const validationErrors = ref<string[]>([])
 const progress = 100
 const snapshot = reactive<DebtScenarioSnapshot>(createDebtSnapshot())
+const requestedTemplate = computed(() =>
+  String(route.query.template || '')
+    .trim()
+    .toLowerCase()
+)
 
 const optionTypes = [
   { title: 'Installment', value: 'INSTALLMENT' },
@@ -284,6 +290,21 @@ const addOption = () => {
 
 const removeOption = (index: number) => {
   snapshot.debtInput.options.splice(index, 1)
+}
+
+const applyRouteTemplate = () => {
+  const templateMap: Record<string, keyof typeof debtScenarioTemplates> = {
+    'pay-now-or-installments': 'pay_now_or_installments',
+    pay_now_or_installments: 'pay_now_or_installments',
+    payment: 'pay_now_or_installments'
+  }
+  const templateKey = templateMap[requestedTemplate.value]
+  if (!templateKey) return false
+
+  const templatedSnapshot = debtScenarioTemplates[templateKey]()
+  templatedSnapshot.budgetId = snapshot.budgetId
+  Object.assign(snapshot, normalizeDebtSnapshot(templatedSnapshot))
+  return true
 }
 
 const simulate = async () => {
@@ -355,10 +376,12 @@ onMounted(async () => {
   const restored = loadDebtSnapshot()
   if (restored) {
     Object.assign(snapshot, restored)
+    applyRouteTemplate()
     return
   }
 
   clearDebtSnapshot()
+  applyRouteTemplate()
 })
 
 watch(

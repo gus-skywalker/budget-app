@@ -5,7 +5,7 @@ import {
   type DebtPaymentScenarioInput,
   type ScenarioSourceType,
   type ScenarioSimulationRequest,
-  type SavedScenario,
+  type SavedScenario
 } from '@/services/ScenarioService'
 
 export type DebtScenarioSnapshot = {
@@ -19,7 +19,9 @@ export type DebtScenarioSnapshot = {
 
 const STORAGE_KEY = 'planning-debt-scenario-wizard-v1'
 
-export const createDebtOption = (defaults?: Partial<DebtPaymentOptionInput>): DebtPaymentOptionInput => ({
+export const createDebtOption = (
+  defaults?: Partial<DebtPaymentOptionInput>
+): DebtPaymentOptionInput => ({
   name: defaults?.name || '',
   type: defaults?.type || 'INSTALLMENT',
   financedAmount: defaults?.financedAmount ?? null,
@@ -29,7 +31,7 @@ export const createDebtOption = (defaults?: Partial<DebtPaymentOptionInput>): De
   totalInstallmentAmount: defaults?.totalInstallmentAmount ?? null,
   expectedPayoffDays: defaults?.expectedPayoffDays ?? null,
   liquidityCertainty: defaults?.liquidityCertainty || 'UNCERTAIN',
-  notes: defaults?.notes || '',
+  notes: defaults?.notes || ''
 })
 
 export const createDebtSnapshot = (): DebtScenarioSnapshot => ({
@@ -41,15 +43,21 @@ export const createDebtSnapshot = (): DebtScenarioSnapshot => ({
     title: '',
     totalAmount: 0,
     availableCash: 0,
-    options: [createDebtOption({ type: 'INSTALLMENT' }), createDebtOption({ type: 'SHORT_TERM_CREDIT' })],
-  },
+    options: [
+      createDebtOption({ type: 'INSTALLMENT' }),
+      createDebtOption({ type: 'SHORT_TERM_CREDIT' })
+    ]
+  }
 })
 
-export const normalizeDebtSnapshot = (snapshot?: Partial<DebtScenarioSnapshot> | null): DebtScenarioSnapshot => {
+export const normalizeDebtSnapshot = (
+  snapshot?: Partial<DebtScenarioSnapshot> | null
+): DebtScenarioSnapshot => {
   const base = createDebtSnapshot()
-  const options = Array.isArray(snapshot?.debtInput?.options) && snapshot?.debtInput?.options.length >= 2
-    ? snapshot.debtInput.options.map((option) => createDebtOption(option))
-    : base.debtInput.options
+  const options =
+    Array.isArray(snapshot?.debtInput?.options) && snapshot?.debtInput?.options.length >= 2
+      ? snapshot.debtInput.options.map((option) => createDebtOption(option))
+      : base.debtInput.options
 
   return {
     scenarioType: DEBT_PAYMENT_SCENARIO_TYPE,
@@ -61,8 +69,8 @@ export const normalizeDebtSnapshot = (snapshot?: Partial<DebtScenarioSnapshot> |
       title: String(snapshot?.debtInput?.title || snapshot?.scenarioName || ''),
       totalAmount: Number(snapshot?.debtInput?.totalAmount || 0),
       availableCash: Number(snapshot?.debtInput?.availableCash || 0),
-      options,
-    },
+      options
+    }
   }
 }
 
@@ -88,7 +96,9 @@ export const validateDebtSnapshot = (snapshot: DebtScenarioSnapshot): string[] =
   return errors
 }
 
-export const buildDebtScenarioPayload = (snapshot: DebtScenarioSnapshot): ScenarioSimulationRequest => ({
+export const buildDebtScenarioPayload = (
+  snapshot: DebtScenarioSnapshot
+): ScenarioSimulationRequest => ({
   id: snapshot.currentScenarioId || undefined,
   budgetId: snapshot.budgetId,
   name: String(snapshot.scenarioName || snapshot.debtInput.title || '').trim(),
@@ -104,9 +114,9 @@ export const buildDebtScenarioPayload = (snapshot: DebtScenarioSnapshot): Scenar
     availableCash: Number(snapshot.debtInput.availableCash || 0),
     options: snapshot.debtInput.options.map((option) => ({
       ...option,
-      name: String(option.name || '').trim(),
-    })),
-  },
+      name: String(option.name || '').trim()
+    }))
+  }
 })
 
 export const snapshotFromSavedDebtScenario = (scenario: SavedScenario): DebtScenarioSnapshot =>
@@ -118,12 +128,13 @@ export const snapshotFromSavedDebtScenario = (scenario: SavedScenario): DebtScen
       title: scenario.name,
       totalAmount: 0,
       availableCash: 0,
-      options: [createDebtOption(), createDebtOption({ type: 'SHORT_TERM_CREDIT' })],
-    },
+      options: [createDebtOption(), createDebtOption({ type: 'SHORT_TERM_CREDIT' })]
+    }
   })
 
 export const getRecommendedDebtOption = (comparison?: DebtPaymentComparison | null) =>
-  (comparison?.options || []).find((option) => option.name === comparison?.recommendedOption) || null
+  (comparison?.options || []).find((option) => option.name === comparison?.recommendedOption) ||
+  null
 
 export const saveDebtSnapshot = (snapshot: DebtScenarioSnapshot) => {
   window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot))
@@ -141,4 +152,41 @@ export const loadDebtSnapshot = (): DebtScenarioSnapshot | null => {
 
 export const clearDebtSnapshot = () => {
   window.sessionStorage.removeItem(STORAGE_KEY)
+}
+
+export const debtScenarioTemplates = {
+  pay_now_or_installments: (): DebtScenarioSnapshot =>
+    normalizeDebtSnapshot({
+      scenarioName: 'Pagar agora ou parcelar',
+      currentScenarioId: null,
+      debtInput: {
+        title: 'Pagar agora ou parcelar',
+        totalAmount: 0,
+        availableCash: 0,
+        options: [
+          createDebtOption({
+            name: 'Pagar agora',
+            type: 'MANUAL',
+            financedAmount: 0,
+            installments: 1,
+            monthlyInterestRate: 0,
+            totalInstallmentAmount: 0,
+            expectedPayoffDays: 0,
+            liquidityCertainty: 'CERTAIN',
+            notes: 'Use esta opcao para comparar quitação imediata com menor custo total.'
+          }),
+          createDebtOption({
+            name: 'Parcelar',
+            type: 'INSTALLMENT',
+            financedAmount: 0,
+            installments: 6,
+            monthlyInterestRate: 0,
+            totalInstallmentAmount: 0,
+            expectedPayoffDays: 180,
+            liquidityCertainty: 'UNCERTAIN',
+            notes: 'Use esta opcao para testar a troca entre liquidez no curto prazo e custo total.'
+          })
+        ]
+      }
+    })
 }

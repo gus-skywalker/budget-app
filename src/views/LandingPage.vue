@@ -23,6 +23,7 @@
         </nav>
 
         <div class="header-actions">
+          <button class="btn btn-ghost" type="button" @click="navigateTo('blog')">Blog</button>
           <button class="btn btn-ghost" type="button" @click="navigateTo('login')">
             {{ $t('landingPage.auth.login') }}
           </button>
@@ -54,6 +55,7 @@
           {{ $t(item.labelKey) }}
         </button>
         <div class="mobile-actions">
+          <button class="btn btn-ghost" type="button" @click="navigateTo('blog')">Blog</button>
           <button class="btn btn-ghost" type="button" @click="navigateTo('login')">
             {{ $t('landingPage.auth.login') }}
           </button>
@@ -82,10 +84,18 @@
             </div>
 
             <div class="cta-row">
-              <button class="btn btn-primary btn-large" type="button" @click="navigateTo('choose-plan')">
+              <button
+                class="btn btn-primary btn-large"
+                type="button"
+                @click="navigateTo('choose-plan')"
+              >
                 {{ $t('landingPage.hero.cta') }}
               </button>
-              <button class="btn btn-secondary btn-large" type="button" @click="scrollToSection('plans')">
+              <button
+                class="btn btn-secondary btn-large"
+                type="button"
+                @click="scrollToSection('plans')"
+              >
                 {{ $t('landingPage.plans.title') }}
               </button>
             </div>
@@ -103,7 +113,9 @@
               <div class="overlay-label-test">{{ $t('landingPage.hero.micro') }}</div>
               <div class="overlay-value-test">+R$8,000</div>
               <div class="overlay-details-test">
-                <div>Projected balance: <span class="overlay-detail-value-test">R$59,639</span></div>
+                <div>
+                  Projected balance: <span class="overlay-detail-value-test">R$59,639</span>
+                </div>
                 <div>Status: <span class="overlay-detail-status-test">Stable</span></div>
                 <div>Available: <span class="overlay-detail-value-test">R$8,969</span></div>
               </div>
@@ -120,7 +132,11 @@
             <p class="section-intro">{{ $t('landingPage.pain.subtitle') }}</p>
 
             <div class="card-grid card-grid-compact">
-              <article v-for="item in painCards.slice(0, 2)" :key="item.titleKey" class="feature-card feature-card-pain">
+              <article
+                v-for="item in painCards.slice(0, 2)"
+                :key="item.titleKey"
+                class="feature-card feature-card-pain"
+              >
                 <div class="icon-chip icon-chip-contrast">
                   <v-icon size="22">{{ item.icon }}</v-icon>
                 </div>
@@ -193,10 +209,18 @@
             </ul>
 
             <div class="cta-row">
-              <button class="btn btn-primary btn-large" type="button" @click="scrollToSection('plans')">
+              <button
+                class="btn btn-primary btn-large"
+                type="button"
+                @click="scrollToSection('plans')"
+              >
                 {{ $t('landingPage.ai.ctaSecondary') }}
               </button>
-              <button class="btn btn-secondary btn-large" type="button" @click="navigateTo('login')">
+              <button
+                class="btn btn-secondary btn-large"
+                type="button"
+                @click="navigateTo('login')"
+              >
                 {{ $t('landingPage.ai.ctaPrimary') }}
               </button>
             </div>
@@ -219,7 +243,11 @@
             <h2>{{ $t('landingPage.family.subtitle') }}</h2>
 
             <div class="card-grid card-grid-compact">
-              <article v-for="item in familyCards.slice(0, 2)" :key="item.titleKey" class="feature-card">
+              <article
+                v-for="item in familyCards.slice(0, 2)"
+                :key="item.titleKey"
+                class="feature-card"
+              >
                 <div class="icon-chip icon-chip-warm">
                   <v-icon size="22">{{ item.icon }}</v-icon>
                 </div>
@@ -314,10 +342,18 @@
                 </li>
               </ul>
               <div class="plan-actions">
-                <button class="btn btn-primary" type="button" @click="redirectToCheckout('MONTHLY')">
+                <button
+                  class="btn btn-primary"
+                  type="button"
+                  @click="redirectToCheckout('MONTHLY')"
+                >
                   {{ $t('landingPage.plans.starterMonthly') }}
                 </button>
-                <button class="btn btn-secondary" type="button" @click="redirectToCheckout('ANNUAL')">
+                <button
+                  class="btn btn-secondary"
+                  type="button"
+                  @click="redirectToCheckout('ANNUAL')"
+                >
                   {{ $t('landingPage.plans.starterAnnual') }}
                 </button>
               </div>
@@ -339,10 +375,18 @@
                 </li>
               </ul>
               <div class="plan-actions">
-                <button class="btn btn-primary" type="button" @click="redirectToCheckout('BUSINESS_MONTHLY')">
+                <button
+                  class="btn btn-primary"
+                  type="button"
+                  @click="redirectToCheckout('BUSINESS_MONTHLY')"
+                >
                   {{ $t('landingPage.plans.teamMonthly') }}
                 </button>
-                <button class="btn btn-dark-outline" type="button" @click="redirectToCheckout('BUSINESS_ANNUAL')">
+                <button
+                  class="btn btn-dark-outline"
+                  type="button"
+                  @click="redirectToCheckout('BUSINESS_ANNUAL')"
+                >
                   {{ $t('landingPage.plans.teamAnnual') }}
                 </button>
               </div>
@@ -374,7 +418,9 @@
               <textarea id="message" v-model="contactForm.message" rows="5" required></textarea>
             </div>
             <button class="btn btn-primary btn-large" type="submit" :disabled="isSubmitting">
-              {{ isSubmitting ? $t('landingPage.contact.sending') : $t('landingPage.contact.send') }}
+              {{
+                isSubmitting ? $t('landingPage.contact.sending') : $t('landingPage.contact.send')
+              }}
             </button>
           </form>
         </div>
@@ -401,6 +447,7 @@
         </div>
 
         <div class="footer-actions">
+          <button class="btn btn-ghost" type="button" @click="navigateTo('blog')">Blog</button>
           <button class="btn btn-primary" type="button" @click="navigateToPath('/login')">
             {{ $t('landingPage.footer.cta') }}
           </button>
@@ -435,7 +482,7 @@ import { formatConvertedPriceFromBRL, resolvePricingCurrency } from '@/utils/pri
 export default {
   name: 'LandingPage',
   components: {
-    PrivacyControls,
+    PrivacyControls
   },
   data() {
     return {
@@ -444,7 +491,7 @@ export default {
       contactForm: {
         name: '',
         email: '',
-        message: '',
+        message: ''
       },
       isSubmitting: false,
       navItems: [
@@ -452,74 +499,92 @@ export default {
         { id: 'benefits', labelKey: 'landingPage.nav.benefits' },
         { id: 'testimonials', labelKey: 'landingPage.nav.testimonials' },
         { id: 'security', labelKey: 'landingPage.nav.security' },
-        { id: 'contact', labelKey: 'landingPage.nav.contact' },
+        { id: 'contact', labelKey: 'landingPage.nav.contact' }
       ],
       painCards: [
         { icon: 'mdi-file-cancel-outline', titleKey: 'landingPage.pain.card1' },
         { icon: 'mdi-eye-off-outline', titleKey: 'landingPage.pain.card2' },
         { icon: 'mdi-chart-timeline-variant', titleKey: 'landingPage.pain.card3' },
         { icon: 'mdi-calendar-remove-outline', titleKey: 'landingPage.pain.card4' },
-        { icon: 'mdi-account-question-outline', titleKey: 'landingPage.pain.card5' },
+        { icon: 'mdi-account-question-outline', titleKey: 'landingPage.pain.card5' }
       ],
       solutionCards: [
         { icon: 'mdi-account-group-outline', titleKey: 'landingPage.solution.card1' },
         { icon: 'mdi-chart-areaspline', titleKey: 'landingPage.solution.card2' },
         { icon: 'mdi-finance', titleKey: 'landingPage.solution.card3' },
-        { icon: 'mdi-handshake-outline', titleKey: 'landingPage.solution.card4' },
+        { icon: 'mdi-handshake-outline', titleKey: 'landingPage.solution.card4' }
       ],
       howSteps: [
-        { icon: 'mdi-database-outline', titleKey: 'landingPage.how.step1Title', descKey: 'landingPage.how.step1Desc' },
-        { icon: 'mdi-share-variant-outline', titleKey: 'landingPage.how.step2Title', descKey: 'landingPage.how.step2Desc' },
-        { icon: 'mdi-brain', titleKey: 'landingPage.how.step3Title', descKey: 'landingPage.how.step3Desc' },
+        {
+          icon: 'mdi-database-outline',
+          titleKey: 'landingPage.how.step1Title',
+          descKey: 'landingPage.how.step1Desc'
+        },
+        {
+          icon: 'mdi-share-variant-outline',
+          titleKey: 'landingPage.how.step2Title',
+          descKey: 'landingPage.how.step2Desc'
+        },
+        {
+          icon: 'mdi-brain',
+          titleKey: 'landingPage.how.step3Title',
+          descKey: 'landingPage.how.step3Desc'
+        }
       ],
       aiBullets: [
         { icon: 'mdi-chart-bell-curve-cumulative', labelKey: 'landingPage.ai.bullet1' },
         { icon: 'mdi-radar', labelKey: 'landingPage.ai.bullet2' },
         { icon: 'mdi-tag-multiple-outline', labelKey: 'landingPage.ai.bullet3' },
-        { icon: 'mdi-lightbulb-on-outline', labelKey: 'landingPage.ai.bullet4' },
+        { icon: 'mdi-lightbulb-on-outline', labelKey: 'landingPage.ai.bullet4' }
       ],
       aiCards: [
         {
           icon: 'mdi-chart-box-outline',
           titleKey: 'landingPage.ai.card1Title',
           descKey: 'landingPage.ai.card1Desc',
-          tagKey: 'landingPage.ai.card1Tag',
+          tagKey: 'landingPage.ai.card1Tag'
         },
         {
           icon: 'mdi-bell-alert-outline',
           titleKey: 'landingPage.ai.card2Title',
           descKey: 'landingPage.ai.card2Desc',
-          tagKey: 'landingPage.ai.card2Tag',
+          tagKey: 'landingPage.ai.card2Tag'
         },
         {
           icon: 'mdi-robot-outline',
           titleKey: 'landingPage.ai.card3Title',
           descKey: 'landingPage.ai.card3Desc',
-          tagKey: 'landingPage.ai.card3Tag',
-        },
+          tagKey: 'landingPage.ai.card3Tag'
+        }
       ],
       familyCards: [
         { icon: 'mdi-receipt-text-outline', titleKey: 'landingPage.family.card1' },
         { icon: 'mdi-home-heart', titleKey: 'landingPage.family.card2' },
         { icon: 'mdi-airplane', titleKey: 'landingPage.family.card3' },
-        { icon: 'mdi-account-supervisor-circle-outline', titleKey: 'landingPage.family.card4' },
+        { icon: 'mdi-account-supervisor-circle-outline', titleKey: 'landingPage.family.card4' }
       ],
       testimonials: [
-        { quoteKey: 'landingPage.testimonials.quote1', authorKey: 'landingPage.testimonials.author1' },
-        { quoteKey: 'landingPage.testimonials.quote2', authorKey: 'landingPage.testimonials.author2' },
+        {
+          quoteKey: 'landingPage.testimonials.quote1',
+          authorKey: 'landingPage.testimonials.author1'
+        },
+        {
+          quoteKey: 'landingPage.testimonials.quote2',
+          authorKey: 'landingPage.testimonials.author2'
+        }
       ],
       securityItems: [
         { icon: 'mdi-lock-check-outline', labelKey: 'landingPage.security.item1' },
         { icon: 'mdi-two-factor-authentication', labelKey: 'landingPage.security.item2' },
         { icon: 'mdi-server-security', labelKey: 'landingPage.security.item3' },
-        { icon: 'mdi-account-key-outline', labelKey: 'landingPage.security.item4' },
+        { icon: 'mdi-account-key-outline', labelKey: 'landingPage.security.item4' }
       ],
       starterFeatures: [
         'landingPage.plans.starterFeature1',
         'landingPage.plans.starterFeature2',
         'landingPage.plans.starterFeature3',
         'landingPage.plans.starterFeature4',
-        'landingPage.plans.starterFeature5',
+        'landingPage.plans.starterFeature5'
       ],
       teamFeatures: [
         'landingPage.plans.teamFeature1',
@@ -527,8 +592,8 @@ export default {
         'landingPage.plans.teamFeature3',
         'landingPage.plans.teamFeature4',
         'landingPage.plans.teamFeature5',
-        'landingPage.plans.teamFeature6',
-      ],
+        'landingPage.plans.teamFeature6'
+      ]
     }
   },
   mounted() {
@@ -591,7 +656,8 @@ export default {
         this.contactForm = { name: '', email: '', message: '' }
       } catch (error) {
         console.error('Erro ao enviar mensagem:', error)
-        const errorMessage = error.response?.data?.error || this.$t('landingPage.contact.errorDefault')
+        const errorMessage =
+          error.response?.data?.error || this.$t('landingPage.contact.errorDefault')
         alert(errorMessage)
       } finally {
         this.isSubmitting = false
@@ -603,7 +669,7 @@ export default {
         pt: 'pt-BR',
         en: 'en-US',
         es: 'es-ES',
-        fr: 'fr-FR',
+        fr: 'fr-FR'
       }
       return localeMap[uiLocale] || 'pt-BR'
     },
@@ -612,13 +678,14 @@ export default {
       const browserLocale = typeof navigator !== 'undefined' ? navigator.language : null
       const currency = resolvePricingCurrency({
         locale: this.$i18n?.locale,
-        browserLocale,
+        browserLocale
       })
-      const periodKey = plan?.billingPeriod === 'year' ? 'landingPage.plans.perYear' : 'landingPage.plans.perMonth'
+      const periodKey =
+        plan?.billingPeriod === 'year' ? 'landingPage.plans.perYear' : 'landingPage.plans.perMonth'
       const formattedAmount = formatConvertedPriceFromBRL({
         amountInBRL: amount,
         targetCurrency: currency,
-        uiLocale: this.getFormattingLocale(),
+        uiLocale: this.getFormattingLocale()
       })
       return `${formattedAmount} / ${this.$t(periodKey)}`
     },
@@ -632,8 +699,8 @@ export default {
       }
 
       this.$router.push({ name: 'choose-plan', query: { plan } })
-    },
-  },
+    }
+  }
 }
 </script>
 
@@ -689,7 +756,7 @@ export default {
   border: 1px solid #e5e7eb;
   border-radius: 18px;
   padding: 18px 20px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
   min-width: 240px;
   max-width: min(90%, 320px);
   opacity: 0;
@@ -703,22 +770,28 @@ export default {
 }
 
 .hero-overlay-card-test::before {
-  content: "";
+  content: '';
   display: block;
   position: absolute;
   left: 50%;
   bottom: -18px;
   width: 32px;
   height: 1px;
-  background: rgba(31, 41, 55, 0.10);
+  background: rgba(31, 41, 55, 0.1);
   transform: translateX(-50%);
   border-radius: 1px;
   pointer-events: none;
 }
 
 @keyframes fadeInCardTest {
-  from { opacity: 0; transform: translateY(16px);}
-  to { opacity: 1; transform: translateY(0);}
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .overlay-label-test {
@@ -918,7 +991,9 @@ h3 {
   padding: 10px 14px;
   border-radius: 999px;
   font-weight: 600;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
 .nav-link:hover,
@@ -946,7 +1021,11 @@ h3 {
   font-size: 0.98rem;
   font-weight: 700;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .btn:hover {

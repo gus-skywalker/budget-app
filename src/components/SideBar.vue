@@ -88,23 +88,30 @@ const mainNavSections = computed<NavSection[]>(() => [
         icon: 'mdi-lightbulb-outline',
         to: { name: 'decisions' },
         primary: true,
-        disabled: false,
+        disabled: false
       },
       {
         key: 'insights',
         title: t('sidebar.insights'),
         icon: 'mdi-brain',
         to: { name: 'insights' },
-        disabled: false,
+        disabled: false
       },
       {
         key: 'activity',
         title: t('sidebar.activity'),
         icon: 'mdi-timeline-text-outline',
         to: { name: 'activity' },
-        disabled: false,
+        disabled: false
       },
-    ],
+      {
+        key: 'blog-app',
+        title: 'Blog',
+        icon: 'mdi-post-outline',
+        to: { name: 'blog-app' },
+        disabled: false
+      }
+    ]
   },
   {
     key: 'financials',
@@ -115,30 +122,30 @@ const mainNavSections = computed<NavSection[]>(() => [
         title: t('sidebar.overview'),
         icon: 'mdi-view-dashboard',
         to: { name: 'dashboard' },
-        disabled: false,
+        disabled: false
       },
       {
         key: 'transactions',
         title: t('sidebar.transactions'),
         icon: 'mdi-swap-horizontal',
         to: { name: 'budget' },
-        disabled: false,
+        disabled: false
       },
       {
         key: 'accounts',
         title: t('sidebar.accounts'),
         icon: 'mdi-bank-outline',
         to: { name: 'accounts' },
-        disabled: false,
+        disabled: false
       },
       {
         key: 'categories',
         title: t('sidebar.categories'),
         icon: 'mdi-shape-outline',
         to: { name: 'categories' },
-        disabled: false,
-      },
-    ],
+        disabled: false
+      }
+    ]
   },
   {
     key: 'planning',
@@ -149,24 +156,24 @@ const mainNavSections = computed<NavSection[]>(() => [
         title: t('sidebar.planning_budget'),
         icon: 'mdi-wallet-outline',
         to: { name: 'planning-budget' },
-        disabled: false,
+        disabled: false
       },
       {
         key: 'planning-scenarios',
         title: t('sidebar.planning_scenarios'),
         icon: 'mdi-layers-triple-outline',
         to: { name: 'planning-scenarios' },
-        disabled: false,
+        disabled: false
       },
       {
         key: 'planning-goals',
         title: t('sidebar.planning_goals'),
         icon: 'mdi-bullseye-arrow',
         to: { name: 'planning-goals' },
-        disabled: false,
-      },
-    ],
-  },
+        disabled: false
+      }
+    ]
+  }
 ])
 
 const settingsItems = computed<NavItem[]>(() => [
@@ -175,15 +182,15 @@ const settingsItems = computed<NavItem[]>(() => [
     title: t('sidebar.settings'),
     icon: 'mdi-cog-outline',
     to: { name: 'settings' },
-    disabled: false,
+    disabled: false
   },
   {
     key: 'workspace',
     title: t('sidebar.workspace.label'),
     icon: 'mdi-briefcase-outline',
     to: userStore.hasMultipleWorkspaces ? { name: 'select-workspace' } : undefined,
-    disabled: !userStore.hasMultipleWorkspaces,
-  },
+    disabled: !userStore.hasMultipleWorkspaces
+  }
 ])
 
 const legalItems = computed<NavItem[]>(() => [
@@ -192,15 +199,15 @@ const legalItems = computed<NavItem[]>(() => [
     title: t('sidebar.legal.privacy_policy'),
     icon: 'mdi-shield-account-outline',
     to: { name: 'privacy-policy' },
-    disabled: false,
+    disabled: false
   },
   {
     key: 'terms-of-use',
     title: t('sidebar.legal.terms_of_service'),
     icon: 'mdi-file-document-outline',
     to: { name: 'terms-of-use' },
-    disabled: false,
-  },
+    disabled: false
+  }
 ])
 
 function isItemActive(item: NavItem): boolean {
@@ -244,7 +251,7 @@ function isItemActive(item: NavItem): boolean {
               :active="isItemActive(item)"
               :class="{
                 'primary-nav-item': item.primary,
-                'active-nav-item': isItemActive(item),
+                'active-nav-item': isItemActive(item)
               }"
             ></v-list-item>
           </template>
@@ -257,7 +264,9 @@ function isItemActive(item: NavItem): boolean {
 
     <div class="sidebar-settings">
       <v-list density="compact" nav>
-        <v-list-subheader class="sidebar-section">{{ $t('sidebar.sections.settings') }}</v-list-subheader>
+        <v-list-subheader class="sidebar-section">{{
+          $t('sidebar.sections.settings')
+        }}</v-list-subheader>
         <v-tooltip v-for="item in settingsItems" :key="item.key" :text="item.title" location="end">
           <template v-slot:activator="{ props }">
             <v-list-item
@@ -294,9 +303,16 @@ function isItemActive(item: NavItem): boolean {
 
       <v-tooltip :text="$t('sidebar.toggle_theme')" location="end">
         <template v-slot:activator="{ props }">
-          <v-switch v-bind="props" @click="toggleTheme" hide-details class="ml-4 mt-2 sidebar-theme-toggle">
+          <v-switch
+            v-bind="props"
+            @click="toggleTheme"
+            hide-details
+            class="ml-4 mt-2 sidebar-theme-toggle"
+          >
             <template v-slot:prepend>
-              <v-icon>{{ theme.global.current.value.dark ? 'mdi-weather-night' : 'mdi-weather-sunny' }}</v-icon>
+              <v-icon>{{
+                theme.global.current.value.dark ? 'mdi-weather-night' : 'mdi-weather-sunny'
+              }}</v-icon>
             </template>
           </v-switch>
         </template>
@@ -371,7 +387,9 @@ function isItemActive(item: NavItem): boolean {
 
 .active-nav-item {
   border-radius: 10px;
-  transition: background-color 0.18s ease, border-color 0.18s ease;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease;
 }
 
 .active-nav-item.v-list-item--active {

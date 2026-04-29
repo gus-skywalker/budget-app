@@ -304,6 +304,11 @@ const templates = computed(() => [
 ])
 const showImmutableNotice = computed(() => String(route.query.locked || '') === '1')
 const cameFromHub = computed(() => String(route.query.from || '') === 'hub')
+const requestedTemplate = computed(() =>
+  String(route.query.template || '')
+    .trim()
+    .toLowerCase()
+)
 
 const estimatedImpact = computed(() => monthlyImpactEstimate(snapshot))
 const canSimulate = computed(() => hasAnyScenarioChange(snapshot))
@@ -350,6 +355,21 @@ const selectTemplate = (templateKey: keyof typeof templateDeltas) => {
   snapshot.scenarioName = template?.title || t('planning.scenarios.default_name')
   snapshot.months = Number(template?.months || 6)
   snapshot.adjustments = mapDeltasToSimpleAdjustments(templateDeltas[templateKey])
+}
+
+const applyRouteTemplate = () => {
+  const templateMap: Record<string, keyof typeof templateDeltas> = {
+    hire: 'hiring',
+    hiring: 'hiring',
+    reduce_costs: 'reduce_costs',
+    increase_revenue: 'increase_revenue',
+    investment: 'investment'
+  }
+  const templateKey = templateMap[requestedTemplate.value]
+  if (!templateKey) return false
+  selectTemplate(templateKey)
+  step.value = Math.max(step.value, 3)
+  return true
 }
 
 const startNewScenario = (budgetOverride?: Budget | null, persist = true) => {
@@ -408,16 +428,19 @@ const loadBudget = async () => {
     if (shouldStartFresh) {
       clearWizardSnapshot()
       startNewScenario(data)
+      applyRouteTemplate()
       return
     }
 
     const restored = loadWizardSnapshot()
     if (restored?.budgetId && restored.budgetId === data.id) {
       Object.assign(snapshot, restored)
+      applyRouteTemplate()
       return
     }
 
     startNewScenario(data, false)
+    applyRouteTemplate()
   } catch (e) {
     console.error(e)
     activeBudget.value = null
