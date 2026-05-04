@@ -64,8 +64,8 @@
                     >
                       {{ profileFeedback.message }}
                     </v-alert>
-                    <v-alert v-if="isOAuthUser" type="info" variant="tonal" class="mb-4">
-                      Esta conta está vinculada ao Google. Alterações de nome e e-mail devem ser feitas diretamente na sua conta Google.
+                    <v-alert v-if="isFederatedIdentityManaged" type="info" variant="tonal" class="mb-4">
+                      Esta conta está vinculada ao {{ federatedProviderLabel }}. Alterações de nome e e-mail devem ser feitas diretamente no provedor de login.
                     </v-alert>
                     <v-text-field 
                       v-model="username" 
@@ -75,7 +75,7 @@
                       color="#667eea"
                       prepend-inner-icon="mdi-account"
                       class="modern-input mb-4"
-                      :disabled="isOAuthUser"
+                      :disabled="isFederatedIdentityManaged"
                       :loading="isLoadingProfile"
                     ></v-text-field>
                     <v-text-field 
@@ -87,7 +87,7 @@
                       color="#667eea"
                       prepend-inner-icon="mdi-email"
                       class="modern-input mb-4"
-                      :disabled="isOAuthUser"
+                      :disabled="isFederatedIdentityManaged"
                       :loading="isLoadingProfile"
                     ></v-text-field>
                     <v-file-input 
@@ -98,7 +98,7 @@
                       color="#667eea"
                       prepend-icon="mdi-camera"
                       class="modern-input mb-4"
-                      :disabled="isOAuthUser"
+                      :disabled="isFederatedIdentityManaged"
                       :loading="isLoadingProfile"
                     ></v-file-input>
                     <v-select 
@@ -112,11 +112,11 @@
                       color="#667eea"
                       prepend-inner-icon="mdi-translate"
                       class="modern-input mb-4"
-                      :disabled="isOAuthUser"
+                      :disabled="isFederatedIdentityManaged"
                       :loading="isLoadingProfile"
                     ></v-select>
                     <v-btn 
-                      v-if="!isOAuthUser"
+                      v-if="!isFederatedIdentityManaged"
                       @click="saveProfile"
                       class="modern-btn gradient-btn"
                       size="large"
@@ -170,7 +170,7 @@
                   <p class="card-description">{{ $t('account_management.security_card.password_description') }}</p>
                 </div>
                 <div class="card-content">
-                  <template v-if="!isOAuthUser">
+                  <template v-if="!isFederatedIdentityManaged">
                     <v-form>
                       <v-alert
                         v-if="passwordFeedback.message"
@@ -225,7 +225,7 @@
                   </template>
                   <template v-else>
                     <v-alert type="info" variant="tonal">
-                      Você está autenticado via Google.<br>
+                      Você está autenticado via {{ federatedProviderLabel }}.<br>
                       A senha é gerenciada pelo provedor de login.
                     </v-alert>
                   </template>
@@ -820,7 +820,7 @@
                       <div class="integration-description">{{ $t('account_management.integrations.google_description') }}</div>
                     </div>
                     <div class="integration-actions">
-                      <template v-if="isOAuthUser">
+                      <template v-if="isGoogleConnected">
                         <v-chip color="green" variant="tonal">
                           Conectado via Google
                         </v-chip>
@@ -1043,10 +1043,22 @@ const loadAlertSettings = async () => {
 
 // Cria uma propriedade computada para o objeto `user`
 const user = computed(() => userStore.getUser);
-// Usuário autenticado via OAuth2 (Google)
-const isOAuthUser = computed(() => {
-  return user.value?.userRoles?.includes('OAUTH2_USER');
-});
+const normalizedAuthProvider = computed(() => String(user.value?.authProvider || 'LOCAL').toUpperCase())
+const isFederatedIdentityManaged = computed(() => Boolean(user.value?.isFederatedAccount) && normalizedAuthProvider.value !== 'LOCAL')
+const federatedProviderLabel = computed(() => {
+  switch (normalizedAuthProvider.value) {
+    case 'GOOGLE':
+      return 'Google'
+    case 'MICROSOFT':
+      return 'Microsoft'
+    case 'APPLE':
+      return 'Apple'
+    case 'GITHUB':
+      return 'GitHub'
+    default:
+      return 'provedor externo'
+  }
+})
 
 // Informações Básicas do Perfil
 const username = ref('')
@@ -1074,7 +1086,7 @@ const passwordFeedback = ref<{ type: 'success' | 'error'; message: string }>({
   message: ''
 })
 const twoFactorAuth = ref(false)
-const isGoogleConnected = computed(() => isOAuthUser.value)
+const isGoogleConnected = computed(() => normalizedAuthProvider.value === 'GOOGLE')
 const profileLocale = ref(locale.value)
 
 // Preferências
@@ -1539,7 +1551,11 @@ const loadUserProfile = async () => {
       username: username.value,
       email: email.value,
       language: apiLanguage,
-      avatar: payload.pictureUrl || fallbackUser?.avatar
+      avatar: payload.pictureUrl || fallbackUser?.avatar,
+      authProvider: payload.authProvider || fallbackUser?.authProvider || 'LOCAL',
+      isFederatedAccount: typeof payload.isFederatedAccount === 'boolean'
+        ? payload.isFederatedAccount
+        : Boolean(fallbackUser?.isFederatedAccount)
     })
   } catch (error: any) {
     const backendMessage =

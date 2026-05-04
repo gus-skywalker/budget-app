@@ -63,6 +63,8 @@ interface User {
   email?: string
   avatar?: string
   language?: string
+  authProvider?: string
+  isFederatedAccount?: boolean
   workspaces?: Workspace[]
   userRoles?: string[]
 }

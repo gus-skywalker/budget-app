@@ -32,6 +32,8 @@ export interface LoginResponse {
   username: string
   email: string
   language: Language
+  authProvider?: string
+  isFederatedAccount?: boolean
   tenantRole?: string | null
   userRole?: string[]
   userRoles?: string[]
