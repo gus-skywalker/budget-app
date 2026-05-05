@@ -38,6 +38,8 @@ async function restoreSession() {
           username: userInfo?.data?.username,
           email: userInfo?.data?.email,
           language: userLanguage,
+          authProvider: userInfo?.data?.authProvider,
+          isFederatedAccount: userInfo?.data?.isFederatedAccount,
           workspaces: userStore.getWorkspaces
         })
       }

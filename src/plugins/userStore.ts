@@ -75,6 +75,11 @@ interface WorkspaceClaim {
   role?: string | null
 }
 
+const normalizeIdentityValue = (value?: string | null): string | null => {
+  const normalized = String(value || '').trim()
+  return normalized.length ? normalized.toLowerCase() : null
+}
+
 const workspaceIdOf = (workspace?: Partial<Workspace> | null): string =>
   String(workspace?.workspaceId ?? '')
 
@@ -215,6 +220,12 @@ export const useUserStore = defineStore({
       this.savePreference()
     },
 
+    clearWorkspacePreference() {
+      this.preferredMode = null
+      this.preferredWorkspaceId = null
+      this.savePreference()
+    },
+
     setToken(token: string | null) {
       this.token = token
       this.scheduleAccessTokenRefresh(token)
@@ -248,6 +259,14 @@ export const useUserStore = defineStore({
 
     setLanguage(language: string) {
       this.language = language
+      this.saveState()
+    },
+
+    resetAccountScopedState() {
+      this.user = {}
+      this.currentWorkspaceId = null
+      this.tenantRole = null
+      this.clearWorkspacePreference()
       this.saveState()
     },
 
@@ -355,6 +374,19 @@ export const useUserStore = defineStore({
       if (!decoded) return
 
       this.scheduleAccessTokenRefresh(token)
+
+      const incomingUserId = normalizeIdentityValue(decoded.user_id)
+      const incomingEmail = normalizeIdentityValue(decoded.user_email)
+      const currentUserId = normalizeIdentityValue(this.user.id)
+      const currentEmail = normalizeIdentityValue(this.user.email)
+      const accountChanged = Boolean(
+        (incomingUserId && currentUserId && incomingUserId !== currentUserId)
+        || (incomingEmail && currentEmail && incomingEmail !== currentEmail)
+      )
+
+      if (accountChanged) {
+        this.resetAccountScopedState()
+      }
 
       if (decoded.user_id) {
         this.user.id = decoded.user_id
@@ -548,6 +580,8 @@ export const useUserStore = defineStore({
       if (!accessToken) {
         console.error('Invalid signin response: missing accessToken', response)
       }
+
+      this.resetAccountScopedState()
 
       if (accessToken) {
         this.token = accessToken

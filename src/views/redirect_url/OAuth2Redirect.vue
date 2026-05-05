@@ -53,6 +53,8 @@ const extractTokenFromUrl = async () => {
         username: res.data.username,
         email: res.data.email,
         language: userLanguage,
+        authProvider: res.data.authProvider,
+        isFederatedAccount: res.data.isFederatedAccount,
         workspaces: userStore.getWorkspaces
       })
 
