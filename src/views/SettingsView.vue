@@ -381,140 +381,16 @@
         <v-window-item value="connections">
           <v-row>
             <v-col cols="12" md="10" lg="8">
-              <div class="modern-card position-relative">
-                <div class="card-header">
-                  <h2 class="card-title">
-                    <v-icon color="#667eea" class="mr-2">mdi-bank</v-icon>
-                    {{ $t('account_management.bank_connections.title') }}
-                  </h2>
-                  <p class="card-description">{{ $t('account_management.bank_connections.description') }}</p>
-                </div>
-                <div class="card-content">
-                  <div class="bank-cards">
-                    <div
-                      v-for="bank in supportedBankCards"
-                      :key="bank.institutionKey"
-                      class="bank-card-item"
-                      :class="{ 'bank-card-highlight': highlightedCard === bank.institutionKey }"
-                      @mouseenter="highlightCard(bank.institutionKey)"
-                      @mouseleave="highlightCard('')"
-                      @focusin="highlightCard(bank.institutionKey)"
-                      @focusout="highlightCard('')"
-                    >
-                      <div class="bank-logo">
-                        <v-img :src="bank.logo" aspect-ratio="1"></v-img>
-                      </div>
-                      <div class="bank-name">{{ bank.label }}</div>
-                      <v-chip :color="bankCardStatus(bank.institutionKey).color" size="small" variant="outlined">
-                        <v-icon start size="small">{{ bankCardStatus(bank.institutionKey).icon }}</v-icon>
-                        {{ bankCardStatus(bank.institutionKey).label }}
-                      </v-chip>
-                      <div
-                        v-if="openFinanceConnectionByKey[bank.institutionKey]?.linkedAccountsCount"
-                        class="bank-card-meta"
-                      >
-                        {{ openFinanceConnectionByKey[bank.institutionKey]?.linkedAccountsCount }} conta(s) deste banco
-                      </div>
-                      <div
-                        v-if="openFinanceAccountNamesByInstitution[bank.institutionKey]?.length"
-                        class="bank-card-meta bank-card-meta--stacked"
-                      >
-                        {{ openFinanceAccountNamesByInstitution[bank.institutionKey].join(' • ') }}
-                      </div>
-                      <div
-                        v-if="openFinanceConnectionByKey[bank.institutionKey]?.lastSyncTo"
-                        class="bank-card-meta"
-                      >
-                        Último sync: {{ openFinanceConnectionByKey[bank.institutionKey]?.lastSyncTo }}
-                      </div>
-                      <div
-                        v-if="openFinanceConnectionByKey[bank.institutionKey]?.lastErrorSummary"
-                        class="bank-card-error"
-                      >
-                        {{ openFinanceConnectionByKey[bank.institutionKey]?.lastErrorSummary }}
-                      </div>
-                      <v-btn
-                        class="mt-3"
-                        size="small"
-                        variant="tonal"
-                        color="#667eea"
-                        :loading="openFinanceConnectionLoadingKey === bank.institutionKey"
-                        :disabled="openFinanceConnectionLoadingKey === bank.institutionKey"
-                        @click.stop="toggleOpenFinanceConnection(bank.institutionKey)"
-                      >
-                        {{
-                          isConnectionDisconnectable(bank.institutionKey)
-                            ? 'Desconectar'
-                            : 'Conectar'
-                        }}
-                      </v-btn>
-                    </div>
-                  </div>
-                  <v-alert type="info" variant="tonal" class="mt-4">
-                    Você pode fazer opt-out do Open Finance a qualquer momento por banco conectado.
-                    Ao desconectar, interrompemos novas sincronizações daquela instituição e mantemos rastreabilidade do histórico já importado.
-                  </v-alert>
-                  <div class="connection-legal-links">
-                    <v-btn variant="text" @click="openLegalDoc('privacy-policy')">Política de Privacidade</v-btn>
-                    <v-btn variant="text" @click="openLegalDoc('terms-of-use')">Termos de Uso</v-btn>
-                    <v-btn variant="text" @click="openLegalDoc('cookie-policy')">Política de Cookies</v-btn>
-                  </div>
-                </div>
-              </div>
-
-              <div class="modern-card mt-6">
-                <div class="card-header">
-                  <h2 class="card-title">
-                    <v-icon color="#667eea" class="mr-2">mdi-chart-box-outline</v-icon>
-                    Saúde operacional
-                  </h2>
-                  <p class="card-description">
-                    Visão rápida do estado atual do Open Finance para este workspace.
-                  </p>
-                </div>
-                <div class="card-content">
-                  <div v-if="openFinanceObservabilitySummary" class="observability-grid">
-                    <div class="observability-card">
-                      <div class="observability-label">Contas conectadas</div>
-                      <div class="observability-value">{{ openFinanceObservabilitySummary.connectedAccounts }}</div>
-                    </div>
-                    <div class="observability-card">
-                      <div class="observability-label">Transações importadas</div>
-                      <div class="observability-value">{{ openFinanceObservabilitySummary.importedTransactions }}</div>
-                    </div>
-                    <div class="observability-card">
-                      <div class="observability-label">Mappings ativos</div>
-                      <div class="observability-value">{{ openFinanceObservabilitySummary.categoryMappings }}</div>
-                    </div>
-                    <div class="observability-card">
-                      <div class="observability-label">Conflitos abertos</div>
-                      <div class="observability-value">{{ openFinanceOpenConflictCount }}</div>
-                    </div>
-                    <div class="observability-card">
-                      <div class="observability-label">Contas em rate limit hoje</div>
-                      <div class="observability-value">{{ openFinanceObservabilitySummary.accountsAtRateLimitToday }}</div>
-                    </div>
-                    <div class="observability-card">
-                      <div class="observability-label">Última sincronização</div>
-                      <div class="observability-value observability-value--small">
-                        {{ openFinanceObservabilitySummary.lastSyncedAt ? formatOpenFinanceDate(openFinanceObservabilitySummary.lastSyncTo || '') : 'Ainda não sincronizado' }}
-                      </div>
-                      <div
-                        v-if="openFinanceObservabilitySummary.lastSyncFrom && openFinanceObservabilitySummary.lastSyncTo"
-                        class="observability-subtitle"
-                      >
-                        {{ openFinanceObservabilitySummary.lastSyncFrom }} → {{ openFinanceObservabilitySummary.lastSyncTo }}
-                      </div>
-                      <div
-                        v-if="openFinanceObservabilitySummary.lastSyncTrigger"
-                        class="observability-subtitle"
-                      >
-                        Origem: {{ openFinanceObservabilitySummary.lastSyncTrigger === 'AUTOMATIC' ? 'Automática' : 'Manual' }}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <OpenFinanceConnectionsPanel
+                :connections="openFinanceConnections"
+                :loading="openFinanceConnectionsLoading"
+                :can-manage="canManageOpenFinance"
+                :sync-from="openFinanceFrom"
+                :sync-to="openFinanceTo"
+                @refresh="refreshOpenFinanceConnectionsPanel"
+                @feedback="openFinanceFeedback = $event"
+                @synced="handleOpenFinanceConnectionSynced"
+              />
 
               <div class="modern-card mt-6">
                 <div class="card-header">
@@ -862,75 +738,6 @@
       </v-window>
     </v-container>
 
-    <!-- Diálogo de consentimento Open Finance -->
-    <v-dialog v-model="bankDialog" max-width="500">
-      <v-card class="modern-dialog-card">
-        <v-card-title class="dialog-header">
-          <v-icon color="#667eea" class="mr-2">mdi-shield-check-outline</v-icon>
-          <span class="headline">Conectar {{ selectedBank }}</span>
-        </v-card-title>
-        <v-card-text class="dialog-content">
-          <p class="mb-3">
-            Esta etapa simula o consentimento Open Finance para a instituição
-            <strong>{{ selectedBank }}</strong>.
-          </p>
-          <p class="mb-0 text-medium-emphasis">
-            Ao confirmar, a conexão ficará ativa para sincronizar contas, transações, saldos,
-            limites e categorias do banco dentro do seu workspace.
-          </p>
-        </v-card-text>
-        <v-card-actions class="dialog-actions">
-          <v-spacer></v-spacer>
-          <v-btn @click="closeBankDialog" variant="text">{{ $t('common.cancel') }}</v-btn>
-          <v-btn
-            @click="confirmOpenFinanceConsent"
-            class="modern-btn gradient-btn"
-            :loading="openFinanceConnectionLoadingKey === selectedInstitutionKey"
-          >
-            Confirmar consentimento
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-
-    <v-dialog v-model="disconnectDialog" max-width="560">
-      <v-card class="modern-dialog-card">
-        <v-card-title class="dialog-header">
-          <v-icon color="#d14343" class="mr-2">mdi-link-variant-off</v-icon>
-          <span class="headline">Desconectar {{ disconnectInstitutionName }}</span>
-        </v-card-title>
-        <v-card-text class="dialog-content">
-          <p class="mb-3">
-            Você está prestes a fazer opt-out da integração com <strong>{{ disconnectInstitutionName }}</strong>.
-          </p>
-          <p class="mb-3 text-medium-emphasis">
-            O que acontece agora:
-          </p>
-          <p class="mb-1 text-medium-emphasis">1. Novas sincronizações automáticas desse banco serão interrompidas.</p>
-          <p class="mb-1 text-medium-emphasis">2. Contas e transações já importadas permanecem no workspace para histórico e auditoria.</p>
-          <p class="mb-3 text-medium-emphasis">3. Você poderá reconectar a instituição depois, se desejar.</p>
-          <div class="connection-legal-links">
-            <v-btn variant="text" @click="openLegalDoc('privacy-policy')">Política de Privacidade</v-btn>
-            <v-btn variant="text" @click="openLegalDoc('terms-of-use')">Termos de Uso</v-btn>
-            <v-btn variant="text" @click="openLegalDoc('cookie-policy')">Política de Cookies</v-btn>
-          </div>
-        </v-card-text>
-        <v-card-actions class="dialog-actions">
-          <v-spacer></v-spacer>
-          <v-btn @click="closeDisconnectDialog" variant="text">{{ $t('common.cancel') }}</v-btn>
-          <v-btn
-            color="error"
-            variant="elevated"
-            :loading="openFinanceConnectionLoadingKey === disconnectInstitutionKey"
-            :disabled="openFinanceConnectionLoadingKey === disconnectInstitutionKey"
-            @click="confirmDisconnectOpenFinanceConnection"
-          >
-            Confirmar desconexão
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-
     <v-dialog v-model="deleteAccountDialog" max-width="520">
       <v-card class="modern-dialog-card">
         <v-card-title class="dialog-header">
@@ -975,6 +782,7 @@ import { useTheme } from 'vuetify';
 import { useUserStore } from '@/plugins/userStore';
 import SubscriptionManagement from '@/components/SubscriptionManagement.vue';
 import WorkspaceSettings from '@/components/WorkspaceSettings.vue';
+import OpenFinanceConnectionsPanel from '@/components/open-finance/OpenFinanceConnectionsPanel.vue';
 import DataService from '@/services/DataService';
 import FinancialReadService from '@/services/FinancialReadService';
 import OpenFinanceService from '@/services/OpenFinanceService';
@@ -1145,15 +953,6 @@ watch(
   }
 )
 
-// Estado dos diálogos
-const bankDialog = ref(false)
-
-const selectedBank = ref('')
-const selectedInstitutionKey = ref('')
-const disconnectDialog = ref(false)
-const disconnectInstitutionKey = ref('')
-const disconnectInstitutionName = ref('')
-const highlightedCard = ref('')
 const openFinanceFrom = ref('')
 const openFinanceTo = ref('')
 const openFinanceSyncing = ref(false)
@@ -1164,7 +963,7 @@ const openFinanceConflicts = ref<OpenFinanceConflict[]>([])
 const lastOpenFinanceSync = ref<OpenFinanceSyncResponse | null>(null)
 const openFinanceConnections = ref<OpenFinanceConnection[]>([])
 const openFinanceImportedAccounts = ref<AccountView[]>([])
-const openFinanceConnectionLoadingKey = ref<string | null>(null)
+const openFinanceConnectionsLoading = ref(false)
 const openFinanceObservabilitySummary = ref<OpenFinanceObservabilitySummary | null>(null)
 const openFinanceSyncHistory = ref<OpenFinanceSyncHistoryItem[]>([])
 const openFinanceBankCategories = ref<OpenFinanceBankCategory[]>([])
@@ -1193,12 +992,6 @@ const availableLanguages = [
   { text: 'Français', value: 'fr' },
   { text: 'Español', value: 'es' }
 ];
-
-const supportedBankCards = [
-  { institutionKey: 'nubank', label: 'Nubank', logo: 'banks/nubank-logo.png' },
-  { institutionKey: 'banco-do-brasil', label: 'Banco do Brasil', logo: 'banks/bb-logo.webp' },
-  { institutionKey: 'itau', label: 'Itaú', logo: 'banks/itau-logo.jpg' },
-]
 
 const normalizeOptionalText = (value: unknown): string | null => {
   const raw = String(value ?? '').trim()
@@ -1281,6 +1074,28 @@ const formatOpenFinanceCurrency = (value: number) => {
   })
 }
 
+const formatOpenFinanceConsentStatus = (status: string) => {
+  const labels: Record<string, string> = {
+    PENDING_SETUP: 'Preparando conexão',
+    PENDING_AUTHORIZATION: 'Aguardando autorização',
+    CONSENT_GRANTED_WAITING_PROVIDER: 'Autorização em processamento',
+    AUTHORIZED_SYNCING: 'Sincronizando',
+    AUTHORIZED_READY: 'Autorizada',
+    DELAYED_PROVIDER: 'Aguardando banco',
+    REAUTH_REQUIRED: 'Reautorização necessária',
+    REVOKED: 'Revogada',
+    ERROR: 'Erro no consentimento',
+  }
+  return labels[status] || status
+}
+
+const digitsOnly = (value: string | null | undefined) => String(value || '').replace(/\D/g, '')
+
+const nullableText = (value: unknown) => {
+  const text = String(value ?? '').trim()
+  return text || null
+}
+
 const extractErrorMessage = (error: any, fallback: string) => {
   return (
     error?.response?.data?.message ||
@@ -1332,36 +1147,16 @@ const filteredOpenFinanceCategoryRows = computed(() => {
     })
 })
 
-const openFinanceConnectionByKey = computed(() => {
-  return openFinanceConnections.value.reduce((accumulator, connection) => {
-    accumulator[connection.institutionKey] = connection
-    return accumulator
-  }, {} as Record<string, OpenFinanceConnection>)
-})
-
-const openFinanceAccountNamesByInstitution = computed(() => {
-  return openFinanceImportedAccounts.value.reduce((accumulator: Record<string, string[]>, account: AccountView) => {
-    const connection = openFinanceConnections.value.find((item) =>
-      account.name.startsWith(`${item.institutionName} - `)
-    )
-    if (!connection) {
-      return accumulator
-    }
-
-    if (!accumulator[connection.institutionKey]) {
-      accumulator[connection.institutionKey] = []
-    }
-
-    accumulator[connection.institutionKey].push(account.name.replace(`${connection.institutionName} - `, ''))
-    return accumulator
-  }, {} as Record<string, string[]>)
-})
-
 const openFinanceOpenConflictCount = computed(() => {
   if (openFinanceConflictsLoaded.value) {
     return openFinanceConflicts.value.length
   }
   return Number(openFinanceObservabilitySummary.value?.openConflicts || 0)
+})
+
+const canManageOpenFinance = computed(() => {
+  const role = String(userStore.getTenantRole || '').toUpperCase()
+  return role === 'ROLE_OWNER' || role === 'ROLE_ADMIN'
 })
 
 const loadOpenFinanceConflicts = async () => {
@@ -1381,6 +1176,7 @@ const loadOpenFinanceConflicts = async () => {
 }
 
 const loadOpenFinanceConnections = async () => {
+  openFinanceConnectionsLoading.value = true
   try {
     const response = await OpenFinanceService.listConnections()
     openFinanceConnections.value = response.data || []
@@ -1389,6 +1185,8 @@ const loadOpenFinanceConnections = async () => {
       type: 'error',
       message: extractErrorMessage(error, 'Não foi possível carregar as conexões Open Finance.')
     }
+  } finally {
+    openFinanceConnectionsLoading.value = false
   }
 }
 
@@ -1430,9 +1228,24 @@ const loadOpenFinanceSyncHistory = async () => {
 
 const refreshOpenFinanceConsistencySnapshot = async () => {
   await Promise.allSettled([
+    loadOpenFinanceConnections(),
     loadOpenFinanceConflicts(),
     loadOpenFinanceObservabilitySummary(),
   ])
+}
+
+const refreshOpenFinanceConnectionsPanel = async () => {
+  await Promise.allSettled([
+    loadOpenFinanceConnections(),
+    loadOpenFinanceImportedAccounts(),
+    loadOpenFinanceObservabilitySummary(),
+    loadOpenFinanceSyncHistory(),
+    loadOpenFinanceConflicts(),
+  ])
+}
+
+const handleOpenFinanceConnectionSynced = (result: OpenFinanceSyncResponse | null) => {
+  lastOpenFinanceSync.value = result
 }
 
 const stopOpenFinanceConnectionsPolling = () => {
@@ -1596,9 +1409,6 @@ onMounted(async () => {
 
 onUnmounted(() => {
   stopOpenFinanceConnectionsPolling()
-  if (timeoutId) {
-    clearTimeout(timeoutId)
-  }
 })
 
 // Funções para manipular as ações do usuário
@@ -1759,153 +1569,6 @@ const connectGoogle = () => {
 
 const disconnectGoogle = () => {
   // lógica de desconexão, se necessário
-}
-
-const openBankDialog = (bank: string) => {
-  selectedBank.value = bank
-  bankDialog.value = true
-}
-
-const closeBankDialog = () => {
-  bankDialog.value = false
-  selectedBank.value = ''
-  selectedInstitutionKey.value = ''
-}
-
-const bankCardStatus = (institutionKey: string) => {
-  const connection = openFinanceConnectionByKey.value[institutionKey]
-  if (!connection) {
-    return { label: t('account_management.bank_connections.disconnected'), color: 'grey', icon: 'mdi-link-variant-off' }
-  }
-  if (connection.status === 'CONNECTED') {
-    return { label: 'Conectado', color: 'green', icon: 'mdi-link-variant' }
-  }
-  if (connection.status === 'PENDING_CONSENT') {
-    return { label: 'Consentimento pendente', color: 'warning', icon: 'mdi-clock-outline' }
-  }
-  if (connection.status === 'ERROR') {
-    return { label: 'Erro', color: 'error', icon: 'mdi-alert-circle-outline' }
-  }
-  return { label: 'Pendente', color: 'warning', icon: 'mdi-clock-outline' }
-}
-
-const isConnectionDisconnectable = (institutionKey: string) => {
-  const existing = openFinanceConnectionByKey.value[institutionKey]
-  return Boolean(existing && (existing.status === 'CONNECTED' || existing.status === 'ERROR'))
-}
-
-const closeDisconnectDialog = () => {
-  disconnectDialog.value = false
-  disconnectInstitutionKey.value = ''
-  disconnectInstitutionName.value = ''
-}
-
-const requestDisconnectOpenFinanceConnection = (institutionKey: string) => {
-  const matchedBank = supportedBankCards.find((item) => item.institutionKey === institutionKey)
-  disconnectInstitutionKey.value = institutionKey
-  disconnectInstitutionName.value =
-    matchedBank?.label ||
-    openFinanceConnectionByKey.value[institutionKey]?.institutionName ||
-    institutionKey
-  disconnectDialog.value = true
-}
-
-const confirmDisconnectOpenFinanceConnection = async () => {
-  if (!disconnectInstitutionKey.value) {
-    return
-  }
-  const institutionKey = disconnectInstitutionKey.value
-  openFinanceConnectionLoadingKey.value = institutionKey
-  try {
-    await OpenFinanceService.disconnectConnection(institutionKey)
-    openFinanceFeedback.value = {
-      type: 'success',
-      message: 'Conexão Open Finance removida com sucesso.'
-    }
-    closeDisconnectDialog()
-    await loadOpenFinanceConnections()
-    await loadOpenFinanceImportedAccounts()
-    await loadOpenFinanceObservabilitySummary()
-  } catch (error: any) {
-    openFinanceFeedback.value = {
-      type: 'error',
-      message: extractErrorMessage(error, 'Falha ao alterar a conexão Open Finance.')
-    }
-  } finally {
-    openFinanceConnectionLoadingKey.value = null
-  }
-}
-
-const toggleOpenFinanceConnection = async (institutionKey: string) => {
-  if (isConnectionDisconnectable(institutionKey)) {
-    requestDisconnectOpenFinanceConnection(institutionKey)
-    return
-  }
-
-  openFinanceConnectionLoadingKey.value = institutionKey
-  openFinanceFeedback.value.message = ''
-  try {
-    await OpenFinanceService.startConnection(institutionKey)
-    selectedInstitutionKey.value = institutionKey
-    openBankDialog(supportedBankCards.find((item) => item.institutionKey === institutionKey)?.label || institutionKey)
-    openFinanceFeedback.value = {
-      type: 'success',
-      message: 'Conexão Open Finance iniciada. Confirme o consentimento para concluir.'
-    }
-    await loadOpenFinanceConnections()
-    await loadOpenFinanceImportedAccounts()
-    await loadOpenFinanceObservabilitySummary()
-  } catch (error: any) {
-    openFinanceFeedback.value = {
-      type: 'error',
-      message: extractErrorMessage(error, 'Falha ao alterar a conexão Open Finance.')
-    }
-  } finally {
-    openFinanceConnectionLoadingKey.value = null
-  }
-}
-
-const confirmOpenFinanceConsent = async () => {
-  if (!selectedInstitutionKey.value) {
-    return
-  }
-  openFinanceConnectionLoadingKey.value = selectedInstitutionKey.value
-  try {
-    await OpenFinanceService.confirmConsent(selectedInstitutionKey.value)
-    const syncResponse = await OpenFinanceService.sync({
-      from: openFinanceFrom.value,
-      to: openFinanceTo.value,
-    })
-    lastOpenFinanceSync.value = syncResponse.data
-    openFinanceFeedback.value = {
-      type: 'success',
-      message: 'Consentimento confirmado e sincronização inicial concluída. As transações já podem ser vistas em Orçamento.'
-    }
-    closeBankDialog()
-    await loadOpenFinanceConnections()
-    await loadOpenFinanceImportedAccounts()
-    await loadOpenFinanceConflicts()
-    await loadOpenFinanceObservabilitySummary()
-    await loadOpenFinanceSyncHistory()
-  } catch (error: any) {
-    openFinanceFeedback.value = {
-      type: 'error',
-      message: extractErrorMessage(error, 'Falha ao confirmar o consentimento Open Finance.')
-    }
-  } finally {
-    openFinanceConnectionLoadingKey.value = null
-  }
-}
-
-let timeoutId: ReturnType<typeof setTimeout> | null = null
-
-const highlightCard = (cardName: string) => {
-  if (timeoutId) {
-    clearTimeout(timeoutId)
-  }
-  timeoutId = setTimeout(() => {
-    highlightedCard.value = cardName
-  }, 200)
 }
 
 const goToImportedTransactions = () => {
@@ -2276,92 +1939,6 @@ const saveAlertSettings = async () => {
 
 .v-theme--dark .setting-hint {
   color: #b0b0b0;
-}
-
-/* Bank Cards Redesign */
-.bank-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 20px;
-  margin-top: 16px;
-}
-
-.bank-card-item {
-  background: white;
-  border: 2px solid rgba(102, 126, 234, 0.1);
-  border-radius: 16px;
-  padding: 20px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  opacity: 0.85;
-}
-
-.connection-legal-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.v-theme--dark .bank-card-item {
-  background: #1e1e1e;
-  border-color: rgba(102, 126, 234, 0.2);
-}
-
-.bank-card-item.bank-card-highlight {
-  border-color: #667eea;
-  box-shadow: 0 8px 22px rgba(102, 126, 234, 0.2);
-  opacity: 1;
-  transform: translateY(-4px);
-}
-
-.bank-card-item:focus-visible {
-  outline: 2px solid #667eea;
-  outline-offset: 4px;
-}
-
-.bank-logo {
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 16px;
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.bank-name {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #1a1a1a;
-  margin-bottom: 12px;
-}
-
-.v-theme--dark .bank-name {
-  color: #ffffff;
-}
-
-.bank-card-meta {
-  margin-top: 10px;
-  font-size: 0.85rem;
-  color: #666;
-}
-
-.bank-card-meta--stacked {
-  line-height: 1.5;
-}
-
-.v-theme--dark .bank-card-meta {
-  color: #b0b0b0;
-}
-
-.bank-card-error {
-  margin-top: 8px;
-  font-size: 0.85rem;
-  color: #c62828;
-}
-
-.v-theme--dark .bank-card-error {
-  color: #ef9a9a;
 }
 
 /* Integration Item */
@@ -2822,10 +2399,6 @@ const saveAlertSettings = async () => {
 
   .card-content {
     padding: 20px;
-  }
-
-  .bank-cards {
-    grid-template-columns: 1fr;
   }
 
   .open-finance-toolbar {

@@ -44,7 +44,8 @@
     "legal": {
       "title": "Legal",
       "privacy_policy": "Política de Privacidade",
-      "terms_of_service": "Termos de Serviço"
+      "terms_of_service": "Termos de Serviço",
+      "cookie_policy": "Política de Cookies"
     },
     "workspace": {
       "label": "Workspace",

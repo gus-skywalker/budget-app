@@ -482,12 +482,10 @@
       </div>
     </footer>
 
-    <PrivacyControls />
   </v-container>
 </template>
 
 <script>
-import PrivacyControls from '@/components/compliance/PrivacyControls.vue'
 import { PLAN_DETAILS } from '@/constants/plans'
 import { useUserStore } from '@/plugins/userStore'
 import NotificationService from '@/services/NotificationService'
@@ -496,9 +494,6 @@ import { formatConvertedPriceFromBRL, resolvePricingCurrency } from '@/utils/pri
 
 export default {
   name: 'LandingPage',
-  components: {
-    PrivacyControls
-  },
   data() {
     return {
       isMenuOpen: false,

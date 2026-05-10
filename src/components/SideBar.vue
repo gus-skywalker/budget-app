@@ -207,6 +207,13 @@ const legalItems = computed<NavItem[]>(() => [
     icon: 'mdi-file-document-outline',
     to: { name: 'terms-of-use' },
     disabled: false
+  },
+  {
+    key: 'cookie-policy',
+    title: t('sidebar.legal.cookie_policy'),
+    icon: 'mdi-cookie-outline',
+    to: { name: 'cookie-policy' },
+    disabled: false
   }
 ])
 

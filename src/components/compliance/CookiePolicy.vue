@@ -14,24 +14,29 @@
 </template>
 
 <script lang="js">
+import { onMounted } from 'vue'
+
+const IUBENDA_SCRIPT_ID = 'iubenda-embed-script'
+
+function loadIubendaEmbed() {
+  if (document.getElementById(IUBENDA_SCRIPT_ID)) {
+    if (window.iubenda?.embed) {
+      window.iubenda.embed()
+    }
+    return
+  }
+
+  const script = document.createElement('script')
+  script.id = IUBENDA_SCRIPT_ID
+  script.src = 'https://cdn.iubenda.com/iubenda.js'
+  script.async = true
+  document.head.appendChild(script)
+}
+
 export default {
-  name: "CookiePolicy",
+  name: 'CookiePolicy',
   setup() {
-    (function (w, d) {
-      var loader = function () {
-        var s = d.createElement("script"),
-          tag = d.getElementsByTagName("script")[0];
-        s.src = "https://cdn.iubenda.com/iubenda.js";
-        tag.parentNode.insertBefore(s, tag);
-      };
-      if (w.addEventListener) {
-        w.addEventListener("load", loader, false);
-      } else if (w.attachEvent) {
-        w.attachEvent("onload", loader);
-      } else {
-        w.onload = loader;
-      }
-    })(window, document);
+    onMounted(loadIubendaEmbed)
   }
 }
 </script>
