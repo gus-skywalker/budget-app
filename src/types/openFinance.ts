@@ -1,6 +1,32 @@
 export interface OpenFinanceSyncRequest {
+  connectionId?: string
   from: string
   to: string
+}
+
+export interface OpenFinanceStartConnectionRequest {
+  institutionKey: string
+  institutionName?: string
+  bankCode: string
+  payerDocument: string
+  payerDocumentType: 'CPF' | 'CNPJ'
+  payerName: string
+  displayName?: string | null
+  agency?: string | null
+  agencyDigit?: string | null
+  accountNumber?: string | null
+  accountNumberDigit?: string | null
+  accountType?: string | null
+  statementType: 'BANK' | 'CREDIT'
+  cardNumber?: string | null
+  street?: string | null
+  neighborhood?: string | null
+  addressNumber?: string | null
+  addressComplement?: string | null
+  city?: string | null
+  state?: string | null
+  zipcode?: string | null
+  email?: string | null
 }
 
 export interface OpenFinanceSyncResponse {
@@ -59,15 +85,45 @@ export interface OpenFinanceObservabilitySummary {
 
 export interface OpenFinanceConnection {
   id: string
+  provider: string | null
   institutionKey: string
   institutionName: string
+  bankCode?: string | null
   status: 'NOT_CONNECTED' | 'PENDING_CONSENT' | 'CONNECTED' | 'ERROR'
+  accessScope: string | null
+  sharingPolicy: string | null
+  consentStatus: string | null
+  payerDocumentType: 'CPF' | 'CNPJ' | null
+  payerName?: string | null
+  payerDocumentMasked?: string | null
+  accountNumberMasked?: string | null
+  displayName: string | null
+  connectedByUserId: string | null
+  connectedByRole: string | null
+  authorizationLink?: string | null
+  authorizationLinkExpiresAt?: string | null
+  lastProviderStatus?: string | null
+  lastProviderStatusCheckedAt?: string | null
+  openfinanceId: string | null
+  openfinanceLink: string | null
+  statementType: 'BANK' | 'CREDIT' | null
+  cardNumber: string | null
   linkedAccountsCount: number
   lastErrorSummary: string | null
   connectedAt: string | null
+  readyForSyncAt: string | null
   lastSyncedAt: string | null
   lastSyncFrom: string | null
   lastSyncTo: string | null
+}
+
+export interface OpenFinanceSyncExecutionResponse {
+  status: string
+  reason: string | null
+  lastSyncAt: string | null
+  nextAvailableAt: string | null
+  remainingQuota: number | null
+  result: OpenFinanceSyncResponse | null
 }
 
 export interface OpenFinanceSyncHistoryItem {

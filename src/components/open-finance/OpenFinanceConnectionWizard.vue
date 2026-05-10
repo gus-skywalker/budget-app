@@ -108,6 +108,7 @@
               persistent-hint
               @blur="prepareZipcodeAutofill"
             />
+            <v-text-field v-model="street" label="Endereço" variant="outlined" density="comfortable" color="#667eea" />
             <v-text-field v-model="addressNumber" label="Número" variant="outlined" density="comfortable" color="#667eea" />
             <v-text-field v-model="neighborhood" label="Bairro" variant="outlined" density="comfortable" color="#667eea" />
             <v-text-field v-model="city" label="Cidade" variant="outlined" density="comfortable" color="#667eea" />
@@ -174,6 +175,7 @@ import OpenFinanceService from '@/services/OpenFinanceService'
 import WorkspaceService from '@/services/WorkspaceService'
 import BrasilApiService, { isValidCep, isValidCnpj, onlyDigits, type BrasilApiCnpj } from '@/services/BrasilApiService'
 import { useUserStore } from '@/plugins/userStore'
+import { extractOpenFinanceErrorMessage } from '@/utils/openFinanceErrors'
 import type { OpenFinanceConnection, OpenFinanceStartConnectionRequest } from '@/types/openFinance'
 import { bankLogoPath, genericBankLogo, openFinanceInstitutions, type OpenFinanceInstitutionOption } from '@/data/openFinanceInstitutions'
 
@@ -208,6 +210,7 @@ const holderType = ref<'CPF' | 'CNPJ'>('CPF')
 const payerName = ref('')
 const payerDocument = ref('')
 const zipcode = ref('')
+const street = ref('')
 const addressNumber = ref('')
 const neighborhood = ref('')
 const city = ref('')
@@ -263,6 +266,7 @@ const reset = () => {
   payerName.value = ''
   payerDocument.value = ''
   zipcode.value = ''
+  street.value = ''
   addressNumber.value = ''
   neighborhood.value = ''
   city.value = ''
@@ -320,6 +324,7 @@ const validateStep = () => {
     if (!digitsOnly(payerDocument.value)) return holderType.value === 'CPF' ? 'Informe o CPF.' : 'Informe o CNPJ.'
     if (holderType.value === 'CNPJ' && !isValidCnpj(payerDocument.value)) return 'Informe um CNPJ válido.'
     if (!isValidCep(zipcode.value)) return 'Informe um CEP válido.'
+    if (!street.value.trim()) return 'Informe o endereço.'
     if (!addressNumber.value.trim()) return 'Informe o número.'
     if (!city.value.trim() || !state.value.trim()) return 'Informe cidade e UF.'
   }
@@ -342,6 +347,7 @@ const submit = async () => {
       payerDocument: digitsOnly(payerDocument.value),
       payerName: payerName.value.trim(),
       zipcode: digitsOnly(zipcode.value),
+      street: street.value.trim(),
       addressNumber: addressNumber.value.trim(),
       neighborhood: neighborhood.value.trim(),
       state: state.value.trim().toUpperCase(),
@@ -377,6 +383,7 @@ const applyCompanyData = (company: BrasilApiCnpj) => {
 
   if (companyName) payerName.value = companyName
   if (companyCep) zipcode.value = companyCep
+  if (company.logradouro) street.value = company.logradouro
   if (company.numero) addressNumber.value = company.numero
   if (company.bairro) neighborhood.value = company.bairro
   if (company.municipio) city.value = company.municipio
@@ -441,6 +448,7 @@ const prepareZipcodeAutofill = async () => {
   try {
     const response = await BrasilApiService.getCep(cep)
     zipcode.value = response.data.cep || cep
+    if (response.data.street) street.value = response.data.street
     if (response.data.neighborhood) neighborhood.value = response.data.neighborhood
     if (response.data.city) city.value = response.data.city
     if (response.data.state) state.value = response.data.state
@@ -478,9 +486,7 @@ const maskAccount = (value: string) => {
   return `****${digits.slice(-4)}`
 }
 const extractErrorMessage = (error: any, fallback: string) => (
-  error?.response?.data?.message ||
-  (typeof error?.response?.data === 'string' ? error.response.data : null) ||
-  fallback
+  extractOpenFinanceErrorMessage(error, fallback)
 )
 </script>
 

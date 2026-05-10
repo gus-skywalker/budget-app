@@ -183,6 +183,7 @@ import { computed, ref } from 'vue'
 import OpenFinanceService from '@/services/OpenFinanceService'
 import type { OpenFinanceConnection, OpenFinanceSyncResponse } from '@/types/openFinance'
 import { bankLogoPath, genericBankLogo } from '@/data/openFinanceInstitutions'
+import { extractOpenFinanceErrorMessage } from '@/utils/openFinanceErrors'
 import OpenFinanceConnectionWizard from './OpenFinanceConnectionWizard.vue'
 
 const props = defineProps<{
@@ -335,9 +336,7 @@ const markLogoAsFailed = (key: string) => {
 const initials = (value: string) => value.split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase()
 const formatDateTime = (value: string) => new Date(value).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
 const extractErrorMessage = (error: any, fallback: string) => (
-  error?.response?.data?.message ||
-  (typeof error?.response?.data === 'string' ? error.response.data : null) ||
-  fallback
+  extractOpenFinanceErrorMessage(error, fallback)
 )
 </script>
 

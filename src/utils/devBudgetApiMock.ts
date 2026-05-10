@@ -85,8 +85,79 @@ const createObservabilitySummary = () => ({
   lastSuccessfulSyncAt: null,
   lastFailedSyncAt: null,
   connectedInstitutions: 0,
-  conflictsOpen: 0
+  conflictsOpen: 0,
+  connectedAccounts: 1,
+  importedTransactions: 0,
+  categoryMappings: 0,
+  openConflicts: 0,
+  accountsAtRateLimitToday: 0,
+  lastSyncedAt: null,
+  lastSyncFrom: null,
+  lastSyncTo: null,
+  lastSyncTrigger: null
 })
+
+const readJsonBody = (data: unknown) => {
+  if (!data) return {}
+  if (typeof data === 'string') {
+    try {
+      return JSON.parse(data)
+    } catch {
+      return {}
+    }
+  }
+  return typeof data === 'object' ? data as Record<string, any> : {}
+}
+
+const maskDocument = (value: unknown) => {
+  const digits = String(value || '').replace(/\D/g, '')
+  return digits ? `${'*'.repeat(Math.max(0, digits.length - 4))}${digits.slice(-4)}` : null
+}
+
+const maskAccount = (value: unknown) => {
+  const digits = String(value || '').replace(/\D/g, '')
+  return digits ? `****${digits.slice(-4)}` : null
+}
+
+const createOpenFinanceConnection = (payload: Record<string, any> = {}) => {
+  const now = new Date().toISOString()
+  const institutionName = String(payload.institutionName || 'Nubank')
+  const institutionKey = String(payload.institutionKey || 'nubank')
+
+  return {
+    id: `dev-open-finance-${institutionKey}`,
+    provider: 'DEV_MOCK',
+    institutionKey,
+    institutionName,
+    bankCode: String(payload.bankCode || '260'),
+    status: 'CONNECTED',
+    accessScope: 'ACCOUNTS_TRANSACTIONS',
+    sharingPolicy: 'WORKSPACE',
+    consentStatus: 'AUTHORIZED_READY',
+    payerDocumentType: payload.payerDocumentType || 'CNPJ',
+    payerName: payload.payerName || 'Empresa de teste',
+    payerDocumentMasked: maskDocument(payload.payerDocument),
+    accountNumberMasked: maskAccount(payload.accountNumber),
+    displayName: payload.displayName || institutionName,
+    connectedByUserId: null,
+    connectedByRole: null,
+    authorizationLink: null,
+    authorizationLinkExpiresAt: null,
+    lastProviderStatus: 'AUTHORIZED',
+    lastProviderStatusCheckedAt: now,
+    openfinanceId: null,
+    openfinanceLink: null,
+    statementType: payload.statementType || 'BANK',
+    cardNumber: payload.cardNumber || null,
+    linkedAccountsCount: 1,
+    lastErrorSummary: null,
+    connectedAt: now,
+    readyForSyncAt: now,
+    lastSyncedAt: null,
+    lastSyncFrom: null,
+    lastSyncTo: null
+  }
+}
 
 const createAccount = () => ({
   id: 'dev-account-1',
@@ -210,8 +281,17 @@ const buildDataForRequest = (config: AxiosRequestConfig) => {
     return createObservabilitySummary()
   }
 
+  if (path === '/open-finance/connections') {
+    return method === 'post'
+      ? createOpenFinanceConnection(readJsonBody(config.data))
+      : [createOpenFinanceConnection()]
+  }
+
+  if (path.startsWith('/open-finance/connections/')) {
+    return createOpenFinanceConnection(readJsonBody(config.data))
+  }
+
   if (
-    path.startsWith('/open-finance/connections') ||
     path.startsWith('/open-finance/categories') ||
     path.startsWith('/open-finance/category-mappings') ||
     path.startsWith('/open-finance/reconciliation/conflicts') ||
