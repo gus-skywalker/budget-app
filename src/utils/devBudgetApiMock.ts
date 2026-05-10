@@ -51,31 +51,161 @@ const createBillingSummaryResponse = (workspaceId?: string) => {
   }
 }
 
-const createPagedTransactionsResponse = (config: AxiosRequestConfig) => ({
-  items: [],
-  total: 0,
-  limit: Number(config.params?.limit || 20),
-  offset: Number(config.params?.offset || 0)
+const todayIso = () => new Date().toISOString().split('T')[0]
+
+const daysAgoIso = (days: number) => {
+  const date = new Date()
+  date.setDate(date.getDate() - days)
+  return date.toISOString().split('T')[0]
+}
+
+const openFinanceAccount = () => ({
+  id: 'dev-of-account-nubank-1',
+  name: 'Nubank - Conta PJ',
+  institution: 'Nubank',
+  institutionName: 'Nubank',
+  institutionKey: 'nubank',
+  bankCode: '260',
+  balance: 8420.35,
+  currency: 'BRL',
+  provider: 'OPEN_FINANCE',
+  accountType: 'CHECKING',
+  type: 'CHECKING'
 })
 
-const createDashboardResponse = () => ({
-  totalBalance: 0,
-  monthlyIncome: 0,
-  monthlyExpenses: 0,
-  recentTransactions: [],
-  topCategories: []
-})
+const devTransactions = () => {
+  const account = openFinanceAccount()
+  return [
+    {
+      id: 'dev-of-tx-1',
+      date: todayIso(),
+      description: 'Recebimento PIX Cliente Alpha',
+      amount: 3250,
+      direction: 'INFLOW',
+      category: 'Receitas',
+      accountId: account.id,
+      accountName: account.name,
+      status: 'POSTED',
+      visibilityScope: 'WORKSPACE',
+      source: 'OPEN_FINANCE',
+      openFinance: true,
+      openFinanceRawStatus: 'POSTED',
+      openFinanceBankCategoryId: 'pix-received',
+      reconciliationStatus: 'MATCHED',
+      reconciliationMatchedBy: 'DEV_MOCK',
+      reconciliationConflictReason: null
+    },
+    {
+      id: 'dev-of-tx-2',
+      date: daysAgoIso(2),
+      description: 'Pagamento fornecedor infraestrutura',
+      amount: 780.45,
+      direction: 'OUTFLOW',
+      category: 'Operacional',
+      accountId: account.id,
+      accountName: account.name,
+      status: 'POSTED',
+      visibilityScope: 'WORKSPACE',
+      source: 'OPEN_FINANCE',
+      openFinance: true,
+      openFinanceRawStatus: 'POSTED',
+      openFinanceBankCategoryId: 'supplier-payment',
+      reconciliationStatus: 'PENDING_REVIEW',
+      reconciliationMatchedBy: null,
+      reconciliationConflictReason: null
+    },
+    {
+      id: 'dev-of-tx-3',
+      date: daysAgoIso(5),
+      description: 'Assinatura software financeiro',
+      amount: 129.9,
+      direction: 'OUTFLOW',
+      category: 'Software',
+      accountId: account.id,
+      accountName: account.name,
+      status: 'POSTED',
+      visibilityScope: 'WORKSPACE',
+      source: 'OPEN_FINANCE',
+      openFinance: true,
+      openFinanceRawStatus: 'POSTED',
+      openFinanceBankCategoryId: 'software',
+      reconciliationStatus: 'MATCHED',
+      reconciliationMatchedBy: 'DEV_MOCK',
+      reconciliationConflictReason: null
+    },
+    {
+      id: 'dev-of-tx-4',
+      date: daysAgoIso(8),
+      description: 'Tarifa pacote de serviços',
+      amount: 42.5,
+      direction: 'OUTFLOW',
+      category: 'Tarifas bancárias',
+      accountId: account.id,
+      accountName: account.name,
+      status: 'POSTED',
+      visibilityScope: 'WORKSPACE',
+      source: 'OPEN_FINANCE',
+      openFinance: true,
+      openFinanceRawStatus: 'POSTED',
+      openFinanceBankCategoryId: 'bank-fee',
+      reconciliationStatus: 'MATCHED',
+      reconciliationMatchedBy: 'DEV_MOCK',
+      reconciliationConflictReason: null
+    }
+  ]
+}
+
+const filterTransactions = (config: AxiosRequestConfig) => {
+  const fromDate = String(config.params?.fromDate || '')
+  const toDate = String(config.params?.toDate || '')
+  const accountId = String(config.params?.accountId || '')
+
+  return devTransactions().filter((transaction) => {
+    if (fromDate && transaction.date < fromDate) return false
+    if (toDate && transaction.date > toDate) return false
+    if (accountId && transaction.accountId !== accountId) return false
+    return true
+  })
+}
+
+const createPagedTransactionsResponse = (config: AxiosRequestConfig) => {
+  const limit = Number(config.params?.limit || 20)
+  const offset = Number(config.params?.offset || 0)
+  const items = filterTransactions(config)
+
+  return {
+    items: items.slice(offset, offset + limit),
+    total: items.length,
+    limit,
+    offset
+  }
+}
+
+const createDashboardResponse = () => {
+  const transactions = devTransactions()
+  return {
+    totalBalance: openFinanceAccount().balance,
+    monthlyIncome: transactions
+      .filter((transaction) => transaction.direction === 'INFLOW')
+      .reduce((total, transaction) => total + transaction.amount, 0),
+    monthlyExpenses: transactions
+      .filter((transaction) => transaction.direction === 'OUTFLOW')
+      .reduce((total, transaction) => total + transaction.amount, 0),
+    recentTransactions: transactions,
+    topCategories: ['Operacional', 'Software', 'Tarifas bancárias']
+  }
+}
 
 const createMonthOverviewResponse = () => ({
-  totalIncome: 0,
-  totalExpense: 0
+  totalIncome: 3250,
+  totalExpense: 952.85
 })
 
 const createDashboardChartResponse = () => ({
-  labels: [],
+  labels: [daysAgoIso(8), daysAgoIso(5), daysAgoIso(2), todayIso()],
   datasets: [
-    { label: 'Income', data: [] },
-    { label: 'Expenses', data: [] }
+    { label: 'Income', data: [0, 0, 0, 3250] },
+    { label: 'Expenses', data: [42.5, 129.9, 780.45, 0] }
   ]
 })
 
@@ -87,15 +217,58 @@ const createObservabilitySummary = () => ({
   connectedInstitutions: 0,
   conflictsOpen: 0,
   connectedAccounts: 1,
-  importedTransactions: 0,
+  importedTransactions: devTransactions().length,
   categoryMappings: 0,
   openConflicts: 0,
   accountsAtRateLimitToday: 0,
-  lastSyncedAt: null,
-  lastSyncFrom: null,
-  lastSyncTo: null,
-  lastSyncTrigger: null
+  lastSyncedAt: new Date().toISOString(),
+  lastSyncFrom: daysAgoIso(30),
+  lastSyncTo: todayIso(),
+  lastSyncTrigger: 'MANUAL'
 })
+
+const createOpenFinanceSyncResponse = () => ({
+  from: daysAgoIso(30),
+  to: todayIso(),
+  accountsCreated: 1,
+  accountsUpdated: 1,
+  transactionsCreated: devTransactions().length,
+  transactionsUpdated: 0,
+  limitsUpserted: 0,
+  metadataUpserted: 1,
+  accountsSkippedDueToRateLimit: 0,
+  reconciliationConflicts: 0
+})
+
+const createOpenFinanceSyncExecutionResponse = () => ({
+  status: 'EXECUTED',
+  reason: null,
+  lastSyncAt: new Date().toISOString(),
+  nextAvailableAt: null,
+  remainingQuota: 9,
+  result: createOpenFinanceSyncResponse()
+})
+
+const createOpenFinanceSyncHistory = () => {
+  const sync = createOpenFinanceSyncResponse()
+  return [{
+    id: 'dev-of-sync-1',
+    syncFrom: sync.from,
+    syncTo: sync.to,
+    accountsCreated: sync.accountsCreated,
+    accountsUpdated: sync.accountsUpdated,
+    transactionsCreated: sync.transactionsCreated,
+    transactionsUpdated: sync.transactionsUpdated,
+    limitsUpserted: sync.limitsUpserted,
+    metadataUpserted: sync.metadataUpserted,
+    accountsSkippedDueToRateLimit: sync.accountsSkippedDueToRateLimit,
+    reconciliationConflicts: sync.reconciliationConflicts,
+    trigger: 'MANUAL',
+    status: 'SUCCESS',
+    errorSummary: null,
+    createdAt: new Date().toISOString()
+  }]
+}
 
 const readJsonBody = (data: unknown) => {
   if (!data) return {}
@@ -159,19 +332,7 @@ const createOpenFinanceConnection = (payload: Record<string, any> = {}) => {
   }
 }
 
-const createAccount = () => ({
-  id: 'dev-account-1',
-  name: 'Itaú - Conta corrente',
-  institution: 'Itaú',
-  institutionName: 'Itaú',
-  institutionKey: 'itau',
-  bankCode: '341',
-  balance: 0,
-  currency: 'BRL',
-  provider: 'OPEN_FINANCE',
-  accountType: 'CHECKING',
-  type: 'CHECKING'
-})
+const createAccount = () => openFinanceAccount()
 
 const buildDataForRequest = (config: AxiosRequestConfig) => {
   const url = buildUrl(config.url, config.baseURL)
@@ -248,6 +409,9 @@ const buildDataForRequest = (config: AxiosRequestConfig) => {
   }
 
   if (path.startsWith('/transactions/')) {
+    const transaction = devTransactions().find((item) => item.id === path.split('/')[2])
+    if (transaction) return transaction
+
     return {
       id: path.split('/')[2] || 'dev-transaction',
       amount: 0,
@@ -288,14 +452,25 @@ const buildDataForRequest = (config: AxiosRequestConfig) => {
   }
 
   if (path.startsWith('/open-finance/connections/')) {
+    if (path.endsWith('/sync')) {
+      return createOpenFinanceSyncExecutionResponse()
+    }
+
     return createOpenFinanceConnection(readJsonBody(config.data))
+  }
+
+  if (path.startsWith('/open-finance/sync/history')) {
+    return createOpenFinanceSyncHistory()
+  }
+
+  if (path === '/open-finance/sync') {
+    return createOpenFinanceSyncResponse()
   }
 
   if (
     path.startsWith('/open-finance/categories') ||
     path.startsWith('/open-finance/category-mappings') ||
-    path.startsWith('/open-finance/reconciliation/conflicts') ||
-    path.startsWith('/open-finance/sync/history')
+    path.startsWith('/open-finance/reconciliation/conflicts')
   ) {
     return []
   }
