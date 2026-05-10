@@ -69,12 +69,12 @@
         <section v-else-if="step === 'holderType'" class="of-step-panel">
           <h4>Essa informação ajuda a preparar a autorização corretamente.</h4>
           <div class="of-choice-grid">
-            <button type="button" class="of-choice" :class="{ 'of-choice--selected': holderType === 'CPF' }" @click="holderType = 'CPF'">
+            <button type="button" class="of-choice" :class="{ 'of-choice--selected': holderType === 'CPF' }" @click="selectHolderType('CPF')">
               <v-icon>mdi-account-outline</v-icon>
               <strong>Pessoa física</strong>
               <span>Use CPF e nome completo do titular.</span>
             </button>
-            <button type="button" class="of-choice" :class="{ 'of-choice--selected': holderType === 'CNPJ' }" @click="holderType = 'CNPJ'">
+            <button type="button" class="of-choice" :class="{ 'of-choice--selected': holderType === 'CNPJ' }" @click="selectHolderType('CNPJ')">
               <v-icon>mdi-domain</v-icon>
               <strong>Empresa</strong>
               <span>Use CNPJ e razão social do pagador.</span>
@@ -86,8 +86,28 @@
           <h4>{{ holderType === 'CPF' ? 'Dados do titular' : 'Dados da empresa' }}</h4>
           <div class="of-form-grid">
             <v-text-field v-model="payerName" :label="holderType === 'CPF' ? 'Nome completo' : 'Razão social'" variant="outlined" density="comfortable" color="#667eea" />
-            <v-text-field v-model="payerDocument" :label="holderType === 'CPF' ? 'CPF' : 'CNPJ'" variant="outlined" density="comfortable" color="#667eea" />
-            <v-text-field v-model="zipcode" label="CEP" variant="outlined" density="comfortable" color="#667eea" @blur="prepareZipcodeAutofill" />
+            <v-text-field
+              v-model="payerDocument"
+              :label="holderType === 'CPF' ? 'CPF' : 'CNPJ'"
+              variant="outlined"
+              density="comfortable"
+              color="#667eea"
+              :loading="cnpjLookupLoading"
+              :hint="cnpjLookupHint"
+              persistent-hint
+              @blur="prepareCnpjAutofill"
+            />
+            <v-text-field
+              v-model="zipcode"
+              label="CEP"
+              variant="outlined"
+              density="comfortable"
+              color="#667eea"
+              :loading="cepLookupLoading"
+              :hint="cepLookupHint"
+              persistent-hint
+              @blur="prepareZipcodeAutofill"
+            />
             <v-text-field v-model="addressNumber" label="Número" variant="outlined" density="comfortable" color="#667eea" />
             <v-text-field v-model="neighborhood" label="Bairro" variant="outlined" density="comfortable" color="#667eea" />
             <v-text-field v-model="city" label="Cidade" variant="outlined" density="comfortable" color="#667eea" />
@@ -151,6 +171,9 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import OpenFinanceService from '@/services/OpenFinanceService'
+import WorkspaceService from '@/services/WorkspaceService'
+import BrasilApiService, { isValidCep, isValidCnpj, onlyDigits, type BrasilApiCnpj } from '@/services/BrasilApiService'
+import { useUserStore } from '@/plugins/userStore'
 import type { OpenFinanceConnection, OpenFinanceStartConnectionRequest } from '@/types/openFinance'
 import { bankLogoPath, genericBankLogo, openFinanceInstitutions, type OpenFinanceInstitutionOption } from '@/data/openFinanceInstitutions'
 
@@ -162,6 +185,7 @@ const emit = defineEmits<{
   created: [connection: OpenFinanceConnection]
   feedback: [payload: { type: 'success' | 'error' | 'info'; message: string }]
 }>()
+const userStore = useUserStore()
 
 const steps: Array<{ value: Step; label: string }> = [
   { value: 'institution', label: 'Banco' },
@@ -197,6 +221,11 @@ const authorizationLink = ref('')
 const submitting = ref(false)
 const errorMessage = ref('')
 const failedLogos = ref<Record<string, boolean>>({})
+const cepLookupLoading = ref(false)
+const cepLookupMessage = ref('')
+const cnpjLookupLoading = ref(false)
+const cnpjLookupMessage = ref('')
+const cnpjCompany = ref<BrasilApiCnpj | null>(null)
 
 const stepIndex = computed(() => steps.findIndex((item) => item.value === step.value))
 const filteredInstitutions = computed(() => {
@@ -211,9 +240,19 @@ const filteredInstitutions = computed(() => {
 
 const maskedDocument = computed(() => maskDocument(payerDocument.value))
 const maskedAccount = computed(() => maskAccount(accountNumber.value))
+const cepLookupHint = computed(() => cepLookupMessage.value || 'Preenche bairro, cidade e UF pelo CEP.')
+const cnpjLookupHint = computed(() => {
+  if (holderType.value !== 'CNPJ') return ''
+  if (cnpjLookupMessage.value) return cnpjLookupMessage.value
+  if (cnpjCompany.value?.razao_social) return `CNPJ validado: ${cnpjCompany.value.razao_social}`
+  return 'Valida e preenche razão social/endereço pelo CNPJ.'
+})
 
 watch(() => props.modelValue, (open) => {
-  if (open) reset()
+  if (open) {
+    reset()
+    void prepareWorkspaceCompanyAutofill()
+  }
 })
 
 const reset = () => {
@@ -235,6 +274,9 @@ const reset = () => {
   displayName.value = ''
   authorizationLink.value = ''
   errorMessage.value = ''
+  cepLookupMessage.value = ''
+  cnpjLookupMessage.value = ''
+  cnpjCompany.value = null
 }
 
 const close = () => {
@@ -244,6 +286,13 @@ const close = () => {
 const previousStep = () => {
   if (stepIndex.value <= 0) return
   step.value = steps[stepIndex.value - 1].value
+}
+
+const selectHolderType = (type: 'CPF' | 'CNPJ') => {
+  holderType.value = type
+  if (type === 'CNPJ') {
+    void prepareWorkspaceCompanyAutofill()
+  }
 }
 
 const advance = async () => {
@@ -269,7 +318,8 @@ const validateStep = () => {
   if (step.value === 'payer') {
     if (!payerName.value.trim()) return holderType.value === 'CPF' ? 'Informe o nome completo.' : 'Informe a razão social.'
     if (!digitsOnly(payerDocument.value)) return holderType.value === 'CPF' ? 'Informe o CPF.' : 'Informe o CNPJ.'
-    if (!digitsOnly(zipcode.value)) return 'Informe o CEP.'
+    if (holderType.value === 'CNPJ' && !isValidCnpj(payerDocument.value)) return 'Informe um CNPJ válido.'
+    if (!isValidCep(zipcode.value)) return 'Informe um CEP válido.'
     if (!addressNumber.value.trim()) return 'Informe o número.'
     if (!city.value.trim() || !state.value.trim()) return 'Informe cidade e UF.'
   }
@@ -321,8 +371,84 @@ const openAuthorizationLink = () => {
   window.open(authorizationLink.value, '_blank', 'noopener,noreferrer')
 }
 
-const prepareZipcodeAutofill = () => {
-  // Preparado para integração futura com ViaCEP/BrasilAPI sem bloquear o fluxo atual.
+const applyCompanyData = (company: BrasilApiCnpj) => {
+  const companyName = company.razao_social || company.nome_fantasia || ''
+  const companyCep = company.cep ? String(company.cep).padStart(8, '0') : ''
+
+  if (companyName) payerName.value = companyName
+  if (companyCep) zipcode.value = companyCep
+  if (company.numero) addressNumber.value = company.numero
+  if (company.bairro) neighborhood.value = company.bairro
+  if (company.municipio) city.value = company.municipio
+  if (company.uf) state.value = company.uf
+}
+
+const prepareCnpjAutofill = async () => {
+  if (holderType.value !== 'CNPJ') return
+
+  cnpjLookupMessage.value = ''
+  cnpjCompany.value = null
+  const cnpj = onlyDigits(payerDocument.value)
+  if (!cnpj) return
+  if (!isValidCnpj(cnpj)) {
+    cnpjLookupMessage.value = 'CNPJ inválido.'
+    return
+  }
+
+  cnpjLookupLoading.value = true
+  try {
+    const response = await BrasilApiService.getCnpj(cnpj)
+    cnpjCompany.value = response.data
+    payerDocument.value = cnpj
+    applyCompanyData(response.data)
+  } catch (error: any) {
+    cnpjLookupMessage.value = error?.response?.data?.message || error?.message || 'Não foi possível validar o CNPJ agora.'
+  } finally {
+    cnpjLookupLoading.value = false
+  }
+}
+
+const prepareWorkspaceCompanyAutofill = async () => {
+  const workspaceId = userStore.getCurrentWorkspaceId
+  if (!workspaceId || payerDocument.value) return
+
+  try {
+    const response = await WorkspaceService.getDetails(workspaceId)
+    const legalDocument = response?.data?.legalDocument
+    const country = String(response?.data?.country || '').toUpperCase()
+    const cnpj = onlyDigits(legalDocument)
+    if (country && country !== 'BR') return
+    if (!isValidCnpj(cnpj)) return
+
+    holderType.value = 'CNPJ'
+    payerDocument.value = cnpj
+    await prepareCnpjAutofill()
+  } catch {
+    // Workspace CNPJ autofill is opportunistic; manual input remains the source of truth.
+  }
+}
+
+const prepareZipcodeAutofill = async () => {
+  cepLookupMessage.value = ''
+  const cep = onlyDigits(zipcode.value)
+  if (!cep) return
+  if (!isValidCep(cep)) {
+    cepLookupMessage.value = 'CEP deve conter 8 dígitos.'
+    return
+  }
+
+  cepLookupLoading.value = true
+  try {
+    const response = await BrasilApiService.getCep(cep)
+    zipcode.value = response.data.cep || cep
+    if (response.data.neighborhood) neighborhood.value = response.data.neighborhood
+    if (response.data.city) city.value = response.data.city
+    if (response.data.state) state.value = response.data.state
+  } catch (error: any) {
+    cepLookupMessage.value = error?.response?.data?.message || error?.message || 'Não foi possível buscar o CEP agora.'
+  } finally {
+    cepLookupLoading.value = false
+  }
 }
 
 const logoFor = (institution: OpenFinanceInstitutionOption) => {

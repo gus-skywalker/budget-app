@@ -85,8 +85,10 @@
                   outlined
                   prepend-inner-icon="mdi-file-document-outline"
                   class="mb-2"
-                  :hint="t('createWorkspace.legal_document_optional_hint')"
+                  :loading="cnpjLookupLoading"
+                  :hint="legalDocumentHint"
                   persistent-hint
+                  @blur="validateBrazilianCompanyDocument"
                 />
 
                 <v-textarea
@@ -152,6 +154,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/plugins/userStore'
 import WorkspaceService from '@/services/WorkspaceService'
+import BrasilApiService, { isValidCnpj, onlyDigits, type BrasilApiCnpj } from '@/services/BrasilApiService'
 import OnboardingOrchestrator from '@/services/OnboardingOrchestrator'
 import BillingOrchestrationService from '@/services/BillingOrchestrationService'
 import { resolveAnyWorkspaceContext } from '@/services/BillingWorkspaceContext'
@@ -205,6 +208,9 @@ const loading = ref(false)
 const workspaceName = ref('')
 const description = ref('')
 const legalDocument = ref('')
+const cnpjLookupLoading = ref(false)
+const cnpjLookupError = ref('')
+const cnpjCompany = ref<BrasilApiCnpj | null>(null)
 
 // Snackbar state
 const snackbar = ref(false)
@@ -262,13 +268,23 @@ const legalDocumentPlaceholder = computed(() => {
   }
 })
 
+const legalDocumentHint = computed(() => {
+  if (country.value === 'BR' && cnpjCompany.value?.razao_social) {
+    return `CNPJ validado: ${cnpjCompany.value.razao_social}`
+  }
+  if (country.value === 'BR' && cnpjLookupError.value) {
+    return cnpjLookupError.value
+  }
+  return t('createWorkspace.legal_document_optional_hint')
+})
+
 const legalDocumentRules = [
   (v: string) => {
     if (!v || !v.trim()) return true
 
     switch (country.value) {
       case 'BR':
-        return /^\d{14}$/.test(v) || t('createWorkspace.legal_document_cnpj');
+        return isValidCnpj(v) || t('createWorkspace.legal_document_cnpj');
       case 'US':
         return /^\d{9}$/.test(v) || t('createWorkspace.legal_document_ein');
       case 'AR':
@@ -296,6 +312,36 @@ const legalDocumentRules = [
     }
   }
 ]
+
+const validateBrazilianCompanyDocument = async () => {
+  cnpjLookupError.value = ''
+  cnpjCompany.value = null
+
+  if (country.value !== 'BR') return
+
+  const cnpj = onlyDigits(legalDocument.value)
+  if (!cnpj) return
+  if (!isValidCnpj(cnpj)) {
+    cnpjLookupError.value = 'CNPJ inválido.'
+    return
+  }
+
+  cnpjLookupLoading.value = true
+  try {
+    const response = await BrasilApiService.getCnpj(cnpj)
+    cnpjCompany.value = response.data
+    legalDocument.value = cnpj
+
+    const companyName = response.data.razao_social || response.data.nome_fantasia || ''
+    if (companyName && (!workspaceName.value.trim() || workspaceName.value.trim().toLowerCase() === 'workspace')) {
+      workspaceName.value = companyName
+    }
+  } catch (error: any) {
+    cnpjLookupError.value = error?.response?.data?.message || error?.message || 'Não foi possível validar o CNPJ agora.'
+  } finally {
+    cnpjLookupLoading.value = false
+  }
+}
 
 const descriptionRules = [
   (v: string) => !v || v.length <= 200 || t('createWorkspace.description_max')
@@ -355,6 +401,12 @@ const createWorkspace = async () => {
 
   try {
     loading.value = true
+    await validateBrazilianCompanyDocument()
+
+    if (country.value === 'BR' && legalDocument.value.trim() && cnpjLookupError.value) {
+      showSnackbar(cnpjLookupError.value, 'error')
+      return
+    }
 
     // Gera correlationId para rastreabilidade cross-service
     const correlationId = getOrCreateCorrelationId('workspaceCorrelationId')
