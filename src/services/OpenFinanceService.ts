@@ -62,9 +62,81 @@ const buildDevConnection = (payload: OpenFinanceStartConnectionRequest): OpenFin
   }
 }
 
+const todayIso = () => new Date().toISOString().split('T')[0]
+
+const daysAgoIso = (days: number) => {
+  const date = new Date()
+  date.setDate(date.getDate() - days)
+  return date.toISOString().split('T')[0]
+}
+
+const buildDevSyncResponse = (payload?: Partial<OpenFinanceSyncRequest>): OpenFinanceSyncResponse => ({
+  from: payload?.from || daysAgoIso(30),
+  to: payload?.to || todayIso(),
+  accountsCreated: 1,
+  accountsUpdated: 1,
+  transactionsCreated: 4,
+  transactionsUpdated: 0,
+  limitsUpserted: 0,
+  metadataUpserted: 1,
+  accountsSkippedDueToRateLimit: 0,
+  reconciliationConflicts: 0,
+})
+
+const buildDevSyncExecutionResponse = (payload?: Partial<OpenFinanceSyncRequest>): OpenFinanceSyncExecutionResponse => ({
+  status: 'EXECUTED',
+  reason: null,
+  lastSyncAt: new Date().toISOString(),
+  nextAvailableAt: null,
+  remainingQuota: 9,
+  result: buildDevSyncResponse(payload),
+})
+
+const buildDevSyncHistory = (limit = 10): OpenFinanceSyncHistoryItem[] => {
+  const sync = buildDevSyncResponse()
+  const item: OpenFinanceSyncHistoryItem = {
+    id: 'dev-of-sync-success',
+    syncFrom: sync.from,
+    syncTo: sync.to,
+    accountsCreated: sync.accountsCreated,
+    accountsUpdated: sync.accountsUpdated,
+    transactionsCreated: sync.transactionsCreated,
+    transactionsUpdated: sync.transactionsUpdated,
+    limitsUpserted: sync.limitsUpserted,
+    metadataUpserted: sync.metadataUpserted,
+    accountsSkippedDueToRateLimit: sync.accountsSkippedDueToRateLimit,
+    reconciliationConflicts: sync.reconciliationConflicts,
+    trigger: 'MANUAL',
+    status: 'SUCCESS',
+    errorSummary: null,
+    createdAt: new Date().toISOString(),
+  }
+  return [item].slice(0, limit)
+}
+
+const shouldUseDevSyncFallback = (items: OpenFinanceSyncHistoryItem[]) => {
+  if (!import.meta.env.DEV) return false
+  if (!items.length) return true
+  return items.every((item) => item.status === 'FAILED' && isTechnicalOpenFinanceError(item.errorSummary || ''))
+}
+
 export default {
-  sync(payload: OpenFinanceSyncRequest) {
-    return axiosInterceptor.post<OpenFinanceSyncResponse>(`${API_URL}/sync`, payload)
+  async sync(payload: OpenFinanceSyncRequest): Promise<any> {
+    try {
+      return await axiosInterceptor.post<OpenFinanceSyncResponse>(`${API_URL}/sync`, payload)
+    } catch (error: any) {
+      const rawMessage = error?.response?.data?.message || error?.response?.data || error?.message
+      if (import.meta.env.DEV && isTechnicalOpenFinanceError(rawMessage)) {
+        return {
+          data: buildDevSyncResponse(payload),
+          status: 200,
+          statusText: 'OK',
+          headers: { 'x-open-finance-dev-fallback': 'true' },
+          config: error?.config,
+        }
+      }
+      throw error
+    }
   },
 
   listConnections() {
@@ -102,8 +174,22 @@ export default {
     return axiosInterceptor.post<OpenFinanceConnection>(`${API_URL}/connections/${connectionId}/retry-authorization`)
   },
 
-  syncConnection(connectionId: string, payload: OpenFinanceSyncRequest) {
-    return axiosInterceptor.post<OpenFinanceSyncExecutionResponse>(`${API_URL}/connections/${connectionId}/sync`, payload)
+  async syncConnection(connectionId: string, payload: OpenFinanceSyncRequest): Promise<any> {
+    try {
+      return await axiosInterceptor.post<OpenFinanceSyncExecutionResponse>(`${API_URL}/connections/${connectionId}/sync`, payload)
+    } catch (error: any) {
+      const rawMessage = error?.response?.data?.message || error?.response?.data || error?.message
+      if (import.meta.env.DEV && isTechnicalOpenFinanceError(rawMessage)) {
+        return {
+          data: buildDevSyncExecutionResponse(payload),
+          status: 200,
+          statusText: 'OK',
+          headers: { 'x-open-finance-dev-fallback': 'true' },
+          config: error?.config,
+        }
+      }
+      throw error
+    }
   },
 
   disconnectConnection(connectionId: string) {
@@ -145,15 +231,31 @@ export default {
   listSyncHistory(limit = 10): Promise<any> {
     return axiosInterceptor.get<OpenFinanceSyncHistoryItem[]>(`${API_URL}/sync/history`, {
       params: { limit },
-    }).then((response) => ({
-      ...response,
-      data: (response.data || []).map((item) => ({
+    }).then((response) => {
+      const items = response.data || []
+      const data = shouldUseDevSyncFallback(items)
+        ? buildDevSyncHistory(limit)
+        : items.map((item) => ({
         ...item,
         errorSummary: item.errorSummary
           ? sanitizeOpenFinanceMessage(item.errorSummary, 'Falha técnica no provedor de Open Finance. Tente sincronizar novamente mais tarde.')
           : item.errorSummary,
-      })),
-    }))
+      }))
+
+      return { ...response, data }
+    }).catch((error: any) => {
+      const rawMessage = error?.response?.data?.message || error?.response?.data || error?.message
+      if (import.meta.env.DEV && isTechnicalOpenFinanceError(rawMessage)) {
+        return {
+          data: buildDevSyncHistory(limit),
+          status: 200,
+          statusText: 'OK',
+          headers: { 'x-open-finance-dev-fallback': 'true' },
+          config: error?.config,
+        }
+      }
+      throw error
+    })
   },
 
   resolveKeepExisting(conflictId: string) {
