@@ -90,10 +90,15 @@ const createObservabilitySummary = () => ({
 
 const createAccount = () => ({
   id: 'dev-account-1',
-  name: 'Mock Account',
-  institution: 'Mock Bank',
+  name: 'Itaú - Conta corrente',
+  institution: 'Itaú',
+  institutionName: 'Itaú',
+  institutionKey: 'itau',
+  bankCode: '341',
   balance: 0,
   currency: 'BRL',
+  provider: 'OPEN_FINANCE',
+  accountType: 'CHECKING',
   type: 'CHECKING'
 })
 

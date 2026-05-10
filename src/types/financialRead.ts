@@ -5,6 +5,9 @@ export interface AccountView {
   accountType: string
   currency: string
   balance: number
+  bankCode?: string | null
+  institutionKey?: string | null
+  institutionName?: string | null
 }
 
 export type TransactionDirection = 'INFLOW' | 'OUTFLOW'

@@ -57,9 +57,18 @@
           <div v-else-if="visibleAccounts.length" class="accounts-grid">
             <div v-for="account in visibleAccounts" :key="account.id" class="account-card">
               <div class="account-card__header">
-                <div>
-                  <h3 class="account-card__title">{{ account.name }}</h3>
-                  <p class="account-card__subtitle">{{ account.provider }} • {{ account.accountType }}</p>
+                <div class="account-card__identity">
+                  <span class="account-card__logo">
+                    <img
+                      :src="accountLogoFor(account)"
+                      :alt="accountInstitutionLabel(account)"
+                      @error="markAccountLogoAsFailed(account.id)"
+                    >
+                  </span>
+                  <div>
+                    <h3 class="account-card__title">{{ account.name }}</h3>
+                    <p class="account-card__subtitle">{{ account.provider }} • {{ account.accountType }}</p>
+                  </div>
                 </div>
                 <v-chip size="small" variant="tonal" color="#667eea">{{ account.currency }}</v-chip>
               </div>
@@ -82,6 +91,7 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import FinancialReadService from '@/services/FinancialReadService'
 import OpenFinanceService from '@/services/OpenFinanceService'
+import { bankLogoPath, genericBankLogo } from '@/data/openFinanceInstitutions'
 import type { AccountView } from '@/types/financialRead'
 import type { OpenFinanceConnection } from '@/types/openFinance'
 
@@ -92,11 +102,15 @@ const accounts = ref<AccountView[]>([])
 const loading = ref(false)
 const conflictCount = ref(0)
 const openFinanceConnections = ref<OpenFinanceConnection[]>([])
+const failedAccountLogos = ref<Record<string, boolean>>({})
 const ACTIVE_OPEN_FINANCE_STATUSES = new Set(['CONNECTED', 'ERROR'])
 
+const activeOpenFinanceConnections = computed(() => {
+  return openFinanceConnections.value.filter((connection) => ACTIVE_OPEN_FINANCE_STATUSES.has(String(connection.status || '').toUpperCase()))
+})
+
 const activeOpenFinanceInstitutionNames = computed(() => {
-  return openFinanceConnections.value
-    .filter((connection) => ACTIVE_OPEN_FINANCE_STATUSES.has(String(connection.status || '').toUpperCase()))
+  return activeOpenFinanceConnections.value
     .map((connection) => String(connection.institutionName || '').trim())
     .filter((name) => name.length > 0)
 })
@@ -130,6 +144,45 @@ const formatCurrency = (value: number, currency = 'BRL') => {
     style: 'currency',
     currency,
   })
+}
+
+const findConnectionForAccount = (account: AccountView) => {
+  const bankCode = String(account.bankCode || '').trim()
+  if (bankCode) {
+    const byCode = activeOpenFinanceConnections.value.find((connection) => connection.bankCode === bankCode)
+    if (byCode) return byCode
+  }
+
+  const institutionName = String(account.institutionName || '').trim()
+  if (institutionName) {
+    const byInstitution = activeOpenFinanceConnections.value.find((connection) => connection.institutionName === institutionName)
+    if (byInstitution) return byInstitution
+  }
+
+  const accountName = String(account.name || '')
+  return activeOpenFinanceConnections.value.find((connection) => {
+    const name = String(connection.institutionName || '').trim()
+    return name && accountName.startsWith(`${name} - `)
+  })
+}
+
+const accountLogoFor = (account: AccountView) => {
+  if (failedAccountLogos.value[account.id]) return genericBankLogo
+  const connection = findConnectionForAccount(account)
+  return bankLogoPath(
+    account.bankCode || connection?.bankCode,
+    account.institutionKey || connection?.institutionKey,
+    account.institutionName || connection?.institutionName || account.provider || account.name,
+  )
+}
+
+const accountInstitutionLabel = (account: AccountView) => {
+  const connection = findConnectionForAccount(account)
+  return account.institutionName || connection?.institutionName || account.provider || account.name || 'Banco'
+}
+
+const markAccountLogoAsFailed = (accountId: string) => {
+  failedAccountLogos.value = { ...failedAccountLogos.value, [accountId]: true }
 }
 
 const fetchAccounts = async () => {
@@ -308,6 +361,30 @@ onMounted(fetchAccounts)
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 12px;
+}
+
+.account-card__identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.account-card__logo {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  overflow: hidden;
+}
+
+.account-card__logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .account-card__title {
