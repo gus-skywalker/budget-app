@@ -51,3 +51,13 @@ npm run build
 pm2 start ecosystem.config.cjs
 node server.cjs
 ```
+
+Production browser-facing API variables should point to public HTTPS domains:
+
+```env
+VITE_API_BASE_URL=https://api.cobudget.app/api
+VITE_AUTH_URL=https://auth.cobudget.app
+VITE_PAYMENT_URL=https://api.cobudget.app/api
+```
+
+The frontend must not use `*.railway.internal` because browsers cannot resolve Railway private networking.
