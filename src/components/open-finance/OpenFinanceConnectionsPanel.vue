@@ -38,34 +38,46 @@
 
       <div v-else class="of-connection-list">
         <article v-for="connection in connections" :key="connection.id" class="of-connection">
-          <div class="of-connection__identity">
-            <span class="of-bank-mark">
-              <img
-                v-if="logoFor(connection)"
-                :src="logoFor(connection)"
-                :alt="connection.institutionName"
-                @error="markLogoAsFailed(connection.bankCode || connection.institutionKey)"
-              >
-              <span v-else>{{ initials(connection.institutionName || connection.institutionKey) }}</span>
-            </span>
-            <div>
-              <div class="of-connection__title">{{ connection.institutionName || connection.institutionKey }}</div>
-              <div class="of-connection__subtitle">
-                {{ connection.displayName || 'Conta Open Finance' }}
-                <span v-if="connection.accountNumberMasked">• {{ connection.accountNumberMasked }}</span>
+          <div class="of-connection__main">
+            <div class="of-connection__identity">
+              <span class="of-bank-mark">
+                <img
+                  v-if="logoFor(connection)"
+                  :src="logoFor(connection)"
+                  :alt="connection.institutionName"
+                  @error="markLogoAsFailed(connection.bankCode || connection.institutionKey)"
+                >
+                <span v-else>{{ initials(connection.institutionName || connection.institutionKey) }}</span>
+              </span>
+              <div class="of-connection__identity-copy">
+                <div class="of-connection__title">{{ connection.institutionName || connection.institutionKey }}</div>
+                <div class="of-connection__subtitle">
+                  {{ connection.displayName || 'Conta Open Finance' }}
+                  <span v-if="connection.accountNumberMasked">• {{ connection.accountNumberMasked }}</span>
+                </div>
               </div>
+            </div>
+
+            <div class="of-connection__status-block">
+              <div class="of-connection__status-row">
+                <v-chip size="small" variant="tonal" :color="statusUi(connection.consentStatus).color">
+                  {{ statusUi(connection.consentStatus).label }}
+                </v-chip>
+                <span v-if="connection.lastProviderStatus" class="of-provider-status">{{ connection.lastProviderStatus }}</span>
+              </div>
+
               <div v-if="connection.lastProviderStatusCheckedAt" class="of-connection__meta">
                 Status checado em {{ formatDateTime(connection.lastProviderStatusCheckedAt) }}
               </div>
-            </div>
-          </div>
 
-          <div class="of-connection__status">
-            <v-chip size="small" variant="tonal" :color="statusUi(connection.consentStatus).color">
-              {{ statusUi(connection.consentStatus).label }}
-            </v-chip>
-            <span v-if="connection.lastProviderStatus" class="of-provider-status">{{ connection.lastProviderStatus }}</span>
-            <span v-if="connection.lastErrorSummary" class="of-provider-status of-provider-status--error">{{ connectionErrorSummary(connection) }}</span>
+              <p v-if="connection.lastErrorSummary" class="of-provider-status of-provider-status--error of-connection__error">
+                {{ connectionErrorSummary(connection) }}
+              </p>
+
+              <p v-if="showSync(connection)" class="of-sync-policy">
+                {{ syncPolicyLabel(connection) }}
+              </p>
+            </div>
           </div>
 
           <div class="of-connection__actions">
@@ -107,9 +119,10 @@
               color="#667eea"
               :loading="syncingConnectionId === connection.id"
               :disabled="!canManage"
+              :title="syncButtonTitle(connection)"
               @click="syncConnection(connection)"
             >
-              Sincronizar
+              {{ syncButtonLabel(connection) }}
             </v-btn>
             <v-btn
               size="small"
@@ -187,6 +200,11 @@ import { bankLogoPath, genericBankLogo } from '@/data/openFinanceInstitutions'
 import { extractOpenFinanceErrorMessage, sanitizeOpenFinanceMessage } from '@/utils/openFinanceErrors'
 import OpenFinanceConnectionWizard from './OpenFinanceConnectionWizard.vue'
 
+type CachedProviderProtocol = {
+  providerProtocolId: string
+  storedAt: string
+}
+
 const props = defineProps<{
   connections: OpenFinanceConnection[]
   loading?: boolean
@@ -208,6 +226,9 @@ const disconnectDialog = ref(false)
 const disconnecting = ref(false)
 const selectedDisconnectConnection = ref<OpenFinanceConnection | null>(null)
 const failedLogos = ref<Record<string, boolean>>({})
+const protocolCacheVersion = ref(0)
+
+const PROTOCOL_REUSE_WINDOW_MS = 24 * 60 * 60 * 1000
 
 const connectedCount = computed(() => props.connections.filter((item) => item.consentStatus === 'AUTHORIZED_READY' || item.status === 'CONNECTED').length)
 const pendingCount = computed(() => props.connections.filter((item) => ['PENDING_SETUP', 'PENDING_AUTHORIZATION', 'CONSENT_GRANTED_WAITING_PROVIDER', 'DELAYED_PROVIDER'].includes(String(item.consentStatus || ''))).length)
@@ -240,6 +261,13 @@ const showContinueAuthorization = (connection: OpenFinanceConnection) => connect
 const showRetry = (connection: OpenFinanceConnection) => ['AUTHORIZATION_EXPIRED', 'AUTHORIZATION_FAILED', 'USER_CANCELLED_AUTHORIZATION', 'REAUTH_REQUIRED'].includes(String(connection.consentStatus || ''))
 const showRefresh = (connection: OpenFinanceConnection) => ['PENDING_AUTHORIZATION', 'CONSENT_GRANTED_WAITING_PROVIDER', 'DELAYED_PROVIDER'].includes(String(connection.consentStatus || ''))
 const showSync = (connection: OpenFinanceConnection) => ['AUTHORIZED_READY', 'AUTHORIZED_SYNCING'].includes(String(connection.consentStatus || '')) || isRecoverableSyncError(connection)
+const syncButtonLabel = (connection: OpenFinanceConnection) => cachedProtocolFor(connection) ? 'Atualizar dados' : 'Gerar protocolo'
+const syncButtonTitle = (connection: OpenFinanceConnection) => cachedProtocolFor(connection)
+  ? 'Busca novamente os dados usando o último protocolo salvo, sem criar um novo protocolo no provedor.'
+  : 'Cria um novo protocolo de extrato no provedor. Essa ação respeita o limite operacional diário.'
+const syncPolicyLabel = (connection: OpenFinanceConnection) => cachedProtocolFor(connection)
+  ? 'Usará o último protocolo salvo para atualizar os dados sem consumir uma nova geração.'
+  : 'Criará um novo protocolo no provedor se a janela de quota/cooldown permitir.'
 
 const handleCreated = () => {
   wizardOpen.value = false
@@ -291,17 +319,22 @@ const retryAuthorization = async (connection: OpenFinanceConnection) => {
 const syncConnection = async (connection: OpenFinanceConnection) => {
   syncingConnectionId.value = connection.id
   try {
+    const cachedProtocol = cachedProtocolFor(connection)
     const response = await OpenFinanceService.syncConnection(connection.id, {
       connectionId: connection.id,
       from: props.syncFrom,
       to: props.syncTo,
+      providerProtocolId: cachedProtocol?.providerProtocolId || null,
     })
     emit('synced', response.data.result)
     const protocolId = response.data.providerProtocolId || response.data.result?.providerProtocolId
+    if (protocolId) {
+      storeCachedProtocol(connection.id, protocolId)
+    }
     emit('feedback', {
       type: response.data.status === 'EXECUTED' ? 'success' : 'info',
       message: response.data.status === 'EXECUTED'
-        ? `Sincronização da conexão concluída.${protocolId ? ` Protocolo: ${protocolId}.` : ''}`
+        ? `${cachedProtocol ? 'Dados atualizados a partir do protocolo salvo' : 'Sincronização da conexão concluída'}.${protocolId ? ` Protocolo: ${protocolId}.` : ''}`
         : response.data.status === 'PROCESSING'
           ? `Sincronização em processamento no banco.${protocolId ? ` Protocolo: ${protocolId}.` : ''}${response.data.reason ? ` ${response.data.reason}` : ''}`
           : `Sincronização não executada: ${response.data.reason || response.data.status}`,
@@ -344,6 +377,36 @@ const logoFor = (connection: OpenFinanceConnection) => {
 }
 const markLogoAsFailed = (key: string) => {
   failedLogos.value = { ...failedLogos.value, [key]: true }
+}
+const cacheKeyFor = (connectionId: string) => `cobudget:open-finance:provider-protocol:${connectionId}`
+const cachedProtocolFor = (connection: OpenFinanceConnection): CachedProviderProtocol | null => {
+  protocolCacheVersion.value
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = window.localStorage.getItem(cacheKeyFor(connection.id))
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as CachedProviderProtocol
+    if (!parsed.providerProtocolId || !parsed.storedAt) return null
+    const ageMs = Date.now() - new Date(parsed.storedAt).getTime()
+    if (Number.isNaN(ageMs) || ageMs < 0 || ageMs > PROTOCOL_REUSE_WINDOW_MS) {
+      window.localStorage.removeItem(cacheKeyFor(connection.id))
+      protocolCacheVersion.value += 1
+      return null
+    }
+    return parsed
+  } catch {
+    window.localStorage.removeItem(cacheKeyFor(connection.id))
+    protocolCacheVersion.value += 1
+    return null
+  }
+}
+const storeCachedProtocol = (connectionId: string, providerProtocolId: string) => {
+  if (typeof window === 'undefined' || !providerProtocolId) return
+  window.localStorage.setItem(cacheKeyFor(connectionId), JSON.stringify({
+    providerProtocolId,
+    storedAt: new Date().toISOString(),
+  }))
+  protocolCacheVersion.value += 1
 }
 const initials = (value: string) => value.split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase()
 const formatDateTime = (value: string) => new Date(value).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
@@ -429,18 +492,28 @@ const extractErrorMessage = (error: any, fallback: string) => (
 
 .of-connection {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) auto minmax(220px, auto);
-  gap: 16px;
-  align-items: center;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: start;
   padding: 16px;
   border: 1px solid rgba(100, 116, 139, 0.16);
   border-radius: 8px;
 }
 
+.of-connection__main {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
 .of-connection__identity {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
+  min-width: 0;
+}
+
+.of-connection__identity-copy {
   min-width: 0;
 }
 
@@ -466,6 +539,7 @@ const extractErrorMessage = (error: any, fallback: string) => (
 .of-connection__title {
   color: #1f2937;
   font-weight: 700;
+  font-size: 1.05rem;
 }
 
 .of-connection__subtitle,
@@ -475,21 +549,61 @@ const extractErrorMessage = (error: any, fallback: string) => (
   font-size: 0.86rem;
 }
 
+.of-connection__subtitle,
+.of-connection__meta,
+.of-provider-status,
+.of-connection__error {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.of-connection__subtitle {
+  margin-top: 2px;
+}
+
 .of-provider-status--error {
   color: #b42318;
 }
 
-.of-connection__status {
+.of-connection__status-block {
   display: grid;
-  gap: 6px;
-  justify-items: start;
+  gap: 8px;
+  min-width: 0;
+}
+
+.of-connection__status-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.of-connection__error {
+  margin: 0;
+  line-height: 1.45;
+  max-width: 68ch;
+}
+
+.of-sync-policy {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  max-width: 68ch;
+}
+
+.v-theme--dark .of-sync-policy {
+  color: #cbd5e1;
 }
 
 .of-connection__actions {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
+  align-items: flex-start;
   gap: 8px;
+  min-width: 220px;
 }
 
 .of-health-grid {
@@ -535,6 +649,7 @@ const extractErrorMessage = (error: any, fallback: string) => (
 
   .of-connection__actions {
     justify-content: flex-start;
+    min-width: 0;
   }
 
   .of-health-grid {

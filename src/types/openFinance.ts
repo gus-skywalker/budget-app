@@ -2,6 +2,7 @@ export interface OpenFinanceSyncRequest {
   connectionId?: string
   from: string
   to: string
+  providerProtocolId?: string | null
 }
 
 export interface OpenFinanceStartConnectionRequest {
