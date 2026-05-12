@@ -38,6 +38,22 @@ export const onlyDigits = (value: string | null | undefined) => String(value || 
 
 export const isValidCep = (value: string | null | undefined) => onlyDigits(value).length === 8
 
+export const isValidCpf = (value: string | null | undefined) => {
+  const cpf = onlyDigits(value)
+  if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false
+
+  const calculateDigit = (base: string, weights: number[]) => {
+    const sum = weights.reduce((total, weight, index) => total + Number(base[index]) * weight, 0)
+    const remainder = sum % 11
+    return remainder < 2 ? 0 : 11 - remainder
+  }
+
+  const firstDigit = calculateDigit(cpf.slice(0, 9), [10, 9, 8, 7, 6, 5, 4, 3, 2])
+  const secondDigit = calculateDigit(cpf.slice(0, 10), [11, 10, 9, 8, 7, 6, 5, 4, 3, 2])
+
+  return firstDigit === Number(cpf[9]) && secondDigit === Number(cpf[10])
+}
+
 export const isValidCnpj = (value: string | null | undefined) => {
   const cnpj = onlyDigits(value)
   if (cnpj.length !== 14 || /^(\d)\1{13}$/.test(cnpj)) return false

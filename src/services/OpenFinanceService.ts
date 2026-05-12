@@ -81,6 +81,10 @@ const buildDevSyncResponse = (payload?: Partial<OpenFinanceSyncRequest>): OpenFi
   metadataUpserted: 1,
   accountsSkippedDueToRateLimit: 0,
   reconciliationConflicts: 0,
+  providerProtocolId: 'dev-protocol-001',
+  processing: false,
+  providerStatus: null,
+  providerReason: null,
 })
 
 const buildDevSyncExecutionResponse = (payload?: Partial<OpenFinanceSyncRequest>): OpenFinanceSyncExecutionResponse => ({
@@ -89,6 +93,9 @@ const buildDevSyncExecutionResponse = (payload?: Partial<OpenFinanceSyncRequest>
   lastSyncAt: new Date().toISOString(),
   nextAvailableAt: null,
   remainingQuota: 9,
+  providerProtocolId: 'dev-protocol-001',
+  providerStatus: null,
+  providerReason: null,
   result: buildDevSyncResponse(payload),
 })
 
@@ -109,6 +116,7 @@ const buildDevSyncHistory = (limit = 10): OpenFinanceSyncHistoryItem[] => {
     trigger: 'MANUAL',
     status: 'SUCCESS',
     errorSummary: null,
+    providerProtocolId: sync.providerProtocolId,
     createdAt: new Date().toISOString(),
   }
   return [item].slice(0, limit)
@@ -139,8 +147,16 @@ export default {
     }
   },
 
-  listConnections() {
-    return axiosInterceptor.get<OpenFinanceConnection[]>(`${API_URL}/connections`)
+  listConnections(): Promise<any> {
+    return axiosInterceptor.get<OpenFinanceConnection[]>(`${API_URL}/connections`).then((response) => ({
+      ...response,
+      data: (response.data || []).map((connection) => ({
+        ...connection,
+        lastErrorSummary: connection.lastErrorSummary
+          ? sanitizeOpenFinanceMessage(connection.lastErrorSummary, 'Falha técnica no provedor de Open Finance. Tente sincronizar novamente mais tarde.')
+          : connection.lastErrorSummary,
+      })),
+    }))
   },
 
   async startConnection(payload: OpenFinanceStartConnectionRequest): Promise<any> {

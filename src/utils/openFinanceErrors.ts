@@ -5,6 +5,14 @@ const TECHNICAL_ERROR_PATTERNS = [
   'StreamReadFeature',
   'io.quarkus',
   'Internal Server Error',
+  'org.hibernate',
+  'ConstraintViolationException',
+  'PSQLException',
+  'SQLState',
+  'could not execute statement',
+  'violates foreign key constraint',
+  'update or delete on table',
+  'delete from public.',
 ]
 
 const GENERIC_ERROR_MESSAGES = [

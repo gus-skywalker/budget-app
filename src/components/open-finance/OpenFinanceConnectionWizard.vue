@@ -110,6 +110,7 @@
             />
             <v-text-field v-model="street" label="Endereço" variant="outlined" density="comfortable" color="#667eea" />
             <v-text-field v-model="addressNumber" label="Número" variant="outlined" density="comfortable" color="#667eea" />
+            <v-text-field v-model="addressComplement" label="Complemento" variant="outlined" density="comfortable" color="#667eea" />
             <v-text-field v-model="neighborhood" label="Bairro" variant="outlined" density="comfortable" color="#667eea" />
             <v-text-field v-model="city" label="Cidade" variant="outlined" density="comfortable" color="#667eea" />
             <v-text-field v-model="state" label="Estado" variant="outlined" density="comfortable" color="#667eea" maxlength="2" />
@@ -119,11 +120,32 @@
         <section v-else-if="step === 'account'" class="of-step-panel">
           <h4>Informe os dados da conta para que possamos preparar a autorização com o banco.</h4>
           <div class="of-form-grid">
-            <v-text-field v-model="agency" label="Agência" variant="outlined" density="comfortable" color="#667eea" />
-            <v-text-field v-model="agencyDigit" label="Dígito da agência opcional" variant="outlined" density="comfortable" color="#667eea" />
-            <v-text-field v-model="accountNumber" label="Conta" variant="outlined" density="comfortable" color="#667eea" />
-            <v-text-field v-model="accountNumberDigit" label="Dígito da conta" variant="outlined" density="comfortable" color="#667eea" />
+            <v-text-field v-model="agency" label="Agência" variant="outlined" density="comfortable" color="#667eea" maxlength="8" inputmode="numeric" @update:model-value="agency = onlyDigits(String($event)).slice(0, 8)" />
+            <v-text-field v-model="agencyDigit" label="Dígito da agência opcional" variant="outlined" density="comfortable" color="#667eea" maxlength="2" @update:model-value="agencyDigit = sanitizeDigit(String($event), 2)" />
+            <v-text-field v-model="accountNumber" label="Conta" variant="outlined" density="comfortable" color="#667eea" maxlength="20" inputmode="numeric" @update:model-value="accountNumber = onlyDigits(String($event)).slice(0, 20)" />
+            <v-text-field v-model="accountNumberDigit" label="Dígito da conta" variant="outlined" density="comfortable" color="#667eea" maxlength="2" @update:model-value="accountNumberDigit = sanitizeDigit(String($event), 2)" />
             <v-text-field v-model="displayName" label="Nome de exibição" variant="outlined" density="comfortable" color="#667eea" class="of-form-grid__wide" />
+            <v-select
+              v-model="statementType"
+              :items="statementTypeOptions"
+              item-title="label"
+              item-value="value"
+              label="Tipo de extrato inicial"
+              variant="outlined"
+              density="comfortable"
+              color="#667eea"
+            />
+            <v-text-field
+              v-if="statementType === 'CREDIT_CARD'"
+              v-model="cardNumber"
+              label="Últimos dígitos do cartão"
+              variant="outlined"
+              density="comfortable"
+              color="#667eea"
+              maxlength="4"
+              inputmode="numeric"
+              @update:model-value="cardNumber = onlyDigits(String($event)).slice(0, 4)"
+            />
           </div>
         </section>
 
@@ -173,7 +195,7 @@
 import { computed, ref, watch } from 'vue'
 import OpenFinanceService from '@/services/OpenFinanceService'
 import WorkspaceService from '@/services/WorkspaceService'
-import BrasilApiService, { isValidCep, isValidCnpj, onlyDigits, type BrasilApiCnpj } from '@/services/BrasilApiService'
+import BrasilApiService, { isValidCep, isValidCnpj, isValidCpf, onlyDigits, type BrasilApiCnpj } from '@/services/BrasilApiService'
 import { useUserStore } from '@/plugins/userStore'
 import { extractOpenFinanceErrorMessage } from '@/utils/openFinanceErrors'
 import type { OpenFinanceConnection, OpenFinanceStartConnectionRequest } from '@/types/openFinance'
@@ -212,6 +234,7 @@ const payerDocument = ref('')
 const zipcode = ref('')
 const street = ref('')
 const addressNumber = ref('')
+const addressComplement = ref('')
 const neighborhood = ref('')
 const city = ref('')
 const state = ref('')
@@ -220,6 +243,8 @@ const agencyDigit = ref('')
 const accountNumber = ref('')
 const accountNumberDigit = ref('')
 const displayName = ref('')
+const statementType = ref<'BANK' | 'CREDIT_CARD'>('BANK')
+const cardNumber = ref('')
 const authorizationLink = ref('')
 const submitting = ref(false)
 const errorMessage = ref('')
@@ -229,6 +254,10 @@ const cepLookupMessage = ref('')
 const cnpjLookupLoading = ref(false)
 const cnpjLookupMessage = ref('')
 const cnpjCompany = ref<BrasilApiCnpj | null>(null)
+const statementTypeOptions = [
+  { label: 'Conta corrente bancária', value: 'BANK' },
+  { label: 'Cartão de crédito', value: 'CREDIT_CARD' },
+]
 
 const stepIndex = computed(() => steps.findIndex((item) => item.value === step.value))
 const filteredInstitutions = computed(() => {
@@ -268,6 +297,7 @@ const reset = () => {
   zipcode.value = ''
   street.value = ''
   addressNumber.value = ''
+  addressComplement.value = ''
   neighborhood.value = ''
   city.value = ''
   state.value = ''
@@ -276,6 +306,8 @@ const reset = () => {
   accountNumber.value = ''
   accountNumberDigit.value = ''
   displayName.value = ''
+  statementType.value = 'BANK'
+  cardNumber.value = ''
   authorizationLink.value = ''
   errorMessage.value = ''
   cepLookupMessage.value = ''
@@ -311,7 +343,7 @@ const advance = async () => {
     return
   }
   if (step.value === 'review') {
-    await submit()
+    await submit(openAuthorizationPlaceholder())
     return
   }
   step.value = steps[stepIndex.value + 1].value
@@ -322,6 +354,7 @@ const validateStep = () => {
   if (step.value === 'payer') {
     if (!payerName.value.trim()) return holderType.value === 'CPF' ? 'Informe o nome completo.' : 'Informe a razão social.'
     if (!digitsOnly(payerDocument.value)) return holderType.value === 'CPF' ? 'Informe o CPF.' : 'Informe o CNPJ.'
+    if (holderType.value === 'CPF' && !isValidCpf(payerDocument.value)) return 'Informe um CPF válido.'
     if (holderType.value === 'CNPJ' && !isValidCnpj(payerDocument.value)) return 'Informe um CNPJ válido.'
     if (!isValidCep(zipcode.value)) return 'Informe um CEP válido.'
     if (!street.value.trim()) return 'Informe o endereço.'
@@ -331,11 +364,12 @@ const validateStep = () => {
   if (step.value === 'account') {
     if (!agency.value.trim()) return 'Informe a agência.'
     if (!accountNumber.value.trim()) return 'Informe a conta.'
+    if (statementType.value === 'CREDIT_CARD' && digitsOnly(cardNumber.value).length !== 4) return 'Informe os 4 últimos dígitos do cartão.'
   }
   return ''
 }
 
-const submit = async () => {
+const submit = async (authorizationWindow?: Window | null) => {
   if (!selectedInstitution.value) return
   submitting.value = true
   try {
@@ -347,33 +381,50 @@ const submit = async () => {
       payerDocument: digitsOnly(payerDocument.value),
       payerName: payerName.value.trim(),
       zipcode: digitsOnly(zipcode.value),
-      street: street.value.trim(),
-      addressNumber: addressNumber.value.trim(),
-      neighborhood: neighborhood.value.trim(),
+      street: sanitizeText(street.value, 120),
+      addressNumber: sanitizeText(addressNumber.value, 20),
+      addressComplement: sanitizeText(addressComplement.value, 80) || null,
+      neighborhood: sanitizeText(neighborhood.value, 120),
       state: state.value.trim().toUpperCase(),
-      city: city.value.trim(),
-      agency: agency.value.trim(),
-      agencyDigit: optionalText(agencyDigit.value),
-      accountNumber: digitsOnly(accountNumber.value),
-      accountNumberDigit: optionalText(accountNumberDigit.value),
-      displayName: optionalText(displayName.value) || selectedInstitution.value.institutionName,
-      statementType: 'BANK',
+      city: sanitizeText(city.value, 120),
+      agency: onlyDigits(agency.value).slice(0, 8),
+      agencyDigit: sanitizeDigit(agencyDigit.value, 2) || null,
+      accountNumber: digitsOnly(accountNumber.value).slice(0, 20),
+      accountNumberDigit: sanitizeDigit(accountNumberDigit.value, 2) || null,
+      displayName: sanitizeText(displayName.value, 80) || selectedInstitution.value.institutionName,
+      statementType: statementType.value,
+      cardNumber: statementType.value === 'CREDIT_CARD' ? digitsOnly(cardNumber.value) : null,
     }
     const response = await OpenFinanceService.startConnection(payload)
     authorizationLink.value = response.data.authorizationLink || response.data.openfinanceLink || ''
     emit('created', response.data)
     emit('feedback', { type: 'success', message: 'Conexão criada. Continue a autorização no ambiente seguro do banco.' })
-    if (authorizationLink.value) openAuthorizationLink()
+    if (authorizationLink.value) openAuthorizationLink(authorizationWindow)
+    else authorizationWindow?.close()
     step.value = 'authorization'
   } catch (error: any) {
+    authorizationWindow?.close()
     errorMessage.value = extractErrorMessage(error, 'Não foi possível iniciar a conexão Open Finance.')
   } finally {
     submitting.value = false
   }
 }
 
-const openAuthorizationLink = () => {
+const openAuthorizationPlaceholder = () => {
+  const target = window.open('about:blank', '_blank')
+  if (!target) return null
+  target.document.write('<!doctype html><title>Open Finance</title><p>Preparando autorizacao Open Finance...</p>')
+  target.document.close()
+  return target
+}
+
+const openAuthorizationLink = (targetWindow?: Window | null) => {
   if (!authorizationLink.value) return
+  if (targetWindow && !targetWindow.closed) {
+    targetWindow.location.href = authorizationLink.value
+    targetWindow.opener = null
+    return
+  }
   window.open(authorizationLink.value, '_blank', 'noopener,noreferrer')
 }
 
@@ -385,6 +436,7 @@ const applyCompanyData = (company: BrasilApiCnpj) => {
   if (companyCep) zipcode.value = companyCep
   if (company.logradouro) street.value = company.logradouro
   if (company.numero) addressNumber.value = company.numero
+  if (company.complemento) addressComplement.value = company.complemento
   if (company.bairro) neighborhood.value = company.bairro
   if (company.municipio) city.value = company.municipio
   if (company.uf) state.value = company.uf
@@ -470,10 +522,12 @@ const markLogoAsFailed = (institutionKey: string) => {
 
 const initials = (value: string) => value.split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase()
 const digitsOnly = (value: string | null | undefined) => String(value || '').replace(/\D/g, '')
-const optionalText = (value: string | null | undefined) => {
-  const text = String(value || '').trim()
-  return text || undefined
-}
+const sanitizeDigit = (value: string | null | undefined, maxLength: number) => (
+  String(value || '').replace(/[^0-9A-Za-z]/g, '').toUpperCase().slice(0, maxLength)
+)
+const sanitizeText = (value: string | null | undefined, maxLength: number) => (
+  String(value || '').replace(/[<>;]/g, '').trim().slice(0, maxLength)
+)
 const normalize = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
 const maskDocument = (value: string) => {
   const digits = digitsOnly(value)

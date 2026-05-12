@@ -17,7 +17,7 @@ export interface OpenFinanceStartConnectionRequest {
   accountNumber?: string | null
   accountNumberDigit?: string | null
   accountType?: string | null
-  statementType: 'BANK' | 'CREDIT'
+  statementType: 'BANK' | 'CREDIT_CARD'
   cardNumber?: string | null
   street?: string | null
   neighborhood?: string | null
@@ -40,6 +40,10 @@ export interface OpenFinanceSyncResponse {
   metadataUpserted: number
   accountsSkippedDueToRateLimit: number
   reconciliationConflicts: number
+  providerProtocolId?: string | null
+  processing?: boolean
+  providerStatus?: string | null
+  providerReason?: string | null
 }
 
 export interface OpenFinanceConflict {
@@ -106,7 +110,7 @@ export interface OpenFinanceConnection {
   lastProviderStatusCheckedAt?: string | null
   openfinanceId: string | null
   openfinanceLink: string | null
-  statementType: 'BANK' | 'CREDIT' | null
+  statementType: 'BANK' | 'CREDIT_CARD' | null
   cardNumber: string | null
   linkedAccountsCount: number
   lastErrorSummary: string | null
@@ -123,6 +127,9 @@ export interface OpenFinanceSyncExecutionResponse {
   lastSyncAt: string | null
   nextAvailableAt: string | null
   remainingQuota: number | null
+  providerProtocolId?: string | null
+  providerStatus?: string | null
+  providerReason?: string | null
   result: OpenFinanceSyncResponse | null
 }
 
@@ -139,7 +146,8 @@ export interface OpenFinanceSyncHistoryItem {
   accountsSkippedDueToRateLimit: number
   reconciliationConflicts: number
   trigger: 'MANUAL' | 'AUTOMATIC'
-  status: 'SUCCESS' | 'FAILED'
+  status: 'SUCCESS' | 'PROCESSING' | 'FAILED'
   errorSummary: string | null
+  providerProtocolId?: string | null
   createdAt: string
 }

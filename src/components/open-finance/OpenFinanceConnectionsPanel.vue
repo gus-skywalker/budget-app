@@ -65,6 +65,7 @@
               {{ statusUi(connection.consentStatus).label }}
             </v-chip>
             <span v-if="connection.lastProviderStatus" class="of-provider-status">{{ connection.lastProviderStatus }}</span>
+            <span v-if="connection.lastErrorSummary" class="of-provider-status of-provider-status--error">{{ connectionErrorSummary(connection) }}</span>
           </div>
 
           <div class="of-connection__actions">
@@ -183,7 +184,7 @@ import { computed, ref } from 'vue'
 import OpenFinanceService from '@/services/OpenFinanceService'
 import type { OpenFinanceConnection, OpenFinanceSyncResponse } from '@/types/openFinance'
 import { bankLogoPath, genericBankLogo } from '@/data/openFinanceInstitutions'
-import { extractOpenFinanceErrorMessage } from '@/utils/openFinanceErrors'
+import { extractOpenFinanceErrorMessage, sanitizeOpenFinanceMessage } from '@/utils/openFinanceErrors'
 import OpenFinanceConnectionWizard from './OpenFinanceConnectionWizard.vue'
 
 const props = defineProps<{
@@ -238,7 +239,7 @@ const statusUi = (status: string | null | undefined) => consentStatusUi[String(s
 const showContinueAuthorization = (connection: OpenFinanceConnection) => connection.consentStatus === 'PENDING_AUTHORIZATION' && Boolean(connection.authorizationLink || connection.openfinanceLink)
 const showRetry = (connection: OpenFinanceConnection) => ['AUTHORIZATION_EXPIRED', 'AUTHORIZATION_FAILED', 'USER_CANCELLED_AUTHORIZATION', 'REAUTH_REQUIRED'].includes(String(connection.consentStatus || ''))
 const showRefresh = (connection: OpenFinanceConnection) => ['PENDING_AUTHORIZATION', 'CONSENT_GRANTED_WAITING_PROVIDER', 'DELAYED_PROVIDER'].includes(String(connection.consentStatus || ''))
-const showSync = (connection: OpenFinanceConnection) => ['AUTHORIZED_READY', 'AUTHORIZED_SYNCING'].includes(String(connection.consentStatus || ''))
+const showSync = (connection: OpenFinanceConnection) => ['AUTHORIZED_READY', 'AUTHORIZED_SYNCING'].includes(String(connection.consentStatus || '')) || isRecoverableSyncError(connection)
 
 const handleCreated = () => {
   wizardOpen.value = false
@@ -254,8 +255,16 @@ const openAuthorization = (connection: OpenFinanceConnection) => {
 const refreshStatus = async (connection: OpenFinanceConnection) => {
   busyConnectionId.value = connection.id
   try {
-    await OpenFinanceService.refreshConnectionStatus(connection.id)
-    emit('feedback', { type: 'success', message: 'Status da conexão atualizado.' })
+    const response = await OpenFinanceService.refreshConnectionStatus(connection.id)
+    const refreshed = response.data
+    if (refreshed.openfinanceId || ['AUTHORIZED_READY', 'AUTHORIZED_SYNCING', 'CONSENT_GRANTED_WAITING_PROVIDER'].includes(String(refreshed.consentStatus || ''))) {
+      emit('feedback', { type: 'success', message: 'Status da conexão atualizado.' })
+    } else {
+      emit('feedback', {
+        type: 'info',
+        message: 'A autorização ainda não foi confirmada pelo provedor. Aguarde alguns minutos e atualize novamente.',
+      })
+    }
     emit('refresh')
   } catch (error: any) {
     emit('feedback', { type: 'error', message: extractErrorMessage(error, 'Falha ao atualizar status da conexão.') })
@@ -288,11 +297,14 @@ const syncConnection = async (connection: OpenFinanceConnection) => {
       to: props.syncTo,
     })
     emit('synced', response.data.result)
+    const protocolId = response.data.providerProtocolId || response.data.result?.providerProtocolId
     emit('feedback', {
       type: response.data.status === 'EXECUTED' ? 'success' : 'info',
       message: response.data.status === 'EXECUTED'
-        ? 'Sincronização da conexão concluída.'
-        : `Sincronização não executada: ${response.data.reason || response.data.status}`,
+        ? `Sincronização da conexão concluída.${protocolId ? ` Protocolo: ${protocolId}.` : ''}`
+        : response.data.status === 'PROCESSING'
+          ? `Sincronização em processamento no banco.${protocolId ? ` Protocolo: ${protocolId}.` : ''}${response.data.reason ? ` ${response.data.reason}` : ''}`
+          : `Sincronização não executada: ${response.data.reason || response.data.status}`,
     })
     emit('refresh')
   } catch (error: any) {
@@ -335,6 +347,20 @@ const markLogoAsFailed = (key: string) => {
 }
 const initials = (value: string) => value.split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase()
 const formatDateTime = (value: string) => new Date(value).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
+const isRecoverableSyncError = (connection: OpenFinanceConnection) => {
+  if (String(connection.consentStatus || '') !== 'ERROR') return false
+  if (!connection.openfinanceId) return false
+  const providerStatus = String(connection.lastProviderStatus || '').toUpperCase()
+  if (providerStatus === 'ERROR_401' || providerStatus === 'ERROR_403') return false
+  const summary = String(connection.lastErrorSummary || '').toLowerCase()
+  return !summary.includes('autoriz')
+    && !summary.includes('revogad')
+    && !summary.includes('expirad')
+    && !summary.includes('reautoriz')
+}
+const connectionErrorSummary = (connection: OpenFinanceConnection) => (
+  sanitizeOpenFinanceMessage(connection.lastErrorSummary, 'Falha técnica no provedor de Open Finance. Tente sincronizar novamente mais tarde.')
+)
 const extractErrorMessage = (error: any, fallback: string) => (
   extractOpenFinanceErrorMessage(error, fallback)
 )
@@ -447,6 +473,10 @@ const extractErrorMessage = (error: any, fallback: string) => (
 .of-provider-status {
   color: #64748b;
   font-size: 0.86rem;
+}
+
+.of-provider-status--error {
+  color: #b42318;
 }
 
 .of-connection__status {

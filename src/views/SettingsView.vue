@@ -414,9 +414,9 @@
                         <v-chip
                           size="small"
                           variant="tonal"
-                          :color="item.status === 'FAILED' ? 'error' : '#667eea'"
+                          :color="item.status === 'FAILED' ? 'error' : item.status === 'PROCESSING' ? 'warning' : '#667eea'"
                         >
-                          {{ item.status === 'FAILED' ? 'Falhou' : 'Sucesso' }}
+                          {{ item.status === 'FAILED' ? 'Falhou' : item.status === 'PROCESSING' ? 'Processando' : 'Sucesso' }}
                         </v-chip>
                       </div>
                       <div class="sync-history-subtitle">
@@ -430,6 +430,7 @@
                         <span>{{ item.transactionsUpdated }} atualizadas</span>
                         <span>{{ item.reconciliationConflicts }} conflitos</span>
                         <span>{{ item.accountsSkippedDueToRateLimit }} rate limit</span>
+                        <span v-if="item.providerProtocolId">Protocolo: {{ item.providerProtocolId }}</span>
                       </div>
                       <div v-if="item.errorSummary" class="sync-history-error">
                         {{ item.errorSummary }}
@@ -513,6 +514,12 @@
                     </v-chip>
                     <v-chip size="small" variant="tonal" color="warning">
                       {{ lastOpenFinanceSync.accountsSkippedDueToRateLimit }} contas em rate limit
+                    </v-chip>
+                    <v-chip v-if="lastOpenFinanceSync.processing" size="small" variant="tonal" color="warning">
+                      Processando no provedor
+                    </v-chip>
+                    <v-chip v-if="lastOpenFinanceSync.providerProtocolId" size="small" variant="tonal" color="#667eea">
+                      Protocolo: {{ lastOpenFinanceSync.providerProtocolId }}
                     </v-chip>
                   </div>
 
