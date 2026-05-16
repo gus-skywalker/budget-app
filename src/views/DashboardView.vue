@@ -1371,6 +1371,12 @@ export default {
         currency: resolvedCurrency,
       })
     },
+    formatDate(value) {
+      if (!value) return '-'
+      const date = moment(value)
+      if (!date.isValid()) return '-'
+      return date.format('DD/MM/YYYY')
+    },
     getScenarioNetDelta(scenario) {
       if (Array.isArray(scenario?.lines) && scenario.lines.length) {
         return scenario.lines.reduce((total, line) => {
