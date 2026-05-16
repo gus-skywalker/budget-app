@@ -125,6 +125,18 @@
               {{ syncButtonLabel(connection) }}
             </v-btn>
             <v-btn
+              v-if="showNewProtocol(connection)"
+              size="small"
+              variant="outlined"
+              color="#667eea"
+              :loading="newProtocolConnectionId === connection.id"
+              :disabled="!canManage"
+              title="Cria um novo protocolo no provedor, respeitando quota e cooldown."
+              @click="syncConnection(connection, { forceNewProtocol: true })"
+            >
+              Gerar protocolo
+            </v-btn>
+            <v-btn
               size="small"
               variant="text"
               color="error"
@@ -222,6 +234,7 @@ const emit = defineEmits<{
 const wizardOpen = ref(false)
 const busyConnectionId = ref<string | null>(null)
 const syncingConnectionId = ref<string | null>(null)
+const newProtocolConnectionId = ref<string | null>(null)
 const disconnectDialog = ref(false)
 const disconnecting = ref(false)
 const selectedDisconnectConnection = ref<OpenFinanceConnection | null>(null)
@@ -261,6 +274,7 @@ const showContinueAuthorization = (connection: OpenFinanceConnection) => connect
 const showRetry = (connection: OpenFinanceConnection) => ['AUTHORIZATION_EXPIRED', 'AUTHORIZATION_FAILED', 'USER_CANCELLED_AUTHORIZATION', 'REAUTH_REQUIRED'].includes(String(connection.consentStatus || ''))
 const showRefresh = (connection: OpenFinanceConnection) => ['PENDING_AUTHORIZATION', 'CONSENT_GRANTED_WAITING_PROVIDER', 'DELAYED_PROVIDER'].includes(String(connection.consentStatus || ''))
 const showSync = (connection: OpenFinanceConnection) => ['AUTHORIZED_READY', 'AUTHORIZED_SYNCING'].includes(String(connection.consentStatus || '')) || isRecoverableSyncError(connection)
+const showNewProtocol = (connection: OpenFinanceConnection) => showSync(connection) && Boolean(cachedProtocolFor(connection))
 const syncButtonLabel = (connection: OpenFinanceConnection) => cachedProtocolFor(connection) ? 'Atualizar dados' : 'Gerar protocolo'
 const syncButtonTitle = (connection: OpenFinanceConnection) => cachedProtocolFor(connection)
   ? 'Busca novamente os dados usando o último protocolo salvo, sem criar um novo protocolo no provedor.'
@@ -316,10 +330,14 @@ const retryAuthorization = async (connection: OpenFinanceConnection) => {
   }
 }
 
-const syncConnection = async (connection: OpenFinanceConnection) => {
-  syncingConnectionId.value = connection.id
+const syncConnection = async (connection: OpenFinanceConnection, options: { forceNewProtocol?: boolean } = {}) => {
+  if (options.forceNewProtocol) {
+    newProtocolConnectionId.value = connection.id
+  } else {
+    syncingConnectionId.value = connection.id
+  }
   try {
-    const cachedProtocol = cachedProtocolFor(connection)
+    const cachedProtocol = options.forceNewProtocol ? null : cachedProtocolFor(connection)
     const response = await OpenFinanceService.syncConnection(connection.id, {
       connectionId: connection.id,
       from: props.syncFrom,
@@ -330,6 +348,8 @@ const syncConnection = async (connection: OpenFinanceConnection) => {
     const protocolId = response.data.providerProtocolId || response.data.result?.providerProtocolId
     if (protocolId) {
       storeCachedProtocol(connection.id, protocolId)
+    } else if (options.forceNewProtocol) {
+      clearCachedProtocol(connection.id)
     }
     emit('feedback', {
       type: response.data.status === 'EXECUTED' ? 'success' : 'info',
@@ -344,6 +364,7 @@ const syncConnection = async (connection: OpenFinanceConnection) => {
     emit('feedback', { type: 'error', message: extractErrorMessage(error, 'Falha ao sincronizar a conexão.') })
   } finally {
     syncingConnectionId.value = null
+    newProtocolConnectionId.value = null
   }
 }
 
@@ -408,14 +429,19 @@ const storeCachedProtocol = (connectionId: string, providerProtocolId: string) =
   }))
   protocolCacheVersion.value += 1
 }
+const clearCachedProtocol = (connectionId: string) => {
+  if (typeof window === 'undefined') return
+  window.localStorage.removeItem(cacheKeyFor(connectionId))
+  protocolCacheVersion.value += 1
+}
 const initials = (value: string) => value.split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase()
 const formatDateTime = (value: string) => new Date(value).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
 const isRecoverableSyncError = (connection: OpenFinanceConnection) => {
   if (String(connection.consentStatus || '') !== 'ERROR') return false
   if (!connection.openfinanceId) return false
   const providerStatus = String(connection.lastProviderStatus || '').toUpperCase()
-  if (providerStatus === 'ERROR_401' || providerStatus === 'ERROR_403') return false
   const summary = String(connection.lastErrorSummary || '').toLowerCase()
+  if (providerStatus === 'ERROR_401' || (providerStatus === 'ERROR_403' && !summary.includes('fetching statement protocol'))) return false
   return !summary.includes('autoriz')
     && !summary.includes('revogad')
     && !summary.includes('expirad')
