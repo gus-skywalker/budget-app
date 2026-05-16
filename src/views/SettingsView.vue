@@ -385,11 +385,8 @@
                 :connections="openFinanceConnections"
                 :loading="openFinanceConnectionsLoading"
                 :can-manage="canManageOpenFinance"
-                :sync-from="openFinanceFrom"
-                :sync-to="openFinanceTo"
                 @refresh="refreshOpenFinanceConnectionsPanel"
                 @feedback="openFinanceFeedback = $event"
-                @synced="handleOpenFinanceConnectionSynced"
               />
 
               <div class="modern-card mt-6">
@@ -426,13 +423,16 @@
                         </span>
                       </div>
                       <div class="sync-history-metrics">
+                        <span v-if="item.fetchedCount !== undefined">{{ item.fetchedCount }} recebidas</span>
                         <span>{{ item.transactionsCreated }} novas</span>
                         <span>{{ item.transactionsUpdated }} atualizadas</span>
+                        <span v-if="item.providerDuplicateCount !== undefined">{{ item.providerDuplicateCount }} duplicadas provider</span>
+                        <span v-if="item.localDuplicateCount !== undefined">{{ item.localDuplicateCount }} duplicadas locais</span>
                         <span>{{ item.reconciliationConflicts }} conflitos</span>
                         <span>{{ item.accountsSkippedDueToRateLimit }} rate limit</span>
                         <span v-if="item.providerProtocolId">Protocolo: {{ item.providerProtocolId }}</span>
                       </div>
-                      <div v-if="item.errorSummary" class="sync-history-error">
+                      <div v-if="item.errorSummary" class="sync-history-error" :title="item.errorSummary">
                         {{ item.errorSummary }}
                       </div>
                     </div>
@@ -447,12 +447,12 @@
                     Revisão Open Finance
                   </h2>
                   <p class="card-description">
-                    Sincronize uma janela de datas e resolva conflitos de reconciliação sem sair da área de conexões.
+                    Acompanhe conflitos de reconciliação sem sair da área de conexões.
                   </p>
                 </div>
                 <div class="card-content">
                   <v-alert type="info" variant="tonal" class="mb-4">
-                    Algumas integrações Open Finance limitam o fetch a 4 sincronizações por dia, por conta.
+                    As sincronizações Open Finance são executadas automaticamente pelo backend, respeitando a janela e a quota de cada provedor.
                   </v-alert>
 
                   <v-alert
@@ -464,34 +464,7 @@
                     {{ openFinanceFeedback.message }}
                   </v-alert>
 
-                  <div class="open-finance-toolbar mb-4">
-                    <v-text-field
-                      v-model="openFinanceFrom"
-                      label="De"
-                      type="date"
-                      variant="outlined"
-                      density="comfortable"
-                      color="#667eea"
-                      hide-details
-                    />
-                    <v-text-field
-                      v-model="openFinanceTo"
-                      label="Até"
-                      type="date"
-                      variant="outlined"
-                      density="comfortable"
-                      color="#667eea"
-                      hide-details
-                    />
-                    <v-btn
-                      class="modern-btn gradient-btn"
-                      :loading="openFinanceSyncing"
-                      :disabled="openFinanceSyncing"
-                      @click="syncOpenFinance"
-                    >
-                      <v-icon start>mdi-sync</v-icon>
-                      Sincronizar
-                    </v-btn>
+                  <div class="open-finance-actions mb-4">
                     <v-btn
                       variant="outlined"
                       color="#667eea"
@@ -500,27 +473,6 @@
                       <v-icon start>mdi-open-in-new</v-icon>
                       Ver transações importadas
                     </v-btn>
-                  </div>
-
-                  <div v-if="lastOpenFinanceSync" class="sync-summary mb-4">
-                    <v-chip size="small" variant="tonal" color="#667eea">
-                      {{ lastOpenFinanceSync.transactionsCreated }} novas
-                    </v-chip>
-                    <v-chip size="small" variant="tonal" color="#667eea">
-                      {{ lastOpenFinanceSync.transactionsUpdated }} atualizadas
-                    </v-chip>
-                    <v-chip size="small" variant="tonal" color="#667eea">
-                      {{ lastOpenFinanceSync.reconciliationConflicts }} conflitos
-                    </v-chip>
-                    <v-chip size="small" variant="tonal" color="warning">
-                      {{ lastOpenFinanceSync.accountsSkippedDueToRateLimit }} contas em rate limit
-                    </v-chip>
-                    <v-chip v-if="lastOpenFinanceSync.processing" size="small" variant="tonal" color="warning">
-                      Processando no provedor
-                    </v-chip>
-                    <v-chip v-if="lastOpenFinanceSync.providerProtocolId" size="small" variant="tonal" color="#667eea">
-                      Protocolo: {{ lastOpenFinanceSync.providerProtocolId }}
-                    </v-chip>
                   </div>
 
                   <div v-if="openFinanceLoadingConflicts" class="loading-state">
@@ -806,7 +758,6 @@ import type {
   OpenFinanceConflict,
   OpenFinanceObservabilitySummary,
   OpenFinanceSyncHistoryItem,
-  OpenFinanceSyncResponse,
 } from '@/types/openFinance';
 import { toUiLocale, toUserLanguageCode } from '@/utils/languageUtils';
 
@@ -960,14 +911,10 @@ watch(
   }
 )
 
-const openFinanceFrom = ref('')
-const openFinanceTo = ref('')
-const openFinanceSyncing = ref(false)
 const openFinanceLoadingConflicts = ref(false)
 const openFinanceConflictsLoaded = ref(false)
 const openFinanceResolvingId = ref<string | null>(null)
 const openFinanceConflicts = ref<OpenFinanceConflict[]>([])
-const lastOpenFinanceSync = ref<OpenFinanceSyncResponse | null>(null)
 const openFinanceConnections = ref<OpenFinanceConnection[]>([])
 const openFinanceImportedAccounts = ref<AccountView[]>([])
 const openFinanceConnectionsLoading = ref(false)
@@ -1066,8 +1013,6 @@ const suggestInternalCategory = (bankCategory: OpenFinanceBankCategory): Suggest
 
   return { categoryId: null, reason: null }
 }
-
-const toIsoDateInput = (value: Date) => value.toISOString().split('T')[0]
 
 const formatOpenFinanceDate = (value: string) => {
   if (!value) return '-'
@@ -1251,10 +1196,6 @@ const refreshOpenFinanceConnectionsPanel = async () => {
   ])
 }
 
-const handleOpenFinanceConnectionSynced = (result: OpenFinanceSyncResponse | null) => {
-  lastOpenFinanceSync.value = result
-}
-
 const stopOpenFinanceConnectionsPolling = () => {
   if (!openFinanceConnectionsPollId) {
     return
@@ -1391,12 +1332,6 @@ const loadUserProfile = async () => {
 }
 
 onMounted(async () => {
-  const today = new Date()
-  const thirtyDaysAgo = new Date()
-  thirtyDaysAgo.setDate(today.getDate() - 30)
-  openFinanceFrom.value = toIsoDateInput(thirtyDaysAgo)
-  openFinanceTo.value = toIsoDateInput(today)
-
   await Promise.all([
     loadAlertSettings(),
     loadUserProfile(),
@@ -1579,8 +1514,9 @@ const disconnectGoogle = () => {
 }
 
 const goToImportedTransactions = () => {
-  const month = openFinanceTo.value ? new Date(`${openFinanceTo.value}T00:00:00`).getMonth() + 1 : new Date().getMonth() + 1
-  const year = openFinanceTo.value ? new Date(`${openFinanceTo.value}T00:00:00`).getFullYear() : new Date().getFullYear()
+  const today = new Date()
+  const month = today.getMonth() + 1
+  const year = today.getFullYear()
   router.push({
     name: 'budget',
     query: {
@@ -1595,45 +1531,6 @@ const goToImportedTransactions = () => {
 const openLegalDoc = (routeName: 'privacy-policy' | 'terms-of-use' | 'cookie-policy') => {
   const resolved = router.resolve({ name: routeName })
   window.open(resolved.href, '_blank', 'noopener,noreferrer')
-}
-
-const syncOpenFinance = async () => {
-  if (!openFinanceFrom.value || !openFinanceTo.value) {
-    openFinanceFeedback.value = {
-      type: 'error',
-      message: 'Informe o intervalo de datas para sincronização.'
-    }
-    return
-  }
-
-  openFinanceSyncing.value = true
-  openFinanceFeedback.value.message = ''
-  try {
-    const response = await OpenFinanceService.sync({
-      from: openFinanceFrom.value,
-      to: openFinanceTo.value,
-    })
-    lastOpenFinanceSync.value = response.data
-    openFinanceFeedback.value = {
-      type: 'success',
-      message: 'Sincronização Open Finance concluída.'
-    }
-    await loadOpenFinanceConnections()
-    await loadOpenFinanceImportedAccounts()
-    await loadOpenFinanceConflicts()
-    await loadOpenFinanceObservabilitySummary()
-    await loadOpenFinanceSyncHistory()
-  } catch (error: any) {
-    await loadOpenFinanceConnections()
-    await loadOpenFinanceImportedAccounts()
-    await loadOpenFinanceSyncHistory()
-    openFinanceFeedback.value = {
-      type: 'error',
-      message: extractErrorMessage(error, 'Falha ao sincronizar dados Open Finance.')
-    }
-  } finally {
-    openFinanceSyncing.value = false
-  }
 }
 
 const saveOpenFinanceCategoryMapping = async (bankCategoryId: string) => {
@@ -1959,9 +1856,9 @@ const saveAlertSettings = async () => {
   border: 1px solid rgba(102, 126, 234, 0.1);
 }
 
-.open-finance-toolbar {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+.open-finance-actions {
+  display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   align-items: center;
 }
@@ -2085,12 +1982,21 @@ const saveAlertSettings = async () => {
 
 .sync-history-error {
   margin-top: 10px;
+  max-height: 96px;
+  overflow-y: auto;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(198, 40, 40, 0.08);
   font-size: 0.9rem;
+  line-height: 1.4;
   color: #c62828;
   font-weight: 500;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
 
 .v-theme--dark .sync-history-error {
+  background: rgba(239, 154, 154, 0.12);
   color: #ef9a9a;
 }
 
@@ -2408,8 +2314,12 @@ const saveAlertSettings = async () => {
     padding: 20px;
   }
 
-  .open-finance-toolbar {
-    grid-template-columns: 1fr;
+  .open-finance-actions {
+    align-items: stretch;
+  }
+
+  .open-finance-actions .v-btn {
+    width: 100%;
   }
 
   .conflict-item {

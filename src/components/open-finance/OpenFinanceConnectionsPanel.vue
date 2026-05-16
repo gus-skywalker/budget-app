@@ -74,7 +74,7 @@
                 {{ connectionErrorSummary(connection) }}
               </p>
 
-              <p v-if="showSync(connection)" class="of-sync-policy">
+              <p v-if="showBackendSyncPolicy(connection)" class="of-sync-policy">
                 {{ syncPolicyLabel(connection) }}
               </p>
             </div>
@@ -111,30 +111,6 @@
               @click="refreshStatus(connection)"
             >
               Atualizar status
-            </v-btn>
-            <v-btn
-              v-if="showSync(connection)"
-              size="small"
-              variant="tonal"
-              color="#667eea"
-              :loading="syncingConnectionId === connection.id"
-              :disabled="!canManage"
-              :title="syncButtonTitle(connection)"
-              @click="syncConnection(connection)"
-            >
-              {{ syncButtonLabel(connection) }}
-            </v-btn>
-            <v-btn
-              v-if="showNewProtocol(connection)"
-              size="small"
-              variant="outlined"
-              color="#667eea"
-              :loading="newProtocolConnectionId === connection.id"
-              :disabled="!canManage"
-              title="Cria um novo protocolo no provedor, respeitando quota e cooldown."
-              @click="syncConnection(connection, { forceNewProtocol: true })"
-            >
-              Gerar protocolo
             </v-btn>
             <v-btn
               size="small"
@@ -207,41 +183,28 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import OpenFinanceService from '@/services/OpenFinanceService'
-import type { OpenFinanceConnection, OpenFinanceSyncResponse } from '@/types/openFinance'
+import type { OpenFinanceConnection } from '@/types/openFinance'
 import { bankLogoPath, genericBankLogo } from '@/data/openFinanceInstitutions'
 import { extractOpenFinanceErrorMessage, sanitizeOpenFinanceMessage } from '@/utils/openFinanceErrors'
 import OpenFinanceConnectionWizard from './OpenFinanceConnectionWizard.vue'
-
-type CachedProviderProtocol = {
-  providerProtocolId: string
-  storedAt: string
-}
 
 const props = defineProps<{
   connections: OpenFinanceConnection[]
   loading?: boolean
   canManage: boolean
-  syncFrom: string
-  syncTo: string
 }>()
 
 const emit = defineEmits<{
   refresh: []
   feedback: [payload: { type: 'success' | 'error' | 'info'; message: string }]
-  synced: [result: OpenFinanceSyncResponse | null]
 }>()
 
 const wizardOpen = ref(false)
 const busyConnectionId = ref<string | null>(null)
-const syncingConnectionId = ref<string | null>(null)
-const newProtocolConnectionId = ref<string | null>(null)
 const disconnectDialog = ref(false)
 const disconnecting = ref(false)
 const selectedDisconnectConnection = ref<OpenFinanceConnection | null>(null)
 const failedLogos = ref<Record<string, boolean>>({})
-const protocolCacheVersion = ref(0)
-
-const PROTOCOL_REUSE_WINDOW_MS = 24 * 60 * 60 * 1000
 
 const connectedCount = computed(() => props.connections.filter((item) => item.consentStatus === 'AUTHORIZED_READY' || item.status === 'CONNECTED').length)
 const pendingCount = computed(() => props.connections.filter((item) => ['PENDING_SETUP', 'PENDING_AUTHORIZATION', 'CONSENT_GRANTED_WAITING_PROVIDER', 'DELAYED_PROVIDER'].includes(String(item.consentStatus || ''))).length)
@@ -273,15 +236,10 @@ const statusUi = (status: string | null | undefined) => consentStatusUi[String(s
 const showContinueAuthorization = (connection: OpenFinanceConnection) => connection.consentStatus === 'PENDING_AUTHORIZATION' && Boolean(connection.authorizationLink || connection.openfinanceLink)
 const showRetry = (connection: OpenFinanceConnection) => ['AUTHORIZATION_EXPIRED', 'AUTHORIZATION_FAILED', 'USER_CANCELLED_AUTHORIZATION', 'REAUTH_REQUIRED'].includes(String(connection.consentStatus || ''))
 const showRefresh = (connection: OpenFinanceConnection) => ['PENDING_AUTHORIZATION', 'CONSENT_GRANTED_WAITING_PROVIDER', 'DELAYED_PROVIDER'].includes(String(connection.consentStatus || ''))
-const showSync = (connection: OpenFinanceConnection) => ['AUTHORIZED_READY', 'AUTHORIZED_SYNCING'].includes(String(connection.consentStatus || '')) || isRecoverableSyncError(connection)
-const showNewProtocol = (connection: OpenFinanceConnection) => showSync(connection) && Boolean(cachedProtocolFor(connection))
-const syncButtonLabel = (connection: OpenFinanceConnection) => cachedProtocolFor(connection) ? 'Atualizar dados' : 'Gerar protocolo'
-const syncButtonTitle = (connection: OpenFinanceConnection) => cachedProtocolFor(connection)
-  ? 'Busca novamente os dados usando o último protocolo salvo, sem criar um novo protocolo no provedor.'
-  : 'Cria um novo protocolo de extrato no provedor. Essa ação respeita o limite operacional diário.'
-const syncPolicyLabel = (connection: OpenFinanceConnection) => cachedProtocolFor(connection)
-  ? 'Usará o último protocolo salvo para atualizar os dados sem consumir uma nova geração.'
-  : 'Criará um novo protocolo no provedor se a janela de quota/cooldown permitir.'
+const showBackendSyncPolicy = (connection: OpenFinanceConnection) => ['AUTHORIZED_READY', 'AUTHORIZED_SYNCING'].includes(String(connection.consentStatus || '')) || isRecoverableSyncError(connection)
+const syncPolicyLabel = (connection: OpenFinanceConnection) => connection.consentStatus === 'AUTHORIZED_SYNCING'
+  ? 'Sincronização em andamento pelo backend.'
+  : 'As transações são sincronizadas automaticamente pelo backend conforme a janela do provedor.'
 
 const handleCreated = () => {
   wizardOpen.value = false
@@ -330,44 +288,6 @@ const retryAuthorization = async (connection: OpenFinanceConnection) => {
   }
 }
 
-const syncConnection = async (connection: OpenFinanceConnection, options: { forceNewProtocol?: boolean } = {}) => {
-  if (options.forceNewProtocol) {
-    newProtocolConnectionId.value = connection.id
-  } else {
-    syncingConnectionId.value = connection.id
-  }
-  try {
-    const cachedProtocol = options.forceNewProtocol ? null : cachedProtocolFor(connection)
-    const response = await OpenFinanceService.syncConnection(connection.id, {
-      connectionId: connection.id,
-      from: props.syncFrom,
-      to: props.syncTo,
-      providerProtocolId: cachedProtocol?.providerProtocolId || null,
-    })
-    emit('synced', response.data.result)
-    const protocolId = response.data.providerProtocolId || response.data.result?.providerProtocolId
-    if (protocolId) {
-      storeCachedProtocol(connection.id, protocolId)
-    } else if (options.forceNewProtocol) {
-      clearCachedProtocol(connection.id)
-    }
-    emit('feedback', {
-      type: response.data.status === 'EXECUTED' ? 'success' : 'info',
-      message: response.data.status === 'EXECUTED'
-        ? `${cachedProtocol ? 'Dados atualizados a partir do protocolo salvo' : 'Sincronização da conexão concluída'}.${protocolId ? ` Protocolo: ${protocolId}.` : ''}`
-        : response.data.status === 'PROCESSING'
-          ? `Sincronização em processamento no banco.${protocolId ? ` Protocolo: ${protocolId}.` : ''}${response.data.reason ? ` ${response.data.reason}` : ''}`
-          : `Sincronização não executada: ${response.data.reason || response.data.status}`,
-    })
-    emit('refresh')
-  } catch (error: any) {
-    emit('feedback', { type: 'error', message: extractErrorMessage(error, 'Falha ao sincronizar a conexão.') })
-  } finally {
-    syncingConnectionId.value = null
-    newProtocolConnectionId.value = null
-  }
-}
-
 const requestDisconnect = (connection: OpenFinanceConnection) => {
   selectedDisconnectConnection.value = connection
   disconnectDialog.value = true
@@ -398,41 +318,6 @@ const logoFor = (connection: OpenFinanceConnection) => {
 }
 const markLogoAsFailed = (key: string) => {
   failedLogos.value = { ...failedLogos.value, [key]: true }
-}
-const cacheKeyFor = (connectionId: string) => `cobudget:open-finance:provider-protocol:${connectionId}`
-const cachedProtocolFor = (connection: OpenFinanceConnection): CachedProviderProtocol | null => {
-  protocolCacheVersion.value
-  if (typeof window === 'undefined') return null
-  try {
-    const raw = window.localStorage.getItem(cacheKeyFor(connection.id))
-    if (!raw) return null
-    const parsed = JSON.parse(raw) as CachedProviderProtocol
-    if (!parsed.providerProtocolId || !parsed.storedAt) return null
-    const ageMs = Date.now() - new Date(parsed.storedAt).getTime()
-    if (Number.isNaN(ageMs) || ageMs < 0 || ageMs > PROTOCOL_REUSE_WINDOW_MS) {
-      window.localStorage.removeItem(cacheKeyFor(connection.id))
-      protocolCacheVersion.value += 1
-      return null
-    }
-    return parsed
-  } catch {
-    window.localStorage.removeItem(cacheKeyFor(connection.id))
-    protocolCacheVersion.value += 1
-    return null
-  }
-}
-const storeCachedProtocol = (connectionId: string, providerProtocolId: string) => {
-  if (typeof window === 'undefined' || !providerProtocolId) return
-  window.localStorage.setItem(cacheKeyFor(connectionId), JSON.stringify({
-    providerProtocolId,
-    storedAt: new Date().toISOString(),
-  }))
-  protocolCacheVersion.value += 1
-}
-const clearCachedProtocol = (connectionId: string) => {
-  if (typeof window === 'undefined') return
-  window.localStorage.removeItem(cacheKeyFor(connectionId))
-  protocolCacheVersion.value += 1
 }
 const initials = (value: string) => value.split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase()
 const formatDateTime = (value: string) => new Date(value).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })

@@ -136,19 +136,27 @@ export interface OpenFinanceSyncExecutionResponse {
 
 export interface OpenFinanceSyncHistoryItem {
   id: string
+  connectionId?: string | null
   syncFrom: string
   syncTo: string
+  fetchedCount?: number
   accountsCreated: number
   accountsUpdated: number
   transactionsCreated: number
   transactionsUpdated: number
+  providerDuplicateCount?: number
+  localDuplicateCount?: number
   limitsUpserted: number
   metadataUpserted: number
   accountsSkippedDueToRateLimit: number
   reconciliationConflicts: number
   trigger: 'MANUAL' | 'AUTOMATIC'
   status: 'SUCCESS' | 'PROCESSING' | 'FAILED'
+  errorCategory?: string | null
   errorSummary: string | null
   providerProtocolId?: string | null
+  startedAt?: string | null
+  finishedAt?: string | null
+  durationMs?: number | null
   createdAt: string
 }
