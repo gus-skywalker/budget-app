@@ -67,36 +67,76 @@
         </section>
 
         <section v-else-if="step === 'holderType'" class="of-step-panel">
-          <h4>Essa informação ajuda a preparar a autorização corretamente.</h4>
+          <h4>Quem é o titular da conta?</h4>
           <div class="of-choice-grid">
             <button type="button" class="of-choice" :class="{ 'of-choice--selected': holderType === 'CPF' }" @click="selectHolderType('CPF')">
               <v-icon>mdi-account-outline</v-icon>
               <strong>Pessoa física</strong>
-              <span>Use CPF e nome completo do titular.</span>
+              <span>Conta vinculada a um CPF.</span>
             </button>
             <button type="button" class="of-choice" :class="{ 'of-choice--selected': holderType === 'CNPJ' }" @click="selectHolderType('CNPJ')">
               <v-icon>mdi-domain</v-icon>
-              <strong>Empresa</strong>
-              <span>Use CNPJ e razão social do pagador.</span>
+              <strong>Pessoa jurídica</strong>
+              <span>Conta vinculada a um CNPJ.</span>
             </button>
           </div>
         </section>
 
-        <section v-else-if="step === 'payer'" class="of-step-panel">
-          <h4>{{ holderType === 'CPF' ? 'Dados do titular' : 'Dados da empresa' }}</h4>
-          <div class="of-form-grid">
-            <v-text-field v-model="payerName" :label="holderType === 'CPF' ? 'Nome completo' : 'Razão social'" variant="outlined" density="comfortable" color="#667eea" />
+        <section v-else-if="step === 'holderLookup'" class="of-step-panel">
+          <h4>{{ holderType === 'CPF' ? 'Informe o CPF do titular.' : 'Informe o CNPJ do titular.' }}</h4>
+          <div class="of-holder-lookup">
             <v-text-field
-              v-model="payerDocument"
+              v-model="holderDocument"
               :label="holderType === 'CPF' ? 'CPF' : 'CNPJ'"
               variant="outlined"
               density="comfortable"
               color="#667eea"
-              :loading="cnpjLookupLoading"
-              :hint="cnpjLookupHint"
+              :loading="holdersLoading || cnpjLookupLoading"
+              :hint="holderLookupHint"
               persistent-hint
-              @blur="prepareCnpjAutofill"
+              @update:model-value="onHolderDocumentInput"
+              @blur="prepareHolderDocument"
             />
+
+            <div v-if="lookupHolderResult" class="of-holder-results">
+              <article class="of-holder-card">
+                <div>
+                  <span class="of-holder-card__eyebrow">Encontramos um titular já cadastrado</span>
+                  <strong>{{ lookupHolderResult.name }}</strong>
+                  <span>{{ lookupHolderResult.documentType }} {{ lookupHolderResult.documentMasked || maskedHolderDocument }}</span>
+                  <span v-if="lookupHolderResult.email">{{ lookupHolderResult.email }}</span>
+                  <span v-if="lookupHolderResult.city || lookupHolderResult.state">{{ [lookupHolderResult.city, lookupHolderResult.state].filter(Boolean).join(' - ') }}</span>
+                </div>
+                <div class="of-holder-card__actions">
+                  <v-btn size="small" color="#667eea" variant="tonal" @click="lookupHolderResult && continueWithHolder(lookupHolderResult)">
+                    Continuar com estes dados
+                  </v-btn>
+                  <v-btn size="small" variant="text" @click="lookupHolderResult && editHolder(lookupHolderResult)">
+                    Atualizar dados
+                  </v-btn>
+                  <v-btn size="small" variant="text" color="warning" @click="useAnotherHolderDocument">
+                    Usar outro {{ holderType }}
+                  </v-btn>
+                </div>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section v-else-if="step === 'payer'" class="of-step-panel">
+          <h4>{{ holderMode === 'update' ? 'Atualizar dados do titular' : 'Dados do titular' }}</h4>
+          <div class="of-form-grid">
+            <v-text-field
+              :model-value="maskedHolderDocument"
+              :label="holderType === 'CPF' ? 'CPF' : 'CNPJ'"
+              variant="outlined"
+              density="comfortable"
+              color="#667eea"
+              readonly
+            />
+            <v-text-field v-model="payerName" :label="holderType === 'CPF' ? 'Nome completo' : 'Razão social'" variant="outlined" density="comfortable" color="#667eea" />
+            <v-text-field v-model="holderEmail" label="E-mail" type="email" variant="outlined" density="comfortable" color="#667eea" />
+            <v-text-field v-model="holderPhone" label="Telefone opcional" variant="outlined" density="comfortable" color="#667eea" />
             <v-text-field
               v-model="zipcode"
               label="CEP"
@@ -153,10 +193,10 @@
           <h4>Revise o compartilhamento.</h4>
           <div class="of-review">
             <div><span>Banco</span><strong>{{ selectedInstitution?.institutionName }}</strong></div>
-            <div><span>Titular</span><strong>{{ payerName }}</strong></div>
-            <div><span>Documento</span><strong>{{ maskedDocument }}</strong></div>
+            <div><span>Titular</span><strong>{{ selectedHolder?.name || payerName }}</strong></div>
+            <div><span>Documento</span><strong>{{ selectedHolder?.documentMasked || maskedHolderDocument }}</strong></div>
             <div><span>Conta</span><strong>{{ maskedAccount }}</strong></div>
-            <div><span>Visibilidade</span><strong>Compartilhada com este workspace</strong></div>
+            <div><span>Visibilidade</span><strong>{{ holderType === 'CPF' ? 'Privada para o titular' : 'Organizacional do workspace' }}</strong></div>
           </div>
           <div class="of-permissions">
             <v-chip size="small" variant="tonal">saldos</v-chip>
@@ -198,10 +238,11 @@ import WorkspaceService from '@/services/WorkspaceService'
 import BrasilApiService, { isValidCep, isValidCnpj, isValidCpf, onlyDigits, type BrasilApiCnpj } from '@/services/BrasilApiService'
 import { useUserStore } from '@/plugins/userStore'
 import { extractOpenFinanceErrorMessage } from '@/utils/openFinanceErrors'
-import type { OpenFinanceConnection, OpenFinanceStartConnectionRequest } from '@/types/openFinance'
+import type { OpenFinanceConnection, OpenFinanceHolder, OpenFinanceHolderRequest, OpenFinanceStartConnectionRequest } from '@/types/openFinance'
 import { bankLogoPath, genericBankLogo, openFinanceInstitutions, type OpenFinanceInstitutionOption } from '@/data/openFinanceInstitutions'
 
-type Step = 'institution' | 'holderType' | 'payer' | 'account' | 'review' | 'authorization' | 'status'
+type Step = 'holderType' | 'holderLookup' | 'payer' | 'institution' | 'account' | 'review' | 'authorization' | 'status'
+type HolderMode = 'none' | 'create' | 'update' | 'reuse'
 
 const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits<{
@@ -212,9 +253,10 @@ const emit = defineEmits<{
 const userStore = useUserStore()
 
 const steps: Array<{ value: Step; label: string }> = [
-  { value: 'institution', label: 'Banco' },
   { value: 'holderType', label: 'Titular' },
-  { value: 'payer', label: 'Pagador' },
+  { value: 'holderLookup', label: 'Documento' },
+  { value: 'payer', label: 'Dados' },
+  { value: 'institution', label: 'Banco' },
   { value: 'account', label: 'Conta' },
   { value: 'review', label: 'Revisão' },
   { value: 'authorization', label: 'Autorização' },
@@ -225,12 +267,19 @@ const isOpen = computed({
   set: (value: boolean) => emit('update:modelValue', value),
 })
 
-const step = ref<Step>('institution')
+const step = ref<Step>('holderType')
 const institutionQuery = ref('')
 const selectedInstitution = ref<OpenFinanceInstitutionOption | null>(null)
 const holderType = ref<'CPF' | 'CNPJ'>('CPF')
+const holderDocument = ref('')
+const holdersLoading = ref(false)
+const lookupHolderResult = ref<OpenFinanceHolder | null>(null)
+const selectedHolder = ref<OpenFinanceHolder | null>(null)
+const holderMode = ref<HolderMode>('none')
+const holderDocumentRequiredForConnection = ref(false)
 const payerName = ref('')
-const payerDocument = ref('')
+const holderEmail = ref('')
+const holderPhone = ref('')
 const zipcode = ref('')
 const street = ref('')
 const addressNumber = ref('')
@@ -270,14 +319,15 @@ const filteredInstitutions = computed(() => {
   )
 })
 
-const maskedDocument = computed(() => maskDocument(payerDocument.value))
+const maskedHolderDocument = computed(() => maskDocument(holderDocument.value))
 const maskedAccount = computed(() => maskAccount(accountNumber.value))
 const cepLookupHint = computed(() => cepLookupMessage.value || 'Preenche bairro, cidade e UF pelo CEP.')
-const cnpjLookupHint = computed(() => {
-  if (holderType.value !== 'CNPJ') return ''
-  if (cnpjLookupMessage.value) return cnpjLookupMessage.value
-  if (cnpjCompany.value?.razao_social) return `CNPJ validado: ${cnpjCompany.value.razao_social}`
-  return 'Valida e preenche razão social/endereço pelo CNPJ.'
+const holderLookupHint = computed(() => {
+  if (holdersLoading.value) return 'Buscando titular cadastrado...'
+  if (holderType.value === 'CNPJ' && cnpjLookupMessage.value) return cnpjLookupMessage.value
+  if (holderType.value === 'CNPJ' && cnpjCompany.value?.razao_social) return `CNPJ validado: ${cnpjCompany.value.razao_social}`
+  if (lookupHolderResult.value) return 'Você pode reutilizar dados já cadastrados.'
+  return holderType.value === 'CPF' ? 'Digite o CPF para buscar um titular cadastrado.' : 'Digite o CNPJ para buscar um titular cadastrado.'
 })
 
 watch(() => props.modelValue, (open) => {
@@ -288,12 +338,18 @@ watch(() => props.modelValue, (open) => {
 })
 
 const reset = () => {
-  step.value = 'institution'
+  step.value = 'holderType'
   institutionQuery.value = ''
   selectedInstitution.value = null
   holderType.value = 'CPF'
+  holderDocument.value = ''
+  lookupHolderResult.value = null
+  selectedHolder.value = null
+  holderMode.value = 'none'
+  holderDocumentRequiredForConnection.value = false
   payerName.value = ''
-  payerDocument.value = ''
+  holderEmail.value = ''
+  holderPhone.value = ''
   zipcode.value = ''
   street.value = ''
   addressNumber.value = ''
@@ -321,11 +377,21 @@ const close = () => {
 
 const previousStep = () => {
   if (stepIndex.value <= 0) return
+  if (step.value === 'institution' && holderMode.value === 'reuse') {
+    step.value = 'holderLookup'
+    return
+  }
   step.value = steps[stepIndex.value - 1].value
 }
 
 const selectHolderType = (type: 'CPF' | 'CNPJ') => {
   holderType.value = type
+  holderDocument.value = ''
+  lookupHolderResult.value = null
+  selectedHolder.value = null
+  holderMode.value = 'none'
+  holderDocumentRequiredForConnection.value = false
+  clearHolderForm()
   if (type === 'CNPJ') {
     void prepareWorkspaceCompanyAutofill()
   }
@@ -342,6 +408,14 @@ const advance = async () => {
     errorMessage.value = validation
     return
   }
+  if (step.value === 'holderLookup') {
+    await resolveHolderDocument()
+    return
+  }
+  if (step.value === 'payer') {
+    await persistHolderData()
+    return
+  }
   if (step.value === 'review') {
     await submit(openAuthorizationPlaceholder())
     return
@@ -351,11 +425,14 @@ const advance = async () => {
 
 const validateStep = () => {
   if (step.value === 'institution' && !selectedInstitution.value) return 'Escolha o banco que deseja conectar.'
+  if (step.value === 'holderLookup') {
+    if (!digitsOnly(holderDocument.value)) return holderType.value === 'CPF' ? 'Informe o CPF.' : 'Informe o CNPJ.'
+    if (holderType.value === 'CPF' && !isValidCpf(holderDocument.value)) return 'Informe um CPF válido.'
+    if (holderType.value === 'CNPJ' && !isValidCnpj(holderDocument.value)) return 'Informe um CNPJ válido.'
+  }
   if (step.value === 'payer') {
     if (!payerName.value.trim()) return holderType.value === 'CPF' ? 'Informe o nome completo.' : 'Informe a razão social.'
-    if (!digitsOnly(payerDocument.value)) return holderType.value === 'CPF' ? 'Informe o CPF.' : 'Informe o CNPJ.'
-    if (holderType.value === 'CPF' && !isValidCpf(payerDocument.value)) return 'Informe um CPF válido.'
-    if (holderType.value === 'CNPJ' && !isValidCnpj(payerDocument.value)) return 'Informe um CNPJ válido.'
+    if (holderEmail.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(holderEmail.value.trim())) return 'Informe um e-mail válido.'
     if (!isValidCep(zipcode.value)) return 'Informe um CEP válido.'
     if (!street.value.trim()) return 'Informe o endereço.'
     if (!addressNumber.value.trim()) return 'Informe o número.'
@@ -369,17 +446,103 @@ const validateStep = () => {
   return ''
 }
 
+const resolveHolderDocument = async () => {
+  holdersLoading.value = true
+  try {
+    await prepareHolderDocument()
+    const response = await OpenFinanceService.lookupHolder({
+      documentType: holderType.value,
+      documentNumber: digitsOnly(holderDocument.value),
+    })
+    lookupHolderResult.value = response.data?.holder || null
+    if (lookupHolderResult.value) {
+      selectedHolder.value = null
+      holderMode.value = 'reuse'
+      return
+    }
+    holderMode.value = 'create'
+    selectedHolder.value = null
+    hydrateHolderFormFromDocument()
+    step.value = 'payer'
+  } catch (error: any) {
+    errorMessage.value = extractErrorMessage(error, 'Não foi possível buscar titulares cadastrados.')
+  } finally {
+    holdersLoading.value = false
+  }
+}
+
+const continueWithHolder = (holder: OpenFinanceHolder) => {
+  selectedHolder.value = holder
+  holderMode.value = 'reuse'
+  holderDocumentRequiredForConnection.value = false
+  applyHolderData(holder)
+  step.value = 'institution'
+}
+
+const editHolder = (holder: OpenFinanceHolder) => {
+  selectedHolder.value = holder
+  holderMode.value = 'update'
+  holderDocumentRequiredForConnection.value = false
+  applyHolderData(holder)
+  step.value = 'payer'
+}
+
+const useAnotherHolderDocument = () => {
+  holderDocument.value = ''
+  selectedHolder.value = null
+  holderMode.value = 'none'
+  holderDocumentRequiredForConnection.value = false
+  lookupHolderResult.value = null
+  clearHolderForm()
+}
+
+const persistHolderData = async () => {
+  submitting.value = true
+  try {
+    const payload = holderPayload()
+    const creatingHolder = !(selectedHolder.value?.id && holderMode.value === 'update')
+    const response = selectedHolder.value?.id && holderMode.value === 'update'
+      ? await OpenFinanceService.updateHolder(selectedHolder.value.id, payload)
+      : await OpenFinanceService.createHolder(payload)
+    selectedHolder.value = response.data
+    holderDocumentRequiredForConnection.value = creatingHolder
+    holderMode.value = 'reuse'
+    step.value = 'institution'
+  } catch (error: any) {
+    errorMessage.value = extractErrorMessage(error, 'Não foi possível salvar os dados do titular.')
+  } finally {
+    submitting.value = false
+  }
+}
+
+const holderPayload = (): OpenFinanceHolderRequest => ({
+  documentType: holderType.value,
+  documentNumber: digitsOnly(holderDocument.value),
+  name: payerName.value.trim(),
+  email: sanitizeText(holderEmail.value, 255) || null,
+  phone: sanitizeText(holderPhone.value, 40) || null,
+  zipcode: digitsOnly(zipcode.value),
+  street: sanitizeText(street.value, 120),
+  addressNumber: sanitizeText(addressNumber.value, 20),
+  addressComplement: sanitizeText(addressComplement.value, 80) || null,
+  neighborhood: sanitizeText(neighborhood.value, 120),
+  state: state.value.trim().toUpperCase(),
+  city: sanitizeText(city.value, 120),
+})
+
 const submit = async (authorizationWindow?: Window | null) => {
   if (!selectedInstitution.value) return
+  if (!selectedHolder.value?.id) {
+    errorMessage.value = 'Confirme os dados do titular antes de continuar.'
+    return
+  }
   submitting.value = true
   try {
     const payload: OpenFinanceStartConnectionRequest = {
+      holderId: selectedHolder.value.id,
       institutionKey: selectedInstitution.value.institutionKey,
       institutionName: selectedInstitution.value.institutionName,
       bankCode: selectedInstitution.value.bankCode,
-      payerDocumentType: holderType.value,
-      payerDocument: digitsOnly(payerDocument.value),
-      payerName: payerName.value.trim(),
       zipcode: digitsOnly(zipcode.value),
       street: sanitizeText(street.value, 120),
       addressNumber: sanitizeText(addressNumber.value, 20),
@@ -394,6 +557,12 @@ const submit = async (authorizationWindow?: Window | null) => {
       displayName: sanitizeText(displayName.value, 80) || selectedInstitution.value.institutionName,
       statementType: statementType.value,
       cardNumber: statementType.value === 'CREDIT_CARD' ? digitsOnly(cardNumber.value) : null,
+      email: sanitizeText(holderEmail.value, 255) || null,
+    }
+    if (holderDocumentRequiredForConnection.value) {
+      payload.payerDocumentType = holderType.value
+      payload.payerDocument = digitsOnly(holderDocument.value)
+      payload.payerName = (selectedHolder.value.name || payerName.value).trim()
     }
     const response = await OpenFinanceService.startConnection(payload)
     authorizationLink.value = response.data.authorizationLink || response.data.openfinanceLink || ''
@@ -428,6 +597,42 @@ const openAuthorizationLink = (targetWindow?: Window | null) => {
   window.open(authorizationLink.value, '_blank', 'noopener,noreferrer')
 }
 
+const clearHolderForm = () => {
+  payerName.value = ''
+  holderEmail.value = ''
+  holderPhone.value = ''
+  zipcode.value = ''
+  street.value = ''
+  addressNumber.value = ''
+  addressComplement.value = ''
+  neighborhood.value = ''
+  city.value = ''
+  state.value = ''
+  cepLookupMessage.value = ''
+  cnpjLookupMessage.value = ''
+  cnpjCompany.value = null
+}
+
+const hydrateHolderFormFromDocument = () => {
+  clearHolderForm()
+  if (holderType.value === 'CNPJ' && cnpjCompany.value) {
+    applyCompanyData(cnpjCompany.value)
+  }
+}
+
+const applyHolderData = (holder: OpenFinanceHolder) => {
+  payerName.value = holder.name || ''
+  holderEmail.value = holder.email || ''
+  holderPhone.value = holder.phone || ''
+  zipcode.value = holder.zipcode || ''
+  street.value = holder.street || ''
+  addressNumber.value = holder.addressNumber || ''
+  addressComplement.value = holder.addressComplement || ''
+  neighborhood.value = holder.neighborhood || ''
+  city.value = holder.city || ''
+  state.value = holder.state || ''
+}
+
 const applyCompanyData = (company: BrasilApiCnpj) => {
   const companyName = company.razao_social || company.nome_fantasia || ''
   const companyCep = company.cep ? String(company.cep).padStart(8, '0') : ''
@@ -442,12 +647,27 @@ const applyCompanyData = (company: BrasilApiCnpj) => {
   if (company.uf) state.value = company.uf
 }
 
+const prepareHolderDocument = async () => {
+  if (holderType.value === 'CNPJ') {
+    await prepareCnpjAutofill()
+    return
+  }
+  holderDocument.value = onlyDigits(holderDocument.value)
+}
+
+const onHolderDocumentInput = (value: string) => {
+  holderDocument.value = onlyDigits(String(value)).slice(0, holderType.value === 'CPF' ? 11 : 14)
+  selectedHolder.value = null
+  holderMode.value = 'none'
+  lookupHolderResult.value = null
+}
+
 const prepareCnpjAutofill = async () => {
   if (holderType.value !== 'CNPJ') return
 
   cnpjLookupMessage.value = ''
   cnpjCompany.value = null
-  const cnpj = onlyDigits(payerDocument.value)
+  const cnpj = onlyDigits(holderDocument.value)
   if (!cnpj) return
   if (!isValidCnpj(cnpj)) {
     cnpjLookupMessage.value = 'CNPJ inválido.'
@@ -458,7 +678,7 @@ const prepareCnpjAutofill = async () => {
   try {
     const response = await BrasilApiService.getCnpj(cnpj)
     cnpjCompany.value = response.data
-    payerDocument.value = cnpj
+    holderDocument.value = cnpj
     applyCompanyData(response.data)
   } catch (error: any) {
     cnpjLookupMessage.value = error?.response?.data?.message || error?.message || 'Não foi possível validar o CNPJ agora.'
@@ -469,7 +689,7 @@ const prepareCnpjAutofill = async () => {
 
 const prepareWorkspaceCompanyAutofill = async () => {
   const workspaceId = userStore.getCurrentWorkspaceId
-  if (!workspaceId || payerDocument.value) return
+  if (!workspaceId || holderDocument.value) return
 
   try {
     const response = await WorkspaceService.getDetails(workspaceId)
@@ -480,7 +700,7 @@ const prepareWorkspaceCompanyAutofill = async () => {
     if (!isValidCnpj(cnpj)) return
 
     holderType.value = 'CNPJ'
-    payerDocument.value = cnpj
+    holderDocument.value = cnpj
     await prepareCnpjAutofill()
   } catch {
     // Workspace CNPJ autofill is opportunistic; manual input remains the source of truth.
@@ -615,6 +835,56 @@ const extractErrorMessage = (error: any, fallback: string) => (
   gap: 12px;
 }
 
+.of-holder-lookup {
+  display: grid;
+  gap: 14px;
+}
+
+.of-holder-results {
+  display: grid;
+  gap: 12px;
+}
+
+.of-holder-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: start;
+  padding: 14px;
+  border: 1px solid rgba(102, 126, 234, 0.24);
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.of-holder-card strong,
+.of-holder-card span {
+  display: block;
+}
+
+.of-holder-card strong {
+  margin-top: 4px;
+  color: #1f2937;
+}
+
+.of-holder-card span {
+  color: #64748b;
+  font-size: 0.88rem;
+}
+
+.of-holder-card__eyebrow {
+  color: #667eea !important;
+  font-size: 0.76rem !important;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.of-holder-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .of-bank-option,
 .of-choice {
   border: 1px solid rgba(100, 116, 139, 0.18);
@@ -738,6 +1008,14 @@ const extractErrorMessage = (error: any, fallback: string) => (
   .of-form-grid,
   .of-review {
     grid-template-columns: 1fr;
+  }
+
+  .of-holder-card {
+    grid-template-columns: 1fr;
+  }
+
+  .of-holder-card__actions {
+    justify-content: flex-start;
   }
 }
 </style>

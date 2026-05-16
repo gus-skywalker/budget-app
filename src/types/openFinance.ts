@@ -6,12 +6,13 @@ export interface OpenFinanceSyncRequest {
 }
 
 export interface OpenFinanceStartConnectionRequest {
+  holderId?: string | null
   institutionKey: string
   institutionName?: string
   bankCode: string
-  payerDocument: string
-  payerDocumentType: 'CPF' | 'CNPJ'
-  payerName: string
+  payerDocument?: string | null
+  payerDocumentType?: 'CPF' | 'CNPJ' | null
+  payerName?: string | null
   displayName?: string | null
   agency?: string | null
   agencyDigit?: string | null
@@ -28,6 +29,49 @@ export interface OpenFinanceStartConnectionRequest {
   state?: string | null
   zipcode?: string | null
   email?: string | null
+}
+
+export interface OpenFinanceHolder {
+  id: string
+  provider?: string | null
+  documentType: 'CPF' | 'CNPJ'
+  documentMasked?: string | null
+  name: string
+  email?: string | null
+  phone?: string | null
+  street?: string | null
+  neighborhood?: string | null
+  addressNumber?: string | null
+  addressComplement?: string | null
+  city?: string | null
+  state?: string | null
+  zipcode?: string | null
+  createdAt?: string | null
+  updatedAt?: string | null
+}
+
+export interface OpenFinanceHolderRequest {
+  documentType: 'CPF' | 'CNPJ'
+  documentNumber?: string | null
+  name: string
+  email?: string | null
+  phone?: string | null
+  street?: string | null
+  neighborhood?: string | null
+  addressNumber?: string | null
+  addressComplement?: string | null
+  city?: string | null
+  state?: string | null
+  zipcode?: string | null
+}
+
+export interface OpenFinanceHolderLookupRequest {
+  documentType: 'CPF' | 'CNPJ'
+  documentNumber: string
+}
+
+export interface OpenFinanceHolderLookupResponse {
+  holder: OpenFinanceHolder | null
 }
 
 export interface OpenFinanceSyncResponse {
@@ -91,6 +135,7 @@ export interface OpenFinanceObservabilitySummary {
 export interface OpenFinanceConnection {
   id: string
   provider: string | null
+  holderId?: string | null
   institutionKey: string
   institutionName: string
   bankCode?: string | null

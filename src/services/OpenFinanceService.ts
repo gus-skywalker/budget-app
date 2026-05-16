@@ -4,6 +4,10 @@ import type {
   OpenFinanceCategoryMapping,
   OpenFinanceConnection,
   OpenFinanceConflict,
+  OpenFinanceHolder,
+  OpenFinanceHolderLookupRequest,
+  OpenFinanceHolderLookupResponse,
+  OpenFinanceHolderRequest,
   OpenFinanceObservabilitySummary,
   OpenFinanceStartConnectionRequest,
   OpenFinanceSyncExecutionResponse,
@@ -25,11 +29,14 @@ const maskAccount = (value?: string | null) => {
   return digits ? `****${digits.slice(-4)}` : null
 }
 
+const devHolders: OpenFinanceHolder[] = []
+
 const buildDevConnection = (payload: OpenFinanceStartConnectionRequest): OpenFinanceConnection => {
   const now = new Date().toISOString()
   return {
     id: `dev-open-finance-${payload.institutionKey}-${Date.now()}`,
     provider: 'DEV_MOCK',
+    holderId: payload.holderId || null,
     institutionKey: payload.institutionKey,
     institutionName: payload.institutionName || payload.institutionKey,
     bankCode: payload.bankCode,
@@ -37,9 +44,9 @@ const buildDevConnection = (payload: OpenFinanceStartConnectionRequest): OpenFin
     accessScope: 'ACCOUNTS_TRANSACTIONS',
     sharingPolicy: 'WORKSPACE',
     consentStatus: 'AUTHORIZED_READY',
-    payerDocumentType: payload.payerDocumentType,
-    payerName: payload.payerName,
-    payerDocumentMasked: maskDocument(payload.payerDocument),
+    payerDocumentType: payload.payerDocumentType || null,
+    payerName: payload.payerName || null,
+    payerDocumentMasked: maskDocument(payload.payerDocument || ''),
     accountNumberMasked: maskAccount(payload.accountNumber),
     displayName: payload.displayName || payload.institutionName || payload.institutionKey,
     connectedByUserId: null,
@@ -176,6 +183,76 @@ export default {
       }
       throw error
     }
+  },
+
+  listHolders(documentType: 'CPF' | 'CNPJ'): Promise<any> {
+    if (import.meta.env.DEV && !API_URL) {
+      return Promise.resolve({ data: devHolders.filter((holder) => holder.documentType === documentType) })
+    }
+    return axiosInterceptor.get<OpenFinanceHolder[]>(`${API_URL}/holders`, {
+      params: { documentType },
+    })
+  },
+
+  lookupHolder(payload: OpenFinanceHolderLookupRequest): Promise<any> {
+    if (import.meta.env.DEV && !API_URL) {
+      return Promise.resolve({
+        data: {
+          holder: null,
+        },
+      })
+    }
+    return axiosInterceptor.post<OpenFinanceHolderLookupResponse>(`${API_URL}/holders/lookup`, payload)
+  },
+
+  createHolder(payload: OpenFinanceHolderRequest): Promise<any> {
+    if (import.meta.env.DEV && !API_URL) {
+      const holder: OpenFinanceHolder = {
+        id: `dev-holder-${Date.now()}`,
+        provider: 'DEV_MOCK',
+        documentType: payload.documentType,
+        documentMasked: maskDocument(payload.documentNumber || ''),
+        name: payload.name,
+        email: payload.email || null,
+        phone: payload.phone || null,
+        street: payload.street || null,
+        neighborhood: payload.neighborhood || null,
+        addressNumber: payload.addressNumber || null,
+        addressComplement: payload.addressComplement || null,
+        city: payload.city || null,
+        state: payload.state || null,
+        zipcode: payload.zipcode || null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+      devHolders.push(holder)
+      return Promise.resolve({ data: holder })
+    }
+    return axiosInterceptor.post<OpenFinanceHolder>(`${API_URL}/holders`, payload)
+  },
+
+  updateHolder(holderId: string, payload: OpenFinanceHolderRequest): Promise<any> {
+    if (import.meta.env.DEV && !API_URL) {
+      const index = devHolders.findIndex((holder) => holder.id === holderId)
+      if (index >= 0) {
+        devHolders[index] = {
+          ...devHolders[index],
+          name: payload.name,
+          email: payload.email || null,
+          phone: payload.phone || null,
+          street: payload.street || null,
+          neighborhood: payload.neighborhood || null,
+          addressNumber: payload.addressNumber || null,
+          addressComplement: payload.addressComplement || null,
+          city: payload.city || null,
+          state: payload.state || null,
+          zipcode: payload.zipcode || null,
+          updatedAt: new Date().toISOString(),
+        }
+      }
+      return Promise.resolve({ data: devHolders[index] })
+    }
+    return axiosInterceptor.put<OpenFinanceHolder>(`${API_URL}/holders/${encodeURIComponent(holderId)}`, payload)
   },
 
   confirmConsent(institutionKey: string) {
