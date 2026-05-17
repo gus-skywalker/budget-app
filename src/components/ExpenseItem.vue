@@ -5,47 +5,18 @@
         <v-list-item-title>
           {{ expense.description }}
         </v-list-item-title>
-        <v-list-item-subtitle>
-          {{ $t('expenseItem.amount') }} {{ expense.amount }} - {{ $t('expenseItem.date') }}: {{ expense.date }}
-        </v-list-item-subtitle>
-        <div v-if="expense.openFinance || expense.reconciliationStatus" class="status-row">
-          <v-chip
-            v-if="expense.openFinance"
-            color="#667eea"
-            size="small"
-            variant="tonal"
-          >
-            {{ $t('expenseItem.openFinance') }}
-          </v-chip>
-          <v-chip
-            v-if="expense.reconciliationStatus"
-            :color="reconciliationColor"
-            size="small"
-            variant="tonal"
-          >
-            {{ reconciliationLabel }}
-          </v-chip>
+        <div class="expense-meta-line">
+          <span class="expense-date-text">{{ expense.date }}</span>
+          <span v-if="expense.category" class="expense-meta-tag">· {{ translatedCategoryName }}</span>
+          <span v-else class="expense-meta-tag expense-meta-tag--warn">· {{ $t('expenseItem.uncategorized') }}</span>
+          <span v-if="expense.openFinance" class="expense-meta-tag">· {{ $t('expenseItem.openFinance') }}</span>
+          <span v-if="expense.visibilityScope === 'PRIVATE'" class="expense-meta-tag">· {{ visibilityScopeLabel }}</span>
+          <v-chip v-if="expense.reconciliationStatus" :color="reconciliationColor" size="x-small" variant="tonal" class="ml-1">{{ reconciliationLabel }}</v-chip>
         </div>
-        <div class="status-row">
-          <v-chip
-            size="small"
-            variant="outlined"
-            color="#667eea"
-          >
-            {{ visibilityScopeLabel }}
-          </v-chip>
-        </div>
-        <v-list-item-subtitle v-if="expense.category">
-          {{ $t('expenseItem.category') }}: {{ translatedCategoryName }}
-          <v-icon :icon="categoryIcons[expense.category.code]" class="mr-2"></v-icon>
-        </v-list-item-subtitle>
-        <div v-else class="uncategorized-row">
-          <v-chip size="small" color="warning" variant="tonal">
-            {{ $t('expenseItem.uncategorized') }}
-          </v-chip>
+        <div v-if="!expense.category" class="uncategorized-row">
           <v-chip
             v-if="hasSuggestionReady"
-            size="small"
+            size="x-small"
             color="#667eea"
             variant="tonal"
           >
@@ -143,6 +114,9 @@
           </v-chip>
         </v-list-item-subtitle>
       </div>
+      <div class="expense-amount-col">
+        <span class="expense-amount-text">{{ expense.amount }}</span>
+      </div>
       <div class="expense-actions">
         <v-btn
           v-if="expense.visibilityScope === 'WORKSPACE'"
@@ -150,7 +124,6 @@
           size="x-small"
           density="comfortable"
           @click.stop="$emit('openComments', expense)"
-          color="#667eea"
           class="expense-action-btn"
         >
           <v-icon size="16">mdi-comment-text-outline</v-icon>
@@ -160,7 +133,6 @@
           size="x-small"
           density="comfortable"
           @click.stop="isDialogOpen = true"
-          color="primary"
           class="expense-action-btn"
         >
           <v-icon size="16">mdi-share-variant</v-icon>
@@ -169,7 +141,6 @@
           icon
           size="x-small"
           density="comfortable"
-          color="orange"
           @click.stop="openAlertDialog"
           class="expense-action-btn"
         >
@@ -681,7 +652,7 @@ export default {
 .expense-item-layout {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
+  gap: 8px;
   width: 100%;
 }
 
@@ -712,8 +683,8 @@ export default {
 .status-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin: 6px 0;
+  gap: 4px;
+  margin: 2px 0;
 }
 
 .conflict-resolution-row {
@@ -726,9 +697,57 @@ export default {
 .uncategorized-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
-  margin: 6px 0;
+  margin: 2px 0;
+}
+
+.expense-meta-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.expense-date-text {
+  font-size: 0.75rem;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.expense-meta-tag {
+  font-size: 0.75rem;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.expense-meta-tag--warn {
+  color: #e65100;
+}
+
+.expense-amount-col {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding-top: 2px;
+  min-width: 80px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.expense-amount-text {
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.v-theme--dark .expense-date-text,
+.v-theme--dark .expense-meta-tag {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.v-theme--dark .expense-meta-tag--warn {
+  color: #ffb74d;
 }
 
 .suggestion-details {
@@ -755,6 +774,10 @@ export default {
   .expense-item-layout {
     flex-wrap: wrap;
     gap: 8px;
+  }
+
+  .expense-amount-col {
+    margin-left: auto;
   }
 
   .expense-actions {
