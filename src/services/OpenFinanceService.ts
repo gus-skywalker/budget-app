@@ -42,7 +42,8 @@ const buildDevConnection = (payload: OpenFinanceStartConnectionRequest): OpenFin
     bankCode: payload.bankCode,
     status: 'CONNECTED',
     accessScope: 'ACCOUNTS_TRANSACTIONS',
-    sharingPolicy: 'WORKSPACE',
+    sharingPolicy: 'PRIVATE_ONLY',
+    planningSharingLevel: 'PRIVATE',
     consentStatus: 'AUTHORIZED_READY',
     payerDocumentType: payload.payerDocumentType || null,
     payerName: payload.payerName || null,
@@ -265,6 +266,12 @@ export default {
 
   retryAuthorization(connectionId: string) {
     return axiosInterceptor.post<OpenFinanceConnection>(`${API_URL}/connections/${connectionId}/retry-authorization`)
+  },
+
+  updatePlanningSharing(connectionId: string, sharingLevel: 'PRIVATE' | 'PLANNING_IMPACT_ONLY') {
+    return axiosInterceptor.patch<OpenFinanceConnection>(`${API_URL}/connections/${connectionId}/planning-sharing`, {
+      sharingLevel,
+    })
   },
 
   async syncConnection(connectionId: string, payload: OpenFinanceSyncRequest): Promise<any> {

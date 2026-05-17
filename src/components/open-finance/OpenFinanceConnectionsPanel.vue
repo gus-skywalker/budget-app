@@ -77,6 +77,23 @@
               <p v-if="showBackendSyncPolicy(connection)" class="of-sync-policy">
                 {{ syncPolicyLabel(connection) }}
               </p>
+
+              <div v-if="showPlanningSharingControl(connection)" class="of-planning-share">
+                <div>
+                  <strong>{{ planningSharingTitle(connection) }}</strong>
+                  <span>{{ planningSharingDescription(connection) }}</span>
+                </div>
+                <v-btn
+                  size="small"
+                  variant="tonal"
+                  color="#667eea"
+                  :loading="busyConnectionId === connection.id"
+                  :disabled="!canManage"
+                  @click="togglePlanningSharing(connection)"
+                >
+                  {{ planningSharingAction(connection) }}
+                </v-btn>
+              </div>
             </div>
           </div>
 
@@ -186,6 +203,7 @@ import OpenFinanceService from '@/services/OpenFinanceService'
 import type { OpenFinanceConnection } from '@/types/openFinance'
 import { bankLogoPath, genericBankLogo } from '@/data/openFinanceInstitutions'
 import { extractOpenFinanceErrorMessage, sanitizeOpenFinanceMessage } from '@/utils/openFinanceErrors'
+import { useUserStore } from '@/plugins/userStore'
 import OpenFinanceConnectionWizard from './OpenFinanceConnectionWizard.vue'
 
 const props = defineProps<{
@@ -205,6 +223,7 @@ const disconnectDialog = ref(false)
 const disconnecting = ref(false)
 const selectedDisconnectConnection = ref<OpenFinanceConnection | null>(null)
 const failedLogos = ref<Record<string, boolean>>({})
+const userStore = useUserStore()
 
 const connectedCount = computed(() => props.connections.filter((item) => item.consentStatus === 'AUTHORIZED_READY' || item.status === 'CONNECTED').length)
 const pendingCount = computed(() => props.connections.filter((item) => ['PENDING_SETUP', 'PENDING_AUTHORIZATION', 'CONSENT_GRANTED_WAITING_PROVIDER', 'DELAYED_PROVIDER'].includes(String(item.consentStatus || ''))).length)
@@ -240,6 +259,22 @@ const showBackendSyncPolicy = (connection: OpenFinanceConnection) => ['AUTHORIZE
 const syncPolicyLabel = (connection: OpenFinanceConnection) => connection.consentStatus === 'AUTHORIZED_SYNCING'
   ? 'Sincronização em andamento pelo backend.'
   : 'As transações são sincronizadas automaticamente pelo backend conforme a janela do provedor.'
+const currentUserId = computed(() => String(userStore.getUser?.id || '').trim())
+const showPlanningSharingControl = (connection: OpenFinanceConnection) => (
+  connection.payerDocumentType === 'CPF'
+  && Boolean(currentUserId.value)
+  && connection.connectedByUserId === currentUserId.value
+)
+const isPlanningShared = (connection: OpenFinanceConnection) => connection.planningSharingLevel === 'PLANNING_IMPACT_ONLY' || connection.sharingPolicy === 'PLANNING_IMPACT_ONLY'
+const planningSharingTitle = (connection: OpenFinanceConnection) => isPlanningShared(connection)
+  ? 'Incluído no planejamento'
+  : 'Privado'
+const planningSharingDescription = (connection: OpenFinanceConnection) => isPlanningShared(connection)
+  ? 'Detalhes continuam privados.'
+  : 'Só você vê esta conta.'
+const planningSharingAction = (connection: OpenFinanceConnection) => isPlanningShared(connection)
+  ? 'Remover do planejamento'
+  : 'Usar no planejamento'
 
 const handleCreated = () => {
   wizardOpen.value = false
@@ -283,6 +318,25 @@ const retryAuthorization = async (connection: OpenFinanceConnection) => {
     emit('refresh')
   } catch (error: any) {
     emit('feedback', { type: 'error', message: extractErrorMessage(error, 'Falha ao tentar autorização novamente.') })
+  } finally {
+    busyConnectionId.value = null
+  }
+}
+
+const togglePlanningSharing = async (connection: OpenFinanceConnection) => {
+  busyConnectionId.value = connection.id
+  const sharingLevel = isPlanningShared(connection) ? 'PRIVATE' : 'PLANNING_IMPACT_ONLY'
+  try {
+    await OpenFinanceService.updatePlanningSharing(connection.id, sharingLevel)
+    emit('feedback', {
+      type: 'success',
+      message: sharingLevel === 'PLANNING_IMPACT_ONLY'
+        ? 'Impacto financeiro incluído no planejamento. Os detalhes continuam privados.'
+        : 'Conta removida do planejamento compartilhado.',
+    })
+    emit('refresh')
+  } catch (error: any) {
+    emit('feedback', { type: 'error', message: extractErrorMessage(error, 'Falha ao atualizar compartilhamento de planejamento.') })
   } finally {
     busyConnectionId.value = null
   }
@@ -504,7 +558,46 @@ const extractErrorMessage = (error: any, fallback: string) => (
   max-width: 68ch;
 }
 
+.of-planning-share {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  max-width: 68ch;
+  border: 1px solid rgba(102, 126, 234, 0.18);
+  border-radius: 8px;
+  background: rgba(102, 126, 234, 0.06);
+}
+
+.of-planning-share div {
+  display: grid;
+  gap: 2px;
+  min-width: 220px;
+  flex: 1;
+}
+
+.of-planning-share strong {
+  color: #1f2937;
+  font-size: 0.86rem;
+}
+
+.of-planning-share span {
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
 .v-theme--dark .of-sync-policy {
+  color: #cbd5e1;
+}
+
+.v-theme--dark .of-planning-share {
+  background: rgba(148, 163, 184, 0.12);
+  border-color: rgba(148, 163, 184, 0.22);
+}
+
+.v-theme--dark .of-planning-share strong,
+.v-theme--dark .of-planning-share span {
   color: #cbd5e1;
 }
 
