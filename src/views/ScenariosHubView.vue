@@ -62,7 +62,7 @@
             <div class="saved-scenario-card__meta">
               <span
                 >{{ t('planning.scenarios.monthly_impact') }}:
-                {{ formatCurrency(Number(scenario.scenarioMonthlyImpact || 0)) }}</span
+                {{ formatCurrency(scenarioMonthlyImpact(scenario)) }}</span
               >
             </div>
 
@@ -181,17 +181,43 @@ const formatCurrency = (value: number) =>
   )
 
 const scenarioTone = (scenario: SavedScenario) => {
-  if (scenario.decisionStatus === 'ACTION_NEEDED') return 'status-chip--danger'
-  if (scenario.decisionStatus === 'WATCH') return 'status-chip--warning'
+  const status = scenarioDecisionStatus(scenario)
+  if (status === 'ACTION_NEEDED') return 'status-chip--danger'
+  if (status === 'WATCH') return 'status-chip--warning'
   return 'status-chip--success'
 }
 
 const scenarioLabel = (scenario: SavedScenario) => {
-  if (scenario.decisionStatus === 'ACTION_NEEDED')
+  const status = scenarioDecisionStatus(scenario)
+  if (status === 'ACTION_NEEDED')
     return t('planning.scenarios.status_action_needed')
-  if (scenario.decisionStatus === 'WATCH') return t('planning.scenarios.status_watch')
-  if (scenario.decisionStatus === 'STABLE') return t('planning.scenarios.status_stable')
+  if (status === 'WATCH') return t('planning.scenarios.status_watch')
+  if (status === 'STABLE') return t('planning.scenarios.status_stable')
   return t('planning.scenarios.status_no_data')
+}
+
+const scenarioMonthlyImpact = (scenario: SavedScenario): number => {
+  if (scenario.scenarioMonthlyImpact != null) return Number(scenario.scenarioMonthlyImpact || 0)
+  const months = Math.max(1, Number(scenario.months || 6))
+  return (scenario.deltas || []).reduce((total, delta) => {
+    const amount = Number(delta.amount || 0)
+    const weightedAmount = String(delta.type || '').startsWith('ONE_TIME') ? amount / months : amount
+    if (delta.type === 'MONTHLY_INCOME' || delta.type === 'ONE_TIME_INCOME') {
+      return total + weightedAmount
+    }
+    if (delta.type === 'MONTHLY_EXPENSE' || delta.type === 'ONE_TIME_EXPENSE') {
+      return total - weightedAmount
+    }
+    return total
+  }, 0)
+}
+
+const scenarioDecisionStatus = (scenario: SavedScenario): string => {
+  if (scenario.decisionStatus) return scenario.decisionStatus
+  const impact = scenarioMonthlyImpact(scenario)
+  if (impact < 0) return 'ACTION_NEEDED'
+  if (impact > 0) return 'STABLE'
+  return 'NO_DATA'
 }
 
 const loadSavedScenarios = async () => {

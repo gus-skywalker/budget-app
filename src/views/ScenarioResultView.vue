@@ -451,10 +451,20 @@ const buildResultFromSavedScenario = (saved: SavedScenario): ScenarioSimulationR
   availableForGoals: Math.max(0, Number(saved.projectedFinalBalance || 0)),
   impactedGoalsCount: Number(saved.impactedGoalsCount || 0),
   summary: saved.summary || '',
-  forecast: [],
-  impactedGoalNames: [],
+  forecast: saved.forecast || [],
+  impactedGoalNames: saved.impactedGoalNames || [],
   debtComparison: saved.debtComparison || null
 })
+
+const hasPersistedScenarioResult = (saved: SavedScenario): boolean => {
+  const hasMetrics =
+    saved.decisionStatus != null ||
+    saved.projectedFinalBalance != null ||
+    saved.scenarioMonthlyImpact != null ||
+    saved.impactedGoalsCount != null
+  if (saved.sourceType === 'MANUAL_TYPED') return hasMetrics
+  return hasMetrics && Array.isArray(saved.forecast) && saved.forecast.length > 0
+}
 
 const loadResult = async () => {
   const routeId = String(route.params.id || '')
@@ -524,6 +534,19 @@ const loadResult = async () => {
       }
       Object.assign(snapshot, rebuilt)
       saveWizardSnapshot(snapshot)
+      if (!hasPersistedScenarioResult(saved)) {
+        const { data } = await ScenarioService.simulate(buildSimulationPayload(snapshot))
+        result.value = data
+        isShowingSavedSnapshot.value = false
+        window.sessionStorage.setItem(
+          'planning-scenario-latest-result',
+          JSON.stringify({
+            scenarioId: saved.id,
+            result: data
+          })
+        )
+        return
+      }
     }
     result.value = buildResultFromSavedScenario(saved)
     isShowingSavedSnapshot.value = true
@@ -684,7 +707,8 @@ const editScenario = async () => {
     (routeScenarioId && routeScenarioId !== 'preview' ? routeScenarioId : null)
   if (!editId) {
     await router.push({
-      name: isManualTypedScenario.value ? 'planning-scenarios-debt-new' : 'planning-scenarios-new'
+      name: isManualTypedScenario.value ? 'planning-scenarios-debt-new' : 'planning-scenarios-new',
+      query: { resume: '1' }
     })
     return
   }

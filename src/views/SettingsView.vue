@@ -65,7 +65,7 @@
                       {{ profileFeedback.message }}
                     </v-alert>
                     <v-alert v-if="isFederatedIdentityManaged" type="info" variant="tonal" class="mb-4">
-                      Esta conta está vinculada ao {{ federatedProviderLabel }}. Alterações de nome e e-mail devem ser feitas diretamente no provedor de login.
+                      Esta conta está vinculada ao {{ federatedProviderLabel }}. Alterações de nome e e-mail devem ser feitas diretamente no provedor de login. Preferências do app, como idioma, continuam editáveis aqui.
                     </v-alert>
                     <v-text-field 
                       v-model="username" 
@@ -112,11 +112,10 @@
                       color="#667eea"
                       prepend-inner-icon="mdi-translate"
                       class="modern-input mb-4"
-                      :disabled="isFederatedIdentityManaged"
+                      :disabled="isLoadingProfile"
                       :loading="isLoadingProfile"
                     ></v-select>
                     <v-btn 
-                      v-if="!isFederatedIdentityManaged"
                       @click="saveProfile"
                       class="modern-btn gradient-btn"
                       size="large"
@@ -903,7 +902,7 @@ watch(
   activeTab,
   async (tab) => {
     if (tab === 'connections') {
-      await refreshOpenFinanceConsistencySnapshot()
+      await loadConnectionsTabData()
       startOpenFinanceConnectionsPolling()
       return
     }
@@ -1268,6 +1267,14 @@ const loadOpenFinanceCategoryMappings = async () => {
   }
 }
 
+const loadConnectionsTabData = async () => {
+  await Promise.allSettled([
+    loadInternalCategories(),
+    refreshOpenFinanceConnectionsPanel(),
+    loadOpenFinanceCategoryMappings(),
+  ])
+}
+
 const loadUserProfile = async () => {
   profileFeedback.value.message = ''
   isLoadingProfile.value = true
@@ -1332,19 +1339,13 @@ const loadUserProfile = async () => {
 }
 
 onMounted(async () => {
-  await Promise.all([
+  await Promise.allSettled([
     loadAlertSettings(),
     loadUserProfile(),
-    loadOpenFinanceConflicts(),
-    loadOpenFinanceConnections(),
-    loadOpenFinanceImportedAccounts(),
-    loadOpenFinanceObservabilitySummary(),
-    loadOpenFinanceSyncHistory(),
-    loadInternalCategories(),
-    loadOpenFinanceCategoryMappings(),
   ])
 
   if (activeTab.value === 'connections') {
+    await loadConnectionsTabData()
     startOpenFinanceConnectionsPolling()
   }
 });
@@ -1356,8 +1357,9 @@ onUnmounted(() => {
 // Funções para manipular as ações do usuário
 const saveProfile = async () => {
   profileFeedback.value.message = ''
+  const nextLanguage = toUserLanguageCode(profileLocale.value)
 
-  if (!profileUserId.value || !username.value.trim() || !email.value.trim()) {
+  if (!profileUserId.value || (!isFederatedIdentityManaged.value && (!username.value.trim() || !email.value.trim()))) {
     profileFeedback.value = {
       type: 'error',
       message: t('account_management.profile_required_fields')
@@ -1366,7 +1368,7 @@ const saveProfile = async () => {
   }
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (!emailRegex.test(email.value.trim())) {
+  if (!isFederatedIdentityManaged.value && !emailRegex.test(email.value.trim())) {
     profileFeedback.value = {
       type: 'error',
       message: t('account_management.profile_invalid_email')
@@ -1374,11 +1376,13 @@ const saveProfile = async () => {
     return
   }
 
-  const payload = {
-    username: username.value.trim(),
-    email: email.value.trim(),
-    language: toUserLanguageCode(profileLocale.value)
-  }
+  const payload = isFederatedIdentityManaged.value
+    ? { language: nextLanguage }
+    : {
+        username: username.value.trim(),
+        email: email.value.trim(),
+        language: nextLanguage
+      }
 
   isSavingProfile.value = true
   try {
@@ -1392,8 +1396,8 @@ const saveProfile = async () => {
 
     userStore.setUser({
       id: profileUserId.value,
-      username: updated.username || payload.username,
-      email: updated.email || payload.email,
+      username: updated.username || username.value,
+      email: updated.email || email.value,
       language: updatedLanguage
     })
 

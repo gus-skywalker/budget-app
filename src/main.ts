@@ -6,7 +6,7 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
 import vuetify from './plugins/vuetify'
-import i18n from './i18n'
+import i18n, { updateI18nLocale } from './i18n'
 import { createPinia } from 'pinia'
 import { useUserStore } from './plugins/userStore'
 import AuthService from './services/AuthService'
@@ -21,6 +21,7 @@ const userStore = useUserStore(pinia)
 async function restoreSession() {
   // Restore persisted auth/workspace context before the router evaluates guards.
   userStore.loadState()
+  updateI18nLocale(userStore.getLanguage || 'PT')
 
   if (!userStore.isAuthenticated) {
     try {
@@ -42,6 +43,7 @@ async function restoreSession() {
           isFederatedAccount: userInfo?.data?.isFederatedAccount,
           workspaces: userStore.getWorkspaces
         })
+        updateI18nLocale(userLanguage)
       }
     } catch {
       // Silent bootstrap failure is expected when there is no valid refresh cookie.
@@ -49,6 +51,7 @@ async function restoreSession() {
   }
 
   if (userStore.isAuthenticated) {
+    updateI18nLocale(userStore.getLanguage || userStore.getUser?.language || 'PT')
     await userStore.reconcileWorkspaceContext()
     userStore.hydrateWorkspaceDetailsFromBudget().catch(() => {
       // Best-effort hydration; app should continue even if workspace details fail.

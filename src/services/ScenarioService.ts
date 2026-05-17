@@ -75,6 +75,8 @@ export interface SavedScenario {
   createdAt?: string
   deltas: ScenarioDeltaInput[]
   lines?: ScenarioLine[]
+  forecast?: ScenarioForecastItem[]
+  impactedGoalNames?: string[]
   debtInput?: DebtPaymentScenarioInput | null
   debtComparison?: DebtPaymentComparison | null
 }

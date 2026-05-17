@@ -45,37 +45,34 @@
       </v-col>
       <v-col cols="3" md="4" class="d-flex flex-column align-end income-actions">
         <span class="income-amount-text">{{ income.amount }}</span>
-        <div class="d-flex align-center">
+        <div class="income-btn-group d-flex align-center">
           <v-btn
             v-if="income.visibilityScope === 'WORKSPACE'"
-            x-small
             icon
-            height="32px"
-            width="32px"
-            class="mr-1"
+            size="x-small"
+            variant="text"
+            class="income-action-btn"
             @click.stop="$emit('openComments', income)"
           >
-            <v-icon size="16">mdi-comment-text-outline</v-icon>
+            <v-icon size="15">mdi-comment-text-outline</v-icon>
           </v-btn>
           <v-btn
-            x-small
             icon
-            height="32px"
-            width="32px"
+            size="x-small"
+            variant="text"
+            class="income-action-btn"
             @click.stop="handleToggleRecurring"
-            class="mr-1"
           >
-            <v-icon size="16">{{ income.isRecurring ? 'mdi-star-outline' : 'mdi-star' }}</v-icon>
+            <v-icon size="15">{{ income.isRecurring ? 'mdi-star-outline' : 'mdi-star' }}</v-icon>
           </v-btn>
           <v-btn
-            x-small
             icon
-            height="32px"
-            width="32px"
-            color="red"
+            size="x-small"
+            variant="text"
+            class="income-action-btn income-action-btn--delete"
             @click.stop="$emit('deleteIncome', income)"
           >
-            <v-icon size="16">mdi-delete</v-icon>
+            <v-icon size="15">mdi-delete</v-icon>
           </v-btn>
         </div>
       </v-col>
@@ -167,9 +164,31 @@ export default {
   cursor: pointer;
 }
 
-.income-actions .v-btn {
-  font-size: 0.75rem;
-  padding: 0.25rem 0.5rem;
+.income-btn-group {
+  gap: 2px;
+  opacity: 0.38;
+  transition: opacity 0.2s ease;
+}
+
+.income-item:hover .income-btn-group,
+.income-item:focus-within .income-btn-group {
+  opacity: 0.85;
+}
+
+.income-action-btn {
+  width: 26px !important;
+  height: 26px !important;
+  border-radius: 5px !important;
+}
+
+.income-action-btn--delete:hover {
+  background-color: rgba(198, 40, 40, 0.08) !important;
+}
+
+@media (max-width: 600px) {
+  .income-btn-group {
+    opacity: 1;
+  }
 }
 
 .status-row {

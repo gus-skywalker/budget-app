@@ -122,39 +122,38 @@
           v-if="expense.visibilityScope === 'WORKSPACE'"
           icon
           size="x-small"
-          density="comfortable"
+          variant="text"
           @click.stop="$emit('openComments', expense)"
           class="expense-action-btn"
         >
-          <v-icon size="16">mdi-comment-text-outline</v-icon>
+          <v-icon size="15">mdi-comment-text-outline</v-icon>
         </v-btn>
         <v-btn
           icon
           size="x-small"
-          density="comfortable"
+          variant="text"
           @click.stop="isDialogOpen = true"
           class="expense-action-btn"
         >
-          <v-icon size="16">mdi-share-variant</v-icon>
+          <v-icon size="15">mdi-share-variant</v-icon>
         </v-btn>
         <v-btn
           icon
           size="x-small"
-          density="comfortable"
+          variant="text"
           @click.stop="openAlertDialog"
           class="expense-action-btn"
         >
-          <v-icon size="16">mdi-alarm</v-icon>
+          <v-icon size="15">mdi-alarm</v-icon>
         </v-btn>
         <v-btn
           icon
           size="x-small"
-          density="comfortable"
-          color="red"
+          variant="text"
           @click.stop="$emit('deleteExpense', expense)"
-          class="expense-action-btn"
+          class="expense-action-btn expense-action-btn--delete"
         >
-          <v-icon size="16">mdi-delete</v-icon>
+          <v-icon size="15">mdi-delete</v-icon>
         </v-btn>
       </div>
     </div>
@@ -664,20 +663,31 @@ export default {
 
 .expense-actions {
   display: flex;
-  gap: 6px;
-  margin-left: auto;
+  gap: 2px;
   align-items: center;
+  opacity: 0.38;
+  transition: opacity 0.2s ease;
+}
+
+.expense-item:hover .expense-actions,
+.expense-item:focus-within .expense-actions {
+  opacity: 0.85;
 }
 
 .expense-action-btn {
-  min-width: 32px;
-  width: 32px;
-  height: 32px;
-  padding: 0;
+  min-width: 26px !important;
+  width: 26px !important;
+  height: 26px !important;
+  padding: 0 !important;
+  border-radius: 5px !important;
 }
 
 .expense-action-btn .v-icon {
-  line-height: 32px;
+  line-height: 26px;
+}
+
+.expense-action-btn--delete:hover {
+  background-color: rgba(198, 40, 40, 0.08) !important;
 }
 
 .status-row {
@@ -785,6 +795,7 @@ export default {
     justify-content: center;
     margin-left: 0;
     margin-top: 4px;
+    opacity: 1;
   }
 }
 </style>
