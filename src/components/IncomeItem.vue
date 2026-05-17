@@ -51,7 +51,7 @@
             icon
             size="x-small"
             variant="text"
-            class="income-action-btn"
+            class="income-action-btn income-action-btn--share"
             @click.stop="$emit('openComments', income)"
           >
             <v-icon size="15">mdi-comment-text-outline</v-icon>
@@ -60,7 +60,7 @@
             icon
             size="x-small"
             variant="text"
-            class="income-action-btn"
+            class="income-action-btn income-action-btn--timer"
             @click.stop="handleToggleRecurring"
           >
             <v-icon size="15">{{ income.isRecurring ? 'mdi-star-outline' : 'mdi-star' }}</v-icon>
@@ -179,10 +179,53 @@ export default {
   width: 26px !important;
   height: 26px !important;
   border-radius: 5px !important;
+  color: rgba(15, 23, 42, 0.46) !important;
+  transition:
+    color 0.18s ease,
+    background-color 0.18s ease,
+    opacity 0.18s ease;
+}
+
+.income-action-btn .v-icon {
+  font-size: 14px !important;
+  transition: color 0.18s ease;
+}
+
+.income-action-btn--share .v-icon {
+  color: rgba(59, 130, 246, 0.74) !important;
+}
+
+.income-action-btn--timer .v-icon {
+  color: rgba(249, 115, 22, 0.74) !important;
+}
+
+.income-action-btn--delete .v-icon {
+  color: rgba(239, 68, 68, 0.74) !important;
+}
+
+.income-action-btn:hover {
+  color: rgba(15, 23, 42, 0.66) !important;
+  background-color: rgba(15, 23, 42, 0.04) !important;
+}
+
+.income-action-btn:hover .v-icon {
+  opacity: 1;
+}
+
+.income-action-btn--share:hover .v-icon {
+  color: rgba(59, 130, 246, 0.92) !important;
+}
+
+.income-action-btn--timer:hover .v-icon {
+  color: rgba(249, 115, 22, 0.92) !important;
 }
 
 .income-action-btn--delete:hover {
   background-color: rgba(198, 40, 40, 0.08) !important;
+}
+
+.income-action-btn--delete:hover .v-icon {
+  color: rgba(239, 68, 68, 0.95) !important;
 }
 
 @media (max-width: 600px) {

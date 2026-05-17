@@ -124,7 +124,7 @@
           size="x-small"
           variant="text"
           @click.stop="$emit('openComments', expense)"
-          class="expense-action-btn"
+          class="expense-action-btn expense-action-btn--share"
         >
           <v-icon size="15">mdi-comment-text-outline</v-icon>
         </v-btn>
@@ -133,7 +133,7 @@
           size="x-small"
           variant="text"
           @click.stop="isDialogOpen = true"
-          class="expense-action-btn"
+          class="expense-action-btn expense-action-btn--share"
         >
           <v-icon size="15">mdi-share-variant</v-icon>
         </v-btn>
@@ -142,7 +142,7 @@
           size="x-small"
           variant="text"
           @click.stop="openAlertDialog"
-          class="expense-action-btn"
+          class="expense-action-btn expense-action-btn--timer"
         >
           <v-icon size="15">mdi-alarm</v-icon>
         </v-btn>
@@ -680,14 +680,54 @@ export default {
   height: 26px !important;
   padding: 0 !important;
   border-radius: 5px !important;
+  color: rgba(15, 23, 42, 0.46) !important;
+  transition:
+    color 0.18s ease,
+    background-color 0.18s ease,
+    opacity 0.18s ease;
 }
 
 .expense-action-btn .v-icon {
   line-height: 26px;
+  font-size: 14px !important;
+  transition: color 0.18s ease;
+}
+
+.expense-action-btn--share .v-icon {
+  color: rgba(59, 130, 246, 0.74) !important;
+}
+
+.expense-action-btn--timer .v-icon {
+  color: rgba(249, 115, 22, 0.74) !important;
+}
+
+.expense-action-btn--delete .v-icon {
+  color: rgba(239, 68, 68, 0.74) !important;
+}
+
+.expense-action-btn:hover {
+  color: rgba(15, 23, 42, 0.66) !important;
+  background-color: rgba(15, 23, 42, 0.04) !important;
+}
+
+.expense-action-btn:hover .v-icon {
+  opacity: 1;
+}
+
+.expense-action-btn--share:hover .v-icon {
+  color: rgba(59, 130, 246, 0.92) !important;
+}
+
+.expense-action-btn--timer:hover .v-icon {
+  color: rgba(249, 115, 22, 0.92) !important;
 }
 
 .expense-action-btn--delete:hover {
   background-color: rgba(198, 40, 40, 0.08) !important;
+}
+
+.expense-action-btn--delete:hover .v-icon {
+  color: rgba(239, 68, 68, 0.95) !important;
 }
 
 .status-row {
