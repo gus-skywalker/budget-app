@@ -1310,7 +1310,7 @@
     "create_workspace": "Crear workspace",
     "personal_mode_alert": "Estás en modo personal. Crea un workspace o selecciona uno existente para gestionar los datos del contexto compartido.",
     "select_existing_workspace": "Seleccionar workspace existente",
-    "only_admin_alert": "Solo los administradores pueden actualizar los datos del workspace, invitar miembros o eliminar este contexto.",
+    "only_admin_alert": "Tu acceso permite ver miembros y salir del workspace. Los cambios, invitaciones y eliminación están restringidos a administradores.",
     "workspace_info": "Información del workspace",
     "workspace_info_desc": "Actualiza el nombre y la descripción visibles para todos los miembros.",
     "save_changes": "Guardar cambios",

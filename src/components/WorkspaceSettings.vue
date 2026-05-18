@@ -296,7 +296,7 @@
             </v-card-text>
           </v-card>
 
-          <v-card v-if="canManageWorkspace" class="modern-card">
+          <v-card class="modern-card">
             <div class="card-header">
               <h3 class="card-title">
                 <v-icon color="primary" class="mr-2">mdi-account-multiple</v-icon>
@@ -504,6 +504,7 @@ const router = useRouter()
 
 const currentWorkspaceId = computed(() => userStore.getCurrentWorkspaceId)
 const canManageWorkspace = computed(() => userStore.isTenantAdmin)
+const canViewWorkspaceMembers = computed(() => Boolean(currentWorkspaceId.value))
 const currentRole = computed(() => userStore.getCurrentRole)
 const currentUserId = computed(() => String(userStore.getUser?.id || '').trim())
 const isCurrentOwner = computed(() => String(currentRole.value || '').toUpperCase() === 'ROLE_OWNER')
@@ -616,10 +617,12 @@ const loadWorkspaceDetails = async () => {
 const loadMembersAndInvites = async () => {
   if (!currentWorkspaceId.value) return
   try {
-    const [membersResult, invitesResult] = await Promise.allSettled([
-      WorkspaceService.listMembers(currentWorkspaceId.value),
-      WorkspaceInviteService.listInvites(currentWorkspaceId.value)
-    ])
+    const requests: Promise<any>[] = [WorkspaceService.listMembers(currentWorkspaceId.value)]
+    if (canManageWorkspace.value) {
+      requests.push(WorkspaceInviteService.listInvites(currentWorkspaceId.value))
+    }
+
+    const [membersResult, invitesResult] = await Promise.allSettled(requests)
 
     if (membersResult.status === 'fulfilled') {
       members.value = membersResult.value?.data || []
@@ -627,7 +630,10 @@ const loadMembersAndInvites = async () => {
       members.value = []
     }
 
-    if (invitesResult.status === 'fulfilled') {
+    if (!canManageWorkspace.value) {
+      invites.value = []
+      invitesAvailable.value = true
+    } else if (invitesResult?.status === 'fulfilled') {
       invites.value = invitesResult.value || []
       invitesAvailable.value = true
     } else {
@@ -648,9 +654,9 @@ const stopMembersAndInvitesPolling = () => {
 
 const startMembersAndInvitesPolling = () => {
   stopMembersAndInvitesPolling()
-  if (!currentWorkspaceId.value || !canManageWorkspace.value) return
+  if (!currentWorkspaceId.value || !canViewWorkspaceMembers.value) return
   membersAndInvitesPollingTimer = window.setInterval(async () => {
-    if (!currentWorkspaceId.value || !canManageWorkspace.value) {
+    if (!currentWorkspaceId.value || !canViewWorkspaceMembers.value) {
       stopMembersAndInvitesPolling()
       return
     }
@@ -1057,13 +1063,13 @@ const getRoleLabel = (role: string) => {
   return role
 }
 
-watch([currentWorkspaceId, canManageWorkspace], async ([workspaceId, canManage]) => {
+watch([currentWorkspaceId, canManageWorkspace, canViewWorkspaceMembers], async ([workspaceId, canManage, canViewMembers]) => {
   stopMembersAndInvitesPolling()
   resetWorkspaceUiState()
   if (!workspaceId) return
 
   await loadWorkspaceDetails()
-  if (canManage) {
+  if (canViewMembers) {
     await loadMembersAndInvites()
     startMembersAndInvitesPolling()
   }

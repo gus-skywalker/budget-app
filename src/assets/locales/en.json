@@ -1328,7 +1328,7 @@
     "create_workspace": "Create workspace",
     "personal_mode_alert": "You are in personal mode. Create a workspace or select an existing one to manage the shared context.",
     "select_existing_workspace": "Select existing workspace",
-    "only_admin_alert": "Only administrators can update workspace data, invite members, or delete this context.",
+    "only_admin_alert": "Your access allows viewing members and leaving the workspace. Updates, invites, and deletion are restricted to administrators.",
     "workspace_info": "Workspace information",
     "workspace_info_desc": "Update the name and description visible to all members.",
     "save_changes": "Save changes",
