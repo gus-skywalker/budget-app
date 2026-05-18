@@ -69,6 +69,16 @@
                 <span>{{ baselineSourceLabel(activeBudget) }}</span>
               </div>
 
+              <v-alert
+                v-if="activeBaselineNotice"
+                type="info"
+                variant="tonal"
+                density="comfortable"
+                class="mb-1"
+              >
+                {{ activeBaselineNotice }}
+              </v-alert>
+
               <div class="flow-action">
                 <v-btn color="#667eea" size="large" @click="goToScenarioCreation">
                   <v-icon start>mdi-chart-timeline-variant</v-icon>
@@ -388,6 +398,8 @@ import BudgetService, {
   type BudgetSuggestion,
   type BudgetSuggestionLine
 } from '@/services/BudgetService'
+import OpenFinanceService from '@/services/OpenFinanceService'
+import type { OpenFinanceConnection } from '@/types/openFinance'
 
 type ManualBudgetLine = {
   id: string
@@ -411,6 +423,7 @@ const activeBudget = ref<Budget | null>(null)
 const allBudgets = ref<Budget[]>([])
 const suggestion = ref<BudgetSuggestion | null>(null)
 const hasSuggestionData = ref(false)
+const visibleOpenFinanceConnections = ref<OpenFinanceConnection[]>([])
 const showSuggestionEditor = ref(false)
 const showManualEditor = ref(false)
 const bannerMessage = ref('')
@@ -457,14 +470,46 @@ const usableAlternativeBudgets = computed(() =>
     (budget) => budget.id !== activeBudget.value?.id && hasUsableBudgetBaseline(budget)
   )
 )
+const hasVisiblePlanningSharedConnection = computed(() =>
+  visibleOpenFinanceConnections.value.some(
+    (connection) =>
+      connection.payerDocumentType === 'CPF' &&
+      connection.planningSharingLevel === 'PLANNING_IMPACT_ONLY' &&
+      (connection.status === 'CONNECTED' || connection.status === 'ERROR')
+  )
+)
+const hasVisiblePrivateOnlyPlanningSource = computed(() =>
+  visibleOpenFinanceConnections.value.some(
+    (connection) =>
+      connection.payerDocumentType === 'CPF' &&
+      connection.planningSharingLevel === 'PRIVATE' &&
+      (connection.status === 'CONNECTED' || connection.status === 'ERROR')
+  )
+)
+const planningSharingDisabledNotice = computed(() =>
+  hasVisiblePrivateOnlyPlanningSource.value && !hasVisiblePlanningSharedConnection.value
+)
 const suggestionMessage = computed(() =>
   hasSuggestionData.value
     ? 'Use recent OpenFinance activity to suggest editable budget lines.'
-    : 'No editable suggestions are ready yet. Check sync status and planning visibility.'
+    : planningSharingDisabledNotice.value
+      ? 'OpenFinance planning sharing is currently disabled. Re-enable planning impact sharing to generate new editable suggestions from this source.'
+      : 'No editable suggestions are ready yet. Check sync status and planning visibility.'
 )
 const consolidatedBaselineMessage = computed(() =>
-  'Create the official planning baseline from aggregated OpenFinance totals for this period.'
+  planningSharingDisabledNotice.value
+    ? 'OpenFinance planning sharing is currently disabled. The saved baseline can still be used, but new recalculations require planning impact sharing to be enabled again.'
+    : 'Create the official planning baseline from aggregated OpenFinance totals for this period.'
 )
+const activeBaselineNotice = computed(() => {
+  if (!activeBudget.value || !isOpenFinanceAggregatedBaseline(activeBudget.value)) {
+    return ''
+  }
+  if (planningSharingDisabledNotice.value) {
+    return 'OpenFinance planning sharing is currently disabled. This baseline remains available as the last saved snapshot, but new recalculations from this source are blocked until planning impact sharing is enabled again.'
+  }
+  return 'This OpenFinance baseline is a saved snapshot. Scenarios keep using it even if planning sharing changes later.'
+})
 
 const formatCurrency = (value: number) =>
   Number(value || 0).toLocaleString(
@@ -513,6 +558,16 @@ const loadCurrentBudget = async () => {
   }
 }
 
+const loadOpenFinancePlanningContext = async () => {
+  try {
+    const { data } = await OpenFinanceService.listConnections()
+    visibleOpenFinanceConnections.value = Array.isArray(data) ? data : []
+  } catch (error) {
+    console.error(error)
+    visibleOpenFinanceConnections.value = []
+  }
+}
+
 const preloadSuggestionAvailability = async () => {
   try {
     const { data } = await BudgetService.getSuggestions(now.value.getMonth() + 1, now.value.getFullYear())
@@ -540,7 +595,9 @@ const generateSuggestion = async () => {
     showSuggestionEditor.value = editableSuggestionLines.value.length > 0
     hasSuggestionData.value = editableSuggestionLines.value.length > 0
     if (!hasSuggestionData.value) {
-      emptyBudgetMessage.value = 'No editable budget suggestions are available for this period yet. Check sync status, transaction dates, and planning sharing.'
+      emptyBudgetMessage.value = planningSharingDisabledNotice.value
+        ? 'OpenFinance planning sharing is currently disabled. Re-enable planning impact sharing to generate editable suggestions again.'
+        : 'No editable budget suggestions are available for this period yet. Check sync status, transaction dates, and planning sharing.'
     }
   } catch (error) {
     console.error(error)
@@ -559,7 +616,9 @@ const generateRealBaseline = async () => {
   try {
     const { data } = await BudgetService.generateBaseline(now.value.getMonth() + 1, now.value.getFullYear())
     if (!data || data.status === 'NO_DATA' || !data.budgetId) {
-      emptyBudgetMessage.value = 'No aggregated OpenFinance totals are available for this period yet. Check sync status and planning sharing.'
+      emptyBudgetMessage.value = planningSharingDisabledNotice.value
+        ? 'OpenFinance planning sharing is currently disabled. The last saved baseline remains available, but generating a new one from this source requires planning impact sharing to be enabled again.'
+        : 'No aggregated OpenFinance totals are available for this period yet. Check sync status and planning sharing.'
       return
     }
     await loadCurrentBudget()
@@ -755,7 +814,7 @@ const baselineTitle = (budget: Budget): string => {
 }
 
 onMounted(async () => {
-  await loadCurrentBudget()
+  await Promise.all([loadCurrentBudget(), loadOpenFinancePlanningContext()])
 })
 </script>
 

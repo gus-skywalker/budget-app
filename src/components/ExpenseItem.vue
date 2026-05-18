@@ -10,6 +10,7 @@
           <span v-if="expense.category" class="expense-meta-tag">· {{ translatedCategoryName }}</span>
           <span v-else class="expense-meta-tag expense-meta-tag--warn">· {{ $t('expenseItem.uncategorized') }}</span>
           <span v-if="expense.openFinance" class="expense-meta-tag">· {{ $t('expenseItem.openFinance') }}</span>
+          <span v-if="expense.excludedFromPlanning" class="expense-meta-tag expense-meta-tag--warn">· {{ $t('expenseItem.excludedFromPlanning') }}</span>
           <span v-if="expense.visibilityScope === 'PRIVATE'" class="expense-meta-tag">· {{ visibilityScopeLabel }}</span>
           <v-chip v-if="expense.reconciliationStatus" :color="reconciliationColor" size="x-small" variant="tonal" class="ml-1">{{ reconciliationLabel }}</v-chip>
         </div>
@@ -147,6 +148,18 @@
           <v-icon size="15">mdi-alarm</v-icon>
         </v-btn>
         <v-btn
+          v-if="expense.openFinance"
+          icon
+          size="x-small"
+          variant="text"
+          :title="expense.excludedFromPlanning ? $t('expenseItem.restorePlanning') : $t('expenseItem.excludeFromPlanning')"
+          @click.stop="$emit('togglePlanningExclusion', expense)"
+          class="expense-action-btn expense-action-btn--planning"
+        >
+          <v-icon size="15">{{ expense.excludedFromPlanning ? 'mdi-plus-circle-outline' : 'mdi-minus-circle-outline' }}</v-icon>
+        </v-btn>
+        <v-btn
+          v-else
           icon
           size="x-small"
           variant="text"
@@ -369,7 +382,7 @@ export default {
       default: false,
     },
   },
-  emits: ['deleteExpense', 'removeAttachment', 'attachFiles', 'shareExpense', 'sendReminder', 'select', 'downloadAttachment', 'resolveConflict', 'suggestCategory', 'applySuggestion', 'openComments'],
+  emits: ['deleteExpense', 'togglePlanningExclusion', 'removeAttachment', 'attachFiles', 'shareExpense', 'sendReminder', 'select', 'downloadAttachment', 'resolveConflict', 'suggestCategory', 'applySuggestion', 'openComments'],
   computed: {
     visibilityScopeLabel() {
       const scope = this.expense?.visibilityScope === 'PRIVATE' ? 'private' : 'workspace'
@@ -701,6 +714,10 @@ export default {
   color: rgba(249, 115, 22, 0.74) !important;
 }
 
+.expense-action-btn--planning .v-icon {
+  color: rgba(139, 92, 246, 0.74) !important;
+}
+
 .expense-action-btn--delete .v-icon {
   color: rgba(239, 68, 68, 0.74) !important;
 }
@@ -720,6 +737,10 @@ export default {
 
 .expense-action-btn--timer:hover .v-icon {
   color: rgba(249, 115, 22, 0.92) !important;
+}
+
+.expense-action-btn--planning:hover .v-icon {
+  color: rgba(139, 92, 246, 0.92) !important;
 }
 
 .expense-action-btn--delete:hover {

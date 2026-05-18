@@ -6,6 +6,7 @@ import type {
   TransactionAttachmentListItem,
   TransactionCommentView,
   TransactionDirection,
+  TransactionPlanningExclusionRequest,
   TransactionQueryParams,
   TransactionRequest,
   TransactionView,
@@ -154,6 +155,10 @@ export default {
 
   deleteTransaction(id: string) {
     return axiosInterceptor.delete(`${API_URL}/transactions/${id}`)
+  },
+
+  setPlanningExclusion(id: string, payload: TransactionPlanningExclusionRequest) {
+    return axiosInterceptor.put<TransactionView>(`${API_URL}/transactions/${id}/planning-exclusion`, payload)
   },
 
   listTransactionAttachments(transactionId: string) {

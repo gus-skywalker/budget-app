@@ -57,6 +57,7 @@ const mapTransactionToExpense = (transaction: TransactionView) => ({
   accountId: transaction.accountId,
   accountName: transaction.accountName,
   openFinance: transaction.openFinance ?? false,
+  excludedFromPlanning: transaction.excludedFromPlanning ?? false,
   openFinanceRawStatus: transaction.openFinanceRawStatus ?? null,
   openFinanceBankCategoryId: transaction.openFinanceBankCategoryId ?? null,
   reconciliationStatus: transaction.reconciliationStatus ?? null,

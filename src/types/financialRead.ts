@@ -28,6 +28,7 @@ export interface TransactionView {
   status: string
   visibilityScope?: TransactionVisibilityScope
   ownerUserId?: string | null
+  excludedFromPlanning?: boolean
   source?: TransactionSource
   openFinance?: boolean
   openFinanceRawStatus?: string | null
@@ -52,6 +53,10 @@ export interface TransactionRequest {
   externalId?: string | null
   visibilityScope?: TransactionVisibilityScope
   entries: LedgerEntryRequest[]
+}
+
+export interface TransactionPlanningExclusionRequest {
+  excludedFromPlanning: boolean
 }
 
 export interface TransactionAttachmentListItem {

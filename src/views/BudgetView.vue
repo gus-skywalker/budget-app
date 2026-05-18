@@ -197,6 +197,7 @@
                   :resolving-action="resolvingConflictId === income.reconciliationConflictId ? resolvingConflictAction : null"
                   @toggle-recurring="toggleRecurring" 
                   @deleteIncome="deleteIncome"
+                  @togglePlanningExclusion="toggleIncomePlanningExclusion"
                   @resolveConflict="handleResolveIncomeConflict"
                   @openComments="openTransactionComments"
                   @select="startEditingIncome"
@@ -537,6 +538,7 @@
                   @applySuggestion="applyStoredExpenseSuggestionInline"
                   @openComments="openTransactionComments"
                   @deleteExpense="deleteExpense"
+                  @togglePlanningExclusion="toggleExpensePlanningExclusion"
                   @select="startEditingExpense"
                 ></expense-item>
               </v-list>
@@ -2022,6 +2024,9 @@ export default {
           })
       }
     },
+    toggleIncomePlanningExclusion(income) {
+      this.togglePlanningExclusionForTransaction(income, 'income')
+    },
     deleteExpense(expense) {
       if (confirm('Are you sure you want to delete this expense?')) {
         ExpenseService.delete(expense.id)
@@ -2037,6 +2042,52 @@ export default {
           .catch((error) => {
             console.error('Failed to delete expense:', error)
           })
+      }
+    },
+    toggleExpensePlanningExclusion(expense) {
+      this.togglePlanningExclusionForTransaction(expense, 'expense')
+    },
+    togglePlanningExclusionForTransaction(transaction, kind) {
+      if (!transaction?.id || !transaction?.openFinance) {
+        return
+      }
+
+      const nextExcludedState = !Boolean(transaction.excludedFromPlanning)
+      const confirmMessage = nextExcludedState
+        ? this.$t('transactionPlanning.confirmExclude')
+        : this.$t('transactionPlanning.confirmRestore')
+
+      if (!confirm(confirmMessage)) {
+        return
+      }
+
+      FinancialReadService.setPlanningExclusion(transaction.id, {
+        excludedFromPlanning: nextExcludedState,
+      })
+        .then(({ data }) => {
+          this.syncPlanningExclusionState(kind, transaction.id, Boolean(data?.excludedFromPlanning))
+          this.showToast(
+            nextExcludedState
+              ? this.$t('transactionPlanning.excludeSuccess')
+              : this.$t('transactionPlanning.restoreSuccess'),
+            'success'
+          )
+        })
+        .catch((error) => {
+          console.error('Failed to update planning exclusion:', error)
+          const responseMessage = typeof error?.response?.data === 'string' ? error.response.data : ''
+          this.showToast(responseMessage || this.$t('transactionPlanning.updateError'), 'error')
+        })
+    },
+    syncPlanningExclusionState(kind, transactionId, excludedFromPlanning) {
+      const targetList = kind === 'income' ? this.monthlyIncomes : this.monthlyExpenses
+      const transaction = targetList.find((item) => item.id === transactionId)
+      if (transaction) {
+        transaction.excludedFromPlanning = excludedFromPlanning
+      }
+
+      if (kind === 'expense' && this.editingExpenseId === transactionId) {
+        this.expense.excludedFromPlanning = excludedFromPlanning
       }
     },
     handleCommentsDialogVisibility(value) {

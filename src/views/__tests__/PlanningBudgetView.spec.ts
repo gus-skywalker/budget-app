@@ -6,7 +6,7 @@ import * as directives from 'vuetify/directives'
 import { ref } from 'vue'
 import PlanningBudgetView from '@/views/PlanningBudgetView.vue'
 
-const { routerPush, budgetServiceMock } = vi.hoisted(() => ({
+const { routerPush, budgetServiceMock, openFinanceServiceMock } = vi.hoisted(() => ({
   routerPush: vi.fn(),
   budgetServiceMock: {
     list: vi.fn(),
@@ -17,6 +17,9 @@ const { routerPush, budgetServiceMock } = vi.hoisted(() => ({
     create: vi.fn(),
     addLine: vi.fn(),
     activate: vi.fn(),
+  },
+  openFinanceServiceMock: {
+    listConnections: vi.fn(),
   },
 }))
 
@@ -34,6 +37,10 @@ vi.mock('vue-i18n', () => ({
 
 vi.mock('@/services/BudgetService', () => ({
   default: budgetServiceMock,
+}))
+
+vi.mock('@/services/OpenFinanceService', () => ({
+  default: openFinanceServiceMock,
 }))
 
 const vuetify = createVuetify({ components, directives })
@@ -56,6 +63,7 @@ const flushPromises = async () => {
 describe('PlanningBudgetView suggestion flow', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    openFinanceServiceMock.listConnections.mockResolvedValue({ data: [] })
   })
 
   it('supports no active budget -> generate suggestion -> edit -> activate this plan', async () => {
@@ -421,5 +429,83 @@ describe('PlanningBudgetView suggestion flow', () => {
     expect(budgetServiceMock.generateBaseline).toHaveBeenCalledTimes(1)
     expect(wrapper.text()).toContain('OpenFinance baseline activated.')
     expect(wrapper.text()).toContain('OpenFinance consolidated baseline')
+    expect(wrapper.text()).toContain('This OpenFinance baseline is a saved snapshot.')
+  })
+
+  it('explains that an existing OpenFinance baseline remains as a snapshot when planning sharing is disabled', async () => {
+    budgetServiceMock.list.mockResolvedValue({
+      data: [
+        {
+          id: 'of-budget-1',
+          workspaceId: '11111111-1111-1111-1111-111111111111',
+          periodMonth: 5,
+          periodYear: 2026,
+          status: 'ACTIVE',
+          totalIncome: 1319.45,
+          totalExpense: 1394.16,
+          net: -74.71,
+          lines: [
+            { id: 'line-1', category: 'OpenFinance Aggregated Expense', type: 'EXPENSE', plannedAmount: 1394.16 },
+            { id: 'line-2', category: 'OpenFinance Aggregated Income', type: 'INCOME', plannedAmount: 1319.45 },
+          ],
+        },
+      ],
+    })
+    budgetServiceMock.getSuggestions.mockResolvedValue({
+      data: {
+        workspaceId: '11111111-1111-1111-1111-111111111111',
+        month: 5,
+        year: 2026,
+        suggestedIncome: 0,
+        suggestedExpense: 0,
+        net: 0,
+        lines: [],
+      },
+    })
+    openFinanceServiceMock.listConnections.mockResolvedValue({
+      data: [
+        {
+          id: 'connection-1',
+          provider: 'TECNOSPEED',
+          institutionKey: 'nubank',
+          institutionName: 'Nubank',
+          status: 'CONNECTED',
+          accessScope: 'RESTRICTED',
+          sharingPolicy: 'PRIVATE_ONLY',
+          planningSharingLevel: 'PRIVATE',
+          consentStatus: 'AUTHORIZED_READY',
+          payerDocumentType: 'CPF',
+          displayName: 'Nubank',
+          connectedByUserId: 'owner-1',
+          connectedByRole: 'ROLE_OWNER',
+          openfinanceId: 'of-1',
+          openfinanceLink: null,
+          statementType: 'BANK',
+          cardNumber: null,
+          linkedAccountsCount: 1,
+          lastErrorSummary: null,
+          connectedAt: null,
+          readyForSyncAt: null,
+          lastSyncedAt: null,
+          lastSyncFrom: null,
+          lastSyncTo: null,
+        },
+      ],
+    })
+
+    const wrapper = mount(PlanningBudgetView, {
+      global: {
+        plugins: [vuetify],
+        mocks: {
+          $t: (key: string) => key,
+        },
+      },
+    })
+
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('This baseline remains available as the last saved snapshot')
+    expect(wrapper.text()).toContain('planning impact sharing to be enabled again')
+    expect(wrapper.text()).toContain('OpenFinance planning sharing is currently disabled')
   })
 })

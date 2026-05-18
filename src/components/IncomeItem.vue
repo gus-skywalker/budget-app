@@ -8,6 +8,7 @@
         <div class="income-meta-line">
           <span class="income-date-text">{{ income.date }}</span>
           <span v-if="income.openFinance" class="income-meta-tag">· {{ $t('incomeItem.open_finance') }}</span>
+          <span v-if="income.excludedFromPlanning" class="income-meta-tag income-meta-tag--warn">· {{ $t('incomeItem.excludedFromPlanning') }}</span>
           <span v-if="income.visibilityScope === 'PRIVATE'" class="income-meta-tag">· {{ visibilityScopeLabel }}</span>
           <v-chip v-if="income.reconciliationStatus" :color="reconciliationColor" size="x-small" variant="tonal" class="ml-1">{{ reconciliationLabel }}</v-chip>
         </div>
@@ -66,6 +67,18 @@
             <v-icon size="15">{{ income.isRecurring ? 'mdi-star-outline' : 'mdi-star' }}</v-icon>
           </v-btn>
           <v-btn
+            v-if="income.openFinance"
+            icon
+            size="x-small"
+            variant="text"
+            class="income-action-btn income-action-btn--planning"
+            :title="income.excludedFromPlanning ? $t('incomeItem.restorePlanning') : $t('incomeItem.excludeFromPlanning')"
+            @click.stop="$emit('togglePlanningExclusion', income)"
+          >
+            <v-icon size="15">{{ income.excludedFromPlanning ? 'mdi-plus-circle-outline' : 'mdi-minus-circle-outline' }}</v-icon>
+          </v-btn>
+          <v-btn
+            v-else
             icon
             size="x-small"
             variant="text"
@@ -105,7 +118,7 @@ export default {
       default: null
     }
   },
-  emits: ['toggle-recurring', 'deleteIncome', 'select', 'resolveConflict', 'openComments'],
+  emits: ['toggle-recurring', 'deleteIncome', 'togglePlanningExclusion', 'select', 'resolveConflict', 'openComments'],
   data() {
     return {
       recurrenceDialog: false,
@@ -199,6 +212,10 @@ export default {
   color: rgba(249, 115, 22, 0.74) !important;
 }
 
+.income-action-btn--planning .v-icon {
+  color: rgba(139, 92, 246, 0.74) !important;
+}
+
 .income-action-btn--delete .v-icon {
   color: rgba(239, 68, 68, 0.74) !important;
 }
@@ -218,6 +235,10 @@ export default {
 
 .income-action-btn--timer:hover .v-icon {
   color: rgba(249, 115, 22, 0.92) !important;
+}
+
+.income-action-btn--planning:hover .v-icon {
+  color: rgba(139, 92, 246, 0.92) !important;
 }
 
 .income-action-btn--delete:hover {

@@ -1241,6 +1241,9 @@
     "recurring_income": "Ingreso recurrente",
     "choose_months": "Elige la cantidad de meses",
     "month_count": "Cantidad de meses",
+    "excludedFromPlanning": "Fuera de la planificación",
+    "excludeFromPlanning": "Excluir de la planificación",
+    "restorePlanning": "Volver a la planificación",
     "reconciliation": {
       "IMPORTED": "Importada",
       "PROMOTED_FROM_PENDING": "Pendiente → confirmada",
@@ -1290,6 +1293,9 @@
     "save": "Guardar",
     "close": "Cerrar",
     "openFinance": "Open Finance",
+    "excludedFromPlanning": "Fuera de la planificación",
+    "excludeFromPlanning": "Excluir de la planificación",
+    "restorePlanning": "Volver a la planificación",
     "keepExisting": "Mantener existente",
     "createNew": "Crear nueva",
     "reconciliation": {
@@ -1299,6 +1305,13 @@
       "CONFLICT_DUPLICATE": "Conflicto por duplicidad",
       "RESOLVED_CREATE_NEW": "Conflicto resuelto"
     }
+  },
+  "transactionPlanning": {
+    "confirmExclude": "¿Quitar esta transacción de Open Finance de los cálculos de planificación?",
+    "confirmRestore": "¿Volver a incluir esta transacción de Open Finance en los cálculos de planificación?",
+    "excludeSuccess": "Transacción excluida de la planificación.",
+    "restoreSuccess": "Transacción restaurada a la planificación.",
+    "updateError": "No fue posible actualizar la visibilidad de planificación de esta transacción."
   },
   "workspaceSettings": {
     "create_new_workspace": "Crear nuevo workspace",
