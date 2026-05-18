@@ -75,6 +75,20 @@ export default {
   },
 
   /**
+   * Atualizar permissão de um membro
+   */
+  updateMemberRole(workspaceId: string, userId: string, role: string): Promise<any> {
+    return axiosInterceptor.patch(`${BUDGET_WORKSPACES_URL}/${workspaceId}/members/${encodeURIComponent(userId)}`, { role })
+  },
+
+  /**
+   * Remover um membro do workspace
+   */
+  removeMember(workspaceId: string, userId: string): Promise<any> {
+    return axiosInterceptor.delete(`${BUDGET_WORKSPACES_URL}/${workspaceId}/members/${encodeURIComponent(userId)}`)
+  },
+
+  /**
    * Sair do workspace atual
    */
   leaveWorkspace(workspaceId: string): Promise<any> {

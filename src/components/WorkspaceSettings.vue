@@ -223,9 +223,20 @@
                   <v-list-item-title>{{ invite.email }}</v-list-item-title>
                   <v-list-item-subtitle>{{ getRoleLabel(invite.role) }}</v-list-item-subtitle>
                   <template #append>
-                    <v-btn icon variant="text" color="error" @click="cancelInvite(invite.id)">
-                      <v-icon>mdi-close-circle</v-icon>
-                    </v-btn>
+                    <v-tooltip :text="$t('workspaceSettings.cancel_invite_tooltip')" location="top">
+                      <template #activator="{ props }">
+                        <v-btn
+                          v-bind="props"
+                          icon
+                          variant="text"
+                          color="error"
+                          :aria-label="$t('workspaceSettings.cancel_invite')"
+                          @click="cancelInvite(invite.id)"
+                        >
+                          <v-icon>mdi-close-circle</v-icon>
+                        </v-btn>
+                      </template>
+                    </v-tooltip>
                   </template>
                 </v-list-item>
               </v-list>
@@ -303,23 +314,63 @@
               >
                 {{ $t('workspaceSettings.no_members') }}
               </v-alert>
-              <v-list v-else density="compact">
+              <v-list v-else density="comfortable" class="member-list">
                 <v-list-item
                   v-for="member in members"
                   :key="member.id"
+                  class="member-row"
                 >
                   <template #prepend>
                     <v-avatar color="primary" class="mr-3">
-                      {{ member.username?.charAt(0)?.toUpperCase() || 'U' }}
+                      {{ getMemberInitials(member) }}
                     </v-avatar>
                   </template>
-                  <v-list-item-title>{{ member.username || member.email }}</v-list-item-title>
-                  <v-list-item-subtitle>{{ member.email }}</v-list-item-subtitle>
-                  <template #append>
-                    <v-chip size="small" color="primary" variant="tonal">
-                      {{ getRoleLabel(member.role) }}
-                    </v-chip>
-                  </template>
+                  <div class="member-content">
+                    <div class="member-main">
+                      <v-list-item-title>{{ getMemberDisplayName(member) }}</v-list-item-title>
+                      <v-list-item-subtitle>
+                        {{ getMemberSecondaryLine(member) }}
+                      </v-list-item-subtitle>
+                    </div>
+                    <div class="member-actions">
+                      <v-select
+                        v-if="canChangeMemberRole(member)"
+                        :model-value="member.role"
+                        :items="roleOptionsForMember(member)"
+                        item-title="label"
+                        item-value="value"
+                        density="compact"
+                        variant="outlined"
+                        hide-details
+                        class="member-role-select"
+                        :disabled="isMemberRoleUpdating(member)"
+                        :loading="isMemberRoleUpdating(member)"
+                        :aria-label="$t('workspaceSettings.change_member_role')"
+                        @update:model-value="updateMemberRole(member, String($event))"
+                      />
+                      <v-chip v-else size="small" color="primary" variant="tonal">
+                        {{ getRoleLabel(member.role) }}
+                      </v-chip>
+
+                      <v-tooltip :text="getRemoveMemberTooltip(member)" location="top">
+                        <template #activator="{ props }">
+                          <span v-bind="props" class="member-action-wrapper">
+                            <v-btn
+                              icon
+                              variant="text"
+                              color="error"
+                              :disabled="!canRemoveMember(member) || isMemberRemoving(member)"
+                              :loading="isMemberRemoving(member)"
+                              :aria-label="$t('workspaceSettings.remove_member')"
+                              @click="openRemoveMemberDialog(member)"
+                            >
+                              <v-icon>mdi-account-remove</v-icon>
+                            </v-btn>
+                          </span>
+                        </template>
+                      </v-tooltip>
+                    </div>
+                  </div>
                 </v-list-item>
               </v-list>
             </v-card-text>
@@ -400,6 +451,27 @@
       </v-card>
     </v-dialog>
 
+    <v-dialog v-model="removeMemberDialog" max-width="520">
+      <v-card>
+        <v-card-title class="text-h6">{{ $t('workspaceSettings.confirm_remove_member_title') }}</v-card-title>
+        <v-card-text>
+          <p class="mb-0" v-html="$t('workspaceSettings.confirm_remove_member_desc', { member: selectedMemberName })"></p>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="closeRemoveMemberDialog">{{ $t('workspaceSettings.cancel') }}</v-btn>
+          <v-btn
+            color="error"
+            variant="elevated"
+            :loading="selectedMember ? isMemberRemoving(selectedMember) : false"
+            @click="removeSelectedMember"
+          >
+            {{ $t('workspaceSettings.remove_member') }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="4000">
       {{ snackbar.message }}
     </v-snackbar>
@@ -433,7 +505,9 @@ const router = useRouter()
 const currentWorkspaceId = computed(() => userStore.getCurrentWorkspaceId)
 const canManageWorkspace = computed(() => userStore.isTenantAdmin)
 const currentRole = computed(() => userStore.getCurrentRole)
+const currentUserId = computed(() => String(userStore.getUser?.id || '').trim())
 const isCurrentOwner = computed(() => String(currentRole.value || '').toUpperCase() === 'ROLE_OWNER')
+const isCurrentAdmin = computed(() => String(currentRole.value || '').toUpperCase() === 'ROLE_ADMIN')
 const currentRoleLabel = computed(() => getRoleLabel(String(currentRole.value || 'ROLE_MEMBER')))
 
 const workspaceFormRef = ref()
@@ -459,12 +533,17 @@ const members = ref<any[]>([])
 const invites = ref<any[]>([])
 const invitesAvailable = ref(true)
 let membersAndInvitesPollingTimer: number | null = null
+const roleUpdatingByMember = ref<Record<string, boolean>>({})
+const removingByMember = ref<Record<string, boolean>>({})
 
 const deleteDialog = ref(false)
 const deleteConfirm = ref('')
 const deleteLoading = ref(false)
 const leaveDialog = ref(false)
 const leaveLoading = ref(false)
+const removeMemberDialog = ref(false)
+const selectedMember = ref<any | null>(null)
+const selectedMemberName = computed(() => selectedMember.value ? getMemberDisplayName(selectedMember.value) : '')
 
 const snackbar = ref({ show: false, message: '', color: 'success' as 'success' | 'error' | 'info' })
 const upgradeSnackbar = ref(false)
@@ -474,6 +553,11 @@ const roleOptions = [
   { label: t('workspaceSettings.roles.ROLE_ADMIN'), value: 'ROLE_ADMIN' },
   { label: t('workspaceSettings.roles.ROLE_MEMBER'), value: 'ROLE_MEMBER' },
   { label: t('workspaceSettings.roles.ROLE_VIEWER'), value: 'ROLE_VIEWER' }
+]
+
+const memberRoleOptions = [
+  { label: t('workspaceSettings.roles.ROLE_OWNER'), value: 'ROLE_OWNER' },
+  ...roleOptions
 ]
 
 const countryOptions = [
@@ -506,6 +590,9 @@ const resetWorkspaceUiState = () => {
   workspaceNameForDelete.value = ''
   members.value = []
   invites.value = []
+  roleUpdatingByMember.value = {}
+  removingByMember.value = {}
+  closeRemoveMemberDialog()
   closeDeleteDialog()
 }
 
@@ -728,6 +815,120 @@ const loadInvites = async () => {
   }
 }
 
+const normalizeRole = (role: unknown): string => String(role || '').trim().toUpperCase()
+
+const memberKey = (member: any): string => String(member?.id || member?.userId || '').trim()
+
+const getMemberDisplayName = (member: any): string => {
+  const name = String(member?.username || member?.name || '').trim()
+  const email = String(member?.email || '').trim()
+  const id = memberKey(member)
+  return name || email || id || t('workspaceSettings.unknown_member')
+}
+
+const getMemberSecondaryLine = (member: any): string => {
+  const email = String(member?.email || '').trim()
+  return email || t('workspaceSettings.member_identity_unavailable')
+}
+
+const getMemberInitials = (member: any): string => {
+  const source = getMemberDisplayName(member)
+  const parts = source
+    .split(/[\s@._-]+/)
+    .map((part) => part.trim())
+    .filter(Boolean)
+  const initials = parts.slice(0, 2).map((part) => part.charAt(0).toUpperCase()).join('')
+  return initials || 'U'
+}
+
+const isCurrentUserMember = (member: any): boolean => Boolean(currentUserId.value && memberKey(member) === currentUserId.value)
+
+const canChangeMemberRole = (member: any): boolean => {
+  if (!canManageWorkspace.value || isCurrentUserMember(member)) return false
+  const role = normalizeRole(member?.role)
+  if (isCurrentOwner.value) return true
+  if (!isCurrentAdmin.value) return false
+  return role !== 'ROLE_OWNER'
+}
+
+const roleOptionsForMember = (member: any) => {
+  if (isCurrentOwner.value) return memberRoleOptions
+  return roleOptions
+}
+
+const canRemoveMember = (member: any): boolean => {
+  if (!canManageWorkspace.value || isCurrentUserMember(member)) return false
+  const role = normalizeRole(member?.role)
+  if (isCurrentOwner.value) return true
+  if (!isCurrentAdmin.value) return false
+  return role !== 'ROLE_OWNER'
+}
+
+const getRemoveMemberTooltip = (member: any): string => {
+  if (isCurrentUserMember(member)) return t('workspaceSettings.remove_self_tooltip')
+  if (!canRemoveMember(member)) return t('workspaceSettings.remove_member_forbidden_tooltip')
+  return t('workspaceSettings.remove_member_tooltip')
+}
+
+const isMemberRoleUpdating = (member: any): boolean => Boolean(roleUpdatingByMember.value[memberKey(member)])
+
+const isMemberRemoving = (member: any): boolean => Boolean(removingByMember.value[memberKey(member)])
+
+const updateMemberRole = async (member: any, role: string) => {
+  if (!currentWorkspaceId.value) return
+  const userId = memberKey(member)
+  const nextRole = normalizeRole(role)
+  const previousRole = member?.role
+  if (!userId || !nextRole || normalizeRole(previousRole) === nextRole) return
+
+  roleUpdatingByMember.value = { ...roleUpdatingByMember.value, [userId]: true }
+  member.role = nextRole
+  try {
+    const response = await WorkspaceService.updateMemberRole(currentWorkspaceId.value, userId, nextRole)
+    const updated = response?.data
+    const index = members.value.findIndex((item: any) => memberKey(item) === userId)
+    if (index >= 0 && updated) {
+      members.value[index] = { ...members.value[index], ...updated }
+    }
+    showSnackbar(t('workspaceSettings.success_member_role_updated'))
+  } catch (error) {
+    member.role = previousRole
+    showSnackbar(parseApiError(error), 'error')
+  } finally {
+    roleUpdatingByMember.value = { ...roleUpdatingByMember.value, [userId]: false }
+  }
+}
+
+const openRemoveMemberDialog = (member: any) => {
+  if (!canRemoveMember(member)) return
+  selectedMember.value = member
+  removeMemberDialog.value = true
+}
+
+const closeRemoveMemberDialog = () => {
+  removeMemberDialog.value = false
+  selectedMember.value = null
+}
+
+const removeSelectedMember = async () => {
+  if (!currentWorkspaceId.value || !selectedMember.value) return
+  const member = selectedMember.value
+  const userId = memberKey(member)
+  if (!userId) return
+
+  removingByMember.value = { ...removingByMember.value, [userId]: true }
+  try {
+    await WorkspaceService.removeMember(currentWorkspaceId.value, userId)
+    members.value = members.value.filter((item: any) => memberKey(item) !== userId)
+    closeRemoveMemberDialog()
+    showSnackbar(t('workspaceSettings.success_member_removed'), 'info')
+  } catch (error) {
+    showSnackbar(parseApiError(error), 'error')
+  } finally {
+    removingByMember.value = { ...removingByMember.value, [userId]: false }
+  }
+}
+
 const cancelInvite = async (inviteId: string) => {
   if (!currentWorkspaceId.value) return
   if (!invitesAvailable.value) {
@@ -906,11 +1107,68 @@ onUnmounted(() => {
   margin-bottom: 8px;
 }
 
+.member-list {
+  padding: 0;
+}
+
+.member-row {
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  padding: 10px 0;
+}
+
+.member-row:last-child {
+  border-bottom: 0;
+}
+
+.member-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+.member-main {
+  min-width: 0;
+}
+
+.member-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.member-role-select {
+  width: 180px;
+}
+
+.member-action-wrapper {
+  display: inline-flex;
+}
+
 .danger-card {
   border-color: rgba(244, 67, 54, 0.25);
 }
 
 .danger-title {
   color: #d32f2f;
+}
+
+@media (max-width: 720px) {
+  .member-content {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .member-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .member-role-select {
+    width: min(220px, 100%);
+  }
 }
 </style>

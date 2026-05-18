@@ -7,6 +7,7 @@ import WorkspaceService from '@/services/WorkspaceService'
 import OnboardingOrchestrator from '@/services/OnboardingOrchestrator'
 import {
   clearInviteAcceptanceContext,
+  readInviteAcceptanceToken,
   saveInviteAcceptanceContext
 } from '@/utils/inviteAcceptanceContext'
 
@@ -18,7 +19,7 @@ const done = ref(false)
 const errorMessage = ref('')
 const acceptedWorkspaceId = ref('')
 
-const token = computed(() => String(route.query.token || '').trim())
+const token = computed(() => String(route.query.token || readInviteAcceptanceToken() || '').trim())
 const inviteRedirectPath = computed(() => token.value ? `/invite/accept?token=${encodeURIComponent(token.value)}` : '/invite/accept')
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -63,7 +64,7 @@ async function syncWorkspacesAfterAccept() {
 
 async function processInviteAccept() {
   if (!token.value) {
-    errorMessage.value = 'Invite token not found.'
+    errorMessage.value = 'Invite token not found. Open the original invitation link from your email so CoBudget can identify the workspace.'
     clearInviteAcceptanceContext()
     loading.value = false
     return

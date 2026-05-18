@@ -3,6 +3,7 @@ import {
   clearInviteAcceptanceContext,
   readInviteAcceptanceContext,
   readInviteAcceptanceRedirect,
+  readInviteAcceptanceToken,
   saveInviteAcceptanceContext
 } from '@/utils/inviteAcceptanceContext'
 
@@ -24,6 +25,7 @@ describe('inviteAcceptanceContext', () => {
       invitedEmail: 'guest@example.com'
     })
     expect(readInviteAcceptanceRedirect()).toBe('/invite/accept?token=invite-token')
+    expect(readInviteAcceptanceToken()).toBe('invite-token')
   })
 
   it('falls back to the invite accept route when redirect is omitted', () => {
@@ -38,5 +40,6 @@ describe('inviteAcceptanceContext', () => {
 
     expect(readInviteAcceptanceContext()).toBeNull()
     expect(readInviteAcceptanceRedirect()).toBeNull()
+    expect(readInviteAcceptanceToken()).toBeNull()
   })
 })
