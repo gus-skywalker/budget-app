@@ -83,16 +83,19 @@
                   <strong>{{ planningSharingTitle(connection) }}</strong>
                   <span>{{ planningSharingDescription(connection) }}</span>
                 </div>
-                <v-btn
-                  size="small"
-                  variant="tonal"
-                  color="#667eea"
+                <v-select
+                  :model-value="planningSharingSelection(connection)"
+                  :items="planningSharingOptions"
+                  item-title="label"
+                  item-value="value"
+                  density="compact"
+                  variant="outlined"
+                  hide-details
+                  class="of-planning-share__select"
                   :loading="busyConnectionId === connection.id"
                   :disabled="!canManage"
-                  @click="togglePlanningSharing(connection)"
-                >
-                  {{ planningSharingAction(connection) }}
-                </v-btn>
+                  @update:model-value="updatePlanningSharingSelection(connection, $event)"
+                />
               </div>
             </div>
           </div>
@@ -281,16 +284,36 @@ const showPlanningSharingControl = (connection: OpenFinanceConnection) => (
   && Boolean(currentUserId.value)
   && connection.connectedByUserId === currentUserId.value
 )
-const isPlanningShared = (connection: OpenFinanceConnection) => connection.planningSharingLevel === 'PLANNING_IMPACT_ONLY' || connection.sharingPolicy === 'PLANNING_IMPACT_ONLY'
-const planningSharingTitle = (connection: OpenFinanceConnection) => isPlanningShared(connection)
-  ? 'Incluído no planejamento'
-  : 'Privado'
-const planningSharingDescription = (connection: OpenFinanceConnection) => isPlanningShared(connection)
-  ? 'Detalhes continuam privados.'
-  : 'Só você vê esta conta.'
-const planningSharingAction = (connection: OpenFinanceConnection) => isPlanningShared(connection)
-  ? 'Remover do planejamento'
-  : 'Usar no planejamento'
+const planningSharingOptions = [
+  { label: 'Privado', value: 'PRIVATE' },
+  { label: 'Planejamento apenas', value: 'PLANNING_IMPACT_ONLY' },
+  { label: 'Compartilhado com admins', value: 'PERSONAL_SHARED' },
+] as const
+const planningSharingSelection = (connection: OpenFinanceConnection) => {
+  if (connection.planningSharingLevel === 'PLANNING_IMPACT_ONLY' || connection.sharingPolicy === 'PLANNING_IMPACT_ONLY') {
+    return 'PLANNING_IMPACT_ONLY'
+  }
+  if (connection.planningSharingLevel === 'PERSONAL_SHARED' || connection.sharingPolicy === 'PERSONAL_SHARED') {
+    return 'PERSONAL_SHARED'
+  }
+  return 'PRIVATE'
+}
+const planningSharingTitle = (connection: OpenFinanceConnection) => {
+  const level = planningSharingSelection(connection)
+  if (level === 'PLANNING_IMPACT_ONLY') return 'Incluído no planejamento'
+  if (level === 'PERSONAL_SHARED') return 'Compartilhado com admins'
+  return 'Privado'
+}
+const planningSharingDescription = (connection: OpenFinanceConnection) => {
+  const level = planningSharingSelection(connection)
+  if (level === 'PLANNING_IMPACT_ONLY') {
+    return 'A fonte alimenta apenas agregados de planejamento. Os detalhes continuam privados.'
+  }
+  if (level === 'PERSONAL_SHARED') {
+    return 'Owners e admins do workspace podem ver esta fonte pessoal. O dono da conexão continua controlando esse nível.'
+  }
+  return 'Só você vê esta conta.'
+}
 
 const handleCreated = () => {
   wizardOpen.value = false
@@ -378,16 +401,23 @@ const syncNowForDev = async (connection: OpenFinanceConnection) => {
   }
 }
 
-const togglePlanningSharing = async (connection: OpenFinanceConnection) => {
+const updatePlanningSharingSelection = async (connection: OpenFinanceConnection, selectedLevel: string | null) => {
+  const sharingLevel = selectedLevel === 'PLANNING_IMPACT_ONLY' || selectedLevel === 'PERSONAL_SHARED'
+    ? selectedLevel
+    : 'PRIVATE'
+  if (planningSharingSelection(connection) === sharingLevel) {
+    return
+  }
   busyConnectionId.value = connection.id
-  const sharingLevel = isPlanningShared(connection) ? 'PRIVATE' : 'PLANNING_IMPACT_ONLY'
   try {
     await OpenFinanceService.updatePlanningSharing(connection.id, sharingLevel)
     emit('feedback', {
       type: 'success',
       message: sharingLevel === 'PLANNING_IMPACT_ONLY'
         ? 'Impacto financeiro incluído no planejamento. Os detalhes continuam privados.'
-        : 'Conta removida do planejamento compartilhado.',
+        : sharingLevel === 'PERSONAL_SHARED'
+          ? 'A fonte pessoal agora está compartilhada com owners e admins do workspace.'
+          : 'A conta voltou a ficar privada.',
     })
     emit('refresh')
   } catch (error: any) {
@@ -640,6 +670,11 @@ const extractErrorMessage = (error: any, fallback: string) => (
 .of-planning-share span {
   color: #64748b;
   font-size: 0.8rem;
+}
+
+.of-planning-share__select {
+  min-width: 220px;
+  max-width: 240px;
 }
 
 .v-theme--dark .of-sync-policy {

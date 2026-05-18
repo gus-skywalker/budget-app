@@ -268,7 +268,7 @@ export default {
     return axiosInterceptor.post<OpenFinanceConnection>(`${API_URL}/connections/${connectionId}/retry-authorization`)
   },
 
-  updatePlanningSharing(connectionId: string, sharingLevel: 'PRIVATE' | 'PLANNING_IMPACT_ONLY') {
+  updatePlanningSharing(connectionId: string, sharingLevel: 'PRIVATE' | 'PLANNING_IMPACT_ONLY' | 'PERSONAL_SHARED') {
     return axiosInterceptor.patch<OpenFinanceConnection>(`${API_URL}/connections/${connectionId}/planning-sharing`, {
       sharingLevel,
     })

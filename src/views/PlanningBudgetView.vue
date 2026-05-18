@@ -79,7 +79,7 @@
                 {{ activeBaselineNotice }}
               </v-alert>
 
-              <div class="flow-action">
+          <div class="flow-action">
                 <v-btn color="#667eea" size="large" @click="goToScenarioCreation">
                   <v-icon start>mdi-chart-timeline-variant</v-icon>
                   Create Scenario
@@ -93,9 +93,12 @@
               <p class="helper-text">
                 A baseline is the financial reference used by scenarios. You can start from real transactions or enter a manual value.
               </p>
+              <p v-if="!canManageBudget" class="helper-text">
+                Only workspace owners and admins can create or activate shared baselines.
+              </p>
             </section>
 
-            <section v-if="showSuggestionEditor && suggestion" class="baseline-section">
+            <section v-if="canManageBudget && showSuggestionEditor && suggestion" class="baseline-section">
               <div class="suggestion-header">
                 <h3>Suggested Budget</h3>
                 <p>This suggestion is based on your last {{ suggestion.lookbackMonths || 3 }} months average.</p>
@@ -162,7 +165,7 @@
               </div>
             </section>
 
-            <section v-else-if="showManualEditor" class="baseline-section">
+            <section v-else-if="canManageBudget && showManualEditor" class="baseline-section">
               <template v-if="manualMode === 'quick'">
                 <div class="suggestion-header">
                   <h3>Quick Baseline</h3>
@@ -290,7 +293,7 @@
               </template>
             </section>
 
-            <section v-if="!showSuggestionEditor && !showManualEditor" class="baseline-section">
+            <section v-if="canManageBudget && !showSuggestionEditor && !showManualEditor" class="baseline-section">
               <div class="section-heading">
                 <div>
                   <p class="section-kicker">Create baseline</p>
@@ -347,7 +350,7 @@
               </div>
             </section>
 
-            <section v-if="usableAlternativeBudgets.length" class="baseline-section">
+            <section v-if="canManageBudget && usableAlternativeBudgets.length" class="baseline-section">
               <div class="section-heading">
                 <div>
                   <p class="section-kicker">Available baselines</p>
@@ -400,6 +403,7 @@ import BudgetService, {
 } from '@/services/BudgetService'
 import OpenFinanceService from '@/services/OpenFinanceService'
 import type { OpenFinanceConnection } from '@/types/openFinance'
+import { useUserStore } from '@/plugins/userStore'
 
 type ManualBudgetLine = {
   id: string
@@ -412,6 +416,7 @@ type ManualBudgetMode = 'quick' | 'detailed'
 
 const router = useRouter()
 const { locale } = useI18n()
+const userStore = useUserStore()
 
 const isLoading = ref(false)
 const isCreatingManualBudget = ref(false)
@@ -428,6 +433,7 @@ const showSuggestionEditor = ref(false)
 const showManualEditor = ref(false)
 const bannerMessage = ref('')
 const emptyBudgetMessage = ref('')
+const canManageBudget = computed(() => userStore.isTenantAdmin)
 const editableSuggestionLines = ref<BudgetSuggestionLine[]>([])
 const editableManualLines = ref<ManualBudgetLine[]>([])
 const manualMode = ref<ManualBudgetMode>('quick')

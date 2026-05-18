@@ -142,7 +142,7 @@ export interface OpenFinanceConnection {
   status: 'NOT_CONNECTED' | 'PENDING_CONSENT' | 'CONNECTED' | 'ERROR'
   accessScope: string | null
   sharingPolicy: string | null
-  planningSharingLevel?: 'PRIVATE' | 'PLANNING_IMPACT_ONLY' | null
+  planningSharingLevel?: 'PRIVATE' | 'PLANNING_IMPACT_ONLY' | 'PERSONAL_SHARED' | null
   consentStatus: string | null
   payerDocumentType: 'CPF' | 'CNPJ' | null
   payerName?: string | null

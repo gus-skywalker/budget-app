@@ -7,11 +7,11 @@
           <p class="page-subtitle">{{ t('planning.scenarios.subtitle') }}</p>
         </div>
         <div class="page-header__actions">
-          <v-btn color="#667eea" @click="createScenario">
+          <v-btn v-if="canWriteScenarios" color="#667eea" @click="createScenario">
             <v-icon start>mdi-plus-circle-outline</v-icon>
             {{ t('planning.scenarios.new_scenario') }}
           </v-btn>
-          <v-btn variant="tonal" color="#0f766e" @click="createDebtScenario">
+          <v-btn v-if="canWriteScenarios" variant="tonal" color="#0f766e" @click="createDebtScenario">
             <v-icon start>mdi-credit-card-fast-outline</v-icon>
             Debt payment decision
           </v-btn>
@@ -68,7 +68,7 @@
 
             <div class="saved-scenario-card__actions">
               <v-tooltip
-                v-if="isScenarioLockedForEdit(scenario.id)"
+                v-if="canWriteScenarios && isScenarioLockedForEdit(scenario.id)"
                 text="This scenario has votes. Create a new version to preserve decision history."
                 location="top"
               >
@@ -86,7 +86,7 @@
                 </template>
               </v-tooltip>
               <v-btn
-                v-else
+                v-else-if="canWriteScenarios"
                 variant="text"
                 density="comfortable"
                 size="small"
@@ -107,7 +107,7 @@
                 {{ t('planning.scenarios.create_decision_from_scenario') }}
               </v-btn>
               <v-tooltip
-                v-if="hasScenarioDecision(scenario.id)"
+                v-if="canWriteScenarios && hasScenarioDecision(scenario.id)"
                 text="Cannot delete: this scenario is linked to a decision. Keep it for audit history."
                 location="top"
               >
@@ -121,7 +121,7 @@
                 </template>
               </v-tooltip>
               <v-btn
-                v-else
+                v-else-if="canWriteScenarios"
                 variant="text"
                 density="comfortable"
                 size="small"
@@ -138,7 +138,7 @@
         <div v-else class="empty-results">
           <v-icon color="#94a3b8">mdi-content-save-outline</v-icon>
           <p>{{ t('planning.scenarios.saved_placeholder') }}</p>
-          <v-btn color="#667eea" variant="tonal" @click="createScenario">
+          <v-btn v-if="canWriteScenarios" color="#667eea" variant="tonal" @click="createScenario">
             <v-icon start>mdi-plus</v-icon>
             {{ t('planning.scenarios.new_scenario') }}
           </v-btn>
@@ -151,14 +151,16 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import ScenarioService, { type SavedScenario } from '@/services/ScenarioService'
 import DecisionService from '@/services/DecisionService'
+import { useUserStore } from '@/plugins/userStore'
 
 const { t, locale } = useI18n()
 const router = useRouter()
+const userStore = useUserStore()
 const DECISIONS_FLASH_SUCCESS_KEY = 'decisions-flash-success'
 
 const isLoading = ref(false)
@@ -167,6 +169,7 @@ const errorMessage = ref('')
 const savedScenarios = ref<SavedScenario[]>([])
 const scenariosLockedForMutation = ref<Set<string>>(new Set())
 const scenariosWithAnyDecision = ref<Set<string>>(new Set())
+const canWriteScenarios = computed(() => userStore.canWrite)
 
 const formatCurrency = (value: number) =>
   Number(value || 0).toLocaleString(

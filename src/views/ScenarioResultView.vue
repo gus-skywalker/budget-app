@@ -238,6 +238,7 @@
             {{ createDecisionLabel }}
           </v-btn>
           <v-btn
+            v-if="canWriteScenarios"
             class="result-action"
             variant="tonal"
             color="#667eea"
@@ -315,10 +316,12 @@ import {
   snapshotFromSavedDebtScenario,
   type DebtScenarioSnapshot
 } from '@/utils/debtScenario'
+import { useUserStore } from '@/plugins/userStore'
 
 const route = useRoute()
 const router = useRouter()
 const { t, locale } = useI18n()
+const userStore = useUserStore()
 const DECISIONS_FLASH_SUCCESS_KEY = 'decisions-flash-success'
 
 const result = ref<ScenarioSimulationResponse | null>(null)
@@ -331,6 +334,7 @@ const successMessage = ref('')
 const isShowingSavedSnapshot = ref(false)
 const isScenarioLockedForEdit = ref(false)
 const debtSnapshot = ref<DebtScenarioSnapshot | null>(null)
+const canWriteScenarios = computed(() => userStore.canWrite)
 
 const snapshot = reactive<ScenarioWizardSnapshot>({
   scenarioName: '',
