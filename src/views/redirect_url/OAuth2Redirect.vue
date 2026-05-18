@@ -9,7 +9,7 @@ import { useRouter } from 'vue-router'
 import AuthService from '@/services/AuthService'
 import { updateI18nLocale } from '@/i18n'
 import OnboardingOrchestrator from '@/services/OnboardingOrchestrator'
-import { readInviteAcceptanceContext } from '@/utils/inviteAcceptanceContext'
+import { readInviteAcceptanceContext, readInviteAcceptanceRedirect } from '@/utils/inviteAcceptanceContext'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -20,7 +20,7 @@ const extractTokenFromUrl = async () => {
   const purgeAfter = urlParams.get('purgeAfter')
   let token = urlParams.get('accessToken')
   const inviteContext = readInviteAcceptanceContext()
-  const redirect = urlParams.get('redirect') || inviteContext?.redirect || null
+  const redirect = readInviteAcceptanceRedirect() || urlParams.get('redirect') || null
   const plan = urlParams.get('plan')
 
   if (oauthError) {
