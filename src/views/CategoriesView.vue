@@ -19,6 +19,22 @@
             <v-icon start>mdi-plus</v-icon>
             Nova categoria
           </v-btn>
+          <v-btn
+            v-else-if="activeTab === 'tags'"
+            class="modern-btn gradient-btn"
+            @click="startCreateTag"
+          >
+            <v-icon start>mdi-plus</v-icon>
+            Nova tag
+          </v-btn>
+          <v-btn
+            v-else
+            class="modern-btn gradient-btn"
+            @click="startCreateAutomation"
+          >
+            <v-icon start>mdi-plus</v-icon>
+            Criar automação
+          </v-btn>
         </div>
       </div>
 
@@ -126,19 +142,30 @@
                   v-for="category in filteredCategories"
                   :key="`${category.id}-${category.code}`"
                   class="category-row"
+                  :class="{ 'category-row--child': category.isChild }"
                 >
                   <div class="category-row__main">
                     <div class="category-row__identity">
-                      <div class="category-avatar" :class="{ 'category-avatar--custom': category.systemDefined === false }">
-                        <v-icon size="18">{{ category.systemDefined ? 'mdi-shape-outline' : 'mdi-pencil-outline' }}</v-icon>
+                      <div
+                        class="category-avatar"
+                        :class="{ 'category-avatar--custom': category.systemDefined === false }"
+                        :style="{ backgroundColor: `${category.displayColor || '#667EEA'}22`, color: category.displayColor || '#667EEA' }"
+                      >
+                        <v-icon size="18">{{ category.displayIcon || (category.systemDefined ? 'mdi-shape-outline' : 'mdi-pencil-outline') }}</v-icon>
                       </div>
                       <div>
                         <div class="category-row__name">{{ category.name }}</div>
-                        <div class="category-row__code">{{ category.code }}</div>
+                        <div class="category-row__code">
+                          {{ category.code }}
+                          <span v-if="category.parentCategoryName">· filha de {{ category.parentCategoryName }}</span>
+                        </div>
                       </div>
                     </div>
 
                     <div class="category-row__badges">
+                      <v-chip size="small" variant="tonal" :color="category.type === 'INCOME' ? 'success' : 'warning'">
+                        {{ category.type === 'INCOME' ? 'Receita' : 'Despesa' }}
+                      </v-chip>
                       <v-chip size="small" variant="tonal" :color="category.systemDefined ? 'default' : 'primary'">
                         {{ category.systemDefined ? 'Padrão' : 'Customizada' }}
                       </v-chip>
@@ -268,26 +295,235 @@
         </div>
 
         <div v-else-if="activeTab === 'tags'" class="tabs-shell__content">
-          <section class="placeholder-state">
-            <div class="placeholder-state__icon">
-              <v-icon size="56">mdi-tag-outline</v-icon>
+          <div class="stats-grid stats-grid--tags">
+            <div class="stat-card">
+              <div class="stat-card__label">Tags ativas</div>
+              <div class="stat-card__value">{{ activeTagsCount }}</div>
             </div>
-            <h2>Tags virão na próxima fase</h2>
-            <p>
-              Vamos usar esta aba para classificação transversal, filtros e agrupamentos que não devem virar categoria contábil.
-            </p>
+            <div class="stat-card">
+              <div class="stat-card__label">Tags inativas</div>
+              <div class="stat-card__value">{{ inactiveTagsCount }}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card__label">Total de tags</div>
+              <div class="stat-card__value">{{ tags.length }}</div>
+            </div>
+          </div>
+
+          <section class="insight-band">
+            <div class="insight-band__headline">
+              <div class="insight-band__copy">
+                <span class="eyebrow">Classificação transversal</span>
+                <h2>Tags para contexto, filtros e agrupamentos futuros</h2>
+                <p>
+                  Use tags para sinalizar temas como viagem, reembolso ou recorrência, sem transformar tudo em categoria contábil.
+                </p>
+              </div>
+              <div class="insight-band__meta insight-band__meta--single">
+                <div class="meta-chip">
+                  <span>{{ visibleTags.length }}</span>
+                  <small>tags visíveis</small>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="modern-card surface-card">
+            <div class="surface-card__header">
+              <div>
+                <h3 class="surface-card__title">Catálogo de tags</h3>
+                <p class="surface-card__subtitle">Mantenha um vocabulário transversal para relatórios, filtros e automações futuras.</p>
+              </div>
+            </div>
+
+            <div class="filters-row filters-row--tags">
+              <v-text-field
+                v-model="tagSearch"
+                label="Buscar tag"
+                prepend-inner-icon="mdi-magnify"
+                variant="outlined"
+                density="comfortable"
+                color="#667eea"
+                class="modern-input"
+                hide-details
+              />
+              <v-switch
+                v-model="showInactiveTags"
+                color="#667eea"
+                hide-details
+                label="Mostrar inativas"
+              />
+            </div>
+
+            <div v-if="loadingTags" class="loading-state">
+              <v-progress-circular indeterminate color="#667eea" size="40" />
+            </div>
+
+            <div v-else-if="visibleTags.length" class="tag-grid">
+              <article v-for="tag in visibleTags" :key="tag.id" class="tag-card">
+                <div class="tag-card__main">
+                  <div class="tag-pill" :style="{ backgroundColor: `${tag.displayColor || '#667EEA'}22`, color: tag.displayColor || '#667EEA' }">
+                    <v-icon size="16">mdi-tag-outline</v-icon>
+                    <span>{{ tag.name }}</span>
+                  </div>
+                  <v-chip
+                    size="small"
+                    variant="tonal"
+                    :color="tag.active === false ? 'warning' : 'success'"
+                  >
+                    {{ tag.active === false ? 'Inativa' : 'Ativa' }}
+                  </v-chip>
+                </div>
+
+                <div class="tag-card__actions">
+                  <v-btn size="small" variant="text" color="#667eea" @click="startEditTag(tag)">
+                    Editar
+                  </v-btn>
+                  <v-btn
+                    v-if="tag.active !== false"
+                    size="small"
+                    variant="text"
+                    color="warning"
+                    :loading="deactivatingTagId === tag.id"
+                    @click="deactivateTag(tag)"
+                  >
+                    Desativar
+                  </v-btn>
+                </div>
+              </article>
+            </div>
+
+            <div v-else class="empty-state compact-empty">
+              <v-icon size="44" color="#667eea" class="mb-3">mdi-tag-off-outline</v-icon>
+              <p class="empty-message">Nenhuma tag encontrada para esse filtro.</p>
+            </div>
           </section>
         </div>
 
         <div v-else class="tabs-shell__content">
-          <section class="placeholder-state">
-            <div class="placeholder-state__icon">
-              <v-icon size="56">mdi-tune-variant</v-icon>
+          <div class="stats-grid stats-grid--tags">
+            <div class="stat-card">
+              <div class="stat-card__label">Regras ativas</div>
+              <div class="stat-card__value">{{ activeAutomationsCount }}</div>
             </div>
-            <h2>Automações virão na próxima fase</h2>
-            <p>
-              Aqui ficarão regras explícitas do tipo “SE descrição contém X, ENTÃO definir categoria Y”, sempre com rastreabilidade.
-            </p>
+            <div class="stat-card">
+              <div class="stat-card__label">Regras inativas</div>
+              <div class="stat-card__value">{{ inactiveAutomationsCount }}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card__label">Total de automações</div>
+              <div class="stat-card__value">{{ automations.length }}</div>
+            </div>
+          </div>
+
+          <section class="insight-band">
+            <div class="insight-band__headline">
+              <div class="insight-band__copy">
+                <span class="eyebrow">Regras explícitas</span>
+                <h2>Automatize categorização sem depender da IA para tudo</h2>
+                <p>
+                  Defina regras do tipo “SE descrição contém X, ENTÃO categorizar como Y” e aplique agora nas transações acessíveis do workspace.
+                </p>
+              </div>
+              <div class="insight-band__meta insight-band__meta--single">
+                <div class="meta-chip">
+                  <span>{{ visibleAutomations.length }}</span>
+                  <small>regras visíveis</small>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="modern-card surface-card">
+            <div class="surface-card__header">
+              <div>
+                <h3 class="surface-card__title">Catálogo de automações</h3>
+                <p class="surface-card__subtitle">Começamos com regras por descrição, auditáveis e fáceis de revisar.</p>
+              </div>
+            </div>
+
+            <div class="filters-row filters-row--tags">
+              <v-text-field
+                v-model="automationSearch"
+                label="Buscar automação"
+                prepend-inner-icon="mdi-magnify"
+                variant="outlined"
+                density="comfortable"
+                color="#667eea"
+                class="modern-input"
+                hide-details
+              />
+              <v-switch
+                v-model="showInactiveAutomations"
+                color="#667eea"
+                hide-details
+                label="Mostrar inativas"
+              />
+            </div>
+
+            <div v-if="loadingAutomations" class="loading-state">
+              <v-progress-circular indeterminate color="#667eea" size="40" />
+            </div>
+
+            <div v-else-if="visibleAutomations.length" class="automation-list">
+              <article v-for="automation in visibleAutomations" :key="automation.id" class="automation-card">
+                <div class="automation-card__main">
+                  <div>
+                    <div class="automation-card__title">{{ automation.name }}</div>
+                    <div class="automation-card__rule">
+                      SE descrição {{ automation.matchOperator === 'EXACT' ? 'é exatamente' : 'contém' }}
+                      <strong>"{{ automation.matchValue }}"</strong>
+                      ENTÃO categorizar como
+                      <strong>{{ automationCategoryName(automation) }}</strong>
+                    </div>
+                  </div>
+
+                  <div class="category-row__badges">
+                    <v-chip size="small" variant="tonal" color="primary">
+                      {{ automation.overwriteExistingCategory ? 'Reclassifica' : 'Só sem categoria' }}
+                    </v-chip>
+                    <v-chip
+                      size="small"
+                      variant="tonal"
+                      :color="automation.active === false ? 'warning' : 'success'"
+                    >
+                      {{ automation.active === false ? 'Inativa' : 'Ativa' }}
+                    </v-chip>
+                  </div>
+                </div>
+
+                <div class="automation-card__actions">
+                  <v-btn
+                    size="small"
+                    variant="outlined"
+                    color="#667eea"
+                    :loading="applyingAutomationId === automation.id"
+                    :disabled="automation.active === false"
+                    @click="applyAutomation(automation)"
+                  >
+                    Aplicar agora
+                  </v-btn>
+                  <v-btn size="small" variant="text" color="#667eea" @click="startEditAutomation(automation)">
+                    Editar
+                  </v-btn>
+                  <v-btn
+                    v-if="automation.active !== false"
+                    size="small"
+                    variant="text"
+                    color="warning"
+                    :loading="deactivatingAutomationId === automation.id"
+                    @click="deactivateAutomation(automation)"
+                  >
+                    Desativar
+                  </v-btn>
+                </div>
+              </article>
+            </div>
+
+            <div v-else class="empty-state compact-empty">
+              <v-icon size="44" color="#667eea" class="mb-3">mdi-tune-variant</v-icon>
+              <p class="empty-message">Nenhuma automação encontrada para esse filtro.</p>
+            </div>
           </section>
         </div>
       </section>
@@ -355,26 +591,61 @@
               color="#667eea"
               class="modern-input"
             />
+
+            <v-select
+              v-model="editorParentCategoryId"
+              :items="parentCategoryOptions"
+              item-title="label"
+              item-value="value"
+              label="Categoria pai"
+              placeholder="Nenhuma (categoria principal)"
+              clearable
+              variant="outlined"
+              density="comfortable"
+              color="#667eea"
+              class="modern-input"
+            />
           </section>
 
-          <section class="drawer-section drawer-section--muted">
-            <span class="drawer-section__label">Próximas fases previstas</span>
-            <div class="future-grid">
-              <div class="future-card">
-                <strong>Subcategorias</strong>
-                <span>Hierarquia pai/filha para navegação e consolidação.</span>
+          <section class="drawer-section">
+            <span class="drawer-section__label">Identidade visual</span>
+            <div class="icon-grid">
+              <button
+                v-for="icon in categoryIconOptions"
+                :key="icon"
+                type="button"
+                class="icon-option"
+                :class="{ 'icon-option--active': editorDisplayIcon === icon }"
+                @click="editorDisplayIcon = icon"
+              >
+                <v-icon>{{ icon }}</v-icon>
+              </button>
+            </div>
+
+            <div class="color-grid">
+              <button
+                v-for="color in categoryColorOptions"
+                :key="color"
+                type="button"
+                class="color-option"
+                :class="{ 'color-option--active': editorDisplayColor === color }"
+                :style="{ backgroundColor: color }"
+                @click="editorDisplayColor = color"
+              >
+                <v-icon v-if="editorDisplayColor === color" color="white" size="18">mdi-check</v-icon>
+              </button>
+            </div>
+
+            <div class="preview-card">
+              <div
+                class="category-avatar"
+                :style="{ backgroundColor: `${editorDisplayColor || '#667EEA'}22`, color: editorDisplayColor || '#667EEA' }"
+              >
+                <v-icon size="18">{{ editorDisplayIcon || 'mdi-shape-outline' }}</v-icon>
               </div>
-              <div class="future-card">
-                <strong>Ícone e cor</strong>
-                <span>Identidade visual para facilitar leitura rápida na lista.</span>
-              </div>
-              <div class="future-card">
-                <strong>Limites</strong>
-                <span>Vínculo com orçamento mensal por categoria.</span>
-              </div>
-              <div class="future-card">
-                <strong>Automações</strong>
-                <span>Regras explícitas para classificação recorrente.</span>
+              <div>
+                <strong>{{ editorName || 'Prévia da categoria' }}</strong>
+                <span>{{ editorDirection === 'INCOME' ? 'Receita' : 'Despesa' }}</span>
               </div>
             </div>
           </section>
@@ -384,6 +655,167 @@
           <v-btn variant="text" @click="closeEditor">Cancelar</v-btn>
           <v-btn class="modern-btn gradient-btn" :loading="savingCategory" @click="saveCategory">
             {{ editingCategoryId ? 'Salvar ajustes' : 'Criar categoria' }}
+          </v-btn>
+        </div>
+      </div>
+    </v-navigation-drawer>
+
+    <v-navigation-drawer
+      v-model="tagDrawer"
+      location="right"
+      temporary
+      width="420"
+      class="category-drawer"
+    >
+      <div class="drawer-shell">
+        <div class="drawer-shell__header">
+          <div>
+            <h2>{{ editingTagId ? 'Editar tag' : 'Nova tag' }}</h2>
+            <p>Crie rótulos transversais para contexto, filtros e automações futuras.</p>
+          </div>
+          <v-btn icon variant="text" @click="closeTagEditor">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </div>
+
+        <div class="drawer-shell__body">
+          <section class="drawer-section">
+            <span class="drawer-section__label">Identidade da tag</span>
+            <v-text-field
+              v-model="tagEditorName"
+              label="Nome"
+              placeholder="Ex: Reembolso, Viagem, Empresa"
+              variant="outlined"
+              density="comfortable"
+              color="#667eea"
+              class="modern-input"
+            />
+
+            <div class="color-grid">
+              <button
+                v-for="color in categoryColorOptions"
+                :key="`tag-${color}`"
+                type="button"
+                class="color-option"
+                :class="{ 'color-option--active': tagEditorColor === color }"
+                :style="{ backgroundColor: color }"
+                @click="tagEditorColor = color"
+              >
+                <v-icon v-if="tagEditorColor === color" color="white" size="18">mdi-check</v-icon>
+              </button>
+            </div>
+
+            <div class="preview-card">
+              <div class="tag-pill" :style="{ backgroundColor: `${tagEditorColor || '#667EEA'}22`, color: tagEditorColor || '#667EEA' }">
+                <v-icon size="16">mdi-tag-outline</v-icon>
+                <span>{{ tagEditorName || 'Prévia da tag' }}</span>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="drawer-shell__footer">
+          <v-btn variant="text" @click="closeTagEditor">Cancelar</v-btn>
+          <v-btn class="modern-btn gradient-btn" :loading="savingTag" @click="saveTag">
+            {{ editingTagId ? 'Salvar tag' : 'Criar tag' }}
+          </v-btn>
+        </div>
+      </div>
+    </v-navigation-drawer>
+
+    <v-navigation-drawer
+      v-model="automationDrawer"
+      location="right"
+      temporary
+      width="460"
+      class="category-drawer"
+    >
+      <div class="drawer-shell">
+        <div class="drawer-shell__header">
+          <div>
+            <h2>{{ editingAutomationId ? 'Editar automação' : 'Nova automação' }}</h2>
+            <p>Crie uma regra explícita para categorizar transações por descrição e aplique no histórico quando fizer sentido.</p>
+          </div>
+          <v-btn icon variant="text" @click="closeAutomationEditor">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </div>
+
+        <div class="drawer-shell__body">
+          <section class="drawer-section">
+            <span class="drawer-section__label">Regra</span>
+            <v-text-field
+              v-model="automationEditorName"
+              label="Nome da regra"
+              placeholder="Ex: Uber => Transporte"
+              variant="outlined"
+              density="comfortable"
+              color="#667eea"
+              class="modern-input"
+            />
+
+            <div class="automation-condition-grid">
+              <v-select
+                v-model="automationEditorOperator"
+                :items="automationOperatorOptions"
+                item-title="label"
+                item-value="value"
+                label="Operador"
+                variant="outlined"
+                density="comfortable"
+                color="#667eea"
+                class="modern-input"
+              />
+              <v-text-field
+                v-model="automationEditorMatchValue"
+                label="Texto da descrição"
+                placeholder="Ex: uber"
+                variant="outlined"
+                density="comfortable"
+                color="#667eea"
+                class="modern-input"
+              />
+            </div>
+
+            <v-select
+              v-model="automationEditorCategoryId"
+              :items="automationCategoryOptions"
+              item-title="label"
+              item-value="value"
+              label="Categoria de destino"
+              variant="outlined"
+              density="comfortable"
+              color="#667eea"
+              class="modern-input"
+            />
+
+            <v-switch
+              v-model="automationEditorOverwrite"
+              color="#667eea"
+              hide-details
+              label="Reclassificar entradas que já têm categoria"
+            />
+
+            <div class="preview-card">
+              <div class="placeholder-state__icon automation-preview__icon">
+                <v-icon size="28">mdi-tune-variant</v-icon>
+              </div>
+              <div>
+                <strong>{{ automationEditorName || 'Prévia da automação' }}</strong>
+                <span>
+                  SE descrição {{ automationEditorOperator === 'EXACT' ? 'é exatamente' : 'contém' }}
+                  "{{ automationEditorMatchValue || '...' }}" ENTÃO categorizar como
+                  {{ selectedAutomationCategoryLabel }}
+                </span>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="drawer-shell__footer">
+          <v-btn variant="text" @click="closeAutomationEditor">Cancelar</v-btn>
+          <v-btn class="modern-btn gradient-btn" :loading="savingAutomation" @click="saveAutomation">
+            {{ editingAutomationId ? 'Salvar automação' : 'Criar automação' }}
           </v-btn>
         </div>
       </div>
@@ -408,6 +840,10 @@ interface CategoryItem {
   name: string
   systemDefined?: boolean
   active?: boolean
+  type?: CategoryDirection
+  parentCategoryId?: number | null
+  displayColor?: string | null
+  displayIcon?: string | null
 }
 
 interface ApiCategoryItem {
@@ -416,10 +852,16 @@ interface ApiCategoryItem {
   name?: string
   systemDefined?: boolean
   active?: boolean
+  type?: string
+  parentCategoryId?: number | null
+  displayColor?: string | null
+  displayIcon?: string | null
 }
 
 interface CategoryWithMappings extends CategoryItem {
   bankMappings: OpenFinanceCategoryMapping[]
+  parentCategoryName?: string | null
+  isChild: boolean
 }
 
 interface MappingOption {
@@ -427,30 +869,122 @@ interface MappingOption {
   value: number
 }
 
+interface TagItem {
+  id: number
+  name: string
+  displayColor?: string | null
+  active?: boolean
+}
+
+interface ApiTagItem {
+  id?: number
+  name?: string
+  displayColor?: string | null
+  active?: boolean
+}
+
+type AutomationOperator = 'CONTAINS' | 'EXACT'
+
+interface AutomationItem {
+  id: number
+  name: string
+  matchOperator: AutomationOperator
+  matchValue: string
+  targetCategoryId: number
+  targetCategoryName?: string | null
+  overwriteExistingCategory?: boolean
+  active?: boolean
+}
+
+interface ApiAutomationItem {
+  id?: number
+  name?: string
+  matchOperator?: string
+  matchValue?: string
+  targetCategoryId?: number
+  targetCategoryName?: string | null
+  overwriteExistingCategory?: boolean
+  active?: boolean
+}
+
 const { locale, t } = useI18n()
 const router = useRouter()
 
 const activeTab = ref<CategoriesTab>('categories')
 const categories = ref<CategoryItem[]>([])
+const tags = ref<TagItem[]>([])
+const automations = ref<AutomationItem[]>([])
 const bankCategories = ref<OpenFinanceBankCategory[]>([])
 const bankMappings = ref<OpenFinanceCategoryMapping[]>([])
 const loading = ref(false)
+const loadingTags = ref(false)
+const loadingAutomations = ref(false)
 const search = ref('')
+const tagSearch = ref('')
+const automationSearch = ref('')
 const showMappedOnly = ref(false)
 const showInactiveCustom = ref(false)
+const showInactiveTags = ref(false)
+const showInactiveAutomations = ref(false)
 const editorDrawer = ref(false)
+const tagDrawer = ref(false)
+const automationDrawer = ref(false)
 const editorName = ref('')
 const editorCode = ref('')
 const editorDirection = ref<CategoryDirection>('EXPENSE')
+const editorParentCategoryId = ref<number | null>(null)
+const editorDisplayColor = ref<string | null>('#667EEA')
+const editorDisplayIcon = ref<string | null>('mdi-shape-outline')
 const editingCategoryId = ref<number | null>(null)
 const savingCategory = ref(false)
 const deactivatingCategoryId = ref<number | null>(null)
+const editingTagId = ref<number | null>(null)
+const tagEditorName = ref('')
+const tagEditorColor = ref<string | null>('#667EEA')
+const savingTag = ref(false)
+const deactivatingTagId = ref<number | null>(null)
+const editingAutomationId = ref<number | null>(null)
+const automationEditorName = ref('')
+const automationEditorOperator = ref<AutomationOperator>('CONTAINS')
+const automationEditorMatchValue = ref('')
+const automationEditorCategoryId = ref<number | null>(null)
+const automationEditorOverwrite = ref(false)
+const savingAutomation = ref(false)
+const deactivatingAutomationId = ref<number | null>(null)
+const applyingAutomationId = ref<number | null>(null)
 const busyBankCategoryId = ref<string | null>(null)
 const mappingSelections = ref<Record<string, number | null>>({})
 const feedback = ref<{ type: 'success' | 'error'; message: string }>({
   type: 'success',
   message: '',
 })
+
+const categoryColorOptions = [
+  '#667EEA',
+  '#0EA5E9',
+  '#10B981',
+  '#F59E0B',
+  '#EF4444',
+  '#8B5CF6',
+  '#EC4899',
+  '#14B8A6',
+]
+
+const categoryIconOptions = [
+  'mdi-shape-outline',
+  'mdi-cart-outline',
+  'mdi-bullhorn-outline',
+  'mdi-home-outline',
+  'mdi-car-outline',
+  'mdi-heart-pulse',
+  'mdi-school-outline',
+  'mdi-cash-plus',
+]
+
+const automationOperatorOptions = [
+  { label: 'contém', value: 'CONTAINS' },
+  { label: 'é exatamente', value: 'EXACT' },
+]
 
 const normalizeCategoriesPayload = (payload: unknown): ApiCategoryItem[] => {
   if (Array.isArray(payload)) return payload as ApiCategoryItem[]
@@ -462,10 +996,25 @@ const normalizeCategoriesPayload = (payload: unknown): ApiCategoryItem[] => {
 }
 
 const categoriesWithMappings = computed<CategoryWithMappings[]>(() =>
-  categories.value.map((category) => ({
-    ...category,
-    bankMappings: bankMappings.value.filter((mapping) => mapping.categoryId === category.id),
-  })),
+  categories.value
+    .map((category) => {
+      const parent = category.parentCategoryId != null
+        ? categories.value.find((candidate) => candidate.id === category.parentCategoryId)
+        : null
+      return {
+        ...category,
+        bankMappings: bankMappings.value.filter((mapping) => mapping.categoryId === category.id),
+        parentCategoryName: parent?.name || null,
+        isChild: category.parentCategoryId != null,
+      }
+    })
+    .sort((left, right) => {
+      const leftRoot = left.parentCategoryId ?? left.id ?? 0
+      const rightRoot = right.parentCategoryId ?? right.id ?? 0
+      if (leftRoot !== rightRoot) return leftRoot - rightRoot
+      if (left.isChild !== right.isChild) return left.isChild ? 1 : -1
+      return left.name.localeCompare(right.name)
+    }),
 )
 
 const filteredCategories = computed(() => {
@@ -500,6 +1049,29 @@ const unmappedBankCategories = computed(() => {
   return bankCategories.value.filter((category) => !mappedIds.has(category.id))
 })
 
+const activeTagsCount = computed(() => tags.value.filter((tag) => tag.active !== false).length)
+const inactiveTagsCount = computed(() => tags.value.filter((tag) => tag.active === false).length)
+const visibleTags = computed(() => {
+  const term = tagSearch.value.trim().toLowerCase()
+  return tags.value.filter((tag) => {
+    const matchesSearch = !term || tag.name.toLowerCase().includes(term)
+    const matchesActive = tag.active !== false || showInactiveTags.value
+    return matchesSearch && matchesActive
+  })
+})
+
+const activeAutomationsCount = computed(() => automations.value.filter((automation) => automation.active !== false).length)
+const inactiveAutomationsCount = computed(() => automations.value.filter((automation) => automation.active === false).length)
+const visibleAutomations = computed(() => {
+  const term = automationSearch.value.trim().toLowerCase()
+  return automations.value.filter((automation) => {
+    const haystack = `${automation.name} ${automation.matchValue} ${automation.targetCategoryName || ''}`.toLowerCase()
+    const matchesSearch = !term || haystack.includes(term)
+    const matchesActive = automation.active !== false || showInactiveAutomations.value
+    return matchesSearch && matchesActive
+  })
+})
+
 const bankCategoryLabel = (bankCategoryId: string) => {
   const bankCategory = bankCategories.value.find((item) => item.id === bankCategoryId)
   return bankCategory?.name || bankCategoryId
@@ -524,14 +1096,85 @@ const mapApiCategory = (category: ApiCategoryItem): CategoryItem | null => {
   const translationKey = `categories.${code}`
   const translatedName = t(translationKey)
   const isTranslated = translatedName !== translationKey
+    return {
+      id: typeof category.id === 'number' ? category.id : null,
+      code,
+      name: isSystemDefined && isTranslated ? translatedName : fallbackName,
+      systemDefined: isSystemDefined,
+      active: category.active !== false,
+      type: String(category.type || 'EXPENSE').toUpperCase() === 'INCOME' ? 'INCOME' : 'EXPENSE',
+      parentCategoryId: typeof category.parentCategoryId === 'number' ? category.parentCategoryId : null,
+      displayColor: typeof category.displayColor === 'string' ? category.displayColor : null,
+      displayIcon: typeof category.displayIcon === 'string' ? category.displayIcon : null,
+    }
+}
+
+const mapApiTag = (tag: ApiTagItem): TagItem | null => {
+  const name = String(tag.name || '').trim()
+  const id = typeof tag.id === 'number' ? tag.id : null
+  if (!name || id == null) {
+    return null
+  }
   return {
-    id: typeof category.id === 'number' ? category.id : null,
-    code,
-    name: isSystemDefined && isTranslated ? translatedName : fallbackName,
-    systemDefined: isSystemDefined,
-    active: category.active !== false,
+    id,
+    name,
+    displayColor: typeof tag.displayColor === 'string' ? tag.displayColor : '#667EEA',
+    active: tag.active !== false,
   }
 }
+
+const mapApiAutomation = (automation: ApiAutomationItem): AutomationItem | null => {
+  const id = typeof automation.id === 'number' ? automation.id : null
+  const name = String(automation.name || '').trim()
+  const matchValue = String(automation.matchValue || '').trim()
+  const targetCategoryId = typeof automation.targetCategoryId === 'number' ? automation.targetCategoryId : null
+  if (id == null || !name || !matchValue || targetCategoryId == null) {
+    return null
+  }
+  return {
+    id,
+    name,
+    matchOperator: String(automation.matchOperator || 'CONTAINS').toUpperCase() === 'EXACT' ? 'EXACT' : 'CONTAINS',
+    matchValue,
+    targetCategoryId,
+    targetCategoryName: typeof automation.targetCategoryName === 'string' ? automation.targetCategoryName : null,
+    overwriteExistingCategory: automation.overwriteExistingCategory === true,
+    active: automation.active !== false,
+  }
+}
+
+const parentCategoryOptions = computed(() =>
+  categoriesWithMappings.value
+    .filter((category) =>
+      category.active !== false &&
+      category.type === editorDirection.value &&
+      !category.isChild &&
+      category.id !== editingCategoryId.value
+    )
+    .map((category) => ({
+      label: `${category.name} (${category.code})`,
+      value: category.id as number,
+    })),
+)
+
+const automationCategoryOptions = computed(() =>
+  categoriesWithMappings.value
+    .filter((category) => category.active !== false)
+    .map((category) => ({
+      label: `${category.name} (${category.code})`,
+      value: category.id as number,
+    })),
+)
+
+const selectedAutomationCategoryLabel = computed(() => {
+  const selected = automationCategoryOptions.value.find((option) => option.value === automationEditorCategoryId.value)
+  return selected?.label || 'a categoria escolhida'
+})
+
+const automationCategoryName = (automation: AutomationItem) =>
+  categoriesWithMappings.value.find((category) => category.id === automation.targetCategoryId)?.name
+    || automation.targetCategoryName
+    || 'Categoria selecionada'
 
 const fetchCategories = async () => {
   loading.value = true
@@ -571,11 +1214,48 @@ const fetchCategories = async () => {
   }
 }
 
+const fetchTags = async () => {
+  loadingTags.value = true
+  try {
+    const tagsResponse = await DataService.listTags()
+    const payload: ApiTagItem[] = Array.isArray(tagsResponse.data) ? tagsResponse.data : []
+    tags.value = payload.map(mapApiTag).filter((tag): tag is TagItem => Boolean(tag))
+  } catch (error) {
+    console.error('Erro ao carregar tags:', error)
+    feedback.value = {
+      type: 'error',
+      message: 'Não foi possível carregar as tags.',
+    }
+  } finally {
+    loadingTags.value = false
+  }
+}
+
+const fetchAutomations = async () => {
+  loadingAutomations.value = true
+  try {
+    const automationsResponse = await DataService.listCategoryAutomations()
+    const payload: ApiAutomationItem[] = Array.isArray(automationsResponse.data) ? automationsResponse.data : []
+    automations.value = payload.map(mapApiAutomation).filter((automation): automation is AutomationItem => Boolean(automation))
+  } catch (error) {
+    console.error('Erro ao carregar automações:', error)
+    feedback.value = {
+      type: 'error',
+      message: 'Não foi possível carregar as automações.',
+    }
+  } finally {
+    loadingAutomations.value = false
+  }
+}
+
 const startCreateCategory = () => {
   editingCategoryId.value = null
   editorName.value = ''
   editorCode.value = ''
   editorDirection.value = 'EXPENSE'
+  editorParentCategoryId.value = null
+  editorDisplayColor.value = '#667EEA'
+  editorDisplayIcon.value = 'mdi-shape-outline'
   editorDrawer.value = true
 }
 
@@ -583,7 +1263,10 @@ const startEditCategory = (category: CategoryItem) => {
   editingCategoryId.value = category.id
   editorName.value = category.name
   editorCode.value = category.code
-  editorDirection.value = category.code.includes('income') || category.code.includes('revenue') ? 'INCOME' : 'EXPENSE'
+  editorDirection.value = category.type || 'EXPENSE'
+  editorParentCategoryId.value = category.parentCategoryId ?? null
+  editorDisplayColor.value = category.displayColor || '#667EEA'
+  editorDisplayIcon.value = category.displayIcon || 'mdi-shape-outline'
   editorDrawer.value = true
 }
 
@@ -593,6 +1276,60 @@ const closeEditor = () => {
   editorName.value = ''
   editorCode.value = ''
   editorDirection.value = 'EXPENSE'
+  editorParentCategoryId.value = null
+  editorDisplayColor.value = '#667EEA'
+  editorDisplayIcon.value = 'mdi-shape-outline'
+}
+
+const startCreateTag = () => {
+  editingTagId.value = null
+  tagEditorName.value = ''
+  tagEditorColor.value = '#667EEA'
+  tagDrawer.value = true
+}
+
+const startEditTag = (tag: TagItem) => {
+  editingTagId.value = tag.id
+  tagEditorName.value = tag.name
+  tagEditorColor.value = tag.displayColor || '#667EEA'
+  tagDrawer.value = true
+}
+
+const closeTagEditor = () => {
+  editingTagId.value = null
+  tagEditorName.value = ''
+  tagEditorColor.value = '#667EEA'
+  tagDrawer.value = false
+}
+
+const startCreateAutomation = () => {
+  editingAutomationId.value = null
+  automationEditorName.value = ''
+  automationEditorOperator.value = 'CONTAINS'
+  automationEditorMatchValue.value = ''
+  automationEditorCategoryId.value = null
+  automationEditorOverwrite.value = false
+  automationDrawer.value = true
+}
+
+const startEditAutomation = (automation: AutomationItem) => {
+  editingAutomationId.value = automation.id
+  automationEditorName.value = automation.name
+  automationEditorOperator.value = automation.matchOperator
+  automationEditorMatchValue.value = automation.matchValue
+  automationEditorCategoryId.value = automation.targetCategoryId
+  automationEditorOverwrite.value = automation.overwriteExistingCategory === true
+  automationDrawer.value = true
+}
+
+const closeAutomationEditor = () => {
+  editingAutomationId.value = null
+  automationEditorName.value = ''
+  automationEditorOperator.value = 'CONTAINS'
+  automationEditorMatchValue.value = ''
+  automationEditorCategoryId.value = null
+  automationEditorOverwrite.value = false
+  automationDrawer.value = false
 }
 
 const saveCategory = async () => {
@@ -609,6 +1346,10 @@ const saveCategory = async () => {
     const payload = {
       name: editorName.value.trim(),
       code: editorCode.value.trim(),
+      type: editorDirection.value,
+      parentCategoryId: editorParentCategoryId.value,
+      displayColor: editorDisplayColor.value,
+      displayIcon: editorDisplayIcon.value,
     }
 
     if (editingCategoryId.value) {
@@ -634,6 +1375,93 @@ const saveCategory = async () => {
     }
   } finally {
     savingCategory.value = false
+  }
+}
+
+const saveTag = async () => {
+  if (!tagEditorName.value.trim()) {
+    feedback.value = {
+      type: 'error',
+      message: 'Nome da tag é obrigatório.',
+    }
+    return
+  }
+
+  savingTag.value = true
+  try {
+    const payload = {
+      name: tagEditorName.value.trim(),
+      displayColor: tagEditorColor.value,
+    }
+
+    if (editingTagId.value) {
+      await DataService.updateTag(editingTagId.value, payload)
+      feedback.value = {
+        type: 'success',
+        message: 'Tag atualizada com sucesso.',
+      }
+    } else {
+      await DataService.createTag(payload)
+      feedback.value = {
+        type: 'success',
+        message: 'Tag criada com sucesso.',
+      }
+    }
+
+    closeTagEditor()
+    await fetchTags()
+  } catch (error: any) {
+    feedback.value = {
+      type: 'error',
+      message: error?.response?.data?.message || 'Não foi possível salvar a tag.',
+    }
+  } finally {
+    savingTag.value = false
+  }
+}
+
+const saveAutomation = async () => {
+  if (!automationEditorName.value.trim() || !automationEditorMatchValue.value.trim() || !automationEditorCategoryId.value) {
+    feedback.value = {
+      type: 'error',
+      message: 'Nome, condição e categoria são obrigatórios na automação.',
+    }
+    return
+  }
+
+  savingAutomation.value = true
+  try {
+    const payload = {
+      name: automationEditorName.value.trim(),
+      matchOperator: automationEditorOperator.value,
+      matchValue: automationEditorMatchValue.value.trim(),
+      targetCategoryId: automationEditorCategoryId.value,
+      overwriteExistingCategory: automationEditorOverwrite.value,
+    }
+
+    if (editingAutomationId.value) {
+      await DataService.updateCategoryAutomation(editingAutomationId.value, payload)
+      feedback.value = {
+        type: 'success',
+        message: 'Automação atualizada com sucesso.',
+      }
+    } else {
+      await DataService.createCategoryAutomation(payload)
+      feedback.value = {
+        type: 'success',
+        message: 'Automação criada com sucesso.',
+      }
+    }
+
+    closeAutomationEditor()
+    await fetchAutomations()
+  } catch (error: any) {
+    feedback.value = {
+      type: 'error',
+      message: error?.response?.data?.message || 'Não foi possível salvar a automação.',
+    }
+  } finally {
+    savingAutomation.value = false
   }
 }
 
@@ -704,6 +1532,64 @@ const deactivateCategory = async (category: CategoryItem) => {
   }
 }
 
+const deactivateTag = async (tag: TagItem) => {
+  deactivatingTagId.value = tag.id
+  try {
+    await DataService.deactivateTag(tag.id)
+    feedback.value = {
+      type: 'success',
+      message: 'Tag desativada com sucesso.',
+    }
+    await fetchTags()
+  } catch (error: any) {
+    feedback.value = {
+      type: 'error',
+      message: error?.response?.data?.message || 'Não foi possível desativar a tag.',
+    }
+  } finally {
+    deactivatingTagId.value = null
+  }
+}
+
+const deactivateAutomation = async (automation: AutomationItem) => {
+  deactivatingAutomationId.value = automation.id
+  try {
+    await DataService.deactivateCategoryAutomation(automation.id)
+    feedback.value = {
+      type: 'success',
+      message: 'Automação desativada com sucesso.',
+    }
+    await fetchAutomations()
+  } catch (error: any) {
+    feedback.value = {
+      type: 'error',
+      message: error?.response?.data?.message || 'Não foi possível desativar a automação.',
+    }
+  } finally {
+    deactivatingAutomationId.value = null
+  }
+}
+
+const applyAutomation = async (automation: AutomationItem) => {
+  applyingAutomationId.value = automation.id
+  try {
+    const response = await DataService.applyCategoryAutomation(automation.id)
+    const affectedTransactions = Number(response?.data?.affectedTransactions || 0)
+    const affectedEntries = Number(response?.data?.affectedEntries || 0)
+    feedback.value = {
+      type: 'success',
+      message: `Automação aplicada: ${affectedTransactions} transação(ões) e ${affectedEntries} lançamento(s) atualizados.`,
+    }
+  } catch (error: any) {
+    feedback.value = {
+      type: 'error',
+      message: error?.response?.data?.message || 'Não foi possível aplicar a automação.',
+    }
+  } finally {
+    applyingAutomationId.value = null
+  }
+}
+
 const goToOpenFinanceSettings = () => {
   router.push({ name: 'settings', query: { tab: 'connections' } })
 }
@@ -715,10 +1601,23 @@ watch(editorName, (value) => {
   editorCode.value = buildSuggestedCode(value)
 })
 
-onMounted(fetchCategories)
+watch(editorDirection, () => {
+  if (editorParentCategoryId.value == null) {
+    return
+  }
+  const stillValid = parentCategoryOptions.value.some((option) => option.value === editorParentCategoryId.value)
+  if (!stillValid) {
+    editorParentCategoryId.value = null
+  }
+})
+
+onMounted(async () => {
+  await Promise.all([fetchCategories(), fetchTags(), fetchAutomations()])
+})
 
 watch(locale, () => {
   fetchCategories()
+  fetchAutomations()
 })
 </script>
 
@@ -926,6 +1825,10 @@ watch(locale, () => {
   gap: 24px;
 }
 
+.stats-grid--tags {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .surface-card {
   padding: 24px;
 }
@@ -993,6 +1896,11 @@ watch(locale, () => {
   border-radius: 8px;
   padding: 18px;
   background: rgba(255, 255, 255, 0.88);
+}
+
+.category-row--child {
+  margin-left: 28px;
+  border-style: dashed;
 }
 
 .v-theme--dark .category-row {
@@ -1136,6 +2044,110 @@ watch(locale, () => {
   display: flex;
   justify-content: flex-end;
   margin-top: 16px;
+}
+
+.filters-row--tags {
+  grid-template-columns: minmax(240px, 1fr) auto;
+}
+
+.tag-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.tag-card {
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 8px;
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.v-theme--dark .tag-card {
+  background: rgba(15, 23, 42, 0.72);
+}
+
+.tag-card__main,
+.tag-card__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tag-card__actions {
+  margin-top: 14px;
+  justify-content: flex-end;
+}
+
+.tag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-weight: 600;
+}
+
+.automation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.automation-card {
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 8px;
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.v-theme--dark .automation-card {
+  background: rgba(15, 23, 42, 0.72);
+}
+
+.automation-card__main {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.automation-card__title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 6px;
+}
+
+.v-theme--dark .automation-card__title {
+  color: #f8fafc;
+}
+
+.automation-card__rule {
+  color: #667085;
+  line-height: 1.5;
+}
+
+.automation-card__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.automation-condition-grid {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.8fr) minmax(0, 1.2fr);
+  gap: 12px;
+}
+
+.automation-preview__icon {
+  width: 56px;
+  height: 56px;
+  min-height: 56px;
+  margin-bottom: 0;
 }
 
 .placeholder-state__icon {
@@ -1292,9 +2304,87 @@ watch(locale, () => {
   font-size: 0.92rem;
 }
 
+.icon-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.icon-option {
+  min-height: 52px;
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: rgba(248, 250, 252, 0.92);
+  color: #667085;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-option--active {
+  border-color: rgba(102, 126, 234, 0.4);
+  color: #667eea;
+  box-shadow: 0 10px 24px rgba(102, 126, 234, 0.12);
+}
+
+.color-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.color-option {
+  min-height: 44px;
+  border-radius: 999px;
+  border: 3px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.color-option--active {
+  border-color: #111827;
+}
+
+.preview-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 8px;
+  padding: 16px;
+  background: rgba(248, 250, 252, 0.72);
+}
+
+.v-theme--dark .preview-card {
+  background: rgba(30, 41, 59, 0.5);
+}
+
+.preview-card strong {
+  display: block;
+  color: #111827;
+}
+
+.v-theme--dark .preview-card strong {
+  color: #f8fafc;
+}
+
+.preview-card span {
+  color: #667085;
+  font-size: 0.92rem;
+}
+
 @media (max-width: 1180px) {
   .content-grid {
     grid-template-columns: 1fr;
+  }
+
+  .tag-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .automation-card__main {
+    flex-direction: column;
   }
 
   .insight-band__headline {
@@ -1316,6 +2406,10 @@ watch(locale, () => {
     grid-template-columns: 1fr;
   }
 
+  .filters-row--tags {
+    grid-template-columns: 1fr;
+  }
+
   .mapping-queue__row {
     grid-template-columns: 1fr;
   }
@@ -1326,6 +2420,15 @@ watch(locale, () => {
   }
 
   .future-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .icon-grid,
+  .color-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .automation-condition-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -1346,6 +2449,10 @@ watch(locale, () => {
 
   .category-row__main {
     flex-direction: column;
+  }
+
+  .category-row--child {
+    margin-left: 0;
   }
 
   .category-row__badges,

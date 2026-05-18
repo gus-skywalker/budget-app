@@ -3,6 +3,28 @@ import { getApiLanguage } from '@/utils/languageUtils'
 
 const API_URL = `${import.meta.env.VITE_API_BASE_URL}`
 
+export interface CategoryUpsertPayload {
+  code: string
+  name: string
+  type?: 'EXPENSE' | 'INCOME'
+  parentCategoryId?: number | null
+  displayColor?: string | null
+  displayIcon?: string | null
+}
+
+export interface TagUpsertPayload {
+  name: string
+  displayColor?: string | null
+}
+
+export interface CategoryAutomationUpsertPayload {
+  name: string
+  matchOperator?: 'CONTAINS' | 'EXACT'
+  matchValue: string
+  targetCategoryId: number
+  overwriteExistingCategory?: boolean
+}
+
 export default {
   getAll(): Promise<any> {
     return axiosInterceptor.get(API_URL)
@@ -25,16 +47,52 @@ export default {
     return axiosInterceptor.get(`${API_URL}/categories`)
   },
 
-  createCategory(payload: { code: string; name: string }): Promise<any> {
+  createCategory(payload: CategoryUpsertPayload): Promise<any> {
     return axiosInterceptor.post(`${API_URL}/categories`, payload)
   },
 
-  updateCategory(id: number, payload: { code: string; name: string }): Promise<any> {
+  updateCategory(id: number, payload: CategoryUpsertPayload): Promise<any> {
     return axiosInterceptor.put(`${API_URL}/categories/${id}`, payload)
   },
 
   deactivateCategory(id: number): Promise<any> {
     return axiosInterceptor.delete(`${API_URL}/categories/${id}`)
+  },
+
+  listTags(): Promise<any> {
+    return axiosInterceptor.get(`${API_URL}/tags`)
+  },
+
+  createTag(payload: TagUpsertPayload): Promise<any> {
+    return axiosInterceptor.post(`${API_URL}/tags`, payload)
+  },
+
+  updateTag(id: number, payload: TagUpsertPayload): Promise<any> {
+    return axiosInterceptor.put(`${API_URL}/tags/${id}`, payload)
+  },
+
+  deactivateTag(id: number): Promise<any> {
+    return axiosInterceptor.delete(`${API_URL}/tags/${id}`)
+  },
+
+  listCategoryAutomations(): Promise<any> {
+    return axiosInterceptor.get(`${API_URL}/category-automations`)
+  },
+
+  createCategoryAutomation(payload: CategoryAutomationUpsertPayload): Promise<any> {
+    return axiosInterceptor.post(`${API_URL}/category-automations`, payload)
+  },
+
+  updateCategoryAutomation(id: number, payload: CategoryAutomationUpsertPayload): Promise<any> {
+    return axiosInterceptor.put(`${API_URL}/category-automations/${id}`, payload)
+  },
+
+  deactivateCategoryAutomation(id: number): Promise<any> {
+    return axiosInterceptor.delete(`${API_URL}/category-automations/${id}`)
+  },
+
+  applyCategoryAutomation(id: number): Promise<any> {
+    return axiosInterceptor.post(`${API_URL}/category-automations/${id}/apply`, {})
   },
   
   /**
