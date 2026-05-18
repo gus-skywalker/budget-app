@@ -5,38 +5,11 @@
         <v-list-item-title>
           {{ income.description }}
         </v-list-item-title>
-        <v-list-item-subtitle>
-          {{ $t('incomeItem.amount') }} {{ income.amount }} - {{ $t('incomeItem.date') }}: {{ income.date }}
-        </v-list-item-subtitle>
-        <div v-if="income.openFinance || income.reconciliationStatus" class="status-row">
-          <v-chip
-            v-if="income.openFinance"
-            color="#667eea"
-            size="small"
-            variant="tonal"
-            class="mt-1"
-          >
-            {{ $t('incomeItem.open_finance') }}
-          </v-chip>
-          <v-chip
-            v-if="income.reconciliationStatus"
-            :color="reconciliationColor"
-            size="small"
-            variant="tonal"
-            class="mt-1"
-          >
-            {{ reconciliationLabel }}
-          </v-chip>
-        </div>
-        <div class="status-row">
-          <v-chip
-            size="small"
-            variant="outlined"
-            color="#667eea"
-            class="mt-1"
-          >
-            {{ visibilityScopeLabel }}
-          </v-chip>
+        <div class="income-meta-line">
+          <span class="income-date-text">{{ income.date }}</span>
+          <span v-if="income.openFinance" class="income-meta-tag">· {{ $t('incomeItem.open_finance') }}</span>
+          <span v-if="income.visibilityScope === 'PRIVATE'" class="income-meta-tag">· {{ visibilityScopeLabel }}</span>
+          <v-chip v-if="income.reconciliationStatus" :color="reconciliationColor" size="x-small" variant="tonal" class="ml-1">{{ reconciliationLabel }}</v-chip>
         </div>
         <div v-if="income.reconciliationConflictId" class="conflict-resolution-row">
           <v-btn
@@ -70,40 +43,38 @@
           {{ $t('incomeItem.recurring_income') }}
         </v-chip>
       </v-col>
-      <v-col cols="3" md="4" class="d-flex justify-end align-center income-actions">
-        <v-btn
-          v-if="income.visibilityScope === 'WORKSPACE'"
-          x-small
-          icon
-          height="32px"
-          width="32px"
-          color="#667eea"
-          class="mr-2"
-          @click.stop="$emit('openComments', income)"
-        >
-          <v-icon size="16">mdi-comment-text-outline</v-icon>
-        </v-btn>
-        <v-btn
-          x-small
-          icon
-          height="32px"
-          width="32px"
-          @click.stop="handleToggleRecurring"
-          color="primary"
-          class="mr-2"
-        >
-          <v-icon size="16">{{ income.isRecurring ? 'mdi-star-outline' : 'mdi-star' }}</v-icon>
-        </v-btn>
-        <v-btn
-          x-small
-          icon
-          height="32px"
-          width="32px"
-          color="red"
-          @click.stop="$emit('deleteIncome', income)"
-        >
-          <v-icon size="16">mdi-delete</v-icon>
-        </v-btn>
+      <v-col cols="3" md="4" class="d-flex flex-column align-end income-actions">
+        <span class="income-amount-text">{{ income.amount }}</span>
+        <div class="income-btn-group d-flex align-center">
+          <v-btn
+            v-if="income.visibilityScope === 'WORKSPACE'"
+            icon
+            size="x-small"
+            variant="text"
+            class="income-action-btn income-action-btn--share"
+            @click.stop="$emit('openComments', income)"
+          >
+            <v-icon size="15">mdi-comment-text-outline</v-icon>
+          </v-btn>
+          <v-btn
+            icon
+            size="x-small"
+            variant="text"
+            class="income-action-btn income-action-btn--timer"
+            @click.stop="handleToggleRecurring"
+          >
+            <v-icon size="15">{{ income.isRecurring ? 'mdi-star-outline' : 'mdi-star' }}</v-icon>
+          </v-btn>
+          <v-btn
+            icon
+            size="x-small"
+            variant="text"
+            class="income-action-btn income-action-btn--delete"
+            @click.stop="$emit('deleteIncome', income)"
+          >
+            <v-icon size="15">mdi-delete</v-icon>
+          </v-btn>
+        </div>
       </v-col>
     </v-row>
 
@@ -193,16 +164,81 @@ export default {
   cursor: pointer;
 }
 
-.income-actions .v-btn {
-  font-size: 0.75rem;
-  padding: 0.25rem 0.5rem;
+.income-btn-group {
+  gap: 2px;
+  opacity: 0.38;
+  transition: opacity 0.2s ease;
+}
+
+.income-item:hover .income-btn-group,
+.income-item:focus-within .income-btn-group {
+  opacity: 0.85;
+}
+
+.income-action-btn {
+  width: 26px !important;
+  height: 26px !important;
+  border-radius: 5px !important;
+  color: rgba(15, 23, 42, 0.46) !important;
+  transition:
+    color 0.18s ease,
+    background-color 0.18s ease,
+    opacity 0.18s ease;
+}
+
+.income-action-btn .v-icon {
+  font-size: 14px !important;
+  transition: color 0.18s ease;
+}
+
+.income-action-btn--share .v-icon {
+  color: rgba(59, 130, 246, 0.74) !important;
+}
+
+.income-action-btn--timer .v-icon {
+  color: rgba(249, 115, 22, 0.74) !important;
+}
+
+.income-action-btn--delete .v-icon {
+  color: rgba(239, 68, 68, 0.74) !important;
+}
+
+.income-action-btn:hover {
+  color: rgba(15, 23, 42, 0.66) !important;
+  background-color: rgba(15, 23, 42, 0.04) !important;
+}
+
+.income-action-btn:hover .v-icon {
+  opacity: 1;
+}
+
+.income-action-btn--share:hover .v-icon {
+  color: rgba(59, 130, 246, 0.92) !important;
+}
+
+.income-action-btn--timer:hover .v-icon {
+  color: rgba(249, 115, 22, 0.92) !important;
+}
+
+.income-action-btn--delete:hover {
+  background-color: rgba(198, 40, 40, 0.08) !important;
+}
+
+.income-action-btn--delete:hover .v-icon {
+  color: rgba(239, 68, 68, 0.95) !important;
+}
+
+@media (max-width: 600px) {
+  .income-btn-group {
+    opacity: 1;
+  }
 }
 
 .status-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 6px;
+  gap: 4px;
+  margin-top: 2px;
 }
 
 .conflict-resolution-row {
@@ -210,5 +246,35 @@ export default {
   flex-wrap: wrap;
   gap: 8px;
   margin: 8px 0 4px;
+}
+
+.income-meta-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.income-date-text {
+  font-size: 0.75rem;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.income-meta-tag {
+  font-size: 0.75rem;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.income-amount-text {
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  margin-bottom: 4px;
+}
+
+.v-theme--dark .income-date-text,
+.v-theme--dark .income-meta-tag {
+  color: rgba(255, 255, 255, 0.5);
 }
 </style>

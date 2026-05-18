@@ -201,6 +201,65 @@ const createMonthOverviewResponse = () => ({
   totalExpense: 952.85
 })
 
+const createBudgetSuggestionResponse = () => {
+  const linesByKey = new Map<string, { category: string; type: 'INCOME' | 'EXPENSE'; suggestedAmount: number; confidence: 'MEDIUM' }>()
+
+  devTransactions()
+    .filter((transaction) => transaction.source === 'OPEN_FINANCE' && transaction.status === 'POSTED')
+    .forEach((transaction) => {
+      const type = transaction.direction === 'INFLOW' ? 'INCOME' : 'EXPENSE'
+      const category = String(transaction.category || (type === 'INCOME' ? 'Receitas' : 'Outras despesas'))
+      const key = `${type}:${category.toLowerCase()}`
+      const current = linesByKey.get(key) || { category, type, suggestedAmount: 0, confidence: 'MEDIUM' as const }
+      current.suggestedAmount = Number((current.suggestedAmount + Number(transaction.amount || 0)).toFixed(2))
+      linesByKey.set(key, current)
+    })
+
+  const lines = Array.from(linesByKey.values()).sort((left, right) =>
+    left.type === right.type ? left.category.localeCompare(right.category) : left.type.localeCompare(right.type)
+  )
+  const suggestedIncome = lines
+    .filter((line) => line.type === 'INCOME')
+    .reduce((total, line) => total + line.suggestedAmount, 0)
+  const suggestedExpense = lines
+    .filter((line) => line.type === 'EXPENSE')
+    .reduce((total, line) => total + line.suggestedAmount, 0)
+
+  return {
+    workspaceId: listDevQuickAccessWorkspaces()[0]?.workspaceId || 'dev-workspace',
+    month: new Date().getMonth() + 1,
+    year: new Date().getFullYear(),
+    suggestedIncome,
+    suggestedExpense,
+    net: Number((suggestedIncome - suggestedExpense).toFixed(2)),
+    lookbackMonths: 1,
+    lines
+  }
+}
+
+const createGeneratedBaselineResponse = () => {
+  const postedOpenFinance = devTransactions().filter(
+    (transaction) => transaction.source === 'OPEN_FINANCE' && transaction.status === 'POSTED'
+  )
+  const incomeTotal = postedOpenFinance
+    .filter((transaction) => transaction.direction === 'INFLOW')
+    .reduce((total, transaction) => total + Number(transaction.amount || 0), 0)
+  const expenseTotal = postedOpenFinance
+    .filter((transaction) => transaction.direction === 'OUTFLOW')
+    .reduce((total, transaction) => total + Number(transaction.amount || 0), 0)
+
+  return {
+    budgetId: `dev-budget-${Date.now()}`,
+    month: new Date().getMonth() + 1,
+    year: new Date().getFullYear(),
+    incomeTotal: Number(incomeTotal.toFixed(2)),
+    expenseTotal: Number(expenseTotal.toFixed(2)),
+    netAmount: Number((incomeTotal - expenseTotal).toFixed(2)),
+    source: 'OPEN_FINANCE_AGGREGATED',
+    status: postedOpenFinance.length ? 'ACTIVE' : 'NO_DATA'
+  }
+}
+
 const createDashboardChartResponse = () => ({
   labels: [daysAgoIso(8), daysAgoIso(5), daysAgoIso(2), todayIso()],
   datasets: [
@@ -431,6 +490,22 @@ const buildDataForRequest = (config: AxiosRequestConfig) => {
 
   if (path === '/dashboard/overview') {
     return createMonthOverviewResponse()
+  }
+
+  if (path === '/budgets/suggestions') {
+    return createBudgetSuggestionResponse()
+  }
+
+  if (path === '/budgets/generate-baseline') {
+    return createGeneratedBaselineResponse()
+  }
+
+  if (path === '/budgets') {
+    return method === 'get' ? [] : { id: `dev-budget-${Date.now()}`, status: 'DRAFT' }
+  }
+
+  if (path.startsWith('/budgets/')) {
+    return { success: true }
   }
 
   if (path === '/categories' || path === '/categories/translated') {

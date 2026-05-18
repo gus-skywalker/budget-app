@@ -460,11 +460,11 @@
 
                   </v-col>
                   <v-col class="d-flex justify-end">
-                    <v-btn @click="editGoal(goal)" icon>
-                      <v-icon>mdi-pencil</v-icon>
+                    <v-btn @click="editGoal(goal)" icon variant="text" class="goal-action-btn goal-action-btn--edit">
+                      <v-icon size="15">mdi-pencil</v-icon>
                     </v-btn>
-                    <v-btn @click="deleteGoal(goal)" icon>
-                      <v-icon>mdi-delete</v-icon>
+                    <v-btn @click="deleteGoal(goal)" icon variant="text" class="goal-action-btn goal-action-btn--delete">
+                      <v-icon size="15">mdi-delete</v-icon>
                     </v-btn>
                   </v-col>
                 </v-row>
@@ -1335,6 +1335,49 @@ export default {
   background: rgba(102, 126, 234, 0.06);
   border-color: rgba(102, 126, 234, 0.2);
   transform: translateX(4px);
+}
+
+.goal-item .goal-action-btn {
+  min-width: 36px !important;
+  width: 36px !important;
+  height: 36px !important;
+  padding: 0 !important;
+  border-radius: 6px !important;
+  color: rgba(15, 23, 42, 0.46) !important;
+  transition:
+    color 0.18s ease,
+    background-color 0.18s ease,
+    opacity 0.18s ease;
+}
+
+.goal-item .goal-action-btn .v-icon {
+  font-size: 18px !important;
+  transition: color 0.18s ease;
+}
+
+.goal-item .goal-action-btn--edit .v-icon {
+  color: rgba(59, 130, 246, 0.74) !important;
+}
+
+.goal-item .goal-action-btn--delete .v-icon {
+  color: rgba(239, 68, 68, 0.74) !important;
+}
+
+.goal-item .goal-action-btn:hover {
+  color: rgba(15, 23, 42, 0.66) !important;
+  background-color: rgba(15, 23, 42, 0.04) !important;
+}
+
+.goal-item .goal-action-btn--edit:hover .v-icon {
+  color: rgba(59, 130, 246, 0.92) !important;
+}
+
+.goal-item .goal-action-btn--delete:hover .v-icon {
+  color: rgba(239, 68, 68, 0.95) !important;
+}
+
+.goal-item .goal-action-btn--delete:hover {
+  background-color: rgba(239, 68, 68, 0.08) !important;
 }
 
 /* Progress Section */

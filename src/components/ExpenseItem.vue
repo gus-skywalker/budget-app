@@ -5,47 +5,18 @@
         <v-list-item-title>
           {{ expense.description }}
         </v-list-item-title>
-        <v-list-item-subtitle>
-          {{ $t('expenseItem.amount') }} {{ expense.amount }} - {{ $t('expenseItem.date') }}: {{ expense.date }}
-        </v-list-item-subtitle>
-        <div v-if="expense.openFinance || expense.reconciliationStatus" class="status-row">
-          <v-chip
-            v-if="expense.openFinance"
-            color="#667eea"
-            size="small"
-            variant="tonal"
-          >
-            {{ $t('expenseItem.openFinance') }}
-          </v-chip>
-          <v-chip
-            v-if="expense.reconciliationStatus"
-            :color="reconciliationColor"
-            size="small"
-            variant="tonal"
-          >
-            {{ reconciliationLabel }}
-          </v-chip>
+        <div class="expense-meta-line">
+          <span class="expense-date-text">{{ expense.date }}</span>
+          <span v-if="expense.category" class="expense-meta-tag">· {{ translatedCategoryName }}</span>
+          <span v-else class="expense-meta-tag expense-meta-tag--warn">· {{ $t('expenseItem.uncategorized') }}</span>
+          <span v-if="expense.openFinance" class="expense-meta-tag">· {{ $t('expenseItem.openFinance') }}</span>
+          <span v-if="expense.visibilityScope === 'PRIVATE'" class="expense-meta-tag">· {{ visibilityScopeLabel }}</span>
+          <v-chip v-if="expense.reconciliationStatus" :color="reconciliationColor" size="x-small" variant="tonal" class="ml-1">{{ reconciliationLabel }}</v-chip>
         </div>
-        <div class="status-row">
-          <v-chip
-            size="small"
-            variant="outlined"
-            color="#667eea"
-          >
-            {{ visibilityScopeLabel }}
-          </v-chip>
-        </div>
-        <v-list-item-subtitle v-if="expense.category">
-          {{ $t('expenseItem.category') }}: {{ translatedCategoryName }}
-          <v-icon :icon="categoryIcons[expense.category.code]" class="mr-2"></v-icon>
-        </v-list-item-subtitle>
-        <div v-else class="uncategorized-row">
-          <v-chip size="small" color="warning" variant="tonal">
-            {{ $t('expenseItem.uncategorized') }}
-          </v-chip>
+        <div v-if="!expense.category" class="uncategorized-row">
           <v-chip
             v-if="hasSuggestionReady"
-            size="small"
+            size="x-small"
             color="#667eea"
             variant="tonal"
           >
@@ -143,47 +114,46 @@
           </v-chip>
         </v-list-item-subtitle>
       </div>
+      <div class="expense-amount-col">
+        <span class="expense-amount-text">{{ expense.amount }}</span>
+      </div>
       <div class="expense-actions">
         <v-btn
           v-if="expense.visibilityScope === 'WORKSPACE'"
           icon
           size="x-small"
-          density="comfortable"
+          variant="text"
           @click.stop="$emit('openComments', expense)"
-          color="#667eea"
-          class="expense-action-btn"
+          class="expense-action-btn expense-action-btn--share"
         >
-          <v-icon size="16">mdi-comment-text-outline</v-icon>
+          <v-icon size="15">mdi-comment-text-outline</v-icon>
         </v-btn>
         <v-btn
           icon
           size="x-small"
-          density="comfortable"
+          variant="text"
           @click.stop="isDialogOpen = true"
-          color="primary"
-          class="expense-action-btn"
+          class="expense-action-btn expense-action-btn--share"
         >
-          <v-icon size="16">mdi-share-variant</v-icon>
+          <v-icon size="15">mdi-share-variant</v-icon>
         </v-btn>
         <v-btn
           icon
           size="x-small"
-          density="comfortable"
-          color="orange"
+          variant="text"
           @click.stop="openAlertDialog"
-          class="expense-action-btn"
+          class="expense-action-btn expense-action-btn--timer"
         >
-          <v-icon size="16">mdi-alarm</v-icon>
+          <v-icon size="15">mdi-alarm</v-icon>
         </v-btn>
         <v-btn
           icon
           size="x-small"
-          density="comfortable"
-          color="red"
+          variant="text"
           @click.stop="$emit('deleteExpense', expense)"
-          class="expense-action-btn"
+          class="expense-action-btn expense-action-btn--delete"
         >
-          <v-icon size="16">mdi-delete</v-icon>
+          <v-icon size="15">mdi-delete</v-icon>
         </v-btn>
       </div>
     </div>
@@ -681,7 +651,7 @@ export default {
 .expense-item-layout {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
+  gap: 8px;
   width: 100%;
 }
 
@@ -693,27 +663,78 @@ export default {
 
 .expense-actions {
   display: flex;
-  gap: 6px;
-  margin-left: auto;
+  gap: 2px;
   align-items: center;
+  opacity: 0.38;
+  transition: opacity 0.2s ease;
+}
+
+.expense-item:hover .expense-actions,
+.expense-item:focus-within .expense-actions {
+  opacity: 0.85;
 }
 
 .expense-action-btn {
-  min-width: 32px;
-  width: 32px;
-  height: 32px;
-  padding: 0;
+  min-width: 26px !important;
+  width: 26px !important;
+  height: 26px !important;
+  padding: 0 !important;
+  border-radius: 5px !important;
+  color: rgba(15, 23, 42, 0.46) !important;
+  transition:
+    color 0.18s ease,
+    background-color 0.18s ease,
+    opacity 0.18s ease;
 }
 
 .expense-action-btn .v-icon {
-  line-height: 32px;
+  line-height: 26px;
+  font-size: 14px !important;
+  transition: color 0.18s ease;
+}
+
+.expense-action-btn--share .v-icon {
+  color: rgba(59, 130, 246, 0.74) !important;
+}
+
+.expense-action-btn--timer .v-icon {
+  color: rgba(249, 115, 22, 0.74) !important;
+}
+
+.expense-action-btn--delete .v-icon {
+  color: rgba(239, 68, 68, 0.74) !important;
+}
+
+.expense-action-btn:hover {
+  color: rgba(15, 23, 42, 0.66) !important;
+  background-color: rgba(15, 23, 42, 0.04) !important;
+}
+
+.expense-action-btn:hover .v-icon {
+  opacity: 1;
+}
+
+.expense-action-btn--share:hover .v-icon {
+  color: rgba(59, 130, 246, 0.92) !important;
+}
+
+.expense-action-btn--timer:hover .v-icon {
+  color: rgba(249, 115, 22, 0.92) !important;
+}
+
+.expense-action-btn--delete:hover {
+  background-color: rgba(198, 40, 40, 0.08) !important;
+}
+
+.expense-action-btn--delete:hover .v-icon {
+  color: rgba(239, 68, 68, 0.95) !important;
 }
 
 .status-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin: 6px 0;
+  gap: 4px;
+  margin: 2px 0;
 }
 
 .conflict-resolution-row {
@@ -726,9 +747,57 @@ export default {
 .uncategorized-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
-  margin: 6px 0;
+  margin: 2px 0;
+}
+
+.expense-meta-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.expense-date-text {
+  font-size: 0.75rem;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.expense-meta-tag {
+  font-size: 0.75rem;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.expense-meta-tag--warn {
+  color: #e65100;
+}
+
+.expense-amount-col {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding-top: 2px;
+  min-width: 80px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.expense-amount-text {
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.v-theme--dark .expense-date-text,
+.v-theme--dark .expense-meta-tag {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.v-theme--dark .expense-meta-tag--warn {
+  color: #ffb74d;
 }
 
 .suggestion-details {
@@ -757,11 +826,16 @@ export default {
     gap: 8px;
   }
 
+  .expense-amount-col {
+    margin-left: auto;
+  }
+
   .expense-actions {
     width: 100%;
     justify-content: center;
     margin-left: 0;
     margin-top: 4px;
+    opacity: 1;
   }
 }
 </style>

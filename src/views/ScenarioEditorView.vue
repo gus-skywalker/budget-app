@@ -138,53 +138,8 @@
         </div>
 
         <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
-        <p v-if="successMessage" class="success-message">{{ successMessage }}</p>
       </div>
     </v-container>
-
-    <v-dialog v-model="previewDialogOpen" max-width="820">
-      <v-card v-if="previewResult">
-        <v-card-title>Simulation preview</v-card-title>
-        <v-card-text>
-          <div class="preview-hero">
-            <span>Monthly impact</span>
-            <strong :class="{ 'positive-value': previewResult.scenarioMonthlyImpact > 0, 'negative-value': previewResult.scenarioMonthlyImpact < 0 }">
-              {{ formatSignedCurrency(previewResult.scenarioMonthlyImpact) }}
-            </strong>
-            <p>{{ previewResult.summary || previewSummary }}</p>
-          </div>
-
-          <div class="preview-metrics">
-            <div class="summary-item">
-              <span>Projected final balance</span>
-              <strong :class="{ 'negative-value': previewResult.projectedFinalBalance < 0 }">
-                {{ formatCurrency(previewResult.projectedFinalBalance) }}
-              </strong>
-            </div>
-            <div class="summary-item">
-              <span>Status</span>
-              <strong>{{ previewStatusLabel }}</strong>
-            </div>
-            <div class="summary-item">
-              <span>Available for goals</span>
-              <strong>{{ formatCurrency(previewResult.availableForGoals) }}</strong>
-            </div>
-          </div>
-        </v-card-text>
-        <v-card-actions>
-          <v-btn variant="text" @click="previewDialogOpen = false">Continue editing</v-btn>
-          <v-spacer />
-          <v-btn variant="tonal" color="#667eea" :loading="isSaving" @click="saveScenarioFromPreview">
-            <v-icon start>mdi-content-save-outline</v-icon>
-            Save scenario
-          </v-btn>
-          <v-btn variant="tonal" color="#4f46e5" :loading="isCreatingDecision" @click="createDecisionFromPreview">
-            <v-icon start>mdi-lightbulb-outline</v-icon>
-            Save and create decision
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
   </div>
 </template>
 
@@ -196,7 +151,6 @@ import BudgetService from '@/services/BudgetService'
 import ScenarioService from '@/services/ScenarioService'
 import DecisionService from '@/services/DecisionService'
 import {
-  buildScenarioPayload,
   buildScenarioLinesFromBudget,
   buildSimulationPayload,
   createAdjustment,
@@ -210,16 +164,10 @@ import {
 const route = useRoute()
 const router = useRouter()
 const { t, locale } = useI18n()
-const DECISIONS_FLASH_SUCCESS_KEY = 'decisions-flash-success'
 
 const isLoading = ref(false)
 const isSimulating = ref(false)
-const isSaving = ref(false)
-const isCreatingDecision = ref(false)
 const errorMessage = ref('')
-const successMessage = ref('')
-const previewDialogOpen = ref(false)
-const previewResult = ref<Awaited<ReturnType<typeof ScenarioService.simulate>>['data'] | null>(null)
 
 const snapshot = reactive<ScenarioWizardSnapshot>({
   scenarioName: '',
@@ -231,26 +179,6 @@ const snapshot = reactive<ScenarioWizardSnapshot>({
 
 const estimatedImpact = computed(() => monthlyImpactEstimate(snapshot))
 const canSimulate = computed(() => hasAnyScenarioChange(snapshot))
-const previewStatusLabel = computed(() => {
-  if (previewResult.value?.decisionStatus === 'ACTION_NEEDED') return t('planning.scenarios.status_action_needed')
-  if (previewResult.value?.decisionStatus === 'WATCH') return t('planning.scenarios.status_watch')
-  if (previewResult.value?.decisionStatus === 'STABLE') return t('planning.scenarios.status_stable')
-  return t('planning.scenarios.status_no_data')
-})
-const previewSummary = computed(() => {
-  if (!previewResult.value) return ''
-  if (previewResult.value.scenarioMonthlyImpact > 0) {
-    return t('planning.scenarios.consequence_positive', {
-      amount: formatCurrency(previewResult.value.scenarioMonthlyImpact),
-    })
-  }
-  if (previewResult.value.scenarioMonthlyImpact < 0) {
-    return t('planning.scenarios.consequence_negative', {
-      amount: formatCurrency(Math.abs(previewResult.value.scenarioMonthlyImpact)),
-    })
-  }
-  return t('planning.scenarios.consequence_neutral')
-})
 
 const formatCurrency = (value: number) =>
   Number(value || 0).toLocaleString(
@@ -273,15 +201,6 @@ const removeAdjustment = (id: string) => {
     return
   }
   snapshot.adjustments = snapshot.adjustments.filter((item) => item.id !== id)
-}
-
-const extractErrorStatus = (error: unknown): number =>
-  Number((error as { response?: { status?: number } })?.response?.status || 0)
-
-const buildVersionedScenarioName = (name?: string): string => {
-  const base = String(name || '').trim() || t('planning.scenarios.default_name')
-  if (!/\(new\)$/i.test(base)) return `${base} (new)`
-  return `${base} ${new Date().toISOString().slice(11, 19)}`
 }
 
 const openScenarioResult = async () => {
@@ -336,94 +255,25 @@ const simulate = async () => {
   try {
     const { data } = await ScenarioService.simulate(buildSimulationPayload(snapshot))
     saveWizardSnapshot(snapshot)
-    previewResult.value = data
-    previewDialogOpen.value = true
+    const routeId = String(route.params.id || '')
+    const targetScenarioId = snapshot.currentScenarioId || routeId || 'preview'
     window.sessionStorage.setItem(
       'planning-scenario-latest-result',
       JSON.stringify({
-        scenarioId: snapshot.currentScenarioId || String(route.params.id || ''),
+        scenarioId: targetScenarioId,
         result: data,
       }),
     )
+    await router.push({
+      name: 'planning-scenarios-result',
+      params: { id: targetScenarioId },
+      query: { simulatedAt: String(Date.now()) },
+    })
   } catch (e) {
     console.error(e)
     errorMessage.value = t('planning.scenarios.error')
   } finally {
     isSimulating.value = false
-  }
-}
-
-const persistScenario = async (): Promise<string> => {
-  const payload = {
-    ...buildScenarioPayload(snapshot),
-    id: snapshot.currentScenarioId || undefined,
-  }
-
-  try {
-    const { data } = await ScenarioService.save(payload)
-    snapshot.currentScenarioId = data.id
-    snapshot.scenarioName = data.name || snapshot.scenarioName
-    saveWizardSnapshot(snapshot)
-    return data.id
-  } catch (error) {
-    if (extractErrorStatus(error) !== 409) {
-      throw error
-    }
-
-    // Conflict-safe fallback: save as a new scenario version instead of overwriting.
-    const conflictSafeName = buildVersionedScenarioName(snapshot.scenarioName)
-    const { data } = await ScenarioService.save({
-      ...payload,
-      id: undefined,
-      name: conflictSafeName,
-    })
-    snapshot.currentScenarioId = data.id
-    snapshot.scenarioName = data.name || conflictSafeName
-    saveWizardSnapshot(snapshot)
-    return data.id
-  }
-}
-
-const saveScenarioFromPreview = async () => {
-  isSaving.value = true
-  errorMessage.value = ''
-  successMessage.value = ''
-  try {
-    const id = await persistScenario()
-    successMessage.value = t('planning.scenarios.save_success', {
-      name: snapshot.scenarioName || t('planning.scenarios.default_name'),
-    })
-    const routeId = String(route.params.id || '')
-    if (routeId !== id) {
-      await router.replace({ name: 'planning-scenarios-edit', params: { id } })
-    }
-    previewDialogOpen.value = false
-  } catch (e) {
-    console.error(e)
-    errorMessage.value = t('planning.scenarios.save_error')
-  } finally {
-    isSaving.value = false
-  }
-}
-
-const createDecisionFromPreview = async () => {
-  isCreatingDecision.value = true
-  errorMessage.value = ''
-  successMessage.value = ''
-  try {
-    const persistedScenarioId = await persistScenario()
-    await DecisionService.createFromScenario(persistedScenarioId)
-    window.sessionStorage.setItem(
-      DECISIONS_FLASH_SUCCESS_KEY,
-      JSON.stringify({ scenarioName: snapshot.scenarioName || t('planning.scenarios.default_name') }),
-    )
-    previewDialogOpen.value = false
-    await router.push({ name: 'decisions', query: { scenarios: persistedScenarioId } })
-  } catch (e) {
-    console.error(e)
-    errorMessage.value = t('planning.scenarios.error')
-  } finally {
-    isCreatingDecision.value = false
   }
 }
 
@@ -543,51 +393,12 @@ onMounted(() => {
   font-size: 0.88rem;
 }
 
-.success-message {
-  color: #166534;
-  margin: 0;
-}
-
 .editor-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 10px;
   margin-top: 6px;
-}
-
-.preview-hero {
-  border: 1px solid rgba(79, 70, 229, 0.2);
-  border-radius: 14px;
-  background: rgba(79, 70, 229, 0.08);
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 12px;
-}
-
-.preview-hero span {
-  font-size: 0.82rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #4f46e5;
-  font-weight: 700;
-}
-
-.preview-hero strong {
-  font-size: 2rem;
-}
-
-.preview-hero p {
-  margin: 0;
-  color: #334155;
-}
-
-.preview-metrics {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 10px;
 }
 
 @media (max-width: 900px) {

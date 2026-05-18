@@ -109,27 +109,48 @@ const activeOpenFinanceConnections = computed(() => {
   return openFinanceConnections.value.filter((connection) => ACTIVE_OPEN_FINANCE_STATUSES.has(String(connection.status || '').toUpperCase()))
 })
 
-const activeOpenFinanceInstitutionNames = computed(() => {
-  return activeOpenFinanceConnections.value
-    .map((connection) => String(connection.institutionName || '').trim())
-    .filter((name) => name.length > 0)
+const visibleAccounts = computed(() => {
+  const nonOpenFinanceAccounts = accounts.value.filter((account) => String(account.provider || '').toUpperCase() !== 'OPEN_FINANCE')
+  const openFinanceAccounts = accounts.value.filter((account) => String(account.provider || '').toUpperCase() === 'OPEN_FINANCE')
+  const syntheticConnectionAccounts = activeOpenFinanceConnections.value
+    .filter((connection) => !openFinanceAccounts.some((account) => accountMatchesConnection(account, connection)))
+    .map(connectionToAccountView)
+
+  return [
+    ...nonOpenFinanceAccounts,
+    ...openFinanceAccounts,
+    ...syntheticConnectionAccounts,
+  ]
 })
 
-const visibleAccounts = computed(() => {
-  const activeInstitutions = activeOpenFinanceInstitutionNames.value
-  if (!activeInstitutions.length) {
-    return accounts.value.filter((account) => String(account.provider || '').toUpperCase() !== 'OPEN_FINANCE')
-  }
+const accountMatchesConnection = (account: AccountView, connection: OpenFinanceConnection) => {
+  const bankCode = String(account.bankCode || '').trim()
+  if (bankCode && connection.bankCode && bankCode === connection.bankCode) return true
 
-  return accounts.value.filter((account) => {
-    const provider = String(account.provider || '').toUpperCase()
-    if (provider !== 'OPEN_FINANCE') {
-      return true
-    }
+  const institutionKey = String(account.institutionKey || '').trim()
+  if (institutionKey && connection.institutionKey && institutionKey === connection.institutionKey) return true
 
-    const accountName = String(account.name || '')
-    return activeInstitutions.some((institutionName) => accountName.startsWith(`${institutionName} - `))
-  })
+  const institutionName = String(account.institutionName || '').trim()
+  if (institutionName && connection.institutionName && institutionName === connection.institutionName) return true
+
+  const accountName = String(account.name || '')
+  const connectionName = String(connection.institutionName || '').trim()
+  if (connectionName && accountName.startsWith(`${connectionName} - `)) return true
+
+  const displayName = String(connection.displayName || '').trim()
+  return Boolean(displayName && accountName === displayName)
+}
+
+const connectionToAccountView = (connection: OpenFinanceConnection): AccountView => ({
+  id: `open-finance-connection-${connection.id}`,
+  name: connection.displayName || connection.institutionName || 'Open Finance',
+  provider: 'OPEN_FINANCE',
+  accountType: connection.statementType || 'BANK',
+  currency: 'BRL',
+  balance: 0,
+  bankCode: connection.bankCode || null,
+  institutionKey: connection.institutionKey || null,
+  institutionName: connection.institutionName || null,
 })
 
 const getLocaleForFormatting = () => {

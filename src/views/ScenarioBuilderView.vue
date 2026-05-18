@@ -158,18 +158,6 @@
                   {{ formatSignedCurrency(estimatedImpact) }}
                 </strong>
               </div>
-              <div class="wizard-next-btn">
-                <v-btn
-                  color="#667eea"
-                  variant="tonal"
-                  :disabled="step === 4 || isSimulating"
-                  @click="step = Math.min(4, step + 1)"
-                  class="primary-next-btn"
-                >
-                  {{ t('contentExperience.planning.scenarioBuilder.next') }}
-                  <v-icon end>mdi-arrow-right</v-icon>
-                </v-btn>
-              </div>
             </div>
           </section>
 
@@ -633,16 +621,6 @@ watch(
   border-radius: 10px;
 }
 
-.primary-next-btn {
-  border-radius: 10px;
-  font-weight: 700;
-  min-width: 120px;
-}
-
-.wizard-next-btn {
-  margin-left: auto;
-}
-
 .wizard-input {
   border-radius: 8px;
   margin-bottom: 12px;
@@ -754,10 +732,6 @@ watch(
   .wizard-inline-actions.new-layout :deep(.v-btn),
   .wizard-footer :deep(.v-btn) {
     width: 100%;
-  }
-
-  .wizard-next-btn {
-    margin-left: 0;
   }
 
   .impact-estimate {
