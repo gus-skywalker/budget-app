@@ -19,6 +19,8 @@ export interface Budget {
   totalIncome: number
   totalExpense: number
   net: number
+  createdAt?: string
+  updatedAt?: string
   lines: BudgetLine[]
 }
 
@@ -53,6 +55,17 @@ export interface BudgetSuggestion {
   net: number
   lookbackMonths?: number
   lines: BudgetSuggestionLine[]
+}
+
+export interface BudgetBaselineGenerationResponse {
+  budgetId?: string
+  month: number
+  year: number
+  incomeTotal: number
+  expenseTotal: number
+  netAmount: number
+  source: 'OPEN_FINANCE_AGGREGATED'
+  status: 'ACTIVE' | 'NO_DATA'
 }
 
 export interface BudgetFromSuggestionRequest {
@@ -103,11 +116,17 @@ export interface FinancialInsightsResponse {
 }
 
 export default {
+  async list(month?: number, year?: number) {
+    return axiosInterceptor.get<Budget[]>('/budgets', { params: { month, year } })
+  },
   async getCurrent(month?: number, year?: number) {
     return axiosInterceptor.get<Budget>('/budgets/current', { params: { month, year } })
   },
   getSuggestions(month?: number, year?: number) {
     return axiosInterceptor.get<BudgetSuggestion>('/budgets/suggestions', { params: { month, year } })
+  },
+  generateBaseline(month?: number, year?: number) {
+    return axiosInterceptor.post<BudgetBaselineGenerationResponse>('/budgets/generate-baseline', null, { params: { month, year } })
   },
   getComparison(month?: number, year?: number) {
     return axiosInterceptor.get<BudgetComparison>('/budgets/comparison', { params: { month, year } })

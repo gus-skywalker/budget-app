@@ -16,20 +16,76 @@
           </h2>
         </div>
         <div class="card-content">
-          <div v-if="isLoading" class="helper-text">Loading active budget...</div>
+          <div v-if="isLoading" class="helper-text">Loading budget baselines...</div>
 
-          <div v-else-if="!activeBudget" class="empty-state">
+          <template v-else>
             <v-alert
               v-if="emptyBudgetMessage"
               type="info"
               variant="tonal"
               density="comfortable"
-              class="mb-2"
+              class="mb-1"
             >
               {{ emptyBudgetMessage }}
             </v-alert>
 
-            <template v-if="showSuggestionEditor && suggestion">
+            <v-alert
+              v-if="bannerMessage"
+              type="info"
+              variant="tonal"
+              density="comfortable"
+              class="mb-1"
+            >
+              {{ bannerMessage }}
+            </v-alert>
+
+            <section v-if="activeBudget" class="baseline-section">
+              <div class="section-heading">
+                <div>
+                  <p class="section-kicker">Active baseline</p>
+                  <h3>{{ baselineTitle(activeBudget) }}</h3>
+                </div>
+                <v-chip color="success" variant="tonal" size="small">Used by scenarios</v-chip>
+              </div>
+
+              <div class="summary-grid">
+                <div class="summary-card">
+                  <span>Total income</span>
+                  <strong>{{ formatCurrency(activeBudget.totalIncome) }}</strong>
+                </div>
+                <div class="summary-card">
+                  <span>Total expense</span>
+                  <strong>{{ formatCurrency(activeBudget.totalExpense) }}</strong>
+                </div>
+                <div class="summary-card">
+                  <span>Net</span>
+                  <strong :class="{ 'negative-value': activeBudget.net < 0 }">{{ formatCurrency(activeBudget.net) }}</strong>
+                </div>
+              </div>
+
+              <div class="baseline-meta">
+                <span>{{ activeBudget.periodMonth }}/{{ activeBudget.periodYear }}</span>
+                <span>{{ activeBudget.lines?.length || 0 }} lines</span>
+                <span>{{ baselineSourceLabel(activeBudget) }}</span>
+              </div>
+
+              <div class="flow-action">
+                <v-btn color="#667eea" size="large" @click="goToScenarioCreation">
+                  <v-icon start>mdi-chart-timeline-variant</v-icon>
+                  Create Scenario
+                </v-btn>
+              </div>
+            </section>
+
+            <section v-else-if="!showSuggestionEditor && !showManualEditor" class="empty-state">
+              <v-icon color="#94a3b8" size="28">mdi-wallet-plus-outline</v-icon>
+              <p class="empty-title">Start your active baseline</p>
+              <p class="helper-text">
+                A baseline is the financial reference used by scenarios. You can start from real transactions or enter a manual value.
+              </p>
+            </section>
+
+            <section v-if="showSuggestionEditor && suggestion" class="baseline-section">
               <div class="suggestion-header">
                 <h3>Suggested Budget</h3>
                 <p>This suggestion is based on your last {{ suggestion.lookbackMonths || 3 }} months average.</p>
@@ -94,9 +150,9 @@
                   Cancel
                 </v-btn>
               </div>
-            </template>
+            </section>
 
-            <template v-else-if="showManualEditor">
+            <section v-else-if="showManualEditor" class="baseline-section">
               <template v-if="manualMode === 'quick'">
                 <div class="suggestion-header">
                   <h3>Quick Baseline</h3>
@@ -222,71 +278,99 @@
                   </v-btn>
                 </div>
               </template>
-            </template>
+            </section>
 
-            <template v-else-if="hasSuggestionData">
-              <v-icon color="#10b981" size="28">mdi-chart-line-variant</v-icon>
-              <p class="empty-title">Start from your real data</p>
-              <p class="helper-text">We found financial activity. We can suggest a plan based on your recent transactions.</p>
-              <div class="empty-actions">
-                <v-btn color="#667eea" :loading="isGeneratingSuggestion" @click="generateSuggestion">
-                  <v-icon start>mdi-auto-fix</v-icon>
-                  Generate Suggested Budget
-                </v-btn>
-                <v-btn variant="text" color="#667eea" @click="startManualBudget">
-                  <v-icon start>mdi-pencil-outline</v-icon>
-                  Create Budget Manually
-                </v-btn>
+            <section v-if="!showSuggestionEditor && !showManualEditor" class="baseline-section">
+              <div class="section-heading">
+                <div>
+                  <p class="section-kicker">Create baseline</p>
+                  <h3>Choose the source for this period</h3>
+                </div>
               </div>
-            </template>
 
-            <template v-else>
-              <v-icon color="#94a3b8" size="28">mdi-wallet-plus-outline</v-icon>
-              <p class="empty-title">Start your financial plan</p>
-              <div class="empty-actions">
-                <v-btn color="#667eea" @click="startManualBudget">
-                  <v-icon start>mdi-plus-circle-outline</v-icon>
-                  Create Budget Manually
-                </v-btn>
-              </div>
-            </template>
-          </div>
+              <div class="baseline-option-grid">
+                <div class="baseline-option">
+                  <v-icon color="#10b981" size="26">mdi-bank-transfer-in</v-icon>
+                  <div>
+                    <h4>Suggested budget from transactions</h4>
+                    <p>{{ suggestionMessage }}</p>
+                  </div>
+                  <v-btn
+                    color="#667eea"
+                    :loading="isGeneratingSuggestion"
+                    :disabled="isGeneratingSuggestion"
+                    @click="generateSuggestion"
+                  >
+                    <v-icon start>mdi-auto-fix</v-icon>
+                    Generate Suggested Budget
+                  </v-btn>
+                </div>
 
-          <template v-else>
-            <v-alert
-              v-if="bannerMessage"
-              type="info"
-              variant="tonal"
-              density="comfortable"
-              class="mb-3"
-            >
-              {{ bannerMessage }}
-            </v-alert>
-            <div class="summary-grid">
-              <div class="summary-card">
-                <span>Total income</span>
-                <strong>{{ formatCurrency(activeBudget.totalIncome) }}</strong>
-              </div>
-              <div class="summary-card">
-                <span>Total expense</span>
-                <strong>{{ formatCurrency(activeBudget.totalExpense) }}</strong>
-              </div>
-              <div class="summary-card">
-                <span>Net</span>
-                <strong :class="{ 'negative-value': activeBudget.net < 0 }">{{ formatCurrency(activeBudget.net) }}</strong>
-              </div>
-            </div>
+                <div class="baseline-option">
+                  <v-icon color="#0ea5e9" size="26">mdi-finance</v-icon>
+                  <div>
+                    <h4>Real baseline from OpenFinance</h4>
+                    <p>{{ consolidatedBaselineMessage }}</p>
+                  </div>
+                  <v-btn
+                    color="#0f766e"
+                    :loading="isGeneratingRealBaseline"
+                    :disabled="isGeneratingRealBaseline"
+                    @click="generateRealBaseline"
+                  >
+                    <v-icon start>mdi-chart-box-outline</v-icon>
+                    Generate Real Baseline
+                  </v-btn>
+                </div>
 
-            <div class="helper-text">
-              Baseline period: {{ activeBudget.periodMonth }}/{{ activeBudget.periodYear }} · {{ activeBudget.lines?.length || 0 }} lines
-            </div>
+                <div class="baseline-option">
+                  <v-icon color="#667eea" size="26">mdi-pencil-outline</v-icon>
+                  <div>
+                    <h4>Quick manual baseline</h4>
+                    <p>Use one monthly net cashflow number when there is no detailed budget yet.</p>
+                  </div>
+                  <v-btn :variant="hasSuggestionData ? 'tonal' : 'flat'" color="#667eea" @click="startManualBudget">
+                    <v-icon start>mdi-plus-circle-outline</v-icon>
+                    Create Manually
+                  </v-btn>
+                </div>
+              </div>
+            </section>
 
-            <div class="flow-action">
-              <v-btn color="#667eea" size="large" @click="goToScenarioCreation">
-                <v-icon start>mdi-chart-timeline-variant</v-icon>
-                Create Scenario
-              </v-btn>
-            </div>
+            <section v-if="usableAlternativeBudgets.length" class="baseline-section">
+              <div class="section-heading">
+                <div>
+                  <p class="section-kicker">Available baselines</p>
+                  <h3>Other versions for {{ now.getMonth() + 1 }}/{{ now.getFullYear() }}</h3>
+                </div>
+              </div>
+
+              <div class="baseline-list">
+                <div
+                  v-for="budget in usableAlternativeBudgets"
+                  :key="budget.id"
+                  class="baseline-row"
+                >
+                  <div>
+                    <h4>{{ baselineTitle(budget) }}</h4>
+                    <p>{{ baselineSourceLabel(budget) }} · {{ budget.lines?.length || 0 }} lines</p>
+                  </div>
+                  <div class="baseline-row__numbers">
+                    <span>Net</span>
+                    <strong :class="{ 'negative-value': budget.net < 0 }">{{ formatCurrency(budget.net) }}</strong>
+                  </div>
+                  <v-btn
+                    variant="tonal"
+                    color="#667eea"
+                    :loading="activatingBudgetId === budget.id"
+                    :disabled="Boolean(activatingBudgetId)"
+                    @click="activateExistingBudget(budget)"
+                  >
+                    Set Active
+                  </v-btn>
+                </div>
+              </div>
+            </section>
           </template>
         </div>
       </div>
@@ -320,8 +404,11 @@ const { locale } = useI18n()
 const isLoading = ref(false)
 const isCreatingManualBudget = ref(false)
 const isGeneratingSuggestion = ref(false)
+const isGeneratingRealBaseline = ref(false)
 const isUsingSuggestedPlan = ref(false)
+const activatingBudgetId = ref<string | null>(null)
 const activeBudget = ref<Budget | null>(null)
+const allBudgets = ref<Budget[]>([])
 const suggestion = ref<BudgetSuggestion | null>(null)
 const hasSuggestionData = ref(false)
 const showSuggestionEditor = ref(false)
@@ -365,6 +452,19 @@ const hasManualBudgetValues = computed(() =>
     (line) => line.category.trim().length > 0 && Number(line.plannedAmount || 0) > 0
   )
 )
+const usableAlternativeBudgets = computed(() =>
+  allBudgets.value.filter(
+    (budget) => budget.id !== activeBudget.value?.id && hasUsableBudgetBaseline(budget)
+  )
+)
+const suggestionMessage = computed(() =>
+  hasSuggestionData.value
+    ? 'Use recent OpenFinance activity to suggest editable budget lines.'
+    : 'No editable suggestions are ready yet. Check sync status and planning visibility.'
+)
+const consolidatedBaselineMessage = computed(() =>
+  'Create the official planning baseline from aggregated OpenFinance totals for this period.'
+)
 
 const formatCurrency = (value: number) =>
   Number(value || 0).toLocaleString(
@@ -383,18 +483,18 @@ const hasUsableBudgetBaseline = (budget: Budget): boolean =>
   Array.isArray(budget.lines) &&
   budget.lines.some((line) => Number(line.plannedAmount || 0) > 0)
 
+const findActiveBudget = (budgets: Budget[]): Budget | null =>
+  budgets.find((budget) => budget.status === 'ACTIVE' && hasUsableBudgetBaseline(budget)) || null
+
 const loadCurrentBudget = async () => {
   isLoading.value = true
   emptyBudgetMessage.value = ''
   try {
-    const { data, status } = await BudgetService.getCurrent(now.value.getMonth() + 1, now.value.getFullYear())
-    if (status === 204 || !data || typeof data !== 'object' || !('id' in data)) {
-      activeBudget.value = null
-      await preloadSuggestionAvailability()
-      return
-    }
-    const currentBudget = data as Budget
-    if (!hasUsableBudgetBaseline(currentBudget)) {
+    const { data } = await BudgetService.list(now.value.getMonth() + 1, now.value.getFullYear())
+    const budgets = Array.isArray(data) ? data : []
+    allBudgets.value = budgets
+    const currentBudget = findActiveBudget(budgets)
+    if (!currentBudget && budgets.some((budget) => budget.status === 'ACTIVE')) {
       activeBudget.value = null
       emptyBudgetMessage.value = 'Your current plan is empty. Add real baseline values or generate a plan from recent financial activity before creating scenarios.'
       await preloadSuggestionAvailability()
@@ -402,10 +502,9 @@ const loadCurrentBudget = async () => {
     }
 
     activeBudget.value = currentBudget
-    suggestion.value = null
-    hasSuggestionData.value = false
     showSuggestionEditor.value = false
     showManualEditor.value = false
+    await preloadSuggestionAvailability()
   } catch (error) {
     console.error(error)
     activeBudget.value = null
@@ -429,6 +528,8 @@ const preloadSuggestionAvailability = async () => {
 const generateSuggestion = async () => {
   isGeneratingSuggestion.value = true
   showManualEditor.value = false
+  bannerMessage.value = ''
+  emptyBudgetMessage.value = ''
   try {
     const { data } = await BudgetService.getSuggestions(now.value.getMonth() + 1, now.value.getFullYear())
     suggestion.value = data
@@ -438,10 +539,36 @@ const generateSuggestion = async () => {
     }))
     showSuggestionEditor.value = editableSuggestionLines.value.length > 0
     hasSuggestionData.value = editableSuggestionLines.value.length > 0
+    if (!hasSuggestionData.value) {
+      emptyBudgetMessage.value = 'No editable budget suggestions are available for this period yet. Check sync status, transaction dates, and planning sharing.'
+    }
   } catch (error) {
     console.error(error)
+    emptyBudgetMessage.value = 'Could not generate editable suggestions from OpenFinance transactions.'
   } finally {
     isGeneratingSuggestion.value = false
+  }
+}
+
+const generateRealBaseline = async () => {
+  isGeneratingRealBaseline.value = true
+  bannerMessage.value = ''
+  emptyBudgetMessage.value = ''
+  showSuggestionEditor.value = false
+  showManualEditor.value = false
+  try {
+    const { data } = await BudgetService.generateBaseline(now.value.getMonth() + 1, now.value.getFullYear())
+    if (!data || data.status === 'NO_DATA' || !data.budgetId) {
+      emptyBudgetMessage.value = 'No aggregated OpenFinance totals are available for this period yet. Check sync status and planning sharing.'
+      return
+    }
+    await loadCurrentBudget()
+    bannerMessage.value = `OpenFinance baseline activated. Income ${formatCurrency(data.incomeTotal)}, expense ${formatCurrency(data.expenseTotal)}, net ${formatCurrency(data.netAmount)}.`
+  } catch (error) {
+    console.error(error)
+    emptyBudgetMessage.value = 'Could not generate a consolidated OpenFinance baseline.'
+  } finally {
+    isGeneratingRealBaseline.value = false
   }
 }
 
@@ -542,6 +669,19 @@ const createQuickBaselineBudget = async () => {
   }
 }
 
+const activateExistingBudget = async (budget: Budget) => {
+  activatingBudgetId.value = budget.id
+  try {
+    await BudgetService.activate(budget.id)
+    await loadCurrentBudget()
+    bannerMessage.value = `${baselineTitle(budget)} is now the active baseline.`
+  } catch (error) {
+    console.error(error)
+  } finally {
+    activatingBudgetId.value = null
+  }
+}
+
 const createManualBudget = async () => {
   const lines = editableManualLines.value
     .map((line) => ({
@@ -589,6 +729,29 @@ const confidenceColor = (confidence?: string) => {
   if (confidence === 'HIGH') return 'success'
   if (confidence === 'MEDIUM') return 'warning'
   return 'default'
+}
+
+const isQuickManualBudget = (budget: Budget): boolean =>
+  (budget.lines || []).length === 1 &&
+  String(budget.lines[0]?.category || '').toLowerCase() === 'manual net baseline'
+
+const isOpenFinanceAggregatedBaseline = (budget: Budget): boolean => {
+  const categories = (budget.lines || []).map((line) => String(line.category || '').toLowerCase())
+  return categories.includes('openfinance aggregated income') || categories.includes('openfinance aggregated expense')
+}
+
+const baselineSourceLabel = (budget: Budget): string => {
+  if (isOpenFinanceAggregatedBaseline(budget)) return 'OpenFinance baseline'
+  if (isQuickManualBudget(budget)) return 'Quick manual'
+  if ((budget.lines || []).length > 1) return 'Detailed budget'
+  return 'Manual budget'
+}
+
+const baselineTitle = (budget: Budget): string => {
+  if (isOpenFinanceAggregatedBaseline(budget)) return 'OpenFinance consolidated baseline'
+  if (isQuickManualBudget(budget)) return 'Quick manual baseline'
+  if (budget.status === 'ACTIVE') return 'Current financial baseline'
+  return 'Budget baseline'
 }
 
 onMounted(async () => {
@@ -680,6 +843,109 @@ onMounted(async () => {
   padding: 24px;
   display: grid;
   gap: 16px;
+}
+
+.baseline-section {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid rgba(102, 126, 234, 0.12);
+  border-radius: 12px;
+  background: rgba(248, 250, 252, 0.72);
+}
+
+.section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.section-heading h3 {
+  margin: 0;
+  color: #0f172a;
+}
+
+.section-kicker {
+  margin: 0 0 3px;
+  color: #667eea;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.baseline-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.baseline-meta span:not(:last-child)::after {
+  content: "·";
+  margin-left: 8px;
+  color: #94a3b8;
+}
+
+.baseline-option-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.baseline-option {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(102, 126, 234, 0.14);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.baseline-option--muted {
+  background: rgba(248, 250, 252, 0.7);
+}
+
+.baseline-option h4,
+.baseline-row h4 {
+  margin: 0 0 3px;
+  color: #0f172a;
+}
+
+.baseline-option p,
+.baseline-row p {
+  margin: 0;
+  color: #64748b;
+}
+
+.baseline-list {
+  display: grid;
+  gap: 10px;
+}
+
+.baseline-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(120px, auto) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.baseline-row__numbers {
+  display: grid;
+  gap: 2px;
+}
+
+.baseline-row__numbers span {
+  color: #64748b;
+  font-size: 0.82rem;
 }
 
 .summary-grid {
@@ -806,6 +1072,16 @@ onMounted(async () => {
 }
 
 @media (max-width: 760px) {
+  .section-heading,
+  .baseline-option,
+  .baseline-row {
+    grid-template-columns: 1fr;
+  }
+
+  .section-heading {
+    display: grid;
+  }
+
   .quick-baseline-panel {
     grid-template-columns: 1fr;
   }

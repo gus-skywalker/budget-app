@@ -130,6 +130,17 @@
               Atualizar status
             </v-btn>
             <v-btn
+              v-if="showDevSync(connection)"
+              size="small"
+              variant="outlined"
+              color="warning"
+              :loading="busyConnectionId === connection.id"
+              :disabled="!canManage"
+              @click="syncNowForDev(connection)"
+            >
+              DEV sync
+            </v-btn>
+            <v-btn
               size="small"
               variant="text"
               color="error"
@@ -255,6 +266,11 @@ const statusUi = (status: string | null | undefined) => consentStatusUi[String(s
 const showContinueAuthorization = (connection: OpenFinanceConnection) => connection.consentStatus === 'PENDING_AUTHORIZATION' && Boolean(connection.authorizationLink || connection.openfinanceLink)
 const showRetry = (connection: OpenFinanceConnection) => ['AUTHORIZATION_EXPIRED', 'AUTHORIZATION_FAILED', 'USER_CANCELLED_AUTHORIZATION', 'REAUTH_REQUIRED'].includes(String(connection.consentStatus || ''))
 const showRefresh = (connection: OpenFinanceConnection) => ['PENDING_AUTHORIZATION', 'CONSENT_GRANTED_WAITING_PROVIDER', 'DELAYED_PROVIDER'].includes(String(connection.consentStatus || ''))
+const isDevMode = import.meta.env.DEV
+const showDevSync = (connection: OpenFinanceConnection) => (
+  isDevMode
+  && (connection.status === 'CONNECTED' || ['AUTHORIZED_READY', 'AUTHORIZED_SYNCING', 'DELAYED_PROVIDER', 'ERROR'].includes(String(connection.consentStatus || '')))
+)
 const showBackendSyncPolicy = (connection: OpenFinanceConnection) => ['AUTHORIZED_READY', 'AUTHORIZED_SYNCING'].includes(String(connection.consentStatus || '')) || isRecoverableSyncError(connection)
 const syncPolicyLabel = (connection: OpenFinanceConnection) => connection.consentStatus === 'AUTHORIZED_SYNCING'
   ? 'Sincronização em andamento pelo backend.'
@@ -318,6 +334,45 @@ const retryAuthorization = async (connection: OpenFinanceConnection) => {
     emit('refresh')
   } catch (error: any) {
     emit('feedback', { type: 'error', message: extractErrorMessage(error, 'Falha ao tentar autorização novamente.') })
+  } finally {
+    busyConnectionId.value = null
+  }
+}
+
+const syncNowForDev = async (connection: OpenFinanceConnection) => {
+  busyConnectionId.value = connection.id
+  const today = new Date()
+  const from = new Date(today)
+  from.setFullYear(from.getFullYear() - 1)
+  const toIsoDate = (date: Date) => date.toISOString().slice(0, 10)
+
+  try {
+    const response = await OpenFinanceService.syncConnection(connection.id, {
+      connectionId: connection.id,
+      from: toIsoDate(from),
+      to: toIsoDate(today),
+    })
+    const status = String(response.data?.status || '')
+    const result = response.data?.result
+    if (status === 'EXECUTED') {
+      emit('feedback', {
+        type: 'success',
+        message: `DEV sync concluído: ${result?.transactionsCreated || 0} novas, ${result?.transactionsUpdated || 0} atualizadas.`,
+      })
+    } else if (status === 'PROCESSING') {
+      emit('feedback', {
+        type: 'info',
+        message: 'DEV sync iniciou e o provider ainda está processando o protocolo. Atualize novamente em alguns minutos.',
+      })
+    } else {
+      emit('feedback', {
+        type: 'info',
+        message: `DEV sync não executado pelo backend: ${response.data?.reason || status || 'sem motivo retornado'}.`,
+      })
+    }
+    emit('refresh')
+  } catch (error: any) {
+    emit('feedback', { type: 'error', message: extractErrorMessage(error, 'Falha ao executar DEV sync Open Finance.') })
   } finally {
     busyConnectionId.value = null
   }
