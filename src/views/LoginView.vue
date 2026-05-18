@@ -269,7 +269,7 @@ import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/plugins/userStore'
 import { useRouter, useRoute } from 'vue-router'
 import { updateI18nLocale } from '@/i18n'
-import { readInviteAcceptanceContext } from '@/utils/inviteAcceptanceContext'
+import { readInviteAcceptanceRedirect } from '@/utils/inviteAcceptanceContext'
 import AuthService from '@/services/AuthService'
 import OnboardingOrchestrator from '@/services/OnboardingOrchestrator'
 import { activateDevQuickAccess, clearDevQuickAccess } from '@/utils/devQuickAccess'
@@ -382,7 +382,7 @@ const userLogin = async () => {
       const onboarding = await OnboardingOrchestrator.resolvePostAuthRoute({
         router,
         userStore: store,
-        redirect: route.query.redirect || readInviteAcceptanceContext()?.redirect,
+        redirect: readInviteAcceptanceRedirect() || route.query.redirect,
         plan: route.query.plan,
         defaultRedirect: '/dashboard'
       })

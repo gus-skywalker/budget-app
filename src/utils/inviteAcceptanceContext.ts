@@ -51,6 +51,8 @@ export const readInviteAcceptanceContext = (): InviteAcceptanceContext | null =>
   }
 }
 
+export const readInviteAcceptanceRedirect = (): string | null => readInviteAcceptanceContext()?.redirect || null
+
 export const clearInviteAcceptanceContext = () => {
   sessionStorage.removeItem(STORAGE_KEY)
 }

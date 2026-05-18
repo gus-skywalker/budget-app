@@ -37,6 +37,7 @@ import ChoosePlan from '@/views/ChoosePlan.vue'
 import ReportView from '@/views/ReportView.vue'
 import InviteAcceptView from '@/views/InviteAcceptView.vue'
 import InviteDeclineView from '@/views/InviteDeclineView.vue'
+import { readInviteAcceptanceRedirect } from '@/utils/inviteAcceptanceContext'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -320,6 +321,16 @@ router.beforeEach((to, from, next) => {
   const isAuthenticated = userStore.isAuthenticated
   const workspaces = userStore.getWorkspaces || []
   const hasWorkspaces = workspaces.length > 0
+  const pendingInviteRedirect = isAuthenticated ? readInviteAcceptanceRedirect() : null
+
+  if (
+    pendingInviteRedirect
+    && to.name === 'create-workspace'
+    && !String(to.fullPath || '').startsWith(pendingInviteRedirect)
+  ) {
+    next({ path: pendingInviteRedirect })
+    return
+  }
 
   if (to.name === 'landing' && isAuthenticated) {
     if (!hasWorkspaces) {
@@ -339,7 +350,7 @@ router.beforeEach((to, from, next) => {
     // Salva os query params para redirecionamento após login
     const query = { ...to.query }
     if (to.path !== '/login') {
-      query.redirect = to.path
+      query.redirect = to.fullPath
     }
     next({
       name: 'login',
