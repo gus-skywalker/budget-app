@@ -183,6 +183,10 @@ export interface OpenFinanceSyncExecutionResponse {
 export interface OpenFinanceSyncHistoryItem {
   id: string
   connectionId?: string | null
+  connectionDisplayName?: string | null
+  institutionName?: string | null
+  accountNumberMasked?: string | null
+  payerDocumentType?: 'CPF' | 'CNPJ' | null
   syncFrom: string
   syncTo: string
   fetchedCount?: number

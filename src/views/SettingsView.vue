@@ -421,6 +421,10 @@
                           • {{ item.trigger === 'AUTOMATIC' ? 'Automático' : 'Manual' }}
                         </span>
                       </div>
+                      <div v-if="formatSyncHistoryConnection(item)" class="sync-history-connection">
+                        <v-icon size="16">mdi-bank-outline</v-icon>
+                        <span>{{ formatSyncHistoryConnection(item) }}</span>
+                      </div>
                       <div class="sync-history-metrics">
                         <span v-if="item.fetchedCount !== undefined">{{ item.fetchedCount }} recebidas</span>
                         <span>{{ item.transactionsCreated }} novas</span>
@@ -1016,6 +1020,15 @@ const suggestInternalCategory = (bankCategory: OpenFinanceBankCategory): Suggest
 const formatOpenFinanceDate = (value: string) => {
   if (!value) return '-'
   return new Date(`${value}T00:00:00`).toLocaleDateString('pt-BR')
+}
+
+const formatSyncHistoryConnection = (item: OpenFinanceSyncHistoryItem) => {
+  const parts = [
+    item.connectionDisplayName || item.institutionName,
+    item.accountNumberMasked,
+    item.payerDocumentType,
+  ].filter(Boolean)
+  return parts.join(' • ')
 }
 
 const formatOpenFinanceCurrency = (value: number) => {
@@ -1988,6 +2001,24 @@ const saveAlertSettings = async () => {
 
 .v-theme--dark .sync-history-subtitle {
   color: #b0b0b0;
+}
+
+.sync-history-connection {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(102, 126, 234, 0.1);
+  color: #4f63c6;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.v-theme--dark .sync-history-connection {
+  background: rgba(102, 126, 234, 0.18);
+  color: #c7d2fe;
 }
 
 .sync-history-metrics {
