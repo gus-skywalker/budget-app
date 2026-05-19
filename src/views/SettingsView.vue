@@ -1930,6 +1930,25 @@ const saveAlertSettings = async () => {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  max-height: clamp(320px, 48vh, 560px);
+  overflow-y: auto;
+  padding-right: 6px;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.sync-history-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sync-history-list::-webkit-scrollbar-track {
+  background: rgba(100, 116, 139, 0.08);
+  border-radius: 999px;
+}
+
+.sync-history-list::-webkit-scrollbar-thumb {
+  background: rgba(102, 126, 234, 0.38);
+  border-radius: 999px;
 }
 
 .sync-history-item {

@@ -568,6 +568,25 @@ const extractErrorMessage = (error: any, fallback: string) => (
 .of-connection-list {
   display: grid;
   gap: 12px;
+  max-height: clamp(380px, 56vh, 680px);
+  overflow-y: auto;
+  padding-right: 6px;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.of-connection-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.of-connection-list::-webkit-scrollbar-track {
+  background: rgba(100, 116, 139, 0.08);
+  border-radius: 999px;
+}
+
+.of-connection-list::-webkit-scrollbar-thumb {
+  background: rgba(102, 126, 234, 0.38);
+  border-radius: 999px;
 }
 
 .of-connection {
