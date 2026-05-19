@@ -128,7 +128,7 @@ const mainNavSections = computed<NavSection[]>(() => [
         key: 'transactions',
         title: t('sidebar.transactions'),
         icon: 'mdi-swap-horizontal',
-        to: { name: 'budget' },
+        to: { name: 'transactions' },
         disabled: false
       },
       {

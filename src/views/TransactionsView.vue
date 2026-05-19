@@ -3,8 +3,8 @@
     <v-container class="modern-container">
       <!-- Header -->
       <div class="budget-header">
-        <h1 class="page-title">{{ $t('budget.title') }}</h1>
-        <p class="page-subtitle">Gerencie suas receitas e despesas</p>
+        <h1 class="page-title">{{ $t('sidebar.transactions') }}</h1>
+        <p class="page-subtitle">Gerencie entradas e despesas manuais, acompanhe lançamentos Open Finance e controle o que entra no planejamento.</p>
       </div>
 
       <v-row>
@@ -776,6 +776,7 @@ export default {
       categories: [],
       paymentMethods: [],
       financialAccounts: [],
+      openFinanceConnections: [],
       isLoadingFinancialAccounts: false,
       selectedIncomeMonth: currentMonth,
       selectedExpenseMonth: currentMonth,
@@ -1007,6 +1008,7 @@ export default {
     this.fetchCategories();
     this.fetchPaymentMethods();
     this.fetchFinancialAccounts();
+    this.fetchOpenFinanceConnections();
     this.fetchShareableUsers();
     this.fetchAlertSettings();
     this.fetchOpenFinanceConflicts();
@@ -1023,7 +1025,7 @@ export default {
     },
     '$route.query': {
       handler() {
-        if (this.$route?.name !== 'budget') {
+        if (this.$route?.name !== 'transactions') {
           return
         }
         this.applyBudgetQueryFilters()
@@ -1110,7 +1112,7 @@ export default {
     },
     clearExpenseDrillDown() {
       this.$router.replace({
-        name: 'budget',
+        name: 'transactions',
         query: {
           month: String(this.selectedExpenseMonth),
           year: String(this.selectedExpenseYear),
@@ -1125,19 +1127,132 @@ export default {
     },
     enrichExpenseWithConflict(expense) {
       const conflict = this.openFinanceConflictMap[expense?.id]
-      return {
+      return this.decorateTransactionOpenFinanceContext({
         ...expense,
         reconciliationConflictId: conflict?.id ?? null,
         reconciliationConflictReason: expense?.reconciliationConflictReason || conflict?.conflictReason || null,
-      }
+      })
     },
     enrichIncomeWithConflict(income) {
       const conflict = this.openFinanceConflictMap[income?.id]
-      return {
+      return this.decorateTransactionOpenFinanceContext({
         ...income,
         reconciliationConflictId: conflict?.id ?? null,
         reconciliationConflictReason: income?.reconciliationConflictReason || conflict?.conflictReason || null,
+      })
+    },
+    isOwnerOrAdminRole() {
+      const userStore = useUserStore()
+      const role = String(userStore.getCurrentRole || '').toUpperCase()
+      return role === 'ROLE_OWNER' || role === 'ROLE_ADMIN'
+    },
+    accountMatchesOpenFinanceConnection(account, connection) {
+      if (!account || !connection) {
+        return false
       }
+
+      const bankCode = String(account.bankCode || '').trim()
+      if (bankCode && connection.bankCode && bankCode === connection.bankCode) return true
+
+      const institutionKey = String(account.institutionKey || '').trim()
+      if (institutionKey && connection.institutionKey && institutionKey === connection.institutionKey) return true
+
+      const institutionName = String(account.institutionName || '').trim()
+      if (institutionName && connection.institutionName && institutionName === connection.institutionName) return true
+
+      const accountName = String(account.name || account.displayName || '')
+      const displayName = String(connection.displayName || '').trim()
+      if (displayName && accountName === displayName) return true
+
+      const connectionName = String(connection.institutionName || '').trim()
+      return Boolean(connectionName && accountName.startsWith(`${connectionName} - `))
+    },
+    findOpenFinanceConnectionForTransaction(transaction) {
+      if (!transaction?.openFinance) {
+        return null
+      }
+
+      const account = this.financialAccounts.find((item) => item.id === transaction.accountId)
+      if (account) {
+        const matched = this.openFinanceConnections.find((connection) =>
+          this.accountMatchesOpenFinanceConnection(account, connection)
+        )
+        if (matched) return matched
+      }
+
+      const accountName = String(transaction.accountName || '').trim()
+      if (accountName) {
+        const matchedByName = this.openFinanceConnections.find((connection) => {
+          const displayName = String(connection.displayName || '').trim()
+          const institutionName = String(connection.institutionName || '').trim()
+          return (displayName && displayName === accountName)
+            || (institutionName && accountName.startsWith(`${institutionName} - `))
+        })
+        if (matchedByName) return matchedByName
+      }
+
+      return null
+    },
+    decorateTransactionOpenFinanceContext(transaction) {
+      if (!transaction?.openFinance) {
+        return transaction
+      }
+
+      const connection = this.findOpenFinanceConnectionForTransaction(transaction)
+      if (!connection) {
+        return {
+          ...transaction,
+          openFinanceDocumentType: null,
+          openFinanceSharingLabel: 'Open Finance compartilhado',
+          openFinanceSharingTone: 'default',
+          openFinanceSharingNote: 'Fonte Open Finance visível no workspace conforme a política atual de compartilhamento.',
+        }
+      }
+
+      if (connection.payerDocumentType === 'CNPJ') {
+        return {
+          ...transaction,
+          openFinanceDocumentType: 'CNPJ',
+          openFinanceSharingLabel: 'Fonte empresarial compartilhada',
+          openFinanceSharingTone: 'shared',
+          openFinanceSharingNote: 'Fonte CNPJ compartilhada com o workspace para operação e planejamento.',
+        }
+      }
+
+      const level = connection.planningSharingLevel || connection.sharingPolicy
+      if (level === 'PERSONAL_SHARED') {
+        return {
+          ...transaction,
+          openFinanceDocumentType: 'CPF',
+          openFinanceSharingLabel: 'Fonte pessoal compartilhada com admins',
+          openFinanceSharingTone: 'admin-shared',
+          openFinanceSharingNote: this.isOwnerOrAdminRole()
+            ? 'Esta transação vem de uma fonte CPF compartilhada com owners e admins.'
+            : 'Esta fonte CPF tem compartilhamento administrativo, mas o acesso à sua role continua restrito.',
+        }
+      }
+
+      if (level === 'PLANNING_IMPACT_ONLY') {
+        return {
+          ...transaction,
+          openFinanceDocumentType: 'CPF',
+          openFinanceSharingLabel: 'Planejamento apenas',
+          openFinanceSharingTone: 'planning-only',
+          openFinanceSharingNote: 'Fonte CPF usada apenas em agregados de planejamento. Os detalhes seguem privados.',
+        }
+      }
+
+      return {
+        ...transaction,
+        openFinanceDocumentType: 'CPF',
+        openFinanceSharingLabel: 'Fonte pessoal privada',
+        openFinanceSharingTone: 'private',
+        openFinanceSharingNote: 'Fonte CPF privada, sem compartilhamento operacional além do dono da conexão.',
+      }
+    },
+    applyOpenFinanceContextToCollections() {
+      this.monthlyIncomes = this.monthlyIncomes.map((income) => this.decorateTransactionOpenFinanceContext(income))
+      this.monthlyExpenses = this.monthlyExpenses.map((expense) => this.decorateTransactionOpenFinanceContext(expense))
     },
     normalizeCollection(payload) {
       if (Array.isArray(payload)) return payload
@@ -1698,6 +1813,7 @@ export default {
             displayName: `${account.name} • ${account.provider} • ${account.currency}`
           }))
           this.applyDefaultFinancialAccount()
+          this.applyOpenFinanceContextToCollections()
         })
         .catch((error) => {
           console.error('Error fetching financial accounts:', error)
@@ -1705,6 +1821,17 @@ export default {
         })
         .finally(() => {
           this.isLoadingFinancialAccounts = false
+        })
+    },
+    fetchOpenFinanceConnections() {
+      return OpenFinanceService.listConnections()
+        .then((response) => {
+          this.openFinanceConnections = Array.isArray(response?.data) ? response.data : []
+          this.applyOpenFinanceContextToCollections()
+        })
+        .catch((error) => {
+          console.error('Erro ao buscar conexões Open Finance:', error)
+          this.openFinanceConnections = []
         })
     },
     ensureAccountSelected(target) {
@@ -1880,7 +2007,7 @@ export default {
         .catch((error) => {
           console.error('Error saving income:', error)
           if (error?.response) {
-            console.error('[BudgetView] saveIncome response error', error.response.data)
+            console.error('[TransactionsView] saveIncome response error', error.response.data)
           }
           if (error?.message === NO_FINANCIAL_ACCOUNT_ERROR_MESSAGE) {
             this.showToast(this.$t('validation.account_required'), 'warning')
@@ -1945,7 +2072,7 @@ export default {
         .catch((error) => {
           console.error('Error saving expense:', error)
           if (error?.response) {
-            console.error('[BudgetView] saveExpense response error', error.response.data)
+            console.error('[TransactionsView] saveExpense response error', error.response.data)
           }
           if (error?.message === NO_FINANCIAL_ACCOUNT_ERROR_MESSAGE) {
             this.showToast(this.$t('validation.account_required'), 'warning')
@@ -2163,7 +2290,7 @@ export default {
       try {
         this.editingExpenseOriginal = JSON.parse(JSON.stringify(expense))
       } catch (parseError) {
-        console.warn('[BudgetView] Failed to snapshot original expense, falling back to shallow copy.', parseError)
+        console.warn('[TransactionsView] Failed to snapshot original expense, falling back to shallow copy.', parseError)
         this.editingExpenseOriginal = { ...expense }
       }
 

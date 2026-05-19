@@ -17,6 +17,16 @@
         </v-alert>
       </div>
 
+      <v-alert
+        v-if="activeOpenFinanceConnections.length"
+        variant="tonal"
+        color="#667eea"
+        density="comfortable"
+        class="mb-6"
+      >
+        {{ openFinanceVisibilityMessage }}
+      </v-alert>
+
       <div class="modern-card optout-story-card mb-6">
         <div class="card-header">
           <h2 class="card-title">
@@ -73,6 +83,27 @@
                 <v-chip size="small" variant="tonal" color="#667eea">{{ account.currency }}</v-chip>
               </div>
               <div class="account-card__balance">{{ formatCurrency(account.balance, account.currency) }}</div>
+              <div v-if="findConnectionForAccount(account)" class="account-card__chips">
+                <v-chip size="x-small" variant="tonal" color="#667eea">Open Finance</v-chip>
+                <v-chip
+                  v-if="findConnectionForAccount(account)?.payerDocumentType"
+                  size="x-small"
+                  variant="outlined"
+                >
+                  {{ findConnectionForAccount(account)?.payerDocumentType }}
+                </v-chip>
+                <v-chip
+                  v-if="connectionSharingBadge(findConnectionForAccount(account))"
+                  size="x-small"
+                  variant="tonal"
+                  :color="connectionSharingBadge(findConnectionForAccount(account))?.color"
+                >
+                  {{ connectionSharingBadge(findConnectionForAccount(account))?.label }}
+                </v-chip>
+              </div>
+              <p v-if="findConnectionForAccount(account)" class="account-card__sharing-note">
+                {{ connectionSharingNote(findConnectionForAccount(account)) }}
+              </p>
             </div>
           </div>
           <div v-else class="empty-state">
@@ -94,9 +125,11 @@ import OpenFinanceService from '@/services/OpenFinanceService'
 import { bankLogoPath, genericBankLogo } from '@/data/openFinanceInstitutions'
 import type { AccountView } from '@/types/financialRead'
 import type { OpenFinanceConnection } from '@/types/openFinance'
+import { useUserStore } from '@/plugins/userStore'
 
 const { locale } = useI18n()
 const router = useRouter()
+const userStore = useUserStore()
 
 const accounts = ref<AccountView[]>([])
 const loading = ref(false)
@@ -104,9 +137,18 @@ const conflictCount = ref(0)
 const openFinanceConnections = ref<OpenFinanceConnection[]>([])
 const failedAccountLogos = ref<Record<string, boolean>>({})
 const ACTIVE_OPEN_FINANCE_STATUSES = new Set(['CONNECTED', 'ERROR'])
+const currentRole = computed(() => String(userStore.getCurrentRole || '').toUpperCase())
+const isOwnerOrAdmin = computed(() => ['ROLE_OWNER', 'ROLE_ADMIN'].includes(currentRole.value))
 
 const activeOpenFinanceConnections = computed(() => {
   return openFinanceConnections.value.filter((connection) => ACTIVE_OPEN_FINANCE_STATUSES.has(String(connection.status || '').toUpperCase()))
+})
+
+const openFinanceVisibilityMessage = computed(() => {
+  if (isOwnerOrAdmin.value) {
+    return 'Fontes CNPJ aparecem como compartilhadas com o workspace. Em fontes CPF, "Planejamento apenas" alimenta só o baseline; "Compartilhado com admins" libera visibilidade operacional para owners e admins.'
+  }
+  return 'Fontes CNPJ compartilhadas aparecem normalmente neste workspace. Fontes CPF continuam privadas para a sua role, exceto pelo impacto agregado de planejamento quando o owner habilita esse nível.'
 })
 
 const visibleAccounts = computed(() => {
@@ -185,6 +227,38 @@ const findConnectionForAccount = (account: AccountView) => {
     const name = String(connection.institutionName || '').trim()
     return name && accountName.startsWith(`${name} - `)
   })
+}
+
+const connectionSharingBadge = (connection?: OpenFinanceConnection | null) => {
+  if (!connection) return null
+  if (connection.payerDocumentType === 'CNPJ') {
+    return { label: 'Compartilhado com workspace', color: 'success' }
+  }
+  const level = connection.planningSharingLevel || connection.sharingPolicy
+  if (level === 'PLANNING_IMPACT_ONLY') {
+    return { label: 'Planejamento apenas', color: 'warning' }
+  }
+  if (level === 'PERSONAL_SHARED') {
+    return { label: 'Compartilhado com admins', color: 'info' }
+  }
+  return { label: 'Privado', color: 'grey' }
+}
+
+const connectionSharingNote = (connection?: OpenFinanceConnection | null) => {
+  if (!connection) return ''
+  if (connection.payerDocumentType === 'CNPJ') {
+    return 'Fonte empresarial compartilhada com o workspace para uso operacional e planejamento.'
+  }
+  const level = connection.planningSharingLevel || connection.sharingPolicy
+  if (level === 'PLANNING_IMPACT_ONLY') {
+    return 'Fonte pessoal usada apenas em agregados de planejamento. Os detalhes continuam privados.'
+  }
+  if (level === 'PERSONAL_SHARED') {
+    return isOwnerOrAdmin.value
+      ? 'Fonte pessoal compartilhada com owners e admins para visibilidade operacional.'
+      : 'Fonte pessoal com compartilhamento administrativo. Esse nível não libera detalhes para a sua role.'
+  }
+  return 'Fonte pessoal privada. Sem compartilhamento operacional nem impacto em planejamento.'
 }
 
 const accountLogoFor = (account: AccountView) => {
@@ -433,6 +507,24 @@ onMounted(fetchAccounts)
   font-size: 1.35rem;
   font-weight: 700;
   color: #667eea;
+}
+
+.account-card__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.account-card__sharing-note {
+  margin: 10px 0 0;
+  color: #64748b;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.v-theme--dark .account-card__sharing-note {
+  color: #cbd5e1;
 }
 
 .empty-message {

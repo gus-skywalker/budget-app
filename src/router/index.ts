@@ -6,7 +6,7 @@ import PlaybookHire from '@/components/playbooks/PlaybookHire.vue'
 import PlaybookPayNowOrInstallments from '@/components/playbooks/PlaybookPayNowOrInstallments.vue'
 import HomeView from '@/views/HomeView.vue'
 import WelcomeView from '@/views/WelcomeView.vue'
-import BudgetView from '@/views/BudgetView.vue'
+import TransactionsView from '@/views/TransactionsView.vue'
 import DashboardView from '@/views/DashboardView.vue'
 import LoginView from '@/views/LoginView.vue'
 import SettingsView from '@/views/SettingsView.vue'
@@ -50,10 +50,14 @@ const router = createRouter({
       meta: { requiresAuth: true, requiresWorkspace: true, keepAlive: true }
     },
     {
-      path: '/budget',
-      name: 'budget',
-      component: BudgetView,
+      path: '/transactions',
+      name: 'transactions',
+      component: TransactionsView,
       meta: { requiresAuth: true, requiresWorkspace: true }
+    },
+    {
+      path: '/budget',
+      redirect: { name: 'transactions' }
     },
     {
       path: '/accounts',

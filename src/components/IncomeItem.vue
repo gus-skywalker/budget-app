@@ -8,9 +8,16 @@
         <div class="income-meta-line">
           <span class="income-date-text">{{ income.date }}</span>
           <span v-if="income.openFinance" class="income-meta-tag">· {{ $t('incomeItem.open_finance') }}</span>
+          <span v-if="income.openFinanceDocumentType" class="income-meta-tag">· {{ income.openFinanceDocumentType }}</span>
           <span v-if="income.excludedFromPlanning" class="income-meta-tag income-meta-tag--warn">· {{ $t('incomeItem.excludedFromPlanning') }}</span>
           <span v-if="income.visibilityScope === 'PRIVATE'" class="income-meta-tag">· {{ visibilityScopeLabel }}</span>
           <v-chip v-if="income.reconciliationStatus" :color="reconciliationColor" size="x-small" variant="tonal" class="ml-1">{{ reconciliationLabel }}</v-chip>
+        </div>
+        <div v-if="income.openFinance && income.openFinanceSharingLabel" class="of-sharing-row">
+          <v-chip size="x-small" variant="tonal" :color="openFinanceSharingColor">
+            {{ income.openFinanceSharingLabel }}
+          </v-chip>
+          <span v-if="income.openFinanceSharingNote" class="of-sharing-note">{{ income.openFinanceSharingNote }}</span>
         </div>
         <div v-if="income.reconciliationConflictId" class="conflict-resolution-row">
           <v-btn
@@ -142,6 +149,14 @@ export default {
       const status = this.income?.reconciliationStatus
       if (status === 'CONFLICT_DUPLICATE') return 'warning'
       if (status === 'MATCHED_AND_CANCELLED') return 'error'
+      return '#667eea'
+    },
+    openFinanceSharingColor() {
+      const tone = this.income?.openFinanceSharingTone
+      if (tone === 'shared') return 'success'
+      if (tone === 'admin-shared') return 'info'
+      if (tone === 'planning-only') return 'warning'
+      if (tone === 'private') return 'grey'
       return '#667eea'
     }
   },
@@ -277,6 +292,20 @@ export default {
   margin-top: 2px;
 }
 
+.of-sharing-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.of-sharing-note {
+  font-size: 0.76rem;
+  color: rgba(0, 0, 0, 0.52);
+  line-height: 1.4;
+}
+
 .income-date-text {
   font-size: 0.75rem;
   color: rgba(0, 0, 0, 0.5);
@@ -297,5 +326,9 @@ export default {
 .v-theme--dark .income-date-text,
 .v-theme--dark .income-meta-tag {
   color: rgba(255, 255, 255, 0.5);
+}
+
+.v-theme--dark .of-sharing-note {
+  color: rgba(255, 255, 255, 0.64);
 }
 </style>

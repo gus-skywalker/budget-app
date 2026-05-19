@@ -10,9 +10,16 @@
           <span v-if="expense.category" class="expense-meta-tag">· {{ translatedCategoryName }}</span>
           <span v-else class="expense-meta-tag expense-meta-tag--warn">· {{ $t('expenseItem.uncategorized') }}</span>
           <span v-if="expense.openFinance" class="expense-meta-tag">· {{ $t('expenseItem.openFinance') }}</span>
+          <span v-if="expense.openFinanceDocumentType" class="expense-meta-tag">· {{ expense.openFinanceDocumentType }}</span>
           <span v-if="expense.excludedFromPlanning" class="expense-meta-tag expense-meta-tag--warn">· {{ $t('expenseItem.excludedFromPlanning') }}</span>
           <span v-if="expense.visibilityScope === 'PRIVATE'" class="expense-meta-tag">· {{ visibilityScopeLabel }}</span>
           <v-chip v-if="expense.reconciliationStatus" :color="reconciliationColor" size="x-small" variant="tonal" class="ml-1">{{ reconciliationLabel }}</v-chip>
+        </div>
+        <div v-if="expense.openFinance && expense.openFinanceSharingLabel" class="of-sharing-row">
+          <v-chip size="x-small" variant="tonal" :color="openFinanceSharingColor">
+            {{ expense.openFinanceSharingLabel }}
+          </v-chip>
+          <span v-if="expense.openFinanceSharingNote" class="of-sharing-note">{{ expense.openFinanceSharingNote }}</span>
         </div>
         <div v-if="!expense.category" class="uncategorized-row">
           <v-chip
@@ -401,6 +408,14 @@ export default {
       if (status === 'MATCHED_AND_CANCELLED') return 'error';
       return '#667eea';
     },
+    openFinanceSharingColor() {
+      const tone = this.expense?.openFinanceSharingTone;
+      if (tone === 'shared') return 'success';
+      if (tone === 'admin-shared') return 'info';
+      if (tone === 'planning-only') return 'warning';
+      if (tone === 'private') return 'grey';
+      return '#667eea';
+    },
     hasAlerts() {
       return Array.isArray(this.expense.alerts) && this.expense.alerts.length > 0;
     },
@@ -781,6 +796,20 @@ export default {
   margin-top: 2px;
 }
 
+.of-sharing-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.of-sharing-note {
+  font-size: 0.76rem;
+  color: rgba(0, 0, 0, 0.52);
+  line-height: 1.4;
+}
+
 .expense-date-text {
   font-size: 0.75rem;
   color: rgba(0, 0, 0, 0.5);
@@ -815,6 +844,10 @@ export default {
 .v-theme--dark .expense-date-text,
 .v-theme--dark .expense-meta-tag {
   color: rgba(255, 255, 255, 0.5);
+}
+
+.v-theme--dark .of-sharing-note {
+  color: rgba(255, 255, 255, 0.64);
 }
 
 .v-theme--dark .expense-meta-tag--warn {

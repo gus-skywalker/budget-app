@@ -1799,7 +1799,7 @@ export default {
     },
     activityRoute(event) {
       const relatedType = String(event?.relatedEntityType || '')
-      if (relatedType === 'TRANSACTION') return '/budget'
+      if (relatedType === 'TRANSACTION') return '/transactions'
       if (relatedType === 'SCENARIO') return '/planning/scenarios/:id'
       if (relatedType === 'DECISION') return '/decisions'
       return null
@@ -1807,7 +1807,7 @@ export default {
     openActivity(event) {
       const path = this.activityRoute(event)
       if (!path) return
-      if (path === '/budget') {
+      if (path === '/transactions') {
         this.$router.push({ path, query: { visibility: 'workspace' } })
         return
       }
@@ -1977,7 +1977,7 @@ export default {
     },
     openCategoryDrillDown(category = null) {
       this.$router.push({
-        name: 'budget',
+        name: 'transactions',
         query: {
           month: String(new Date().getMonth() + 1),
           year: String(new Date().getFullYear()),
@@ -1988,7 +1988,7 @@ export default {
     },
     openAccountDrillDown(accountId = null) {
       this.$router.push({
-        name: 'budget',
+        name: 'transactions',
         query: {
           month: String(new Date().getMonth() + 1),
           year: String(new Date().getFullYear()),

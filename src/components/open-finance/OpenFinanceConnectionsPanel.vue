@@ -70,6 +70,23 @@
                 Status checado em {{ formatDateTime(connection.lastProviderStatusCheckedAt) }}
               </div>
 
+              <div class="of-connection__policy-chips">
+                <v-chip
+                  v-if="connection.payerDocumentType"
+                  size="x-small"
+                  variant="outlined"
+                >
+                  {{ connection.payerDocumentType }}
+                </v-chip>
+                <v-chip
+                  size="x-small"
+                  variant="tonal"
+                  :color="sharingPolicyBadge(connection).color"
+                >
+                  {{ sharingPolicyBadge(connection).label }}
+                </v-chip>
+              </div>
+
               <p v-if="connection.lastErrorSummary" class="of-provider-status of-provider-status--error of-connection__error">
                 {{ connectionErrorSummary(connection) }}
               </p>
@@ -313,6 +330,19 @@ const planningSharingDescription = (connection: OpenFinanceConnection) => {
     return 'Owners e admins do workspace podem ver esta fonte pessoal. O dono da conexão continua controlando esse nível.'
   }
   return 'Só você vê esta conta.'
+}
+const sharingPolicyBadge = (connection: OpenFinanceConnection) => {
+  if (connection.payerDocumentType === 'CNPJ') {
+    return { label: 'Compartilhado com workspace', color: 'success' }
+  }
+  const level = planningSharingSelection(connection)
+  if (level === 'PLANNING_IMPACT_ONLY') {
+    return { label: 'Planejamento apenas', color: 'warning' }
+  }
+  if (level === 'PERSONAL_SHARED') {
+    return { label: 'Compartilhado com admins', color: 'info' }
+  }
+  return { label: 'Privado', color: 'grey' }
 }
 
 const handleCreated = () => {
@@ -627,6 +657,12 @@ const extractErrorMessage = (error: any, fallback: string) => (
   align-items: center;
   gap: 8px;
   min-width: 0;
+}
+
+.of-connection__policy-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .of-connection__error {

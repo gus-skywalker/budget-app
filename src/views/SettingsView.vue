@@ -1522,7 +1522,7 @@ const goToImportedTransactions = () => {
   const month = today.getMonth() + 1
   const year = today.getFullYear()
   router.push({
-    name: 'budget',
+    name: 'transactions',
     query: {
       focus: 'expenses',
       openFinance: '1',
