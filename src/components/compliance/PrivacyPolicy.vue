@@ -1,6 +1,38 @@
 <template>
     <div class="privacy-policy-container">
         <h1>Política de Privacidade</h1>
+        <div class="privacy-summary">
+            <p>
+                O CoBudget trata dados financeiros importados por Open Finance em modo somente leitura. Não coletamos a
+                senha bancária do usuário e não movimentamos recursos em nome do usuário, do workspace ou de terceiros.
+            </p>
+            <p>
+                Fontes empresariais vinculadas a CNPJ podem ser compartilhadas com o workspace para operação e
+                planejamento. Fontes pessoais vinculadas a CPF começam privadas por padrão e só passam a ter outro nível
+                de compartilhamento quando o titular da conexão escolhe isso explicitamente.
+            </p>
+            <p>
+                Para fontes CPF, o titular pode manter a conexão <strong>privada</strong>, permitir apenas
+                <strong>impacto agregado no planejamento</strong> ou compartilhar a visibilidade operacional com
+                <strong>owners e admins</strong>. Essa escolha não transforma dados pessoais em dados públicos do
+                workspace.
+            </p>
+            <p>
+                Revogar o consentimento ou desligar o compartilhamento impede novas utilizações futuras da fonte
+                conforme a política escolhida, mas artefatos já materializados, como budgets e cenários salvos, podem
+                permanecer como snapshots para rastreabilidade e auditoria.
+            </p>
+            <p>
+                Transações Open Finance espelhadas não são excluídas fisicamente como ação de produto. Em vez disso, o
+                CoBudget pode aplicar controles internos, como exclusão do planejamento, para preservar trilha de
+                auditoria, reconciliação e ressincronização.
+            </p>
+            <p>
+                Quando a plataforma é utilizada em contexto colaborativo, o tratamento de dados respeita as permissões
+                do workspace, os papéis dos usuários e as políticas de compartilhamento aplicáveis a cada fonte
+                financeira, sem ampliar automaticamente a visibilidade de dados pessoais.
+            </p>
+        </div>
         <p>
             Sua privacidade é importante para nós. Para saber mais sobre como protegemos suas informações, você pode ler
             nossa
@@ -54,5 +86,13 @@ export default {
 
 .privacy-policy-container p {
     line-height: 1.6;
+}
+
+.privacy-summary {
+    margin: 0 auto 24px;
+    max-width: 860px;
+    text-align: left;
+    display: grid;
+    gap: 12px;
 }
 </style>

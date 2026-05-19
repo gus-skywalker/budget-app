@@ -1512,7 +1512,13 @@
     "q3": "O CoBudget suporta múltiplos workspaces?",
     "a3": "Sim. Você pode criar e alternar entre workspaces conforme seu acesso.",
     "q4": "Posso fazer upgrade depois?",
-    "a4": "Sim. Você pode fazer upgrade para um plano superior a qualquer momento."
+    "a4": "Sim. Você pode fazer upgrade para um plano superior a qualquer momento.",
+    "q5": "Como funciona o consentimento do Open Finance?",
+    "a5": "O CoBudget opera em modo somente leitura. Fontes CNPJ podem ser compartilhadas com o workspace. Fontes CPF começam privadas e o titular decide se elas continuam privadas, entram apenas no planejamento agregado ou ficam visíveis para owners e admins.",
+    "q6": "Revogar o compartilhamento apaga budgets e cenários já criados?",
+    "a6": "Não automaticamente. A revogação impede novas utilizações futuras da fonte conforme a política atual, mas budgets e cenários já materializados podem permanecer como snapshots salvos para histórico e auditoria.",
+    "q7": "Posso excluir uma transação Open Finance?",
+    "a7": "Transações Open Finance espelhadas não são excluídas fisicamente como regra padrão do produto. Em vez disso, o CoBudget pode removê-las do planejamento ou aplicar controles internos sem perder a rastreabilidade da origem."
   },
   "theWelcome": {
     "header": {
