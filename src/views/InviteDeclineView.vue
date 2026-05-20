@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import WorkspaceInviteService from '@/services/WorkspaceInviteService'
 
 const route = useRoute()
+const { t } = useI18n()
 const loading = ref(true)
 const done = ref(false)
 const errorMessage = ref('')
@@ -12,7 +14,7 @@ const token = computed(() => String(route.query.token || '').trim())
 
 async function processInviteDecline() {
   if (!token.value) {
-    errorMessage.value = 'Invite token not found.'
+    errorMessage.value = t('invites.token_missing')
     loading.value = false
     return
   }
@@ -20,7 +22,7 @@ async function processInviteDecline() {
     await WorkspaceInviteService.declineInvite(token.value)
     done.value = true
   } catch (error: any) {
-    errorMessage.value = error?.response?.data?.error || error?.response?.data || 'Could not decline invitation.'
+    errorMessage.value = error?.response?.data?.error || error?.response?.data || t('invites.decline_error')
   } finally {
     loading.value = false
   }
@@ -34,9 +36,9 @@ onMounted(() => {
 <template>
   <v-container class="fill-height d-flex align-center justify-center">
     <v-card class="pa-6" max-width="560" width="100%">
-      <div class="text-h5 font-weight-bold mb-2">Workspace invitation</div>
+      <div class="text-h5 font-weight-bold mb-2">{{ t('invites.title') }}</div>
       <div class="text-body-2 text-medium-emphasis mb-6">
-        Invitation response
+        {{ t('invites.response_subtitle') }}
       </div>
 
       <v-progress-linear v-if="loading" indeterminate color="primary" class="mb-4" />
@@ -47,7 +49,7 @@ onMounted(() => {
         variant="tonal"
         class="mb-4"
       >
-        Invitation declined.
+        {{ t('invites.decline_success') }}
       </v-alert>
 
       <v-alert

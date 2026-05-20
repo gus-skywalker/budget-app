@@ -3,7 +3,7 @@
     <v-container class="modern-container">
       <div v-if="loading" class="empty-state">
         <v-icon color="#94a3b8" size="28">mdi-timer-sand</v-icon>
-        <p>Carregando decisão...</p>
+        <p>{{ t('decisionDetail.loading') }}</p>
       </div>
       <div v-else-if="error" class="empty-state empty-state--error">
         <v-icon color="#ef4444" size="28">mdi-alert-circle-outline</v-icon>
@@ -11,21 +11,21 @@
       </div>
       <div v-else-if="decision" class="decision-detail">
         <h1 class="page-title">{{ decision.title }}</h1>
-        <p class="status">Status: {{ decision.status }}</p>
+        <p class="status">{{ t('decisionDetail.status_label', { status: decision.status }) }}</p>
         <div class="impact">
-          <span>Impacto mensal: <strong>{{ formatCurrency(decision.impact.monthlyImpact) }}</strong></span>
-          <span>Saldo final projetado: <strong>{{ formatCurrency(decision.impact.projectedFinalBalance) }}</strong></span>
-          <span>Mês de risco: <strong>{{ formatRiskMonth(decision.impact.firstRiskMonth) }}</strong></span>
+          <span>{{ t('decisionDetail.monthly_impact') }}: <strong>{{ formatCurrency(decision.impact.monthlyImpact) }}</strong></span>
+          <span>{{ t('decisionDetail.projected_final_balance') }}: <strong>{{ formatCurrency(decision.impact.projectedFinalBalance) }}</strong></span>
+          <span>{{ t('decisionDetail.risk_month') }}: <strong>{{ formatRiskMonth(decision.impact.firstRiskMonth) }}</strong></span>
         </div>
         <div class="summary">
           <p>{{ decision.summary.message }}</p>
         </div>
         <div class="votes">
-          <span>Aprovações: {{ decision.votes.approvals }}</span>
-          <span>Rejeições: {{ decision.votes.rejections }}</span>
+          <span>{{ t('decisionDetail.approvals') }}: {{ decision.votes.approvals }}</span>
+          <span>{{ t('decisionDetail.rejections') }}: {{ decision.votes.rejections }}</span>
         </div>
         <div class="justifications">
-          <h3>Justificativas</h3>
+          <h3>{{ t('decisionDetail.justifications') }}</h3>
           <ul>
             <li v-for="(item, idx) in decision.justifications" :key="idx">
               <span :class="item.type === 'APPROVE' ? 'approve' : 'reject'">
@@ -43,16 +43,18 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import DecisionService, { type PublicDecision } from '@/services/DecisionService'
 
 const route = useRoute()
+const { t, locale } = useI18n()
 const loading = ref(true)
 const error = ref('')
 const decision = ref<PublicDecision | null>(null)
 
 function formatCurrency(value: number | null | undefined): string {
   const amount = Number(value || 0)
-  return new Intl.NumberFormat('pt-BR', {
+  return new Intl.NumberFormat(getLocaleForFormatting(), {
     style: 'currency',
     currency: 'BRL',
     minimumFractionDigits: 2
@@ -60,11 +62,18 @@ function formatCurrency(value: number | null | undefined): string {
 }
 
 function formatRiskMonth(value?: string | null): string {
-  if (!value) return 'Sem risco imediato'
+  if (!value) return t('decisionDetail.no_immediate_risk')
   const [year, month] = value.split('-')
   const parsed = new Date(Number(year), Number(month) - 1, 1)
   if (Number.isNaN(parsed.getTime())) return value
-  return new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(parsed)
+  return new Intl.DateTimeFormat(getLocaleForFormatting(), { month: 'long', year: 'numeric' }).format(parsed)
+}
+
+function getLocaleForFormatting(): string {
+  if (locale.value === 'en') return 'en-US'
+  if (locale.value === 'fr') return 'fr-FR'
+  if (locale.value === 'es') return 'es-ES'
+  return 'pt-BR'
 }
 
 async function loadDecision() {
@@ -73,16 +82,15 @@ async function loadDecision() {
   decision.value = null
   const decisionId = String(route.params.id || '')
   if (!decisionId) {
-    error.value = 'Decisão não encontrada.'
+    error.value = t('decisionDetail.not_found')
     loading.value = false
     return
   }
   try {
-    // Para simplificar, reutiliza o endpoint público
     const response = await DecisionService.getPublicDecision(decisionId)
     decision.value = response.data
   } catch (e) {
-    error.value = 'Erro ao carregar decisão.'
+    error.value = t('decisionDetail.load_error')
   } finally {
     loading.value = false
   }
@@ -145,4 +153,3 @@ onMounted(loadDecision)
   color: #b91c1c;
 }
 </style>
-

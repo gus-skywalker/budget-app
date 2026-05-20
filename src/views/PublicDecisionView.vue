@@ -2,17 +2,17 @@
   <div class="public-decision-page">
     <header class="public-header">
       <h1 class="logo">CoBudget</h1>
-      <p class="tagline">Collaborative financial decision</p>
+      <p class="tagline">{{ t('publicDecision.tagline') }}</p>
     </header>
 
     <main class="public-content">
       <section v-if="loading" class="state-card">
-        <p>Loading decision...</p>
+        <p>{{ t('publicDecision.loading') }}</p>
       </section>
 
       <section v-else-if="notFound" class="state-card">
-        <h2>Decision not found</h2>
-        <p>This link may be invalid or unavailable.</p>
+        <h2>{{ t('publicDecision.not_found_title') }}</h2>
+        <p>{{ t('publicDecision.not_found_message') }}</p>
       </section>
 
       <template v-else-if="decision">
@@ -22,11 +22,11 @@
         </section>
 
         <section class="impact-card">
-          <div class="impact-label">Monthly impact</div>
+          <div class="impact-label">{{ t('publicDecision.monthly_impact') }}</div>
           <div class="impact-value" :class="impactClass">{{ formatCurrency(decision.impact.monthlyImpact) }}</div>
           <div class="impact-meta">
-            <span>Projected final balance: <strong>{{ formatCurrency(decision.impact.projectedFinalBalance) }}</strong></span>
-            <span>First risk month: <strong>{{ formatRiskMonth(decision.impact.firstRiskMonth) }}</strong></span>
+            <span>{{ t('publicDecision.projected_final_balance') }}: <strong>{{ formatCurrency(decision.impact.projectedFinalBalance) }}</strong></span>
+            <span>{{ t('publicDecision.first_risk_month') }}: <strong>{{ formatRiskMonth(decision.impact.firstRiskMonth) }}</strong></span>
           </div>
         </section>
 
@@ -35,12 +35,12 @@
         </section>
 
         <section class="votes-card">
-          <h3>Votes</h3>
-          <p>{{ decision.votes.approvals }} approvals • {{ decision.votes.rejections }} rejection{{ decision.votes.rejections === 1 ? '' : 's' }}</p>
+          <h3>{{ t('publicDecision.votes') }}</h3>
+          <p>{{ t('publicDecision.votes_summary', { approvals: decision.votes.approvals, rejections: decision.votes.rejections }) }}</p>
         </section>
 
         <section class="reasoning-card">
-          <h3>Team reasoning</h3>
+          <h3>{{ t('publicDecision.team_reasoning') }}</h3>
           <ul v-if="decision.justifications.length" class="reasoning-list">
             <li v-for="(item, index) in decision.justifications" :key="`${item.type}-${index}`">
               <span class="reasoning-type" :class="item.type === 'APPROVE' ? 'approve' : 'reject'">
@@ -49,12 +49,12 @@
               <span>{{ item.message }}</span>
             </li>
           </ul>
-          <p v-else>No justifications yet.</p>
+          <p v-else>{{ t('publicDecision.no_justifications') }}</p>
         </section>
 
         <section class="cta-card">
-          <h3>Make decisions like this with your team</h3>
-          <v-btn color="#0ea5e9" size="large" rounded="xl" @click="goToSignup">Start your workspace</v-btn>
+          <h3>{{ t('publicDecision.cta_title') }}</h3>
+          <v-btn color="#0ea5e9" size="large" rounded="xl" @click="goToSignup">{{ t('publicDecision.cta_button') }}</v-btn>
         </section>
       </template>
     </main>
@@ -64,14 +64,23 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import DecisionService, { type PublicDecision } from '@/services/DecisionService'
 
 const route = useRoute()
 const router = useRouter()
+const { locale, t } = useI18n()
 
 const loading = ref(true)
 const notFound = ref(false)
 const decision = ref<PublicDecision | null>(null)
+
+const formattingLocale = computed(() => {
+  if (locale.value === 'en') return 'en-US'
+  if (locale.value === 'fr') return 'fr-FR'
+  if (locale.value === 'es') return 'es-ES'
+  return 'pt-BR'
+})
 
 const impactClass = computed(() => {
   const value = decision.value?.impact?.monthlyImpact ?? 0
@@ -82,7 +91,7 @@ const impactClass = computed(() => {
 
 function formatCurrency(value: number | null | undefined): string {
   const amount = Number(value || 0)
-  return new Intl.NumberFormat('pt-BR', {
+  return new Intl.NumberFormat(formattingLocale.value, {
     style: 'currency',
     currency: 'BRL',
     minimumFractionDigits: 2
@@ -90,11 +99,11 @@ function formatCurrency(value: number | null | undefined): string {
 }
 
 function formatRiskMonth(value?: string | null): string {
-  if (!value) return 'No immediate risk'
+  if (!value) return t('publicDecision.no_immediate_risk')
   const [year, month] = value.split('-')
   const parsed = new Date(Number(year), Number(month) - 1, 1)
   if (Number.isNaN(parsed.getTime())) return value
-  return new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(parsed)
+  return new Intl.DateTimeFormat(formattingLocale.value, { month: 'long', year: 'numeric' }).format(parsed)
 }
 
 async function loadPublicDecision() {

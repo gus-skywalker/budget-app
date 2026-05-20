@@ -4,7 +4,7 @@
       <v-card-title class="of-wizard__header">
         <div>
           <div class="of-wizard__eyebrow">Open Finance</div>
-          <h3>Adicionar conexão</h3>
+          <h3>{{ t('openFinance.wizard.add_connection') }}</h3>
         </div>
         <v-btn icon="mdi-close" variant="text" @click="close" />
       </v-card-title>
@@ -27,11 +27,11 @@
         </v-alert>
 
         <section v-if="step === 'institution'" class="of-step-panel">
-          <h4>Escolha o banco que deseja conectar.</h4>
+          <h4>{{ t('openFinance.wizard.choose_bank') }}</h4>
           <v-text-field
             v-model="institutionQuery"
             prepend-inner-icon="mdi-magnify"
-            label="Buscar banco"
+            :label="t('openFinance.wizard.search_bank')"
             variant="outlined"
             density="comfortable"
             color="#667eea"
@@ -67,23 +67,23 @@
         </section>
 
         <section v-else-if="step === 'holderType'" class="of-step-panel">
-          <h4>Quem é o titular da conta?</h4>
+          <h4>{{ t('openFinance.wizard.holder_type_title') }}</h4>
           <div class="of-choice-grid">
             <button type="button" class="of-choice" :class="{ 'of-choice--selected': holderType === 'CPF' }" @click="selectHolderType('CPF')">
               <v-icon>mdi-account-outline</v-icon>
-              <strong>Pessoa física</strong>
-              <span>Conta vinculada a um CPF.</span>
+              <strong>{{ t('openFinance.wizard.individual') }}</strong>
+              <span>{{ t('openFinance.wizard.individual_description') }}</span>
             </button>
             <button type="button" class="of-choice" :class="{ 'of-choice--selected': holderType === 'CNPJ' }" @click="selectHolderType('CNPJ')">
               <v-icon>mdi-domain</v-icon>
-              <strong>Pessoa jurídica</strong>
-              <span>Conta vinculada a um CNPJ.</span>
+              <strong>{{ t('openFinance.wizard.company') }}</strong>
+              <span>{{ t('openFinance.wizard.company_description') }}</span>
             </button>
           </div>
         </section>
 
         <section v-else-if="step === 'holderLookup'" class="of-step-panel">
-          <h4>{{ holderType === 'CPF' ? 'Informe o CPF do titular.' : 'Informe o CNPJ do titular.' }}</h4>
+          <h4>{{ holderType === 'CPF' ? t('openFinance.wizard.enter_cpf') : t('openFinance.wizard.enter_cnpj') }}</h4>
           <div class="of-holder-lookup">
             <v-text-field
               v-model="holderDocument"
@@ -101,7 +101,7 @@
             <div v-if="lookupHolderResult" class="of-holder-results">
               <article class="of-holder-card">
                 <div>
-                  <span class="of-holder-card__eyebrow">Encontramos um titular já cadastrado</span>
+                  <span class="of-holder-card__eyebrow">{{ t('openFinance.wizard.existing_holder_found') }}</span>
                   <strong>{{ lookupHolderResult.name }}</strong>
                   <span>{{ lookupHolderResult.documentType }} {{ lookupHolderResult.documentMasked || maskedHolderDocument }}</span>
                   <span v-if="lookupHolderResult.email">{{ lookupHolderResult.email }}</span>
@@ -109,13 +109,13 @@
                 </div>
                 <div class="of-holder-card__actions">
                   <v-btn size="small" color="#667eea" variant="tonal" @click="lookupHolderResult && continueWithHolder(lookupHolderResult)">
-                    Continuar com estes dados
+                    {{ t('openFinance.wizard.continue_with_data') }}
                   </v-btn>
                   <v-btn size="small" variant="text" @click="lookupHolderResult && editHolder(lookupHolderResult)">
-                    Atualizar dados
+                    {{ t('openFinance.wizard.update_data') }}
                   </v-btn>
                   <v-btn size="small" variant="text" color="warning" @click="useAnotherHolderDocument">
-                    Usar outro {{ holderType }}
+                    {{ t('openFinance.wizard.use_another_document', { document: holderType }) }}
                   </v-btn>
                 </div>
               </article>
@@ -124,7 +124,7 @@
         </section>
 
         <section v-else-if="step === 'payer'" class="of-step-panel">
-          <h4>{{ holderMode === 'update' ? 'Atualizar dados do titular' : 'Dados do titular' }}</h4>
+          <h4>{{ holderMode === 'update' ? t('openFinance.wizard.update_holder_data') : t('openFinance.wizard.holder_data') }}</h4>
           <div class="of-form-grid">
             <v-text-field
               :model-value="maskedHolderDocument"
@@ -134,12 +134,12 @@
               color="#667eea"
               readonly
             />
-            <v-text-field v-model="payerName" :label="holderType === 'CPF' ? 'Nome completo' : 'Razão social'" variant="outlined" density="comfortable" color="#667eea" />
-            <v-text-field v-model="holderEmail" label="E-mail" type="email" variant="outlined" density="comfortable" color="#667eea" />
-            <v-text-field v-model="holderPhone" label="Telefone opcional" variant="outlined" density="comfortable" color="#667eea" />
+            <v-text-field v-model="payerName" :label="holderType === 'CPF' ? t('openFinance.wizard.full_name') : t('openFinance.wizard.company_name')" variant="outlined" density="comfortable" color="#667eea" />
+            <v-text-field v-model="holderEmail" :label="t('openFinance.wizard.email')" type="email" variant="outlined" density="comfortable" color="#667eea" />
+            <v-text-field v-model="holderPhone" :label="t('openFinance.wizard.optional_phone')" variant="outlined" density="comfortable" color="#667eea" />
             <v-text-field
               v-model="zipcode"
-              label="CEP"
+              :label="t('openFinance.wizard.zipcode')"
               variant="outlined"
               density="comfortable"
               color="#667eea"
@@ -148,29 +148,29 @@
               persistent-hint
               @blur="prepareZipcodeAutofill"
             />
-            <v-text-field v-model="street" label="Endereço" variant="outlined" density="comfortable" color="#667eea" />
-            <v-text-field v-model="addressNumber" label="Número" variant="outlined" density="comfortable" color="#667eea" />
-            <v-text-field v-model="addressComplement" label="Complemento" variant="outlined" density="comfortable" color="#667eea" />
-            <v-text-field v-model="neighborhood" label="Bairro" variant="outlined" density="comfortable" color="#667eea" />
-            <v-text-field v-model="city" label="Cidade" variant="outlined" density="comfortable" color="#667eea" />
-            <v-text-field v-model="state" label="Estado" variant="outlined" density="comfortable" color="#667eea" maxlength="2" />
+            <v-text-field v-model="street" :label="t('openFinance.wizard.street')" variant="outlined" density="comfortable" color="#667eea" />
+            <v-text-field v-model="addressNumber" :label="t('openFinance.wizard.address_number')" variant="outlined" density="comfortable" color="#667eea" />
+            <v-text-field v-model="addressComplement" :label="t('openFinance.wizard.address_complement')" variant="outlined" density="comfortable" color="#667eea" />
+            <v-text-field v-model="neighborhood" :label="t('openFinance.wizard.neighborhood')" variant="outlined" density="comfortable" color="#667eea" />
+            <v-text-field v-model="city" :label="t('openFinance.wizard.city')" variant="outlined" density="comfortable" color="#667eea" />
+            <v-text-field v-model="state" :label="t('openFinance.wizard.state')" variant="outlined" density="comfortable" color="#667eea" maxlength="2" />
           </div>
         </section>
 
         <section v-else-if="step === 'account'" class="of-step-panel">
-          <h4>Informe os dados da conta para que possamos preparar a autorização com o banco.</h4>
+          <h4>{{ t('openFinance.wizard.account_data_title') }}</h4>
           <div class="of-form-grid">
-            <v-text-field v-model="agency" label="Agência" variant="outlined" density="comfortable" color="#667eea" maxlength="8" inputmode="numeric" @update:model-value="agency = onlyDigits(String($event)).slice(0, 8)" />
-            <v-text-field v-model="agencyDigit" label="Dígito da agência opcional" variant="outlined" density="comfortable" color="#667eea" maxlength="2" @update:model-value="agencyDigit = sanitizeDigit(String($event), 2)" />
-            <v-text-field v-model="accountNumber" label="Conta" variant="outlined" density="comfortable" color="#667eea" maxlength="20" inputmode="numeric" @update:model-value="accountNumber = onlyDigits(String($event)).slice(0, 20)" />
-            <v-text-field v-model="accountNumberDigit" label="Dígito da conta" variant="outlined" density="comfortable" color="#667eea" maxlength="2" @update:model-value="accountNumberDigit = sanitizeDigit(String($event), 2)" />
-            <v-text-field v-model="displayName" label="Nome de exibição" variant="outlined" density="comfortable" color="#667eea" class="of-form-grid__wide" />
+            <v-text-field v-model="agency" :label="t('openFinance.wizard.agency')" variant="outlined" density="comfortable" color="#667eea" maxlength="8" inputmode="numeric" @update:model-value="agency = onlyDigits(String($event)).slice(0, 8)" />
+            <v-text-field v-model="agencyDigit" :label="t('openFinance.wizard.optional_agency_digit')" variant="outlined" density="comfortable" color="#667eea" maxlength="2" @update:model-value="agencyDigit = sanitizeDigit(String($event), 2)" />
+            <v-text-field v-model="accountNumber" :label="t('openFinance.wizard.account')" variant="outlined" density="comfortable" color="#667eea" maxlength="20" inputmode="numeric" @update:model-value="accountNumber = onlyDigits(String($event)).slice(0, 20)" />
+            <v-text-field v-model="accountNumberDigit" :label="t('openFinance.wizard.account_digit')" variant="outlined" density="comfortable" color="#667eea" maxlength="2" @update:model-value="accountNumberDigit = sanitizeDigit(String($event), 2)" />
+            <v-text-field v-model="displayName" :label="t('openFinance.wizard.display_name')" variant="outlined" density="comfortable" color="#667eea" class="of-form-grid__wide" />
             <v-select
               v-model="statementType"
               :items="statementTypeOptions"
               item-title="label"
               item-value="value"
-              label="Tipo de extrato inicial"
+              :label="t('openFinance.wizard.initial_statement_type')"
               variant="outlined"
               density="comfortable"
               color="#667eea"
@@ -178,7 +178,7 @@
             <v-text-field
               v-if="statementType === 'CREDIT_CARD'"
               v-model="cardNumber"
-              label="Últimos dígitos do cartão"
+              :label="t('openFinance.wizard.card_last_digits')"
               variant="outlined"
               density="comfortable"
               color="#667eea"
@@ -190,41 +190,41 @@
         </section>
 
         <section v-else-if="step === 'review'" class="of-step-panel">
-          <h4>Revise o compartilhamento.</h4>
+          <h4>{{ t('openFinance.wizard.review_sharing') }}</h4>
           <div class="of-review">
-            <div><span>Banco</span><strong>{{ selectedInstitution?.institutionName }}</strong></div>
-            <div><span>Titular</span><strong>{{ selectedHolder?.name || payerName }}</strong></div>
-            <div><span>Documento</span><strong>{{ selectedHolder?.documentMasked || maskedHolderDocument }}</strong></div>
-            <div><span>Conta</span><strong>{{ maskedAccount }}</strong></div>
-            <div><span>Visibilidade</span><strong>{{ holderType === 'CPF' ? 'Privada para o titular' : 'Organizacional do workspace' }}</strong></div>
+            <div><span>{{ t('openFinance.wizard.bank') }}</span><strong>{{ selectedInstitution?.institutionName }}</strong></div>
+            <div><span>{{ t('openFinance.wizard.holder') }}</span><strong>{{ selectedHolder?.name || payerName }}</strong></div>
+            <div><span>{{ t('openFinance.wizard.document') }}</span><strong>{{ selectedHolder?.documentMasked || maskedHolderDocument }}</strong></div>
+            <div><span>{{ t('openFinance.wizard.account') }}</span><strong>{{ maskedAccount }}</strong></div>
+            <div><span>{{ t('openFinance.wizard.visibility') }}</span><strong>{{ holderType === 'CPF' ? t('openFinance.wizard.private_to_holder') : t('openFinance.wizard.workspace_organizational') }}</strong></div>
           </div>
           <div class="of-permissions">
-            <v-chip size="small" variant="tonal">saldos</v-chip>
-            <v-chip size="small" variant="tonal">extratos</v-chip>
-            <v-chip size="small" variant="tonal">identificação da conta</v-chip>
+            <v-chip size="small" variant="tonal">{{ t('openFinance.wizard.permission_balances') }}</v-chip>
+            <v-chip size="small" variant="tonal">{{ t('openFinance.wizard.permission_statements') }}</v-chip>
+            <v-chip size="small" variant="tonal">{{ t('openFinance.wizard.permission_account_identification') }}</v-chip>
           </div>
           <v-alert type="info" variant="tonal" class="mt-4">
-            Você será redirecionado ao banco para autorizar o compartilhamento. O CoBudget não acessa sua senha.
+            {{ t('openFinance.panel.security_note') }}
           </v-alert>
         </section>
 
         <section v-else class="of-step-panel of-status-panel">
           <v-icon size="46" color="#667eea">mdi-bank-transfer-out</v-icon>
-          <h4>Autorização em andamento</h4>
-          <p>Finalize no ambiente seguro do banco e volte para acompanhar o status da conexão.</p>
+          <h4>{{ t('openFinance.wizard.authorization_in_progress') }}</h4>
+          <p>{{ t('openFinance.wizard.authorization_in_progress_description') }}</p>
           <v-btn v-if="authorizationLink" color="#667eea" variant="tonal" @click="openAuthorizationLink">
             <v-icon start>mdi-open-in-new</v-icon>
-            Abrir autorização
+            {{ t('openFinance.wizard.open_authorization') }}
           </v-btn>
         </section>
       </v-card-text>
 
       <v-card-actions class="of-wizard__actions">
-        <v-btn variant="text" @click="previousStep" :disabled="stepIndex === 0 || submitting">Voltar</v-btn>
+        <v-btn variant="text" @click="previousStep" :disabled="stepIndex === 0 || submitting">{{ t('common.back') }}</v-btn>
         <v-spacer />
-        <v-btn variant="text" @click="close" :disabled="submitting">Cancelar</v-btn>
+        <v-btn variant="text" @click="close" :disabled="submitting">{{ t('common.cancel') }}</v-btn>
         <v-btn class="gradient-btn" :loading="submitting" @click="advance">
-          {{ step === 'review' ? 'Continuar para o banco' : step === 'authorization' || step === 'status' ? 'Concluir' : 'Continuar' }}
+          {{ step === 'review' ? t('openFinance.wizard.continue_to_bank') : step === 'authorization' || step === 'status' ? t('openFinance.wizard.finish') : t('openFinance.wizard.continue') }}
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -233,6 +233,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import OpenFinanceService from '@/services/OpenFinanceService'
 import WorkspaceService from '@/services/WorkspaceService'
 import BrasilApiService, { isValidCep, isValidCnpj, isValidCpf, onlyDigits, type BrasilApiCnpj } from '@/services/BrasilApiService'
@@ -251,16 +252,17 @@ const emit = defineEmits<{
   feedback: [payload: { type: 'success' | 'error' | 'info'; message: string }]
 }>()
 const userStore = useUserStore()
+const { t } = useI18n()
 
-const steps: Array<{ value: Step; label: string }> = [
-  { value: 'holderType', label: 'Titular' },
-  { value: 'holderLookup', label: 'Documento' },
-  { value: 'payer', label: 'Dados' },
-  { value: 'institution', label: 'Banco' },
-  { value: 'account', label: 'Conta' },
-  { value: 'review', label: 'Revisão' },
-  { value: 'authorization', label: 'Autorização' },
-]
+const steps = computed<Array<{ value: Step; label: string }>>(() => [
+  { value: 'holderType', label: t('openFinance.wizard.steps.holder') },
+  { value: 'holderLookup', label: t('openFinance.wizard.steps.document') },
+  { value: 'payer', label: t('openFinance.wizard.steps.data') },
+  { value: 'institution', label: t('openFinance.wizard.steps.bank') },
+  { value: 'account', label: t('openFinance.wizard.steps.account') },
+  { value: 'review', label: t('openFinance.wizard.steps.review') },
+  { value: 'authorization', label: t('openFinance.wizard.steps.authorization') },
+])
 
 const isOpen = computed({
   get: () => props.modelValue,
@@ -303,12 +305,12 @@ const cepLookupMessage = ref('')
 const cnpjLookupLoading = ref(false)
 const cnpjLookupMessage = ref('')
 const cnpjCompany = ref<BrasilApiCnpj | null>(null)
-const statementTypeOptions = [
-  { label: 'Conta corrente bancária', value: 'BANK' },
-  { label: 'Cartão de crédito', value: 'CREDIT_CARD' },
-]
+const statementTypeOptions = computed(() => [
+  { label: t('openFinance.wizard.bank_current_account'), value: 'BANK' },
+  { label: t('openFinance.wizard.credit_card'), value: 'CREDIT_CARD' },
+])
 
-const stepIndex = computed(() => steps.findIndex((item) => item.value === step.value))
+const stepIndex = computed(() => steps.value.findIndex((item) => item.value === step.value))
 const filteredInstitutions = computed(() => {
   const query = normalize(institutionQuery.value)
   if (!query) return openFinanceInstitutions
@@ -321,13 +323,13 @@ const filteredInstitutions = computed(() => {
 
 const maskedHolderDocument = computed(() => maskDocument(holderDocument.value))
 const maskedAccount = computed(() => maskAccount(accountNumber.value))
-const cepLookupHint = computed(() => cepLookupMessage.value || 'Preenche bairro, cidade e UF pelo CEP.')
+const cepLookupHint = computed(() => cepLookupMessage.value || t('openFinance.wizard.cep_hint'))
 const holderLookupHint = computed(() => {
-  if (holdersLoading.value) return 'Buscando titular cadastrado...'
+  if (holdersLoading.value) return t('openFinance.wizard.searching_holder')
   if (holderType.value === 'CNPJ' && cnpjLookupMessage.value) return cnpjLookupMessage.value
-  if (holderType.value === 'CNPJ' && cnpjCompany.value?.razao_social) return `CNPJ validado: ${cnpjCompany.value.razao_social}`
-  if (lookupHolderResult.value) return 'Você pode reutilizar dados já cadastrados.'
-  return holderType.value === 'CPF' ? 'Digite o CPF para buscar um titular cadastrado.' : 'Digite o CNPJ para buscar um titular cadastrado.'
+  if (holderType.value === 'CNPJ' && cnpjCompany.value?.razao_social) return t('openFinance.wizard.cnpj_validated', { name: cnpjCompany.value.razao_social })
+  if (lookupHolderResult.value) return t('openFinance.wizard.reuse_holder_hint')
+  return holderType.value === 'CPF' ? t('openFinance.wizard.cpf_lookup_hint') : t('openFinance.wizard.cnpj_lookup_hint')
 })
 
 watch(() => props.modelValue, (open) => {
@@ -381,7 +383,7 @@ const previousStep = () => {
     step.value = 'holderLookup'
     return
   }
-  step.value = steps[stepIndex.value - 1].value
+  step.value = steps.value[stepIndex.value - 1].value
 }
 
 const selectHolderType = (type: 'CPF' | 'CNPJ') => {
@@ -420,28 +422,28 @@ const advance = async () => {
     await submit(openAuthorizationPlaceholder())
     return
   }
-  step.value = steps[stepIndex.value + 1].value
+  step.value = steps.value[stepIndex.value + 1].value
 }
 
 const validateStep = () => {
-  if (step.value === 'institution' && !selectedInstitution.value) return 'Escolha o banco que deseja conectar.'
+  if (step.value === 'institution' && !selectedInstitution.value) return t('openFinance.wizard.validation.choose_bank')
   if (step.value === 'holderLookup') {
-    if (!digitsOnly(holderDocument.value)) return holderType.value === 'CPF' ? 'Informe o CPF.' : 'Informe o CNPJ.'
-    if (holderType.value === 'CPF' && !isValidCpf(holderDocument.value)) return 'Informe um CPF válido.'
-    if (holderType.value === 'CNPJ' && !isValidCnpj(holderDocument.value)) return 'Informe um CNPJ válido.'
+    if (!digitsOnly(holderDocument.value)) return holderType.value === 'CPF' ? t('openFinance.wizard.validation.enter_cpf') : t('openFinance.wizard.validation.enter_cnpj')
+    if (holderType.value === 'CPF' && !isValidCpf(holderDocument.value)) return t('openFinance.wizard.validation.valid_cpf')
+    if (holderType.value === 'CNPJ' && !isValidCnpj(holderDocument.value)) return t('openFinance.wizard.validation.valid_cnpj')
   }
   if (step.value === 'payer') {
-    if (!payerName.value.trim()) return holderType.value === 'CPF' ? 'Informe o nome completo.' : 'Informe a razão social.'
-    if (holderEmail.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(holderEmail.value.trim())) return 'Informe um e-mail válido.'
-    if (!isValidCep(zipcode.value)) return 'Informe um CEP válido.'
-    if (!street.value.trim()) return 'Informe o endereço.'
-    if (!addressNumber.value.trim()) return 'Informe o número.'
-    if (!city.value.trim() || !state.value.trim()) return 'Informe cidade e UF.'
+    if (!payerName.value.trim()) return holderType.value === 'CPF' ? t('openFinance.wizard.validation.full_name') : t('openFinance.wizard.validation.company_name')
+    if (holderEmail.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(holderEmail.value.trim())) return t('openFinance.wizard.validation.valid_email')
+    if (!isValidCep(zipcode.value)) return t('openFinance.wizard.validation.valid_cep')
+    if (!street.value.trim()) return t('openFinance.wizard.validation.street')
+    if (!addressNumber.value.trim()) return t('openFinance.wizard.validation.address_number')
+    if (!city.value.trim() || !state.value.trim()) return t('openFinance.wizard.validation.city_state')
   }
   if (step.value === 'account') {
-    if (!agency.value.trim()) return 'Informe a agência.'
-    if (!accountNumber.value.trim()) return 'Informe a conta.'
-    if (statementType.value === 'CREDIT_CARD' && digitsOnly(cardNumber.value).length !== 4) return 'Informe os 4 últimos dígitos do cartão.'
+    if (!agency.value.trim()) return t('openFinance.wizard.validation.agency')
+    if (!accountNumber.value.trim()) return t('openFinance.wizard.validation.account')
+    if (statementType.value === 'CREDIT_CARD' && digitsOnly(cardNumber.value).length !== 4) return t('openFinance.wizard.validation.card_last_digits')
   }
   return ''
 }
@@ -465,7 +467,7 @@ const resolveHolderDocument = async () => {
     hydrateHolderFormFromDocument()
     step.value = 'payer'
   } catch (error: any) {
-    errorMessage.value = extractErrorMessage(error, 'Não foi possível buscar titulares cadastrados.')
+    errorMessage.value = extractErrorMessage(error, t('openFinance.wizard.error.lookup_holder'))
   } finally {
     holdersLoading.value = false
   }
@@ -509,7 +511,7 @@ const persistHolderData = async () => {
     holderMode.value = 'reuse'
     step.value = 'institution'
   } catch (error: any) {
-    errorMessage.value = extractErrorMessage(error, 'Não foi possível salvar os dados do titular.')
+    errorMessage.value = extractErrorMessage(error, t('openFinance.wizard.error.save_holder'))
   } finally {
     submitting.value = false
   }
@@ -533,7 +535,7 @@ const holderPayload = (): OpenFinanceHolderRequest => ({
 const submit = async (authorizationWindow?: Window | null) => {
   if (!selectedInstitution.value) return
   if (!selectedHolder.value?.id) {
-    errorMessage.value = 'Confirme os dados do titular antes de continuar.'
+    errorMessage.value = t('openFinance.wizard.validation.confirm_holder')
     return
   }
   submitting.value = true
@@ -567,13 +569,13 @@ const submit = async (authorizationWindow?: Window | null) => {
     const response = await OpenFinanceService.startConnection(payload)
     authorizationLink.value = response.data.authorizationLink || response.data.openfinanceLink || ''
     emit('created', response.data)
-    emit('feedback', { type: 'success', message: 'Conexão criada. Continue a autorização no ambiente seguro do banco.' })
+    emit('feedback', { type: 'success', message: t('openFinance.wizard.feedback.connection_created') })
     if (authorizationLink.value) openAuthorizationLink(authorizationWindow)
     else authorizationWindow?.close()
     step.value = 'authorization'
   } catch (error: any) {
     authorizationWindow?.close()
-    errorMessage.value = extractErrorMessage(error, 'Não foi possível iniciar a conexão Open Finance.')
+    errorMessage.value = extractErrorMessage(error, t('openFinance.wizard.error.start_connection'))
   } finally {
     submitting.value = false
   }
@@ -582,7 +584,7 @@ const submit = async (authorizationWindow?: Window | null) => {
 const openAuthorizationPlaceholder = () => {
   const target = window.open('about:blank', '_blank')
   if (!target) return null
-  target.document.write('<!doctype html><title>Open Finance</title><p>Preparando autorizacao Open Finance...</p>')
+  target.document.write(`<!doctype html><title>Open Finance</title><p>${t('openFinance.wizard.preparing_authorization')}</p>`)
   target.document.close()
   return target
 }
@@ -670,7 +672,7 @@ const prepareCnpjAutofill = async () => {
   const cnpj = onlyDigits(holderDocument.value)
   if (!cnpj) return
   if (!isValidCnpj(cnpj)) {
-    cnpjLookupMessage.value = 'CNPJ inválido.'
+    cnpjLookupMessage.value = t('openFinance.wizard.validation.invalid_cnpj')
     return
   }
 
@@ -681,7 +683,7 @@ const prepareCnpjAutofill = async () => {
     holderDocument.value = cnpj
     applyCompanyData(response.data)
   } catch (error: any) {
-    cnpjLookupMessage.value = error?.response?.data?.message || error?.message || 'Não foi possível validar o CNPJ agora.'
+    cnpjLookupMessage.value = error?.response?.data?.message || error?.message || t('openFinance.wizard.error.validate_cnpj')
   } finally {
     cnpjLookupLoading.value = false
   }
@@ -712,7 +714,7 @@ const prepareZipcodeAutofill = async () => {
   const cep = onlyDigits(zipcode.value)
   if (!cep) return
   if (!isValidCep(cep)) {
-    cepLookupMessage.value = 'CEP deve conter 8 dígitos.'
+    cepLookupMessage.value = t('openFinance.wizard.validation.cep_digits')
     return
   }
 
@@ -725,7 +727,7 @@ const prepareZipcodeAutofill = async () => {
     if (response.data.city) city.value = response.data.city
     if (response.data.state) state.value = response.data.state
   } catch (error: any) {
-    cepLookupMessage.value = error?.response?.data?.message || error?.message || 'Não foi possível buscar o CEP agora.'
+    cepLookupMessage.value = error?.response?.data?.message || error?.message || t('openFinance.wizard.error.lookup_cep')
   } finally {
     cepLookupLoading.value = false
   }

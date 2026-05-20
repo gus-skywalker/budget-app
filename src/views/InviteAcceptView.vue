@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/plugins/userStore'
 import WorkspaceInviteService from '@/services/WorkspaceInviteService'
 import WorkspaceService from '@/services/WorkspaceService'
@@ -14,6 +15,7 @@ import {
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
+const { t } = useI18n()
 const loading = ref(true)
 const done = ref(false)
 const errorMessage = ref('')
@@ -64,7 +66,7 @@ async function syncWorkspacesAfterAccept() {
 
 async function processInviteAccept() {
   if (!token.value) {
-    errorMessage.value = 'Invite token not found. Open the original invitation link from your email so CoBudget can identify the workspace.'
+    errorMessage.value = t('invites.accept_token_missing')
     clearInviteAcceptanceContext()
     loading.value = false
     return
@@ -80,7 +82,7 @@ async function processInviteAccept() {
     const isRecoverable = !inviteStatus || inviteStatus === 'PENDING' || inviteStatus === 'ACCEPTED'
 
     if (!inviteValidation?.valid || !isRecoverable) {
-      errorMessage.value = 'This invitation is invalid, expired, or no longer pending.'
+      errorMessage.value = t('invites.invalid_or_expired')
       clearInviteAcceptanceContext()
       return
     }
@@ -105,7 +107,7 @@ async function processInviteAccept() {
     const acceptResponse = await WorkspaceInviteService.acceptInvite(token.value)
     const membershipMaterialized = acceptResponse?.data?.membershipMaterialized !== false
     if (!membershipMaterialized) {
-      throw new Error('Invite accepted, but workspace membership is not available yet.')
+      throw new Error(t('invites.membership_unavailable'))
     }
     acceptedWorkspaceId.value = String(acceptResponse?.data?.workspaceId || '').trim()
     const acceptedRole = String(acceptResponse?.data?.tenantRole || '').trim() || null
@@ -149,10 +151,10 @@ async function processInviteAccept() {
       return
     }
     if (status === 403) {
-      errorMessage.value = 'This invitation belongs to a different account. Sign in with the invited email.'
+      errorMessage.value = t('invites.different_account')
       return
     }
-    errorMessage.value = error?.response?.data?.error || error?.response?.data || 'Could not accept invitation.'
+    errorMessage.value = error?.response?.data?.error || error?.response?.data || t('invites.accept_error')
   } finally {
     loading.value = false
   }
@@ -176,9 +178,9 @@ onMounted(() => {
 <template>
   <v-container class="fill-height d-flex align-center justify-center">
     <v-card class="pa-6" max-width="560" width="100%">
-      <div class="text-h5 font-weight-bold mb-2">Workspace invitation</div>
+      <div class="text-h5 font-weight-bold mb-2">{{ t('invites.title') }}</div>
       <div class="text-body-2 text-medium-emphasis mb-6">
-        Accept your invite and continue to the decision workspace.
+        {{ t('invites.accept_subtitle') }}
       </div>
 
       <v-progress-linear v-if="loading" indeterminate color="primary" class="mb-4" />
@@ -189,7 +191,7 @@ onMounted(() => {
         variant="tonal"
         class="mb-4"
       >
-        Invitation accepted successfully.
+        {{ t('invites.accept_success') }}
       </v-alert>
 
       <v-alert
@@ -207,7 +209,7 @@ onMounted(() => {
         block
         @click="goToDecisions"
       >
-        Go to Decisions
+        {{ t('invites.go_to_decisions') }}
       </v-btn>
     </v-card>
   </v-container>

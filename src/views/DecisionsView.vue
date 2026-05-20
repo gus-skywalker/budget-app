@@ -28,9 +28,9 @@
                 color="#667eea"
                 class="decisions-filter-toggle"
               >
-                <v-btn value="open">Open ({{ openDecisionCount }})</v-btn>
-                <v-btn value="withDecision">With decision ({{ withDecisionCount }})</v-btn>
-                <v-btn value="closed">Closed ({{ closedDecisionCount }})</v-btn>
+                <v-btn value="open">{{ $t('decisions.filter_open', { count: openDecisionCount }) }}</v-btn>
+                <v-btn value="withDecision">{{ $t('decisions.filter_with_decision', { count: withDecisionCount }) }}</v-btn>
+                <v-btn value="closed">{{ $t('decisions.filter_closed', { count: closedDecisionCount }) }}</v-btn>
               </v-btn-toggle>
               <v-btn variant="tonal" color="#4f46e5" @click="openDecisionCreationDialog">
                 <v-icon start>mdi-plus-circle-outline</v-icon>
@@ -284,7 +284,7 @@
                     @click="copyPublicDecisionLink(decision.decisionId)"
                   >
                     <v-icon start size="16">mdi-link-variant</v-icon>
-                    Copy public link
+                    {{ $t('decisions.copy_public_link') }}
                   </v-btn>
                   <v-btn
                     v-if="decision.isOpenDecision"
@@ -413,7 +413,7 @@
 
     <v-dialog v-model="decisionCreationDialogOpen" max-width="640">
       <v-card>
-        <v-card-title>Choose a scenario</v-card-title>
+        <v-card-title>{{ $t('decisions.choose_scenario') }}</v-card-title>
         <v-card-text>
           <div v-if="availableScenariosForDecision.length" class="decision-create-list">
             <button
@@ -432,12 +432,12 @@
           </div>
           <div v-else class="empty-state">
             <v-icon color="#94a3b8" size="28">mdi-lightbulb-auto-outline</v-icon>
-            <p>No available scenarios without decision.</p>
+            <p>{{ $t('decisions.no_available_scenarios') }}</p>
           </div>
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn variant="text" @click="closeDecisionCreationDialog">Cancel</v-btn>
+          <v-btn variant="text" @click="closeDecisionCreationDialog">{{ $t('decisions.cancel') }}</v-btn>
           <v-btn
             color="#4f46e5"
             variant="flat"
@@ -445,7 +445,7 @@
             :loading="Boolean(selectedScenarioToCreate) && activeDecisionId === selectedScenarioToCreate && decisionAction === 'create'"
             @click="createDecisionFromSelectedScenario"
           >
-            Create decision
+            {{ $t('decisions.create_decision') }}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -545,14 +545,14 @@ const getSavedScenarioPayload = (scenario: SavedScenario) => ({
         if (!delta) return null
         if (line.type === 'INCOME') {
           return {
-            label: `Baseline adjustment: ${line.category}`,
+            label: t('planning.scenarios.baseline_adjustment_label', { category: line.category }),
             type: (delta > 0 ? 'MONTHLY_INCOME' : 'MONTHLY_EXPENSE') as ScenarioDeltaType,
             amount: Math.abs(delta),
             startMonthOffset: 0,
           }
         }
         return {
-          label: `Baseline adjustment: ${line.category}`,
+          label: t('planning.scenarios.baseline_adjustment_label', { category: line.category }),
           type: (delta > 0 ? 'MONTHLY_EXPENSE' : 'MONTHLY_INCOME') as ScenarioDeltaType,
           amount: Math.abs(delta),
           startMonthOffset: 0,
@@ -665,13 +665,13 @@ const filteredDecisionCards = computed(() => {
 
 const emptyDecisionMessage = computed(() => {
   if (decisionFilter.value === 'open') {
-    return 'No open decisions right now.'
+    return t('decisions.empty_open')
   }
   if (decisionFilter.value === 'withDecision') {
-    return 'No persisted decisions yet. Create one from a scenario.'
+    return t('decisions.empty_with_decision')
   }
   if (decisionFilter.value === 'closed') {
-    return 'No closed decisions yet.'
+    return t('decisions.empty_closed')
   }
   return t('decisions.empty')
 })
@@ -831,8 +831,8 @@ const trackDecision = async (scenarioId: string) => {
     ]
     const scenarioName = savedScenarios.value.find((scenario) => scenario.id === scenarioId)?.name || ''
     successMessage.value = scenarioName
-      ? `Decision created from "${scenarioName}".`
-      : 'Decision created successfully.'
+      ? t('decisions.created_from_scenario', { name: scenarioName })
+      : t('decisions.created_success')
   } catch (trackError) {
     console.error(trackError)
     error.value = t('decisions.persist_error')
@@ -885,7 +885,7 @@ const copyPublicDecisionLink = async (decisionId: string) => {
   const publicUrl = `${window.location.origin}/decision/${decisionId}/public`
   try {
     await navigator.clipboard.writeText(publicUrl)
-    successMessage.value = 'Public link copied'
+    successMessage.value = t('decisions.public_link_copied')
   } catch (copyError) {
     try {
       const input = document.createElement('input')
@@ -894,10 +894,10 @@ const copyPublicDecisionLink = async (decisionId: string) => {
       input.select()
       document.execCommand('copy')
       document.body.removeChild(input)
-      successMessage.value = 'Public link copied'
+      successMessage.value = t('decisions.public_link_copied')
     } catch (fallbackError) {
       console.error(copyError, fallbackError)
-      error.value = 'Could not copy public link'
+      error.value = t('decisions.public_link_copy_error')
     }
   }
 }
@@ -1001,10 +1001,10 @@ onMounted(async () => {
       const parsed = JSON.parse(rawFlash) as { scenarioName?: string }
       const scenarioName = String(parsed?.scenarioName || '').trim()
       successMessage.value = scenarioName
-        ? `Decision created from "${scenarioName}".`
-        : 'Decision created successfully.'
+        ? t('decisions.created_from_scenario', { name: scenarioName })
+        : t('decisions.created_success')
     } catch {
-      successMessage.value = 'Decision created successfully.'
+      successMessage.value = t('decisions.created_success')
     }
   }
   await loadDecisionCards()

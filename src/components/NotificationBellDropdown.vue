@@ -21,7 +21,7 @@
     </template>
 
     <v-card class="notification-card">
-      <v-card-title class="notification-title"> Notifications </v-card-title>
+      <v-card-title class="notification-title">{{ t('notifications.title') }}</v-card-title>
       <v-divider />
       <v-list v-if="latestNotifications.length" density="comfortable" class="notification-list">
         <v-list-item
@@ -31,7 +31,7 @@
           @click="emit('notification-click', notification)"
         >
           <v-list-item-title class="notification-message">
-            {{ notification.message || notification.title || 'New update' }}
+            {{ notification.message || notification.title || t('notifications.fallback_title') }}
           </v-list-item-title>
           <v-list-item-subtitle class="notification-meta">
             <span>{{ normalizeType(notification.type) }}</span>
@@ -39,13 +39,14 @@
           </v-list-item-subtitle>
         </v-list-item>
       </v-list>
-      <div v-else class="notification-empty">No notifications yet</div>
+      <div v-else class="notification-empty">{{ t('notifications.empty') }}</div>
     </v-card>
   </v-menu>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { Notification } from '@/services/NotificationService'
 
 const props = defineProps<{
@@ -58,6 +59,15 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
   (e: 'notification-click', notification: Notification): void
 }>()
+
+const { locale, t } = useI18n()
+
+const formattingLocale = computed(() => {
+  if (locale.value === 'en') return 'en-US'
+  if (locale.value === 'fr') return 'fr-FR'
+  if (locale.value === 'es') return 'es-ES'
+  return 'pt-BR'
+})
 
 const latestNotifications = computed(() => {
   return [...(props.notifications || [])]
@@ -73,23 +83,23 @@ function normalizeType(type?: string): string {
   const normalized = String(type || '')
     .trim()
     .toLowerCase()
-  if (normalized === 'decision_created') return 'new decision'
-  if (normalized === 'vote_added') return 'new vote'
-  if (normalized === 'comment_added') return 'new comment'
-  if (normalized === 'decision_applied') return 'decision applied'
-  if (normalized === 'workspace_welcome') return 'workspace welcome'
-  if (normalized === 'workspace_exited') return 'workspace exit'
-  if (normalized === 'invite_accepted') return 'invite accepted'
-  if (normalized === 'invite_declined') return 'invite declined'
-  if (normalized === 'invite_expired') return 'invite expired'
-  return 'workspace update'
+  if (normalized === 'decision_created') return t('notifications.types.decision_created')
+  if (normalized === 'vote_added') return t('notifications.types.vote_added')
+  if (normalized === 'comment_added') return t('notifications.types.comment_added')
+  if (normalized === 'decision_applied') return t('notifications.types.decision_applied')
+  if (normalized === 'workspace_welcome') return t('notifications.types.workspace_welcome')
+  if (normalized === 'workspace_exited') return t('notifications.types.workspace_exited')
+  if (normalized === 'invite_accepted') return t('notifications.types.invite_accepted')
+  if (normalized === 'invite_declined') return t('notifications.types.invite_declined')
+  if (normalized === 'invite_expired') return t('notifications.types.invite_expired')
+  return t('notifications.types.workspace_update')
 }
 
 function formatTimestamp(value?: string): string {
-  if (!value) return 'now'
+  if (!value) return t('notifications.now')
   const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return 'now'
-  return new Intl.DateTimeFormat('pt-BR', {
+  if (Number.isNaN(date.getTime())) return t('notifications.now')
+  return new Intl.DateTimeFormat(formattingLocale.value, {
     day: '2-digit',
     month: '2-digit',
     hour: '2-digit',

@@ -4,7 +4,7 @@
       <!-- Header -->
       <div class="budget-header">
         <h1 class="page-title">{{ $t('sidebar.transactions') }}</h1>
-        <p class="page-subtitle">Gerencie entradas e despesas manuais, acompanhe lançamentos Open Finance e controle o que entra no planejamento.</p>
+        <p class="page-subtitle">{{ $t('transactions.subtitle') }}</p>
       </div>
 
       <v-row>
@@ -143,7 +143,7 @@
                   :label="$t('common.select_month')" 
                   v-model="selectedIncomeMonth"
                   @update:model-value="resetIncomePaginationAndFetch" 
-                  :items="months" 
+                  :items="localizedMonths" 
                   item-title="name"
                   item-value="value"
                   variant="outlined"
@@ -169,7 +169,7 @@
               <div class="budget-drilldown-banner__content">
                 <v-icon color="#667eea">mdi-tune-vertical</v-icon>
                 <span>
-                  Filtro aplicado:
+                  {{ $t('transactions.applied_filter') }}:
                   <strong v-if="activeExpenseCategoryName">{{ activeExpenseCategoryName }}</strong>
                   <strong v-if="activeExpenseCategoryName && activeExpenseAccountName"> • </strong>
                   <strong v-if="activeExpenseAccountName">{{ activeExpenseAccountName }}</strong>
@@ -177,15 +177,15 @@
                   <strong v-if="activeExpenseFilterLabel">{{ activeExpenseFilterLabel }}</strong>
                 </span>
               </div>
-              <v-btn size="small" variant="text" @click="clearExpenseDrillDown">Limpar</v-btn>
+              <v-btn size="small" variant="text" @click="clearExpenseDrillDown">{{ $t('common.clear') }}</v-btn>
             </div>
             <div class="transaction-filter-row">
               <v-chip-group v-model="incomeListFilter" mandatory selected-class="filter-chip-selected">
                 <v-chip size="small" value="all" variant="outlined">{{ $t('transactionVisibility.filters.all') }}</v-chip>
                 <v-chip size="small" value="workspace" variant="outlined">{{ $t('transactionVisibility.filters.workspace') }}</v-chip>
                 <v-chip size="small" value="private" variant="outlined">{{ $t('transactionVisibility.filters.private') }}</v-chip>
-                <v-chip size="small" value="open-finance" variant="outlined">Open Finance</v-chip>
-                <v-chip size="small" value="conflicts" variant="outlined">Conflitos</v-chip>
+                <v-chip size="small" value="open-finance" variant="outlined">{{ $t('transactions.filters.open_finance') }}</v-chip>
+                <v-chip size="small" value="conflicts" variant="outlined">{{ $t('transactions.filters.conflicts') }}</v-chip>
               </v-chip-group>
             </div>
             <div class="list-wrapper">
@@ -452,7 +452,7 @@
                   :label="$t('common.select_month')" 
                   v-model="selectedExpenseMonth"
                   @update:model-value="resetExpensePaginationAndFetch" 
-                  :items="months" 
+                  :items="localizedMonths" 
                   item-title="name"
                   item-value="value"
                   variant="outlined"
@@ -479,8 +479,8 @@
                 <v-chip size="small" value="all" variant="outlined">{{ $t('transactionVisibility.filters.all') }}</v-chip>
                 <v-chip size="small" value="workspace" variant="outlined">{{ $t('transactionVisibility.filters.workspace') }}</v-chip>
                 <v-chip size="small" value="private" variant="outlined">{{ $t('transactionVisibility.filters.private') }}</v-chip>
-                <v-chip size="small" value="open-finance" variant="outlined">Open Finance</v-chip>
-                <v-chip size="small" value="conflicts" variant="outlined">Conflitos</v-chip>
+                <v-chip size="small" value="open-finance" variant="outlined">{{ $t('transactions.filters.open_finance') }}</v-chip>
+                <v-chip size="small" value="conflicts" variant="outlined">{{ $t('transactions.filters.conflicts') }}</v-chip>
                 <v-chip size="small" value="uncategorized" variant="outlined">{{ $t('expense.uncategorized_only') }}</v-chip>
               </v-chip-group>
             </div>
@@ -794,18 +794,18 @@ export default {
       routeExpenseAccountId: null,
       routeExpenseCategory: null,
       months: [
-        { name: 'Janeiro', value: 1 },
-        { name: 'Fevereiro', value: 2 },
-        { name: 'Março', value: 3 },
-        { name: 'Abril', value: 4 },
-        { name: 'Maio', value: 5 },
-        { name: 'Junho', value: 6 },
-        { name: 'Julho', value: 7 },
-        { name: 'Agosto', value: 8 },
-        { name: 'Setembro', value: 9 },
-        { name: 'Outubro', value: 10 },
-        { name: 'Novembro', value: 11 },
-        { name: 'Dezembro', value: 12 }
+        { titleKey: 'common.months.january', value: 1 },
+        { titleKey: 'common.months.february', value: 2 },
+        { titleKey: 'common.months.march', value: 3 },
+        { titleKey: 'common.months.april', value: 4 },
+        { titleKey: 'common.months.may', value: 5 },
+        { titleKey: 'common.months.june', value: 6 },
+        { titleKey: 'common.months.july', value: 7 },
+        { titleKey: 'common.months.august', value: 8 },
+        { titleKey: 'common.months.september', value: 9 },
+        { titleKey: 'common.months.october', value: 10 },
+        { titleKey: 'common.months.november', value: 11 },
+        { titleKey: 'common.months.december', value: 12 }
       ],
       years,
       monthlyExpenses: [],
@@ -862,6 +862,12 @@ export default {
       return this.transactionVisibilityOptions.map((option) => ({
         value: option.value,
         title: this.$t(option.titleKey),
+      }))
+    },
+    localizedMonths() {
+      return this.months.map((month) => ({
+        value: month.value,
+        name: this.$t(month.titleKey),
       }))
     },
     canGoToPreviousIncomePage() {
@@ -948,7 +954,7 @@ export default {
     },
     activeExpenseFilterLabel() {
       if (this.expenseListFilter === 'open-finance') {
-        return 'Somente Open Finance'
+        return this.$t('transactions.filters.open_finance_only')
       }
       if (this.expenseListFilter === 'workspace') {
         return this.$t('transactionVisibility.filters.workspace')
@@ -971,7 +977,7 @@ export default {
         return this.$t('income.no_entries')
       }
       if (this.incomeListFilter === 'open-finance') {
-        return 'Nenhuma entrada Open Finance neste período.'
+        return this.$t('transactions.empty.open_finance_income')
       }
       if (this.incomeListFilter === 'workspace') {
         return this.$t('transactionVisibility.empty.workspaceIncome')
@@ -979,14 +985,14 @@ export default {
       if (this.incomeListFilter === 'private') {
         return this.$t('transactionVisibility.empty.privateIncome')
       }
-      return 'Nenhum conflito de reconciliação em entradas neste período.'
+      return this.$t('transactions.empty.income_conflicts')
     },
     expenseEmptyMessage() {
       if (this.expenseListFilter === 'all') {
         return this.$t('expense.no_entries')
       }
       if (this.expenseListFilter === 'open-finance') {
-        return 'Nenhuma despesa Open Finance neste período.'
+        return this.$t('transactions.empty.open_finance_expense')
       }
       if (this.expenseListFilter === 'workspace') {
         return this.$t('transactionVisibility.empty.workspaceExpense')
@@ -997,7 +1003,7 @@ export default {
       if (this.expenseListFilter === 'uncategorized') {
         return this.$t('expense.no_uncategorized_entries')
       }
-      return 'Nenhum conflito de reconciliação em despesas neste período.'
+      return this.$t('transactions.empty.expense_conflicts')
     },
     canSuggestExpenseCategory() {
       return Boolean(String(this.expense.description || '').trim()) && parseCurrencyToNumber(this.expense.amount) !== null
@@ -1203,9 +1209,9 @@ export default {
         return {
           ...transaction,
           openFinanceDocumentType: null,
-          openFinanceSharingLabel: 'Open Finance compartilhado',
+          openFinanceSharingLabel: this.$t('transactions.open_finance_shared_label'),
           openFinanceSharingTone: 'default',
-          openFinanceSharingNote: 'Fonte Open Finance visível no workspace conforme a política atual de compartilhamento.',
+          openFinanceSharingNote: this.$t('transactions.open_finance_shared_note'),
         }
       }
 
@@ -1213,9 +1219,9 @@ export default {
         return {
           ...transaction,
           openFinanceDocumentType: 'CNPJ',
-          openFinanceSharingLabel: 'Fonte empresarial compartilhada',
+          openFinanceSharingLabel: this.$t('transactions.open_finance_business_shared_label'),
           openFinanceSharingTone: 'shared',
-          openFinanceSharingNote: 'Fonte CNPJ compartilhada com o workspace para operação e planejamento.',
+          openFinanceSharingNote: this.$t('transactions.open_finance_business_shared_note'),
         }
       }
 
@@ -1224,11 +1230,11 @@ export default {
         return {
           ...transaction,
           openFinanceDocumentType: 'CPF',
-          openFinanceSharingLabel: 'Fonte pessoal compartilhada com admins',
+          openFinanceSharingLabel: this.$t('transactions.open_finance_personal_admin_label'),
           openFinanceSharingTone: 'admin-shared',
           openFinanceSharingNote: this.isOwnerOrAdminRole()
-            ? 'Esta transação vem de uma fonte CPF compartilhada com owners e admins.'
-            : 'Esta fonte CPF tem compartilhamento administrativo, mas o acesso à sua role continua restrito.',
+            ? this.$t('transactions.open_finance_personal_admin_note')
+            : this.$t('transactions.open_finance_personal_admin_restricted_note'),
         }
       }
 
@@ -1236,18 +1242,18 @@ export default {
         return {
           ...transaction,
           openFinanceDocumentType: 'CPF',
-          openFinanceSharingLabel: 'Planejamento apenas',
+          openFinanceSharingLabel: this.$t('transactions.open_finance_planning_only_label'),
           openFinanceSharingTone: 'planning-only',
-          openFinanceSharingNote: 'Fonte CPF usada apenas em agregados de planejamento. Os detalhes seguem privados.',
+          openFinanceSharingNote: this.$t('transactions.open_finance_planning_only_note'),
         }
       }
 
       return {
         ...transaction,
         openFinanceDocumentType: 'CPF',
-        openFinanceSharingLabel: 'Fonte pessoal privada',
+        openFinanceSharingLabel: this.$t('transactions.open_finance_private_label'),
         openFinanceSharingTone: 'private',
-        openFinanceSharingNote: 'Fonte CPF privada, sem compartilhamento operacional além do dono da conexão.',
+        openFinanceSharingNote: this.$t('transactions.open_finance_private_note'),
       }
     },
     applyOpenFinanceContextToCollections() {

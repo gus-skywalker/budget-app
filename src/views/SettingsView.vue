@@ -65,7 +65,7 @@
                       {{ profileFeedback.message }}
                     </v-alert>
                     <v-alert v-if="isFederatedIdentityManaged" type="info" variant="tonal" class="mb-4">
-                      Esta conta está vinculada ao {{ federatedProviderLabel }}. Alterações de nome e e-mail devem ser feitas diretamente no provedor de login. Preferências do app, como idioma, continuam editáveis aqui.
+                      {{ $t('account_management.federated_profile_notice', { provider: federatedProviderLabel }) }}
                     </v-alert>
                     <v-text-field 
                       v-model="username" 
@@ -224,8 +224,7 @@
                   </template>
                   <template v-else>
                     <v-alert type="info" variant="tonal">
-                      Você está autenticado via {{ federatedProviderLabel }}.<br>
-                      A senha é gerenciada pelo provedor de login.
+                      {{ $t('account_management.federated_password_notice', { provider: federatedProviderLabel }) }}
                     </v-alert>
                   </template>
                 </div>
@@ -392,16 +391,16 @@
                 <div class="card-header">
                   <h2 class="card-title">
                     <v-icon color="#667eea" class="mr-2">mdi-history</v-icon>
-                    Histórico de sincronizações
+                    {{ $t('openFinance.settings.sync_history_title') }}
                   </h2>
                   <p class="card-description">
-                    Últimas execuções de sync Open Finance com os principais contadores operacionais.
+                    {{ $t('openFinance.settings.sync_history_description') }}
                   </p>
                 </div>
                 <div class="card-content">
                   <div v-if="!openFinanceSyncHistory.length" class="empty-state-panel">
                     <v-icon size="40" color="#667eea" class="mb-3">mdi-history</v-icon>
-                    <p class="empty-message">Nenhuma sincronização registrada ainda.</p>
+                    <p class="empty-message">{{ $t('openFinance.settings.no_sync_history') }}</p>
                   </div>
                   <div v-else class="sync-history-list">
                     <div v-for="item in openFinanceSyncHistory" :key="item.id" class="sync-history-item">
@@ -412,13 +411,13 @@
                           variant="tonal"
                           :color="item.status === 'FAILED' ? 'error' : item.status === 'PROCESSING' ? 'warning' : '#667eea'"
                         >
-                          {{ item.status === 'FAILED' ? 'Falhou' : item.status === 'PROCESSING' ? 'Processando' : 'Sucesso' }}
+                          {{ item.status === 'FAILED' ? $t('openFinance.settings.sync_failed') : item.status === 'PROCESSING' ? $t('openFinance.settings.sync_processing') : $t('openFinance.settings.sync_success') }}
                         </v-chip>
                       </div>
                       <div class="sync-history-subtitle">
                         {{ formatOpenFinanceDate(item.createdAt.split('T')[0]) }}
                         <span class="sync-history-trigger">
-                          • {{ item.trigger === 'AUTOMATIC' ? 'Automático' : 'Manual' }}
+                          • {{ item.trigger === 'AUTOMATIC' ? $t('openFinance.settings.trigger_automatic') : $t('openFinance.settings.trigger_manual') }}
                         </span>
                       </div>
                       <div v-if="formatSyncHistoryConnection(item)" class="sync-history-connection">
@@ -426,14 +425,14 @@
                         <span>{{ formatSyncHistoryConnection(item) }}</span>
                       </div>
                       <div class="sync-history-metrics">
-                        <span v-if="item.fetchedCount !== undefined">{{ item.fetchedCount }} recebidas</span>
-                        <span>{{ item.transactionsCreated }} novas</span>
-                        <span>{{ item.transactionsUpdated }} atualizadas</span>
-                        <span v-if="item.providerDuplicateCount !== undefined">{{ item.providerDuplicateCount }} duplicadas provider</span>
-                        <span v-if="item.localDuplicateCount !== undefined">{{ item.localDuplicateCount }} duplicadas locais</span>
-                        <span>{{ item.reconciliationConflicts }} conflitos</span>
-                        <span>{{ item.accountsSkippedDueToRateLimit }} rate limit</span>
-                        <span v-if="item.providerProtocolId">Protocolo: {{ item.providerProtocolId }}</span>
+                        <span v-if="item.fetchedCount !== undefined">{{ $t('openFinance.settings.metric_fetched', { count: item.fetchedCount }) }}</span>
+                        <span>{{ $t('openFinance.settings.metric_created', { count: item.transactionsCreated }) }}</span>
+                        <span>{{ $t('openFinance.settings.metric_updated', { count: item.transactionsUpdated }) }}</span>
+                        <span v-if="item.providerDuplicateCount !== undefined">{{ $t('openFinance.settings.metric_provider_duplicates', { count: item.providerDuplicateCount }) }}</span>
+                        <span v-if="item.localDuplicateCount !== undefined">{{ $t('openFinance.settings.metric_local_duplicates', { count: item.localDuplicateCount }) }}</span>
+                        <span>{{ $t('openFinance.settings.metric_conflicts', { count: item.reconciliationConflicts }) }}</span>
+                        <span>{{ $t('openFinance.settings.metric_rate_limit', { count: item.accountsSkippedDueToRateLimit }) }}</span>
+                        <span v-if="item.providerProtocolId">{{ $t('openFinance.settings.protocol', { id: item.providerProtocolId }) }}</span>
                       </div>
                       <div v-if="item.errorSummary" class="sync-history-error" :title="item.errorSummary">
                         {{ item.errorSummary }}
@@ -447,15 +446,15 @@
                 <div class="card-header">
                   <h2 class="card-title">
                     <v-icon color="#667eea" class="mr-2">mdi-file-compare</v-icon>
-                    Revisão Open Finance
+                    {{ $t('openFinance.settings.review_title') }}
                   </h2>
                   <p class="card-description">
-                    Acompanhe conflitos de reconciliação sem sair da área de conexões.
+                    {{ $t('openFinance.settings.review_description') }}
                   </p>
                 </div>
                 <div class="card-content">
                   <v-alert type="info" variant="tonal" class="mb-4">
-                    As sincronizações Open Finance são executadas automaticamente pelo backend, respeitando a janela e a quota de cada provedor.
+                    {{ $t('openFinance.settings.auto_sync_notice') }}
                   </v-alert>
 
                   <v-alert
@@ -474,7 +473,7 @@
                       @click="goToImportedTransactions"
                     >
                       <v-icon start>mdi-open-in-new</v-icon>
-                      Ver transações importadas
+                      {{ $t('openFinance.settings.view_imported_transactions') }}
                     </v-btn>
                   </div>
 
@@ -483,7 +482,7 @@
                   </div>
                   <div v-else-if="!openFinanceConflicts.length" class="empty-state-panel">
                     <v-icon size="40" color="#667eea" class="mb-3">mdi-check-decagram-outline</v-icon>
-                    <p class="empty-message">Nenhum conflito de reconciliação pendente.</p>
+                    <p class="empty-message">{{ $t('openFinance.settings.no_pending_conflicts') }}</p>
                   </div>
                   <div v-else class="conflict-list">
                     <div v-for="conflict in openFinanceConflicts" :key="conflict.id" class="conflict-item">
@@ -491,18 +490,18 @@
                         <div class="conflict-title-row">
                           <div class="conflict-title">{{ conflict.description }}</div>
                           <v-chip size="small" color="warning" variant="tonal">
-                            {{ conflict.rawStatus || 'SEM STATUS' }}
+                            {{ conflict.rawStatus || $t('openFinance.settings.no_status') }}
                           </v-chip>
                         </div>
                         <div class="conflict-meta">
                           <span>{{ formatOpenFinanceDate(conflict.transactionDate) }}</span>
                           <span>{{ formatOpenFinanceCurrency(conflict.amount) }}</span>
-                          <span>{{ conflict.conflictReason || 'Conflito de assinatura' }}</span>
+                          <span>{{ conflict.conflictReason || $t('openFinance.settings.signature_conflict') }}</span>
                         </div>
                         <div class="conflict-meta">
-                          <span>Transação remota: {{ conflict.remoteTransactionId }}</span>
-                          <span>Conta: {{ conflict.accountExternalId }}</span>
-                          <span v-if="conflict.bankCategoryId">Categoria banco: {{ conflict.bankCategoryId }}</span>
+                          <span>{{ $t('openFinance.settings.remote_transaction', { id: conflict.remoteTransactionId }) }}</span>
+                          <span>{{ $t('openFinance.settings.account', { id: conflict.accountExternalId }) }}</span>
+                          <span v-if="conflict.bankCategoryId">{{ $t('openFinance.settings.bank_category', { id: conflict.bankCategoryId }) }}</span>
                         </div>
                       </div>
                       <div class="conflict-actions">
@@ -513,7 +512,7 @@
                           :disabled="openFinanceResolvingId === conflict.id"
                           @click="resolveOpenFinanceConflict(conflict.id, 'keep-existing')"
                         >
-                          Manter existente
+                          {{ $t('openFinance.settings.keep_existing') }}
                         </v-btn>
                         <v-btn
                           color="#667eea"
@@ -522,7 +521,7 @@
                           :disabled="openFinanceResolvingId === conflict.id"
                           @click="resolveOpenFinanceConflict(conflict.id, 'create-new')"
                         >
-                          Criar nova
+                          {{ $t('openFinance.settings.create_new') }}
                         </v-btn>
                       </div>
                     </div>
@@ -534,16 +533,16 @@
                 <div class="card-header">
                   <h2 class="card-title">
                     <v-icon color="#667eea" class="mr-2">mdi-shape-plus</v-icon>
-                    Mapeamento de categorias
+                    {{ $t('openFinance.settings.category_mapping_title') }}
                   </h2>
                   <p class="card-description">
-                    Defina como cada categoria do banco deve ser convertida para a categoria interna do produto.
+                    {{ $t('openFinance.settings.category_mapping_description') }}
                   </p>
                 </div>
                 <div class="card-content">
                   <v-text-field
                     v-model="openFinanceCategorySearch"
-                    label="Buscar categoria do banco"
+                    :label="$t('openFinance.settings.search_bank_category')"
                     variant="outlined"
                     density="comfortable"
                     color="#667eea"
@@ -553,7 +552,7 @@
 
                   <div v-if="!filteredOpenFinanceCategoryRows.length" class="empty-state-panel">
                     <v-icon size="40" color="#667eea" class="mb-3">mdi-shape-outline</v-icon>
-                    <p class="empty-message">Nenhuma categoria bancária encontrada para mapear.</p>
+                    <p class="empty-message">{{ $t('openFinance.settings.no_bank_category_to_map') }}</p>
                   </div>
 
                   <div v-else class="mapping-list">
@@ -569,10 +568,10 @@
                             <div class="mapping-title">{{ row.bankCategory.name }}</div>
                             <div class="mapping-subtitle">
                               {{ row.bankCategory.id }}
-                              <span v-if="row.bankCategory.parentId">• pai: {{ row.bankCategory.parentId }}</span>
+                              <span v-if="row.bankCategory.parentId">• {{ $t('openFinance.settings.parent', { id: row.bankCategory.parentId }) }}</span>
                             </div>
                             <div v-if="!row.isMapped && row.suggestedCategoryName" class="mapping-suggestion">
-                              Sugestão: {{ row.suggestedCategoryName }}
+                              {{ $t('openFinance.settings.suggestion', { name: row.suggestedCategoryName }) }}
                               <span v-if="row.suggestionReason">• {{ row.suggestionReason }}</span>
                             </div>
                           </div>
@@ -581,7 +580,7 @@
                             :color="row.isMapped ? '#667eea' : 'warning'"
                             variant="tonal"
                           >
-                            {{ row.isMapped ? 'Mapeada' : 'Pendente' }}
+                            {{ row.isMapped ? $t('openFinance.settings.mapped') : $t('openFinance.settings.pending') }}
                           </v-chip>
                         </div>
 
@@ -590,7 +589,7 @@
                           :items="internalCategories"
                           item-title="name"
                           item-value="id"
-                          label="Categoria interna"
+                          :label="$t('openFinance.settings.internal_category')"
                           variant="outlined"
                           density="comfortable"
                           color="#667eea"
@@ -603,11 +602,11 @@
                           class="mapping-suggestion-action"
                           @click="openFinanceMappingSelections[row.bankCategory.id] = row.suggestedCategoryId"
                         >
-                          Aplicar sugestão
+                          {{ $t('openFinance.settings.apply_suggestion') }}
                         </v-btn>
                         <v-checkbox
                           v-model="openFinanceMappingReprocessSelections[row.bankCategory.id]"
-                          label="Reprocessar transações já importadas com esta categoria"
+                          :label="$t('openFinance.settings.reprocess_imported')"
                           color="#667eea"
                           density="comfortable"
                           hide-details
@@ -623,7 +622,7 @@
                           :disabled="openFinanceMappingDeletingId === row.bankCategory.id"
                           @click="saveOpenFinanceCategoryMapping(row.bankCategory.id)"
                         >
-                          Salvar
+                          {{ $t('common.save') }}
                         </v-btn>
                         <v-btn
                           variant="outlined"
@@ -632,7 +631,7 @@
                           :loading="openFinanceMappingDeletingId === row.bankCategory.id"
                           @click="removeOpenFinanceCategoryMapping(row.bankCategory.id)"
                         >
-                          Remover
+                          {{ $t('common.remove') }}
                         </v-btn>
                       </div>
                     </div>
@@ -660,7 +659,7 @@
                     <div class="integration-actions">
                       <template v-if="isGoogleConnected">
                         <v-chip color="green" variant="tonal">
-                          Conectado via Google
+                          {{ $t('account_management.integrations.connected_google') }}
                         </v-chip>
                       </template>
                       <template v-else>
@@ -825,7 +824,7 @@ const federatedProviderLabel = computed(() => {
     case 'GITHUB':
       return 'GitHub'
     default:
-      return 'provedor externo'
+      return t('account_management.external_provider')
   }
 })
 
@@ -1040,15 +1039,15 @@ const formatOpenFinanceCurrency = (value: number) => {
 
 const formatOpenFinanceConsentStatus = (status: string) => {
   const labels: Record<string, string> = {
-    PENDING_SETUP: 'Preparando conexão',
-    PENDING_AUTHORIZATION: 'Aguardando autorização',
-    CONSENT_GRANTED_WAITING_PROVIDER: 'Autorização em processamento',
-    AUTHORIZED_SYNCING: 'Sincronizando',
-    AUTHORIZED_READY: 'Autorizada',
-    DELAYED_PROVIDER: 'Aguardando banco',
-    REAUTH_REQUIRED: 'Reautorização necessária',
-    REVOKED: 'Revogada',
-    ERROR: 'Erro no consentimento',
+    PENDING_SETUP: t('openFinance.status.PENDING_SETUP'),
+    PENDING_AUTHORIZATION: t('openFinance.status.PENDING_AUTHORIZATION'),
+    CONSENT_GRANTED_WAITING_PROVIDER: t('openFinance.status.CONSENT_GRANTED_WAITING_PROVIDER'),
+    AUTHORIZED_SYNCING: t('openFinance.status.AUTHORIZED_SYNCING'),
+    AUTHORIZED_READY: t('openFinance.status.AUTHORIZED_READY'),
+    DELAYED_PROVIDER: t('openFinance.status.DELAYED_PROVIDER'),
+    REAUTH_REQUIRED: t('openFinance.status.REAUTH_REQUIRED'),
+    REVOKED: t('openFinance.status.REVOKED'),
+    ERROR: t('openFinance.status.ERROR'),
   }
   return labels[status] || status
 }
@@ -1132,7 +1131,7 @@ const loadOpenFinanceConflicts = async () => {
   } catch (error: any) {
     openFinanceFeedback.value = {
       type: 'error',
-      message: extractErrorMessage(error, 'Não foi possível carregar os conflitos Open Finance.')
+      message: extractErrorMessage(error, t('openFinance.settings.load_conflicts_error'))
     }
   } finally {
     openFinanceLoadingConflicts.value = false
@@ -1147,7 +1146,7 @@ const loadOpenFinanceConnections = async () => {
   } catch (error: any) {
     openFinanceFeedback.value = {
       type: 'error',
-      message: extractErrorMessage(error, 'Não foi possível carregar as conexões Open Finance.')
+      message: extractErrorMessage(error, t('openFinance.settings.load_connections_error'))
     }
   } finally {
     openFinanceConnectionsLoading.value = false
@@ -1161,7 +1160,7 @@ const loadOpenFinanceImportedAccounts = async () => {
   } catch (error: any) {
     openFinanceFeedback.value = {
       type: 'error',
-      message: extractErrorMessage(error, 'Não foi possível carregar as contas importadas do Open Finance.')
+      message: extractErrorMessage(error, t('openFinance.settings.load_imported_accounts_error'))
     }
   }
 }
@@ -1173,7 +1172,7 @@ const loadOpenFinanceObservabilitySummary = async () => {
   } catch (error: any) {
     openFinanceFeedback.value = {
       type: 'error',
-      message: extractErrorMessage(error, 'Não foi possível carregar o resumo operacional do Open Finance.')
+      message: extractErrorMessage(error, t('openFinance.settings.load_summary_error'))
     }
   }
 }
@@ -1185,7 +1184,7 @@ const loadOpenFinanceSyncHistory = async () => {
   } catch (error: any) {
     openFinanceFeedback.value = {
       type: 'error',
-      message: extractErrorMessage(error, 'Não foi possível carregar o histórico de sincronização Open Finance.')
+      message: extractErrorMessage(error, t('openFinance.settings.load_sync_history_error'))
     }
   }
 }
@@ -1258,7 +1257,7 @@ const loadInternalCategories = async () => {
   } catch (error: any) {
     openFinanceFeedback.value = {
       type: 'error',
-      message: extractErrorMessage(error, 'Não foi possível carregar as categorias internas.')
+      message: extractErrorMessage(error, t('openFinance.settings.load_internal_categories_error'))
     }
   }
 }
@@ -1275,7 +1274,7 @@ const loadOpenFinanceCategoryMappings = async () => {
   } catch (error: any) {
     openFinanceFeedback.value = {
       type: 'error',
-      message: extractErrorMessage(error, 'Não foi possível carregar o mapeamento de categorias Open Finance.')
+      message: extractErrorMessage(error, t('openFinance.settings.load_category_mapping_error'))
     }
   }
 }
@@ -1556,7 +1555,7 @@ const saveOpenFinanceCategoryMapping = async (bankCategoryId: string) => {
   if (!categoryId) {
     openFinanceFeedback.value = {
       type: 'error',
-      message: 'Selecione uma categoria interna antes de salvar o mapeamento.'
+      message: t('openFinance.settings.select_internal_category')
     }
     return
   }
@@ -1569,14 +1568,14 @@ const saveOpenFinanceCategoryMapping = async (bankCategoryId: string) => {
     openFinanceFeedback.value = {
       type: 'success',
       message: reprocessExistingTransactions
-        ? 'Mapeamento salvo e transações existentes reprocessadas.'
-        : 'Mapeamento de categoria salvo com sucesso.'
+        ? t('openFinance.settings.mapping_saved_reprocess')
+        : t('openFinance.settings.mapping_saved')
     }
     await loadOpenFinanceObservabilitySummary()
   } catch (error: any) {
     openFinanceFeedback.value = {
       type: 'error',
-      message: extractErrorMessage(error, 'Falha ao salvar o mapeamento de categoria.')
+      message: extractErrorMessage(error, t('openFinance.settings.mapping_save_error'))
     }
   } finally {
     openFinanceMappingSavingId.value = null
@@ -1593,14 +1592,14 @@ const removeOpenFinanceCategoryMapping = async (bankCategoryId: string) => {
     openFinanceFeedback.value = {
       type: 'success',
       message: reprocessExistingTransactions
-        ? 'Mapeamento removido e transações existentes reprocessadas.'
-        : 'Mapeamento removido com sucesso.'
+        ? t('openFinance.settings.mapping_removed_reprocess')
+        : t('openFinance.settings.mapping_removed')
     }
     await loadOpenFinanceObservabilitySummary()
   } catch (error: any) {
     openFinanceFeedback.value = {
       type: 'error',
-      message: extractErrorMessage(error, 'Falha ao remover o mapeamento de categoria.')
+      message: extractErrorMessage(error, t('openFinance.settings.mapping_remove_error'))
     }
   } finally {
     openFinanceMappingDeletingId.value = null
@@ -1618,14 +1617,14 @@ const resolveOpenFinanceConflict = async (conflictId: string, action: 'keep-exis
     }
     openFinanceFeedback.value = {
       type: 'success',
-      message: 'Conflito resolvido com sucesso.'
+      message: t('openFinance.settings.conflict_resolved')
     }
     await loadOpenFinanceConflicts()
     await loadOpenFinanceObservabilitySummary()
   } catch (error: any) {
     openFinanceFeedback.value = {
       type: 'error',
-      message: extractErrorMessage(error, 'Falha ao resolver conflito Open Finance.')
+      message: extractErrorMessage(error, t('openFinance.settings.conflict_resolve_error'))
     }
   } finally {
     openFinanceResolvingId.value = null

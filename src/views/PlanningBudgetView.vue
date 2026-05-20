@@ -12,11 +12,11 @@
         <div class="card-header">
           <h2 class="card-title">
             <v-icon color="#667eea" class="mr-2">mdi-wallet-outline</v-icon>
-            Current Financial Plan
+            {{ $t('planning.budget.current_plan_title') }}
           </h2>
         </div>
         <div class="card-content">
-          <div v-if="isLoading" class="helper-text">Loading budget baselines...</div>
+          <div v-if="isLoading" class="helper-text">{{ $t('planning.budget.loading_baselines') }}</div>
 
           <template v-else>
             <v-alert
@@ -42,30 +42,30 @@
             <section v-if="activeBudget" class="baseline-section">
               <div class="section-heading">
                 <div>
-                  <p class="section-kicker">Active baseline</p>
+                  <p class="section-kicker">{{ $t('planning.budget.active_baseline') }}</p>
                   <h3>{{ baselineTitle(activeBudget) }}</h3>
                 </div>
-                <v-chip color="success" variant="tonal" size="small">Used by scenarios</v-chip>
+                <v-chip color="success" variant="tonal" size="small">{{ $t('planning.budget.used_by_scenarios') }}</v-chip>
               </div>
 
               <div class="summary-grid">
                 <div class="summary-card">
-                  <span>Total income</span>
+                  <span>{{ $t('planning.budget.total_income') }}</span>
                   <strong>{{ formatCurrency(activeBudget.totalIncome) }}</strong>
                 </div>
                 <div class="summary-card">
-                  <span>Total expense</span>
+                  <span>{{ $t('planning.budget.total_expense') }}</span>
                   <strong>{{ formatCurrency(activeBudget.totalExpense) }}</strong>
                 </div>
                 <div class="summary-card">
-                  <span>Net</span>
+                  <span>{{ $t('planning.budget.net') }}</span>
                   <strong :class="{ 'negative-value': activeBudget.net < 0 }">{{ formatCurrency(activeBudget.net) }}</strong>
                 </div>
               </div>
 
               <div class="baseline-meta">
                 <span>{{ activeBudget.periodMonth }}/{{ activeBudget.periodYear }}</span>
-                <span>{{ activeBudget.lines?.length || 0 }} lines</span>
+                <span>{{ $t('planning.budget.lines_count', { count: activeBudget.lines?.length || 0 }) }}</span>
                 <span>{{ baselineSourceLabel(activeBudget) }}</span>
               </div>
 
@@ -82,39 +82,39 @@
           <div class="flow-action">
                 <v-btn color="#667eea" size="large" @click="goToScenarioCreation">
                   <v-icon start>mdi-chart-timeline-variant</v-icon>
-                  Create Scenario
+                  {{ $t('planning.budget.create_scenario') }}
                 </v-btn>
               </div>
             </section>
 
             <section v-else-if="!showSuggestionEditor && !showManualEditor" class="empty-state">
               <v-icon color="#94a3b8" size="28">mdi-wallet-plus-outline</v-icon>
-              <p class="empty-title">Start your active baseline</p>
+              <p class="empty-title">{{ $t('planning.budget.empty_start_title') }}</p>
               <p class="helper-text">
-                A baseline is the financial reference used by scenarios. You can start from real transactions or enter a manual value.
+                {{ $t('planning.budget.empty_start_description') }}
               </p>
               <p v-if="!canManageBudget" class="helper-text">
-                Only workspace owners and admins can create or activate shared baselines.
+                {{ $t('planning.budget.manage_permission_hint') }}
               </p>
             </section>
 
             <section v-if="canManageBudget && showSuggestionEditor && suggestion" class="baseline-section">
               <div class="suggestion-header">
-                <h3>Suggested Budget</h3>
-                <p>This suggestion is based on your last {{ suggestion.lookbackMonths || 3 }} months average.</p>
+                <h3>{{ $t('planning.budget.suggested_budget') }}</h3>
+                <p>{{ $t('planning.budget.suggestion_lookback', { count: suggestion.lookbackMonths || 3 }) }}</p>
               </div>
 
               <div class="summary-grid">
                 <div class="summary-card">
-                  <span>Suggested income</span>
+                  <span>{{ $t('planning.budget.suggested_income') }}</span>
                   <strong>{{ formatCurrency(suggestedIncomeTotal) }}</strong>
                 </div>
                 <div class="summary-card">
-                  <span>Suggested expense</span>
+                  <span>{{ $t('planning.budget.suggested_expense') }}</span>
                   <strong>{{ formatCurrency(suggestedExpenseTotal) }}</strong>
                 </div>
                 <div class="summary-card">
-                  <span>Net</span>
+                  <span>{{ $t('planning.budget.net') }}</span>
                   <strong :class="{ 'negative-value': suggestedNetTotal < 0 }">{{ formatCurrency(suggestedNetTotal) }}</strong>
                 </div>
               </div>
@@ -122,9 +122,9 @@
               <v-table density="comfortable" class="suggestion-table">
                 <thead>
                   <tr>
-                    <th>Category</th>
-                    <th>Suggested</th>
-                    <th>Confidence</th>
+                    <th>{{ $t('planning.budget.category') }}</th>
+                    <th>{{ $t('planning.budget.suggested') }}</th>
+                    <th>{{ $t('planning.budget.confidence') }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -157,10 +157,10 @@
                   @click="useSuggestedPlan"
                 >
                   <v-icon start>mdi-check-circle-outline</v-icon>
-                  Activate This Plan
+                  {{ $t('planning.budget.activate_this_plan') }}
                 </v-btn>
                 <v-btn variant="text" color="#64748b" @click="cancelSuggestion">
-                  Cancel
+                  {{ $t('common.cancel') }}
                 </v-btn>
               </div>
             </section>
@@ -168,14 +168,14 @@
             <section v-else-if="canManageBudget && showManualEditor" class="baseline-section">
               <template v-if="manualMode === 'quick'">
                 <div class="suggestion-header">
-                  <h3>Quick Baseline</h3>
-                  <p>Enter the expected monthly net cashflow. Use a positive value for surplus or a negative value for shortfall.</p>
+                  <h3>{{ $t('planning.budget.quick_baseline') }}</h3>
+                  <p>{{ $t('planning.budget.quick_baseline_description') }}</p>
                 </div>
 
                 <div class="quick-baseline-panel">
                   <v-text-field
                     v-model.number="quickBaselineAmount"
-                    label="Monthly net cashflow"
+                    :label="$t('planning.budget.monthly_net_cashflow')"
                     type="number"
                     density="comfortable"
                     variant="outlined"
@@ -183,7 +183,7 @@
                     hide-details
                   />
                   <div class="summary-card quick-baseline-summary">
-                    <span>Baseline</span>
+                    <span>{{ $t('planning.budget.baseline') }}</span>
                     <strong :class="{ 'negative-value': Number(quickBaselineAmount || 0) < 0 }">
                       {{ formatCurrency(Number(quickBaselineAmount || 0)) }}
                     </strong>
@@ -198,35 +198,35 @@
                     @click="createQuickBaselineBudget"
                   >
                     <v-icon start>mdi-check-circle-outline</v-icon>
-                    Activate Quick Baseline
+                    {{ $t('planning.budget.activate_quick_baseline') }}
                   </v-btn>
                   <v-btn variant="tonal" color="#667eea" @click="startDetailedManualBudget">
                     <v-icon start>mdi-format-list-bulleted</v-icon>
-                    Use Detailed Budget
+                    {{ $t('planning.budget.use_detailed_budget') }}
                   </v-btn>
                   <v-btn variant="text" color="#64748b" @click="cancelManualBudget">
-                    Cancel
+                    {{ $t('common.cancel') }}
                   </v-btn>
                 </div>
               </template>
 
               <template v-else>
                 <div class="suggestion-header">
-                  <h3>Detailed Manual Budget</h3>
-                  <p>Add real income and expense lines. This becomes the active baseline for scenarios.</p>
+                  <h3>{{ $t('planning.budget.detailed_manual_budget') }}</h3>
+                  <p>{{ $t('planning.budget.detailed_manual_description') }}</p>
                 </div>
 
                 <div class="summary-grid">
                   <div class="summary-card">
-                    <span>Income</span>
+                    <span>{{ $t('planning.budget.income') }}</span>
                     <strong>{{ formatCurrency(manualIncomeTotal) }}</strong>
                   </div>
                   <div class="summary-card">
-                    <span>Expense</span>
+                    <span>{{ $t('planning.budget.expense') }}</span>
                     <strong>{{ formatCurrency(manualExpenseTotal) }}</strong>
                   </div>
                   <div class="summary-card">
-                    <span>Net</span>
+                    <span>{{ $t('planning.budget.net') }}</span>
                     <strong :class="{ 'negative-value': manualNetTotal < 0 }">{{ formatCurrency(manualNetTotal) }}</strong>
                   </div>
                 </div>
@@ -239,18 +239,18 @@
                   >
                     <v-text-field
                       v-model="line.category"
-                      label="Category"
+                      :label="$t('planning.budget.category')"
                       density="comfortable"
                       variant="outlined"
                       hide-details
                     />
                     <v-btn-toggle v-model="line.type" mandatory divided color="#667eea">
-                      <v-btn value="INCOME">Income</v-btn>
-                      <v-btn value="EXPENSE">Expense</v-btn>
+                      <v-btn value="INCOME">{{ $t('planning.budget.income') }}</v-btn>
+                      <v-btn value="EXPENSE">{{ $t('planning.budget.expense') }}</v-btn>
                     </v-btn-toggle>
                     <v-text-field
                       v-model.number="line.plannedAmount"
-                      label="Monthly amount"
+                      :label="$t('planning.budget.monthly_amount')"
                       type="number"
                       min="0"
                       density="comfortable"
@@ -272,7 +272,7 @@
                 <div class="empty-actions">
                   <v-btn variant="tonal" color="#667eea" @click="addManualLine">
                     <v-icon start>mdi-plus</v-icon>
-                    Add Line
+                    {{ $t('planning.budget.add_line') }}
                   </v-btn>
                   <v-btn
                     color="#667eea"
@@ -281,13 +281,13 @@
                     @click="createManualBudget"
                   >
                     <v-icon start>mdi-check-circle-outline</v-icon>
-                    Activate Detailed Budget
+                    {{ $t('planning.budget.activate_detailed_budget') }}
                   </v-btn>
                   <v-btn variant="text" color="#64748b" @click="startManualBudget">
-                    Quick Baseline
+                    {{ $t('planning.budget.quick_baseline') }}
                   </v-btn>
                   <v-btn variant="text" color="#64748b" @click="cancelManualBudget">
-                    Cancel
+                    {{ $t('common.cancel') }}
                   </v-btn>
                 </div>
               </template>
@@ -296,8 +296,8 @@
             <section v-if="canManageBudget && !showSuggestionEditor && !showManualEditor" class="baseline-section">
               <div class="section-heading">
                 <div>
-                  <p class="section-kicker">Create baseline</p>
-                  <h3>Choose the source for this period</h3>
+                  <p class="section-kicker">{{ $t('planning.budget.create_baseline') }}</p>
+                  <h3>{{ $t('planning.budget.choose_source') }}</h3>
                 </div>
               </div>
 
@@ -305,7 +305,7 @@
                 <div class="baseline-option">
                   <v-icon color="#10b981" size="26">mdi-bank-transfer-in</v-icon>
                   <div>
-                    <h4>Suggested budget from transactions</h4>
+                    <h4>{{ $t('planning.budget.suggested_from_transactions') }}</h4>
                     <p>{{ suggestionMessage }}</p>
                   </div>
                   <v-btn
@@ -315,14 +315,14 @@
                     @click="generateSuggestion"
                   >
                     <v-icon start>mdi-auto-fix</v-icon>
-                    Generate Suggested Budget
+                    {{ $t('planning.budget.generate_suggested_budget') }}
                   </v-btn>
                 </div>
 
                 <div class="baseline-option">
                   <v-icon color="#0ea5e9" size="26">mdi-finance</v-icon>
                   <div>
-                    <h4>Real baseline from OpenFinance</h4>
+                    <h4>{{ $t('planning.budget.real_baseline_openfinance') }}</h4>
                     <p>{{ consolidatedBaselineMessage }}</p>
                   </div>
                   <v-btn
@@ -332,19 +332,19 @@
                     @click="generateRealBaseline"
                   >
                     <v-icon start>mdi-chart-box-outline</v-icon>
-                    Generate Real Baseline
+                    {{ $t('planning.budget.generate_real_baseline') }}
                   </v-btn>
                 </div>
 
                 <div class="baseline-option">
                   <v-icon color="#667eea" size="26">mdi-pencil-outline</v-icon>
                   <div>
-                    <h4>Quick manual baseline</h4>
-                    <p>Use one monthly net cashflow number when there is no detailed budget yet.</p>
+                    <h4>{{ $t('planning.budget.quick_manual_baseline') }}</h4>
+                    <p>{{ $t('planning.budget.quick_manual_description') }}</p>
                   </div>
                   <v-btn :variant="hasSuggestionData ? 'tonal' : 'flat'" color="#667eea" @click="startManualBudget">
                     <v-icon start>mdi-plus-circle-outline</v-icon>
-                    Create Manually
+                    {{ $t('planning.budget.create_manually') }}
                   </v-btn>
                 </div>
               </div>
@@ -353,8 +353,8 @@
             <section v-if="canManageBudget && usableAlternativeBudgets.length" class="baseline-section">
               <div class="section-heading">
                 <div>
-                  <p class="section-kicker">Available baselines</p>
-                  <h3>Other versions for {{ now.getMonth() + 1 }}/{{ now.getFullYear() }}</h3>
+                  <p class="section-kicker">{{ $t('planning.budget.available_baselines') }}</p>
+                  <h3>{{ $t('planning.budget.other_versions_for_period', { month: now.getMonth() + 1, year: now.getFullYear() }) }}</h3>
                 </div>
               </div>
 
@@ -366,10 +366,10 @@
                 >
                   <div>
                     <h4>{{ baselineTitle(budget) }}</h4>
-                    <p>{{ baselineSourceLabel(budget) }} · {{ budget.lines?.length || 0 }} lines</p>
+                    <p>{{ baselineSourceLabel(budget) }} · {{ $t('planning.budget.lines_count', { count: budget.lines?.length || 0 }) }}</p>
                   </div>
                   <div class="baseline-row__numbers">
-                    <span>Net</span>
+                    <span>{{ $t('planning.budget.net') }}</span>
                     <strong :class="{ 'negative-value': budget.net < 0 }">{{ formatCurrency(budget.net) }}</strong>
                   </div>
                   <v-btn
@@ -379,7 +379,7 @@
                     :disabled="Boolean(activatingBudgetId)"
                     @click="activateExistingBudget(budget)"
                   >
-                    Set Active
+                    {{ $t('planning.budget.set_active') }}
                   </v-btn>
                 </div>
               </div>
@@ -415,7 +415,7 @@ type ManualBudgetLine = {
 type ManualBudgetMode = 'quick' | 'detailed'
 
 const router = useRouter()
-const { locale } = useI18n()
+const { t, locale } = useI18n()
 const userStore = useUserStore()
 
 const isLoading = ref(false)
@@ -497,24 +497,24 @@ const planningSharingDisabledNotice = computed(() =>
 )
 const suggestionMessage = computed(() =>
   hasSuggestionData.value
-    ? 'Use recent OpenFinance activity to suggest editable budget lines.'
+    ? t('planning.budget.suggestion_message_ready')
     : planningSharingDisabledNotice.value
-      ? 'OpenFinance planning sharing is currently disabled. Re-enable planning impact sharing to generate new editable suggestions from this source.'
-      : 'No editable suggestions are ready yet. Check sync status and planning visibility.'
+      ? t('planning.budget.suggestion_message_sharing_disabled')
+      : t('planning.budget.suggestion_message_unavailable')
 )
 const consolidatedBaselineMessage = computed(() =>
   planningSharingDisabledNotice.value
-    ? 'OpenFinance planning sharing is currently disabled. The saved baseline can still be used, but new recalculations require planning impact sharing to be enabled again.'
-    : 'Create the official planning baseline from aggregated OpenFinance totals for this period.'
+    ? t('planning.budget.consolidated_message_sharing_disabled')
+    : t('planning.budget.consolidated_message_ready')
 )
 const activeBaselineNotice = computed(() => {
   if (!activeBudget.value || !isOpenFinanceAggregatedBaseline(activeBudget.value)) {
     return ''
   }
   if (planningSharingDisabledNotice.value) {
-    return 'OpenFinance planning sharing is currently disabled. This baseline remains available as the last saved snapshot, but new recalculations from this source are blocked until planning impact sharing is enabled again.'
+    return t('planning.budget.active_baseline_sharing_disabled')
   }
-  return 'This OpenFinance baseline is a saved snapshot. Scenarios keep using it even if planning sharing changes later.'
+  return t('planning.budget.active_baseline_snapshot')
 })
 
 const formatCurrency = (value: number) =>
@@ -547,7 +547,7 @@ const loadCurrentBudget = async () => {
     const currentBudget = findActiveBudget(budgets)
     if (!currentBudget && budgets.some((budget) => budget.status === 'ACTIVE')) {
       activeBudget.value = null
-      emptyBudgetMessage.value = 'Your current plan is empty. Add real baseline values or generate a plan from recent financial activity before creating scenarios.'
+      emptyBudgetMessage.value = t('planning.budget.empty_current_plan')
       await preloadSuggestionAvailability()
       return
     }
@@ -602,12 +602,12 @@ const generateSuggestion = async () => {
     hasSuggestionData.value = editableSuggestionLines.value.length > 0
     if (!hasSuggestionData.value) {
       emptyBudgetMessage.value = planningSharingDisabledNotice.value
-        ? 'OpenFinance planning sharing is currently disabled. Re-enable planning impact sharing to generate editable suggestions again.'
-        : 'No editable budget suggestions are available for this period yet. Check sync status, transaction dates, and planning sharing.'
+        ? t('planning.budget.generate_suggestion_sharing_disabled')
+        : t('planning.budget.generate_suggestion_no_data')
     }
   } catch (error) {
     console.error(error)
-    emptyBudgetMessage.value = 'Could not generate editable suggestions from OpenFinance transactions.'
+    emptyBudgetMessage.value = t('planning.budget.generate_suggestion_error')
   } finally {
     isGeneratingSuggestion.value = false
   }
@@ -623,15 +623,19 @@ const generateRealBaseline = async () => {
     const { data } = await BudgetService.generateBaseline(now.value.getMonth() + 1, now.value.getFullYear())
     if (!data || data.status === 'NO_DATA' || !data.budgetId) {
       emptyBudgetMessage.value = planningSharingDisabledNotice.value
-        ? 'OpenFinance planning sharing is currently disabled. The last saved baseline remains available, but generating a new one from this source requires planning impact sharing to be enabled again.'
-        : 'No aggregated OpenFinance totals are available for this period yet. Check sync status and planning sharing.'
+        ? t('planning.budget.generate_real_sharing_disabled')
+        : t('planning.budget.generate_real_no_data')
       return
     }
     await loadCurrentBudget()
-    bannerMessage.value = `OpenFinance baseline activated. Income ${formatCurrency(data.incomeTotal)}, expense ${formatCurrency(data.expenseTotal)}, net ${formatCurrency(data.netAmount)}.`
+    bannerMessage.value = t('planning.budget.real_baseline_activated', {
+      income: formatCurrency(data.incomeTotal),
+      expense: formatCurrency(data.expenseTotal),
+      net: formatCurrency(data.netAmount),
+    })
   } catch (error) {
     console.error(error)
-    emptyBudgetMessage.value = 'Could not generate a consolidated OpenFinance baseline.'
+    emptyBudgetMessage.value = t('planning.budget.generate_real_error')
   } finally {
     isGeneratingRealBaseline.value = false
   }
@@ -658,7 +662,7 @@ const useSuggestedPlan = async () => {
     }
     await loadCurrentBudget()
     showSuggestionEditor.value = false
-    bannerMessage.value = 'Budget activated from recent financial activity.'
+    bannerMessage.value = t('planning.budget.suggested_budget_activated')
   } catch (error) {
     console.error(error)
   } finally {
@@ -676,8 +680,8 @@ const startManualBudget = () => {
 const startDetailedManualBudget = () => {
   manualMode.value = 'detailed'
   editableManualLines.value = [
-    createManualLine({ category: 'Revenue', type: 'INCOME' }),
-    createManualLine({ category: 'Operations', type: 'EXPENSE' }),
+    createManualLine({ category: t('planning.budget.default_income_category'), type: 'INCOME' }),
+    createManualLine({ category: t('planning.budget.default_expense_category'), type: 'EXPENSE' }),
   ]
 }
 
@@ -701,7 +705,7 @@ const createQuickBaselineBudget = async () => {
   const baselineAmount = Number(quickBaselineAmount.value || 0)
 
   if (baselineAmount === 0) {
-    emptyBudgetMessage.value = 'Add a monthly net cashflow different from zero.'
+    emptyBudgetMessage.value = t('planning.budget.quick_baseline_required')
     return
   }
 
@@ -726,7 +730,7 @@ const createQuickBaselineBudget = async () => {
     await BudgetService.activate(createdBudget.id)
     await loadCurrentBudget()
     showManualEditor.value = false
-    bannerMessage.value = 'Quick baseline activated. You can now create scenarios from this baseline.'
+    bannerMessage.value = t('planning.budget.quick_baseline_activated')
   } catch (error) {
     console.error(error)
   } finally {
@@ -739,7 +743,7 @@ const activateExistingBudget = async (budget: Budget) => {
   try {
     await BudgetService.activate(budget.id)
     await loadCurrentBudget()
-    bannerMessage.value = `${baselineTitle(budget)} is now the active baseline.`
+    bannerMessage.value = t('planning.budget.existing_baseline_activated', { name: baselineTitle(budget) })
   } catch (error) {
     console.error(error)
   } finally {
@@ -757,7 +761,7 @@ const createManualBudget = async () => {
     .filter((line) => line.category.length > 0 && line.plannedAmount > 0)
 
   if (!lines.length) {
-    emptyBudgetMessage.value = 'Add at least one income or expense line with a value greater than zero.'
+    emptyBudgetMessage.value = t('planning.budget.manual_budget_required')
     return
   }
 
@@ -778,7 +782,7 @@ const createManualBudget = async () => {
     await BudgetService.activate(createdBudget.id)
     await loadCurrentBudget()
     showManualEditor.value = false
-    bannerMessage.value = 'Manual budget activated. You can now create scenarios from this baseline.'
+    bannerMessage.value = t('planning.budget.manual_budget_activated')
   } catch (error) {
     console.error(error)
   } finally {
@@ -806,17 +810,17 @@ const isOpenFinanceAggregatedBaseline = (budget: Budget): boolean => {
 }
 
 const baselineSourceLabel = (budget: Budget): string => {
-  if (isOpenFinanceAggregatedBaseline(budget)) return 'OpenFinance baseline'
-  if (isQuickManualBudget(budget)) return 'Quick manual'
-  if ((budget.lines || []).length > 1) return 'Detailed budget'
-  return 'Manual budget'
+  if (isOpenFinanceAggregatedBaseline(budget)) return t('planning.budget.source_openfinance')
+  if (isQuickManualBudget(budget)) return t('planning.budget.source_quick_manual')
+  if ((budget.lines || []).length > 1) return t('planning.budget.source_detailed_budget')
+  return t('planning.budget.source_manual_budget')
 }
 
 const baselineTitle = (budget: Budget): string => {
-  if (isOpenFinanceAggregatedBaseline(budget)) return 'OpenFinance consolidated baseline'
-  if (isQuickManualBudget(budget)) return 'Quick manual baseline'
-  if (budget.status === 'ACTIVE') return 'Current financial baseline'
-  return 'Budget baseline'
+  if (isOpenFinanceAggregatedBaseline(budget)) return t('planning.budget.title_openfinance_baseline')
+  if (isQuickManualBudget(budget)) return t('planning.budget.title_quick_manual_baseline')
+  if (budget.status === 'ACTIVE') return t('planning.budget.title_current_baseline')
+  return t('planning.budget.title_budget_baseline')
 }
 
 onMounted(async () => {

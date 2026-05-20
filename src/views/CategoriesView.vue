@@ -9,7 +9,7 @@
         <div class="page-header__actions">
           <v-btn class="modern-btn" variant="outlined" color="#667eea" @click="goToOpenFinanceSettings">
             <v-icon start>mdi-bank-outline</v-icon>
-            Open Finance
+            {{ $t('categories_page.open_finance') }}
           </v-btn>
           <v-btn
             v-if="activeTab === 'categories'"
@@ -17,7 +17,7 @@
             @click="startCreateCategory"
           >
             <v-icon start>mdi-plus</v-icon>
-            Nova categoria
+            {{ $t('categories_page.new_category') }}
           </v-btn>
           <v-btn
             v-else-if="activeTab === 'tags'"
@@ -25,7 +25,7 @@
             @click="startCreateTag"
           >
             <v-icon start>mdi-plus</v-icon>
-            Nova tag
+            {{ $t('categories_page.new_tag') }}
           </v-btn>
           <v-btn
             v-else
@@ -33,7 +33,7 @@
             @click="startCreateAutomation"
           >
             <v-icon start>mdi-plus</v-icon>
-            Criar automação
+            {{ $t('categories_page.create_automation') }}
           </v-btn>
         </div>
       </div>
@@ -50,28 +50,28 @@
       <section class="modern-card tabs-shell">
         <div class="tabs-shell__header">
           <v-tabs v-model="activeTab" color="#667eea" class="categories-tabs">
-            <v-tab value="categories">Categorias</v-tab>
-            <v-tab value="tags">Tags</v-tab>
-            <v-tab value="automations">Automações</v-tab>
+            <v-tab value="categories">{{ $t('categories_page.tabs.categories') }}</v-tab>
+            <v-tab value="tags">{{ $t('categories_page.tabs.tags') }}</v-tab>
+            <v-tab value="automations">{{ $t('categories_page.tabs.automations') }}</v-tab>
           </v-tabs>
         </div>
 
         <div v-if="activeTab === 'categories'" class="tabs-shell__content">
           <div class="stats-grid">
             <div class="stat-card">
-              <div class="stat-card__label">Categorias padrão</div>
+              <div class="stat-card__label">{{ $t('categories_page.stats.system_categories') }}</div>
               <div class="stat-card__value">{{ systemCategoriesCount }}</div>
             </div>
             <div class="stat-card">
-              <div class="stat-card__label">Categorias customizadas</div>
+              <div class="stat-card__label">{{ $t('categories_page.stats.custom_categories') }}</div>
               <div class="stat-card__value">{{ customCategoriesCount }}</div>
             </div>
             <div class="stat-card">
-              <div class="stat-card__label">Customizadas inativas</div>
+              <div class="stat-card__label">{{ $t('categories_page.stats.inactive_custom_categories') }}</div>
               <div class="stat-card__value">{{ inactiveCustomCategoriesCount }}</div>
             </div>
             <div class="stat-card" :class="{ 'stat-card--warning': unmappedBankCategories.length > 0 }">
-              <div class="stat-card__label">Pendências Open Finance</div>
+              <div class="stat-card__label">{{ $t('categories_page.stats.open_finance_pending') }}</div>
               <div class="stat-card__value">{{ unmappedBankCategories.length }}</div>
             </div>
           </div>
@@ -79,21 +79,20 @@
           <section class="insight-band">
             <div class="insight-band__headline">
               <div class="insight-band__copy">
-                <span class="eyebrow">Hub de classificação</span>
-                <h2>Taxonomia pronta para budget, IA e cenários</h2>
+                <span class="eyebrow">{{ $t('categories_page.category_insight.eyebrow') }}</span>
+                <h2>{{ $t('categories_page.category_insight.title') }}</h2>
                 <p>
-                  Organize o catálogo do workspace, resolva mappings Open Finance e prepare a base que alimenta classificação,
-                  orçamento e simulações.
+                  {{ $t('categories_page.category_insight.description') }}
                 </p>
               </div>
               <div class="insight-band__meta">
                 <div class="meta-chip">
                   <span>{{ mappedBankCategoriesCount }}</span>
-                  <small>mappings resolvidos</small>
+                  <small>{{ $t('categories_page.resolved_mappings') }}</small>
                 </div>
                 <div class="meta-chip">
                   <span>{{ filteredCategories.length }}</span>
-                  <small>categorias visíveis</small>
+                  <small>{{ $t('categories_page.visible_categories') }}</small>
                 </div>
               </div>
             </div>
@@ -103,15 +102,15 @@
             <section class="modern-card surface-card">
               <div class="surface-card__header">
                 <div>
-                  <h3 class="surface-card__title">Catálogo de categorias</h3>
-                  <p class="surface-card__subtitle">Ajuste o vocabulário financeiro do workspace e acompanhe o vínculo com o Open Finance.</p>
+                  <h3 class="surface-card__title">{{ $t('categories_page.category_catalog_title') }}</h3>
+                  <p class="surface-card__subtitle">{{ $t('categories_page.category_catalog_subtitle') }}</p>
                 </div>
               </div>
 
               <div class="filters-row">
                 <v-text-field
                   v-model="search"
-                  label="Buscar categoria"
+                  :label="$t('categories_page.search_category')"
                   prepend-inner-icon="mdi-magnify"
                   variant="outlined"
                   density="comfortable"
@@ -123,13 +122,13 @@
                   v-model="showMappedOnly"
                   color="#667eea"
                   hide-details
-                  label="Somente com mapping bancário"
+                  :label="$t('categories_page.mapped_only')"
                 />
                 <v-switch
                   v-model="showInactiveCustom"
                   color="#667eea"
                   hide-details
-                  label="Mostrar customizadas inativas"
+                  :label="$t('categories_page.show_inactive_custom')"
                 />
               </div>
 
@@ -157,17 +156,17 @@
                         <div class="category-row__name">{{ category.name }}</div>
                         <div class="category-row__code">
                           {{ category.code }}
-                          <span v-if="category.parentCategoryName">· filha de {{ category.parentCategoryName }}</span>
+                          <span v-if="category.parentCategoryName">· {{ $t('categories_page.child_of', { name: category.parentCategoryName }) }}</span>
                         </div>
                       </div>
                     </div>
 
                     <div class="category-row__badges">
                       <v-chip size="small" variant="tonal" :color="category.type === 'INCOME' ? 'success' : 'warning'">
-                        {{ category.type === 'INCOME' ? 'Receita' : 'Despesa' }}
+                        {{ category.type === 'INCOME' ? $t('categories_page.income') : $t('categories_page.expense') }}
                       </v-chip>
                       <v-chip size="small" variant="tonal" :color="category.systemDefined ? 'default' : 'primary'">
-                        {{ category.systemDefined ? 'Padrão' : 'Customizada' }}
+                        {{ category.systemDefined ? $t('categories_page.system_defined') : $t('categories_page.custom') }}
                       </v-chip>
                       <v-chip
                         v-if="category.bankMappings.length"
@@ -175,7 +174,7 @@
                         variant="tonal"
                         color="success"
                       >
-                        {{ category.bankMappings.length }} mapping(s)
+                        {{ $t('categories_page.mappings_count', { count: category.bankMappings.length }) }}
                       </v-chip>
                       <v-chip
                         v-if="category.active === false"
@@ -183,7 +182,7 @@
                         variant="tonal"
                         color="warning"
                       >
-                        Inativa
+                        {{ $t('categories_page.inactive') }}
                       </v-chip>
                     </div>
                   </div>
@@ -217,7 +216,7 @@
                       color="#667eea"
                       @click="startEditCategory(category)"
                     >
-                      Editar
+                      {{ $t('common.edit') }}
                     </v-btn>
                     <v-btn
                       v-if="!category.systemDefined && category.active !== false"
@@ -227,7 +226,7 @@
                       :loading="deactivatingCategoryId === category.id"
                       @click="deactivateCategory(category)"
                     >
-                      Desativar
+                      {{ $t('categories_page.deactivate') }}
                     </v-btn>
                   </div>
                 </article>
@@ -235,15 +234,15 @@
 
               <div v-else class="empty-state">
                 <v-icon size="48" color="#667eea" class="mb-3">mdi-shape-off</v-icon>
-                <p class="empty-message">Nenhuma categoria encontrada para esse filtro.</p>
+                <p class="empty-message">{{ $t('categories_page.empty_categories_filter') }}</p>
               </div>
             </section>
 
             <section class="modern-card surface-card">
               <div class="surface-card__header">
                 <div>
-                  <h3 class="surface-card__title">Mappings Open Finance</h3>
-                  <p class="surface-card__subtitle">Resolva aqui o vínculo entre categorias bancárias e o catálogo interno do workspace.</p>
+                  <h3 class="surface-card__title">{{ $t('categories_page.open_finance_mappings_title') }}</h3>
+                  <p class="surface-card__subtitle">{{ $t('categories_page.open_finance_mappings_subtitle') }}</p>
                 </div>
               </div>
 
@@ -252,7 +251,7 @@
                   <div>
                     <div class="mapping-queue__name">{{ bankCategory.name || bankCategory.id }}</div>
                     <div class="mapping-queue__meta">
-                      {{ bankCategory.parentId ? `Parent: ${bankCategory.parentId}` : 'Categoria sincronizada sem parentId' }}
+                      {{ bankCategory.parentId ? $t('categories_page.parent_id', { id: bankCategory.parentId }) : $t('categories_page.synced_without_parent') }}
                     </div>
                   </div>
 
@@ -262,7 +261,7 @@
                       :items="mappingOptions"
                       item-title="label"
                       item-value="value"
-                      label="Mapear para"
+                      :label="$t('categories_page.map_to')"
                       density="comfortable"
                       variant="outlined"
                       class="mapping-select"
@@ -274,7 +273,7 @@
                       :disabled="!mappingSelections[bankCategory.id]"
                       @click="saveMapping(bankCategory.id)"
                     >
-                      Mapear
+                      {{ $t('categories_page.map') }}
                     </v-btn>
                   </div>
                 </article>
@@ -282,12 +281,12 @@
 
               <div v-else class="empty-state compact-empty">
                 <v-icon size="44" color="#667eea" class="mb-3">mdi-check-circle-outline</v-icon>
-                <p class="empty-message">Nenhuma categoria bancária pendente de mapping.</p>
+                <p class="empty-message">{{ $t('categories_page.no_pending_bank_categories') }}</p>
               </div>
 
               <div class="mapping-footer">
                 <v-btn variant="text" color="#667eea" @click="goToOpenFinanceSettings">
-                  Abrir conexões Open Finance
+                  {{ $t('categories_page.open_finance_connections') }}
                 </v-btn>
               </div>
             </section>
@@ -297,15 +296,15 @@
         <div v-else-if="activeTab === 'tags'" class="tabs-shell__content">
           <div class="stats-grid stats-grid--tags">
             <div class="stat-card">
-              <div class="stat-card__label">Tags ativas</div>
+              <div class="stat-card__label">{{ $t('categories_page.stats.active_tags') }}</div>
               <div class="stat-card__value">{{ activeTagsCount }}</div>
             </div>
             <div class="stat-card">
-              <div class="stat-card__label">Tags inativas</div>
+              <div class="stat-card__label">{{ $t('categories_page.stats.inactive_tags') }}</div>
               <div class="stat-card__value">{{ inactiveTagsCount }}</div>
             </div>
             <div class="stat-card">
-              <div class="stat-card__label">Total de tags</div>
+              <div class="stat-card__label">{{ $t('categories_page.stats.total_tags') }}</div>
               <div class="stat-card__value">{{ tags.length }}</div>
             </div>
           </div>
@@ -313,16 +312,16 @@
           <section class="insight-band">
             <div class="insight-band__headline">
               <div class="insight-band__copy">
-                <span class="eyebrow">Classificação transversal</span>
-                <h2>Tags para contexto, filtros e agrupamentos futuros</h2>
+                <span class="eyebrow">{{ $t('categories_page.tag_insight.eyebrow') }}</span>
+                <h2>{{ $t('categories_page.tag_insight.title') }}</h2>
                 <p>
-                  Use tags para sinalizar temas como viagem, reembolso ou recorrência, sem transformar tudo em categoria contábil.
+                  {{ $t('categories_page.tag_insight.description') }}
                 </p>
               </div>
               <div class="insight-band__meta insight-band__meta--single">
                 <div class="meta-chip">
                   <span>{{ visibleTags.length }}</span>
-                  <small>tags visíveis</small>
+                  <small>{{ $t('categories_page.visible_tags') }}</small>
                 </div>
               </div>
             </div>
@@ -331,15 +330,15 @@
           <section class="modern-card surface-card">
             <div class="surface-card__header">
               <div>
-                <h3 class="surface-card__title">Catálogo de tags</h3>
-                <p class="surface-card__subtitle">Mantenha um vocabulário transversal para relatórios, filtros e automações futuras.</p>
+                <h3 class="surface-card__title">{{ $t('categories_page.tag_catalog_title') }}</h3>
+                <p class="surface-card__subtitle">{{ $t('categories_page.tag_catalog_subtitle') }}</p>
               </div>
             </div>
 
             <div class="filters-row filters-row--tags">
               <v-text-field
                 v-model="tagSearch"
-                label="Buscar tag"
+                :label="$t('categories_page.search_tag')"
                 prepend-inner-icon="mdi-magnify"
                 variant="outlined"
                 density="comfortable"
@@ -351,7 +350,7 @@
                 v-model="showInactiveTags"
                 color="#667eea"
                 hide-details
-                label="Mostrar inativas"
+                :label="$t('categories_page.show_inactive')"
               />
             </div>
 
@@ -371,13 +370,13 @@
                     variant="tonal"
                     :color="tag.active === false ? 'warning' : 'success'"
                   >
-                    {{ tag.active === false ? 'Inativa' : 'Ativa' }}
+                    {{ tag.active === false ? $t('categories_page.inactive') : $t('categories_page.active') }}
                   </v-chip>
                 </div>
 
                 <div class="tag-card__actions">
                   <v-btn size="small" variant="text" color="#667eea" @click="startEditTag(tag)">
-                    Editar
+                    {{ $t('common.edit') }}
                   </v-btn>
                   <v-btn
                     v-if="tag.active !== false"
@@ -387,7 +386,7 @@
                     :loading="deactivatingTagId === tag.id"
                     @click="deactivateTag(tag)"
                   >
-                    Desativar
+                    {{ $t('categories_page.deactivate') }}
                   </v-btn>
                 </div>
               </article>
@@ -395,7 +394,7 @@
 
             <div v-else class="empty-state compact-empty">
               <v-icon size="44" color="#667eea" class="mb-3">mdi-tag-off-outline</v-icon>
-              <p class="empty-message">Nenhuma tag encontrada para esse filtro.</p>
+              <p class="empty-message">{{ $t('categories_page.empty_tags_filter') }}</p>
             </div>
           </section>
         </div>
@@ -403,15 +402,15 @@
         <div v-else class="tabs-shell__content">
           <div class="stats-grid stats-grid--tags">
             <div class="stat-card">
-              <div class="stat-card__label">Regras ativas</div>
+              <div class="stat-card__label">{{ $t('categories_page.stats.active_rules') }}</div>
               <div class="stat-card__value">{{ activeAutomationsCount }}</div>
             </div>
             <div class="stat-card">
-              <div class="stat-card__label">Regras inativas</div>
+              <div class="stat-card__label">{{ $t('categories_page.stats.inactive_rules') }}</div>
               <div class="stat-card__value">{{ inactiveAutomationsCount }}</div>
             </div>
             <div class="stat-card">
-              <div class="stat-card__label">Total de automações</div>
+              <div class="stat-card__label">{{ $t('categories_page.stats.total_automations') }}</div>
               <div class="stat-card__value">{{ automations.length }}</div>
             </div>
           </div>
@@ -419,16 +418,16 @@
           <section class="insight-band">
             <div class="insight-band__headline">
               <div class="insight-band__copy">
-                <span class="eyebrow">Regras explícitas</span>
-                <h2>Automatize categorização sem depender da IA para tudo</h2>
+                <span class="eyebrow">{{ $t('categories_page.automation_insight.eyebrow') }}</span>
+                <h2>{{ $t('categories_page.automation_insight.title') }}</h2>
                 <p>
-                  Defina regras do tipo “SE descrição contém X, ENTÃO categorizar como Y” e aplique agora nas transações acessíveis do workspace.
+                  {{ $t('categories_page.automation_insight.description') }}
                 </p>
               </div>
               <div class="insight-band__meta insight-band__meta--single">
                 <div class="meta-chip">
                   <span>{{ visibleAutomations.length }}</span>
-                  <small>regras visíveis</small>
+                  <small>{{ $t('categories_page.visible_rules') }}</small>
                 </div>
               </div>
             </div>
@@ -437,15 +436,15 @@
           <section class="modern-card surface-card">
             <div class="surface-card__header">
               <div>
-                <h3 class="surface-card__title">Catálogo de automações</h3>
-                <p class="surface-card__subtitle">Começamos com regras por descrição, auditáveis e fáceis de revisar.</p>
+                <h3 class="surface-card__title">{{ $t('categories_page.automation_catalog_title') }}</h3>
+                <p class="surface-card__subtitle">{{ $t('categories_page.automation_catalog_subtitle') }}</p>
               </div>
             </div>
 
             <div class="filters-row filters-row--tags">
               <v-text-field
                 v-model="automationSearch"
-                label="Buscar automação"
+                :label="$t('categories_page.search_automation')"
                 prepend-inner-icon="mdi-magnify"
                 variant="outlined"
                 density="comfortable"
@@ -457,7 +456,7 @@
                 v-model="showInactiveAutomations"
                 color="#667eea"
                 hide-details
-                label="Mostrar inativas"
+                :label="$t('categories_page.show_inactive')"
               />
             </div>
 
@@ -471,23 +470,23 @@
                   <div>
                     <div class="automation-card__title">{{ automation.name }}</div>
                     <div class="automation-card__rule">
-                      SE descrição {{ automation.matchOperator === 'EXACT' ? 'é exatamente' : 'contém' }}
+                      {{ $t('categories_page.rule_if_description') }} {{ automation.matchOperator === 'EXACT' ? $t('categories_page.operator_exact') : $t('categories_page.operator_contains') }}
                       <strong>"{{ automation.matchValue }}"</strong>
-                      ENTÃO categorizar como
+                      {{ $t('categories_page.rule_then_categorize_as') }}
                       <strong>{{ automationCategoryName(automation) }}</strong>
                     </div>
                   </div>
 
                   <div class="category-row__badges">
                     <v-chip size="small" variant="tonal" color="primary">
-                      {{ automation.overwriteExistingCategory ? 'Reclassifica' : 'Só sem categoria' }}
+                      {{ automation.overwriteExistingCategory ? $t('categories_page.reclassifies') : $t('categories_page.only_uncategorized') }}
                     </v-chip>
                     <v-chip
                       size="small"
                       variant="tonal"
                       :color="automation.active === false ? 'warning' : 'success'"
                     >
-                      {{ automation.active === false ? 'Inativa' : 'Ativa' }}
+                      {{ automation.active === false ? $t('categories_page.inactive') : $t('categories_page.active') }}
                     </v-chip>
                   </div>
                 </div>
@@ -501,10 +500,10 @@
                     :disabled="automation.active === false"
                     @click="applyAutomation(automation)"
                   >
-                    Aplicar agora
+                    {{ $t('categories_page.apply_now') }}
                   </v-btn>
                   <v-btn size="small" variant="text" color="#667eea" @click="startEditAutomation(automation)">
-                    Editar
+                    {{ $t('common.edit') }}
                   </v-btn>
                   <v-btn
                     v-if="automation.active !== false"
@@ -514,7 +513,7 @@
                     :loading="deactivatingAutomationId === automation.id"
                     @click="deactivateAutomation(automation)"
                   >
-                    Desativar
+                    {{ $t('categories_page.deactivate') }}
                   </v-btn>
                 </div>
               </article>
@@ -522,7 +521,7 @@
 
             <div v-else class="empty-state compact-empty">
               <v-icon size="44" color="#667eea" class="mb-3">mdi-tune-variant</v-icon>
-              <p class="empty-message">Nenhuma automação encontrada para esse filtro.</p>
+              <p class="empty-message">{{ $t('categories_page.empty_automations_filter') }}</p>
             </div>
           </section>
         </div>
@@ -539,8 +538,8 @@
       <div class="drawer-shell">
         <div class="drawer-shell__header">
           <div>
-            <h2>{{ editingCategoryId ? 'Editar categoria' : 'Nova categoria' }}</h2>
-            <p>Organize o catálogo do workspace com uma taxonomia consistente para budget, IA e cenários.</p>
+            <h2>{{ editingCategoryId ? $t('categories_page.edit_category') : $t('categories_page.new_category') }}</h2>
+            <p>{{ $t('categories_page.category_drawer_description') }}</p>
           </div>
           <v-btn icon variant="text" @click="closeEditor">
             <v-icon>mdi-close</v-icon>
@@ -549,7 +548,7 @@
 
         <div class="drawer-shell__body">
           <section class="drawer-section">
-            <span class="drawer-section__label">Estrutura</span>
+            <span class="drawer-section__label">{{ $t('categories_page.structure') }}</span>
             <div class="type-toggle">
               <button
                 type="button"
@@ -558,7 +557,7 @@
                 @click="editorDirection = 'EXPENSE'"
               >
                 <v-icon size="18">mdi-arrow-up</v-icon>
-                Despesa
+                {{ $t('categories_page.expense') }}
               </button>
               <button
                 type="button"
@@ -567,14 +566,14 @@
                 @click="editorDirection = 'INCOME'"
               >
                 <v-icon size="18">mdi-arrow-down</v-icon>
-                Receita
+                {{ $t('categories_page.income') }}
               </button>
             </div>
 
             <v-text-field
               v-model="editorName"
-              label="Nome"
-              placeholder="Ex: Marketing, Receita recorrente"
+              :label="$t('categories_page.name')"
+              :placeholder="$t('categories_page.category_name_placeholder')"
               variant="outlined"
               density="comfortable"
               color="#667eea"
@@ -583,8 +582,8 @@
 
             <v-text-field
               v-model="editorCode"
-              label="Código"
-              hint="Use um identificador estável, ex: marketing_recorrente"
+              :label="$t('categories_page.code')"
+              :hint="$t('categories_page.code_hint')"
               persistent-hint
               variant="outlined"
               density="comfortable"
@@ -597,8 +596,8 @@
               :items="parentCategoryOptions"
               item-title="label"
               item-value="value"
-              label="Categoria pai"
-              placeholder="Nenhuma (categoria principal)"
+              :label="$t('categories_page.parent_category')"
+              :placeholder="$t('categories_page.no_parent_category')"
               clearable
               variant="outlined"
               density="comfortable"
@@ -608,7 +607,7 @@
           </section>
 
           <section class="drawer-section">
-            <span class="drawer-section__label">Identidade visual</span>
+            <span class="drawer-section__label">{{ $t('categories_page.visual_identity') }}</span>
             <div class="icon-grid">
               <button
                 v-for="icon in categoryIconOptions"
@@ -644,17 +643,17 @@
                 <v-icon size="18">{{ editorDisplayIcon || 'mdi-shape-outline' }}</v-icon>
               </div>
               <div>
-                <strong>{{ editorName || 'Prévia da categoria' }}</strong>
-                <span>{{ editorDirection === 'INCOME' ? 'Receita' : 'Despesa' }}</span>
+                <strong>{{ editorName || $t('categories_page.category_preview') }}</strong>
+                <span>{{ editorDirection === 'INCOME' ? $t('categories_page.income') : $t('categories_page.expense') }}</span>
               </div>
             </div>
           </section>
         </div>
 
         <div class="drawer-shell__footer">
-          <v-btn variant="text" @click="closeEditor">Cancelar</v-btn>
+          <v-btn variant="text" @click="closeEditor">{{ $t('common.cancel') }}</v-btn>
           <v-btn class="modern-btn gradient-btn" :loading="savingCategory" @click="saveCategory">
-            {{ editingCategoryId ? 'Salvar ajustes' : 'Criar categoria' }}
+            {{ editingCategoryId ? $t('categories_page.save_adjustments') : $t('categories_page.create_category') }}
           </v-btn>
         </div>
       </div>
@@ -670,8 +669,8 @@
       <div class="drawer-shell">
         <div class="drawer-shell__header">
           <div>
-            <h2>{{ editingTagId ? 'Editar tag' : 'Nova tag' }}</h2>
-            <p>Crie rótulos transversais para contexto, filtros e automações futuras.</p>
+            <h2>{{ editingTagId ? $t('categories_page.edit_tag') : $t('categories_page.new_tag') }}</h2>
+            <p>{{ $t('categories_page.tag_drawer_description') }}</p>
           </div>
           <v-btn icon variant="text" @click="closeTagEditor">
             <v-icon>mdi-close</v-icon>
@@ -680,11 +679,11 @@
 
         <div class="drawer-shell__body">
           <section class="drawer-section">
-            <span class="drawer-section__label">Identidade da tag</span>
+            <span class="drawer-section__label">{{ $t('categories_page.tag_identity') }}</span>
             <v-text-field
               v-model="tagEditorName"
-              label="Nome"
-              placeholder="Ex: Reembolso, Viagem, Empresa"
+              :label="$t('categories_page.name')"
+              :placeholder="$t('categories_page.tag_name_placeholder')"
               variant="outlined"
               density="comfortable"
               color="#667eea"
@@ -708,16 +707,16 @@
             <div class="preview-card">
               <div class="tag-pill" :style="{ backgroundColor: `${tagEditorColor || '#667EEA'}22`, color: tagEditorColor || '#667EEA' }">
                 <v-icon size="16">mdi-tag-outline</v-icon>
-                <span>{{ tagEditorName || 'Prévia da tag' }}</span>
+                <span>{{ tagEditorName || $t('categories_page.tag_preview') }}</span>
               </div>
             </div>
           </section>
         </div>
 
         <div class="drawer-shell__footer">
-          <v-btn variant="text" @click="closeTagEditor">Cancelar</v-btn>
+          <v-btn variant="text" @click="closeTagEditor">{{ $t('common.cancel') }}</v-btn>
           <v-btn class="modern-btn gradient-btn" :loading="savingTag" @click="saveTag">
-            {{ editingTagId ? 'Salvar tag' : 'Criar tag' }}
+            {{ editingTagId ? $t('categories_page.save_tag') : $t('categories_page.create_tag') }}
           </v-btn>
         </div>
       </div>
@@ -733,8 +732,8 @@
       <div class="drawer-shell">
         <div class="drawer-shell__header">
           <div>
-            <h2>{{ editingAutomationId ? 'Editar automação' : 'Nova automação' }}</h2>
-            <p>Crie uma regra explícita para categorizar transações por descrição e aplique no histórico quando fizer sentido.</p>
+            <h2>{{ editingAutomationId ? $t('categories_page.edit_automation') : $t('categories_page.new_automation') }}</h2>
+            <p>{{ $t('categories_page.automation_drawer_description') }}</p>
           </div>
           <v-btn icon variant="text" @click="closeAutomationEditor">
             <v-icon>mdi-close</v-icon>
@@ -743,11 +742,11 @@
 
         <div class="drawer-shell__body">
           <section class="drawer-section">
-            <span class="drawer-section__label">Regra</span>
+            <span class="drawer-section__label">{{ $t('categories_page.rule') }}</span>
             <v-text-field
               v-model="automationEditorName"
-              label="Nome da regra"
-              placeholder="Ex: Uber => Transporte"
+              :label="$t('categories_page.rule_name')"
+              :placeholder="$t('categories_page.rule_name_placeholder')"
               variant="outlined"
               density="comfortable"
               color="#667eea"
@@ -760,7 +759,7 @@
                 :items="automationOperatorOptions"
                 item-title="label"
                 item-value="value"
-                label="Operador"
+                :label="$t('categories_page.operator')"
                 variant="outlined"
                 density="comfortable"
                 color="#667eea"
@@ -768,8 +767,8 @@
               />
               <v-text-field
                 v-model="automationEditorMatchValue"
-                label="Texto da descrição"
-                placeholder="Ex: uber"
+                :label="$t('categories_page.description_text')"
+                :placeholder="$t('categories_page.description_text_placeholder')"
                 variant="outlined"
                 density="comfortable"
                 color="#667eea"
@@ -782,7 +781,7 @@
               :items="automationCategoryOptions"
               item-title="label"
               item-value="value"
-              label="Categoria de destino"
+              :label="$t('categories_page.target_category')"
               variant="outlined"
               density="comfortable"
               color="#667eea"
@@ -793,7 +792,7 @@
               v-model="automationEditorOverwrite"
               color="#667eea"
               hide-details
-              label="Reclassificar entradas que já têm categoria"
+              :label="$t('categories_page.overwrite_existing_category')"
             />
 
             <div class="preview-card">
@@ -801,10 +800,10 @@
                 <v-icon size="28">mdi-tune-variant</v-icon>
               </div>
               <div>
-                <strong>{{ automationEditorName || 'Prévia da automação' }}</strong>
+                <strong>{{ automationEditorName || $t('categories_page.automation_preview') }}</strong>
                 <span>
-                  SE descrição {{ automationEditorOperator === 'EXACT' ? 'é exatamente' : 'contém' }}
-                  "{{ automationEditorMatchValue || '...' }}" ENTÃO categorizar como
+                  {{ $t('categories_page.rule_if_description') }} {{ automationEditorOperator === 'EXACT' ? $t('categories_page.operator_exact') : $t('categories_page.operator_contains') }}
+                  "{{ automationEditorMatchValue || '...' }}" {{ $t('categories_page.rule_then_categorize_as') }}
                   {{ selectedAutomationCategoryLabel }}
                 </span>
               </div>
@@ -813,9 +812,9 @@
         </div>
 
         <div class="drawer-shell__footer">
-          <v-btn variant="text" @click="closeAutomationEditor">Cancelar</v-btn>
+          <v-btn variant="text" @click="closeAutomationEditor">{{ $t('common.cancel') }}</v-btn>
           <v-btn class="modern-btn gradient-btn" :loading="savingAutomation" @click="saveAutomation">
-            {{ editingAutomationId ? 'Salvar automação' : 'Criar automação' }}
+            {{ editingAutomationId ? $t('categories_page.save_automation') : $t('categories_page.create_automation') }}
           </v-btn>
         </div>
       </div>
@@ -981,10 +980,10 @@ const categoryIconOptions = [
   'mdi-cash-plus',
 ]
 
-const automationOperatorOptions = [
-  { label: 'contém', value: 'CONTAINS' },
-  { label: 'é exatamente', value: 'EXACT' },
-]
+const automationOperatorOptions = computed(() => [
+  { label: t('categories_page.operator_contains'), value: 'CONTAINS' },
+  { label: t('categories_page.operator_exact'), value: 'EXACT' },
+])
 
 const normalizeCategoriesPayload = (payload: unknown): ApiCategoryItem[] => {
   if (Array.isArray(payload)) return payload as ApiCategoryItem[]
@@ -1168,7 +1167,7 @@ const automationCategoryOptions = computed(() =>
 
 const selectedAutomationCategoryLabel = computed(() => {
   const selected = automationCategoryOptions.value.find((option) => option.value === automationEditorCategoryId.value)
-  return selected?.label || 'a categoria escolhida'
+  return selected?.label || t('categories_page.selected_category_fallback')
 })
 
 const automationCategoryName = (automation: AutomationItem) =>
@@ -1207,7 +1206,7 @@ const fetchCategories = async () => {
     console.error('Erro ao carregar categorias:', error)
     feedback.value = {
       type: 'error',
-      message: 'Não foi possível carregar as categorias.',
+      message: t('categories_page.load_categories_error'),
     }
   } finally {
     loading.value = false
@@ -1224,7 +1223,7 @@ const fetchTags = async () => {
     console.error('Erro ao carregar tags:', error)
     feedback.value = {
       type: 'error',
-      message: 'Não foi possível carregar as tags.',
+      message: t('categories_page.load_tags_error'),
     }
   } finally {
     loadingTags.value = false
@@ -1241,7 +1240,7 @@ const fetchAutomations = async () => {
     console.error('Erro ao carregar automações:', error)
     feedback.value = {
       type: 'error',
-      message: 'Não foi possível carregar as automações.',
+      message: t('categories_page.load_automations_error'),
     }
   } finally {
     loadingAutomations.value = false
@@ -1336,7 +1335,7 @@ const saveCategory = async () => {
   if (!editorName.value.trim() || !editorCode.value.trim()) {
     feedback.value = {
       type: 'error',
-      message: 'Nome e código são obrigatórios.',
+      message: t('categories_page.category_required_fields'),
     }
     return
   }
@@ -1356,13 +1355,13 @@ const saveCategory = async () => {
       await DataService.updateCategory(editingCategoryId.value, payload)
       feedback.value = {
         type: 'success',
-        message: 'Categoria atualizada com sucesso.',
+        message: t('categories_page.category_update_success'),
       }
     } else {
       await DataService.createCategory(payload)
       feedback.value = {
         type: 'success',
-        message: 'Categoria criada com sucesso.',
+        message: t('categories_page.category_create_success'),
       }
     }
 
@@ -1371,7 +1370,7 @@ const saveCategory = async () => {
   } catch (error: any) {
     feedback.value = {
       type: 'error',
-      message: error?.response?.data?.message || 'Não foi possível salvar a categoria.',
+      message: error?.response?.data?.message || t('categories_page.category_save_error'),
     }
   } finally {
     savingCategory.value = false
@@ -1382,7 +1381,7 @@ const saveTag = async () => {
   if (!tagEditorName.value.trim()) {
     feedback.value = {
       type: 'error',
-      message: 'Nome da tag é obrigatório.',
+      message: t('categories_page.tag_required_fields'),
     }
     return
   }
@@ -1398,13 +1397,13 @@ const saveTag = async () => {
       await DataService.updateTag(editingTagId.value, payload)
       feedback.value = {
         type: 'success',
-        message: 'Tag atualizada com sucesso.',
+        message: t('categories_page.tag_update_success'),
       }
     } else {
       await DataService.createTag(payload)
       feedback.value = {
         type: 'success',
-        message: 'Tag criada com sucesso.',
+        message: t('categories_page.tag_create_success'),
       }
     }
 
@@ -1413,7 +1412,7 @@ const saveTag = async () => {
   } catch (error: any) {
     feedback.value = {
       type: 'error',
-      message: error?.response?.data?.message || 'Não foi possível salvar a tag.',
+      message: error?.response?.data?.message || t('categories_page.tag_save_error'),
     }
   } finally {
     savingTag.value = false
@@ -1424,7 +1423,7 @@ const saveAutomation = async () => {
   if (!automationEditorName.value.trim() || !automationEditorMatchValue.value.trim() || !automationEditorCategoryId.value) {
     feedback.value = {
       type: 'error',
-      message: 'Nome, condição e categoria são obrigatórios na automação.',
+      message: t('categories_page.automation_required_fields'),
     }
     return
   }
@@ -1443,13 +1442,13 @@ const saveAutomation = async () => {
       await DataService.updateCategoryAutomation(editingAutomationId.value, payload)
       feedback.value = {
         type: 'success',
-        message: 'Automação atualizada com sucesso.',
+        message: t('categories_page.automation_update_success'),
       }
     } else {
       await DataService.createCategoryAutomation(payload)
       feedback.value = {
         type: 'success',
-        message: 'Automação criada com sucesso.',
+        message: t('categories_page.automation_create_success'),
       }
     }
 
@@ -1458,7 +1457,7 @@ const saveAutomation = async () => {
   } catch (error: any) {
     feedback.value = {
       type: 'error',
-      message: error?.response?.data?.message || 'Não foi possível salvar a automação.',
+      message: error?.response?.data?.message || t('categories_page.automation_save_error'),
     }
   } finally {
     savingAutomation.value = false
@@ -1476,14 +1475,14 @@ const saveMapping = async (bankCategoryId: string) => {
     await OpenFinanceService.upsertCategoryMapping(bankCategoryId, categoryId, true)
     feedback.value = {
       type: 'success',
-      message: 'Mapping Open Finance atualizado com sucesso.',
+      message: t('categories_page.mapping_update_success'),
     }
     mappingSelections.value = { ...mappingSelections.value, [bankCategoryId]: null }
     await fetchCategories()
   } catch (error: any) {
     feedback.value = {
       type: 'error',
-      message: error?.response?.data?.message || 'Não foi possível salvar o mapping.',
+      message: error?.response?.data?.message || t('categories_page.mapping_save_error'),
     }
   } finally {
     busyBankCategoryId.value = null
@@ -1496,13 +1495,13 @@ const removeMapping = async (bankCategoryId: string) => {
     await OpenFinanceService.deleteCategoryMapping(bankCategoryId, false)
     feedback.value = {
       type: 'success',
-      message: 'Mapping Open Finance removido com sucesso.',
+      message: t('categories_page.mapping_remove_success'),
     }
     await fetchCategories()
   } catch (error: any) {
     feedback.value = {
       type: 'error',
-      message: error?.response?.data?.message || 'Não foi possível remover o mapping.',
+      message: error?.response?.data?.message || t('categories_page.mapping_remove_error'),
     }
   } finally {
     busyBankCategoryId.value = null
@@ -1519,13 +1518,13 @@ const deactivateCategory = async (category: CategoryItem) => {
     await DataService.deactivateCategory(category.id)
     feedback.value = {
       type: 'success',
-      message: 'Categoria desativada com sucesso.',
+      message: t('categories_page.category_deactivate_success'),
     }
     await fetchCategories()
   } catch (error: any) {
     feedback.value = {
       type: 'error',
-      message: error?.response?.data?.message || 'Não foi possível desativar a categoria.',
+      message: error?.response?.data?.message || t('categories_page.category_deactivate_error'),
     }
   } finally {
     deactivatingCategoryId.value = null
@@ -1538,13 +1537,13 @@ const deactivateTag = async (tag: TagItem) => {
     await DataService.deactivateTag(tag.id)
     feedback.value = {
       type: 'success',
-      message: 'Tag desativada com sucesso.',
+      message: t('categories_page.tag_deactivate_success'),
     }
     await fetchTags()
   } catch (error: any) {
     feedback.value = {
       type: 'error',
-      message: error?.response?.data?.message || 'Não foi possível desativar a tag.',
+      message: error?.response?.data?.message || t('categories_page.tag_deactivate_error'),
     }
   } finally {
     deactivatingTagId.value = null
@@ -1557,13 +1556,13 @@ const deactivateAutomation = async (automation: AutomationItem) => {
     await DataService.deactivateCategoryAutomation(automation.id)
     feedback.value = {
       type: 'success',
-      message: 'Automação desativada com sucesso.',
+      message: t('categories_page.automation_deactivate_success'),
     }
     await fetchAutomations()
   } catch (error: any) {
     feedback.value = {
       type: 'error',
-      message: error?.response?.data?.message || 'Não foi possível desativar a automação.',
+      message: error?.response?.data?.message || t('categories_page.automation_deactivate_error'),
     }
   } finally {
     deactivatingAutomationId.value = null
@@ -1578,12 +1577,12 @@ const applyAutomation = async (automation: AutomationItem) => {
     const affectedEntries = Number(response?.data?.affectedEntries || 0)
     feedback.value = {
       type: 'success',
-      message: `Automação aplicada: ${affectedTransactions} transação(ões) e ${affectedEntries} lançamento(s) atualizados.`,
+      message: t('categories_page.automation_apply_success', { transactions: affectedTransactions, entries: affectedEntries }),
     }
   } catch (error: any) {
     feedback.value = {
       type: 'error',
-      message: error?.response?.data?.message || 'Não foi possível aplicar a automação.',
+      message: error?.response?.data?.message || t('categories_page.automation_apply_error'),
     }
   } finally {
     applyingAutomationId.value = null

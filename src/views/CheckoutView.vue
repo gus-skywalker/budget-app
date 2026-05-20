@@ -3,10 +3,10 @@
         <section class="checkout-shell">
             <div class="shell checkout-grid">
                 <div class="checkout-main card-surface">
-                    <div class="section-tag">Checkout seguro</div>
-                    <h1>Finalizando sua assinatura</h1>
+                    <div class="section-tag">{{ t('checkout.secure_tag') }}</div>
+                    <h1>{{ t('checkout.title') }}</h1>
                     <p class="checkout-lead">
-                        Estamos preparando a sessão segura de pagamento para concluir sua assinatura com o menor atrito possível.
+                        {{ t('checkout.lead') }}
                     </p>
 
                     <div v-if="loading" class="status-panel status-panel-loading">
@@ -16,8 +16,8 @@
                             size="56"
                         ></v-progress-circular>
                         <div>
-                            <strong>Preparando seu checkout...</strong>
-                            <p>Validando plano, contexto de cobrança e redirecionamento seguro.</p>
+                            <strong>{{ t('checkout.loading_title') }}</strong>
+                            <p>{{ t('checkout.loading_message') }}</p>
                         </div>
                     </div>
 
@@ -26,10 +26,10 @@
                             <v-icon size="22">mdi-check-circle</v-icon>
                         </div>
                         <div>
-                            <strong>Solicitação enviada com sucesso.</strong>
-                            <p>Você será redirecionado assim que a sessão de pagamento estiver pronta.</p>
+                            <strong>{{ t('checkout.success_title') }}</strong>
+                            <p>{{ t('checkout.success_message') }}</p>
                             <div v-if="operationStatus" class="status-badge">
-                                Status: {{ operationStatus.status }}
+                                {{ t('checkout.status_label') }}: {{ operationStatus.status }}
                             </div>
                         </div>
                     </div>
@@ -39,7 +39,7 @@
                             <v-icon size="22">mdi-alert-circle-outline</v-icon>
                         </div>
                         <div>
-                            <strong>Não foi possível iniciar o checkout.</strong>
+                            <strong>{{ t('checkout.error_title') }}</strong>
                             <p>{{ error }}</p>
                         </div>
                     </div>
@@ -47,7 +47,7 @@
                     <div v-if="planDetails" class="plan-summary">
                         <div class="summary-header">
                             <div>
-                                <span class="summary-label">Resumo do plano</span>
+                                <span class="summary-label">{{ t('checkout.plan_summary') }}</span>
                                 <h2>{{ planDetails.name }}</h2>
                             </div>
                             <div class="summary-price">{{ formattedPlanPrice }}</div>
@@ -59,8 +59,8 @@
                                     <v-icon size="18">mdi-credit-card-outline</v-icon>
                                 </div>
                                 <div>
-                                    <strong>Pagamento seguro</strong>
-                                    <p>Fluxo protegido e redirecionamento externo da sessão de cobrança.</p>
+                                    <strong>{{ t('checkout.secure_payment_title') }}</strong>
+                                    <p>{{ t('checkout.secure_payment_message') }}</p>
                                 </div>
                             </div>
 
@@ -69,8 +69,8 @@
                                     <v-icon size="18">mdi-refresh</v-icon>
                                 </div>
                                 <div>
-                                    <strong>Alteração futura simples</strong>
-                                    <p>Você poderá revisar ou trocar o plano depois nas configurações.</p>
+                                    <strong>{{ t('checkout.plan_change_title') }}</strong>
+                                    <p>{{ t('checkout.plan_change_message') }}</p>
                                 </div>
                             </div>
                         </div>
@@ -82,51 +82,51 @@
                             @click="initializeCheckout"
                             :disabled="loading"
                         >
-                            Tentar novamente
+                            {{ t('checkout.retry') }}
                         </button>
                         <button
                             class="btn btn-secondary"
                             @click="$router.push({ name: 'choose-plan' })"
                         >
-                            Voltar para planos
+                            {{ t('checkout.back_to_plans') }}
                         </button>
                     </div>
                 </div>
 
                 <aside class="checkout-side">
                     <div class="side-card side-card-highlight">
-                        <div class="section-tag section-tag-soft">Próximos passos</div>
+                        <div class="section-tag section-tag-soft">{{ t('checkout.next_steps') }}</div>
                         <ul class="checklist">
                             <li>
                                 <div class="meta-icon icon-contrast">
                                     <v-icon size="18">mdi-check-decagram-outline</v-icon>
                                 </div>
-                                <span>Confirmamos o contexto do plano e do workspace.</span>
+                                <span>{{ t('checkout.step_context') }}</span>
                             </li>
                             <li>
                                 <div class="meta-icon icon-contrast">
                                     <v-icon size="18">mdi-progress-clock</v-icon>
                                 </div>
-                                <span>Solicitamos a sessão de cobrança ao backend de billing.</span>
+                                <span>{{ t('checkout.step_billing') }}</span>
                             </li>
                             <li>
                                 <div class="meta-icon icon-contrast">
                                     <v-icon size="18">mdi-open-in-new</v-icon>
                                 </div>
-                                <span>Você será redirecionado automaticamente quando a sessão estiver pronta.</span>
+                                <span>{{ t('checkout.step_redirect') }}</span>
                             </li>
                         </ul>
                     </div>
 
                     <div class="side-card">
-                        <div class="section-tag section-tag-soft">Confiança</div>
+                        <div class="section-tag section-tag-soft">{{ t('checkout.trust') }}</div>
                         <div class="trust-note">
                             <div class="meta-icon icon-warm">
                                 <v-icon size="18">mdi-shield-lock-outline</v-icon>
                             </div>
                             <div>
-                                <strong>Pagamento com proteção</strong>
-                                <p>Não armazenamos dados sensíveis de pagamento nesta tela.</p>
+                                <strong>{{ t('checkout.protected_payment_title') }}</strong>
+                                <p>{{ t('checkout.protected_payment_message') }}</p>
                             </div>
                         </div>
                         <div class="trust-note">
@@ -134,8 +134,8 @@
                                 <v-icon size="18">mdi-office-building-outline</v-icon>
                             </div>
                             <div>
-                                <strong>Fluxo alinhado ao seu contexto</strong>
-                                <p>Planos TEAM respeitam empresa e permissões antes de seguir para cobrança.</p>
+                                <strong>{{ t('checkout.context_flow_title') }}</strong>
+                                <p>{{ t('checkout.context_flow_message') }}</p>
                             </div>
                         </div>
                     </div>
@@ -148,6 +148,7 @@
 <script>
 import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { useUserStore } from '@/plugins/userStore';
 import { PLAN_DETAILS } from '@/constants/plans';
 import { createCorrelationId } from '@/utils/correlation'
@@ -168,6 +169,7 @@ export default {
         const route = useRoute();
         const router = useRouter();
         const userStore = useUserStore();
+        const { t } = useI18n();
 
         const loading = ref(true);
         const error = ref(null);
@@ -193,7 +195,7 @@ export default {
                 targetCurrency: billing.preferredCurrency,
                 uiLocale: billing.uiLocale
             })
-            const suffix = planDetails.value.billingPeriod === 'year' ? 'year' : 'month'
+            const suffix = planDetails.value.billingPeriod === 'year' ? t('checkout.period_year') : t('checkout.period_month')
             return `${amount} / ${suffix}`
         })
 
@@ -213,7 +215,7 @@ export default {
                 }
 
                 if (resp.data.status === 'FAILED') {
-                    throw new Error(resp.data.lastError || 'Falha ao processar comando de billing')
+                    throw new Error(resp.data.lastError || t('checkout.billing_command_failed'))
                 }
 
                 if (resp.data.status === 'DISPATCHED') {
@@ -232,7 +234,7 @@ export default {
             try {
                 const plan = route.query.plan;
                 if (!plan) {
-                    error.value = 'Nenhum plano selecionado';
+                    error.value = t('checkout.no_plan_selected');
                     return
                 }
 
@@ -307,7 +309,8 @@ export default {
             planDetails,
             formattedPlanPrice,
             operationStatus,
-            initializeCheckout
+            initializeCheckout,
+            t
         };
     }
 };

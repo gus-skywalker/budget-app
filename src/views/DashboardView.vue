@@ -487,10 +487,10 @@
 
       <section class="section-block">
         <div class="section-header">
-          <h2 class="section-title">Insights</h2>
+          <h2 class="section-title">{{ $t('overview.insights_title') }}</h2>
         </div>
         <div v-if="financialInsightsLoading" class="projection-placeholder">
-          <p>Loading insights...</p>
+          <p>{{ $t('overview.insights_loading') }}</p>
         </div>
         <div v-else-if="hasRuleBasedInsights" class="insights-grid">
           <div v-for="insight in financialInsights" :key="`${insight.type}-${insight.message}`" class="insight-pill">
@@ -499,7 +499,7 @@
           </div>
         </div>
         <div v-else class="projection-placeholder">
-          <p>No insights yet</p>
+          <p>{{ $t('overview.insights_empty') }}</p>
         </div>
       </section>
 
@@ -529,24 +529,24 @@
 
       <section class="section-block">
         <div class="section-header">
-          <h2 class="section-title">Impact of Decisions</h2>
+          <h2 class="section-title">{{ $t('overview.approved_decisions_title') }}</h2>
           <v-btn size="small" variant="text" @click="$router.push('/decisions')">
             <v-icon start>mdi-open-in-new</v-icon>
-            Decisions
+            {{ $t('overview.view_decisions') }}
           </v-btn>
         </div>
         <div v-if="approvedDecisionCards.length" class="decisions-grid">
           <div v-for="decision in approvedDecisionCards" :key="decision.id" class="decision-card decision-card--opportunity">
             <div class="decision-card__header">
               <h3 class="decision-card__title">{{ decision.title }}</h3>
-              <v-chip size="x-small" variant="tonal" color="success">APPROVED</v-chip>
+              <v-chip size="x-small" variant="tonal" color="success">{{ $t('overview.decision_status_approved') }}</v-chip>
             </div>
             <p class="decision-card__description">{{ decision.scenarioLabel }}</p>
             <div class="decision-card__meta">{{ decision.impactLabel }}</div>
           </div>
         </div>
         <div v-else class="projection-placeholder">
-          <p>No approved decisions yet. Turn scenarios into team decisions.</p>
+          <p>{{ $t('overview.approved_decisions_empty') }}</p>
         </div>
         <div class="insight-pill mt-4">
           <v-icon size="18" color="#667eea">mdi-chart-line</v-icon>
@@ -556,31 +556,31 @@
 
       <section class="section-block">
         <div class="section-header">
-          <h2 class="section-title">Planned vs Actual</h2>
+          <h2 class="section-title">{{ $t('overview.comparison_title') }}</h2>
         </div>
 
         <div v-if="budgetComparisonLoading" class="projection-placeholder">
-          <p>Loading planned vs actual...</p>
+          <p>{{ $t('overview.comparison_loading') }}</p>
         </div>
 
         <template v-else-if="budgetComparisonState === 'no-budget'">
           <div class="projection-placeholder">
-            <p>Create a plan to start tracking performance</p>
+            <p>{{ $t('overview.comparison_no_budget') }}</p>
           </div>
         </template>
 
         <template v-else-if="budgetComparison">
           <div class="projection-grid">
             <div class="projection-card">
-              <div class="projection-label">Planned Net</div>
+              <div class="projection-label">{{ $t('overview.comparison_planned_net') }}</div>
               <div class="projection-value">{{ formatCurrency(budgetComparison.summary.plannedNet) }}</div>
             </div>
             <div class="projection-card">
-              <div class="projection-label">Actual Net</div>
+              <div class="projection-label">{{ $t('overview.comparison_actual_net') }}</div>
               <div class="projection-value">{{ formatCurrency(budgetComparison.summary.actualNet) }}</div>
             </div>
             <div class="projection-card">
-              <div class="projection-label">Difference</div>
+              <div class="projection-label">{{ $t('overview.comparison_difference') }}</div>
               <div class="projection-value" :class="budgetComparison.summary.netDelta < 0 ? 'delta-negative' : 'delta-positive'">
                 {{ formatCurrency(budgetComparison.summary.netDelta) }}
               </div>
@@ -593,31 +593,31 @@
           </div>
 
           <div v-if="!hasComparisonActivity" class="projection-placeholder mt-4">
-            <p>No activity yet this month</p>
+            <p>{{ $t('overview.comparison_no_activity') }}</p>
           </div>
           <div v-else class="comparison-table-wrap mt-4">
             <v-table density="comfortable">
               <thead>
                 <tr>
-                  <th>Category</th>
-                  <th>Planned</th>
-                  <th>Actual</th>
-                  <th>Delta</th>
-                  <th>Status</th>
+                  <th>{{ $t('overview.comparison_category') }}</th>
+                  <th>{{ $t('overview.comparison_planned') }}</th>
+                  <th>{{ $t('overview.comparison_actual') }}</th>
+                  <th>{{ $t('overview.comparison_delta') }}</th>
+                  <th>{{ $t('overview.comparison_status') }}</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="line in displayedComparisonLines" :key="`${line.type}-${line.category}`">
                   <td>
                     {{ line.category }}
-                    <span class="line-type ml-1">{{ line.type }}</span>
+                    <span class="line-type ml-1">{{ comparisonLineTypeLabel(line.type) }}</span>
                   </td>
                   <td>{{ formatCurrency(line.planned) }}</td>
                   <td>{{ formatCurrency(line.actual) }}</td>
                   <td :class="line.delta < 0 ? 'delta-negative' : 'delta-positive'">{{ formatCurrency(line.delta) }}</td>
                   <td>
                     <v-chip size="x-small" variant="tonal" :color="comparisonStatusColor(line.status)">
-                      {{ line.status }}
+                      {{ comparisonStatusLabel(line.status) }}
                     </v-chip>
                   </td>
                 </tr>
@@ -631,7 +631,7 @@
                 color="#667eea"
                 @click="showAllComparisonLines = !showAllComparisonLines"
               >
-                {{ showAllComparisonLines ? 'Show Top 5' : 'View All' }}
+                {{ showAllComparisonLines ? $t('overview.comparison_show_top') : $t('overview.comparison_view_all') }}
               </v-btn>
             </div>
           </div>
@@ -650,11 +650,11 @@
         <v-card-text class="dialog-content">
           <div class="drilldown-summary">
             <div class="overview-pill">
-              <span class="overview-pill__label">Transações</span>
+              <span class="overview-pill__label">{{ $t('overview.drilldown_transactions') }}</span>
               <span class="overview-pill__value">{{ drillDownTransactions.length }}</span>
             </div>
             <div class="overview-pill">
-              <span class="overview-pill__label">Volume</span>
+              <span class="overview-pill__label">{{ $t('overview.drilldown_volume') }}</span>
               <span class="overview-pill__value">{{ formatCurrency(drillDownTotalAmount) }}</span>
             </div>
           </div>
@@ -668,7 +668,7 @@
               <div>
                 <div class="upcoming-title">{{ transaction.description }}</div>
                 <div class="upcoming-date">
-                  {{ formatTransactionDate(transaction.date) }} • {{ transaction.accountName || 'Sem conta' }}
+                  {{ formatTransactionDate(transaction.date) }} • {{ transaction.accountName || $t('overview.drilldown_no_account') }}
                 </div>
               </div>
               <div class="transaction-row__amount">
@@ -685,7 +685,7 @@
             >
               <div>
                 <div class="upcoming-title">{{ item.accountName }}</div>
-                <div class="upcoming-date">{{ item.transactionCount }} transação(ões) no período</div>
+                <div class="upcoming-date">{{ $t('overview.drilldown_period_transactions', { count: item.transactionCount }) }}</div>
               </div>
               <div class="transaction-row__amount">
                 {{ formatCurrency(item.totalAmount) }}
@@ -694,12 +694,12 @@
           </div>
 
           <div v-if="!drillDownTransactions.length" class="empty-state">
-            <p class="empty-message">Nenhum dado encontrado para esse recorte.</p>
+            <p class="empty-message">{{ $t('overview.drilldown_empty') }}</p>
           </div>
         </v-card-text>
         <v-card-actions class="dialog-actions">
           <v-spacer />
-          <v-btn variant="text" @click="drillDownDialog = false">Fechar</v-btn>
+          <v-btn variant="text" @click="drillDownDialog = false">{{ $t('common.close') }}</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -735,12 +735,12 @@ export default {
     comparisonInsightText() {
       const netDelta = Number(this.budgetComparison?.summary?.netDelta || 0)
       if (netDelta < 0) {
-        return "You're spending more than planned"
+        return this.$t('overview.comparison_insight_over')
       }
       if (netDelta > 0) {
-        return "You're outperforming your plan"
+        return this.$t('overview.comparison_insight_under')
       }
-      return 'You are on plan this month'
+      return this.$t('overview.comparison_insight_on_plan')
     },
     sortedComparisonLines() {
       const lines = Array.isArray(this.budgetComparison?.lines) ? this.budgetComparison.lines : []
@@ -929,8 +929,10 @@ export default {
     },
     approvedImpactSummary() {
       const amount = this.formatCurrency(this.approvedDecisionImpactTotal || 0)
-      const direction = Number(this.approvedDecisionImpactTotal || 0) < 0 ? 'reduced' : 'increased'
-      return `Approved decisions ${direction} net by ${amount} this month`
+      const key = Number(this.approvedDecisionImpactTotal || 0) < 0
+        ? 'overview.approved_impact_reduced'
+        : 'overview.approved_impact_increased'
+      return this.$t(key, { amount })
     },
     overviewInsights() {
       const insights = []
@@ -1177,16 +1179,18 @@ export default {
     drillDownTitle() {
       if (this.drillDownMode === 'category') {
         return this.drillDownCategory
-          ? `Despesas da categoria ${this.drillDownCategory}`
-          : 'Despesas por categoria'
+          ? this.$t('overview.drilldown_category_title', { category: this.drillDownCategory })
+          : this.$t('overview.drilldown_categories_title')
       }
 
       if (this.drillDownAccountId) {
         const account = this.accounts.find((item) => item.id === this.drillDownAccountId)
-        return account ? `Conta ${account.name}` : 'Saldo por conta'
+        return account
+          ? this.$t('overview.drilldown_account_title', { account: account.name })
+          : this.$t('overview.drilldown_accounts_title')
       }
 
-      return 'Saldo por conta'
+      return this.$t('overview.drilldown_accounts_title')
     },
     accountDrillDownGroups() {
       const items = this.drillDownTransactions
@@ -1196,7 +1200,7 @@ export default {
         const key = transaction.accountId || 'unknown'
         const current = grouped.get(key) || {
           accountId: key,
-          accountName: transaction.accountName || 'Sem conta',
+          accountName: transaction.accountName || this.$t('overview.drilldown_no_account'),
           totalAmount: 0,
           transactionCount: 0,
         }
@@ -1402,10 +1406,15 @@ export default {
             const impact = this.getScenarioNetDelta(scenario)
             return {
               id: decision.id,
-              title: decision.title || 'Decision',
-              scenarioLabel: scenario?.name ? `Scenario: ${scenario.name}` : 'Scenario linked',
+              title: decision.title || this.$t('overview.decision_fallback_title'),
+              scenarioLabel: scenario?.name
+                ? this.$t('overview.approved_scenario_label', { scenario: scenario.name })
+                : this.$t('overview.approved_scenario_linked'),
               impact,
-              impactLabel: `Net impact: ${impact >= 0 ? '+' : '-'}${this.formatCurrency(Math.abs(impact))}`,
+              impactLabel: this.$t('overview.approved_net_impact', {
+                sign: impact >= 0 ? '+' : '-',
+                amount: this.formatCurrency(Math.abs(impact)),
+              }),
             }
           })
 
@@ -1458,6 +1467,15 @@ export default {
     comparisonStatusColor(status) {
       if (status === 'OK') return 'success'
       return 'error'
+    },
+    comparisonStatusLabel(status) {
+      if (status === 'OK') return this.$t('overview.comparison_status_ok')
+      return this.$t('overview.comparison_status_attention')
+    },
+    comparisonLineTypeLabel(type) {
+      if (type === 'INCOME') return this.$t('overview.comparison_type_income')
+      if (type === 'EXPENSE') return this.$t('overview.comparison_type_expense')
+      return type || ''
     },
     fetchBudgetComparison() {
       const requestToken = this.beginRequest('budgetComparison')

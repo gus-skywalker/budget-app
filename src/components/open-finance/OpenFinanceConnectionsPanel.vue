@@ -4,36 +4,36 @@
       <div class="of-connect-copy">
         <div class="of-title-row">
           <v-icon color="#667eea">mdi-bank-outline</v-icon>
-          <h2>Conectar bancos</h2>
+          <h2>{{ t('openFinance.panel.connect_banks') }}</h2>
         </div>
-        <p>Sincronize saldos e transações com segurança via Open Finance.</p>
+        <p>{{ t('openFinance.panel.connect_description') }}</p>
         <div class="of-security-note">
           <v-icon size="18" color="#667eea">mdi-shield-check-outline</v-icon>
-          <span>Você será redirecionado ao ambiente seguro do banco para autorizar o compartilhamento. O CoBudget não acessa sua senha.</span>
+          <span>{{ t('openFinance.panel.security_note') }}</span>
         </div>
       </div>
       <v-btn class="gradient-btn" :disabled="!canManage" @click="wizardOpen = true">
         <v-icon start>mdi-plus</v-icon>
-        Adicionar conexão
+        {{ t('openFinance.panel.add_connection') }}
       </v-btn>
     </section>
 
     <section class="modern-card mt-6">
       <div class="of-section-header">
         <div>
-          <h3>Conexões existentes</h3>
-          <p>Autorizações e contas conectadas neste workspace.</p>
+          <h3>{{ t('openFinance.panel.existing_connections') }}</h3>
+          <p>{{ t('openFinance.panel.existing_connections_description') }}</p>
         </div>
         <v-btn variant="text" color="#667eea" :loading="loading" @click="$emit('refresh')">
           <v-icon start>mdi-refresh</v-icon>
-          Atualizar
+          {{ t('openFinance.panel.refresh') }}
         </v-btn>
       </div>
 
       <div v-if="!connections.length" class="of-empty">
         <v-icon size="42" color="#667eea">mdi-bank-plus</v-icon>
-        <strong>Nenhum banco conectado ainda.</strong>
-        <span>Comece adicionando uma conexão pelo catálogo de bancos.</span>
+        <strong>{{ t('openFinance.panel.empty_title') }}</strong>
+        <span>{{ t('openFinance.panel.empty_description') }}</span>
       </div>
 
       <div v-else class="of-connection-list">
@@ -52,7 +52,7 @@
               <div class="of-connection__identity-copy">
                 <div class="of-connection__title">{{ connection.institutionName || connection.institutionKey }}</div>
                 <div class="of-connection__subtitle">
-                  {{ connection.displayName || 'Conta Open Finance' }}
+                  {{ connection.displayName || t('openFinance.panel.default_account_name') }}
                   <span v-if="connection.accountNumberMasked">• {{ connection.accountNumberMasked }}</span>
                 </div>
               </div>
@@ -67,7 +67,7 @@
               </div>
 
               <div v-if="connection.lastProviderStatusCheckedAt" class="of-connection__meta">
-                Status checado em {{ formatDateTime(connection.lastProviderStatusCheckedAt) }}
+                {{ t('openFinance.panel.status_checked_at', { date: formatDateTime(connection.lastProviderStatusCheckedAt) }) }}
               </div>
 
               <div class="of-connection__policy-chips">
@@ -125,7 +125,7 @@
               color="#667eea"
               @click="openAuthorization(connection)"
             >
-              Continuar autorização
+              {{ t('openFinance.panel.continue_authorization') }}
             </v-btn>
             <v-btn
               v-if="showRetry(connection)"
@@ -136,7 +136,7 @@
               :disabled="!canManage"
               @click="retryAuthorization(connection)"
             >
-              Tentar novamente
+              {{ t('openFinance.panel.retry') }}
             </v-btn>
             <v-btn
               v-if="showRefresh(connection)"
@@ -147,7 +147,7 @@
               :disabled="!canManage"
               @click="refreshStatus(connection)"
             >
-              Atualizar status
+              {{ t('openFinance.panel.refresh_status') }}
             </v-btn>
             <v-btn
               v-if="showDevSync(connection)"
@@ -167,7 +167,7 @@
               :disabled="!canManage"
               @click="requestDisconnect(connection)"
             >
-              Desconectar
+              {{ t('openFinance.panel.disconnect') }}
             </v-btn>
           </div>
         </article>
@@ -177,26 +177,26 @@
     <section class="modern-card mt-6">
       <div class="of-section-header">
         <div>
-          <h3>Saúde operacional</h3>
-          <p>Visão rápida derivada das conexões atuais.</p>
+          <h3>{{ t('openFinance.panel.operational_health') }}</h3>
+          <p>{{ t('openFinance.panel.operational_health_description') }}</p>
         </div>
       </div>
       <div class="of-health-grid">
         <div class="of-health-card">
-          <span>Contas conectadas</span>
+          <span>{{ t('openFinance.panel.connected_accounts') }}</span>
           <strong>{{ connectedCount }}</strong>
         </div>
         <div class="of-health-card">
-          <span>Autorizações pendentes</span>
+          <span>{{ t('openFinance.panel.pending_authorizations') }}</span>
           <strong>{{ pendingCount }}</strong>
         </div>
         <div class="of-health-card">
-          <span>Conexões com erro</span>
+          <span>{{ t('openFinance.panel.error_connections') }}</span>
           <strong>{{ errorCount }}</strong>
         </div>
         <div class="of-health-card">
-          <span>Última atualização</span>
-          <strong>{{ latestStatusCheck || 'Sem atualização' }}</strong>
+          <span>{{ t('openFinance.panel.latest_update') }}</span>
+          <strong>{{ latestStatusCheck || t('openFinance.panel.no_update') }}</strong>
         </div>
       </div>
     </section>
@@ -211,16 +211,16 @@
       <v-card class="modern-dialog-card">
         <v-card-title class="dialog-header">
           <v-icon color="#d14343" class="mr-2">mdi-link-variant-off</v-icon>
-          <span class="headline">Desconectar banco?</span>
+          <span class="headline">{{ t('openFinance.panel.disconnect_title') }}</span>
         </v-card-title>
         <v-card-text class="dialog-content">
-          Novas sincronizações serão interrompidas, mas o histórico já importado será mantido para rastreabilidade.
+          {{ t('openFinance.panel.disconnect_description') }}
         </v-card-text>
         <v-card-actions class="dialog-actions">
           <v-spacer />
-          <v-btn variant="text" @click="disconnectDialog = false">Cancelar</v-btn>
+          <v-btn variant="text" @click="disconnectDialog = false">{{ t('common.cancel') }}</v-btn>
           <v-btn color="error" variant="elevated" :loading="disconnecting" @click="confirmDisconnect">
-            Desconectar
+            {{ t('openFinance.panel.disconnect') }}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -230,6 +230,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import OpenFinanceService from '@/services/OpenFinanceService'
 import type { OpenFinanceConnection } from '@/types/openFinance'
 import { bankLogoPath, genericBankLogo } from '@/data/openFinanceInstitutions'
@@ -255,6 +256,7 @@ const disconnecting = ref(false)
 const selectedDisconnectConnection = ref<OpenFinanceConnection | null>(null)
 const failedLogos = ref<Record<string, boolean>>({})
 const userStore = useUserStore()
+const { t, locale } = useI18n()
 
 const connectedCount = computed(() => props.connections.filter((item) => item.consentStatus === 'AUTHORIZED_READY' || item.status === 'CONNECTED').length)
 const pendingCount = computed(() => props.connections.filter((item) => ['PENDING_SETUP', 'PENDING_AUTHORIZATION', 'CONSENT_GRANTED_WAITING_PROVIDER', 'DELAYED_PROVIDER'].includes(String(item.consentStatus || ''))).length)
@@ -267,22 +269,27 @@ const latestStatusCheck = computed(() => {
   return dates.length ? formatDateTime(dates[dates.length - 1] as string) : ''
 })
 
-const consentStatusUi: Record<string, { label: string; color: string }> = {
-  PENDING_SETUP: { label: 'Preparando', color: 'grey' },
-  PENDING_AUTHORIZATION: { label: 'Aguardando autorização', color: 'warning' },
-  CONSENT_GRANTED_WAITING_PROVIDER: { label: 'Autorização recebida', color: 'info' },
-  AUTHORIZED_SYNCING: { label: 'Sincronizando', color: 'info' },
-  AUTHORIZED_READY: { label: 'Atualizado', color: 'success' },
-  DELAYED_PROVIDER: { label: 'Aguardando banco', color: 'warning' },
-  REAUTH_REQUIRED: { label: 'Reautorizar', color: 'warning' },
-  REVOKED: { label: 'Revogado', color: 'error' },
-  ERROR: { label: 'Erro', color: 'error' },
-  AUTHORIZATION_EXPIRED: { label: 'Autorização expirada', color: 'error' },
-  AUTHORIZATION_FAILED: { label: 'Falha na autorização', color: 'error' },
-  USER_CANCELLED_AUTHORIZATION: { label: 'Cancelado pelo usuário', color: 'grey' },
+const consentStatusColor: Record<string, string> = {
+  PENDING_SETUP: 'grey',
+  PENDING_AUTHORIZATION: 'warning',
+  CONSENT_GRANTED_WAITING_PROVIDER: 'info',
+  AUTHORIZED_SYNCING: 'info',
+  AUTHORIZED_READY: 'success',
+  DELAYED_PROVIDER: 'warning',
+  REAUTH_REQUIRED: 'warning',
+  REVOKED: 'error',
+  ERROR: 'error',
+  AUTHORIZATION_EXPIRED: 'error',
+  AUTHORIZATION_FAILED: 'error',
+  USER_CANCELLED_AUTHORIZATION: 'grey',
 }
 
-const statusUi = (status: string | null | undefined) => consentStatusUi[String(status || '')] || { label: status || 'Indefinido', color: 'grey' }
+const statusUi = (status: string | null | undefined) => {
+  const key = String(status || '')
+  const labelKey = `openFinance.status.${key}`
+  const label = key ? t(labelKey) : t('openFinance.status.undefined')
+  return { label: label === labelKey ? key : label, color: consentStatusColor[key] || 'grey' }
+}
 const showContinueAuthorization = (connection: OpenFinanceConnection) => connection.consentStatus === 'PENDING_AUTHORIZATION' && Boolean(connection.authorizationLink || connection.openfinanceLink)
 const showRetry = (connection: OpenFinanceConnection) => ['AUTHORIZATION_EXPIRED', 'AUTHORIZATION_FAILED', 'USER_CANCELLED_AUTHORIZATION', 'REAUTH_REQUIRED'].includes(String(connection.consentStatus || ''))
 const showRefresh = (connection: OpenFinanceConnection) => ['PENDING_AUTHORIZATION', 'CONSENT_GRANTED_WAITING_PROVIDER', 'DELAYED_PROVIDER'].includes(String(connection.consentStatus || ''))
@@ -293,8 +300,8 @@ const showDevSync = (connection: OpenFinanceConnection) => (
 )
 const showBackendSyncPolicy = (connection: OpenFinanceConnection) => ['AUTHORIZED_READY', 'AUTHORIZED_SYNCING'].includes(String(connection.consentStatus || '')) || isRecoverableSyncError(connection)
 const syncPolicyLabel = (connection: OpenFinanceConnection) => connection.consentStatus === 'AUTHORIZED_SYNCING'
-  ? 'Sincronização em andamento pelo backend.'
-  : 'As transações são sincronizadas automaticamente pelo backend conforme a janela do provedor.'
+  ? t('openFinance.panel.sync_in_progress')
+  : t('openFinance.panel.sync_policy')
 const currentUserId = computed(() => String(userStore.getUser?.id || '').trim())
 const showPlanningSharingControl = (connection: OpenFinanceConnection) => (
   connection.payerDocumentType === 'CPF'
@@ -302,9 +309,9 @@ const showPlanningSharingControl = (connection: OpenFinanceConnection) => (
   && connection.connectedByUserId === currentUserId.value
 )
 const planningSharingOptions = [
-  { label: 'Privado', value: 'PRIVATE' },
-  { label: 'Planejamento apenas', value: 'PLANNING_IMPACT_ONLY' },
-  { label: 'Compartilhado com admins', value: 'PERSONAL_SHARED' },
+  { label: t('openFinance.sharing.private'), value: 'PRIVATE' },
+  { label: t('openFinance.sharing.planning_only'), value: 'PLANNING_IMPACT_ONLY' },
+  { label: t('openFinance.sharing.personal_shared'), value: 'PERSONAL_SHARED' },
 ] as const
 const planningSharingSelection = (connection: OpenFinanceConnection) => {
   if (connection.planningSharingLevel === 'PLANNING_IMPACT_ONLY' || connection.sharingPolicy === 'PLANNING_IMPACT_ONLY') {
@@ -317,32 +324,32 @@ const planningSharingSelection = (connection: OpenFinanceConnection) => {
 }
 const planningSharingTitle = (connection: OpenFinanceConnection) => {
   const level = planningSharingSelection(connection)
-  if (level === 'PLANNING_IMPACT_ONLY') return 'Incluído no planejamento'
-  if (level === 'PERSONAL_SHARED') return 'Compartilhado com admins'
-  return 'Privado'
+  if (level === 'PLANNING_IMPACT_ONLY') return t('openFinance.sharing.included_in_planning')
+  if (level === 'PERSONAL_SHARED') return t('openFinance.sharing.personal_shared')
+  return t('openFinance.sharing.private')
 }
 const planningSharingDescription = (connection: OpenFinanceConnection) => {
   const level = planningSharingSelection(connection)
   if (level === 'PLANNING_IMPACT_ONLY') {
-    return 'A fonte alimenta apenas agregados de planejamento. Os detalhes continuam privados.'
+    return t('openFinance.sharing.planning_description')
   }
   if (level === 'PERSONAL_SHARED') {
-    return 'Owners e admins do workspace podem ver esta fonte pessoal. O dono da conexão continua controlando esse nível.'
+    return t('openFinance.sharing.personal_shared_description')
   }
-  return 'Só você vê esta conta.'
+  return t('openFinance.sharing.private_description')
 }
 const sharingPolicyBadge = (connection: OpenFinanceConnection) => {
   if (connection.payerDocumentType === 'CNPJ') {
-    return { label: 'Compartilhado com workspace', color: 'success' }
+    return { label: t('openFinance.sharing.workspace_shared'), color: 'success' }
   }
   const level = planningSharingSelection(connection)
   if (level === 'PLANNING_IMPACT_ONLY') {
-    return { label: 'Planejamento apenas', color: 'warning' }
+    return { label: t('openFinance.sharing.planning_only'), color: 'warning' }
   }
   if (level === 'PERSONAL_SHARED') {
-    return { label: 'Compartilhado com admins', color: 'info' }
+    return { label: t('openFinance.sharing.personal_shared'), color: 'info' }
   }
-  return { label: 'Privado', color: 'grey' }
+  return { label: t('openFinance.sharing.private'), color: 'grey' }
 }
 
 const handleCreated = () => {
@@ -362,16 +369,16 @@ const refreshStatus = async (connection: OpenFinanceConnection) => {
     const response = await OpenFinanceService.refreshConnectionStatus(connection.id)
     const refreshed = response.data
     if (refreshed.openfinanceId || ['AUTHORIZED_READY', 'AUTHORIZED_SYNCING', 'CONSENT_GRANTED_WAITING_PROVIDER'].includes(String(refreshed.consentStatus || ''))) {
-      emit('feedback', { type: 'success', message: 'Status da conexão atualizado.' })
+      emit('feedback', { type: 'success', message: t('openFinance.feedback.status_updated') })
     } else {
       emit('feedback', {
         type: 'info',
-        message: 'A autorização ainda não foi confirmada pelo provedor. Aguarde alguns minutos e atualize novamente.',
+        message: t('openFinance.feedback.authorization_pending'),
       })
     }
     emit('refresh')
   } catch (error: any) {
-    emit('feedback', { type: 'error', message: extractErrorMessage(error, 'Falha ao atualizar status da conexão.') })
+    emit('feedback', { type: 'error', message: extractErrorMessage(error, t('openFinance.feedback.status_update_error')) })
   } finally {
     busyConnectionId.value = null
   }
@@ -381,12 +388,12 @@ const retryAuthorization = async (connection: OpenFinanceConnection) => {
   busyConnectionId.value = connection.id
   try {
     const response = await OpenFinanceService.retryAuthorization(connection.id)
-    emit('feedback', { type: 'success', message: 'Novo link de autorização gerado.' })
+    emit('feedback', { type: 'success', message: t('openFinance.feedback.retry_link_generated') })
     const link = response.data.authorizationLink || response.data.openfinanceLink
     if (link) window.open(link, '_blank', 'noopener,noreferrer')
     emit('refresh')
   } catch (error: any) {
-    emit('feedback', { type: 'error', message: extractErrorMessage(error, 'Falha ao tentar autorização novamente.') })
+    emit('feedback', { type: 'error', message: extractErrorMessage(error, t('openFinance.feedback.retry_error')) })
   } finally {
     busyConnectionId.value = null
   }
@@ -410,22 +417,22 @@ const syncNowForDev = async (connection: OpenFinanceConnection) => {
     if (status === 'EXECUTED') {
       emit('feedback', {
         type: 'success',
-        message: `DEV sync concluído: ${result?.transactionsCreated || 0} novas, ${result?.transactionsUpdated || 0} atualizadas.`,
+        message: t('openFinance.feedback.dev_sync_done', { created: result?.transactionsCreated || 0, updated: result?.transactionsUpdated || 0 }),
       })
     } else if (status === 'PROCESSING') {
       emit('feedback', {
         type: 'info',
-        message: 'DEV sync iniciou e o provider ainda está processando o protocolo. Atualize novamente em alguns minutos.',
+        message: t('openFinance.feedback.dev_sync_processing'),
       })
     } else {
       emit('feedback', {
         type: 'info',
-        message: `DEV sync não executado pelo backend: ${response.data?.reason || status || 'sem motivo retornado'}.`,
+        message: t('openFinance.feedback.dev_sync_skipped', { reason: response.data?.reason || status || t('openFinance.feedback.no_reason') }),
       })
     }
     emit('refresh')
   } catch (error: any) {
-    emit('feedback', { type: 'error', message: extractErrorMessage(error, 'Falha ao executar DEV sync Open Finance.') })
+    emit('feedback', { type: 'error', message: extractErrorMessage(error, t('openFinance.feedback.dev_sync_error')) })
   } finally {
     busyConnectionId.value = null
   }
@@ -444,14 +451,14 @@ const updatePlanningSharingSelection = async (connection: OpenFinanceConnection,
     emit('feedback', {
       type: 'success',
       message: sharingLevel === 'PLANNING_IMPACT_ONLY'
-        ? 'Impacto financeiro incluído no planejamento. Os detalhes continuam privados.'
+        ? t('openFinance.feedback.planning_enabled')
         : sharingLevel === 'PERSONAL_SHARED'
-          ? 'A fonte pessoal agora está compartilhada com owners e admins do workspace.'
-          : 'A conta voltou a ficar privada.',
+          ? t('openFinance.feedback.personal_shared')
+          : t('openFinance.feedback.private_again'),
     })
     emit('refresh')
   } catch (error: any) {
-    emit('feedback', { type: 'error', message: extractErrorMessage(error, 'Falha ao atualizar compartilhamento de planejamento.') })
+    emit('feedback', { type: 'error', message: extractErrorMessage(error, t('openFinance.feedback.planning_update_error')) })
   } finally {
     busyConnectionId.value = null
   }
@@ -468,12 +475,12 @@ const confirmDisconnect = async () => {
   disconnecting.value = true
   try {
     await OpenFinanceService.disconnectConnection(connection.id)
-    emit('feedback', { type: 'success', message: 'Banco desconectado. O histórico importado foi mantido.' })
+    emit('feedback', { type: 'success', message: t('openFinance.feedback.disconnected') })
     disconnectDialog.value = false
     selectedDisconnectConnection.value = null
     emit('refresh')
   } catch (error: any) {
-    emit('feedback', { type: 'error', message: extractErrorMessage(error, 'Falha ao desconectar banco.') })
+    emit('feedback', { type: 'error', message: extractErrorMessage(error, t('openFinance.feedback.disconnect_error')) })
   } finally {
     disconnecting.value = false
   }
@@ -489,7 +496,13 @@ const markLogoAsFailed = (key: string) => {
   failedLogos.value = { ...failedLogos.value, [key]: true }
 }
 const initials = (value: string) => value.split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase()
-const formatDateTime = (value: string) => new Date(value).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
+const getLocaleForFormatting = () => {
+  if (locale.value === 'en') return 'en-US'
+  if (locale.value === 'fr') return 'fr-FR'
+  if (locale.value === 'es') return 'es-ES'
+  return 'pt-BR'
+}
+const formatDateTime = (value: string) => new Date(value).toLocaleString(getLocaleForFormatting(), { dateStyle: 'short', timeStyle: 'short' })
 const isRecoverableSyncError = (connection: OpenFinanceConnection) => {
   if (String(connection.consentStatus || '') !== 'ERROR') return false
   if (!connection.openfinanceId) return false
@@ -502,7 +515,7 @@ const isRecoverableSyncError = (connection: OpenFinanceConnection) => {
     && !summary.includes('reautoriz')
 }
 const connectionErrorSummary = (connection: OpenFinanceConnection) => (
-  sanitizeOpenFinanceMessage(connection.lastErrorSummary, 'Falha técnica no provedor de Open Finance. Tente sincronizar novamente mais tarde.')
+  sanitizeOpenFinanceMessage(connection.lastErrorSummary, t('openFinance.feedback.provider_technical_error'))
 )
 const extractErrorMessage = (error: any, fallback: string) => (
   extractOpenFinanceErrorMessage(error, fallback)
