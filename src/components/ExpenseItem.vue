@@ -454,8 +454,8 @@ export default {
       isDialogOpen: false,
       email: '',
       emailRules: [
-        (value) => !!value || 'Email é obrigatório',
-        (value) => /.+@.+\..+/.test(value) || 'E-mail deve ser válido',
+        (value) => !!value || this.$t('expenseItem.emailRequired'),
+        (value) => /.+@.+\..+/.test(value) || this.$t('expenseItem.emailInvalid'),
       ],
       attachedFiles: [],
       newFiles: [],
@@ -469,9 +469,9 @@ export default {
       recurrenceInterval: null,
       recurrenceEndDate: null,
       customAlertDaysRules: [
-        (value) => !!value || 'O valor é obrigatório',
-        (value) => value > 0 || 'O valor deve ser maior que zero',
-        (value) => value <= 30 || 'O valor deve ser menor ou igual a 30',
+        (value) => !!value || this.$t('expenseItem.alertDaysRequired'),
+        (value) => value > 0 || this.$t('expenseItem.alertDaysPositive'),
+        (value) => value <= 30 || this.$t('expenseItem.alertDaysMax'),
       ],
       snackbar: false,
       snackbarMessage: '',
@@ -630,19 +630,26 @@ export default {
     },
     formatAlertDate(date) {
       const options = { year: 'numeric', month: 'long', day: 'numeric' };
-      return new Date(date).toLocaleDateString('pt-BR', options);
+      return new Date(date).toLocaleDateString(this.getFormattingLocale(), options);
     },
     formatMethods(methods) {
       return Array.isArray(methods) ? methods.join(', ') : '';
     },
     formatRecurrence(recurrenceInterval) {
       const map = {
-        DAILY: 'Diário',
-        WEEKLY: 'Semanal',
-        MONTHLY: 'Mensal',
-        YEARLY: 'Anual',
+        DAILY: this.$t('expenseItem.recurrenceOptions.daily'),
+        WEEKLY: this.$t('expenseItem.recurrenceOptions.weekly'),
+        MONTHLY: this.$t('expenseItem.recurrenceOptions.monthly'),
+        YEARLY: this.$t('expenseItem.recurrenceOptions.yearly'),
       };
-      return map[recurrenceInterval] || 'Desconhecido';
+      return map[recurrenceInterval] || this.$t('expenseItem.unknown');
+    },
+    getFormattingLocale() {
+      const locale = this.$i18n?.locale || 'pt';
+      if (locale === 'en') return 'en-US';
+      if (locale === 'fr') return 'fr-FR';
+      if (locale === 'es') return 'es-ES';
+      return 'pt-BR';
     },
     saveAlert() {
       const daysBefore = this.useDefaultAlertDays ? this.defaultAlertDays : this.customAlertDays;
@@ -656,7 +663,7 @@ export default {
       };
 
       this.$emit('sendReminder', alertData);
-      this.snackbarMessage = 'Alerta configurado com sucesso!';
+      this.snackbarMessage = this.$t('expenseItem.alertSaved');
       this.snackbar = true;
       this.isAlertDialogOpen = false;
     },

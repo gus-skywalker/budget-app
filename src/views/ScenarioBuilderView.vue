@@ -407,7 +407,7 @@ const loadBudget = async () => {
         Object.assign(snapshot, snapshotFromSavedScenario(source, data))
         snapshot.currentScenarioId = null
         snapshot.scenarioName = source.name
-          ? `${source.name} (new)`
+          ? t('planning.scenarios.versioned_name', { name: source.name })
           : t('planning.scenarios.default_name')
         step.value = 3
         saveWizardSnapshot(snapshot)

@@ -400,7 +400,7 @@ const extractErrorStatus = (error: unknown): number =>
 
 const buildVersionedScenarioName = (name?: string): string => {
   const base = String(name || '').trim() || t('planning.scenarios.default_name')
-  if (!/\(new\)$/i.test(base)) return `${base} (new)`
+  if (!/\(new\)$/i.test(base)) return t('planning.scenarios.versioned_name', { name: base })
   return `${base} ${new Date().toISOString().slice(11, 19)}`
 }
 

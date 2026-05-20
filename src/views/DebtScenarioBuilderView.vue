@@ -284,10 +284,19 @@ const liquidityOptions = [
 ]
 
 const formatCurrency = (value: number) =>
-  Number(value || 0).toLocaleString(locale.value === 'en' ? 'en-US' : 'pt-BR', {
-    style: 'currency',
-    currency: 'BRL'
-  })
+  Number(value || 0).toLocaleString(
+    locale.value === 'en'
+      ? 'en-US'
+      : locale.value === 'fr'
+        ? 'fr-FR'
+        : locale.value === 'es'
+          ? 'es-ES'
+          : 'pt-BR',
+    {
+      style: 'currency',
+      currency: 'BRL'
+    }
+  )
 
 const addOption = () => {
   snapshot.debtInput.options.push(createDebtOption())
@@ -371,7 +380,7 @@ onMounted(async () => {
     if (source?.sourceType === 'MANUAL_TYPED') {
       const cloned = snapshotFromSavedDebtScenario(source)
       cloned.currentScenarioId = null
-      cloned.scenarioName = `${cloned.scenarioName} (new)`
+      cloned.scenarioName = t('planning.scenarios.versioned_name', { name: cloned.scenarioName })
       cloned.debtInput.title = cloned.scenarioName
       Object.assign(snapshot, normalizeDebtSnapshot(cloned))
       return

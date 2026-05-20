@@ -137,11 +137,11 @@
                       <div class="goal-insight-grid mt-3">
                         <div class="goal-insight-chip">
                           <span class="goal-insight-chip__label">{{ $t('financial_goals.goal_monthly_suggestion') }}</span>
-                          <span class="goal-insight-chip__value">{{ formatCurrency(suggestion.suggestedContributionAmount || 0) }}/mês</span>
+                          <span class="goal-insight-chip__value">{{ $t('financial_goals.amount_per_month', { amount: formatCurrency(suggestion.suggestedContributionAmount || 0) }) }}</span>
                         </div>
                         <div class="goal-insight-chip">
                           <span class="goal-insight-chip__label">{{ $t('financial_goals.goal_months_left') }}</span>
-                          <span class="goal-insight-chip__value">{{ suggestion.monthsRemaining || 0 }} mês(es)</span>
+                          <span class="goal-insight-chip__value">{{ $t('financial_goals.months_count', { count: suggestion.monthsRemaining || 0 }) }}</span>
                         </div>
                         <div class="goal-insight-chip">
                           <span class="goal-insight-chip__label">{{ $t('financial_goals.deadline_label') }}</span>
@@ -402,19 +402,19 @@
 
                     <div class="goal-insight-grid">
                       <div class="goal-insight-chip">
-                        <span class="goal-insight-chip__label">Falta</span>
+                        <span class="goal-insight-chip__label">{{ $t('financial_goals.remaining_amount') }}</span>
                         <span class="goal-insight-chip__value">{{ formatCurrency(goal.remainingAmount || 0) }}</span>
                       </div>
                       <div class="goal-insight-chip">
-                        <span class="goal-insight-chip__label">Prazo restante</span>
-                        <span class="goal-insight-chip__value">{{ goal.monthsRemaining || 0 }} mês(es)</span>
+                        <span class="goal-insight-chip__label">{{ $t('financial_goals.goal_months_left') }}</span>
+                        <span class="goal-insight-chip__value">{{ $t('financial_goals.months_count', { count: goal.monthsRemaining || 0 }) }}</span>
                       </div>
                       <div class="goal-insight-chip">
-                        <span class="goal-insight-chip__label">Sugestão</span>
-                        <span class="goal-insight-chip__value">{{ formatCurrency(goal.suggestedContributionAmount || 0) }}/mês</span>
+                        <span class="goal-insight-chip__label">{{ $t('financial_goals.goal_monthly_suggestion') }}</span>
+                        <span class="goal-insight-chip__value">{{ $t('financial_goals.amount_per_month', { amount: formatCurrency(goal.suggestedContributionAmount || 0) }) }}</span>
                       </div>
                       <div class="goal-insight-chip" :class="paceStatusClass(goal.paceStatus)">
-                        <span class="goal-insight-chip__label">Ritmo</span>
+                        <span class="goal-insight-chip__label">{{ $t('financial_goals.pace') }}</span>
                         <span class="goal-insight-chip__value">{{ paceStatusLabel(goal.paceStatus) }}</span>
                       </div>
                     </div>
@@ -748,7 +748,7 @@ export default {
       }
     },
     deleteGoal(goal) {
-      if (confirm('Tem certeza que deseja excluir este objetivo?')) {
+      if (confirm(this.$t('financial_goals.confirm_delete_goal'))) {
         FinancialGoalService.deleteFinancialGoal(goal.id)
           .then(() => {
             this.fetchFinancialGoals();
@@ -759,7 +759,7 @@ export default {
       }
     },
     deleteContribution(contributionId, goalId) {
-      if (confirm('Tem certeza que deseja excluir esta contribuição?')) {
+      if (confirm(this.$t('financial_goals.confirm_delete_contribution'))) {
         FinancialGoalService.deleteContribution(goalId, contributionId)
           .then(() => {
             this.fetchFinancialGoals();
@@ -1080,7 +1080,7 @@ export default {
         const daysRemaining = (deadline - today) / (1000 * 60 * 60 * 24);
 
         if (daysRemaining <= 7 && goal.progress < 100) {
-          alert(`Atenção! O prazo para atingir o objetivo "${goal.name}" está se aproximando e você ainda não atingiu a meta.`);
+          alert(this.$t('financial_goals.deadline_alert', { goal: goal.name }));
         }
       });
     },
@@ -1109,13 +1109,20 @@ export default {
     },
     formatDate(dateStr) {
       const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
-      return new Date(dateStr).toLocaleDateString('pt-BR', options);
+      return new Date(dateStr).toLocaleDateString(this.getFormattingLocale(), options);
     },
     formatCurrency(value) {
-      return new Intl.NumberFormat('pt-BR', {
+      return new Intl.NumberFormat(this.getFormattingLocale(), {
         style: 'currency',
         currency: 'BRL'
       }).format(Number(value || 0));
+    },
+    getFormattingLocale() {
+      const locale = this.$i18n?.locale || 'pt';
+      if (locale === 'en') return 'en-US';
+      if (locale === 'fr') return 'fr-FR';
+      if (locale === 'es') return 'es-ES';
+      return 'pt-BR';
     },
     suggestedGoalMessage(suggestion) {
       const amount = this.formatCurrency(suggestion?.suggestedContributionAmount || 0);
@@ -1167,10 +1174,10 @@ export default {
       return Boolean(firstSuggestion && firstSuggestion.name === suggestion?.name);
     },
     paceStatusLabel(status) {
-      if (status === 'AHEAD') return 'Adiantado';
-      if (status === 'AT_RISK') return 'Em risco';
-      if (status === 'ON_TRACK') return 'No ritmo';
-      return 'Sem dados';
+      if (status === 'AHEAD') return this.$t('financial_goals.pace_ahead');
+      if (status === 'AT_RISK') return this.$t('financial_goals.pace_at_risk');
+      if (status === 'ON_TRACK') return this.$t('financial_goals.pace_on_track');
+      return this.$t('financial_goals.pace_no_data');
     },
     paceStatusClass(status) {
       return {

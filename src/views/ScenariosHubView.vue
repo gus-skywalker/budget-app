@@ -13,7 +13,7 @@
           </v-btn>
           <v-btn v-if="canWriteScenarios" variant="tonal" color="#0f766e" @click="createDebtScenario">
             <v-icon start>mdi-credit-card-fast-outline</v-icon>
-            Debt payment decision
+            {{ t('planning.scenarios.debt_payment_decision') }}
           </v-btn>
         </div>
       </div>
@@ -48,7 +48,7 @@
                 <span
                   v-if="isScenarioLockedForEdit(scenario.id)"
                   class="status-chip status-chip--locked"
-                  >Votes locked</span
+                  >{{ t('planning.scenarios.votes_locked') }}</span
                 >
               </div>
             </div>
@@ -69,7 +69,7 @@
             <div class="saved-scenario-card__actions">
               <v-tooltip
                 v-if="canWriteScenarios && isScenarioLockedForEdit(scenario.id)"
-                text="This scenario has votes. Create a new version to preserve decision history."
+                :text="t('planning.scenarios.locked_edit_tooltip')"
                 location="top"
               >
                 <template #activator="{ props }">
@@ -108,7 +108,7 @@
               </v-btn>
               <v-tooltip
                 v-if="canWriteScenarios && hasScenarioDecision(scenario.id)"
-                text="Cannot delete: this scenario is linked to a decision. Keep it for audit history."
+                :text="t('planning.scenarios.linked_delete_tooltip')"
                 location="top"
               >
                 <template #activator="{ props }">
@@ -290,11 +290,13 @@ const isScenarioLockedForEdit = (scenarioId: string) =>
 const hasScenarioDecision = (scenarioId: string) => scenariosWithAnyDecision.value.has(scenarioId)
 
 const editActionLabel = (scenarioId: string) =>
-  isScenarioLockedForEdit(scenarioId) ? 'Create new version' : t('planning.scenarios.edit_action')
+  isScenarioLockedForEdit(scenarioId)
+    ? t('planning.scenarios.create_new_version')
+    : t('planning.scenarios.edit_action')
 
 const deleteScenario = async (scenario: SavedScenario) => {
   if (hasScenarioDecision(scenario.id)) {
-    errorMessage.value = 'This scenario cannot be deleted because it is linked to a decision.'
+    errorMessage.value = t('planning.scenarios.linked_delete_error')
     return
   }
   const confirmed = window.confirm(t('planning.scenarios.delete_confirm', { name: scenario.name }))
