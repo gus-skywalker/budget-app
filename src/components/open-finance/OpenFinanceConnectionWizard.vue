@@ -127,7 +127,7 @@
           <h4>{{ holderMode === 'update' ? t('openFinance.wizard.update_holder_data') : t('openFinance.wizard.holder_data') }}</h4>
           <div class="of-form-grid">
             <v-text-field
-              :model-value="maskedHolderDocument"
+              :model-value="displayHolderDocument"
               :label="holderType === 'CPF' ? 'CPF' : 'CNPJ'"
               variant="outlined"
               density="comfortable"
@@ -292,6 +292,7 @@ const holderDocument = ref('')
 const holdersLoading = ref(false)
 const lookupHolderResult = ref<OpenFinanceHolder | null>(null)
 const selectedHolder = ref<OpenFinanceHolder | null>(null)
+const defaultCpfHolder = ref<OpenFinanceHolder | null>(null)
 const holderMode = ref<HolderMode>('none')
 const holderDocumentRequiredForConnection = ref(false)
 const payerName = ref('')
@@ -339,6 +340,7 @@ const filteredInstitutions = computed(() => {
 })
 
 const maskedHolderDocument = computed(() => maskDocument(holderDocument.value))
+const displayHolderDocument = computed(() => selectedHolder.value?.documentMasked || lookupHolderResult.value?.documentMasked || maskedHolderDocument.value)
 const maskedAccount = computed(() => maskAccount(accountNumber.value))
 const cepLookupHint = computed(() => cepLookupMessage.value || t('openFinance.wizard.cep_hint'))
 const holderLookupHint = computed(() => {
@@ -364,7 +366,7 @@ const creditCardOptions = computed(() => {
 watch(() => props.modelValue, (open) => {
   if (open) {
     reset()
-    void prepareWorkspaceCompanyAutofill()
+    void prepareDefaultCpfHolder()
   }
 })
 
@@ -376,6 +378,7 @@ const reset = () => {
   holderDocument.value = ''
   lookupHolderResult.value = null
   selectedHolder.value = null
+  defaultCpfHolder.value = null
   holderMode.value = 'none'
   holderDocumentRequiredForConnection.value = false
   payerName.value = ''
@@ -421,7 +424,7 @@ const selectHolderType = (type: 'CPF' | 'CNPJ') => {
   errorMessage.value = ''
   holderType.value = type
   holderDocument.value = ''
-  lookupHolderResult.value = null
+  lookupHolderResult.value = type === 'CPF' ? defaultCpfHolder.value : null
   selectedHolder.value = null
   holderMode.value = 'none'
   holderDocumentRequiredForConnection.value = false
@@ -437,12 +440,20 @@ const advance = async () => {
     close()
     return
   }
+  if (step.value === 'holderLookup' && lookupHolderResult.value && !digitsOnly(holderDocument.value)) {
+    await continueWithHolder(lookupHolderResult.value)
+    return
+  }
   const validation = validateStep()
   if (validation) {
     errorMessage.value = validation
     return
   }
   if (step.value === 'holderLookup') {
+    if (lookupHolderResult.value && !digitsOnly(holderDocument.value)) {
+      await continueWithHolder(lookupHolderResult.value)
+      return
+    }
     await resolveHolderDocument()
     return
   }
@@ -484,6 +495,10 @@ const validateStep = () => {
 }
 
 const resolveHolderDocument = async () => {
+  if (lookupHolderResult.value && !digitsOnly(holderDocument.value)) {
+    await continueWithHolder(lookupHolderResult.value)
+    return
+  }
   holdersLoading.value = true
   try {
     await prepareHolderDocument()
@@ -540,6 +555,29 @@ const useAnotherHolderDocument = () => {
   holderDocumentRequiredForConnection.value = false
   lookupHolderResult.value = null
   clearHolderForm()
+}
+
+const prepareDefaultCpfHolder = async () => {
+  holdersLoading.value = true
+  try {
+    const response = await OpenFinanceService.listHolders('CPF')
+    const holders = response.data || []
+    const user = userStore.getUser || {}
+    const userEmail = normalize(user.email || '')
+    const userName = normalize(user.username || '')
+    const matchingHolder = holders.find((holder: OpenFinanceHolder) =>
+      (userEmail && normalize(holder.email || '') === userEmail) ||
+      (userName && normalize(holder.name || '') === userName)
+    )
+    defaultCpfHolder.value = matchingHolder || (holders.length === 1 ? holders[0] : null)
+    if (holderType.value === 'CPF' && !holderDocument.value && !lookupHolderResult.value) {
+      lookupHolderResult.value = defaultCpfHolder.value
+    }
+  } catch {
+    defaultCpfHolder.value = null
+  } finally {
+    holdersLoading.value = false
+  }
 }
 
 const persistHolderData = async () => {
