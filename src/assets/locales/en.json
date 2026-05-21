@@ -1170,6 +1170,7 @@
         "card_last_digits": "Enter the card's 4 last digits.",
         "confirm_holder": "Confirm holder data before continuing.",
         "complete_holder_data": "Complete the holder data before starting bank authorization.",
+        "update_holder_data_required": "The saved data is still incomplete. Click Update data to complete the holder record.",
         "invalid_cnpj": "Invalid CNPJ.",
         "cep_digits": "ZIP code must contain 8 digits."
       },

@@ -418,6 +418,7 @@ const previousStep = () => {
 }
 
 const selectHolderType = (type: 'CPF' | 'CNPJ') => {
+  errorMessage.value = ''
   holderType.value = type
   holderDocument.value = ''
   lookupHolderResult.value = null
@@ -507,14 +508,14 @@ const resolveHolderDocument = async () => {
   }
 }
 
-const continueWithHolder = (holder: OpenFinanceHolder) => {
+const continueWithHolder = async (holder: OpenFinanceHolder) => {
   selectedHolder.value = holder
   holderDocumentRequiredForConnection.value = false
-  applyHolderData(holder)
+  errorMessage.value = ''
+  await hydrateReusableHolderData(holder)
   if (!holderHasProviderStartData(holder)) {
     holderMode.value = 'update'
-    errorMessage.value = t('openFinance.wizard.validation.complete_holder_data')
-    step.value = 'payer'
+    errorMessage.value = t('openFinance.wizard.validation.update_holder_data_required')
     return
   }
   holderMode.value = 'reuse'
@@ -522,15 +523,17 @@ const continueWithHolder = (holder: OpenFinanceHolder) => {
   step.value = 'institution'
 }
 
-const editHolder = (holder: OpenFinanceHolder) => {
+const editHolder = async (holder: OpenFinanceHolder) => {
   selectedHolder.value = holder
   holderMode.value = 'update'
   holderDocumentRequiredForConnection.value = false
-  applyHolderData(holder)
+  errorMessage.value = ''
+  await hydrateReusableHolderData(holder)
   step.value = 'payer'
 }
 
 const useAnotherHolderDocument = () => {
+  errorMessage.value = ''
   holderDocument.value = ''
   selectedHolder.value = null
   holderMode.value = 'none'
@@ -707,27 +710,44 @@ const applyHolderData = (holder: OpenFinanceHolder) => {
   state.value = holder.state || ''
 }
 
+const hydrateReusableHolderData = async (holder: OpenFinanceHolder) => {
+  applyHolderData(holder)
+  if (holderType.value === 'CPF') {
+    const user = userStore.getUser || {}
+    if (!payerName.value && user.username) payerName.value = user.username
+    if (!holderEmail.value && user.email) holderEmail.value = user.email
+    return
+  }
+  if (holderType.value === 'CNPJ') {
+    await prepareCnpjAutofill({ preserveExisting: true })
+  }
+}
+
 const holderHasProviderStartData = (holder: OpenFinanceHolder) => (
-  Boolean(holder.name?.trim()) &&
-  isValidCep(holder.zipcode || '') &&
-  Boolean(holder.street?.trim()) &&
-  Boolean(holder.addressNumber?.trim()) &&
-  Boolean(holder.city?.trim()) &&
-  Boolean(holder.state?.trim())
+  Boolean((payerName.value || holder.name)?.trim()) &&
+  isValidCep(zipcode.value || holder.zipcode || '') &&
+  Boolean((street.value || holder.street)?.trim()) &&
+  Boolean((addressNumber.value || holder.addressNumber)?.trim()) &&
+  Boolean((city.value || holder.city)?.trim()) &&
+  Boolean((state.value || holder.state)?.trim())
 )
 
-const applyCompanyData = (company: BrasilApiCnpj) => {
+const applyCompanyData = (company: BrasilApiCnpj, preserveExisting = false) => {
   const companyName = company.razao_social || company.nome_fantasia || ''
   const companyCep = company.cep ? String(company.cep).padStart(8, '0') : ''
+  const assign = (current: { value: string }, next?: string | null) => {
+    if (!next) return
+    if (!preserveExisting || !current.value) current.value = next
+  }
 
-  if (companyName) payerName.value = companyName
-  if (companyCep) zipcode.value = companyCep
-  if (company.logradouro) street.value = company.logradouro
-  if (company.numero) addressNumber.value = company.numero
-  if (company.complemento) addressComplement.value = company.complemento
-  if (company.bairro) neighborhood.value = company.bairro
-  if (company.municipio) city.value = company.municipio
-  if (company.uf) state.value = company.uf
+  assign(payerName, companyName)
+  assign(zipcode, companyCep)
+  assign(street, company.logradouro)
+  assign(addressNumber, company.numero)
+  assign(addressComplement, company.complemento)
+  assign(neighborhood, company.bairro)
+  assign(city, company.municipio)
+  assign(state, company.uf)
 }
 
 const prepareHolderDocument = async () => {
@@ -739,13 +759,14 @@ const prepareHolderDocument = async () => {
 }
 
 const onHolderDocumentInput = (value: string) => {
+  errorMessage.value = ''
   holderDocument.value = onlyDigits(String(value)).slice(0, holderType.value === 'CPF' ? 11 : 14)
   selectedHolder.value = null
   holderMode.value = 'none'
   lookupHolderResult.value = null
 }
 
-const prepareCnpjAutofill = async () => {
+const prepareCnpjAutofill = async (options: { preserveExisting?: boolean } = {}) => {
   if (holderType.value !== 'CNPJ') return
 
   cnpjLookupMessage.value = ''
@@ -762,7 +783,7 @@ const prepareCnpjAutofill = async () => {
     const response = await BrasilApiService.getCnpj(cnpj)
     cnpjCompany.value = response.data
     holderDocument.value = cnpj
-    applyCompanyData(response.data)
+    applyCompanyData(response.data, Boolean(options.preserveExisting))
   } catch (error: any) {
     cnpjLookupMessage.value = error?.response?.data?.message || error?.message || t('openFinance.wizard.error.validate_cnpj')
   } finally {

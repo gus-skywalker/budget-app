@@ -1159,6 +1159,7 @@
         "card_last_digits": "Informe os 4 últimos dígitos do cartão.",
         "confirm_holder": "Confirme os dados do titular antes de continuar.",
         "complete_holder_data": "Complete os dados do titular para iniciar a autorização no banco.",
+        "update_holder_data_required": "Os dados salvos ainda estão incompletos. Clique em Atualizar dados para completar o cadastro.",
         "invalid_cnpj": "CNPJ inválido.",
         "cep_digits": "CEP deve conter 8 dígitos."
       },
