@@ -1105,6 +1105,8 @@
       "display_name": "Nome de exibição",
       "initial_statement_type": "Tipo de extrato inicial",
       "card_last_digits": "Últimos dígitos do cartão",
+      "loading_credit_cards": "Buscando cartões vinculados...",
+      "credit_cards_found": "Cartões vinculados encontrados",
       "review_sharing": "Revise o compartilhamento.",
       "bank": "Banco",
       "holder": "Titular",
@@ -1156,6 +1158,7 @@
         "account": "Informe a conta.",
         "card_last_digits": "Informe os 4 últimos dígitos do cartão.",
         "confirm_holder": "Confirme os dados do titular antes de continuar.",
+        "complete_holder_data": "Complete os dados do titular para iniciar a autorização no banco.",
         "invalid_cnpj": "CNPJ inválido.",
         "cep_digits": "CEP deve conter 8 dígitos."
       },

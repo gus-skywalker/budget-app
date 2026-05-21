@@ -1116,6 +1116,8 @@
       "display_name": "Display name",
       "initial_statement_type": "Initial statement type",
       "card_last_digits": "Card last digits",
+      "loading_credit_cards": "Searching linked cards...",
+      "credit_cards_found": "Linked cards found",
       "review_sharing": "Review sharing.",
       "bank": "Bank",
       "holder": "Holder",
@@ -1167,6 +1169,7 @@
         "account": "Enter the account.",
         "card_last_digits": "Enter the card's 4 last digits.",
         "confirm_holder": "Confirm holder data before continuing.",
+        "complete_holder_data": "Complete the holder data before starting bank authorization.",
         "invalid_cnpj": "Invalid CNPJ.",
         "cep_digits": "ZIP code must contain 8 digits."
       },

@@ -3,6 +3,7 @@ import type {
   OpenFinanceBankCategory,
   OpenFinanceCategoryMapping,
   OpenFinanceConnection,
+  OpenFinanceCreditCard,
   OpenFinanceConflict,
   OpenFinanceHolder,
   OpenFinanceHolderLookupRequest,
@@ -165,6 +166,12 @@ export default {
           : connection.lastErrorSummary,
       })),
     }))
+  },
+
+  listCreditCards(connectionId: string): Promise<any> {
+    return axiosInterceptor.get<OpenFinanceCreditCard[]>(
+      `${API_URL}/connections/${encodeURIComponent(connectionId)}/credit-cards`,
+    )
   },
 
   async startConnection(payload: OpenFinanceStartConnectionRequest): Promise<any> {

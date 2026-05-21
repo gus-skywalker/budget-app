@@ -168,6 +168,13 @@ export interface OpenFinanceConnection {
   lastSyncTo: string | null
 }
 
+export interface OpenFinanceCreditCard {
+  cardNumber: string | null
+  additionalCards: string | null
+  availableCreditLimit: string | null
+  creditLimit: string | null
+}
+
 export interface OpenFinanceSyncExecutionResponse {
   status: string
   reason: string | null

@@ -186,6 +186,21 @@
               inputmode="numeric"
               @update:model-value="cardNumber = onlyDigits(String($event)).slice(0, 4)"
             />
+            <div v-if="statementType === 'CREDIT_CARD' && (creditCardsLoading || creditCardOptions.length)" class="of-card-options of-form-grid__wide">
+              <span>{{ creditCardsLoading ? t('openFinance.wizard.loading_credit_cards') : t('openFinance.wizard.credit_cards_found') }}</span>
+              <div class="of-card-options__chips">
+                <v-chip
+                  v-for="option in creditCardOptions"
+                  :key="option"
+                  size="small"
+                  variant="tonal"
+                  color="#667eea"
+                  @click="cardNumber = option"
+                >
+                  {{ option }}
+                </v-chip>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -239,7 +254,7 @@ import WorkspaceService from '@/services/WorkspaceService'
 import BrasilApiService, { isValidCep, isValidCnpj, isValidCpf, onlyDigits, type BrasilApiCnpj } from '@/services/BrasilApiService'
 import { useUserStore } from '@/plugins/userStore'
 import { extractOpenFinanceErrorMessage } from '@/utils/openFinanceErrors'
-import type { OpenFinanceConnection, OpenFinanceHolder, OpenFinanceHolderRequest, OpenFinanceStartConnectionRequest } from '@/types/openFinance'
+import type { OpenFinanceConnection, OpenFinanceCreditCard, OpenFinanceHolder, OpenFinanceHolderRequest, OpenFinanceStartConnectionRequest } from '@/types/openFinance'
 import { bankLogoPath, genericBankLogo, openFinanceInstitutions, type OpenFinanceInstitutionOption } from '@/data/openFinanceInstitutions'
 
 type Step = 'holderType' | 'holderLookup' | 'payer' | 'institution' | 'account' | 'review' | 'authorization' | 'status'
@@ -296,6 +311,8 @@ const accountNumberDigit = ref('')
 const displayName = ref('')
 const statementType = ref<'BANK' | 'CREDIT_CARD'>('BANK')
 const cardNumber = ref('')
+const linkedCreditCards = ref<OpenFinanceCreditCard[]>([])
+const creditCardsLoading = ref(false)
 const authorizationLink = ref('')
 const submitting = ref(false)
 const errorMessage = ref('')
@@ -330,6 +347,18 @@ const holderLookupHint = computed(() => {
   if (holderType.value === 'CNPJ' && cnpjCompany.value?.razao_social) return t('openFinance.wizard.cnpj_validated', { name: cnpjCompany.value.razao_social })
   if (lookupHolderResult.value) return t('openFinance.wizard.reuse_holder_hint')
   return holderType.value === 'CPF' ? t('openFinance.wizard.cpf_lookup_hint') : t('openFinance.wizard.cnpj_lookup_hint')
+})
+const creditCardOptions = computed(() => {
+  const values = new Set<string>()
+  linkedCreditCards.value.forEach((card) => {
+    const add = (value?: string | null) => {
+      const digits = onlyDigits(value || '').slice(-4)
+      if (digits.length === 4) values.add(digits)
+    }
+    add(card.cardNumber)
+    String(card.additionalCards || '').split(',').forEach(add)
+  })
+  return Array.from(values)
 })
 
 watch(() => props.modelValue, (open) => {
@@ -371,6 +400,8 @@ const reset = () => {
   cepLookupMessage.value = ''
   cnpjLookupMessage.value = ''
   cnpjCompany.value = null
+  linkedCreditCards.value = []
+  creditCardsLoading.value = false
 }
 
 const close = () => {
@@ -423,6 +454,9 @@ const advance = async () => {
     return
   }
   step.value = steps.value[stepIndex.value + 1].value
+  if (step.value === 'account' && statementType.value === 'CREDIT_CARD') {
+    void loadLinkedCreditCards()
+  }
 }
 
 const validateStep = () => {
@@ -475,9 +509,16 @@ const resolveHolderDocument = async () => {
 
 const continueWithHolder = (holder: OpenFinanceHolder) => {
   selectedHolder.value = holder
-  holderMode.value = 'reuse'
   holderDocumentRequiredForConnection.value = false
   applyHolderData(holder)
+  if (!holderHasProviderStartData(holder)) {
+    holderMode.value = 'update'
+    errorMessage.value = t('openFinance.wizard.validation.complete_holder_data')
+    step.value = 'payer'
+    return
+  }
+  holderMode.value = 'reuse'
+  errorMessage.value = ''
   step.value = 'institution'
 }
 
@@ -581,6 +622,37 @@ const submit = async (authorizationWindow?: Window | null) => {
   }
 }
 
+const loadLinkedCreditCards = async () => {
+  if (!selectedHolder.value?.id || !selectedInstitution.value || creditCardsLoading.value) return
+  creditCardsLoading.value = true
+  try {
+    const connectionsResponse = await OpenFinanceService.listConnections()
+    const source = (connectionsResponse.data || []).find((connection: OpenFinanceConnection) =>
+      connection.status === 'CONNECTED' &&
+      connection.statementType === 'BANK' &&
+      connection.holderId === selectedHolder.value?.id &&
+      connection.institutionKey === selectedInstitution.value?.institutionKey
+    )
+    if (!source) {
+      linkedCreditCards.value = []
+      return
+    }
+    const cardsResponse = await OpenFinanceService.listCreditCards(source.id)
+    linkedCreditCards.value = cardsResponse.data || []
+  } catch {
+    linkedCreditCards.value = []
+  } finally {
+    creditCardsLoading.value = false
+  }
+}
+
+watch([statementType, selectedInstitution, selectedHolder], () => {
+  linkedCreditCards.value = []
+  if (step.value === 'account' && statementType.value === 'CREDIT_CARD') {
+    void loadLinkedCreditCards()
+  }
+})
+
 const openAuthorizationPlaceholder = () => {
   const target = window.open('about:blank', '_blank')
   if (!target) return null
@@ -634,6 +706,15 @@ const applyHolderData = (holder: OpenFinanceHolder) => {
   city.value = holder.city || ''
   state.value = holder.state || ''
 }
+
+const holderHasProviderStartData = (holder: OpenFinanceHolder) => (
+  Boolean(holder.name?.trim()) &&
+  isValidCep(holder.zipcode || '') &&
+  Boolean(holder.street?.trim()) &&
+  Boolean(holder.addressNumber?.trim()) &&
+  Boolean(holder.city?.trim()) &&
+  Boolean(holder.state?.trim())
+)
 
 const applyCompanyData = (company: BrasilApiCnpj) => {
   const companyName = company.razao_social || company.nome_fantasia || ''
@@ -969,6 +1050,20 @@ const extractErrorMessage = (error: any, fallback: string) => (
 
 .of-form-grid__wide {
   grid-column: 1 / -1;
+}
+
+.of-card-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.of-card-options__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .of-review > div {
