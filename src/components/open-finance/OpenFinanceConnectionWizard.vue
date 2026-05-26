@@ -93,6 +93,8 @@
               color="#667eea"
               :loading="holdersLoading || cnpjLookupLoading"
               :hint="holderLookupHint"
+              :maxlength="holderType === 'CPF' ? 14 : 18"
+              inputmode="numeric"
               persistent-hint
               @update:model-value="onHolderDocumentInput"
               @blur="prepareHolderDocument"
@@ -793,12 +795,13 @@ const prepareHolderDocument = async () => {
     await prepareCnpjAutofill()
     return
   }
-  holderDocument.value = onlyDigits(holderDocument.value)
+  holderDocument.value = formatCpf(holderDocument.value)
 }
 
 const onHolderDocumentInput = (value: string) => {
   errorMessage.value = ''
-  holderDocument.value = onlyDigits(String(value)).slice(0, holderType.value === 'CPF' ? 11 : 14)
+  const digits = onlyDigits(String(value)).slice(0, holderType.value === 'CPF' ? 11 : 14)
+  holderDocument.value = holderType.value === 'CPF' ? formatCpf(digits) : digits
   selectedHolder.value = null
   holderMode.value = 'none'
   lookupHolderResult.value = null
@@ -891,6 +894,13 @@ const sanitizeText = (value: string | null | undefined, maxLength: number) => (
   String(value || '').replace(/[<>;]/g, '').trim().slice(0, maxLength)
 )
 const normalize = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+const formatCpf = (value: string | null | undefined) => {
+  const digits = digitsOnly(value).slice(0, 11)
+  if (digits.length <= 3) return digits
+  if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`
+  if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`
+  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`
+}
 const maskDocument = (value: string) => {
   const digits = digitsOnly(value)
   if (!digits) return '-'
