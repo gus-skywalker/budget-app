@@ -533,6 +533,9 @@
                   @downloadAttachment="handleDownloadAttachment"
                   @sendReminder="handleSendReminder"
                   @shareExpense="handleShareExpense"
+                  @agreementCreated="handleSharedAgreementCreated"
+                  @agreementUpdated="handleSharedAgreementUpdated"
+                  @agreementError="handleSharedAgreementError"
                   @resolveConflict="handleResolveExpenseConflict"
                   @suggestCategory="handleSuggestExpenseCategoryInline"
                   @applySuggestion="applyStoredExpenseSuggestionInline"
@@ -617,6 +620,7 @@ import DataService from '@/services/DataService'
 import AiService from '@/services/aiService'
 import FinancialReadService, { NO_FINANCIAL_ACCOUNT_ERROR_MESSAGE } from '@/services/FinancialReadService'
 import NotificationService from '@/services/NotificationService'
+import SharedExpenseAgreementService from '@/services/SharedExpenseAgreementService'
 import UsersService from '@/services/UsersService'
 import WorkspaceService from '@/services/WorkspaceService'
 import { useUserStore } from '@/plugins/userStore'
@@ -2367,6 +2371,7 @@ export default {
             this.expensePagination.total = Number(page.total ?? this.monthlyExpenses.length)
             this.expensePagination.limit = Number(page.limit ?? this.expensePagination.limit)
             this.expensePagination.offset = Number(page.offset ?? this.expensePagination.offset)
+            return this.loadSharedExpenseAgreements()
           })
           .catch((error) => {
             console.error('Error fetching monthly expenses:', error);
@@ -2376,6 +2381,33 @@ export default {
           });
       }
       return Promise.resolve()
+    },
+    loadSharedExpenseAgreements() {
+      if (!this.monthlyExpenses.length) {
+        return Promise.resolve()
+      }
+
+      return SharedExpenseAgreementService.list()
+        .then((response) => {
+          const agreements = Array.isArray(response?.data) ? response.data : []
+          const agreementsByTransaction = agreements.reduce((acc, agreement) => {
+            const transactionId = agreement?.transactionId
+            if (!transactionId) return acc
+            if (!acc[transactionId]) {
+              acc[transactionId] = []
+            }
+            acc[transactionId].push(agreement)
+            return acc
+          }, {})
+
+          this.monthlyExpenses = this.monthlyExpenses.map((expense) => ({
+            ...expense,
+            sharedAgreements: agreementsByTransaction[expense.id] || [],
+          }))
+        })
+        .catch((error) => {
+          console.error('Erro ao carregar combinados de divisão:', error)
+        })
     },
     handleResolveExpenseConflict({ expense, action }) {
       const conflictId = expense?.reconciliationConflictId
@@ -2441,26 +2473,17 @@ export default {
     },
     handleAttachFiles({ expense, files }) {
       const expenseId = expense.id
-      ExpenseService.uploadAttachment(expenseId, files, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      })
+      ExpenseService.uploadAttachment(expenseId, files)
         .then((response) => {
-          const updatedAttachments = Array.isArray(response?.data) ? response.data : []
-          const expenseIndex = this.monthlyExpenses.findIndex((item) => item.id === expenseId)
-          if (expenseIndex !== -1) {
-            this.monthlyExpenses[expenseIndex] = {
-              ...this.monthlyExpenses[expenseIndex],
-              attachments: updatedAttachments,
-            }
-          }
+          this.applyExpenseAttachments(expenseId, response?.data)
+          this.showToast('Anexo salvo.', 'success')
         })
         .catch((error) => {
           console.error('Erro ao anexar arquivos:', error)
+          this.showToast('Falha ao anexar arquivo.', 'error')
         })
     },
-    handleShareExpense({ expense, email }) {
+    async handleShareExpense({ expense, email, files = [] }) {
       const userStore = useUserStore();
 
       if (!email) {
@@ -2468,7 +2491,26 @@ export default {
         return;
       }
 
-      // Preparar os dados para o e-mail
+      const filesToUpload = Array.isArray(files)
+        ? files.filter((file) => file instanceof File)
+        : []
+
+      if (filesToUpload.length) {
+        const formData = new FormData()
+        filesToUpload.forEach((file) => {
+          formData.append('files', file)
+        })
+
+        try {
+          const uploadResponse = await ExpenseService.uploadAttachment(expense.id, formData)
+          this.applyExpenseAttachments(expense.id, uploadResponse?.data)
+        } catch (error) {
+          console.error('Erro ao anexar arquivos antes de compartilhar:', error)
+          this.showToast('Falha ao anexar arquivo antes do envio.', 'error')
+          return
+        }
+      }
+
       const emailData = {
         user: {
           email: userStore.getUser.email,
@@ -2478,12 +2520,93 @@ export default {
         destinationEmail: email,
       };
 
-      // Enviar o e-mail
-      NotificationService.sendEmailWithAttachment(emailData)
-        .then(() => {})
+      NotificationService.sendTransactionShareEmail(emailData)
+        .then((response) => {
+          const attachmentCount = response?.data?.attachmentCount ?? 0
+          this.showToast(`Email enviado com ${attachmentCount} anexo(s).`, 'success')
+        })
         .catch((error) => {
           console.error('Erro ao enviar o email:', error);
+          this.showToast('Falha ao enviar email.', 'error')
         });
+    },
+    applyExpenseAttachments(expenseId, attachments) {
+      const updatedAttachments = Array.isArray(attachments) ? attachments : []
+      const expenseIndex = this.monthlyExpenses.findIndex((item) => item.id === expenseId)
+      if (expenseIndex !== -1) {
+        this.monthlyExpenses[expenseIndex] = {
+          ...this.monthlyExpenses[expenseIndex],
+          attachments: updatedAttachments,
+        }
+      }
+    },
+    handleSharedAgreementCreated({ expense, agreement }) {
+      const expenseId = expense?.id || agreement?.transactionId
+      if (!expenseId || !agreement) {
+        return
+      }
+
+      const expenseIndex = this.monthlyExpenses.findIndex((item) => item.id === expenseId)
+      if (expenseIndex !== -1) {
+        const currentAgreements = Array.isArray(this.monthlyExpenses[expenseIndex].sharedAgreements)
+          ? this.monthlyExpenses[expenseIndex].sharedAgreements
+          : []
+        const exists = currentAgreements.some((item) => item.id === agreement.id)
+        this.monthlyExpenses[expenseIndex] = {
+          ...this.monthlyExpenses[expenseIndex],
+          sharedAgreements: exists
+            ? currentAgreements.map((item) => (item.id === agreement.id ? agreement : item))
+            : [agreement, ...currentAgreements],
+        }
+      }
+
+      const emailStatus = agreement?.emailDeliveryStatus
+      const emailCount = Number(agreement?.emailDeliveryCount || 0)
+      if (emailStatus === 'SENT') {
+        this.showToast(`Combinado criado e email enviado para ${emailCount} participante(s).`, 'success')
+      } else if (emailStatus === 'PARTIAL') {
+        this.showToast(`Combinado criado, mas alguns emails falharam. Enviados: ${emailCount}.`, 'warning')
+      } else if (emailStatus === 'FAILED') {
+        this.showToast('Combinado criado, mas o envio dos emails falhou.', 'warning')
+      } else {
+        this.showToast('Combinado de divisão criado.', 'success')
+      }
+    },
+    handleSharedAgreementUpdated({ expense, agreement }) {
+      const expenseId = expense?.id || agreement?.transactionId
+      if (!expenseId || !agreement) {
+        return
+      }
+
+      const expenseIndex = this.monthlyExpenses.findIndex((item) => item.id === expenseId)
+      if (expenseIndex !== -1) {
+        const currentAgreements = Array.isArray(this.monthlyExpenses[expenseIndex].sharedAgreements)
+          ? this.monthlyExpenses[expenseIndex].sharedAgreements
+          : []
+        const exists = currentAgreements.some((item) => item.id === agreement.id)
+        this.monthlyExpenses[expenseIndex] = {
+          ...this.monthlyExpenses[expenseIndex],
+          sharedAgreements: exists
+            ? currentAgreements.map((item) => (item.id === agreement.id ? agreement : item))
+            : [agreement, ...currentAgreements],
+        }
+      }
+
+      const emailStatus = agreement?.emailDeliveryStatus
+      const emailCount = Number(agreement?.emailDeliveryCount || 0)
+      if (emailStatus === 'SENT') {
+        this.showToast(`Combinado atualizado e email enviado para ${emailCount} participante(s).`, 'success')
+      } else if (emailStatus === 'PARTIAL') {
+        this.showToast(`Combinado atualizado, mas alguns emails falharam. Enviados: ${emailCount}.`, 'warning')
+      } else if (emailStatus === 'FAILED') {
+        this.showToast('Combinado atualizado, mas o envio dos emails falhou.', 'warning')
+      } else {
+        this.showToast('Combinado de divisão atualizado.', 'success')
+      }
+    },
+    handleSharedAgreementError({ error }) {
+      console.error('Erro ao criar combinado de divisão:', error)
+      this.showToast('Falha ao criar combinado de divisão.', 'error')
     },
     handleRemoveAttachment({ expenseId, attachmentId }) {
       ExpenseService.removeAttachment(expenseId, attachmentId)

@@ -102,7 +102,7 @@ export default {
     const uploads = files.map((file) => {
       const payload = new FormData()
       payload.append('file', file as Blob)
-      payload.append('kind', 'RECEIPT')
+      payload.append('kind', 'PROOF_OF_PAYMENT')
       return FinancialReadService.uploadTransactionAttachment(expenseId, payload, config)
     })
     await Promise.all(uploads)

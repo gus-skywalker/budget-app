@@ -51,6 +51,18 @@ export interface ContactSubmissionResponse {
   message: string
 }
 
+export interface TransactionShareEmailRequest {
+  user?: {
+    email?: string
+    name?: string
+  }
+  expense: {
+    id: string
+    amount?: number
+  }
+  destinationEmail: string
+}
+
 const API_URL = `${import.meta.env.VITE_API_BASE_URL}/notifications`
 
 const NotificationService = {
@@ -76,11 +88,8 @@ const NotificationService = {
   updateExpenseAlert(expenseRequest: any): Promise<any> {
     return axiosInterceptor.put(`${API_URL}/alerts/update`, expenseRequest)
   },
-  sendEmail(expenseRequest: any): Promise<any> {
-    return axiosInterceptor.post(`${API_URL}/sendEmail/html`, expenseRequest)
-  },
-  sendEmailWithAttachment(request: any): Promise<any> {
-    return axiosInterceptor.post(`${API_URL}/sendEmail/attachment`, request)
+  sendTransactionShareEmail(request: TransactionShareEmailRequest): Promise<any> {
+    return axiosInterceptor.post(`${API_URL}/transaction-share/email`, request)
   },
   sendContactForm(contactData: ContactFormRequest): Promise<{ data: ContactSubmissionResponse }> {
     return axiosInterceptor.post(`${API_URL}/contact`, contactData)

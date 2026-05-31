@@ -17,6 +17,7 @@
     "goals": "Goals",
     "home": "Home",
     "transactions": "Transactions",
+    "shared_with_me": "Shared with me",
     "accounts": "Accounts",
     "categories": "Categories",
     "planning_budget": "Budget",
@@ -2009,6 +2010,81 @@
       "CONFLICT_DUPLICATE": "Duplicate conflict",
       "RESOLVED_CREATE_NEW": "Conflict resolved"
     }
+  },
+  "sharedExpenseAgreement": {
+    "title": "Split agreement",
+    "stepsLabel": "Agreement steps",
+    "steps": {
+      "participant": "Participant",
+      "split": "Split",
+      "tracking": "Tracking"
+    },
+    "counterpartyEmail": "Person's email",
+    "participantEmail": "Participant email",
+    "addParticipant": "Add participant",
+    "agreementName": "Agreement name",
+    "notes": "Notes",
+    "split": {
+      "equal": "Half and half",
+      "fixed": "Amount",
+      "percentage": "Percentage"
+    },
+    "sharedAmount": "Agreed amount",
+    "percentage": "Percentage",
+    "paymentMode": "How it will be paid",
+    "paymentModes": {
+      "pixReimbursement": "Pix or reimbursement",
+      "debit": "Debit",
+      "creditCard": "Installment credit",
+      "other": "Other"
+    },
+    "resolvedShare": "Agreed share",
+    "firstDueDate": "First due date",
+    "remindBefore": "Remind before",
+    "daysSuffix": "days",
+    "installments": "Installments",
+    "noDueDate": "No due date",
+    "back": "Back",
+    "continue": "Continue",
+    "create": "Create agreement",
+    "save": "Save agreement",
+    "defaultTitleWithDescription": "Split: {description}",
+    "visibility": {
+      "toggle": "Show agreement details",
+      "participant": "Participant",
+      "subtitle": "{count} participant(s) · {total} · {installments}",
+      "singleInstallment": "single payment",
+      "installmentsCount": "{count} installments",
+      "noObligations": "No tracking",
+      "nextDue": "Installment {installment} · due {dueDate}",
+      "delivery": {
+        "sent": "Email sent ({count})",
+        "partial": "Partial email ({count})",
+        "failed": "Email failed",
+        "skipped": "Email not sent",
+        "not_attempted": "Email pending"
+      }
+    },
+    "validation": {
+      "participantsRequired": "Add at least one participant",
+      "emailRequired": "Enter the email",
+      "emailInvalid": "Enter a valid email"
+    }
+  },
+  "sharedWithMe": {
+    "kicker": "Restricted scope",
+    "title": "Shared with me",
+    "subtitle": "Track only the agreements where your email was included. This does not grant access to the source workspace.",
+    "refresh": "Refresh",
+    "tryAgain": "Try again",
+    "loadError": "Could not load received shares.",
+    "emptyTitle": "No received agreements",
+    "emptyText": "When someone shares a transfer with you, it will appear here with amount, due date, and installments.",
+    "total": "Transfer total",
+    "firstDueDate": "First due date",
+    "installments": "Installments",
+    "installment": "Installment {number}",
+    "you": "You"
   },
   "transactionPlanning": {
     "confirmExclude": "Remove this Open Finance transaction from planning calculations?",

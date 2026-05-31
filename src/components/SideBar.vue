@@ -132,6 +132,13 @@ const mainNavSections = computed<NavSection[]>(() => [
         disabled: false
       },
       {
+        key: 'shared-with-me',
+        title: t('sidebar.shared_with_me'),
+        icon: 'mdi-handshake-outline',
+        to: { name: 'shared-with-me' },
+        disabled: false
+      },
+      {
         key: 'accounts',
         title: t('sidebar.accounts'),
         icon: 'mdi-bank-outline',

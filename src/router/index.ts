@@ -22,6 +22,7 @@ import DecisionsView from '@/views/DecisionsView.vue'
 import PublicDecisionView from '@/views/PublicDecisionView.vue'
 import InsightsView from '@/views/InsightsView.vue'
 import ActivityView from '@/views/ActivityView.vue'
+import SharedWithMeView from '@/views/SharedWithMeView.vue'
 import OAuth2Redirect from '@/views/redirect_url/OAuth2Redirect.vue'
 import PrivacyPolicy from '@/components/compliance/PrivacyPolicy.vue'
 import TermsOfUse from '@/components/compliance/TermsOfUse.vue'
@@ -54,6 +55,12 @@ const router = createRouter({
       name: 'transactions',
       component: TransactionsView,
       meta: { requiresAuth: true, requiresWorkspace: true }
+    },
+    {
+      path: '/shared-with-me',
+      name: 'shared-with-me',
+      component: SharedWithMeView,
+      meta: { requiresAuth: true }
     },
     {
       path: '/budget',

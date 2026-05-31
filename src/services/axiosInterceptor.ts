@@ -34,6 +34,18 @@ const extractWorkspaceIdFromRequest = (config: AxiosRequestConfig): string | nul
   }
 }
 
+const shouldSkipWorkspaceHeader = (config: AxiosRequestConfig): boolean => {
+  try {
+    const rawUrl = String(config.url || '')
+    const base = String((config as any).baseURL || apiUrl || window.location.origin)
+    const resolved = isAbsoluteUrl(rawUrl) ? rawUrl : new URL(rawUrl, base).toString()
+    const path = new URL(resolved).pathname
+    return /\/(?:api\/)?shared-expense-agreements\/received(?:\/|$)/.test(path)
+  } catch {
+    return false
+  }
+}
+
 const axiosInstance = axios.create({
   baseURL: apiUrl,
   timeout: 300000,
@@ -45,6 +57,16 @@ const axiosInstance = axios.create({
 
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    if (config.data instanceof FormData) {
+      if (typeof (config.headers as any)?.delete === 'function') {
+        ;(config.headers as any).delete('Content-Type')
+        ;(config.headers as any).delete('content-type')
+      } else if (config.headers) {
+        delete (config.headers as any)['Content-Type']
+        delete (config.headers as any)['content-type']
+      }
+    }
+
     if (isBudgetApiRequest(config)) {
       config.adapter = () => buildBudgetApiMockResponse(config)
     }
@@ -52,7 +74,7 @@ axiosInstance.interceptors.request.use(
     if (access_token.value) {
       config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${access_token.value}`;
-      if (isBudgetApiTarget(config)) {
+      if (isBudgetApiTarget(config) && !shouldSkipWorkspaceHeader(config)) {
         // Some endpoints (e.g. GET /workspaces/:id) require workspace context even before
         // the store has the current workspace selected. Infer it from the URL when needed.
         const inferredWorkspaceId = extractWorkspaceIdFromRequest(config)

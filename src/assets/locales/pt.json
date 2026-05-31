@@ -16,6 +16,7 @@
     "goals": "Metas",
     "home": "Início",
     "transactions": "Transações",
+    "shared_with_me": "Compartilhados comigo",
     "accounts": "Contas",
     "categories": "Categorias",
     "planning_budget": "Orçamento",
@@ -1989,6 +1990,81 @@
       "CONFLICT_DUPLICATE": "Conflito de duplicidade",
       "RESOLVED_CREATE_NEW": "Conflito resolvido"
     }
+  },
+  "sharedExpenseAgreement": {
+    "title": "Combinado de divisão",
+    "stepsLabel": "Etapas do combinado",
+    "steps": {
+      "participant": "Participante",
+      "split": "Divisão",
+      "tracking": "Acompanhamento"
+    },
+    "counterpartyEmail": "Email da pessoa",
+    "participantEmail": "Email do participante",
+    "addParticipant": "Adicionar participante",
+    "agreementName": "Nome do combinado",
+    "notes": "Observações",
+    "split": {
+      "equal": "Meio a meio",
+      "fixed": "Valor",
+      "percentage": "Percentual"
+    },
+    "sharedAmount": "Valor combinado",
+    "percentage": "Percentual",
+    "paymentMode": "Como será pago",
+    "paymentModes": {
+      "pixReimbursement": "Pix ou reembolso",
+      "debit": "Débito",
+      "creditCard": "Crédito parcelado",
+      "other": "Outro"
+    },
+    "resolvedShare": "Parte combinada",
+    "firstDueDate": "Primeiro vencimento",
+    "remindBefore": "Lembrar antes",
+    "daysSuffix": "dias",
+    "installments": "Parcelas",
+    "noDueDate": "Sem vencimento",
+    "back": "Voltar",
+    "continue": "Continuar",
+    "create": "Criar combinado",
+    "save": "Salvar combinado",
+    "defaultTitleWithDescription": "Divisão: {description}",
+    "visibility": {
+      "toggle": "Mostrar detalhes do combinado",
+      "participant": "Participante",
+      "subtitle": "{count} participante(s) · {total} · {installments}",
+      "singleInstallment": "à vista",
+      "installmentsCount": "{count} parcelas",
+      "noObligations": "Sem acompanhamento",
+      "nextDue": "Parcela {installment} · vencimento {dueDate}",
+      "delivery": {
+        "sent": "Email enviado ({count})",
+        "partial": "Email parcial ({count})",
+        "failed": "Email falhou",
+        "skipped": "Email não enviado",
+        "not_attempted": "Email pendente"
+      }
+    },
+    "validation": {
+      "participantsRequired": "Adicione pelo menos um participante",
+      "emailRequired": "Informe o email",
+      "emailInvalid": "Informe um email válido"
+    }
+  },
+  "sharedWithMe": {
+    "kicker": "Escopo restrito",
+    "title": "Compartilhados comigo",
+    "subtitle": "Acompanhe apenas os combinados em que seu email foi incluído. Isso não concede acesso ao workspace de origem.",
+    "refresh": "Atualizar",
+    "tryAgain": "Tentar novamente",
+    "loadError": "Não foi possível carregar os compartilhamentos recebidos.",
+    "emptyTitle": "Nenhum combinado recebido",
+    "emptyText": "Quando alguém compartilhar uma transferência com você, ela aparecerá aqui com valor, vencimento e parcelas.",
+    "total": "Total da transferência",
+    "firstDueDate": "Primeiro vencimento",
+    "installments": "Parcelas",
+    "installment": "Parcela {number}",
+    "you": "Você"
   },
   "transactionPlanning": {
     "confirmExclude": "Remover esta transação Open Finance dos cálculos de planejamento?",

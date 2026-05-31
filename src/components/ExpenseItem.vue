@@ -121,6 +121,33 @@
             {{ $t('expenseItem.alertConfigured') }}
           </v-chip>
         </v-list-item-subtitle>
+        <div v-if="sharedAgreements.length" class="agreement-summary-row">
+          <v-chip
+            v-for="agreement in sharedAgreements"
+            :key="agreement.id"
+            size="x-small"
+            color="#0f766e"
+            variant="tonal"
+            @click.stop="toggleAgreementVisibility"
+          >
+            <v-icon start size="14">mdi-handshake-outline</v-icon>
+            {{ agreementSummary(agreement) }}
+          </v-chip>
+          <v-btn
+            icon
+            size="x-small"
+            variant="text"
+            class="agreement-toggle-btn"
+            :title="$t('sharedExpenseAgreement.visibility.toggle')"
+            @click.stop="toggleAgreementVisibility"
+          >
+            <v-icon size="15">{{ isAgreementVisibilityOpen ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+          </v-btn>
+        </div>
+        <shared-expense-agreement-visibility
+          v-if="isAgreementVisibilityOpen"
+          :agreements="sharedAgreements"
+        />
       </div>
       <div class="expense-amount-col">
         <span class="expense-amount-text">{{ expense.amount }}</span>
@@ -144,6 +171,16 @@
           class="expense-action-btn expense-action-btn--share"
         >
           <v-icon size="15">mdi-share-variant</v-icon>
+        </v-btn>
+        <v-btn
+          icon
+          size="x-small"
+          variant="text"
+          title="Criar combinado de divisão"
+          @click.stop="openAgreementDialog"
+          class="expense-action-btn expense-action-btn--agreement"
+        >
+          <v-icon size="15">mdi-handshake-outline</v-icon>
         </v-btn>
         <v-btn
           icon
@@ -353,12 +390,28 @@
         </template>
       </v-snackbar>
     </v-dialog>
+
+    <shared-expense-agreement-dialog
+      v-model="isAgreementDialogOpen"
+      :expense="expense"
+      :agreement="editingAgreement"
+      @created="handleAgreementCreated"
+      @updated="handleAgreementUpdated"
+      @error="handleAgreementError"
+    />
 </v-list-item>
 </template>
 
 <script>
+import SharedExpenseAgreementDialog from '@/components/SharedExpenseAgreementDialog.vue'
+import SharedExpenseAgreementVisibility from '@/components/SharedExpenseAgreementVisibility.vue'
+
 export default {
   name: 'ExpenseItem',
+  components: {
+    SharedExpenseAgreementDialog,
+    SharedExpenseAgreementVisibility,
+  },
   props: {
     expense: {
       type: Object,
@@ -389,7 +442,7 @@ export default {
       default: false,
     },
   },
-  emits: ['deleteExpense', 'togglePlanningExclusion', 'removeAttachment', 'attachFiles', 'shareExpense', 'sendReminder', 'select', 'downloadAttachment', 'resolveConflict', 'suggestCategory', 'applySuggestion', 'openComments'],
+  emits: ['deleteExpense', 'togglePlanningExclusion', 'removeAttachment', 'attachFiles', 'shareExpense', 'sendReminder', 'select', 'downloadAttachment', 'resolveConflict', 'suggestCategory', 'applySuggestion', 'openComments', 'agreementCreated', 'agreementUpdated', 'agreementError'],
   computed: {
     visibilityScopeLabel() {
       const scope = this.expense?.visibilityScope === 'PRIVATE' ? 'private' : 'workspace'
@@ -452,6 +505,9 @@ export default {
         miscellaneous: 'mdi-dots-horizontal',
       },
       isDialogOpen: false,
+      isAgreementDialogOpen: false,
+      editingAgreement: null,
+      isAgreementVisibilityOpen: false,
       email: '',
       emailRules: [
         (value) => !!value || this.$t('expenseItem.emailRequired'),
@@ -475,10 +531,12 @@ export default {
       ],
       snackbar: false,
       snackbarMessage: '',
+      sharedAgreements: [],
     };
   },
   mounted() {
     this.attachedFiles = this.expense.attachments || [];
+    this.sharedAgreements = this.expense.sharedAgreements || [];
     this.initializeAlertState();
   },
   watch: {
@@ -496,6 +554,7 @@ export default {
     expense: {
       handler() {
         this.attachedFiles = this.expense.attachments || [];
+        this.sharedAgreements = this.expense.sharedAgreements || [];
         this.initializeAlertState();
       },
       immediate: true,
@@ -621,9 +680,65 @@ export default {
         return;
       }
 
-      const combinedFiles = [...this.attachedFiles, ...this.newFiles];
-      this.$emit('shareExpense', { expense: this.expense, email: this.email, files: combinedFiles });
+      const filesToUpload = [...this.newFiles];
+      this.$emit('shareExpense', { expense: this.expense, email: this.email, files: filesToUpload });
+      this.newFiles = [];
       this.isDialogOpen = false;
+    },
+    openAgreementDialog() {
+      this.editingAgreement = this.sharedAgreements.length ? this.sharedAgreements[0] : null;
+      this.isAgreementDialogOpen = true;
+    },
+    handleAgreementCreated(agreement) {
+      const exists = this.sharedAgreements.some((item) => item.id === agreement.id);
+      this.sharedAgreements = exists
+        ? this.sharedAgreements.map((item) => (item.id === agreement.id ? agreement : item))
+        : [agreement, ...this.sharedAgreements];
+      this.isAgreementVisibilityOpen = true;
+      this.$emit('agreementCreated', { expense: this.expense, agreement });
+    },
+    handleAgreementUpdated(agreement) {
+      const previousAgreement = this.sharedAgreements.find((item) => item.id === agreement.id);
+      const updatedAgreement = this.preserveAgreementDeliveryState(previousAgreement, agreement);
+      this.sharedAgreements = this.sharedAgreements.map((item) => (item.id === updatedAgreement.id ? updatedAgreement : item));
+      this.isAgreementVisibilityOpen = true;
+      this.editingAgreement = updatedAgreement;
+      this.$emit('agreementUpdated', { expense: this.expense, agreement: updatedAgreement });
+    },
+    preserveAgreementDeliveryState(previousAgreement, nextAgreement) {
+      if (!previousAgreement || nextAgreement.emailDeliveryStatus !== 'NOT_ATTEMPTED') {
+        return nextAgreement;
+      }
+      return {
+        ...nextAgreement,
+        emailDeliveryStatus: previousAgreement.emailDeliveryStatus,
+        emailDeliveryCount: previousAgreement.emailDeliveryCount,
+        emailDeliveryErrors: previousAgreement.emailDeliveryErrors,
+      };
+    },
+    handleAgreementError(error) {
+      this.$emit('agreementError', { expense: this.expense, error });
+    },
+    agreementSummary(agreement) {
+      const amount = this.formatCurrency(agreement.sharedAmount);
+      const participants = Array.isArray(agreement.participants) ? agreement.participants : [];
+      const participantCount = participants.length;
+      const email = participantCount > 1
+        ? `${participantCount} participantes`
+        : (participants[0]?.email || agreement.counterpartyEmail || 'participante');
+      const installments = Number(agreement.installmentCount || 1);
+      const suffix = installments > 1 ? ` em ${installments}x` : '';
+      return `${email}: ${amount}${suffix}`;
+    },
+    toggleAgreementVisibility() {
+      this.isAgreementVisibilityOpen = !this.isAgreementVisibilityOpen;
+    },
+    formatCurrency(value) {
+      const number = Number(value || 0);
+      return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+      }).format(Number.isFinite(number) ? number : 0);
     },
     openAlertDialog() {
       this.isAlertDialogOpen = true;
@@ -736,6 +851,10 @@ export default {
   color: rgba(249, 115, 22, 0.74) !important;
 }
 
+.expense-action-btn--agreement .v-icon {
+  color: rgba(15, 118, 110, 0.78) !important;
+}
+
 .expense-action-btn--planning .v-icon {
   color: rgba(139, 92, 246, 0.74) !important;
 }
@@ -759,6 +878,10 @@ export default {
 
 .expense-action-btn--timer:hover .v-icon {
   color: rgba(249, 115, 22, 0.92) !important;
+}
+
+.expense-action-btn--agreement:hover .v-icon {
+  color: rgba(15, 118, 110, 0.95) !important;
 }
 
 .expense-action-btn--planning:hover .v-icon {
@@ -793,6 +916,25 @@ export default {
   gap: 6px;
   flex-wrap: wrap;
   margin: 2px 0;
+}
+
+.agreement-summary-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.agreement-summary-row .v-chip {
+  cursor: pointer;
+}
+
+.agreement-toggle-btn {
+  min-width: 24px !important;
+  width: 24px !important;
+  height: 24px !important;
+  color: rgba(15, 118, 110, 0.78) !important;
 }
 
 .expense-meta-line {

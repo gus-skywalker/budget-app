@@ -68,10 +68,22 @@ declare module '@/services/NotificationService' {
     message: string
   }
 
+  export interface TransactionShareEmailRequest {
+    user?: {
+      email?: string
+      name?: string
+    }
+    expense: {
+      id: string
+      amount?: number
+    }
+    destinationEmail: string
+  }
+
   export function accept(notificationId: number): Promise<void>
   export function decline(notificationId: number): Promise<void>
   export function getNotifications(): Promise<{ data: any[] }>
-  export function sendEmail(notification: ExpenseNotification): Promise<void>
+  export function sendTransactionShareEmail(request: TransactionShareEmailRequest): Promise<void>
   export function sendContactForm(contactData: ContactFormRequest): Promise<{ data: ContactSubmissionResponse }>
   export function updateAlertSettings(settings: UserSettings): Promise<void>
   export function getAlertSettings(): Promise<UserSettings>
