@@ -607,6 +607,8 @@ import BillingOrchestrationService from '@/services/BillingOrchestrationService'
 import { resolveAnyWorkspaceContext } from '@/services/BillingWorkspaceContext'
 import { useUserStore } from '@/plugins/userStore'
 import { useI18n } from 'vue-i18n'
+import PageHeader from '@/components/PageHeader.vue'
+import AlertStrip from '@/components/AlertStrip.vue'
 import 'chartjs-adapter-moment'
 
 Chart.register(...registerables)
@@ -618,8 +620,8 @@ export default {
     return { t }
   },
   components: {
-    PageHeader: () => import('@/components/PageHeader.vue'),
-    AlertStrip: () => import('@/components/AlertStrip.vue'),
+    PageHeader,
+    AlertStrip,
   },
   computed: {
     netMonthlyCashflow() {

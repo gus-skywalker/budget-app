@@ -408,6 +408,8 @@ import SharedExpenseAgreementService from '@/services/SharedExpenseAgreementServ
 import UsersService from '@/services/UsersService'
 import WorkspaceService from '@/services/WorkspaceService'
 import { useUserStore } from '@/plugins/userStore'
+import PageHeader from '@/components/PageHeader.vue'
+import AlertStrip from '@/components/AlertStrip.vue'
 
 const toLocalISODate = (date = new Date()) => {
   const timeOffset = date.getTimezoneOffset() * 60000
@@ -515,8 +517,8 @@ export default {
     IncomeItem,
     ExpenseItem,
     TransactionCommentsDialog,
-    PageHeader: () => import('@/components/PageHeader.vue'),
-    AlertStrip: () => import('@/components/AlertStrip.vue'),
+    PageHeader,
+    AlertStrip,
   },
   data() {
     // const currentYear = new Date().getFullYear();
