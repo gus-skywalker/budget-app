@@ -27,7 +27,7 @@
             </div>
             <div class="summary-item">
               <span>{{ t('contentExperience.planning.scenarioEditor.horizonLabel', 'Horizon') }}</span>
-              <strong>{{ t('contentExperience.planning.scenarioEditor.monthsValue', '{n} months', { n: snapshot.months }) }}</strong>
+              <strong>{{ t('contentExperience.planning.scenarioBuilder.monthsLabel', { count: snapshot.months }) }}</strong>
             </div>
             <div class="summary-item">
               <span>{{ t('contentExperience.planning.scenarioEditor.estimatedImpact', 'Estimated monthly impact') }}</span>

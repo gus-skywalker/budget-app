@@ -32,13 +32,13 @@ const initialReportType = computed(() =>
   typeof route.query?.reportType === 'string' ? route.query.reportType : 'expenses'
 )
 const initialStartDate = computed(() =>
-  typeof route.query?.startDate === 'string' ? route.query.startDate : null
+  typeof route.query?.startDate === 'string' ? route.query.startDate : undefined
 )
 const initialEndDate = computed(() =>
-  typeof route.query?.endDate === 'string' ? route.query.endDate : null
+  typeof route.query?.endDate === 'string' ? route.query.endDate : undefined
 )
 const initialCategoryFilter = computed(() =>
-  typeof route.query?.category === 'string' ? route.query.category : null
+  typeof route.query?.category === 'string' ? route.query.category : undefined
 )
 </script>
 
