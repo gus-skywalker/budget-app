@@ -1,16 +1,14 @@
 <template>
-  <div class="financial-goal-container">
-    <v-container class="modern-container">
-      <v-row>
-        <v-col>
-          <div class="modern-card main-card">
-            <div class="card-header">
-              <h2 class="card-title">
-                <v-icon color="#667eea" class="mr-2">mdi-bullseye-arrow</v-icon>
+  <div class="financial-goal-shell">
+    <div class="cb-container">
+          <div class="cb-card">
+            <div class="cb-card__header">
+              <h2 class="cb-card__title">
+                <v-icon color="var(--cb-primary)" class="mr-2">mdi-bullseye-arrow</v-icon>
                 {{ $t('financial_goals.title') }}
               </h2>
             </div>
-            <div class="card-content">
+            <div class="cb-card__body">
               <v-alert
                 type="info"
                 variant="tonal"
@@ -24,7 +22,7 @@
                   </div>
                   <v-btn
                     variant="outlined"
-                    color="#667eea"
+                    color="var(--cb-primary)"
                     class="goal-tip__button"
                     @click="goToConnections"
                   >
@@ -34,14 +32,14 @@
                 </div>
               </v-alert>
 
-              <div class="modern-card suggestions-card mt-5">
-                <div class="card-header">
-                  <h3 class="card-title">
-                    <v-icon color="#667eea" class="mr-2">mdi-lightbulb</v-icon>
+              <div class="cb-card suggestions-card">
+                <div class="cb-card__header">
+                  <h3 class="cb-card__title">
+                    <v-icon color="var(--cb-primary)" class="mr-2">mdi-lightbulb</v-icon>
                     {{ $t('financial_goals.suggested_goals_title') }}
                   </h3>
                 </div>
-                <div class="card-content">
+                <div class="cb-card__body">
                   <p class="suggestions-helper">
                     {{ $t('financial_goals.suggested_goals_helper') }}
                   </p>
@@ -62,7 +60,7 @@
                           type="number" 
                           variant="outlined"
                           density="comfortable"
-                          color="#667eea"
+                          color="var(--cb-primary)"
                           class="modern-input"
                           required
                         ></v-text-field>
@@ -74,7 +72,7 @@
                           type="number" 
                           variant="outlined"
                           density="comfortable"
-                          color="#667eea"
+                          color="var(--cb-primary)"
                           class="modern-input"
                           required
                         ></v-text-field>
@@ -92,8 +90,7 @@
                     </div>
                     <v-btn 
                       type="submit" 
-                      color="secondary"
-                      class="modern-btn gradient-btn"
+                      color="var(--cb-primary)"
                       size="large"
                       :disabled="!canFetchSuggestions"
                     >
@@ -104,7 +101,7 @@
 
                   <div v-if="suggestedGoals.length" class="mt-4 suggestions-grid">
                     <div class="suggestions-ranking-note">
-                      <v-icon size="16" color="#667eea">mdi-information-outline</v-icon>
+                      <v-icon size="16" color="var(--cb-primary)">mdi-information-outline</v-icon>
                       <span>{{ $t('financial_goals.suggested_goals_ranking_note') }}</span>
                     </div>
                     <article
@@ -115,7 +112,7 @@
                       <div class="suggestion-item__top">
                         <div class="suggestion-item__title-group">
                           <div class="suggestion-icon">
-                            <v-icon color="#667eea">{{ suggestedGoalIcon(suggestion) }}</v-icon>
+                            <v-icon color="var(--cb-primary)">{{ suggestedGoalIcon(suggestion) }}</v-icon>
                           </div>
                           <div class="suggestion-item__headline">
                             <div class="suggestion-name">{{ suggestion.name }}</div>
@@ -158,7 +155,7 @@
                         <v-btn 
                           color="success" 
                           @click="acceptSuggestedGoal(suggestion)"
-                          class="modern-btn"
+                         
                         >
                           <v-icon left>mdi-check</v-icon>
                           {{ $t('financial_goals.create_suggested_goal') }}
@@ -181,7 +178,7 @@
                   required 
                   variant="outlined"
                   density="comfortable"
-                  color="#667eea"
+                  color="var(--cb-primary)"
                   class="modern-input mb-4"
                 ></v-text-field>
 
@@ -198,14 +195,14 @@
                   :no-data-text="$t('financial_goals.categories_unavailable')"
                   variant="outlined"
                   density="comfortable"
-                  color="#667eea"
+                  color="var(--cb-primary)"
                   class="modern-input mb-4"
                 ></v-select>
 
                 <div class="goal-ai-row mb-4">
                   <v-btn
                     variant="tonal"
-                    color="#667eea"
+                    color="var(--cb-primary)"
                     :loading="isSuggestingGoalCategory"
                     :disabled="!canSuggestGoalCategory"
                     @click="suggestGoalCategory"
@@ -237,7 +234,7 @@
                     <div class="goal-ai-suggestion__actions">
                       <v-btn
                         size="small"
-                        color="#667eea"
+                        color="var(--cb-primary)"
                         variant="outlined"
                         @click="applyGoalCategorySuggestion"
                       >
@@ -262,7 +259,7 @@
                   required
                   variant="outlined"
                   density="comfortable"
-                  color="#667eea"
+                  color="var(--cb-primary)"
                   class="modern-input mb-4"
                 ></v-text-field>
 
@@ -273,7 +270,7 @@
                   type="number"
                   variant="outlined"
                   density="comfortable"
-                  color="#667eea"
+                  color="var(--cb-primary)"
                   class="modern-input mb-4"
                 ></v-text-field>
 
@@ -284,7 +281,7 @@
                   type="date"
                   variant="outlined"
                   density="comfortable"
-                  color="#667eea"
+                  color="var(--cb-primary)"
                   class="modern-input mb-4"
                 ></v-text-field>
 
@@ -305,7 +302,7 @@
                         type="number"
                         variant="outlined"
                         density="comfortable"
-                        color="#667eea"
+                        color="var(--cb-primary)"
                         class="modern-input mb-4"
                       ></v-text-field>
 
@@ -315,7 +312,7 @@
                         :items="['weekly', 'monthly']" 
                         variant="outlined"
                         density="comfortable"
-                        color="#667eea"
+                        color="var(--cb-primary)"
                         class="modern-input"
                       ></v-select>
                     </v-expansion-panel-text>
@@ -326,8 +323,7 @@
                   <v-col cols="auto">
                     <v-btn 
                       type="submit" 
-                      color="primary"
-                      class="modern-btn gradient-btn"
+                      color="var(--cb-primary)"
                       size="large"
                     >
                       <v-icon left>{{ isEditing ? 'mdi-check' : 'mdi-plus' }}</v-icon>
@@ -340,7 +336,6 @@
                       @click="cancelEdit" 
                       color="secondary"
                       variant="outlined"
-                      class="modern-btn"
                       size="large"
                     >
                       <v-icon left>mdi-close</v-icon>
@@ -366,7 +361,7 @@
                     class="goal-template-card"
                     @click="startFromTemplate(template)"
                   >
-                    <v-icon color="#667eea" size="26">{{ template.icon }}</v-icon>
+                    <v-icon color="var(--cb-primary)" size="26">{{ template.icon }}</v-icon>
                     <div class="goal-template-card__title">{{ template.title }}</div>
                     <div class="goal-template-card__description">{{ template.description }}</div>
                   </button>
@@ -376,8 +371,7 @@
               <v-btn 
                 v-if="!isAddingOrEditing" 
                 @click="addNewGoal" 
-                color="primary"
-                class="modern-btn gradient-btn mt-4"
+                color="var(--cb-primary)"
                 size="large"
                 block
               >
@@ -474,13 +468,13 @@
 
               <!-- Alerta para quando não houver metas -->
               <div v-else class="empty-state">
-                <v-icon size="64" color="#667eea" class="mb-4">mdi-bullseye-arrow</v-icon>
+                <v-icon size="64" color="var(--cb-primary)" class="mb-4">mdi-bullseye-arrow</v-icon>
                 <p class="empty-message">{{ $t('financial_goals.no_goals') }}</p>
                 <p class="empty-submessage">{{ $t('financial_goals.empty_state_tip') }}</p>
                 <v-btn
                   variant="outlined"
-                  color="#667eea"
-                  class="modern-btn mt-4"
+                  color="var(--cb-primary)"
+                  class="mt-4"
                   @click="goToConnections"
                 >
                   <v-icon left>mdi-bank-outline</v-icon>
@@ -489,9 +483,7 @@
               </div>
             </div>
           </div>
-        </v-col>
-      </v-row>
-    </v-container>
+    </div>
 
     <v-snackbar
       v-model="snackbar.show"
@@ -1217,131 +1209,45 @@ export default {
 </script>
 
 <style scoped>
-.financial-goal-container {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e8eaf0 100%);
-  padding: 32px 0;
-}
-
-.v-theme--dark .financial-goal-container {
-  background: linear-gradient(135deg, #1e1e1e 0%, #141414 100%);
-}
-
-.modern-container {
-  max-width: 1400px;
-  padding-left: 16px;
-  padding-right: 16px;
+.financial-goal-shell {
+  padding: 0;
 }
 
 .suggestions-helper {
   margin: 0 0 16px;
-  color: #64748b;
+  color: var(--cb-ink-muted);
 }
 
-@media (min-width: 600px) {
-  .modern-container {
-    padding-left: 24px;
-    padding-right: 24px;
-  }
-}
-
-/* Modern Cards */
-.modern-card {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  margin-bottom: 24px;
-  overflow: hidden;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-}
-
-.v-theme--dark .modern-card {
-  background: #2a2a2a;
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-}
-
-.modern-card:hover {
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-}
-
-.v-theme--dark .modern-card:hover {
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
-}
-
-.card-header {
-  padding: 20px 24px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-  background: rgba(102, 126, 234, 0.03);
-}
-
-.v-theme--dark .card-header {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(102, 126, 234, 0.08);
-}
-
-.card-title {
-  font-size: 1.35rem;
-  font-weight: 600;
-  color: #1a1a1a;
-  display: flex;
-  align-items: center;
-  margin: 0;
-}
-
-.v-theme--dark .card-title {
-  color: #ffffff;
-}
-
-.card-content {
+/* ── cb-card overrides for this component ────────────────────────────────── */
+.cb-card__body {
   padding: 24px;
 }
 
-/* Form Styles */
+@media (max-width: 960px) { .cb-card__body { padding: 20px; } }
+@media (max-width: 600px) { .cb-card__body { padding: 16px; } }
+
+/* ── Modern input focus glow ──────────────────────────────────────────────── */
 .modern-input :deep(.v-field) {
   border-radius: 8px;
-  transition: all 0.3s ease;
 }
 
 .modern-input :deep(.v-field--focused) {
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cb-primary) 12%, transparent);
 }
 
-/* Buttons */
-.modern-btn {
-  border-radius: 8px;
-  text-transform: none;
-  font-weight: 600;
-  letter-spacing: 0.3px;
-  transition: all 0.3s ease;
-}
-
-.gradient-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-  color: white !important;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-}
-
-.gradient-btn:hover {
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-  transform: translateY(-2px);
-}
-
-/* Goals List */
+/* ── Goal items ───────────────────────────────────────────────────────────── */
 .goal-item {
   padding: 20px;
-  background: rgba(102, 126, 234, 0.03);
+  background: color-mix(in srgb, var(--cb-primary) 4%, transparent);
   border-radius: 12px;
   margin-bottom: 16px;
-  border: 1px solid rgba(102, 126, 234, 0.1);
+  border: 1px solid color-mix(in srgb, var(--cb-primary) 10%, transparent);
   transition: all 0.3s ease;
 }
 
 .goal-item:hover {
-  background: rgba(102, 126, 234, 0.06);
-  border-color: rgba(102, 126, 234, 0.2);
-  transform: translateX(4px);
+  background: color-mix(in srgb, var(--cb-primary) 7%, transparent);
+  border-color: color-mix(in srgb, var(--cb-primary) 18%, transparent);
 }
 
 .goal-item .goal-action-btn {
@@ -1351,54 +1257,26 @@ export default {
   padding: 0 !important;
   border-radius: 6px !important;
   color: rgba(15, 23, 42, 0.46) !important;
-  transition:
-    color 0.18s ease,
-    background-color 0.18s ease,
-    opacity 0.18s ease;
+  transition: color 0.18s ease, background-color 0.18s ease;
 }
 
-.goal-item .goal-action-btn .v-icon {
-  font-size: 18px !important;
-  transition: color 0.18s ease;
-}
+.goal-item .goal-action-btn .v-icon { font-size: 18px !important; }
+.goal-item .goal-action-btn--edit .v-icon  { color: rgba(59, 130, 246, 0.74) !important; }
+.goal-item .goal-action-btn--delete .v-icon { color: rgba(239, 68, 68, 0.74) !important; }
+.goal-item .goal-action-btn:hover { background-color: rgba(15, 23, 42, 0.04) !important; }
+.goal-item .goal-action-btn--edit:hover  .v-icon { color: rgba(59, 130, 246, 0.92) !important; }
+.goal-item .goal-action-btn--delete:hover .v-icon { color: rgba(239, 68, 68, 0.95) !important; }
+.goal-item .goal-action-btn--delete:hover { background-color: rgba(239, 68, 68, 0.08) !important; }
 
-.goal-item .goal-action-btn--edit .v-icon {
-  color: rgba(59, 130, 246, 0.74) !important;
-}
-
-.goal-item .goal-action-btn--delete .v-icon {
-  color: rgba(239, 68, 68, 0.74) !important;
-}
-
-.goal-item .goal-action-btn:hover {
-  color: rgba(15, 23, 42, 0.66) !important;
-  background-color: rgba(15, 23, 42, 0.04) !important;
-}
-
-.goal-item .goal-action-btn--edit:hover .v-icon {
-  color: rgba(59, 130, 246, 0.92) !important;
-}
-
-.goal-item .goal-action-btn--delete:hover .v-icon {
-  color: rgba(239, 68, 68, 0.95) !important;
-}
-
-.goal-item .goal-action-btn--delete:hover {
-  background-color: rgba(239, 68, 68, 0.08) !important;
-}
-
-/* Progress Section */
-.progress-section {
-  margin-top: 12px;
-}
-
+/* ── Progress ─────────────────────────────────────────────────────────────── */
 .progress-text {
   font-size: 0.9rem;
-  color: #666;
+  color: var(--cb-ink-muted);
   margin-top: 8px;
   font-weight: 600;
 }
 
+/* ── Insight chips ───────────────────────────────────────────────────────── */
 .goal-insight-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -1412,51 +1290,27 @@ export default {
   gap: 3px;
   padding: 10px 12px;
   border-radius: 10px;
-  background: rgba(102, 126, 234, 0.06);
-  border: 1px solid rgba(102, 126, 234, 0.12);
+  background: var(--cb-surface-soft);
+  border: 1px solid var(--cb-border-card);
 }
 
-.goal-insight-chip__label {
-  font-size: 0.77rem;
-  color: #6b7280;
-}
+.goal-insight-chip__label { font-size: 0.77rem; color: var(--cb-ink-muted); }
+.goal-insight-chip__value { font-size: 0.92rem; font-weight: 700; color: var(--cb-ink); }
 
-.goal-insight-chip__value {
-  font-size: 0.92rem;
-  font-weight: 700;
-  color: #1f2937;
-}
+.goal-insight-chip--ahead { background: rgba(32, 95, 99, 0.08); border-color: rgba(32, 95, 99, 0.18); }
+.goal-insight-chip--track { background: rgba(59, 130, 246, 0.08); border-color: rgba(59, 130, 246, 0.16); }
+.goal-insight-chip--risk  { background: rgba(217, 119, 6, 0.08); border-color: rgba(217, 119, 6, 0.2); }
 
-.goal-insight-chip--ahead {
-  background: rgba(34, 197, 94, 0.10);
-  border-color: rgba(34, 197, 94, 0.2);
-}
-
-.goal-insight-chip--track {
-  background: rgba(59, 130, 246, 0.10);
-  border-color: rgba(59, 130, 246, 0.2);
-}
-
-.goal-insight-chip--risk {
-  background: rgba(245, 158, 11, 0.12);
-  border-color: rgba(245, 158, 11, 0.24);
-}
-
-.goal-insight-alert {
-  margin-top: 14px;
-}
+.goal-insight-alert   { margin-top: 14px; }
+.goal-advanced-panel  { border-radius: 12px; overflow: hidden; }
 
 .goal-planned-message {
   margin-top: 10px;
   font-size: 0.92rem;
-  color: #5b6475;
+  color: var(--cb-ink-muted);
 }
 
-.goal-advanced-panel {
-  border-radius: 12px;
-  overflow: hidden;
-}
-
+/* ── Tip banner ───────────────────────────────────────────────────────────── */
 .goal-tip {
   display: flex;
   align-items: center;
@@ -1464,20 +1318,21 @@ export default {
   gap: 16px;
 }
 
-.goal-template-section__header {
-  margin-bottom: 12px;
-}
+.goal-tip__button { flex-shrink: 0; }
+
+/* ── Template section ────────────────────────────────────────────────────── */
+.goal-template-section__header { margin-bottom: 12px; }
 
 .goal-template-section__title {
   font-size: 1.05rem;
   font-weight: 700;
-  margin: 0 0 4px 0;
-  color: #1f2937;
+  margin: 0 0 4px;
+  color: var(--cb-ink);
 }
 
 .goal-template-section__subtitle {
   margin: 0;
-  color: #6b7280;
+  color: var(--cb-ink-muted);
   font-size: 0.94rem;
 }
 
@@ -1495,81 +1350,25 @@ export default {
   width: 100%;
   padding: 16px;
   border-radius: 12px;
-  border: 1px solid rgba(102, 126, 234, 0.15);
-  background: rgba(102, 126, 234, 0.05);
+  border: 1px solid color-mix(in srgb, var(--cb-primary) 14%, transparent);
+  background: color-mix(in srgb, var(--cb-primary) 4%, transparent);
   text-align: left;
   transition: all 0.2s ease;
 }
 
 .goal-template-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(102, 126, 234, 0.28);
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.12);
+  border-color: color-mix(in srgb, var(--cb-primary) 26%, transparent);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--cb-primary) 10%, transparent);
 }
 
-.goal-template-card__title {
-  font-weight: 700;
-  color: #1f2937;
-}
+.goal-template-card__title       { font-weight: 700; color: var(--cb-ink); }
+.goal-template-card__description { font-size: 0.92rem; color: var(--cb-ink-muted); }
 
-.goal-template-card__description {
-  font-size: 0.92rem;
-  color: #6b7280;
-}
-
-.goal-tip__button {
-  flex-shrink: 0;
-  text-transform: none;
-  font-weight: 600;
-}
-
-.v-theme--dark .progress-text {
-  color: #b0b0b0;
-}
-
-.v-theme--dark .goal-insight-chip {
-  background: rgba(102, 126, 234, 0.12);
-  border-color: rgba(255, 255, 255, 0.08);
-}
-
-.v-theme--dark .goal-insight-chip__label {
-  color: #cbd5e1;
-}
-
-.v-theme--dark .goal-insight-chip__value {
-  color: #f8fafc;
-}
-
-.v-theme--dark .goal-planned-message {
-  color: #cbd5e1;
-}
-
-.v-theme--dark .goal-template-section__title,
-.v-theme--dark .goal-template-card__title {
-  color: #f8fafc;
-}
-
-.v-theme--dark .goal-template-section__subtitle,
-.v-theme--dark .goal-template-card__description {
-  color: #cbd5e1;
-}
-
-.v-theme--dark .goal-template-card {
-  background: rgba(102, 126, 234, 0.12);
-  border-color: rgba(255, 255, 255, 0.08);
-}
-
-@media (max-width: 760px) {
-  .goal-tip {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-}
-
-/* Suggestions */
+/* ── Suggestions card ────────────────────────────────────────────────────── */
 .suggestions-card {
-  background: rgba(255, 193, 7, 0.05);
-  border: 1px solid rgba(255, 193, 7, 0.2);
+  background: rgba(255, 193, 7, 0.04);
+  border: 1px solid rgba(255, 193, 7, 0.18);
 }
 
 .suggestions-grid {
@@ -1584,19 +1383,15 @@ export default {
   align-items: center;
   gap: 8px;
   padding: 8px 2px 2px;
-  color: #667085;
+  color: var(--cb-ink-muted);
   font-size: 0.88rem;
-}
-
-.v-theme--dark .suggestions-ranking-note {
-  color: #cbd5e1;
 }
 
 .suggestion-item {
   padding: 16px;
-  background: white;
+  background: var(--cb-surface);
   border-radius: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--cb-border-card);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -1632,8 +1427,8 @@ export default {
   width: 38px;
   height: 38px;
   border-radius: 10px;
-  background: rgba(102, 126, 234, 0.10);
-  border: 1px solid rgba(102, 126, 234, 0.14);
+  background: color-mix(in srgb, var(--cb-primary) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--cb-primary) 14%, transparent);
   flex-shrink: 0;
 }
 
@@ -1643,65 +1438,36 @@ export default {
   gap: 6px;
   padding: 5px 9px;
   border-radius: 999px;
-  background: rgba(102, 126, 234, 0.10);
-  color: #5b5bd6;
+  background: color-mix(in srgb, var(--cb-primary) 10%, transparent);
+  color: var(--cb-primary);
   font-size: 0.74rem;
   font-weight: 700;
   white-space: nowrap;
 }
 
-.v-theme--dark .suggestion-item {
-  background: #2a2a2a;
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-.v-theme--dark .suggestion-badge {
-  background: rgba(102, 126, 234, 0.18);
-  color: #c7d2fe;
-}
-
-.v-theme--dark .suggestion-icon {
-  background: rgba(102, 126, 234, 0.18);
-  border-color: rgba(255, 255, 255, 0.08);
-}
-
 .suggestion-name {
   font-size: 1.02rem;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--cb-ink);
   line-height: 1.2;
   word-break: break-word;
 }
 
-.v-theme--dark .suggestion-name {
-  color: #ffffff;
-}
-
 .suggestion-details {
   font-size: 0.86rem;
-  color: #666;
+  color: var(--cb-ink-muted);
   line-height: 1.35;
   word-break: break-word;
-}
-
-.v-theme--dark .suggestion-details {
-  color: #b0b0b0;
 }
 
 .suggestion-note {
   padding: 10px 12px;
   border-radius: 10px;
-  background: rgba(59, 130, 246, 0.08);
-  border: 1px solid rgba(59, 130, 246, 0.15);
-  color: #1e40af;
+  background: color-mix(in srgb, var(--cb-accent) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--cb-accent) 14%, transparent);
+  color: var(--cb-accent);
   font-size: 0.88rem;
   line-height: 1.45;
-}
-
-.v-theme--dark .suggestion-note {
-  background: rgba(59, 130, 246, 0.14);
-  border-color: rgba(147, 197, 253, 0.18);
-  color: #dbeafe;
 }
 
 .suggestion-footer {
@@ -1712,41 +1478,18 @@ export default {
   margin-top: auto;
 }
 
-.suggestion-footer__text {
-  font-size: 0.84rem;
-  color: #667085;
-}
+.suggestion-footer__text { font-size: 0.84rem; color: var(--cb-ink-muted); }
 
-.v-theme--dark .suggestion-footer__text {
-  color: #cbd5e1;
-}
-
-/* Empty State */
+/* ── Empty state ─────────────────────────────────────────────────────────── */
 .empty-state {
   text-align: center;
   padding: 60px 20px;
 }
 
-.empty-message {
-  font-size: 1rem;
-  color: #666;
-  margin: 0;
-}
+.empty-message    { font-size: 1rem; color: var(--cb-ink-muted); margin: 0; }
+.empty-submessage { margin-top: 12px; color: var(--cb-ink-muted); font-size: 0.95rem; }
 
-.empty-submessage {
-  margin-top: 12px;
-  color: #6b7280;
-  font-size: 0.95rem;
-}
-
-.v-theme--dark .empty-message {
-  color: #b0b0b0;
-}
-
-.v-theme--dark .empty-submessage {
-  color: #cbd5e1;
-}
-
+/* ── AI row ──────────────────────────────────────────────────────────────── */
 .goal-ai-row {
   display: flex;
   align-items: center;
@@ -1754,28 +1497,9 @@ export default {
   flex-wrap: wrap;
 }
 
-.goal-ai-row__meta {
-  font-size: 0.9rem;
-  color: #667085;
-}
-
-.v-theme--dark .goal-ai-row__meta {
-  color: #d0d5dd;
-}
-
-.goal-ai-suggestion {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.goal-ai-suggestion__reasoning {
-  color: #475467;
-}
-
-.v-theme--dark .goal-ai-suggestion__reasoning {
-  color: #d0d5dd;
-}
+.goal-ai-row__meta           { font-size: 0.9rem; color: var(--cb-ink-muted); }
+.goal-ai-suggestion          { display: flex; flex-direction: column; gap: 8px; }
+.goal-ai-suggestion__reasoning { color: var(--cb-ink-secondary); }
 
 .goal-ai-suggestion__actions {
   display: flex;
@@ -1783,42 +1507,14 @@ export default {
   flex-wrap: wrap;
 }
 
-/* Responsive */
-@media (max-width: 960px) {
-  .card-content {
-    padding: 20px;
-  }
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 760px) {
+  .goal-tip { flex-direction: column; align-items: flex-start; }
 }
 
 @media (max-width: 600px) {
-  .financial-goal-container {
-    padding: 20px 0;
-  }
-
-  .card-header {
-    padding: 16px 20px;
-  }
-
-  .card-title {
-    font-size: 1.2rem;
-  }
-
-  .card-content {
-    padding: 16px;
-  }
-
-  .goal-item {
-    padding: 16px;
-  }
-
   .suggestion-item__top,
-  .suggestion-footer {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .suggestion-badge {
-    white-space: normal;
-  }
+  .suggestion-footer { flex-direction: column; align-items: flex-start; }
+  .suggestion-badge  { white-space: normal; }
 }
 </style>

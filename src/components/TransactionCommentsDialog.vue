@@ -3,7 +3,7 @@
     <v-card>
       <v-card-title class="d-flex justify-space-between align-center">
         <span>{{ $t('transactionComments.title') }}</span>
-        <v-chip v-if="transactionDescription" size="small" variant="tonal" color="#667eea">
+        <v-chip v-if="transactionDescription" size="small" variant="tonal" color="var(--cb-primary)">
           {{ transactionDescription }}
         </v-chip>
       </v-card-title>
@@ -11,7 +11,7 @@
         <p class="comments-subtitle">{{ $t('transactionComments.subtitle') }}</p>
 
         <div v-if="loading" class="comments-empty">
-          <v-progress-circular indeterminate color="#667eea" size="24" />
+          <v-progress-circular indeterminate color="var(--cb-primary)" size="24" />
           <span>{{ $t('transactionComments.loading') }}</span>
         </div>
 
@@ -43,7 +43,7 @@
       <v-card-actions>
         <v-spacer />
         <v-btn variant="text" @click="internalVisible = false">{{ $t('common.cancel') }}</v-btn>
-        <v-btn color="#667eea" :loading="submitting" :disabled="!draftComment.trim()" @click="submit">
+        <v-btn color="var(--cb-primary)" :loading="submitting" :disabled="!draftComment.trim()" @click="submit">
           {{ $t('transactionComments.submit') }}
         </v-btn>
       </v-card-actions>

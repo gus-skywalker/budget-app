@@ -1,40 +1,28 @@
 <template>
-  <div class="accounts-page">
-    <v-container class="modern-container">
-      <div class="page-header">
-        <div>
-          <h1 class="page-title">{{ $t('accounts.title') }}</h1>
-          <p class="page-subtitle">{{ $t('accounts.subtitle') }}</p>
-        </div>
-        <v-alert
-          v-if="conflictCount > 0"
-          type="warning"
-          variant="tonal"
-          density="comfortable"
-          class="conflict-alert"
-        >
-          {{ conflictCount }} conflito(s) Open Finance pendente(s) de revisão.
-        </v-alert>
-      </div>
+  <div class="cb-page">
+    <div class="cb-container">
+      <page-header :title="t('accounts.title')" :meta="t('accounts.subtitle')">
+        <template v-if="conflictCount > 0" #actions>
+          <v-chip color="var(--cb-warning)" variant="tonal" prepend-icon="mdi-alert">
+            {{ conflictCount }} conflito(s) Open Finance pendente(s)
+          </v-chip>
+        </template>
+      </page-header>
 
-      <v-alert
+      <alert-strip
         v-if="activeOpenFinanceConnections.length"
-        variant="tonal"
-        color="#667eea"
-        density="comfortable"
-        class="mb-6"
-      >
-        {{ openFinanceVisibilityMessage }}
-      </v-alert>
+        variant="info"
+        :description="openFinanceVisibilityMessage"
+      />
 
-      <div class="modern-card optout-story-card mb-6">
-        <div class="card-header">
-          <h2 class="card-title">
-            <v-icon color="#667eea" class="mr-2">mdi-shield-account-outline</v-icon>
+      <div class="cb-card accounts-optout-card">
+        <div class="cb-card__header">
+          <h2 class="cb-card__title">
+            <v-icon color="var(--cb-primary)" class="mr-2" size="18">mdi-shield-account-outline</v-icon>
             Controle de conexão e opt-out
           </h2>
         </div>
-        <div class="card-content">
+        <div class="cb-card__body">
           <p class="story-text">
             Se você quiser sair do Open Finance, o caminho é simples: vá em Conexões, desconecte o banco e a sincronização automática é interrompida.
           </p>
@@ -42,7 +30,7 @@
             O histórico já importado pode continuar disponível para auditoria; a gestão de retenção e exclusão deve seguir as políticas legais abaixo.
           </p>
           <div class="story-actions">
-            <v-btn color="#667eea" variant="tonal" @click="goToConnections">
+            <v-btn color="var(--cb-primary)" variant="tonal" @click="goToConnections">
               <v-icon start>mdi-link-variant-off</v-icon>
               Ir para Conexões
             </v-btn>
@@ -53,16 +41,17 @@
         </div>
       </div>
 
-      <div class="modern-card">
-        <div class="card-header">
-          <h2 class="card-title">
-            <v-icon color="#667eea" class="mr-2">mdi-bank-outline</v-icon>
-            {{ $t('accounts.list_title') }}
+      <div class="cb-card">
+        <div class="cb-card__header">
+          <h2 class="cb-card__title">
+            <v-icon color="var(--cb-primary)" class="mr-2" size="18">mdi-bank-outline</v-icon>
+            {{ t('accounts.list_title') }}
           </h2>
         </div>
-        <div class="card-content">
-          <div v-if="loading" class="loading-state">
-            <v-progress-circular indeterminate color="#667eea" size="40" />
+        <div class="cb-card__body">
+          <div v-if="loading" class="cb-empty-state">
+            <v-icon size="40" color="var(--cb-ink-muted)">mdi-timer-sand</v-icon>
+            <p>Carregando contas...</p>
           </div>
           <div v-else-if="visibleAccounts.length" class="accounts-grid">
             <div v-for="account in visibleAccounts" :key="account.id" class="account-card">
@@ -80,11 +69,11 @@
                     <p class="account-card__subtitle">{{ account.provider }} • {{ account.accountType }}</p>
                   </div>
                 </div>
-                <v-chip size="small" variant="tonal" color="#667eea">{{ account.currency }}</v-chip>
+                <v-chip size="small" variant="tonal" color="var(--cb-accent)">{{ account.currency }}</v-chip>
               </div>
               <div class="account-card__balance">{{ formatCurrency(account.balance, account.currency) }}</div>
               <div v-if="findConnectionForAccount(account)" class="account-card__chips">
-                <v-chip size="x-small" variant="tonal" color="#667eea">Open Finance</v-chip>
+                <v-chip size="x-small" variant="tonal" color="var(--cb-accent)">Open Finance</v-chip>
                 <v-chip
                   v-if="findConnectionForAccount(account)?.payerDocumentType"
                   size="x-small"
@@ -106,13 +95,13 @@
               </p>
             </div>
           </div>
-          <div v-else class="empty-state">
-            <v-icon size="48" color="#667eea" class="mb-3">mdi-bank-off-outline</v-icon>
-            <p class="empty-message">{{ $t('accounts.empty') }}</p>
+          <div v-else class="cb-empty-state">
+            <v-icon size="48" color="var(--cb-ink-muted)">mdi-bank-off-outline</v-icon>
+            <p>{{ t('accounts.empty') }}</p>
           </div>
         </div>
       </div>
-    </v-container>
+    </div>
   </div>
 </template>
 
@@ -126,8 +115,10 @@ import { bankLogoPath, genericBankLogo } from '@/data/openFinanceInstitutions'
 import type { AccountView } from '@/types/financialRead'
 import type { OpenFinanceConnection } from '@/types/openFinance'
 import { useUserStore } from '@/plugins/userStore'
+import PageHeader from '@/components/PageHeader.vue'
+import AlertStrip from '@/components/AlertStrip.vue'
 
-const { locale } = useI18n()
+const { t, locale } = useI18n()
 const router = useRouter()
 const userStore = useUserStore()
 
@@ -311,74 +302,16 @@ onMounted(fetchAccounts)
 </script>
 
 <style scoped>
-.accounts-page {
-  min-height: 100vh;
-  background: linear-gradient(135deg, rgba(245, 247, 250, 1) 0%, rgba(232, 234, 240, 1) 100%);
-  padding: 32px 0;
-}
-
-.v-theme--dark .accounts-page {
-  background: linear-gradient(135deg, rgba(30, 30, 30, 1) 0%, rgba(20, 20, 20, 1) 100%);
-}
-
-.modern-container {
-  max-width: 1400px;
-  padding-left: 16px;
-  padding-right: 16px;
-}
-
-.page-header {
-  margin-bottom: 32px;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.conflict-alert {
-  max-width: 420px;
-}
-
-.page-title {
-  font-size: 2.2rem;
-  font-weight: 700;
-  margin: 0 0 8px;
-  color: #1a1a1a;
-}
-
-.v-theme--dark .page-title {
-  color: #ffffff;
-}
-
-.page-subtitle {
-  margin: 0;
-  color: #666;
-  font-size: 1rem;
-}
-
-.v-theme--dark .page-subtitle {
-  color: #b0b0b0;
-}
-
-.modern-card {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  overflow: hidden;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.optout-story-card {
-  margin-top: 0;
+/* Opt-out info card spacing */
+.accounts-optout-card {
+  margin-bottom: 20px;
 }
 
 .story-text {
   margin: 0 0 10px;
-  color: #4b5563;
-}
-
-.v-theme--dark .story-text {
-  color: #cbd5e1;
+  color: var(--cb-ink-secondary);
+  font-size: 0.9rem;
+  line-height: 1.55;
 }
 
 .story-actions {
@@ -388,50 +321,7 @@ onMounted(fetchAccounts)
   margin-top: 12px;
 }
 
-.v-theme--dark .modern-card {
-  background: #2a2a2a;
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-}
-
-.card-header {
-  padding: 20px 24px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-  background: rgba(102, 126, 234, 0.03);
-}
-
-.v-theme--dark .card-header {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(102, 126, 234, 0.08);
-}
-
-.card-title {
-  font-size: 1.3rem;
-  font-weight: 600;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  color: #1a1a1a;
-}
-
-.v-theme--dark .card-title {
-  color: #ffffff;
-}
-
-.card-content {
-  padding: 24px;
-}
-
-.loading-state,
-.empty-state {
-  min-height: 180px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-}
-
+/* Account grid */
 .accounts-grid {
   display: grid;
   gap: 16px;
@@ -439,15 +329,10 @@ onMounted(fetchAccounts)
 }
 
 .account-card {
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 14px;
+  border: 1px solid var(--cb-border-card);
+  border-radius: var(--cb-radius-card);
   padding: 18px;
-  background: rgba(102, 126, 234, 0.04);
-}
-
-.v-theme--dark .account-card {
-  border-color: rgba(255, 255, 255, 0.08);
-  background: rgba(102, 126, 234, 0.08);
+  background: var(--cb-surface-soft);
 }
 
 .account-card__header {
@@ -472,7 +357,7 @@ onMounted(fetchAccounts)
   height: 44px;
   flex: 0 0 44px;
   border-radius: 8px;
-  background: #f1f5f9;
+  background: var(--cb-surface);
   overflow: hidden;
 }
 
@@ -486,27 +371,20 @@ onMounted(fetchAccounts)
   font-size: 1rem;
   font-weight: 600;
   margin: 0;
-  color: #1a1a1a;
-}
-
-.v-theme--dark .account-card__title {
-  color: #ffffff;
+  color: var(--cb-ink);
 }
 
 .account-card__subtitle {
   margin: 4px 0 0;
-  color: #666;
-  font-size: 0.9rem;
-}
-
-.v-theme--dark .account-card__subtitle {
-  color: #b0b0b0;
+  color: var(--cb-ink-muted);
+  font-size: 0.88rem;
 }
 
 .account-card__balance {
+  font-family: var(--cb-font-heading);
   font-size: 1.35rem;
   font-weight: 700;
-  color: #667eea;
+  color: var(--cb-primary);
 }
 
 .account-card__chips {
@@ -518,32 +396,8 @@ onMounted(fetchAccounts)
 
 .account-card__sharing-note {
   margin: 10px 0 0;
-  color: #64748b;
+  color: var(--cb-ink-secondary);
   font-size: 0.88rem;
   line-height: 1.45;
-}
-
-.v-theme--dark .account-card__sharing-note {
-  color: #cbd5e1;
-}
-
-.empty-message {
-  color: #666;
-  margin: 0;
-}
-
-.v-theme--dark .empty-message {
-  color: #b0b0b0;
-}
-
-@media (max-width: 720px) {
-  .page-header {
-    flex-direction: column;
-  }
-
-  .conflict-alert {
-    max-width: none;
-    width: 100%;
-  }
 }
 </style>

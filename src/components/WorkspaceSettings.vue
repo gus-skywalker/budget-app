@@ -3,9 +3,9 @@
     <template v-if="!currentWorkspaceId">
       <v-row dense>
         <v-col cols="12" md="7" lg="6">
-          <v-card class="modern-card">
-            <div class="card-header">
-              <h3 class="card-title">
+          <v-card class="cb-card">
+            <div class="cb-card__header">
+              <h3 class="cb-card__title">
                 <v-icon color="primary" class="mr-2">mdi-office-building-plus</v-icon>
                 {{ $t('workspaceSettings.create_new_workspace') }}
               </h3>
@@ -104,9 +104,9 @@
 
       <v-row dense>
         <v-col cols="12" md="6">
-          <v-card class="modern-card">
-            <div class="card-header">
-              <h3 class="card-title">
+          <v-card class="cb-card">
+            <div class="cb-card__header">
+              <h3 class="cb-card__title">
                 <v-icon color="primary" class="mr-2">mdi-office-building-cog</v-icon>
                 {{ $t('workspaceSettings.workspace_info') }}
               </h3>
@@ -152,9 +152,9 @@
             </v-card-text>
           </v-card>
 
-          <v-card v-if="canManageWorkspace" class="modern-card mt-6">
-            <div class="card-header">
-              <h3 class="card-title">
+          <v-card v-if="canManageWorkspace" class="cb-card mt-6">
+            <div class="cb-card__header">
+              <h3 class="cb-card__title">
                 <v-icon color="primary" class="mr-2">mdi-account-plus</v-icon>
                 {{ $t('workspaceSettings.invite_members') }}
               </h3>
@@ -245,9 +245,9 @@
         </v-col>
 
         <v-col cols="12" md="6">
-          <v-card class="modern-card">
-            <div class="card-header">
-              <h3 class="card-title">
+          <v-card class="cb-card">
+            <div class="cb-card__header">
+              <h3 class="cb-card__title">
                 <v-icon color="primary" class="mr-2">mdi-account-check</v-icon>
                 {{ $t('workspaceSettings.your_membership') }}
               </h3>
@@ -296,9 +296,9 @@
             </v-card-text>
           </v-card>
 
-          <v-card class="modern-card">
-            <div class="card-header">
-              <h3 class="card-title">
+          <v-card class="cb-card">
+            <div class="cb-card__header">
+              <h3 class="cb-card__title">
                 <v-icon color="primary" class="mr-2">mdi-account-multiple</v-icon>
                 {{ $t('workspaceSettings.current_members') }}
               </h3>
@@ -376,9 +376,9 @@
             </v-card-text>
           </v-card>
 
-          <v-card v-if="canManageWorkspace" class="modern-card mt-6 danger-card">
-            <div class="card-header">
-              <h3 class="card-title danger-title">
+          <v-card v-if="canManageWorkspace" class="cb-card mt-6 danger-card">
+            <div class="cb-card__header">
+              <h3 class="cb-card__title danger-title">
                 <v-icon color="error" class="mr-2">mdi-alert</v-icon>
                 {{ $t('workspaceSettings.danger_zone') }}
               </h3>
@@ -1085,23 +1085,8 @@ onUnmounted(() => {
   width: 100%;
 }
 
-.modern-card {
-  border-radius: 16px;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
 
-.card-header {
-  padding: 20px 24px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-}
 
-.card-title {
-  display: flex;
-  align-items: center;
-  font-weight: 600;
-  margin: 0;
-}
 
 .card-description {
   margin: 8px 0 0;

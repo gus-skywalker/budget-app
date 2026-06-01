@@ -1,27 +1,23 @@
 <template>
-  <div class="planning-page">
-    <v-container class="modern-container scenario-wizard">
-      <div class="page-header">
-        <div>
-          <h1 class="page-title">{{ t('planning.scenarios.title') }}</h1>
-          <p class="page-subtitle">{{ t('planning.scenarios.subtitle') }}</p>
-        </div>
-        <div class="page-header__actions">
+  <div class="cb-page">
+    <div class="cb-container scenario-wizard">
+      <page-header :title="t('planning.scenarios.title')" :meta="t('planning.scenarios.subtitle')">
+        <template #actions>
           <v-btn
             v-if="cameFromHub"
             variant="text"
-            color="#667eea"
+            color="var(--cb-primary)"
             @click="router.push({ name: 'planning-scenarios' })"
           >
             <v-icon start>mdi-arrow-left</v-icon>
             {{ t('contentExperience.planning.scenarioBuilder.backToList') }}
           </v-btn>
-          <v-btn variant="tonal" color="#667eea" @click="startNewScenario()">
+          <v-btn variant="tonal" color="var(--cb-primary)" @click="startNewScenario()">
             <v-icon start>mdi-file-plus-outline</v-icon>
             {{ t('planning.scenarios.new_scenario') }}
           </v-btn>
-        </div>
-      </div>
+        </template>
+      </page-header>
 
       <div class="wizard-shell">
         <v-alert v-if="showImmutableNotice" type="info" variant="tonal" density="comfortable">
@@ -34,21 +30,21 @@
           }}</span>
           <v-progress-linear
             :model-value="(step / 4) * 100"
-            color="#667eea"
+            color="var(--cb-primary)"
             height="8"
             rounded
           ></v-progress-linear>
         </div>
 
         <div v-if="isBudgetLoading" class="empty-results">
-          <v-icon color="#94a3b8" size="28">mdi-timer-sand</v-icon>
+          <v-icon color="var(--cb-ink-muted)" size="28">mdi-timer-sand</v-icon>
           <p>{{ t('planning.scenarios.loading_budget_baseline') }}</p>
         </div>
 
         <div v-else-if="!activeBudget" class="empty-results">
-          <v-icon color="#94a3b8" size="28">mdi-wallet-plus-outline</v-icon>
+          <v-icon color="var(--cb-ink-muted)" size="28">mdi-wallet-plus-outline</v-icon>
           <p>{{ t('planning.scenarios.empty_no_budget_title') }}</p>
-          <v-btn color="#667eea" variant="tonal" @click="router.push({ name: 'planning-budget' })">
+          <v-btn color="var(--cb-primary)" variant="tonal" @click="router.push({ name: 'planning-budget' })">
             <v-icon start>mdi-wallet-outline</v-icon>
             {{ t('planning.scenarios.empty_no_budget_cta') }}
           </v-btn>
@@ -89,7 +85,7 @@
                 @click="selectTemplate(template.key)"
               >
                 <div class="template-card__header">
-                  <v-icon color="#667eea">{{ template.icon }}</v-icon>
+                  <v-icon color="var(--cb-primary)">{{ template.icon }}</v-icon>
                   <span>{{ template.title }}</span>
                 </div>
                 <p>{{ template.description }}</p>
@@ -139,7 +135,7 @@
               <div>
                 <v-btn
                   variant="tonal"
-                  color="#667eea"
+                  color="var(--cb-primary)"
                   @click="addAdjustment"
                   class="add-change-btn"
                 >
@@ -185,7 +181,7 @@
             </div>
 
             <v-btn
-              color="#667eea"
+              color="var(--cb-primary)"
               size="large"
               :loading="isSimulating"
               :disabled="isSimulating || !canSimulate"
@@ -206,7 +202,7 @@
               {{ t('contentExperience.planning.scenarioBuilder.back') }}
             </v-btn>
             <v-btn
-              color="#667eea"
+              color="var(--cb-primary)"
               variant="tonal"
               :disabled="step === 4 || isSimulating"
               @click="step = Math.min(4, step + 1)"
@@ -219,7 +215,7 @@
           <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
         </template>
       </div>
-    </v-container>
+    </div>
   </div>
 </template>
 
@@ -227,6 +223,8 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
+import PageHeader from '@/components/PageHeader.vue'
+import AlertStrip from '@/components/AlertStrip.vue'
 import BudgetService, { type Budget } from '@/services/BudgetService'
 import ScenarioService from '@/services/ScenarioService'
 import {
@@ -499,25 +497,10 @@ watch(
   max-width: 1080px;
 }
 
-.page-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  min-width: 0;
-}
-
-.page-header__actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
 .wizard-shell {
-  background: #fff;
+  background: var(--cb-surface);
   border-radius: 16px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid var(--cb-border-card);
   padding: 24px;
   display: flex;
   flex-direction: column;
@@ -525,10 +508,16 @@ watch(
   min-width: 0;
 }
 
+.wizard-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .wizard-step {
   font-size: 0.84rem;
   font-weight: 700;
-  color: #475569;
+  color: var(--cb-ink-secondary);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -549,7 +538,7 @@ watch(
 
 .metric-card,
 .review-box > div {
-  border: 1px solid rgba(15, 23, 42, 0.1);
+  border: 1px solid var(--cb-border-card);
   border-radius: 12px;
   padding: 14px;
   display: flex;
@@ -559,7 +548,7 @@ watch(
 
 .metric-card span,
 .review-box span {
-  color: #64748b;
+  color: var(--cb-ink-muted);
   font-size: 0.86rem;
 }
 
@@ -576,10 +565,10 @@ watch(
 }
 
 .template-card {
-  border: 1px solid rgba(102, 126, 234, 0.2);
+  border: 1px solid var(--cb-border-card);
   border-radius: 12px;
   text-align: left;
-  background: #fff;
+  background: var(--cb-surface);
   padding: 14px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -589,8 +578,8 @@ watch(
 
 .template-card:hover,
 .template-card--active {
-  border-color: #667eea;
-  background: rgba(102, 126, 234, 0.08);
+  border-color: var(--cb-primary);
+  background: color-mix(in srgb, var(--cb-primary) 8%, transparent);
 }
 
 .template-card__header {
@@ -638,63 +627,15 @@ watch(
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  color: #64748b;
+  color: var(--cb-ink-muted);
   padding: 40px 16px;
   text-align: center;
 }
 
-.positive-value {
-  color: #0f766e;
-}
-
-.negative-value {
-  color: #b91c1c;
-}
-
-.v-theme--dark .wizard-shell {
-  background: rgba(17, 24, 39, 0.9);
-  border-color: rgba(148, 163, 184, 0.16);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.24);
-}
-
-.v-theme--dark .wizard-step,
-.v-theme--dark .impact-estimate,
-.v-theme--dark .empty-results,
-.v-theme--dark .metric-card span,
-.v-theme--dark .review-box span {
-  color: #cbd5e1;
-}
-
-.v-theme--dark .metric-card,
-.v-theme--dark .review-box > div,
-.v-theme--dark .adjustment-card {
-  background: rgba(30, 41, 59, 0.76);
-  border-color: rgba(148, 163, 184, 0.18);
-  color: #f8fafc;
-}
-
-.v-theme--dark .template-card {
-  background: rgba(30, 41, 59, 0.78);
-  border-color: rgba(129, 140, 248, 0.24);
-  color: #f8fafc;
-}
-
-.v-theme--dark .template-card:hover,
-.v-theme--dark .template-card--active {
-  background: rgba(99, 102, 241, 0.2);
-  border-color: rgba(129, 140, 248, 0.4);
-}
+.positive-value { color: var(--cb-positive); }
+.negative-value { color: var(--cb-risk); }
 
 @media (max-width: 960px) {
-  .page-header {
-    flex-direction: column;
-  }
-
-  .page-header__actions {
-    width: 100%;
-    justify-content: flex-start;
-  }
-
   .wizard-inline-actions.new-layout {
     gap: 16px;
   }
@@ -721,14 +662,12 @@ watch(
     grid-template-columns: 1fr;
   }
 
-  .page-header__actions,
   .wizard-inline-actions.new-layout,
   .wizard-footer {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .page-header__actions :deep(.v-btn),
   .wizard-inline-actions.new-layout :deep(.v-btn),
   .wizard-footer :deep(.v-btn) {
     width: 100%;

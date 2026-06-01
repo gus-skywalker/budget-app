@@ -1,599 +1,384 @@
 <template>
-  <div class="budget-container">
-    <v-container class="modern-container">
-      <!-- Header -->
-      <div class="budget-header">
-        <h1 class="page-title">{{ $t('sidebar.transactions') }}</h1>
-        <p class="page-subtitle">{{ $t('transactions.subtitle') }}</p>
+  <div class="cb-page">
+    <div class="cb-container">
+
+      <!-- Page Header with Summary Strip -->
+      <page-header
+        :title="$t('sidebar.transactions')"
+        :period="activeMonthLabel"
+        :summary-items="transactionSummaryItems"
+      >
+        <template #actions>
+          <v-btn
+            size="small"
+            variant="tonal"
+            color="var(--cb-ink-secondary)"
+            style="text-transform:none;font-weight:600;letter-spacing:0"
+            @click="openFormDrawer('income')"
+          >
+            <v-icon start size="14">mdi-trending-up</v-icon>
+            {{ $t('income.save') }}
+          </v-btn>
+          <v-btn
+            size="small"
+            class="cb-btn-primary"
+            @click="openFormDrawer('expense')"
+          >
+            <v-icon start size="14">mdi-plus</v-icon>
+            {{ $t('transactions.add_expense') || $t('expense.save') }}
+          </v-btn>
+        </template>
+      </page-header>
+
+      <!-- Alert: Open Finance conflicts -->
+      <alert-strip
+        v-if="openFinanceConflicts.length > 0"
+        variant="warning"
+        :title="$t('overview.open_finance_conflicts', { count: openFinanceConflicts.length })"
+      >
+        <template #actions>
+          <v-btn
+            size="x-small"
+            variant="text"
+            color="var(--cb-warning)"
+            style="text-transform:none"
+            @click="activeTab = 'expense'; expenseListFilter = 'conflicts'"
+          >
+            {{ $t('common.resolve') || 'Resolver' }}
+          </v-btn>
+        </template>
+      </alert-strip>
+
+      <!-- Filter Bar: Tabs + Month Nav + Filter Chips -->
+      <div class="cb-filter-bar">
+        <div class="cb-filter-chips">
+          <!-- Tab: Despesas -->
+          <button
+            class="cb-chip"
+            :class="{ 'cb-chip--active': activeTab === 'expense' }"
+            @click="activeTab = 'expense'"
+          >
+            <v-icon size="12" start>mdi-trending-down</v-icon>
+            {{ $t('expense.title') }}
+          </button>
+          <!-- Tab: Receitas -->
+          <button
+            class="cb-chip"
+            :class="{ 'cb-chip--active': activeTab === 'income' }"
+            @click="activeTab = 'income'"
+          >
+            <v-icon size="12" start>mdi-trending-up</v-icon>
+            {{ $t('income.title') }}
+          </button>
+
+          <div style="width:1px;height:20px;background:rgba(23,32,51,.12);margin:0 4px;align-self:center"></div>
+
+          <!-- Expense filters -->
+          <template v-if="activeTab === 'expense'">
+            <button class="cb-chip" :class="{ 'cb-chip--active': expenseListFilter === 'all' }" @click="expenseListFilter = 'all'">{{ $t('transactionVisibility.filters.all') }}</button>
+            <button class="cb-chip" :class="{ 'cb-chip--active': expenseListFilter === 'workspace' }" @click="expenseListFilter = 'workspace'">{{ $t('transactionVisibility.filters.workspace') }}</button>
+            <button class="cb-chip" :class="{ 'cb-chip--active': expenseListFilter === 'private' }" @click="expenseListFilter = 'private'">{{ $t('transactionVisibility.filters.private') }}</button>
+            <button class="cb-chip" :class="{ 'cb-chip--active': expenseListFilter === 'open-finance' }" @click="expenseListFilter = 'open-finance'">{{ $t('transactions.filters.open_finance') }}</button>
+            <button class="cb-chip" :class="{ 'cb-chip--active': expenseListFilter === 'uncategorized' }" @click="expenseListFilter = 'uncategorized'">{{ $t('expense.uncategorized_only') }}</button>
+            <button
+              v-if="openFinanceConflicts.length > 0"
+              class="cb-chip cb-chip--warning"
+              :class="{ 'cb-chip--active': expenseListFilter === 'conflicts' }"
+              @click="expenseListFilter = 'conflicts'"
+            >
+              {{ $t('transactions.filters.conflicts') }} ({{ openFinanceConflicts.length }})
+            </button>
+          </template>
+
+          <!-- Income filters -->
+          <template v-else>
+            <button class="cb-chip" :class="{ 'cb-chip--active': incomeListFilter === 'all' }" @click="incomeListFilter = 'all'">{{ $t('transactionVisibility.filters.all') }}</button>
+            <button class="cb-chip" :class="{ 'cb-chip--active': incomeListFilter === 'workspace' }" @click="incomeListFilter = 'workspace'">{{ $t('transactionVisibility.filters.workspace') }}</button>
+            <button class="cb-chip" :class="{ 'cb-chip--active': incomeListFilter === 'private' }" @click="incomeListFilter = 'private'">{{ $t('transactionVisibility.filters.private') }}</button>
+            <button class="cb-chip" :class="{ 'cb-chip--active': incomeListFilter === 'open-finance' }" @click="incomeListFilter = 'open-finance'">{{ $t('transactions.filters.open_finance') }}</button>
+            <button
+              v-if="openFinanceConflicts.length > 0"
+              class="cb-chip cb-chip--warning"
+              :class="{ 'cb-chip--active': incomeListFilter === 'conflicts' }"
+              @click="incomeListFilter = 'conflicts'"
+            >
+              {{ $t('transactions.filters.conflicts') }} ({{ openFinanceConflicts.length }})
+            </button>
+          </template>
+        </div>
+
+        <!-- Month Nav -->
+        <div class="cb-month-nav">
+          <v-btn icon size="x-small" variant="text" @click="goToPrevMonth">
+            <v-icon size="16">mdi-chevron-left</v-icon>
+          </v-btn>
+          <span class="cb-month-nav__label">{{ activeMonthLabel }}</span>
+          <v-btn icon size="x-small" variant="text" @click="goToNextMonth">
+            <v-icon size="16">mdi-chevron-right</v-icon>
+          </v-btn>
+        </div>
       </div>
 
-      <v-row>
-        <!-- Coluna Esquerda: Formulários de Entrada -->
-      <v-col cols="12" md="6">
-        <!-- Seção de Entradas -->
-        <div class="modern-card income-section">
-          <div class="card-header">
-            <h2 class="card-title">
-              <v-icon color="#11998e" class="mr-2">mdi-trending-up</v-icon>
-              {{ $t('income.title') }}
-            </h2>
+      <!-- Expense Drill-Down Banner -->
+      <div
+        v-if="hasActiveExpenseDrillDown && activeTab === 'expense'"
+        class="cb-alert-strip cb-alert-strip--info"
+        style="margin-bottom:12px"
+      >
+        <div class="cb-alert-strip__icon">
+          <v-icon size="16" color="var(--cb-accent)">mdi-tune-vertical</v-icon>
+        </div>
+        <div class="cb-alert-strip__body">
+          <p class="cb-alert-strip__desc">
+            {{ $t('transactions.applied_filter') }}:
+            <strong v-if="activeExpenseCategoryName">{{ activeExpenseCategoryName }}</strong>
+            <strong v-if="activeExpenseCategoryName && activeExpenseAccountName"> · </strong>
+            <strong v-if="activeExpenseAccountName">{{ activeExpenseAccountName }}</strong>
+            <strong v-if="(activeExpenseCategoryName || activeExpenseAccountName) && activeExpenseFilterLabel"> · </strong>
+            <strong v-if="activeExpenseFilterLabel">{{ activeExpenseFilterLabel }}</strong>
+          </p>
+        </div>
+        <div class="cb-alert-strip__actions">
+          <v-btn size="x-small" variant="text" @click="clearExpenseDrillDown">{{ $t('common.clear') }}</v-btn>
+        </div>
+      </div>
+
+      <!-- AI Batch Queue (expenses only, when uncategorized exist) -->
+      <div v-if="activeTab === 'expense' && uncategorizedExpenses.length" class="cb-card" style="margin-bottom:12px">
+        <div class="cb-card__body" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <div>
+            <div class="cb-card__title" style="margin-bottom:2px">{{ $t('expense.ai_queue_title') }}</div>
+            <div style="font-size:.8rem;color:var(--cb-ink-muted)">
+              {{ $t('expense.ai_queue_summary', { total: uncategorizedExpenses.length, suggested: uncategorizedSuggestionCount }) }}
+            </div>
           </div>
-          <div class="card-content">
-            <v-row>
-              <v-col cols="12" sm="6">
-                <v-text-field 
-                  :label="$t('common.date')" 
-                  type="date" 
-                  v-model="income.date"
-                  variant="outlined"
-                  density="comfortable"
-                  color="#667eea"
-                  class="modern-input"
-                ></v-text-field>
-              </v-col>
-              <v-col cols="12" sm="6">
-                <v-text-field 
-                  :label="$t('common.amount')" 
-                  type="text"
-                  inputmode="decimal"
-                  :model-value="income.amount"
-                  @update:model-value="onIncomeAmountInput"
-                  variant="outlined"
-                  density="comfortable"
-                  color="#667eea"
-                  class="modern-input"
-                  :rules="[
-                    requiredAmount,
-                    validCurrencyFormat
-                  ]"
-                ></v-text-field>
-              </v-col>
-              <v-col cols="12">
-                <v-text-field 
-                  :label="$t('common.description')" 
-                  v-model="income.description"
-                  variant="outlined"
-                  density="comfortable"
-                  color="#667eea"
-                  class="modern-input"
-                ></v-text-field>
-              </v-col>
-              <v-col cols="12">
-                <v-select 
-                  :label="$t('common.payment_method')" 
-                  v-model="income.paymentMethod" 
-                  :items="paymentMethods"
-                  item-title="name" 
-                  item-value="id"
-                  variant="outlined"
-                  density="comfortable"
-                  color="#667eea"
-                  class="modern-input"
-                ></v-select>
-              </v-col>
-              <v-col cols="12">
-                <v-select
-                  :label="$t('transactionVisibility.label')"
-                  v-model="income.visibilityScope"
-                  :items="localizedTransactionVisibilityOptions"
-                  item-title="title"
-                  item-value="value"
-                  variant="outlined"
-                  density="comfortable"
-                  color="#667eea"
-                  class="modern-input"
-                  :hint="transactionVisibilityHint(income.visibilityScope)"
-                  persistent-hint
-                ></v-select>
-              </v-col>
-              <v-col cols="12">
-                <v-select
-                  :label="$t('common.account')"
-                  v-model="income.accountId"
-                  :items="financialAccounts"
-                  item-title="displayName"
-                  item-value="id"
-                  variant="outlined"
-                  density="comfortable"
-                  color="#667eea"
-                  class="modern-input"
-                  :disabled="isLoadingFinancialAccounts || !financialAccounts.length"
-                  :hint="financialAccountsHint"
-                  persistent-hint
-                ></v-select>
-              </v-col>
-            </v-row>
-            <v-btn 
-              color="primary" 
-              @click="saveIncome"
-              class="modern-btn gradient-btn mt-2"
-              size="large"
-              block
-            >
-              <v-icon left>mdi-content-save</v-icon>
-              {{ isEditingIncome ? $t('income.update') : $t('income.save') }}
+          <div style="display:flex;gap:8px">
+            <v-btn size="small" variant="tonal" color="var(--cb-accent)" :loading="isBatchSuggestingExpenseCategories" @click="suggestUncategorizedExpensesInBatch">
+              <v-icon start size="14">mdi-brain</v-icon>
+              {{ $t('expense.ai_queue_suggest') }}
             </v-btn>
-            <v-btn
-              v-if="isEditingIncome"
-              class="modern-btn mt-2"
-              variant="tonal"
-              color="grey"
-              size="large"
-              block
-              @click="cancelIncomeEdit"
-            >
-              <v-icon left>mdi-cancel</v-icon>
-              {{ $t('common.cancel_edit') }}
+            <v-btn size="small" color="var(--cb-accent)" :disabled="!canApplyBatchExpenseSuggestions" :loading="isApplyingBatchExpenseSuggestions" @click="applyBatchExpenseSuggestions">
+              <v-icon start size="14">mdi-check-decagram</v-icon>
+              {{ $t('expense.ai_queue_apply') }}
             </v-btn>
           </div>
         </div>
+      </div>
 
-        <!-- Lista de Entradas Mensais -->
-        <div class="modern-card income-list-section">
-          <div class="card-header">
-            <h2 class="card-title">
-              <v-icon color="#11998e" class="mr-2">mdi-format-list-bulleted</v-icon>
-              {{ $t('income.monthly_title') }}
-            </h2>
+      <!-- Transaction List Card -->
+      <div class="cb-card">
+
+        <!-- EXPENSE LIST -->
+        <template v-if="activeTab === 'expense'">
+          <v-list v-if="!isLoadingExpenses && filteredMonthlyExpenses.length" class="pa-0">
+            <expense-item
+              v-for="(item, index) in filteredMonthlyExpenses"
+              :key="index"
+              :expense="item"
+              :alert-settings="alertSettings"
+              :resolving-action="resolvingConflictId === item.reconciliationConflictId ? resolvingConflictAction : null"
+              :ai-suggesting="aiSuggestingExpenseId === item.id"
+              :has-suggestion-ready="Boolean(getStoredExpenseSuggestion(item.id))"
+              :suggestion-details="getExpenseSuggestionDetails(item)"
+              :is-applying-suggestion="applyingExpenseSuggestionId === item.id"
+              @attachFiles="handleAttachFiles"
+              @removeAttachment="handleRemoveAttachment"
+              @downloadAttachment="handleDownloadAttachment"
+              @sendReminder="handleSendReminder"
+              @shareExpense="handleShareExpense"
+              @agreementCreated="handleSharedAgreementCreated"
+              @agreementUpdated="handleSharedAgreementUpdated"
+              @agreementError="handleSharedAgreementError"
+              @resolveConflict="handleResolveExpenseConflict"
+              @suggestCategory="handleSuggestExpenseCategoryInline"
+              @applySuggestion="applyStoredExpenseSuggestionInline"
+              @openComments="openTransactionComments"
+              @deleteExpense="deleteExpense"
+              @togglePlanningExclusion="toggleExpensePlanningExclusion"
+              @select="startEditingExpense"
+            />
+          </v-list>
+          <div v-else-if="!isLoadingExpenses" style="padding:40px 24px;text-align:center">
+            <v-icon size="40" color="var(--cb-ink-disabled)" style="display:block;margin:0 auto 12px">mdi-receipt-text-outline</v-icon>
+            <p style="font-family:var(--cb-font-heading);font-size:.925rem;font-weight:600;color:var(--cb-ink);margin:0 0 8px">{{ expenseEmptyMessage }}</p>
+            <v-btn size="small" class="cb-btn-primary mt-2" @click="openFormDrawer('expense')">
+              <v-icon start size="14">mdi-plus</v-icon>{{ $t('expense.save') }}
+            </v-btn>
           </div>
-          <div class="card-content">
-            <v-row align="center" class="mb-4">
-              <v-col cols="8">
-                <v-select 
-                  :label="$t('common.select_month')" 
-                  v-model="selectedIncomeMonth"
-                  @update:model-value="resetIncomePaginationAndFetch" 
-                  :items="localizedMonths" 
-                  item-title="name"
-                  item-value="value"
-                  variant="outlined"
-                  density="comfortable"
-                  color="#667eea"
-                  class="modern-input"
-                ></v-select>
-              </v-col>
-              <v-col cols="4">
-                <v-select 
-                  :label="$t('common.year')" 
-                  v-model="selectedIncomeYear"
-                  @update:model-value="resetIncomePaginationAndFetch" 
-                  :items="years"
-                  variant="outlined"
-                  density="comfortable"
-                  color="#667eea"
-                  class="modern-input"
-                ></v-select>
-              </v-col>
-            </v-row>
-            <div v-if="hasActiveExpenseDrillDown" class="budget-drilldown-banner">
-              <div class="budget-drilldown-banner__content">
-                <v-icon color="#667eea">mdi-tune-vertical</v-icon>
-                <span>
-                  {{ $t('transactions.applied_filter') }}:
-                  <strong v-if="activeExpenseCategoryName">{{ activeExpenseCategoryName }}</strong>
-                  <strong v-if="activeExpenseCategoryName && activeExpenseAccountName"> • </strong>
-                  <strong v-if="activeExpenseAccountName">{{ activeExpenseAccountName }}</strong>
-                  <strong v-if="(activeExpenseCategoryName || activeExpenseAccountName) && activeExpenseFilterLabel"> • </strong>
-                  <strong v-if="activeExpenseFilterLabel">{{ activeExpenseFilterLabel }}</strong>
+          <div v-else style="padding:40px 24px;text-align:center">
+            <v-progress-circular indeterminate color="var(--cb-primary)" size="32" />
+          </div>
+          <div v-if="expensePagination.total > expensePagination.limit" class="cb-tx-pagination">
+            <span class="cb-tx-pagination__label">{{ expenseRangeLabel }}</span>
+            <div style="display:flex;gap:2px">
+              <v-btn icon size="x-small" variant="text" :disabled="!canGoToPreviousExpensePage" @click="goToPreviousExpensePage"><v-icon>mdi-chevron-left</v-icon></v-btn>
+              <v-btn icon size="x-small" variant="text" :disabled="!canGoToNextExpensePage" @click="goToNextExpensePage"><v-icon>mdi-chevron-right</v-icon></v-btn>
+            </div>
+          </div>
+        </template>
+
+        <!-- INCOME LIST -->
+        <template v-else>
+          <v-list v-if="!isLoadingIncomes && filteredMonthlyIncomes.length" class="pa-0">
+            <income-item
+              v-for="(item, index) in filteredMonthlyIncomes"
+              :key="index"
+              :income="item"
+              :resolving-action="resolvingConflictId === item.reconciliationConflictId ? resolvingConflictAction : null"
+              @toggle-recurring="toggleRecurring"
+              @deleteIncome="deleteIncome"
+              @togglePlanningExclusion="toggleIncomePlanningExclusion"
+              @resolveConflict="handleResolveIncomeConflict"
+              @openComments="openTransactionComments"
+              @select="startEditingIncome"
+            />
+          </v-list>
+          <div v-else-if="!isLoadingIncomes" style="padding:40px 24px;text-align:center">
+            <v-icon size="40" color="var(--cb-ink-disabled)" style="display:block;margin:0 auto 12px">mdi-cash-plus</v-icon>
+            <p style="font-family:var(--cb-font-heading);font-size:.925rem;font-weight:600;color:var(--cb-ink);margin:0 0 8px">{{ incomeEmptyMessage }}</p>
+            <v-btn size="small" class="cb-btn-primary mt-2" @click="openFormDrawer('income')">
+              <v-icon start size="14">mdi-plus</v-icon>{{ $t('income.save') }}
+            </v-btn>
+          </div>
+          <div v-else style="padding:40px 24px;text-align:center">
+            <v-progress-circular indeterminate color="var(--cb-primary)" size="32" />
+          </div>
+          <div v-if="incomePagination.total > incomePagination.limit" class="cb-tx-pagination">
+            <span class="cb-tx-pagination__label">{{ incomeRangeLabel }}</span>
+            <div style="display:flex;gap:2px">
+              <v-btn icon size="x-small" variant="text" :disabled="!canGoToPreviousIncomePage" @click="goToPreviousIncomePage"><v-icon>mdi-chevron-left</v-icon></v-btn>
+              <v-btn icon size="x-small" variant="text" :disabled="!canGoToNextIncomePage" @click="goToNextIncomePage"><v-icon>mdi-chevron-right</v-icon></v-btn>
+            </div>
+          </div>
+        </template>
+
+      </div><!-- end list card -->
+
+    </div><!-- end cb-container -->
+
+    <!-- FORM DRAWER (right side slide-over) -->
+    <v-navigation-drawer
+      v-model="showFormDrawer"
+      location="right"
+      :width="400"
+      temporary
+    >
+      <div class="cb-drawer-header">
+        <h2 class="cb-drawer-title">
+          {{ formMode === 'income' ? $t('income.title') : $t('expense.title') }}
+          <span
+            v-if="(formMode === 'income' && isEditingIncome) || (formMode === 'expense' && isEditingExpense)"
+            style="font-weight:400;font-size:.82em;color:var(--cb-ink-muted);margin-left:6px"
+          >— editando</span>
+        </h2>
+        <v-btn icon size="small" variant="text" @click="closeFormDrawer">
+          <v-icon>mdi-close</v-icon>
+        </v-btn>
+      </div>
+      <div class="cb-drawer-body">
+
+        <!-- INCOME FORM -->
+        <template v-if="formMode === 'income'">
+          <v-row>
+            <v-col cols="12" sm="6">
+              <v-text-field :label="$t('common.date')" type="date" v-model="income.date" variant="outlined" density="comfortable" color="var(--cb-accent)" class="modern-input" />
+            </v-col>
+            <v-col cols="12" sm="6">
+              <v-text-field :label="$t('common.amount')" type="text" inputmode="decimal" :model-value="income.amount" @update:model-value="onIncomeAmountInput" variant="outlined" density="comfortable" color="var(--cb-accent)" class="modern-input" :rules="[requiredAmount, validCurrencyFormat]" />
+            </v-col>
+            <v-col cols="12">
+              <v-text-field :label="$t('common.description')" v-model="income.description" variant="outlined" density="comfortable" color="var(--cb-accent)" class="modern-input" />
+            </v-col>
+            <v-col cols="12">
+              <v-select :label="$t('common.payment_method')" v-model="income.paymentMethod" :items="paymentMethods" item-title="name" item-value="id" variant="outlined" density="comfortable" color="var(--cb-accent)" class="modern-input" />
+            </v-col>
+            <v-col cols="12">
+              <v-select :label="$t('transactionVisibility.label')" v-model="income.visibilityScope" :items="localizedTransactionVisibilityOptions" item-title="title" item-value="value" variant="outlined" density="comfortable" color="var(--cb-accent)" class="modern-input" :hint="transactionVisibilityHint(income.visibilityScope)" persistent-hint />
+            </v-col>
+            <v-col cols="12">
+              <v-select :label="$t('common.account')" v-model="income.accountId" :items="financialAccounts" item-title="displayName" item-value="id" variant="outlined" density="comfortable" color="var(--cb-accent)" class="modern-input" :disabled="isLoadingFinancialAccounts || !financialAccounts.length" :hint="financialAccountsHint" persistent-hint />
+            </v-col>
+          </v-row>
+          <v-btn color="var(--cb-accent)" @click="saveIncome" size="large" block style="text-transform:none;font-weight:600;letter-spacing:0;margin-top:8px">
+            <v-icon start size="16">mdi-content-save</v-icon>
+            {{ isEditingIncome ? $t('income.update') : $t('income.save') }}
+          </v-btn>
+          <v-btn v-if="isEditingIncome" variant="tonal" color="grey" size="large" block style="text-transform:none;margin-top:8px" @click="cancelIncomeEdit">
+            <v-icon start size="16">mdi-cancel</v-icon>{{ $t('common.cancel_edit') }}
+          </v-btn>
+        </template>
+
+        <!-- EXPENSE FORM -->
+        <template v-else>
+          <v-row>
+            <v-col cols="12" sm="6">
+              <v-text-field :label="$t('common.date')" type="date" v-model="expense.date" variant="outlined" density="comfortable" color="var(--cb-primary)" class="modern-input" />
+            </v-col>
+            <v-col cols="12" sm="6">
+              <v-text-field :label="$t('common.amount')" type="text" inputmode="decimal" :model-value="expense.amount" @update:model-value="onExpenseAmountInput" variant="outlined" density="comfortable" color="var(--cb-primary)" class="modern-input" :rules="[requiredAmount, validCurrencyFormat]" />
+            </v-col>
+            <v-col cols="12">
+              <v-text-field :label="$t('common.description')" v-model="expense.description" variant="outlined" density="comfortable" color="var(--cb-primary)" class="modern-input" />
+            </v-col>
+            <v-col cols="12" sm="6">
+              <v-select :label="$t('common.category')" v-model="expense.category" :items="categories" item-title="name" item-value="id" variant="outlined" density="comfortable" color="var(--cb-primary)" class="modern-input">
+                <template #item="{ item, props }">
+                  <v-list-item v-bind="props">
+                    <template #prepend><v-icon :icon="categoryIcons[item.raw.code]" class="mr-2" /></template>
+                  </v-list-item>
+                </template>
+                <template #selection="{ item, props }">
+                  <v-chip v-bind="props" class="ma-1" small><v-icon left :icon="categoryIcons[item.raw.code]" />{{ item.raw.name }}</v-chip>
+                </template>
+              </v-select>
+            </v-col>
+            <v-col cols="12" sm="6">
+              <v-select :label="$t('common.payment_method')" v-model="expense.paymentMethod" :items="paymentMethods" item-title="name" item-value="id" variant="outlined" density="comfortable" color="var(--cb-primary)" class="modern-input" />
+            </v-col>
+            <v-col cols="12">
+              <div class="ai-category-row">
+                <v-btn variant="tonal" color="var(--cb-accent)" :loading="isSuggestingExpenseCategory" :disabled="!canSuggestExpenseCategory" @click="suggestExpenseCategory" size="small">
+                  <v-icon start size="14">mdi-brain</v-icon>{{ $t('expense.ai_suggest_category') }}
+                </v-btn>
+                <span v-if="expenseCategorySuggestion" class="ai-category-row__meta">
+                  {{ expenseCategorySuggestionSourceLabel(expenseCategorySuggestion.source) }} · {{ Math.round((expenseCategorySuggestion.suggestedCategory?.confidence || 0) * 100) }}%
                 </span>
               </div>
-              <v-btn size="small" variant="text" @click="clearExpenseDrillDown">{{ $t('common.clear') }}</v-btn>
-            </div>
-            <div class="transaction-filter-row">
-              <v-chip-group v-model="incomeListFilter" mandatory selected-class="filter-chip-selected">
-                <v-chip size="small" value="all" variant="outlined">{{ $t('transactionVisibility.filters.all') }}</v-chip>
-                <v-chip size="small" value="workspace" variant="outlined">{{ $t('transactionVisibility.filters.workspace') }}</v-chip>
-                <v-chip size="small" value="private" variant="outlined">{{ $t('transactionVisibility.filters.private') }}</v-chip>
-                <v-chip size="small" value="open-finance" variant="outlined">{{ $t('transactions.filters.open_finance') }}</v-chip>
-                <v-chip size="small" value="conflicts" variant="outlined">{{ $t('transactions.filters.conflicts') }}</v-chip>
-              </v-chip-group>
-            </div>
-            <div class="list-wrapper">
-              <v-list v-if="!isLoadingIncomes && filteredMonthlyIncomes.length" class="modern-list">
-                <income-item 
-                  v-for="(income, index) in filteredMonthlyIncomes" 
-                  :key="index" 
-                  :income="income"
-                  :resolving-action="resolvingConflictId === income.reconciliationConflictId ? resolvingConflictAction : null"
-                  @toggle-recurring="toggleRecurring" 
-                  @deleteIncome="deleteIncome"
-                  @togglePlanningExclusion="toggleIncomePlanningExclusion"
-                  @resolveConflict="handleResolveIncomeConflict"
-                  @openComments="openTransactionComments"
-                  @select="startEditingIncome"
-                ></income-item>
-              </v-list>
-              <div v-else-if="!isLoadingIncomes" class="empty-state">
-                <v-icon size="48" color="#667eea" class="mb-3">mdi-inbox</v-icon>
-                <p class="empty-message">{{ incomeEmptyMessage }}</p>
-              </div>
-              <div v-else class="loading-state">
-                <v-progress-circular indeterminate color="#667eea" size="48"></v-progress-circular>
-              </div>
-            </div>
-            <div v-if="incomePagination.total > incomePagination.limit" class="pagination-row">
-              <span class="pagination-label">{{ incomeRangeLabel }}</span>
-              <div class="pagination-actions">
-                <v-btn
-                  icon
-                  size="small"
-                  variant="text"
-                  :disabled="!canGoToPreviousIncomePage"
-                  @click="goToPreviousIncomePage"
-                >
-                  <v-icon>mdi-chevron-left</v-icon>
-                </v-btn>
-                <v-btn
-                  icon
-                  size="small"
-                  variant="text"
-                  :disabled="!canGoToNextIncomePage"
-                  @click="goToNextIncomePage"
-                >
-                  <v-icon>mdi-chevron-right</v-icon>
-                </v-btn>
-              </div>
-            </div>
-          </div>
-        </div>
-      </v-col>
-
-      <!-- Coluna Direita: Listas de Entrada e Débitos -->
-      <v-col cols="12" md="6">
-        <!-- Seção de Débitos -->
-        <div class="modern-card expense-section">
-          <div class="card-header">
-            <h2 class="card-title">
-              <v-icon color="#eb3349" class="mr-2">mdi-trending-down</v-icon>
-              {{ $t('expense.title') }}
-            </h2>
-          </div>
-          <div class="card-content">
-            <v-row>
-              <v-col cols="12" sm="6">
-                <v-text-field 
-                  :label="$t('common.date')" 
-                  type="date" 
-                  v-model="expense.date"
-                  variant="outlined"
-                  density="comfortable"
-                  color="#667eea"
-                  class="modern-input"
-                ></v-text-field>
-              </v-col>
-              <v-col cols="12" sm="6">
-                <v-text-field 
-                  :label="$t('common.amount')" 
-                  type="text"
-                  inputmode="decimal"
-                  :model-value="expense.amount"
-                  @update:model-value="onExpenseAmountInput"
-                  variant="outlined"
-                  density="comfortable"
-                  color="#667eea"
-                  class="modern-input"
-                  :rules="[
-                    requiredAmount,
-                    validCurrencyFormat
-                  ]"
-                ></v-text-field>
-              </v-col>
-              <v-col cols="12">
-                <v-text-field 
-                  :label="$t('common.description')" 
-                  v-model="expense.description"
-                  variant="outlined"
-                  density="comfortable"
-                  color="#667eea"
-                  class="modern-input"
-                ></v-text-field>
-              </v-col>
-              <v-col cols="12" sm="6">
-                <v-select 
-                  :label="$t('common.category')" 
-                  v-model="expense.category" 
-                  :items="categories"
-                  item-title="name" 
-                  item-value="id"
-                  variant="outlined"
-                  density="comfortable"
-                  color="#667eea"
-                  class="modern-input"
-                >
-                  <template #item="{ item, props }">
-                    <v-list-item v-bind="props">
-                      <template #prepend>
-                        <v-icon :icon="categoryIcons[item.raw.code]" class="mr-2"></v-icon>
-                      </template>
-                    </v-list-item>
-                  </template>
-                  <template #selection="{ item, props }">
-                    <v-chip v-bind="props" class="ma-1" small>
-                      <v-icon left :icon="categoryIcons[item.raw.code]"></v-icon>
-                      {{ item.raw.name }}
-                    </v-chip>
-                  </template>
-                </v-select>
-              </v-col>
-              <v-col cols="12" sm="6">
-                <v-select 
-                  :label="$t('common.payment_method')" 
-                  v-model="expense.paymentMethod" 
-                  :items="paymentMethods"
-                  item-title="name" 
-                  item-value="id"
-                  variant="outlined"
-                  density="comfortable"
-                  color="#667eea"
-                  class="modern-input"
-                ></v-select>
-              </v-col>
-              <v-col cols="12">
-                <div class="ai-category-row">
-                  <v-btn
-                    variant="tonal"
-                    color="#667eea"
-                    :loading="isSuggestingExpenseCategory"
-                    :disabled="!canSuggestExpenseCategory"
-                    @click="suggestExpenseCategory"
-                  >
-                    <v-icon start>mdi-brain</v-icon>
-                    {{ $t('expense.ai_suggest_category') }}
-                  </v-btn>
-                  <span v-if="expenseCategorySuggestion" class="ai-category-row__meta">
-                    {{ expenseCategorySuggestionSourceLabel(expenseCategorySuggestion.source) }}
-                    • {{ Math.round((expenseCategorySuggestion.suggestedCategory?.confidence || 0) * 100) }}%
-                  </span>
-                </div>
-                <v-alert
-                  v-if="expenseCategorySuggestion"
-                  type="info"
-                  variant="tonal"
-                  density="comfortable"
-                  class="mt-3"
-                >
-                  <div class="ai-category-suggestion">
-                    <div>
-                      <strong>{{ $t('expense.ai_suggested_category') }}:</strong>
-                      {{ expenseCategorySuggestion.suggestedCategory?.name }}
-                    </div>
-                    <div v-if="expenseCategoryReasoningLabel(expenseCategorySuggestion)" class="ai-category-suggestion__reasoning">
-                      {{ expenseCategoryReasoningLabel(expenseCategorySuggestion) }}
-                    </div>
-                    <div class="ai-category-suggestion__actions">
-                      <v-btn
-                        size="small"
-                        color="#667eea"
-                        variant="outlined"
-                        @click="applyExpenseCategorySuggestion"
-                      >
-                        {{ $t('expense.ai_apply_suggestion') }}
-                      </v-btn>
-                      <v-btn
-                        size="small"
-                        variant="text"
-                        @click="dismissExpenseCategorySuggestion"
-                      >
-                        {{ $t('common.close') }}
-                      </v-btn>
-                    </div>
-                  </div>
-                </v-alert>
-              </v-col>
-              <v-col cols="12" sm="6">
-                <v-select
-                  :label="$t('common.account')"
-                  v-model="expense.accountId"
-                  :items="financialAccounts"
-                  item-title="displayName"
-                  item-value="id"
-                  variant="outlined"
-                  density="comfortable"
-                  color="#667eea"
-                  class="modern-input"
-                  :disabled="isLoadingFinancialAccounts || !financialAccounts.length"
-                  :hint="financialAccountsHint"
-                  persistent-hint
-                ></v-select>
-              </v-col>
-              <v-col cols="12" sm="6">
-                <v-select 
-                  :label="$t('transactionVisibility.label')" 
-                  v-model="expense.visibilityScope" 
-                  :items="localizedTransactionVisibilityOptions"
-                  item-title="title" 
-                  item-value="value" 
-                  variant="outlined"
-                  density="comfortable"
-                  color="#667eea"
-                  class="modern-input"
-                  :hint="transactionVisibilityHint(expense.visibilityScope)"
-                  persistent-hint
-                ></v-select>
-              </v-col>
-            </v-row>
-            <v-btn 
-              color="primary" 
-              @click="saveExpense"
-              class="modern-btn gradient-btn mt-2"
-              size="large"
-              block
-            >
-              <v-icon left>mdi-content-save</v-icon>
-              {{ isEditingExpense ? $t('expense.update') : $t('expense.save') }}
-            </v-btn>
-            <v-btn
-              v-if="isEditingExpense"
-              class="modern-btn mt-2"
-              variant="tonal"
-              color="grey"
-              size="large"
-              block
-              @click="cancelExpenseEdit"
-            >
-              <v-icon left>mdi-cancel</v-icon>
-              {{ $t('common.cancel_edit') }}
-            </v-btn>
-          </div>
-        </div>
-
-        <!-- Lista de Débitos Mensais -->
-        <div class="modern-card expense-list-section">
-          <div class="card-header">
-            <h2 class="card-title">
-              <v-icon color="#eb3349" class="mr-2">mdi-format-list-bulleted</v-icon>
-              {{ $t('expense.monthly_title') }}
-            </h2>
-          </div>
-          <div class="card-content">
-            <v-row align="center" class="mb-4">
-              <v-col cols="8">
-                <v-select 
-                  :label="$t('common.select_month')" 
-                  v-model="selectedExpenseMonth"
-                  @update:model-value="resetExpensePaginationAndFetch" 
-                  :items="localizedMonths" 
-                  item-title="name"
-                  item-value="value"
-                  variant="outlined"
-                  density="comfortable"
-                  color="#667eea"
-                  class="modern-input"
-                ></v-select>
-              </v-col>
-              <v-col cols="4">
-                <v-select 
-                  :label="$t('common.year')" 
-                  v-model="selectedExpenseYear"
-                  @update:model-value="resetExpensePaginationAndFetch" 
-                  :items="years"
-                  variant="outlined"
-                  density="comfortable"
-                  color="#667eea"
-                  class="modern-input"
-                ></v-select>
-              </v-col>
-            </v-row>
-            <div class="transaction-filter-row">
-              <v-chip-group v-model="expenseListFilter" mandatory selected-class="filter-chip-selected">
-                <v-chip size="small" value="all" variant="outlined">{{ $t('transactionVisibility.filters.all') }}</v-chip>
-                <v-chip size="small" value="workspace" variant="outlined">{{ $t('transactionVisibility.filters.workspace') }}</v-chip>
-                <v-chip size="small" value="private" variant="outlined">{{ $t('transactionVisibility.filters.private') }}</v-chip>
-                <v-chip size="small" value="open-finance" variant="outlined">{{ $t('transactions.filters.open_finance') }}</v-chip>
-                <v-chip size="small" value="conflicts" variant="outlined">{{ $t('transactions.filters.conflicts') }}</v-chip>
-                <v-chip size="small" value="uncategorized" variant="outlined">{{ $t('expense.uncategorized_only') }}</v-chip>
-              </v-chip-group>
-            </div>
-            <div v-if="uncategorizedExpenses.length" class="ai-queue-card">
-              <div class="ai-queue-card__content">
-                <div>
-                  <div class="ai-queue-card__title">{{ $t('expense.ai_queue_title') }}</div>
-                  <div class="ai-queue-card__subtitle">
-                    {{ $t('expense.ai_queue_summary', { total: uncategorizedExpenses.length, suggested: uncategorizedSuggestionCount }) }}
+              <v-alert v-if="expenseCategorySuggestion" type="info" variant="tonal" density="comfortable" class="mt-3">
+                <div class="ai-category-suggestion">
+                  <div><strong>{{ $t('expense.ai_suggested_category') }}:</strong> {{ expenseCategorySuggestion.suggestedCategory?.name }}</div>
+                  <div v-if="expenseCategoryReasoningLabel(expenseCategorySuggestion)" class="ai-category-suggestion__reasoning">{{ expenseCategoryReasoningLabel(expenseCategorySuggestion) }}</div>
+                  <div class="ai-category-suggestion__actions">
+                    <v-btn size="small" color="var(--cb-accent)" variant="outlined" @click="applyExpenseCategorySuggestion">{{ $t('expense.ai_apply_suggestion') }}</v-btn>
+                    <v-btn size="small" variant="text" @click="dismissExpenseCategorySuggestion">{{ $t('common.close') }}</v-btn>
                   </div>
                 </div>
-                <div class="ai-queue-card__actions">
-                  <v-btn
-                    size="small"
-                    variant="tonal"
-                    color="#667eea"
-                    :loading="isBatchSuggestingExpenseCategories"
-                    @click="suggestUncategorizedExpensesInBatch"
-                  >
-                    <v-icon start>mdi-brain</v-icon>
-                    {{ $t('expense.ai_queue_suggest') }}
-                  </v-btn>
-                  <v-btn
-                    size="small"
-                    color="#667eea"
-                    :disabled="!canApplyBatchExpenseSuggestions"
-                    :loading="isApplyingBatchExpenseSuggestions"
-                    @click="applyBatchExpenseSuggestions"
-                  >
-                    <v-icon start>mdi-check-decagram</v-icon>
-                    {{ $t('expense.ai_queue_apply') }}
-                  </v-btn>
-                </div>
-              </div>
-            </div>
-            <div class="list-wrapper">
-              <v-list v-if="!isLoadingExpenses && filteredMonthlyExpenses.length" class="modern-list">
-                <expense-item 
-                  v-for="(expense, index) in filteredMonthlyExpenses" 
-                  :key="index" 
-                  :expense="expense"
-                  :alert-settings="alertSettings"
-                  :resolving-action="resolvingConflictId === expense.reconciliationConflictId ? resolvingConflictAction : null"
-                  :ai-suggesting="aiSuggestingExpenseId === expense.id"
-                  :has-suggestion-ready="Boolean(getStoredExpenseSuggestion(expense.id))"
-                  :suggestion-details="getExpenseSuggestionDetails(expense)"
-                  :is-applying-suggestion="applyingExpenseSuggestionId === expense.id"
-                  @attachFiles="handleAttachFiles" 
-                  @removeAttachment="handleRemoveAttachment"
-                  @downloadAttachment="handleDownloadAttachment"
-                  @sendReminder="handleSendReminder"
-                  @shareExpense="handleShareExpense"
-                  @agreementCreated="handleSharedAgreementCreated"
-                  @agreementUpdated="handleSharedAgreementUpdated"
-                  @agreementError="handleSharedAgreementError"
-                  @resolveConflict="handleResolveExpenseConflict"
-                  @suggestCategory="handleSuggestExpenseCategoryInline"
-                  @applySuggestion="applyStoredExpenseSuggestionInline"
-                  @openComments="openTransactionComments"
-                  @deleteExpense="deleteExpense"
-                  @togglePlanningExclusion="toggleExpensePlanningExclusion"
-                  @select="startEditingExpense"
-                ></expense-item>
-              </v-list>
-              <div v-else-if="!isLoadingExpenses" class="empty-state">
-                <v-icon size="48" color="#667eea" class="mb-3">mdi-inbox</v-icon>
-                <p class="empty-message">{{ expenseEmptyMessage }}</p>
-              </div>
-              <div v-else class="loading-state">
-                <v-progress-circular indeterminate color="#667eea" size="48"></v-progress-circular>
-              </div>
-            </div>
-            <div v-if="expensePagination.total > expensePagination.limit" class="pagination-row">
-              <span class="pagination-label">{{ expenseRangeLabel }}</span>
-              <div class="pagination-actions">
-                <v-btn
-                  icon
-                  size="small"
-                  variant="text"
-                  :disabled="!canGoToPreviousExpensePage"
-                  @click="goToPreviousExpensePage"
-                >
-                  <v-icon>mdi-chevron-left</v-icon>
-                </v-btn>
-                <v-btn
-                  icon
-                  size="small"
-                  variant="text"
-                  :disabled="!canGoToNextExpensePage"
-                  @click="goToNextExpensePage"
-                >
-                  <v-icon>mdi-chevron-right</v-icon>
-                </v-btn>
-              </div>
-            </div>
-          </div>
-        </div>
-      </v-col>
-    </v-row>
+              </v-alert>
+            </v-col>
+            <v-col cols="12" sm="6">
+              <v-select :label="$t('common.account')" v-model="expense.accountId" :items="financialAccounts" item-title="displayName" item-value="id" variant="outlined" density="comfortable" color="var(--cb-primary)" class="modern-input" :disabled="isLoadingFinancialAccounts || !financialAccounts.length" :hint="financialAccountsHint" persistent-hint />
+            </v-col>
+            <v-col cols="12" sm="6">
+              <v-select :label="$t('transactionVisibility.label')" v-model="expense.visibilityScope" :items="localizedTransactionVisibilityOptions" item-title="title" item-value="value" variant="outlined" density="comfortable" color="var(--cb-primary)" class="modern-input" :hint="transactionVisibilityHint(expense.visibilityScope)" persistent-hint />
+            </v-col>
+          </v-row>
+          <v-btn color="var(--cb-primary)" @click="saveExpense" size="large" block style="text-transform:none;font-weight:600;letter-spacing:0;margin-top:8px">
+            <v-icon start size="16">mdi-content-save</v-icon>
+            {{ isEditingExpense ? $t('expense.update') : $t('expense.save') }}
+          </v-btn>
+          <v-btn v-if="isEditingExpense" variant="tonal" color="grey" size="large" block style="text-transform:none;margin-top:8px" @click="cancelExpenseEdit">
+            <v-icon start size="16">mdi-cancel</v-icon>{{ $t('common.cancel_edit') }}
+          </v-btn>
+        </template>
+
+      </div>
+    </v-navigation-drawer>
 
     <!-- Snackbar -->
-    <v-snackbar 
-      v-model="snackbar.show" 
-      :color="snackbar.color" 
-      timeout="3000" 
-      top
-      class="modern-snackbar"
-    >
+    <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="3000" top class="modern-snackbar">
       {{ snackbar.text }}
       <template #actions>
-        <v-btn color="white" variant="text" @click="snackbar.show = false">
-          {{ $t('common.close') }}
-        </v-btn>
+        <v-btn color="white" variant="text" @click="snackbar.show = false">{{ $t('common.close') }}</v-btn>
       </template>
     </v-snackbar>
     <TransactionCommentsDialog
@@ -605,7 +390,6 @@
       @update:visible="handleCommentsDialogVisibility"
       @submit="submitTransactionComment"
     />
-    </v-container>
   </div>
 </template>
 
@@ -731,6 +515,8 @@ export default {
     IncomeItem,
     ExpenseItem,
     TransactionCommentsDialog,
+    PageHeader: () => import('@/components/PageHeader.vue'),
+    AlertStrip: () => import('@/components/AlertStrip.vue'),
   },
   data() {
     // const currentYear = new Date().getFullYear();
@@ -854,6 +640,10 @@ export default {
         comments: [],
       },
       alertSettings: null,
+      // --- drawer & tab state ---
+      showFormDrawer: false,
+      formMode: 'expense',
+      activeTab: 'expense',
     }
   },
   computed: {
@@ -1012,6 +802,33 @@ export default {
     canSuggestExpenseCategory() {
       return Boolean(String(this.expense.description || '').trim()) && parseCurrencyToNumber(this.expense.amount) !== null
     },
+    // --- summary strip ---
+    monthlyIncomeTotal() {
+      return this.monthlyIncomes.reduce((sum, t) => sum + (Number(t.amount) || 0), 0)
+    },
+    monthlyExpenseTotal() {
+      return this.monthlyExpenses.reduce((sum, t) => sum + (Number(t.amount) || 0), 0)
+    },
+    transactionSummaryItems() {
+      const locale = this.$i18n?.locale || 'pt-BR'
+      const currency = 'BRL'
+      const fmt = (v) => Number(v || 0).toLocaleString(locale === 'pt' ? 'pt-BR' : locale, { style: 'currency', currency })
+      const net = this.monthlyIncomeTotal - this.monthlyExpenseTotal
+      return [
+        { label: this.$t('income.title'), value: fmt(this.monthlyIncomeTotal), valueClass: 'cb-summary-item__value--positive' },
+        { divider: true },
+        { label: this.$t('expense.title'), value: fmt(this.monthlyExpenseTotal), valueClass: 'cb-summary-item__value--negative' },
+        { divider: true },
+        { label: this.$t('overview.snapshot_net'), value: fmt(net), valueClass: net >= 0 ? 'cb-summary-item__value--positive' : 'cb-summary-item__value--negative' },
+      ]
+    },
+    activeMonthLabel() {
+      const month = this.activeTab === 'income' ? this.selectedIncomeMonth : this.selectedExpenseMonth
+      const year  = this.activeTab === 'income' ? this.selectedIncomeYear  : this.selectedExpenseYear
+      const months = this.localizedMonths
+      const found = months.find((m) => m.value === month)
+      return found ? `${found.name} ${year}` : `${month}/${year}`
+    },
   },
   mounted() {
     this.applyBudgetQueryFilters();
@@ -1045,6 +862,37 @@ export default {
     },
   },
   methods: {
+    // --- drawer helpers ---
+    openFormDrawer(mode) {
+      this.formMode = mode || 'expense'
+      this.showFormDrawer = true
+    },
+    closeFormDrawer() {
+      this.showFormDrawer = false
+    },
+    // --- month navigation ---
+    goToPrevMonth() {
+      if (this.activeTab === 'income') {
+        if (this.selectedIncomeMonth === 1) { this.selectedIncomeMonth = 12; this.selectedIncomeYear -= 1 }
+        else { this.selectedIncomeMonth -= 1 }
+        this.resetIncomePaginationAndFetch()
+      } else {
+        if (this.selectedExpenseMonth === 1) { this.selectedExpenseMonth = 12; this.selectedExpenseYear -= 1 }
+        else { this.selectedExpenseMonth -= 1 }
+        this.resetExpensePaginationAndFetch()
+      }
+    },
+    goToNextMonth() {
+      if (this.activeTab === 'income') {
+        if (this.selectedIncomeMonth === 12) { this.selectedIncomeMonth = 1; this.selectedIncomeYear += 1 }
+        else { this.selectedIncomeMonth += 1 }
+        this.resetIncomePaginationAndFetch()
+      } else {
+        if (this.selectedExpenseMonth === 12) { this.selectedExpenseMonth = 1; this.selectedExpenseYear += 1 }
+        else { this.selectedExpenseMonth += 1 }
+        this.resetExpensePaginationAndFetch()
+      }
+    },
     applyTransactionFilter(items, filter) {
       if (!Array.isArray(items)) {
         return []
@@ -2116,6 +1964,7 @@ export default {
       }
       this.isEditingIncome = false
       this.editingIncomeId = null
+      this.showFormDrawer = false
     },
     resetExpenseForm() {
       this.expense = {
@@ -2133,6 +1982,7 @@ export default {
       this.editingExpenseId = null
       this.editingExpenseOriginal = null
       this.expenseCategorySuggestion = null
+      this.showFormDrawer = false
     },
     toggleRecurring({ income, months }) {
       IncomeService.toggleRecurring(income.id, months)
@@ -2279,6 +2129,8 @@ export default {
         })
     },
     startEditingIncome(income) {
+      this.formMode = 'income'
+      this.showFormDrawer = true
       this.isEditingIncome = true
       this.editingIncomeId = income.id
       this.income = {
@@ -2297,6 +2149,8 @@ export default {
       this.resetIncomeForm()
     },
     startEditingExpense(expense) {
+      this.formMode = 'expense'
+      this.showFormDrawer = true
       try {
         this.editingExpenseOriginal = JSON.parse(JSON.stringify(expense))
       } catch (parseError) {
@@ -2704,139 +2558,7 @@ export default {
 </script>
 
 <style scoped>
-.budget-container {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e8eaf0 100%);
-  padding: 32px 0;
-}
-
-.v-theme--dark .budget-container {
-  background: linear-gradient(135deg, #1e1e1e 0%, #141414 100%);
-}
-
-.modern-container {
-  max-width: 1400px;
-  padding-left: 16px;
-  padding-right: 16px;
-}
-
-@media (min-width: 600px) {
-  .modern-container {
-    padding-left: 24px;
-    padding-right: 24px;
-  }
-}
-
-/* Header */
-.budget-header {
-  margin-bottom: 32px;
-  padding: 0 8px;
-}
-
-.page-title {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: #1a1a1a;
-  margin-bottom: 8px;
-}
-
-.v-theme--dark .page-title {
-  color: #ffffff;
-}
-
-.page-subtitle {
-  font-size: 1.1rem;
-  color: #666;
-  margin: 0;
-}
-
-.v-theme--dark .page-subtitle {
-  color: #b0b0b0;
-}
-
-/* Modern Cards */
-.modern-card {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  margin-bottom: 24px;
-  overflow: hidden;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-}
-
-.v-theme--dark .modern-card {
-  background: #2a2a2a;
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-}
-
-.modern-card:hover {
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-}
-
-.v-theme--dark .modern-card:hover {
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
-}
-
-.budget-drilldown-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: rgba(102, 126, 234, 0.08);
-  border: 1px solid rgba(102, 126, 234, 0.18);
-  margin-bottom: 14px;
-  flex-wrap: wrap;
-}
-
-.budget-drilldown-banner__content {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #334155;
-}
-
-.v-theme--dark .budget-drilldown-banner {
-  background: rgba(102, 126, 234, 0.12);
-  border-color: rgba(148, 163, 184, 0.28);
-}
-
-.v-theme--dark .budget-drilldown-banner__content {
-  color: #e2e8f0;
-}
-
-.card-header {
-  padding: 20px 24px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-  background: rgba(102, 126, 234, 0.03);
-}
-
-.v-theme--dark .card-header {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(102, 126, 234, 0.08);
-}
-
-.card-title {
-  font-size: 1.35rem;
-  font-weight: 600;
-  color: #1a1a1a;
-  display: flex;
-  align-items: center;
-  margin: 0;
-}
-
-.v-theme--dark .card-title {
-  color: #ffffff;
-}
-
-.card-content {
-  padding: 24px;
-}
-
-/* Inputs Modernos */
+/* ── Form inputs ───────────────────────── */
 .modern-input {
   margin-bottom: 4px;
 }
@@ -2847,132 +2569,15 @@ export default {
 }
 
 .modern-input :deep(.v-field--focused) {
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cb-primary) 10%, transparent);
 }
 
-/* Botões Modernos */
-.modern-btn {
-  border-radius: 8px;
-  text-transform: none;
-  font-weight: 600;
-  letter-spacing: 0.3px;
-  transition: all 0.3s ease;
-}
-
-.gradient-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-  color: white !important;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-}
-
-.gradient-btn:hover {
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-  transform: translateY(-2px);
-}
-
-/* List Wrapper */
-.list-wrapper {
-  min-height: 200px;
-  max-height: 400px;
-  overflow-y: auto;
-  border-radius: 8px;
-  background: rgba(102, 126, 234, 0.02);
-  padding: 8px;
-}
-
-.list-wrapper::-webkit-scrollbar {
-  width: 8px;
-}
-
-.list-wrapper::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.05);
-  border-radius: 4px;
-}
-
-.list-wrapper::-webkit-scrollbar-thumb {
-  background: rgba(102, 126, 234, 0.3);
-  border-radius: 4px;
-}
-
-.list-wrapper::-webkit-scrollbar-thumb:hover {
-  background: rgba(102, 126, 234, 0.5);
-}
-
-.modern-list {
-  background: transparent;
-  padding: 0;
-}
-
-.transaction-filter-row {
-  margin-bottom: 12px;
-}
-
-.filter-chip-selected {
-  background: rgba(102, 126, 234, 0.14) !important;
-  color: #667eea !important;
-}
-
-.pagination-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding-top: 16px;
-}
-
-.pagination-label {
-  font-size: 0.9rem;
-  color: #666;
-}
-
-.v-theme--dark .pagination-label {
-  color: #b0b0b0;
-}
-
-.pagination-actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-/* Empty State */
-.empty-state {
-  text-align: center;
-  padding: 60px 20px;
-}
-
-.empty-message {
-  font-size: 1rem;
-  color: #666;
-  margin: 0;
-}
-
-.v-theme--dark .empty-message {
-  color: #b0b0b0;
-}
-
-/* Loading State */
-.loading-state {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 60px 20px;
-}
-
-/* Section Specific Colors */
-.income-section .card-header {
-  background: rgba(17, 153, 142, 0.05);
-}
-
-.expense-section .card-header {
-  background: rgba(235, 51, 73, 0.05);
-}
-
-/* Snackbar */
+/* ── Snackbar ───────────────────────────── */
 .modern-snackbar {
   border-radius: 8px;
 }
 
+/* ── AI category suggestions ───────────── */
 .ai-category-row {
   display: flex;
   align-items: center;
@@ -2982,11 +2587,7 @@ export default {
 
 .ai-category-row__meta {
   font-size: 0.9rem;
-  color: #667085;
-}
-
-.v-theme--dark .ai-category-row__meta {
-  color: #d0d5dd;
+  color: var(--cb-ink-muted);
 }
 
 .ai-category-suggestion {
@@ -2996,106 +2597,12 @@ export default {
 }
 
 .ai-category-suggestion__reasoning {
-  color: #475467;
-}
-
-.v-theme--dark .ai-category-suggestion__reasoning {
-  color: #d0d5dd;
+  color: var(--cb-ink-secondary);
 }
 
 .ai-category-suggestion__actions {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-}
-
-.ai-queue-card {
-  border: 1px solid rgba(102, 126, 234, 0.18);
-  background: rgba(102, 126, 234, 0.04);
-  border-radius: 14px;
-  padding: 14px 16px;
-  margin-bottom: 16px;
-}
-
-.ai-queue-card__content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.ai-queue-card__title {
-  font-weight: 700;
-  color: #334155;
-}
-
-.ai-queue-card__subtitle {
-  color: #64748b;
-  font-size: 0.92rem;
-}
-
-.v-theme--dark .ai-queue-card {
-  background: rgba(102, 126, 234, 0.08);
-  border-color: rgba(148, 163, 184, 0.24);
-}
-
-.v-theme--dark .ai-queue-card__title {
-  color: #e2e8f0;
-}
-
-.v-theme--dark .ai-queue-card__subtitle {
-  color: #cbd5e1;
-}
-
-.ai-queue-card__actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-/* Responsive */
-@media (max-width: 960px) {
-  .budget-header {
-    margin-bottom: 24px;
-  }
-
-  .page-title {
-    font-size: 2rem;
-  }
-
-  .card-content {
-    padding: 20px;
-  }
-}
-
-@media (max-width: 600px) {
-  .budget-container {
-    padding: 20px 0;
-  }
-
-  .page-title {
-    font-size: 1.75rem;
-  }
-
-  .page-subtitle {
-    font-size: 1rem;
-  }
-
-  .card-header {
-    padding: 16px 20px;
-  }
-
-  .card-title {
-    font-size: 1.2rem;
-  }
-
-  .card-content {
-    padding: 16px;
-  }
-
-  .list-wrapper {
-    max-height: 300px;
-  }
 }
 </style>

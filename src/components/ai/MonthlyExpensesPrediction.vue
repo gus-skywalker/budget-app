@@ -280,8 +280,8 @@ watch(locale, loadCategories)
   align-items: center;
   border-radius: 999px;
   padding: 0.2rem 0.65rem;
-  background: rgba(245, 158, 11, 0.12);
-  color: #b45309;
+  background: var(--cb-warning-bg);
+  color: var(--cb-warning);
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -289,7 +289,7 @@ watch(locale, loadCategories)
 
 .experimental-note {
   display: block;
-  color: #64748b;
+  color: var(--cb-ink-muted);
   margin-top: 0.35rem;
 }
 
@@ -299,13 +299,13 @@ watch(locale, loadCategories)
   margin: 1rem 0 1.25rem;
   padding: 0.9rem 1rem;
   border-radius: 12px;
-  background: rgba(102, 126, 234, 0.06);
-  color: #334155;
+  background: color-mix(in srgb, var(--cb-primary) 6%, transparent);
+  color: var(--cb-ink);
 }
 
 .history-note {
   margin: -0.5rem 0 0;
-  color: #64748b;
+  color: var(--cb-ink-muted);
   font-size: 0.92rem;
 }
 
@@ -321,11 +321,11 @@ watch(locale, loadCategories)
   gap: 0.25rem;
   padding: 0.9rem 1rem;
   border-radius: 12px;
-  background: rgba(248, 250, 252, 0.92);
+  background: var(--cb-surface-soft);
 }
 
 .summary-label {
-  color: #64748b;
+  color: var(--cb-ink-muted);
   font-size: 0.82rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;

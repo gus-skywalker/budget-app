@@ -1,6 +1,6 @@
 <template>
-  <div class="decision-detail-page">
-    <v-container class="modern-container">
+  <div class="cb-page">
+    <div class="cb-container">
       <div v-if="loading" class="empty-state">
         <v-icon color="#94a3b8" size="28">mdi-timer-sand</v-icon>
         <p>{{ t('decisionDetail.loading') }}</p>
@@ -36,7 +36,7 @@
           </ul>
         </div>
       </div>
-    </v-container>
+    </div>
   </div>
 </template>
 
@@ -100,11 +100,7 @@ onMounted(loadDecision)
 </script>
 
 <style scoped>
-.decision-detail-page {
-  min-height: 100vh;
-  background: #f8fafc;
-  padding: 32px 0;
-}
+
 .page-title {
   font-size: 2rem;
   font-weight: 700;

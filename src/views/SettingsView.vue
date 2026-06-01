@@ -1,16 +1,12 @@
 <template>
-  <div class="settings-container">
-    <v-container class="modern-container">
-      <!-- Header -->
-      <div class="settings-header">
-        <h1 class="page-title">{{ $t('account_management.title') }}</h1>
-        <p class="page-subtitle">{{ $t('account_management.subtitle') }}</p>
-      </div>
+  <div class="cb-page">
+    <div class="cb-container">
+      <page-header :title="$t('account_management.title')" :meta="$t('account_management.subtitle')" />
 
       <!-- Tabs de Navegação -->
       <v-tabs 
         v-model="activeTab" 
-        color="#667eea" 
+        color="var(--cb-primary)" 
         class="modern-tabs mb-6"
         show-arrows
       >
@@ -46,15 +42,15 @@
         <v-window-item value="profile">
           <v-row>
             <v-col cols="12" md="8" lg="6">
-              <div class="modern-card profile-card">
-                <div class="card-header">
-                  <h2 class="card-title">
-                    <v-icon color="#667eea" class="mr-2">mdi-account-edit</v-icon>
+              <div class="cb-card profile-card">
+                <div class="cb-card__header">
+                  <h2 class="cb-card__title">
+                    <v-icon color="var(--cb-primary)" class="mr-2">mdi-account-edit</v-icon>
                     {{ $t('account_management.profile.title') }}
                   </h2>
                   <p class="card-description">{{ $t('account_management.profile.description') }}</p>
                 </div>
-                <div class="card-content">
+                <div class="cb-card__body">
                   <v-form>
                     <v-alert
                       v-if="profileFeedback.message"
@@ -72,7 +68,7 @@
                       :label="$t('account_management.username_label')"
                       variant="outlined"
                       density="comfortable"
-                      color="#667eea"
+                      color="var(--cb-primary)"
                       prepend-inner-icon="mdi-account"
                       class="modern-input mb-4"
                       :disabled="isFederatedIdentityManaged"
@@ -84,7 +80,7 @@
                       type="email"
                       variant="outlined"
                       density="comfortable"
-                      color="#667eea"
+                      color="var(--cb-primary)"
                       prepend-inner-icon="mdi-email"
                       class="modern-input mb-4"
                       :disabled="isFederatedIdentityManaged"
@@ -95,7 +91,7 @@
                       :label="$t('account_management.profile_picture_label')"
                       variant="outlined"
                       density="comfortable"
-                      color="#667eea"
+                      color="var(--cb-primary)"
                       prepend-icon="mdi-camera"
                       class="modern-input mb-4"
                       :disabled="isFederatedIdentityManaged"
@@ -109,7 +105,7 @@
                       :label="$t('language_label')" 
                       variant="outlined"
                       density="comfortable"
-                      color="#667eea"
+                      color="var(--cb-primary)"
                       prepend-inner-icon="mdi-translate"
                       class="modern-input mb-4"
                       :disabled="isLoadingProfile"
@@ -117,7 +113,7 @@
                     ></v-select>
                     <v-btn 
                       @click="saveProfile"
-                      class="modern-btn gradient-btn"
+                     
                       size="large"
                       :loading="isSavingProfile"
                       :disabled="isSavingProfile || isLoadingProfile"
@@ -130,9 +126,9 @@
                 </div>
               </div>
 
-              <div class="modern-card mt-6 danger-zone-card">
-                <div class="card-header">
-                  <h2 class="card-title danger-title">
+              <div class="cb-card mt-6 danger-zone-card">
+                <div class="cb-card__header">
+                  <h2 class="cb-card__title danger-title">
                     <v-icon color="error" class="mr-2">mdi-alert-octagon</v-icon>
                     {{ $t('account_management.danger_zone_title') }}
                   </h2>
@@ -140,7 +136,7 @@
                     {{ $t('account_management.delete_account_description') }}
                   </p>
                 </div>
-                <div class="card-content">
+                <div class="cb-card__body">
                   <v-btn
                     color="error"
                     variant="outlined"
@@ -160,15 +156,15 @@
         <v-window-item value="security">
           <v-row>
             <v-col cols="12" md="8" lg="6">
-              <div class="modern-card security-card">
-                <div class="card-header">
-                  <h2 class="card-title">
-                    <v-icon color="#667eea" class="mr-2">mdi-key-variant</v-icon>
+              <div class="cb-card security-card">
+                <div class="cb-card__header">
+                  <h2 class="cb-card__title">
+                    <v-icon color="var(--cb-primary)" class="mr-2">mdi-key-variant</v-icon>
                     {{ $t('account_management.security_card.password_title') }}
                   </h2>
                   <p class="card-description">{{ $t('account_management.security_card.password_description') }}</p>
                 </div>
-                <div class="card-content">
+                <div class="cb-card__body">
                   <template v-if="!isFederatedIdentityManaged">
                     <v-form>
                       <v-alert
@@ -185,7 +181,7 @@
                         type="password"
                         variant="outlined"
                         density="comfortable"
-                        color="#667eea"
+                        color="var(--cb-primary)"
                         prepend-inner-icon="mdi-lock"
                         class="modern-input mb-4"
                       ></v-text-field>
@@ -195,7 +191,7 @@
                         type="password"
                         variant="outlined"
                         density="comfortable"
-                        color="#667eea"
+                        color="var(--cb-primary)"
                         prepend-inner-icon="mdi-lock-reset"
                         class="modern-input mb-4"
                       ></v-text-field>
@@ -205,13 +201,13 @@
                         type="password"
                         variant="outlined"
                         density="comfortable"
-                        color="#667eea"
+                        color="var(--cb-primary)"
                         prepend-inner-icon="mdi-lock-check"
                         class="modern-input mb-4"
                       ></v-text-field>
                       <v-btn 
                         @click="changePassword"
-                        class="modern-btn gradient-btn mb-4"
+                        class="mb-4"
                         size="large"
                         block
                         :loading="isChangingPassword"
@@ -230,15 +226,15 @@
                 </div>
               </div>
 
-              <div class="modern-card mt-6">
-                <div class="card-header">
-                  <h2 class="card-title">
-                    <v-icon color="#667eea" class="mr-2">mdi-two-factor-authentication</v-icon>
+              <div class="cb-card mt-6">
+                <div class="cb-card__header">
+                  <h2 class="cb-card__title">
+                    <v-icon color="var(--cb-primary)" class="mr-2">mdi-two-factor-authentication</v-icon>
                     {{ $t('account_management.security_card.two_factor_title') }}
                   </h2>
                   <p class="card-description">{{ $t('account_management.security_card.two_factor_description') }}</p>
                 </div>
-                <div class="card-content">
+                <div class="cb-card__body">
                   <div class="setting-item">
                     <div class="setting-info">
                       <div class="setting-label">{{ $t('account_management.security_card.two_factor_enable') }}</div>
@@ -246,7 +242,7 @@
                     </div>
                     <v-switch 
                       v-model="twoFactorAuth" 
-                      color="#667eea"
+                      color="var(--cb-primary)"
                       hide-details
                     ></v-switch>
                   </div>
@@ -260,15 +256,15 @@
         <v-window-item value="preferences">
           <v-row>
             <v-col cols="12" md="8" lg="6">
-              <div class="modern-card">
-                <div class="card-header">
-                  <h2 class="card-title">
-                    <v-icon color="#667eea" class="mr-2">mdi-bell-ring</v-icon>
+              <div class="cb-card">
+                <div class="cb-card__header">
+                  <h2 class="cb-card__title">
+                    <v-icon color="var(--cb-primary)" class="mr-2">mdi-bell-ring</v-icon>
                     {{ $t('account_management.notifications.title') }}
                   </h2>
                   <p class="card-description">{{ $t('account_management.notifications.description') }}</p>
                 </div>
-                <div class="card-content">
+                <div class="cb-card__body">
                   <div class="setting-item">
                     <div class="setting-info">
                       <div class="setting-label">{{ $t('account_management.notifications.email_label') }}</div>
@@ -276,7 +272,7 @@
                     </div>
                     <v-switch 
                       v-model="notificationEmail" 
-                      color="#667eea"
+                      color="var(--cb-primary)"
                       hide-details
                     ></v-switch>
                   </div>
@@ -290,7 +286,7 @@
                     </div>
                     <v-switch 
                       v-model="notificationPush" 
-                      color="#667eea"
+                      color="var(--cb-primary)"
                       hide-details
                     ></v-switch>
                   </div>
@@ -304,7 +300,7 @@
                     </div>
                     <v-switch
                       v-model="dailyDigestEmail"
-                      color="#667eea"
+                      color="var(--cb-primary)"
                       hide-details
                     ></v-switch>
                   </div>
@@ -323,22 +319,22 @@
                     :label="$t('account_management.alert_days_before_label')" 
                     variant="outlined"
                     density="comfortable"
-                    color="#667eea"
+                    color="var(--cb-primary)"
                     prepend-inner-icon="mdi-calendar-clock"
                     class="modern-input"
                   ></v-select>
                 </div>
               </div>
 
-              <div class="modern-card mt-6">
-                <div class="card-header">
-                  <h2 class="card-title">
-                    <v-icon color="#667eea" class="mr-2">mdi-palette</v-icon>
+              <div class="cb-card mt-6">
+                <div class="cb-card__header">
+                  <h2 class="cb-card__title">
+                    <v-icon color="var(--cb-primary)" class="mr-2">mdi-palette</v-icon>
                     {{ $t('account_management.appearance.title') }}
                   </h2>
                   <p class="card-description">{{ $t('account_management.appearance.description') }}</p>
                 </div>
-                <div class="card-content">
+                <div class="cb-card__body">
                   <div class="setting-item">
                     <div class="setting-info">
                       <div class="setting-label">{{ $t('account_management.appearance.dark_theme_label') }}</div>
@@ -346,7 +342,7 @@
                     </div>
                     <v-switch 
                       v-model="darkTheme" 
-                      color="#667eea"
+                      color="var(--cb-primary)"
                       hide-details
                     >
                       <template v-slot:prepend>
@@ -359,7 +355,7 @@
 
               <v-btn 
                 @click="saveAlertSettings"
-                class="modern-btn gradient-btn mt-6"
+                class="mt-6"
                 size="large"
                 block
               >
@@ -387,19 +383,19 @@
                 @feedback="openFinanceFeedback = $event"
               />
 
-              <div class="modern-card mt-6">
-                <div class="card-header">
-                  <h2 class="card-title">
-                    <v-icon color="#667eea" class="mr-2">mdi-history</v-icon>
+              <div class="cb-card mt-6">
+                <div class="cb-card__header">
+                  <h2 class="cb-card__title">
+                    <v-icon color="var(--cb-primary)" class="mr-2">mdi-history</v-icon>
                     {{ $t('openFinance.settings.sync_history_title') }}
                   </h2>
                   <p class="card-description">
                     {{ $t('openFinance.settings.sync_history_description') }}
                   </p>
                 </div>
-                <div class="card-content">
+                <div class="cb-card__body">
                   <div v-if="!openFinanceSyncHistory.length" class="empty-state-panel">
-                    <v-icon size="40" color="#667eea" class="mb-3">mdi-history</v-icon>
+                    <v-icon size="40" color="var(--cb-primary)" class="mb-3">mdi-history</v-icon>
                     <p class="empty-message">{{ $t('openFinance.settings.no_sync_history') }}</p>
                   </div>
                   <div v-else class="sync-history-list">
@@ -409,7 +405,7 @@
                         <v-chip
                           size="small"
                           variant="tonal"
-                          :color="item.status === 'FAILED' ? 'error' : item.status === 'PROCESSING' ? 'warning' : '#667eea'"
+                          :color="item.status === 'FAILED' ? 'error' : item.status === 'PROCESSING' ? 'warning' : 'var(--cb-primary)'"
                         >
                           {{ item.status === 'FAILED' ? $t('openFinance.settings.sync_failed') : item.status === 'PROCESSING' ? $t('openFinance.settings.sync_processing') : $t('openFinance.settings.sync_success') }}
                         </v-chip>
@@ -442,17 +438,17 @@
                 </div>
               </div>
 
-              <div class="modern-card mt-6">
-                <div class="card-header">
-                  <h2 class="card-title">
-                    <v-icon color="#667eea" class="mr-2">mdi-file-compare</v-icon>
+              <div class="cb-card mt-6">
+                <div class="cb-card__header">
+                  <h2 class="cb-card__title">
+                    <v-icon color="var(--cb-primary)" class="mr-2">mdi-file-compare</v-icon>
                     {{ $t('openFinance.settings.review_title') }}
                   </h2>
                   <p class="card-description">
                     {{ $t('openFinance.settings.review_description') }}
                   </p>
                 </div>
-                <div class="card-content">
+                <div class="cb-card__body">
                   <v-alert type="info" variant="tonal" class="mb-4">
                     {{ $t('openFinance.settings.auto_sync_notice') }}
                   </v-alert>
@@ -469,7 +465,7 @@
                   <div class="open-finance-actions mb-4">
                     <v-btn
                       variant="outlined"
-                      color="#667eea"
+                      color="var(--cb-primary)"
                       @click="goToImportedTransactions"
                     >
                       <v-icon start>mdi-open-in-new</v-icon>
@@ -478,10 +474,10 @@
                   </div>
 
                   <div v-if="openFinanceLoadingConflicts" class="loading-state">
-                    <v-progress-circular indeterminate color="#667eea" size="36" />
+                    <v-progress-circular indeterminate color="var(--cb-primary)" size="36" />
                   </div>
                   <div v-else-if="!openFinanceConflicts.length" class="empty-state-panel">
-                    <v-icon size="40" color="#667eea" class="mb-3">mdi-check-decagram-outline</v-icon>
+                    <v-icon size="40" color="var(--cb-primary)" class="mb-3">mdi-check-decagram-outline</v-icon>
                     <p class="empty-message">{{ $t('openFinance.settings.no_pending_conflicts') }}</p>
                   </div>
                   <div v-else class="conflict-list">
@@ -507,7 +503,7 @@
                       <div class="conflict-actions">
                         <v-btn
                           variant="outlined"
-                          color="#667eea"
+                          color="var(--cb-primary)"
                           :loading="openFinanceResolvingId === conflict.id"
                           :disabled="openFinanceResolvingId === conflict.id"
                           @click="resolveOpenFinanceConflict(conflict.id, 'keep-existing')"
@@ -515,7 +511,7 @@
                           {{ $t('openFinance.settings.keep_existing') }}
                         </v-btn>
                         <v-btn
-                          color="#667eea"
+                          color="var(--cb-primary)"
                           variant="tonal"
                           :loading="openFinanceResolvingId === conflict.id"
                           :disabled="openFinanceResolvingId === conflict.id"
@@ -529,29 +525,29 @@
                 </div>
               </div>
 
-              <div class="modern-card mt-6">
-                <div class="card-header">
-                  <h2 class="card-title">
-                    <v-icon color="#667eea" class="mr-2">mdi-shape-plus</v-icon>
+              <div class="cb-card mt-6">
+                <div class="cb-card__header">
+                  <h2 class="cb-card__title">
+                    <v-icon color="var(--cb-primary)" class="mr-2">mdi-shape-plus</v-icon>
                     {{ $t('openFinance.settings.category_mapping_title') }}
                   </h2>
                   <p class="card-description">
                     {{ $t('openFinance.settings.category_mapping_description') }}
                   </p>
                 </div>
-                <div class="card-content">
+                <div class="cb-card__body">
                   <v-text-field
                     v-model="openFinanceCategorySearch"
                     :label="$t('openFinance.settings.search_bank_category')"
                     variant="outlined"
                     density="comfortable"
-                    color="#667eea"
+                    color="var(--cb-primary)"
                     prepend-inner-icon="mdi-magnify"
                     class="modern-input mb-4"
                   />
 
                   <div v-if="!filteredOpenFinanceCategoryRows.length" class="empty-state-panel">
-                    <v-icon size="40" color="#667eea" class="mb-3">mdi-shape-outline</v-icon>
+                    <v-icon size="40" color="var(--cb-primary)" class="mb-3">mdi-shape-outline</v-icon>
                     <p class="empty-message">{{ $t('openFinance.settings.no_bank_category_to_map') }}</p>
                   </div>
 
@@ -577,7 +573,7 @@
                           </div>
                           <v-chip
                             size="small"
-                            :color="row.isMapped ? '#667eea' : 'warning'"
+                            :color="row.isMapped ? 'var(--cb-primary)' : 'warning'"
                             variant="tonal"
                           >
                             {{ row.isMapped ? $t('openFinance.settings.mapped') : $t('openFinance.settings.pending') }}
@@ -592,13 +588,13 @@
                           :label="$t('openFinance.settings.internal_category')"
                           variant="outlined"
                           density="comfortable"
-                          color="#667eea"
+                          color="var(--cb-primary)"
                           class="modern-input mt-3"
                         />
                         <v-btn
                           v-if="!row.isMapped && row.suggestedCategoryId"
                           variant="text"
-                          color="#667eea"
+                          color="var(--cb-primary)"
                           class="mapping-suggestion-action"
                           @click="openFinanceMappingSelections[row.bankCategory.id] = row.suggestedCategoryId"
                         >
@@ -607,7 +603,7 @@
                         <v-checkbox
                           v-model="openFinanceMappingReprocessSelections[row.bankCategory.id]"
                           :label="$t('openFinance.settings.reprocess_imported')"
-                          color="#667eea"
+                          color="var(--cb-primary)"
                           density="comfortable"
                           hide-details
                           class="mt-2"
@@ -617,7 +613,7 @@
                       <div class="mapping-actions">
                         <v-btn
                           variant="tonal"
-                          color="#667eea"
+                          color="var(--cb-primary)"
                           :loading="openFinanceMappingSavingId === row.bankCategory.id"
                           :disabled="openFinanceMappingDeletingId === row.bankCategory.id"
                           @click="saveOpenFinanceCategoryMapping(row.bankCategory.id)"
@@ -639,15 +635,15 @@
                 </div>
               </div>
 
-              <div class="modern-card mt-6">
-                <div class="card-header">
-                  <h2 class="card-title">
-                    <v-icon color="#667eea" class="mr-2">mdi-google</v-icon>
+              <div class="cb-card mt-6">
+                <div class="cb-card__header">
+                  <h2 class="cb-card__title">
+                    <v-icon color="var(--cb-primary)" class="mr-2">mdi-google</v-icon>
                     {{ $t('account_management.integrations.title') }}
                   </h2>
                   <p class="card-description">{{ $t('account_management.integrations.description') }}</p>
                 </div>
-                <div class="card-content">
+                <div class="cb-card__body">
                   <div class="integration-item">
                     <div class="integration-icon">
                       <v-icon size="32" color="#4285F4">mdi-google</v-icon>
@@ -667,8 +663,8 @@
                           v-if="!isGoogleConnected"
                           @click="connectGoogle"
                           variant="outlined"
-                          color="#667eea"
-                          class="modern-btn"
+                          color="var(--cb-primary)"
+                         
                         >
                           <v-icon left>mdi-link-variant</v-icon>
                           {{ $t('account_management.integrations.connect') }}
@@ -678,7 +674,7 @@
                           @click="disconnectGoogle"
                           variant="tonal"
                           color="#d14343"
-                          class="modern-btn"
+                         
                         >
                           <v-icon left>mdi-link-variant-off</v-icon>
                           {{ $t('account_management.disconnect_google') }}
@@ -697,10 +693,10 @@
           <SubscriptionManagement :user="user" />
         </v-window-item>
       </v-window>
-    </v-container>
+    </div>
 
     <v-dialog v-model="deleteAccountDialog" max-width="520">
-      <v-card class="modern-dialog-card">
+      <v-card class="cb-card">
         <v-card-title class="dialog-header">
           <v-icon color="#eb3349" class="mr-2">mdi-alert-octagon</v-icon>
           <span class="headline">{{ $t('account_management.delete_account_confirm_title') }}</span>
@@ -736,6 +732,7 @@
 </template>
 
 <script setup lang="ts">
+import PageHeader from '@/components/PageHeader.vue'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
@@ -1662,229 +1659,48 @@ const saveAlertSettings = async () => {
 </script>
 
 <style scoped>
-.settings-container {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e8eaf0 100%);
-  padding: 32px 0;
-}
+/* ── Tabs ─────────────────────────────────────────────────────────────────── */
+.modern-tabs { background: transparent !important; }
+.modern-tabs :deep(.v-tab) { text-transform: none; font-weight: 500; letter-spacing: 0.3px; }
+.settings-tab { min-width: auto !important; padding: 12px 20px !important; }
+.tab-icon  { margin-right: 8px; }
+.tab-text  { display: inline; }
 
-.v-theme--dark .settings-container {
-  background: linear-gradient(135deg, #1e1e1e 0%, #141414 100%);
-}
-
-.modern-container {
-  max-width: 1400px;
-  padding-left: 16px;
-  padding-right: 16px;
-}
-
-@media (min-width: 600px) {
-  .modern-container {
-    padding-left: 24px;
-    padding-right: 24px;
-  }
-}
-
-/* Header */
-.settings-header {
-  margin-bottom: 32px;
-  padding: 0 8px;
-}
-
-.page-title {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: #1a1a1a;
-  margin-bottom: 8px;
-}
-
-.v-theme--dark .page-title {
-  color: #ffffff;
-}
-
-.page-subtitle {
-  font-size: 1.1rem;
-  color: #666;
-  margin: 0;
-}
-
-.v-theme--dark .page-subtitle {
-  color: #b0b0b0;
-}
-
-/* Modern Cards */
-.modern-card {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  margin-bottom: 24px;
-  overflow: hidden;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-}
-
-.v-theme--dark .modern-card {
-  background: #2a2a2a;
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-}
-
-.modern-card:hover {
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-}
-
-.v-theme--dark .modern-card:hover {
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
-}
-
-.danger-zone-card {
-  border-color: rgba(235, 51, 73, 0.28);
-}
-
-.danger-title {
-  color: #c62828;
-}
-
-.card-header {
-  padding: 20px 24px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-  background: rgba(102, 126, 234, 0.03);
-}
-
-.v-theme--dark .card-header {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(102, 126, 234, 0.08);
-}
-
-.card-title {
-  font-size: 1.35rem;
-  font-weight: 600;
-  color: #1a1a1a;
-  display: flex;
-  align-items: center;
-  margin: 0;
-}
-
-.v-theme--dark .card-title {
-  color: #ffffff;
-}
-
-.card-content {
-  padding: 24px;
-}
-
-.card-description {
-  font-size: 0.9rem;
-  color: #666;
-  margin-top: 4px;
-  font-weight: 400;
-}
-
-.v-theme--dark .card-description {
-  color: #b0b0b0;
-}
-
-/* Tabs */
-.modern-tabs {
-  background: transparent !important;
-}
-
-.modern-tabs :deep(.v-tab) {
-  text-transform: none;
-  font-weight: 500;
-  letter-spacing: 0.3px;
-}
-
-.settings-tab {
-  min-width: auto !important;
-  padding: 12px 20px !important;
-}
-
-.tab-icon {
-  margin-right: 8px;
-}
-
-.tab-text {
-  display: inline;
-}
-
-/* Mobile: Apenas ícones nas tabs */
 @media (max-width: 600px) {
-  .settings-tab {
-    min-width: 56px !important;
-    padding: 12px 8px !important;
-  }
-  
-  .tab-text {
-    display: none;
-  }
-  
-  .tab-icon {
-    margin-right: 0;
-  }
+  .settings-tab { min-width: 56px !important; padding: 12px 8px !important; }
+  .tab-text { display: none; }
+  .tab-icon { margin-right: 0; }
 }
 
-/* Settings Items */
-.setting-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-}
+/* ── Danger zone ─────────────────────────────────────────────────────────── */
+.danger-zone-card { border-color: rgba(235, 51, 73, 0.28); }
+.danger-title     { color: #c62828; }
 
-.setting-info {
-  flex: 1;
-}
+/* ── Card partials ──────────────────────────────────────────────────────── */
+.card-description { font-size: 0.9rem; color: var(--cb-ink-muted); margin-top: 4px; font-weight: 400; }
 
-.setting-info.full-width {
-  width: 100%;
-}
+/* ── Setting items ───────────────────────────────────────────────────────── */
+.setting-item        { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.setting-info        { flex: 1; }
+.setting-info.full-width { width: 100%; }
+.setting-label       { font-size: 1rem; font-weight: 600; color: var(--cb-ink); margin-bottom: 4px; }
+.setting-hint        { font-size: 0.85rem; color: var(--cb-ink-muted); line-height: 1.4; }
 
-.setting-label {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1a1a1a;
-  margin-bottom: 4px;
-}
-
-.v-theme--dark .setting-label {
-  color: #ffffff;
-}
-
-.setting-hint {
-  font-size: 0.85rem;
-  color: #666;
-  line-height: 1.4;
-}
-
-.v-theme--dark .setting-hint {
-  color: #b0b0b0;
-}
-
-/* Integration Item */
+/* ── Integration item ────────────────────────────────────────────────────── */
 .integration-item {
   display: flex;
   align-items: center;
   gap: 16px;
   padding: 16px;
-  background: rgba(102, 126, 234, 0.03);
+  background: var(--cb-surface-soft);
   border-radius: 12px;
-  border: 1px solid rgba(102, 126, 234, 0.1);
+  border: 1px solid var(--cb-border-card);
 }
 
-.open-finance-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: center;
-}
+.open-finance-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.sync-summary         { display: flex; flex-wrap: wrap; gap: 8px; }
 
-.sync-summary {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
+/* ── Observability ───────────────────────────────────────────────────────── */
 .observability-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -1892,52 +1708,18 @@ const saveAlertSettings = async () => {
 }
 
 .observability-card {
-  border: 1px solid rgba(102, 126, 234, 0.14);
+  border: 1px solid var(--cb-border-card);
   border-radius: 14px;
   padding: 16px;
-  background: rgba(102, 126, 234, 0.04);
+  background: color-mix(in srgb, var(--cb-primary) 4%, transparent);
 }
 
-.v-theme--dark .observability-card {
-  border-color: rgba(102, 126, 234, 0.22);
-  background: rgba(102, 126, 234, 0.08);
-}
+.observability-label    { font-size: 0.9rem; color: var(--cb-ink-muted); margin-bottom: 6px; }
+.observability-value    { font-size: 1.6rem; font-weight: 700; color: var(--cb-ink); }
+.observability-value--small { font-size: 1rem; line-height: 1.4; }
+.observability-subtitle { margin-top: 6px; font-size: 0.85rem; color: var(--cb-ink-muted); }
 
-.observability-label {
-  font-size: 0.9rem;
-  color: #666;
-  margin-bottom: 6px;
-}
-
-.v-theme--dark .observability-label {
-  color: #b0b0b0;
-}
-
-.observability-value {
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: #1a1a1a;
-}
-
-.v-theme--dark .observability-value {
-  color: #ffffff;
-}
-
-.observability-value--small {
-  font-size: 1rem;
-  line-height: 1.4;
-}
-
-.observability-subtitle {
-  margin-top: 6px;
-  font-size: 0.85rem;
-  color: #666;
-}
-
-.v-theme--dark .observability-subtitle {
-  color: #b0b0b0;
-}
-
+/* ── Sync history ────────────────────────────────────────────────────────── */
 .sync-history-list {
   display: flex;
   flex-direction: column;
@@ -1949,58 +1731,20 @@ const saveAlertSettings = async () => {
   scrollbar-gutter: stable;
 }
 
-.sync-history-list::-webkit-scrollbar {
-  width: 8px;
-}
-
-.sync-history-list::-webkit-scrollbar-track {
-  background: rgba(100, 116, 139, 0.08);
-  border-radius: 999px;
-}
-
-.sync-history-list::-webkit-scrollbar-thumb {
-  background: rgba(102, 126, 234, 0.38);
-  border-radius: 999px;
-}
+.sync-history-list::-webkit-scrollbar       { width: 8px; }
+.sync-history-list::-webkit-scrollbar-track { background: rgba(100, 116, 139, 0.08); border-radius: 999px; }
+.sync-history-list::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--cb-primary) 38%, transparent); border-radius: 999px; }
 
 .sync-history-item {
   padding: 16px;
-  border: 1px solid rgba(102, 126, 234, 0.14);
+  border: 1px solid var(--cb-border-card);
   border-radius: 14px;
-  background: rgba(102, 126, 234, 0.04);
+  background: color-mix(in srgb, var(--cb-primary) 4%, transparent);
 }
 
-.v-theme--dark .sync-history-item {
-  border-color: rgba(102, 126, 234, 0.22);
-  background: rgba(102, 126, 234, 0.08);
-}
-
-.sync-history-title-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-}
-
-.sync-history-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1a1a1a;
-}
-
-.v-theme--dark .sync-history-title {
-  color: #ffffff;
-}
-
-.sync-history-subtitle {
-  margin-top: 6px;
-  font-size: 0.85rem;
-  color: #666;
-}
-
-.v-theme--dark .sync-history-subtitle {
-  color: #b0b0b0;
-}
+.sync-history-title-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.sync-history-title     { font-size: 1rem; font-weight: 600; color: var(--cb-ink); }
+.sync-history-subtitle  { margin-top: 6px; font-size: 0.85rem; color: var(--cb-ink-muted); }
 
 .sync-history-connection {
   display: inline-flex;
@@ -2009,15 +1753,10 @@ const saveAlertSettings = async () => {
   margin-top: 8px;
   padding: 4px 10px;
   border-radius: 999px;
-  background: rgba(102, 126, 234, 0.1);
-  color: #4f63c6;
+  background: color-mix(in srgb, var(--cb-primary) 10%, transparent);
+  color: var(--cb-primary);
   font-size: 0.82rem;
   font-weight: 600;
-}
-
-.v-theme--dark .sync-history-connection {
-  background: rgba(102, 126, 234, 0.18);
-  color: #c7d2fe;
 }
 
 .sync-history-metrics {
@@ -2026,11 +1765,7 @@ const saveAlertSettings = async () => {
   gap: 12px;
   margin-top: 10px;
   font-size: 0.9rem;
-  color: #666;
-}
-
-.v-theme--dark .sync-history-metrics {
-  color: #b0b0b0;
+  color: var(--cb-ink-muted);
 }
 
 .sync-history-error {
@@ -2048,11 +1783,6 @@ const saveAlertSettings = async () => {
   white-space: pre-wrap;
 }
 
-.v-theme--dark .sync-history-error {
-  background: rgba(239, 154, 154, 0.12);
-  color: #ef9a9a;
-}
-
 .empty-state-panel {
   min-height: 160px;
   display: flex;
@@ -2062,84 +1792,19 @@ const saveAlertSettings = async () => {
   text-align: center;
 }
 
-.conflict-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
+/* ── Conflict & mapping lists ────────────────────────────────────────────── */
+.conflict-list,
+.mapping-list { display: flex; flex-direction: column; gap: 12px; }
 
-.conflict-item {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px;
-  border: 1px solid rgba(102, 126, 234, 0.14);
-  border-radius: 14px;
-  background: rgba(102, 126, 234, 0.04);
-}
-
-.v-theme--dark .conflict-item {
-  border-color: rgba(102, 126, 234, 0.22);
-  background: rgba(102, 126, 234, 0.08);
-}
-
-.conflict-main {
-  flex: 1;
-  min-width: 0;
-}
-
-.conflict-title-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.conflict-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1a1a1a;
-}
-
-.v-theme--dark .conflict-title {
-  color: #ffffff;
-}
-
-.conflict-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  font-size: 0.9rem;
-  color: #666;
-  margin-top: 6px;
-}
-
-.v-theme--dark .conflict-meta {
-  color: #b0b0b0;
-}
-
-.conflict-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  justify-content: center;
-}
-
-.mapping-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
+.conflict-item,
 .mapping-item {
   display: flex;
   justify-content: space-between;
   gap: 16px;
   padding: 16px;
-  border: 1px solid rgba(102, 126, 234, 0.14);
+  border: 1px solid var(--cb-border-card);
   border-radius: 14px;
-  background: rgba(102, 126, 234, 0.04);
+  background: color-mix(in srgb, var(--cb-primary) 4%, transparent);
 }
 
 .mapping-item--unmapped {
@@ -2147,126 +1812,52 @@ const saveAlertSettings = async () => {
   background: rgba(255, 152, 0, 0.06);
 }
 
-.v-theme--dark .mapping-item {
-  border-color: rgba(102, 126, 234, 0.22);
-  background: rgba(102, 126, 234, 0.08);
-}
+.conflict-main, .mapping-main { flex: 1; min-width: 0; }
 
-.v-theme--dark .mapping-item--unmapped {
-  border-color: rgba(255, 152, 0, 0.4);
-  background: rgba(255, 152, 0, 0.09);
-}
-
-.mapping-main {
-  flex: 1;
-  min-width: 0;
-}
-
+.conflict-title-row,
 .mapping-title-row {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
   gap: 12px;
+  align-items: center;
+  margin-bottom: 8px;
 }
 
-.mapping-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1a1a1a;
-}
+.conflict-title,
+.mapping-title     { font-size: 1rem; font-weight: 600; color: var(--cb-ink); }
+.mapping-subtitle  { margin-top: 4px; color: var(--cb-ink-muted); font-size: 0.9rem; }
 
-.v-theme--dark .mapping-title {
-  color: #ffffff;
-}
+.conflict-meta     { display: flex; flex-wrap: wrap; gap: 12px; font-size: 0.9rem; color: var(--cb-ink-muted); margin-top: 6px; }
 
-.mapping-subtitle {
-  margin-top: 4px;
-  color: #666;
-  font-size: 0.9rem;
-}
+.conflict-actions,
+.mapping-actions { display: flex; flex-direction: column; gap: 8px; justify-content: center; }
 
-.v-theme--dark .mapping-subtitle {
-  color: #b0b0b0;
-}
+.mapping-suggestion        { margin-top: 6px; color: var(--cb-primary); font-size: 0.9rem; font-weight: 500; }
+.mapping-suggestion-action { align-self: flex-start; padding-left: 0 !important; }
 
-.mapping-suggestion {
-  margin-top: 6px;
-  color: #667eea;
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-
-.mapping-suggestion-action {
-  align-self: flex-start;
-  padding-left: 0 !important;
-}
-
-.mapping-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  justify-content: center;
-}
-
-.v-theme--dark .integration-item {
-  background: rgba(102, 126, 234, 0.08);
-  border-color: rgba(102, 126, 234, 0.2);
-}
-
+/* ── Integration display ─────────────────────────────────────────────────── */
 .integration-icon {
   width: 56px;
   height: 56px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: white;
+  background: var(--cb-surface);
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.v-theme--dark .integration-icon {
-  background: #2a2a2a;
-}
+.integration-info        { flex: 1; }
+.integration-name        { font-size: 1.1rem; font-weight: 600; color: var(--cb-ink); margin-bottom: 4px; }
+.integration-description { font-size: 0.9rem; color: var(--cb-ink-muted); }
+.integration-actions     { flex-shrink: 0; }
 
-.integration-info {
-  flex: 1;
-}
-
-.integration-name {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #1a1a1a;
-  margin-bottom: 4px;
-}
-
-.v-theme--dark .integration-name {
-  color: #ffffff;
-}
-
-.integration-description {
-  font-size: 0.9rem;
-  color: #666;
-}
-
-.v-theme--dark .integration-description {
-  color: #b0b0b0;
-}
-
-.integration-actions {
-  flex-shrink: 0;
-}
-
-/* Coming Soon Overlay */
-.position-relative {
-  position: relative;
-}
+/* ── Coming soon overlay ─────────────────────────────────────────────────── */
+.position-relative { position: relative; }
 
 .coming-soon-overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(255, 255, 255, 0.4);
   backdrop-filter: blur(3px);
   display: flex;
@@ -2276,159 +1867,43 @@ const saveAlertSettings = async () => {
   z-index: 10;
 }
 
-.v-theme--dark .coming-soon-overlay {
-  background: rgba(30, 30, 30, 0.5);
-}
-
 .coming-soon-badge {
   text-align: center;
   padding: 32px;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  background: color-mix(in srgb, var(--cb-primary) 8%, transparent);
   border-radius: 16px;
-  border: 2px dashed rgba(102, 126, 234, 0.3);
+  border: 2px dashed color-mix(in srgb, var(--cb-primary) 30%, transparent);
   max-width: 400px;
 }
 
-.v-theme--dark .coming-soon-badge {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
-  border-color: rgba(102, 126, 234, 0.4);
-}
-
-.coming-soon-badge .v-icon {
-  color: #667eea;
-  opacity: 0.8;
-}
-
+.coming-soon-badge .v-icon { color: var(--cb-primary); opacity: 0.8; }
 .coming-soon-title {
   font-size: 1.75rem;
   font-weight: 700;
-  color: #667eea;
+  color: var(--cb-primary);
   margin-bottom: 8px;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
+.coming-soon-subtitle { font-size: 1rem; color: var(--cb-ink-muted); font-weight: 500; }
 
-.coming-soon-subtitle {
-  font-size: 1rem;
-  color: #666;
-  font-weight: 500;
-}
+/* ── Inputs ──────────────────────────────────────────────────────────────── */
+.modern-input :deep(.v-field) { border-radius: 8px; transition: all 0.3s ease; }
+.modern-input :deep(.v-field--focused) { box-shadow: 0 0 0 3px color-mix(in srgb, var(--cb-primary) 12%, transparent); }
 
-.v-theme--dark .coming-soon-subtitle {
-  color: #b0b0b0;
-}
+.modern-switch { margin-top: 16px; }
 
-/* Inputs Modernos */
-.modern-input :deep(.v-field) {
-  border-radius: 8px;
-  transition: all 0.3s ease;
-}
-
-.modern-input :deep(.v-field--focused) {
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-/* Switches */
-.modern-switch {
-  margin-top: 16px;
-}
-
-/* Botões Modernos */
-.modern-btn {
-  border-radius: 8px;
-  text-transform: none;
-  font-weight: 600;
-  letter-spacing: 0.3px;
-  transition: all 0.3s ease;
-}
-
-.gradient-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-  color: white !important;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-}
-
-.gradient-btn:hover:not(:disabled) {
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-  transform: translateY(-2px);
-}
-
-/* Responsive */
+/* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 960px) {
-  .settings-header {
-    margin-bottom: 24px;
-  }
-
-  .page-title {
-    font-size: 2rem;
-  }
-
-  .card-content {
-    padding: 20px;
-  }
-
-  .open-finance-actions {
-    align-items: stretch;
-  }
-
-  .open-finance-actions .v-btn {
-    width: 100%;
-  }
-
-  .conflict-item {
-    flex-direction: column;
-  }
-
-  .conflict-actions {
-    width: 100%;
-  }
-
-  .mapping-item {
-    flex-direction: column;
-  }
-
-  .mapping-actions {
-    width: 100%;
-  }
+  .open-finance-actions { align-items: stretch; }
+  .open-finance-actions .v-btn { width: 100%; }
+  .conflict-item, .mapping-item { flex-direction: column; }
+  .conflict-actions, .mapping-actions { width: 100%; }
 }
 
 @media (max-width: 600px) {
-  .settings-container {
-    padding: 20px 0;
-  }
-
-  .page-title {
-    font-size: 1.75rem;
-  }
-
-  .page-subtitle {
-    font-size: 1rem;
-  }
-
-  .card-header {
-    padding: 16px 20px;
-  }
-
-  .card-title {
-    font-size: 1.2rem;
-  }
-
-  .card-content {
-    padding: 16px;
-  }
-
-  .setting-item {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .integration-item {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .integration-icon {
-    margin: 0 auto;
-  }
+  .setting-item { flex-direction: column; align-items: flex-start; }
+  .integration-item { flex-direction: column; text-align: center; }
+  .integration-icon { margin: 0 auto; }
 }
 </style>

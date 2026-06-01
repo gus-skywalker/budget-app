@@ -1,35 +1,36 @@
 <template>
-  <div class="planning-page">
-    <v-container class="modern-container scenario-editor">
-      <div class="page-header">
-        <div>
-          <h1 class="page-title">Edit scenario</h1>
-          <p class="page-subtitle">Update assumptions and re-run the simulation for this saved scenario.</p>
-        </div>
-        <v-btn variant="text" color="#667eea" @click="openScenarioResult">
-          <v-icon start>mdi-arrow-left</v-icon>
-          Back to results
-        </v-btn>
-      </div>
+  <div class="cb-page">
+    <div class="cb-container scenario-editor">
+      <page-header
+        :title="t('contentExperience.planning.scenarioEditor.title', 'Edit scenario')"
+        :meta="t('contentExperience.planning.scenarioEditor.subtitle', 'Update assumptions and re-run the simulation for this saved scenario.')"
+      >
+        <template #actions>
+          <v-btn variant="text" color="var(--cb-primary)" @click="openScenarioResult">
+            <v-icon start>mdi-arrow-left</v-icon>
+            {{ t('contentExperience.planning.scenarioEditor.backToResults', 'Back to results') }}
+          </v-btn>
+        </template>
+      </page-header>
 
       <div class="editor-shell">
         <div v-if="isLoading" class="empty-results">
-          <v-icon color="#94a3b8" size="28">mdi-timer-sand</v-icon>
+          <v-icon color="var(--cb-ink-muted)" size="28">mdi-timer-sand</v-icon>
           <p>{{ t('planning.scenarios.comparing') }}</p>
         </div>
 
         <template v-else-if="snapshot.currentScenarioId">
           <div class="summary-strip">
             <div class="summary-item">
-              <span>Scenario</span>
+              <span>{{ t('contentExperience.planning.scenarioEditor.scenarioLabel', 'Scenario') }}</span>
               <strong>{{ snapshot.scenarioName || t('planning.scenarios.default_name') }}</strong>
             </div>
             <div class="summary-item">
-              <span>Horizon</span>
-              <strong>{{ snapshot.months }} months</strong>
+              <span>{{ t('contentExperience.planning.scenarioEditor.horizonLabel', 'Horizon') }}</span>
+              <strong>{{ t('contentExperience.planning.scenarioEditor.monthsValue', '{n} months', { n: snapshot.months }) }}</strong>
             </div>
             <div class="summary-item">
-              <span>Estimated monthly impact</span>
+              <span>{{ t('contentExperience.planning.scenarioEditor.estimatedImpact', 'Estimated monthly impact') }}</span>
               <strong :class="{ 'positive-value': estimatedImpact > 0, 'negative-value': estimatedImpact < 0 }">
                 {{ formatSignedCurrency(estimatedImpact) }}
               </strong>
@@ -56,8 +57,8 @@
           />
 
           <div class="section-header">
-            <h3>Changes</h3>
-            <p>Keep only the adjustments that matter for this scenario.</p>
+            <h3>{{ t('contentExperience.planning.scenarioEditor.changesTitle', 'Changes') }}</h3>
+            <p>{{ t('contentExperience.planning.scenarioEditor.changesDescription', 'Keep only the adjustments that matter for this scenario.') }}</p>
           </div>
 
           <div class="adjustments-list">
@@ -65,21 +66,21 @@
               <div class="adjustment-row">
                 <v-text-field
                   v-model="adjustment.label"
-                  label="Label (optional)"
+                  :label="t('contentExperience.planning.scenarioEditor.labelField', 'Label (optional)')"
                   variant="outlined"
                   density="comfortable"
                   hide-details="auto"
                 />
-                <v-btn-toggle v-model="adjustment.flow" mandatory divided color="#667eea">
-                  <v-btn value="INCOME">Income</v-btn>
-                  <v-btn value="EXPENSE">Expense</v-btn>
+                <v-btn-toggle v-model="adjustment.flow" mandatory divided color="var(--cb-primary)">
+                  <v-btn value="INCOME">{{ t('common.income', 'Income') }}</v-btn>
+                  <v-btn value="EXPENSE">{{ t('common.expense', 'Expense') }}</v-btn>
                 </v-btn-toggle>
               </div>
 
               <div class="adjustment-row adjustment-row--numbers">
                 <v-text-field
                   v-model.number="adjustment.monthlyChange"
-                  label="Monthly change"
+                  :label="t('contentExperience.planning.scenarioEditor.monthlyChangeField', 'Monthly change')"
                   type="number"
                   min="0"
                   variant="outlined"
@@ -88,7 +89,7 @@
                 />
                 <v-text-field
                   v-model.number="adjustment.oneTimeChange"
-                  label="One-time change"
+                  :label="t('contentExperience.planning.scenarioEditor.oneTimeChangeField', 'One-time change')"
                   type="number"
                   min="0"
                   variant="outlined"
@@ -103,43 +104,43 @@
           </div>
 
           <div class="editor-actions-inline">
-            <v-btn variant="tonal" color="#667eea" @click="addAdjustment">
+            <v-btn variant="tonal" color="var(--cb-primary)" @click="addAdjustment">
               <v-icon start>mdi-plus</v-icon>
-              Add change
+              {{ t('contentExperience.planning.scenarioEditor.addChange', 'Add change') }}
             </v-btn>
-            <span class="hint-text">You can simulate without saving. Save is optional on result page.</span>
+            <span class="hint-text">{{ t('contentExperience.planning.scenarioEditor.saveHint', 'You can simulate without saving. Save is optional on result page.') }}</span>
           </div>
 
           <div class="editor-footer">
             <v-btn variant="text" @click="router.push({ name: 'planning-scenarios' })">
               <v-icon start>mdi-layers-triple-outline</v-icon>
-              Scenario list
+              {{ t('contentExperience.planning.scenarioEditor.scenarioList', 'Scenario list') }}
             </v-btn>
             <v-btn
-              color="#667eea"
+              color="var(--cb-primary)"
               size="large"
               :loading="isSimulating"
               :disabled="isSimulating || !canSimulate"
               @click="simulate"
             >
               <v-icon start>mdi-chart-line-variant</v-icon>
-              Simulate updates
+              {{ t('contentExperience.planning.scenarioEditor.simulateUpdates', 'Simulate updates') }}
             </v-btn>
           </div>
         </template>
 
         <div v-else class="empty-results">
-          <v-icon color="#94a3b8" size="28">mdi-alert-circle-outline</v-icon>
-          <p>Scenario not found.</p>
-          <v-btn color="#667eea" variant="tonal" @click="router.push({ name: 'planning-scenarios' })">
+          <v-icon color="var(--cb-ink-muted)" size="28">mdi-alert-circle-outline</v-icon>
+          <p>{{ t('contentExperience.planning.scenarioEditor.notFound', 'Scenario not found.') }}</p>
+          <v-btn color="var(--cb-primary)" variant="tonal" @click="router.push({ name: 'planning-scenarios' })">
             <v-icon start>mdi-arrow-left</v-icon>
-            Back to scenarios
+            {{ t('contentExperience.planning.scenarioEditor.backToScenarios', 'Back to scenarios') }}
           </v-btn>
         </div>
 
         <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
       </div>
-    </v-container>
+    </div>
   </div>
 </template>
 
@@ -147,6 +148,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
+import PageHeader from '@/components/PageHeader.vue'
 import BudgetService from '@/services/BudgetService'
 import ScenarioService from '@/services/ScenarioService'
 import DecisionService from '@/services/DecisionService'
@@ -303,20 +305,13 @@ onMounted(() => {
 }
 
 .editor-shell {
-  background: #fff;
+  background: var(--cb-surface);
   border-radius: 16px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid var(--cb-border-card);
   padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 16px;
-}
-
-.page-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
 }
 
 .summary-strip {
@@ -327,7 +322,7 @@ onMounted(() => {
 }
 
 .summary-item {
-  border: 1px solid rgba(15, 23, 42, 0.1);
+  border: 1px solid var(--cb-border-card);
   border-radius: 12px;
   padding: 12px;
   display: flex;
@@ -336,13 +331,13 @@ onMounted(() => {
 }
 
 .summary-item span {
-  color: #64748b;
+  color: var(--cb-ink-muted);
   font-size: 0.84rem;
 }
 
 .summary-item strong {
   font-size: 1.06rem;
-  color: #0f172a;
+  color: var(--cb-ink);
 }
 
 .section-header h3 {
@@ -351,7 +346,7 @@ onMounted(() => {
 
 .section-header p {
   margin: 4px 0 0;
-  color: #64748b;
+  color: var(--cb-ink-muted);
 }
 
 .adjustments-list {
@@ -361,7 +356,7 @@ onMounted(() => {
 }
 
 .adjustment-card {
-  border: 1px solid rgba(15, 23, 42, 0.1);
+  border: 1px solid var(--cb-border-card);
   border-radius: 12px;
   padding: 12px;
   display: flex;
@@ -389,7 +384,7 @@ onMounted(() => {
 }
 
 .hint-text {
-  color: #64748b;
+  color: var(--cb-ink-muted);
   font-size: 0.88rem;
 }
 
@@ -401,16 +396,21 @@ onMounted(() => {
   margin-top: 6px;
 }
 
+.positive-value { color: var(--cb-positive); }
+.negative-value { color: var(--cb-risk); }
+
+.empty-results {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: var(--cb-ink-muted);
+  padding: 40px 16px;
+  text-align: center;
+}
+
 @media (max-width: 900px) {
-  .page-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .adjustment-row {
-    grid-template-columns: 1fr;
-  }
-
+  .adjustment-row,
   .adjustment-row--numbers {
     grid-template-columns: 1fr;
   }

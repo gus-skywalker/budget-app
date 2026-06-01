@@ -3,7 +3,7 @@
     <v-card>
       <v-card-title class="agreement-title">
         <span>{{ t('sharedExpenseAgreement.title') }}</span>
-        <v-chip size="small" variant="tonal" color="#667eea">
+        <v-chip size="small" variant="tonal" color="var(--cb-primary)">
           {{ formatCurrency(transactionAmount) }}
         </v-chip>
       </v-card-title>
@@ -15,7 +15,7 @@
             :key="item.value"
             size="small"
             :variant="step === item.value ? 'flat' : 'tonal'"
-            :color="step === item.value ? '#667eea' : undefined"
+            :color="step === item.value ? 'var(--cb-primary)' : undefined"
             @click="step = item.value"
           >
             <v-icon start size="16">{{ item.icon }}</v-icon>
@@ -54,7 +54,7 @@
                   v-for="participant in form.participants"
                   :key="participant.email"
                   closable
-                  color="#0f766e"
+                  color="var(--cb-accent)"
                   variant="tonal"
                   @click:close="removeParticipant(participant.email)"
                 >
@@ -208,12 +208,12 @@
         <v-spacer />
         <v-btn variant="text" @click="close">{{ t('common.cancel') }}</v-btn>
         <v-btn v-if="step > 1" variant="text" @click="step -= 1">{{ t('sharedExpenseAgreement.back') }}</v-btn>
-        <v-btn v-if="step < 3" color="#667eea" :disabled="!canContinue" @click="step += 1">
+        <v-btn v-if="step < 3" color="var(--cb-primary)" :disabled="!canContinue" @click="step += 1">
           {{ t('sharedExpenseAgreement.continue') }}
         </v-btn>
         <v-btn
           v-else
-          color="#667eea"
+          color="var(--cb-primary)"
           :loading="submitting"
           :disabled="!canSubmit"
           @click="submit"

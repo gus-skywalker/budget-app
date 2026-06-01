@@ -1,37 +1,34 @@
 <template>
-  <div class="planning-page">
-    <v-container class="modern-container">
-      <div class="page-header">
-        <div>
-          <h1 class="page-title">{{ t('planning.scenarios.title') }}</h1>
-          <p class="page-subtitle">{{ t('planning.scenarios.subtitle') }}</p>
-        </div>
-        <div class="page-header__actions">
-          <v-btn v-if="canWriteScenarios" color="#667eea" @click="createScenario">
+  <div class="cb-page">
+    <div class="cb-container">
+      <page-header :title="t('planning.scenarios.title')" :meta="t('planning.scenarios.subtitle')">
+        <template #actions>
+          <v-btn v-if="canWriteScenarios" color="var(--cb-primary)" @click="createScenario">
             <v-icon start>mdi-plus-circle-outline</v-icon>
             {{ t('planning.scenarios.new_scenario') }}
           </v-btn>
-          <v-btn v-if="canWriteScenarios" variant="tonal" color="#0f766e" @click="createDebtScenario">
+          <v-btn v-if="canWriteScenarios" variant="tonal" color="var(--cb-accent)" @click="createDebtScenario">
             <v-icon start>mdi-credit-card-fast-outline</v-icon>
             {{ t('planning.scenarios.debt_payment_decision') }}
           </v-btn>
-        </div>
-      </div>
+        </template>
+      </page-header>
 
-      <div class="saved-scenarios-panel">
-        <div class="saved-scenarios-panel__header">
+      <div class="cb-card">
+        <div class="cb-card__header">
           <div>
-            <h3>{{ t('planning.scenarios.saved_title') }}</h3>
-            <p>{{ t('planning.scenarios.saved_subtitle') }}</p>
+            <h3 class="cb-card__title">{{ t('planning.scenarios.saved_title') }}</h3>
+            <p class="scenarios-subtitle">{{ t('planning.scenarios.saved_subtitle') }}</p>
           </div>
         </div>
+        <div class="cb-card__body scenarios-body">
 
-        <div v-if="isLoading" class="empty-results">
-          <v-icon color="#94a3b8">mdi-timer-sand</v-icon>
-          <p>{{ t('planning.scenarios.comparing') }}</p>
-        </div>
+          <div v-if="isLoading" class="cb-empty-state">
+            <v-icon size="40" color="var(--cb-ink-muted)">mdi-timer-sand</v-icon>
+            <p>{{ t('planning.scenarios.comparing') }}</p>
+          </div>
 
-        <div v-else-if="savedScenarios.length" class="saved-scenarios-list">
+          <div v-else-if="savedScenarios.length" class="saved-scenarios-list">
           <button
             v-for="scenario in savedScenarios"
             :key="scenario.id"
@@ -99,7 +96,7 @@
                 variant="text"
                 density="comfortable"
                 size="small"
-                color="#4f46e5"
+                color="var(--cb-primary)"
                 :loading="creatingDecisionId === scenario.id"
                 @click.stop="createDecisionFromScenario(scenario)"
               >
@@ -133,20 +130,21 @@
               </v-btn>
             </div>
           </button>
-        </div>
+          </div>
 
-        <div v-else class="empty-results">
-          <v-icon color="#94a3b8">mdi-content-save-outline</v-icon>
-          <p>{{ t('planning.scenarios.saved_placeholder') }}</p>
-          <v-btn v-if="canWriteScenarios" color="#667eea" variant="tonal" @click="createScenario">
-            <v-icon start>mdi-plus</v-icon>
-            {{ t('planning.scenarios.new_scenario') }}
-          </v-btn>
-        </div>
+          <div v-else class="cb-empty-state">
+            <v-icon size="40" color="var(--cb-ink-muted)">mdi-content-save-outline</v-icon>
+            <p>{{ t('planning.scenarios.saved_placeholder') }}</p>
+            <v-btn v-if="canWriteScenarios" color="var(--cb-primary)" variant="tonal" @click="createScenario">
+              <v-icon start>mdi-plus</v-icon>
+              {{ t('planning.scenarios.new_scenario') }}
+            </v-btn>
+          </div>
 
-        <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
+          <alert-strip v-if="errorMessage" variant="risk" :description="errorMessage" />
+        </div>
       </div>
-    </v-container>
+    </div>
   </div>
 </template>
 
@@ -157,6 +155,8 @@ import { useRouter } from 'vue-router'
 import ScenarioService, { type SavedScenario } from '@/services/ScenarioService'
 import DecisionService from '@/services/DecisionService'
 import { useUserStore } from '@/plugins/userStore'
+import PageHeader from '@/components/PageHeader.vue'
+import AlertStrip from '@/components/AlertStrip.vue'
 
 const { t, locale } = useI18n()
 const router = useRouter()
@@ -335,36 +335,14 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.saved-scenarios-panel {
-  background: #fff;
-  border-radius: 16px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  padding: 20px;
-  margin-top: 16px;
+.scenarios-subtitle {
+  font-size: 0.82rem;
+  color: var(--cb-ink-muted);
+  margin: 2px 0 0;
 }
 
-.page-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  min-width: 0;
-}
-
-.page-header__actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-.saved-scenarios-panel__header h3 {
-  margin: 0;
-}
-
-.saved-scenarios-panel__header p {
-  color: #64748b;
-  margin-top: 4px;
+.scenarios-body {
+  padding: 16px;
 }
 
 .saved-scenarios-list {
@@ -375,17 +353,23 @@ onMounted(() => {
 }
 
 .saved-scenario-card {
-  border: 1px solid rgba(15, 23, 42, 0.1);
-  border-radius: 12px;
-  padding: 12px;
+  border: 1px solid var(--cb-border-card);
+  border-radius: var(--cb-radius-card);
+  padding: 14px;
   text-align: left;
-  background: #fff;
+  background: var(--cb-surface-soft);
   cursor: pointer;
   display: flex;
   flex-direction: column;
   gap: 10px;
   min-width: 0;
   overflow-wrap: anywhere;
+  transition: box-shadow 0.15s ease, transform 0.12s ease;
+}
+
+.saved-scenario-card:hover {
+  box-shadow: var(--cb-shadow-elevated);
+  transform: translateY(-1px);
 }
 
 .saved-scenario-card__header {
@@ -393,6 +377,17 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+}
+
+.saved-scenario-card strong {
+  color: var(--cb-ink);
+  font-size: 0.95rem;
+}
+
+.saved-scenario-card > p {
+  color: var(--cb-ink-secondary);
+  font-size: 0.875rem;
+  margin: 0;
 }
 
 .saved-scenario-card__header-tags {
@@ -404,7 +399,7 @@ onMounted(() => {
 }
 
 .saved-scenario-card__meta {
-  color: #64748b;
+  color: var(--cb-ink-muted);
   font-size: 0.86rem;
   min-width: 0;
 }
@@ -421,6 +416,7 @@ onMounted(() => {
   display: inline-flex;
 }
 
+/* Status chips */
 .status-chip {
   border-radius: 999px;
   padding: 2px 10px;
@@ -429,18 +425,18 @@ onMounted(() => {
 }
 
 .status-chip--danger {
-  color: #991b1b;
-  background: rgba(185, 28, 28, 0.15);
+  color: var(--cb-risk);
+  background: var(--cb-risk-bg);
 }
 
 .status-chip--warning {
-  color: #92400e;
-  background: rgba(217, 119, 6, 0.15);
+  color: var(--cb-warning);
+  background: var(--cb-warning-bg);
 }
 
 .status-chip--success {
-  color: #166534;
-  background: rgba(22, 163, 74, 0.16);
+  color: var(--cb-positive);
+  background: var(--cb-positive-bg);
 }
 
 .status-chip--locked {
@@ -448,61 +444,11 @@ onMounted(() => {
   background: rgba(251, 146, 60, 0.2);
 }
 
-.empty-results {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  color: #64748b;
-  padding: 40px 16px;
-  text-align: center;
-}
-
-.v-theme--dark .saved-scenarios-panel {
-  background: rgba(17, 24, 39, 0.9);
-  border-color: rgba(148, 163, 184, 0.16);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.24);
-}
-
-.v-theme--dark .saved-scenarios-panel__header p,
-.v-theme--dark .saved-scenario-card__meta,
-.v-theme--dark .empty-results {
-  color: #cbd5e1;
-}
-
-.v-theme--dark .saved-scenario-card {
-  background: rgba(30, 41, 59, 0.78);
-  border-color: rgba(148, 163, 184, 0.2);
-  color: #f8fafc;
-}
-
-@media (max-width: 960px) {
-  .page-header {
-    flex-direction: column;
-  }
-
-  .page-header__actions {
-    width: 100%;
-    justify-content: flex-start;
-  }
-}
-
 @media (max-width: 600px) {
-  .saved-scenarios-panel {
-    padding: 16px;
-  }
-
-  .page-header__actions,
   .saved-scenario-card__header,
   .saved-scenario-card__actions {
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .page-header__actions :deep(.v-btn),
-  .saved-scenario-card__actions :deep(.v-btn) {
-    width: 100%;
-    justify-content: flex-start;
   }
 
   .saved-scenario-card__header-tags {
@@ -511,12 +457,6 @@ onMounted(() => {
 
   .saved-scenarios-list {
     grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 430px) {
-  .saved-scenario-card {
-    padding: 10px;
   }
 }
 </style>

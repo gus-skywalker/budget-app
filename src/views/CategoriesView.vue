@@ -1,19 +1,15 @@
 <template>
-  <div class="categories-page">
-    <v-container class="modern-container">
-      <div class="page-header">
-        <div>
-          <h1 class="page-title">{{ $t('categories_page.title') }}</h1>
-          <p class="page-subtitle">{{ $t('categories_page.subtitle') }}</p>
-        </div>
-        <div class="page-header__actions">
-          <v-btn class="modern-btn" variant="outlined" color="#667eea" @click="goToOpenFinanceSettings">
+  <div class="cb-page">
+    <div class="cb-container">
+      <page-header :title="$t('categories_page.title')" :meta="$t('categories_page.subtitle')">
+        <template #actions>
+          <v-btn variant="outlined" color="var(--cb-primary)" @click="goToOpenFinanceSettings">
             <v-icon start>mdi-bank-outline</v-icon>
             {{ $t('categories_page.open_finance') }}
           </v-btn>
           <v-btn
             v-if="activeTab === 'categories'"
-            class="modern-btn gradient-btn"
+            color="var(--cb-primary)"
             @click="startCreateCategory"
           >
             <v-icon start>mdi-plus</v-icon>
@@ -21,7 +17,7 @@
           </v-btn>
           <v-btn
             v-else-if="activeTab === 'tags'"
-            class="modern-btn gradient-btn"
+            color="var(--cb-primary)"
             @click="startCreateTag"
           >
             <v-icon start>mdi-plus</v-icon>
@@ -29,14 +25,14 @@
           </v-btn>
           <v-btn
             v-else
-            class="modern-btn gradient-btn"
+            color="var(--cb-primary)"
             @click="startCreateAutomation"
           >
             <v-icon start>mdi-plus</v-icon>
             {{ $t('categories_page.create_automation') }}
           </v-btn>
-        </div>
-      </div>
+        </template>
+      </page-header>
 
       <v-alert
         v-if="feedback.message"
@@ -47,9 +43,9 @@
         {{ feedback.message }}
       </v-alert>
 
-      <section class="modern-card tabs-shell">
+      <section class="cb-card tabs-shell">
         <div class="tabs-shell__header">
-          <v-tabs v-model="activeTab" color="#667eea" class="categories-tabs">
+          <v-tabs v-model="activeTab" color="var(--cb-primary)" class="categories-tabs">
             <v-tab value="categories">{{ $t('categories_page.tabs.categories') }}</v-tab>
             <v-tab value="tags">{{ $t('categories_page.tabs.tags') }}</v-tab>
             <v-tab value="automations">{{ $t('categories_page.tabs.automations') }}</v-tab>
@@ -99,7 +95,7 @@
           </section>
 
           <div class="content-grid">
-            <section class="modern-card surface-card">
+            <section class="cb-card surface-card">
               <div class="surface-card__header">
                 <div>
                   <h3 class="surface-card__title">{{ $t('categories_page.category_catalog_title') }}</h3>
@@ -114,26 +110,26 @@
                   prepend-inner-icon="mdi-magnify"
                   variant="outlined"
                   density="comfortable"
-                  color="#667eea"
+                  color="var(--cb-primary)"
                   class="modern-input"
                   hide-details
                 />
                 <v-switch
                   v-model="showMappedOnly"
-                  color="#667eea"
+                  color="var(--cb-primary)"
                   hide-details
                   :label="$t('categories_page.mapped_only')"
                 />
                 <v-switch
                   v-model="showInactiveCustom"
-                  color="#667eea"
+                  color="var(--cb-primary)"
                   hide-details
                   :label="$t('categories_page.show_inactive_custom')"
                 />
               </div>
 
               <div v-if="loading" class="loading-state">
-                <v-progress-circular indeterminate color="#667eea" size="40" />
+                <v-progress-circular indeterminate color="var(--cb-primary)" size="40" />
               </div>
 
               <div v-else-if="filteredCategories.length" class="category-list">
@@ -193,7 +189,7 @@
                       :key="mapping.bankCategoryId"
                       size="small"
                       variant="outlined"
-                      color="#667eea"
+                      color="var(--cb-primary)"
                       class="mapping-chip"
                     >
                       <span>{{ bankCategoryLabel(mapping.bankCategoryId) }}</span>
@@ -213,7 +209,7 @@
                       v-if="!category.systemDefined && category.active !== false"
                       size="small"
                       variant="text"
-                      color="#667eea"
+                      color="var(--cb-primary)"
                       @click="startEditCategory(category)"
                     >
                       {{ $t('common.edit') }}
@@ -233,12 +229,12 @@
               </div>
 
               <div v-else class="empty-state">
-                <v-icon size="48" color="#667eea" class="mb-3">mdi-shape-off</v-icon>
+                <v-icon size="48" color="var(--cb-primary)" class="mb-3">mdi-shape-off</v-icon>
                 <p class="empty-message">{{ $t('categories_page.empty_categories_filter') }}</p>
               </div>
             </section>
 
-            <section class="modern-card surface-card">
+            <section class="cb-card surface-card">
               <div class="surface-card__header">
                 <div>
                   <h3 class="surface-card__title">{{ $t('categories_page.open_finance_mappings_title') }}</h3>
@@ -268,7 +264,7 @@
                       hide-details
                     />
                     <v-btn
-                      class="modern-btn gradient-btn"
+                     
                       :loading="busyBankCategoryId === bankCategory.id"
                       :disabled="!mappingSelections[bankCategory.id]"
                       @click="saveMapping(bankCategory.id)"
@@ -280,12 +276,12 @@
               </div>
 
               <div v-else class="empty-state compact-empty">
-                <v-icon size="44" color="#667eea" class="mb-3">mdi-check-circle-outline</v-icon>
+                <v-icon size="44" color="var(--cb-primary)" class="mb-3">mdi-check-circle-outline</v-icon>
                 <p class="empty-message">{{ $t('categories_page.no_pending_bank_categories') }}</p>
               </div>
 
               <div class="mapping-footer">
-                <v-btn variant="text" color="#667eea" @click="goToOpenFinanceSettings">
+                <v-btn variant="text" color="var(--cb-primary)" @click="goToOpenFinanceSettings">
                   {{ $t('categories_page.open_finance_connections') }}
                 </v-btn>
               </div>
@@ -327,7 +323,7 @@
             </div>
           </section>
 
-          <section class="modern-card surface-card">
+          <section class="cb-card surface-card">
             <div class="surface-card__header">
               <div>
                 <h3 class="surface-card__title">{{ $t('categories_page.tag_catalog_title') }}</h3>
@@ -342,20 +338,20 @@
                 prepend-inner-icon="mdi-magnify"
                 variant="outlined"
                 density="comfortable"
-                color="#667eea"
+                color="var(--cb-primary)"
                 class="modern-input"
                 hide-details
               />
               <v-switch
                 v-model="showInactiveTags"
-                color="#667eea"
+                color="var(--cb-primary)"
                 hide-details
                 :label="$t('categories_page.show_inactive')"
               />
             </div>
 
             <div v-if="loadingTags" class="loading-state">
-              <v-progress-circular indeterminate color="#667eea" size="40" />
+              <v-progress-circular indeterminate color="var(--cb-primary)" size="40" />
             </div>
 
             <div v-else-if="visibleTags.length" class="tag-grid">
@@ -375,7 +371,7 @@
                 </div>
 
                 <div class="tag-card__actions">
-                  <v-btn size="small" variant="text" color="#667eea" @click="startEditTag(tag)">
+                  <v-btn size="small" variant="text" color="var(--cb-primary)" @click="startEditTag(tag)">
                     {{ $t('common.edit') }}
                   </v-btn>
                   <v-btn
@@ -393,7 +389,7 @@
             </div>
 
             <div v-else class="empty-state compact-empty">
-              <v-icon size="44" color="#667eea" class="mb-3">mdi-tag-off-outline</v-icon>
+              <v-icon size="44" color="var(--cb-primary)" class="mb-3">mdi-tag-off-outline</v-icon>
               <p class="empty-message">{{ $t('categories_page.empty_tags_filter') }}</p>
             </div>
           </section>
@@ -433,7 +429,7 @@
             </div>
           </section>
 
-          <section class="modern-card surface-card">
+          <section class="cb-card surface-card">
             <div class="surface-card__header">
               <div>
                 <h3 class="surface-card__title">{{ $t('categories_page.automation_catalog_title') }}</h3>
@@ -448,20 +444,20 @@
                 prepend-inner-icon="mdi-magnify"
                 variant="outlined"
                 density="comfortable"
-                color="#667eea"
+                color="var(--cb-primary)"
                 class="modern-input"
                 hide-details
               />
               <v-switch
                 v-model="showInactiveAutomations"
-                color="#667eea"
+                color="var(--cb-primary)"
                 hide-details
                 :label="$t('categories_page.show_inactive')"
               />
             </div>
 
             <div v-if="loadingAutomations" class="loading-state">
-              <v-progress-circular indeterminate color="#667eea" size="40" />
+              <v-progress-circular indeterminate color="var(--cb-primary)" size="40" />
             </div>
 
             <div v-else-if="visibleAutomations.length" class="automation-list">
@@ -495,14 +491,14 @@
                   <v-btn
                     size="small"
                     variant="outlined"
-                    color="#667eea"
+                    color="var(--cb-primary)"
                     :loading="applyingAutomationId === automation.id"
                     :disabled="automation.active === false"
                     @click="applyAutomation(automation)"
                   >
                     {{ $t('categories_page.apply_now') }}
                   </v-btn>
-                  <v-btn size="small" variant="text" color="#667eea" @click="startEditAutomation(automation)">
+                  <v-btn size="small" variant="text" color="var(--cb-primary)" @click="startEditAutomation(automation)">
                     {{ $t('common.edit') }}
                   </v-btn>
                   <v-btn
@@ -520,13 +516,13 @@
             </div>
 
             <div v-else class="empty-state compact-empty">
-              <v-icon size="44" color="#667eea" class="mb-3">mdi-tune-variant</v-icon>
+              <v-icon size="44" color="var(--cb-primary)" class="mb-3">mdi-tune-variant</v-icon>
               <p class="empty-message">{{ $t('categories_page.empty_automations_filter') }}</p>
             </div>
           </section>
         </div>
       </section>
-    </v-container>
+    </div>
 
     <v-navigation-drawer
       v-model="editorDrawer"
@@ -576,7 +572,7 @@
               :placeholder="$t('categories_page.category_name_placeholder')"
               variant="outlined"
               density="comfortable"
-              color="#667eea"
+              color="var(--cb-primary)"
               class="modern-input"
             />
 
@@ -587,7 +583,7 @@
               persistent-hint
               variant="outlined"
               density="comfortable"
-              color="#667eea"
+              color="var(--cb-primary)"
               class="modern-input"
             />
 
@@ -601,7 +597,7 @@
               clearable
               variant="outlined"
               density="comfortable"
-              color="#667eea"
+              color="var(--cb-primary)"
               class="modern-input"
             />
           </section>
@@ -652,7 +648,7 @@
 
         <div class="drawer-shell__footer">
           <v-btn variant="text" @click="closeEditor">{{ $t('common.cancel') }}</v-btn>
-          <v-btn class="modern-btn gradient-btn" :loading="savingCategory" @click="saveCategory">
+          <v-btn :loading="savingCategory" @click="saveCategory">
             {{ editingCategoryId ? $t('categories_page.save_adjustments') : $t('categories_page.create_category') }}
           </v-btn>
         </div>
@@ -686,7 +682,7 @@
               :placeholder="$t('categories_page.tag_name_placeholder')"
               variant="outlined"
               density="comfortable"
-              color="#667eea"
+              color="var(--cb-primary)"
               class="modern-input"
             />
 
@@ -715,7 +711,7 @@
 
         <div class="drawer-shell__footer">
           <v-btn variant="text" @click="closeTagEditor">{{ $t('common.cancel') }}</v-btn>
-          <v-btn class="modern-btn gradient-btn" :loading="savingTag" @click="saveTag">
+          <v-btn :loading="savingTag" @click="saveTag">
             {{ editingTagId ? $t('categories_page.save_tag') : $t('categories_page.create_tag') }}
           </v-btn>
         </div>
@@ -749,7 +745,7 @@
               :placeholder="$t('categories_page.rule_name_placeholder')"
               variant="outlined"
               density="comfortable"
-              color="#667eea"
+              color="var(--cb-primary)"
               class="modern-input"
             />
 
@@ -762,7 +758,7 @@
                 :label="$t('categories_page.operator')"
                 variant="outlined"
                 density="comfortable"
-                color="#667eea"
+                color="var(--cb-primary)"
                 class="modern-input"
               />
               <v-text-field
@@ -771,7 +767,7 @@
                 :placeholder="$t('categories_page.description_text_placeholder')"
                 variant="outlined"
                 density="comfortable"
-                color="#667eea"
+                color="var(--cb-primary)"
                 class="modern-input"
               />
             </div>
@@ -784,13 +780,13 @@
               :label="$t('categories_page.target_category')"
               variant="outlined"
               density="comfortable"
-              color="#667eea"
+              color="var(--cb-primary)"
               class="modern-input"
             />
 
             <v-switch
               v-model="automationEditorOverwrite"
-              color="#667eea"
+              color="var(--cb-primary)"
               hide-details
               :label="$t('categories_page.overwrite_existing_category')"
             />
@@ -813,7 +809,7 @@
 
         <div class="drawer-shell__footer">
           <v-btn variant="text" @click="closeAutomationEditor">{{ $t('common.cancel') }}</v-btn>
-          <v-btn class="modern-btn gradient-btn" :loading="savingAutomation" @click="saveAutomation">
+          <v-btn :loading="savingAutomation" @click="saveAutomation">
             {{ editingAutomationId ? $t('categories_page.save_automation') : $t('categories_page.create_automation') }}
           </v-btn>
         </div>
@@ -823,6 +819,7 @@
 </template>
 
 <script setup lang="ts">
+import PageHeader from '@/components/PageHeader.vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
@@ -1621,79 +1618,14 @@ watch(locale, () => {
 </script>
 
 <style scoped>
-.categories-page {
-  min-height: 100vh;
-  background: linear-gradient(135deg, rgba(245, 247, 250, 1) 0%, rgba(232, 234, 240, 1) 100%);
-  padding: 32px 0;
-}
-
-.v-theme--dark .categories-page {
-  background: linear-gradient(135deg, rgba(30, 30, 30, 1) 0%, rgba(20, 20, 20, 1) 100%);
-}
-
-.modern-container {
-  max-width: 1440px;
-  padding-left: 16px;
-  padding-right: 16px;
-}
-
-.page-header {
-  margin-bottom: 24px;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.page-header__actions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.page-title {
-  font-size: 2.2rem;
-  font-weight: 700;
-  margin: 0 0 8px;
-  color: #1a1a1a;
-}
-
-.v-theme--dark .page-title {
-  color: #ffffff;
-}
-
-.page-subtitle {
-  margin: 0;
-  color: #667085;
-  font-size: 1rem;
-  max-width: 720px;
-}
-
-.modern-btn {
-  border-radius: 10px;
-  text-transform: none;
-  font-weight: 600;
-  letter-spacing: 0;
-}
-
-.gradient-btn {
-  background: linear-gradient(135deg, #667eea 0%, #5a67d8 100%);
-  color: #ffffff;
-  box-shadow: 0 10px 24px rgba(102, 126, 234, 0.25);
-}
-
-.tabs-shell {
-  overflow: hidden;
-}
+/* ── Tabs shell ──────────────────────────────────────────────────────────── */
+.tabs-shell { overflow: hidden; }
 
 .tabs-shell__header {
-  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+  border-bottom: 1px solid var(--cb-border);
 }
 
-.tabs-shell__content {
-  padding: 24px;
-}
+.tabs-shell__content { padding: 24px; }
 
 .categories-tabs :deep(.v-tab) {
   text-transform: none;
@@ -1702,6 +1634,7 @@ watch(locale, () => {
   font-weight: 600;
 }
 
+/* ── Stats grid ──────────────────────────────────────────────────────────── */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1709,48 +1642,26 @@ watch(locale, () => {
   margin-bottom: 24px;
 }
 
+.stats-grid--tags { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
 .stat-card {
-  background: rgba(255, 255, 255, 0.75);
-  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: var(--cb-surface);
+  border: 1px solid var(--cb-border-card);
   border-radius: 8px;
   padding: 18px 20px;
 }
 
-.v-theme--dark .stat-card {
-  background: rgba(30, 41, 59, 0.65);
-  border-color: rgba(148, 163, 184, 0.18);
-}
+.stat-card--warning { border-color: rgba(217, 119, 6, 0.38); }
+.stat-card__label   { color: var(--cb-ink-muted); font-size: 0.9rem; margin-bottom: 8px; }
+.stat-card__value   { color: var(--cb-ink); font-size: 2rem; font-weight: 700; }
 
-.stat-card--warning {
-  border-color: rgba(245, 158, 11, 0.38);
-}
-
-.stat-card__label {
-  color: #667085;
-  font-size: 0.9rem;
-  margin-bottom: 8px;
-}
-
-.stat-card__value {
-  color: #111827;
-  font-size: 2rem;
-  font-weight: 700;
-}
-
-.v-theme--dark .stat-card__value {
-  color: #f8fafc;
-}
-
+/* ── Insight band ────────────────────────────────────────────────────────── */
 .insight-band {
-  border: 1px solid rgba(148, 163, 184, 0.16);
+  border: 1px solid var(--cb-border-card);
   border-radius: 8px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(248, 250, 252, 0.95));
+  background: var(--cb-surface-soft);
   padding: 24px;
   margin-bottom: 24px;
-}
-
-.v-theme--dark .insight-band {
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.88), rgba(30, 41, 59, 0.9));
 }
 
 .insight-band__headline {
@@ -1764,26 +1675,13 @@ watch(locale, () => {
   display: inline-block;
   font-size: 0.8rem;
   font-weight: 700;
-  color: #667eea;
+  color: var(--cb-primary);
   text-transform: uppercase;
   margin-bottom: 10px;
 }
 
-.insight-band__copy h2 {
-  margin: 0 0 10px;
-  font-size: 1.7rem;
-  color: #111827;
-}
-
-.v-theme--dark .insight-band__copy h2 {
-  color: #f8fafc;
-}
-
-.insight-band__copy p {
-  margin: 0;
-  color: #667085;
-  max-width: 780px;
-}
+.insight-band__copy h2 { margin: 0 0 10px; font-size: 1.7rem; color: var(--cb-ink); }
+.insight-band__copy p  { margin: 0; color: var(--cb-ink-muted); max-width: 780px; }
 
 .insight-band__meta {
   display: grid;
@@ -1792,65 +1690,32 @@ watch(locale, () => {
   min-width: 320px;
 }
 
+.insight-band__meta--single { grid-template-columns: 1fr; min-width: 160px; }
+
 .meta-chip {
-  border: 1px solid rgba(102, 126, 234, 0.18);
+  border: 1px solid var(--cb-border-card);
   border-radius: 8px;
   padding: 16px;
-  background: rgba(255, 255, 255, 0.85);
+  background: var(--cb-surface);
 }
 
-.v-theme--dark .meta-chip {
-  background: rgba(30, 41, 59, 0.75);
-}
+.meta-chip span  { display: block; font-size: 1.5rem; font-weight: 700; color: var(--cb-ink); }
+.meta-chip small { color: var(--cb-ink-muted); }
 
-.meta-chip span {
-  display: block;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #111827;
-}
-
-.v-theme--dark .meta-chip span {
-  color: #f8fafc;
-}
-
-.meta-chip small {
-  color: #667085;
-}
-
+/* ── Content grid ────────────────────────────────────────────────────────── */
 .content-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(360px, 0.9fr);
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 1fr);
   gap: 24px;
 }
 
-.stats-grid--tags {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
+/* ── Surface cards ───────────────────────────────────────────────────────── */
+.surface-card { padding: 24px; }
+.surface-card__header { margin-bottom: 20px; }
+.surface-card__title  { margin: 0 0 6px; font-size: 1.25rem; color: var(--cb-ink); }
+.surface-card__subtitle { margin: 0; color: var(--cb-ink-muted); }
 
-.surface-card {
-  padding: 24px;
-}
-
-.surface-card__header {
-  margin-bottom: 20px;
-}
-
-.surface-card__title {
-  margin: 0 0 6px;
-  font-size: 1.25rem;
-  color: #111827;
-}
-
-.v-theme--dark .surface-card__title {
-  color: #f8fafc;
-}
-
-.surface-card__subtitle {
-  margin: 0;
-  color: #667085;
-}
-
+/* ── Filters ─────────────────────────────────────────────────────────────── */
 .filters-row {
   display: grid;
   grid-template-columns: minmax(240px, 1fr) auto auto;
@@ -1859,10 +1724,10 @@ watch(locale, () => {
   margin-bottom: 20px;
 }
 
-.modern-input {
-  min-width: 0;
-}
+.filters-row--tags { grid-template-columns: minmax(240px, 1fr) auto; }
+.modern-input { min-width: 0; }
 
+/* ── States ──────────────────────────────────────────────────────────────── */
 .loading-state,
 .empty-state,
 .placeholder-state {
@@ -1874,37 +1739,21 @@ watch(locale, () => {
   text-align: center;
 }
 
-.compact-empty {
-  min-height: 180px;
-}
-
+.compact-empty { min-height: 180px; }
 .empty-message,
-.placeholder-state p {
-  color: #667085;
-  max-width: 460px;
-}
+.placeholder-state p { color: var(--cb-ink-muted); max-width: 460px; }
 
-.category-list {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
+/* ── Category rows ───────────────────────────────────────────────────────── */
+.category-list { display: flex; flex-direction: column; gap: 14px; }
 
 .category-row {
-  border: 1px solid rgba(148, 163, 184, 0.16);
+  border: 1px solid var(--cb-border-card);
   border-radius: 8px;
   padding: 18px;
-  background: rgba(255, 255, 255, 0.88);
+  background: var(--cb-surface);
 }
 
-.category-row--child {
-  margin-left: 28px;
-  border-style: dashed;
-}
-
-.v-theme--dark .category-row {
-  background: rgba(15, 23, 42, 0.72);
-}
+.category-row--child { margin-left: 28px; border-style: dashed; }
 
 .category-row__main {
   display: flex;
@@ -1913,19 +1762,14 @@ watch(locale, () => {
   align-items: flex-start;
 }
 
-.category-row__identity {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  min-width: 0;
-}
+.category-row__identity { display: flex; align-items: center; gap: 14px; min-width: 0; }
 
 .category-avatar {
   width: 42px;
   height: 42px;
   border-radius: 8px;
-  background: rgba(102, 126, 234, 0.12);
-  color: #667eea;
+  background: color-mix(in srgb, var(--cb-primary) 12%, transparent);
+  color: var(--cb-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1933,23 +1777,11 @@ watch(locale, () => {
 }
 
 .category-avatar--custom {
-  background: rgba(102, 126, 234, 0.18);
+  background: color-mix(in srgb, var(--cb-primary) 18%, transparent);
 }
 
-.category-row__name {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #111827;
-}
-
-.v-theme--dark .category-row__name {
-  color: #f8fafc;
-}
-
-.category-row__code {
-  font-size: 0.9rem;
-  color: #667085;
-}
+.category-row__name { font-size: 1rem; font-weight: 600; color: var(--cb-ink); }
+.category-row__code { font-size: 0.9rem; color: var(--cb-ink-muted); }
 
 .category-row__badges {
   display: flex;
@@ -1958,18 +1790,8 @@ watch(locale, () => {
   justify-content: flex-end;
 }
 
-.mapping-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 14px 0 0;
-}
-
-.mapping-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
+.mapping-tags  { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 0; }
+.mapping-chip  { display: inline-flex; align-items: center; gap: 6px; }
 
 .mapping-chip__remove {
   display: inline-flex;
@@ -1982,102 +1804,47 @@ watch(locale, () => {
   cursor: pointer;
 }
 
-.mapping-chip__remove:disabled {
-  cursor: default;
-  opacity: 0.5;
-}
+.mapping-chip__remove:disabled { cursor: default; opacity: 0.5; }
 
-.category-row__actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 14px;
-  justify-content: flex-end;
-}
+.category-row__actions { display: flex; gap: 8px; margin-top: 14px; justify-content: flex-end; }
 
-.mapping-queue {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
+/* ── Mapping queue ───────────────────────────────────────────────────────── */
+.mapping-queue { display: flex; flex-direction: column; gap: 14px; }
 
 .mapping-queue__row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  display: flex;
+  flex-direction: column;
   gap: 16px;
-  border: 1px solid rgba(148, 163, 184, 0.16);
+  border: 1px solid var(--cb-border-card);
   border-radius: 8px;
   padding: 16px;
-  background: rgba(255, 255, 255, 0.88);
+  background: var(--cb-surface);
 }
 
-.v-theme--dark .mapping-queue__row {
-  background: rgba(15, 23, 42, 0.72);
-}
-
-.mapping-queue__name {
-  font-weight: 600;
-  color: #111827;
-}
-
-.v-theme--dark .mapping-queue__name {
-  color: #f8fafc;
-}
-
-.mapping-queue__meta {
-  margin-top: 6px;
-  color: #667085;
-  font-size: 0.92rem;
-}
-
+.mapping-queue__name     { font-weight: 600; color: var(--cb-ink); }
+.mapping-queue__meta     { margin-top: 6px; color: var(--cb-ink-muted); font-size: 0.92rem; }
 .mapping-queue__controls {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 10px;
   align-items: center;
 }
+.mapping-select          { min-width: 0; }
+.mapping-footer          { display: flex; justify-content: flex-end; margin-top: 16px; }
 
-.mapping-select {
-  flex: 1;
-}
-
-.mapping-footer {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 16px;
-}
-
-.filters-row--tags {
-  grid-template-columns: minmax(240px, 1fr) auto;
-}
-
-.tag-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-}
+/* ── Tag grid ────────────────────────────────────────────────────────────── */
+.tag-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 
 .tag-card {
-  border: 1px solid rgba(148, 163, 184, 0.16);
+  border: 1px solid var(--cb-border-card);
   border-radius: 8px;
   padding: 18px;
-  background: rgba(255, 255, 255, 0.88);
-}
-
-.v-theme--dark .tag-card {
-  background: rgba(15, 23, 42, 0.72);
+  background: var(--cb-surface);
 }
 
 .tag-card__main,
-.tag-card__actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.tag-card__actions {
-  margin-top: 14px;
-  justify-content: flex-end;
-}
+.tag-card__actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.tag-card__actions { margin-top: 14px; justify-content: flex-end; }
 
 .tag-pill {
   display: inline-flex;
@@ -2088,21 +1855,14 @@ watch(locale, () => {
   font-weight: 600;
 }
 
-.automation-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
+/* ── Automation list ─────────────────────────────────────────────────────── */
+.automation-list { display: flex; flex-direction: column; gap: 16px; }
 
 .automation-card {
-  border: 1px solid rgba(148, 163, 184, 0.16);
+  border: 1px solid var(--cb-border-card);
   border-radius: 8px;
   padding: 18px;
-  background: rgba(255, 255, 255, 0.88);
-}
-
-.v-theme--dark .automation-card {
-  background: rgba(15, 23, 42, 0.72);
+  background: var(--cb-surface);
 }
 
 .automation-card__main {
@@ -2112,21 +1872,8 @@ watch(locale, () => {
   align-items: flex-start;
 }
 
-.automation-card__title {
-  font-size: 1rem;
-  font-weight: 700;
-  color: #111827;
-  margin-bottom: 6px;
-}
-
-.v-theme--dark .automation-card__title {
-  color: #f8fafc;
-}
-
-.automation-card__rule {
-  color: #667085;
-  line-height: 1.5;
-}
+.automation-card__title   { font-size: 1rem; font-weight: 700; color: var(--cb-ink); margin-bottom: 6px; }
+.automation-card__rule    { color: var(--cb-ink-muted); line-height: 1.5; }
 
 .automation-card__actions {
   display: flex;
@@ -2142,57 +1889,39 @@ watch(locale, () => {
   gap: 12px;
 }
 
-.automation-preview__icon {
-  width: 56px;
-  height: 56px;
-  min-height: 56px;
-  margin-bottom: 0;
-}
+.automation-preview__icon { width: 56px; height: 56px; min-height: 56px; margin-bottom: 0; }
 
+/* ── Placeholder state ───────────────────────────────────────────────────── */
 .placeholder-state__icon {
   width: 84px;
   height: 84px;
   border-radius: 999px;
-  background: rgba(102, 126, 234, 0.12);
-  color: #667eea;
+  background: color-mix(in srgb, var(--cb-primary) 10%, transparent);
+  color: var(--cb-primary);
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 18px;
 }
 
-.placeholder-state h2 {
-  margin: 0 0 10px;
-  color: #111827;
-}
+.placeholder-state h2 { margin: 0 0 10px; color: var(--cb-ink); }
 
-.v-theme--dark .placeholder-state h2 {
-  color: #f8fafc;
-}
-
+/* ── Drawer ──────────────────────────────────────────────────────────────── */
 .category-drawer :deep(.v-navigation-drawer__content) {
-  background: #ffffff;
+  background: var(--cb-surface);
 }
 
-.v-theme--dark .category-drawer :deep(.v-navigation-drawer__content) {
-  background: #0f172a;
-}
-
-.drawer-shell {
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-}
+.drawer-shell { min-height: 100%; display: flex; flex-direction: column; }
 
 .drawer-shell__header,
 .drawer-shell__footer {
   padding: 24px;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+  border-bottom: 1px solid var(--cb-border);
 }
 
 .drawer-shell__footer {
   border-bottom: 0;
-  border-top: 1px solid rgba(148, 163, 184, 0.16);
+  border-top: 1px solid var(--cb-border);
   display: flex;
   justify-content: flex-end;
   gap: 12px;
@@ -2206,45 +1935,22 @@ watch(locale, () => {
   gap: 16px;
 }
 
-.drawer-shell__header h2 {
-  margin: 0 0 8px;
-  color: #111827;
-  font-size: 1.9rem;
-}
+.drawer-shell__header h2 { margin: 0 0 8px; color: var(--cb-ink); font-size: 1.9rem; }
+.drawer-shell__header p  { margin: 0; color: var(--cb-ink-muted); }
 
-.v-theme--dark .drawer-shell__header h2 {
-  color: #f8fafc;
-}
+.drawer-shell__body { padding: 24px; display: flex; flex-direction: column; gap: 24px; }
 
-.drawer-shell__header p {
-  margin: 0;
-  color: #667085;
-}
-
-.drawer-shell__body {
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.drawer-section {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.drawer-section--muted {
-  padding-top: 8px;
-}
+.drawer-section       { display: flex; flex-direction: column; gap: 16px; }
+.drawer-section--muted { padding-top: 8px; }
 
 .drawer-section__label {
   font-size: 0.85rem;
   font-weight: 700;
   text-transform: uppercase;
-  color: #667eea;
+  color: var(--cb-primary);
 }
 
+/* ── Type toggle ─────────────────────────────────────────────────────────── */
 .type-toggle {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2254,9 +1960,9 @@ watch(locale, () => {
 .type-toggle__option {
   min-height: 54px;
   border-radius: 8px;
-  border: 1px solid rgba(148, 163, 184, 0.22);
-  background: rgba(248, 250, 252, 0.92);
-  color: #667085;
+  border: 1px solid var(--cb-border);
+  background: var(--cb-surface-soft);
+  color: var(--cb-ink-muted);
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -2265,72 +1971,33 @@ watch(locale, () => {
 }
 
 .type-toggle__option--active {
-  background: linear-gradient(135deg, #667eea 0%, #5a67d8 100%);
+  background: var(--cb-primary);
   color: #ffffff;
-  border-color: rgba(102, 126, 234, 0.35);
-  box-shadow: 0 10px 24px rgba(102, 126, 234, 0.2);
+  border-color: color-mix(in srgb, var(--cb-primary) 35%, transparent);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--cb-primary) 22%, transparent);
 }
 
-.future-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.future-card {
-  border: 1px dashed rgba(148, 163, 184, 0.28);
-  border-radius: 8px;
-  padding: 16px;
-  background: rgba(248, 250, 252, 0.72);
-}
-
-.v-theme--dark .future-card {
-  background: rgba(30, 41, 59, 0.5);
-}
-
-.future-card strong {
-  display: block;
-  color: #111827;
-  margin-bottom: 6px;
-}
-
-.v-theme--dark .future-card strong {
-  color: #f8fafc;
-}
-
-.future-card span {
-  color: #667085;
-  font-size: 0.92rem;
-}
-
-.icon-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-}
+/* ── Icon + color pickers ────────────────────────────────────────────────── */
+.icon-grid  { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
 
 .icon-option {
   min-height: 52px;
   border-radius: 8px;
-  border: 1px solid rgba(148, 163, 184, 0.22);
-  background: rgba(248, 250, 252, 0.92);
-  color: #667085;
+  border: 1px solid var(--cb-border);
+  background: var(--cb-surface-soft);
+  color: var(--cb-ink-muted);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .icon-option--active {
-  border-color: rgba(102, 126, 234, 0.4);
-  color: #667eea;
-  box-shadow: 0 10px 24px rgba(102, 126, 234, 0.12);
+  border-color: color-mix(in srgb, var(--cb-primary) 40%, transparent);
+  color: var(--cb-primary);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--cb-primary) 10%, transparent);
 }
 
-.color-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-}
+.color-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
 
 .color-option {
   min-height: 44px;
@@ -2341,95 +2008,37 @@ watch(locale, () => {
   justify-content: center;
 }
 
-.color-option--active {
-  border-color: #111827;
-}
+.color-option--active { border-color: var(--cb-ink); }
 
+/* ── Preview card ────────────────────────────────────────────────────────── */
 .preview-card {
   display: flex;
   align-items: center;
   gap: 14px;
-  border: 1px solid rgba(148, 163, 184, 0.16);
+  border: 1px solid var(--cb-border-card);
   border-radius: 8px;
   padding: 16px;
-  background: rgba(248, 250, 252, 0.72);
+  background: var(--cb-surface-soft);
 }
 
-.v-theme--dark .preview-card {
-  background: rgba(30, 41, 59, 0.5);
-}
+.preview-card strong { display: block; color: var(--cb-ink); }
+.preview-card span   { color: var(--cb-ink-muted); font-size: 0.92rem; }
 
-.preview-card strong {
-  display: block;
-  color: #111827;
-}
-
-.v-theme--dark .preview-card strong {
-  color: #f8fafc;
-}
-
-.preview-card span {
-  color: #667085;
-  font-size: 0.92rem;
-}
-
+/* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 1180px) {
-  .content-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .tag-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .automation-card__main {
-    flex-direction: column;
-  }
-
-  .insight-band__headline {
-    flex-direction: column;
-  }
-
-  .insight-band__meta {
-    min-width: 0;
-    width: 100%;
-  }
+  .content-grid             { grid-template-columns: 1fr; }
+  .tag-grid                 { grid-template-columns: 1fr; }
+  .automation-card__main    { flex-direction: column; }
+  .insight-band__headline   { flex-direction: column; }
+  .insight-band__meta       { min-width: 0; width: 100%; }
 }
 
 @media (max-width: 900px) {
-  .stats-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .filters-row {
-    grid-template-columns: 1fr;
-  }
-
-  .filters-row--tags {
-    grid-template-columns: 1fr;
-  }
-
-  .mapping-queue__row {
-    grid-template-columns: 1fr;
-  }
-
-  .mapping-queue__controls {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .future-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .icon-grid,
-  .color-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-
-  .automation-condition-grid {
-    grid-template-columns: 1fr;
-  }
+  .stats-grid                 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .filters-row,
+  .filters-row--tags          { grid-template-columns: 1fr; }
+  .mapping-queue__controls    { grid-template-columns: 1fr; }
+  .automation-condition-grid  { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 640px) {
@@ -2437,26 +2046,12 @@ watch(locale, () => {
   .surface-card,
   .drawer-shell__header,
   .drawer-shell__body,
-  .drawer-shell__footer {
-    padding-left: 16px;
-    padding-right: 16px;
-  }
+  .drawer-shell__footer { padding-left: 16px; padding-right: 16px; }
 
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .category-row__main {
-    flex-direction: column;
-  }
-
-  .category-row--child {
-    margin-left: 0;
-  }
-
+  .stats-grid                  { grid-template-columns: 1fr; }
+  .category-row__main          { flex-direction: column; }
+  .category-row--child         { margin-left: 0; }
   .category-row__badges,
-  .category-row__actions {
-    justify-content: flex-start;
-  }
+  .category-row__actions       { justify-content: flex-start; }
 }
 </style>

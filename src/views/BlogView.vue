@@ -546,9 +546,9 @@ async function handleNewsletterSubmit() {
   --ink: #0f172a;
   --ink-soft: #475569;
   --line: rgba(15, 23, 42, 0.08);
-  --brand: #667eea;
-  --brand-strong: #4f46e5;
-  --accent-soft: rgba(79, 70, 229, 0.08);
+  --brand: var(--cb-primary);
+  --brand-strong: var(--cb-primary);
+  --accent-soft: color-mix(in srgb, var(--cb-primary) 8%, transparent);
   --shadow-soft: 0 12px 24px rgba(15, 23, 42, 0.06);
   background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
   color: var(--ink);
@@ -571,6 +571,19 @@ async function handleNewsletterSubmit() {
     radial-gradient(circle at top left, rgba(32, 95, 99, 0.08), transparent 28%),
     radial-gradient(circle at 85% 10%, rgba(182, 85, 31, 0.08), transparent 22%),
     linear-gradient(180deg, #fbf8f2 0%, #f8f4ed 52%, #fdfaf5 100%);
+}
+
+:global(.v-theme--dark) #blog-page:not(.blog-page--public) {
+  --page-bg: var(--cb-page-bg);
+  --surface: var(--cb-surface);
+  --surface-soft: var(--cb-surface-soft);
+  --ink: var(--cb-ink);
+  --ink-soft: var(--cb-ink-muted);
+  --line: var(--cb-border-card);
+  --accent-soft: var(--cb-primary-bg);
+  --shadow-soft: var(--cb-shadow-elevated);
+  background: var(--cb-page-bg);
+  color: var(--cb-ink);
 }
 
 #blog-page :deep(*) {
@@ -730,7 +743,7 @@ h3 {
 
 .btn-secondary,
 .btn-ghost {
-  background: #fff;
+  background: var(--surface);
   color: var(--ink);
   border-color: var(--line);
 }
@@ -839,7 +852,7 @@ h3 {
 .topic-chip {
   border-radius: 999px;
   padding: 7px 10px;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--line);
   color: var(--ink-soft);
   font-size: 0.9rem;
@@ -1025,7 +1038,7 @@ h3 {
 .newsletter-confirmation__icon {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #0f766e;
+  color: var(--cb-accent);
 }
 
 .newsletter-confirmation__content {
@@ -1039,7 +1052,7 @@ h3 {
 }
 
 .newsletter-feedback--success {
-  color: #0f766e;
+  color: var(--cb-accent);
 }
 
 .newsletter-feedback--error {
@@ -1050,14 +1063,14 @@ h3 {
   width: 100%;
   border-radius: 12px;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--surface);
   padding: 14px 16px;
   font: inherit;
   color: var(--ink);
 }
 
 .newsletter-form input:focus {
-  outline: 2px solid rgba(79, 70, 229, 0.12);
+  outline: 2px solid color-mix(in srgb, var(--cb-primary) 12%, transparent);
   border-color: var(--brand);
 }
 

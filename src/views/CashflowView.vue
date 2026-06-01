@@ -1,78 +1,68 @@
 <template>
-  <div class="cashflow-page">
-    <v-container class="modern-container">
-      <div class="page-header">
-        <div>
-          <h1 class="page-title">{{ $t('cashflow.title') }}</h1>
-          <p class="page-subtitle">{{ $t('cashflow.subtitle') }}</p>
-        </div>
+  <div class="cb-page">
+    <div class="cb-container">
+      <page-header :title="t('cashflow.title')" :meta="t('cashflow.subtitle')" />
+
+      <div class="cb-scope-note">
+        <v-icon size="14" color="var(--cb-ink-muted)">mdi-account-group-outline</v-icon>
+        <span>{{ t('transactionVisibility.cashflowBadge') }} — {{ t('transactionVisibility.cashflowScopeNote') }}</span>
       </div>
 
-      <div class="scope-badge-row">
-        <v-chip size="small" color="#667eea" variant="outlined">
-          <v-icon start size="14">mdi-account-group-outline</v-icon>
-          {{ $t('transactionVisibility.cashflowBadge') }}
-        </v-chip>
-        <span class="scope-badge-note">{{ $t('transactionVisibility.cashflowScopeNote') }}</span>
-      </div>
-
-      <div class="modern-card">
-        <div class="card-header">
-          <h2 class="card-title">
-            <v-icon color="#667eea" class="mr-2">mdi-chart-areaspline</v-icon>
-            {{ $t('cashflow.flow_title') }}
+      <div class="cb-card cf-card">
+        <div class="cb-card__header">
+          <h2 class="cb-card__title">
+            <v-icon color="var(--cb-primary)" size="16" class="mr-2">mdi-chart-areaspline</v-icon>
+            {{ t('cashflow.flow_title') }}
           </h2>
         </div>
-        <div class="card-content">
+        <div class="cb-card__body">
           <CashflowDashboard />
         </div>
       </div>
 
-      <div class="modern-card">
-        <div class="card-header">
-          <div class="insights-header">
-            <div class="insights-heading">
-              <h2 class="card-title">
-                <v-icon color="#667eea" class="mr-2">mdi-brain</v-icon>
-                {{ $t('cashflow.insights_title') }}
-              </h2>
-              <p class="insights-subtitle">{{ $t('cashflow.insights_subtitle') }}</p>
-            </div>
-            <span class="experimental-badge">{{ $t('cashflow.experimental_badge') }}</span>
+      <div class="cb-card">
+        <div class="cb-card__header">
+          <div class="insights-heading">
+            <h2 class="cb-card__title">
+              <v-icon color="var(--cb-primary)" size="16" class="mr-2">mdi-brain</v-icon>
+              {{ t('cashflow.insights_title') }}
+            </h2>
+            <p class="insights-subtitle">{{ t('cashflow.insights_subtitle') }}</p>
           </div>
+          <span class="experimental-badge">{{ t('cashflow.experimental_badge') }}</span>
         </div>
-        <div class="card-content">
-          <p class="experimental-note">{{ $t('cashflow.experimental_note') }}</p>
+        <div class="cb-card__body">
+          <p class="experimental-note">{{ t('cashflow.experimental_note') }}</p>
           <div class="insights-context">
             <div class="insights-context__item">
-              <v-icon size="18" color="#667eea">mdi-database-outline</v-icon>
-              <span>{{ $t('cashflow.insights_context_history') }}</span>
+              <v-icon size="18" color="var(--cb-primary)">mdi-database-outline</v-icon>
+              <span>{{ t('cashflow.insights_context_history') }}</span>
             </div>
             <div class="insights-context__item">
-              <v-icon size="18" color="#f59e0b">mdi-flask-outline</v-icon>
-              <span>{{ $t('cashflow.insights_context_experimental') }}</span>
+              <v-icon size="18" color="var(--cb-warning)">mdi-flask-outline</v-icon>
+              <span>{{ t('cashflow.insights_context_experimental') }}</span>
             </div>
           </div>
           <div v-if="hasCreditCardContext" class="credit-card-context">
             <div class="credit-card-context__header">
-              <h3>{{ $t('cashflow.credit_card_context_title') }}</h3>
-              <p>{{ $t('cashflow.credit_card_context_subtitle') }}</p>
+              <h3>{{ t('cashflow.credit_card_context_title') }}</h3>
+              <p>{{ t('cashflow.credit_card_context_subtitle') }}</p>
             </div>
             <div class="credit-card-context__grid">
-              <div v-if="pendingCreditCardAmount > 0" class="credit-card-context__card credit-card-context__card--warning">
-                <span>{{ $t('cashflow.credit_card_pending_title') }}</span>
+              <div v-if="pendingCreditCardAmount > 0" class="cc-card cc-card--warning">
+                <span>{{ t('cashflow.credit_card_pending_title') }}</span>
                 <strong>{{ formatCurrency(pendingCreditCardAmount) }}</strong>
-                <p>{{ $t('cashflow.credit_card_pending_message', { amount: formatCurrency(pendingCreditCardAmount) }) }}</p>
+                <p>{{ t('cashflow.credit_card_pending_message', { amount: formatCurrency(pendingCreditCardAmount) }) }}</p>
               </div>
-              <div v-if="recurringCreditCardAverage > 0" class="credit-card-context__card">
-                <span>{{ $t('cashflow.credit_card_recurring_title') }}</span>
+              <div v-if="recurringCreditCardAverage > 0" class="cc-card">
+                <span>{{ t('cashflow.credit_card_recurring_title') }}</span>
                 <strong>{{ formatCurrency(recurringCreditCardAverage) }}</strong>
-                <p>{{ $t('cashflow.credit_card_recurring_message', { count: recurringCreditCardCount, amount: formatCurrency(recurringCreditCardAverage) }) }}</p>
+                <p>{{ t('cashflow.credit_card_recurring_message', { count: recurringCreditCardCount, amount: formatCurrency(recurringCreditCardAverage) }) }}</p>
               </div>
-              <div v-if="creditCardShare > 0" class="credit-card-context__card">
-                <span>{{ $t('cashflow.credit_card_share_title') }}</span>
+              <div v-if="creditCardShare > 0" class="cc-card">
+                <span>{{ t('cashflow.credit_card_share_title') }}</span>
                 <strong>{{ creditCardShareLabel }}</strong>
-                <p>{{ $t('cashflow.credit_card_share_message', { share: creditCardShareLabel }) }}</p>
+                <p>{{ t('cashflow.credit_card_share_message', { share: creditCardShareLabel }) }}</p>
               </div>
             </div>
           </div>
@@ -82,7 +72,7 @@
           </div>
         </div>
       </div>
-    </v-container>
+    </div>
   </div>
 </template>
 
@@ -93,8 +83,9 @@ import CashflowDashboard from '@/components/ai/CashflowDashboard.vue'
 import MonthlyExpensesPrediction from '@/components/ai/MonthlyExpensesPrediction.vue'
 import AnomalyDetectionTable from '@/components/ai/AnomalyDetectionTable.vue'
 import AiService from '@/services/aiService'
+import PageHeader from '@/components/PageHeader.vue'
 
-const { locale } = useI18n()
+const { t, locale } = useI18n()
 
 const predictionSummary = ref<any | null>(null)
 
@@ -125,276 +116,133 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.cashflow-page {
-  min-height: 100vh;
-  background: linear-gradient(135deg, rgba(245, 247, 250, 1) 0%, rgba(232, 234, 240, 1) 100%);
-  padding: 32px 0;
-}
-
-.v-theme--dark .cashflow-page {
-  background: linear-gradient(135deg, rgba(30, 30, 30, 1) 0%, rgba(20, 20, 20, 1) 100%);
-}
-
-.modern-container {
-  max-width: 1400px;
-  padding-left: 16px;
-  padding-right: 16px;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 32px;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.page-title {
-  font-size: 2.2rem;
-  font-weight: 700;
-  margin: 0 0 8px;
-  color: #1a1a1a;
-}
-
-.v-theme--dark .page-title {
-  color: #ffffff;
-}
-
-.page-subtitle {
-  margin: 0;
-  color: #666;
-  font-size: 1rem;
-}
-
-.scope-badge-row {
+.cb-scope-note {
   display: flex;
   align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+  gap: 6px;
+  font-size: .82rem;
+  color: var(--cb-ink-muted);
   margin-bottom: 20px;
 }
 
-.scope-badge-note {
-  color: #64748b;
-  font-size: 0.92rem;
-}
-
-.v-theme--dark .page-subtitle {
-  color: #b0b0b0;
-}
-
-.v-theme--dark .scope-badge-note {
-  color: #cbd5e1;
-}
-
-.modern-card {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  margin-bottom: 32px;
-  overflow: hidden;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.v-theme--dark .modern-card {
-  background: #2a2a2a;
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-}
-
-.card-header {
-  padding: 20px 24px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-  background: rgba(102, 126, 234, 0.03);
-}
-
-.v-theme--dark .card-header {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(102, 126, 234, 0.08);
-}
-
-.card-title {
-  font-size: 1.3rem;
-  font-weight: 600;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  color: #1a1a1a;
-}
-
-.v-theme--dark .card-title {
-  color: #ffffff;
-}
-
-.card-content {
-  padding: 24px;
-}
-
-.insights-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
+.cf-card {
+  margin-bottom: 20px;
 }
 
 .insights-heading {
-  display: grid;
-  gap: 0.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .insights-subtitle {
-  margin: 0;
-  color: #64748b;
-  font-size: 0.95rem;
+  font-size: 0.875rem;
+  color: var(--cb-ink-secondary);
+  margin: 4px 0 0;
 }
 
 .experimental-badge {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 999px;
-  padding: 0.3rem 0.8rem;
-  background: rgba(245, 158, 11, 0.12);
-  color: #b45309;
-  font-size: 0.82rem;
+  font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.02em;
-}
-
-.v-theme--dark .experimental-badge {
-  background: rgba(245, 158, 11, 0.18);
-  color: #fbbf24;
+  letter-spacing: 0.06em;
+  color: var(--cb-warning);
+  background: var(--cb-warning-bg);
+  padding: 3px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
 }
 
 .experimental-note {
+  color: var(--cb-ink-secondary);
+  font-size: 0.9rem;
   margin: 0 0 16px;
-  color: #64748b;
-  font-size: 0.95rem;
-}
-
-.v-theme--dark .experimental-note {
-  color: #cbd5e1;
 }
 
 .insights-context {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 12px;
-  margin: 0 0 18px;
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
 }
 
 .insights-context__item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 0.85rem 0.95rem;
-  border-radius: 12px;
-  background: rgba(248, 250, 252, 0.9);
-  color: #334155;
-  font-size: 0.93rem;
-}
-
-.v-theme--dark .insights-subtitle {
-  color: #cbd5e1;
-}
-
-.v-theme--dark .insights-context__item {
-  background: rgba(51, 65, 85, 0.55);
-  color: #e2e8f0;
+  gap: 6px;
+  font-size: 0.875rem;
+  color: var(--cb-ink-secondary);
 }
 
 .insights-grid {
   display: grid;
-  gap: 24px;
+  gap: 16px;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  margin-top: 20px;
 }
 
+/* Credit card context */
 .credit-card-context {
-  display: grid;
-  gap: 14px;
-  margin: 0 0 20px;
-}
-
-.credit-card-context__header {
-  display: grid;
-  gap: 0.35rem;
-}
-
-.credit-card-context__header h3,
-.credit-card-context__header p {
-  margin: 0;
+  margin-bottom: 20px;
 }
 
 .credit-card-context__header h3 {
   font-size: 1rem;
-  font-weight: 700;
-  color: #0f172a;
+  font-weight: 600;
+  color: var(--cb-ink);
+  margin: 0 0 4px;
 }
 
 .credit-card-context__header p {
-  color: #64748b;
-  font-size: 0.92rem;
+  font-size: 0.875rem;
+  color: var(--cb-ink-secondary);
+  margin: 0 0 12px;
 }
 
 .credit-card-context__grid {
   display: grid;
   gap: 12px;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
 
-.credit-card-context__card {
-  display: grid;
-  gap: 0.35rem;
-  padding: 0.95rem 1rem;
-  border-radius: 14px;
-  background: rgba(248, 250, 252, 0.92);
-  border: 1px solid rgba(148, 163, 184, 0.18);
+.cc-card {
+  padding: 14px;
+  border-radius: var(--cb-radius-card);
+  background: var(--cb-surface-soft);
+  border: 1px solid var(--cb-border-card);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.credit-card-context__card--warning {
-  background: rgba(245, 158, 11, 0.08);
-  border-color: rgba(245, 158, 11, 0.2);
-}
-
-.credit-card-context__card span {
-  color: #64748b;
-  font-size: 0.82rem;
+.cc-card span {
+  font-size: 0.78rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
+  color: var(--cb-ink-muted);
 }
 
-.credit-card-context__card strong {
-  color: #0f172a;
-  font-size: 1.15rem;
+.cc-card strong {
+  font-family: var(--cb-font-heading);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--cb-ink);
 }
 
-.credit-card-context__card p {
+.cc-card p {
+  font-size: 0.82rem;
+  color: var(--cb-ink-secondary);
   margin: 0;
-  color: #475569;
-  font-size: 0.92rem;
-  line-height: 1.45;
+  line-height: 1.4;
 }
 
-.v-theme--dark .credit-card-context__header h3,
-.v-theme--dark .credit-card-context__card strong {
-  color: #f8fafc;
+.cc-card--warning {
+  background: var(--cb-warning-bg);
+  border-color: var(--cb-warning);
 }
 
-.v-theme--dark .credit-card-context__header p,
-.v-theme--dark .credit-card-context__card p {
-  color: #cbd5e1;
-}
-
-.v-theme--dark .credit-card-context__card {
-  background: rgba(51, 65, 85, 0.55);
-  border-color: rgba(148, 163, 184, 0.2);
-}
-
-.v-theme--dark .credit-card-context__card--warning {
-  background: rgba(245, 158, 11, 0.16);
-  border-color: rgba(245, 158, 11, 0.24);
+.cc-card--warning strong {
+  color: var(--cb-warning);
 }
 </style>

@@ -3,15 +3,15 @@
   <v-row>
     <v-col cols="12" lg="10">
       <!-- Card do Plano Atual -->
-      <div class="modern-card mb-6">
-        <div class="card-header">
-          <h2 class="card-title">
-            <v-icon color="#667eea" class="mr-2">mdi-crown</v-icon>
+      <div class="cb-card mb-6">
+        <div class="cb-card__header">
+          <h2 class="cb-card__title">
+            <v-icon color="var(--cb-primary)" class="mr-2">mdi-crown</v-icon>
             {{ t('subscription_management.current_plan') }}
           </h2>
           <p class="card-description">{{ t('subscription_management.title') }}</p>
         </div>
-        <div class="card-content">
+        <div class="cb-card__body">
           <v-alert type="info" variant="tonal" class="mb-4">
             {{ t('subscription_management.global_billing_notice') }}
           </v-alert>
@@ -19,14 +19,14 @@
             <div class="subscription-info-grid">
               <div class="info-item">
                 <div class="info-label">
-                  <v-icon size="20" color="#667eea">mdi-package-variant</v-icon>
+                  <v-icon size="20" color="var(--cb-primary)">mdi-package-variant</v-icon>
                   {{ t('subscription_management.plan_label') }}
                 </div>
                 <div class="info-value">{{ currentPlanText }}</div>
               </div>
               <div class="info-item">
                 <div class="info-label">
-                  <v-icon size="20" color="#667eea">mdi-check-circle</v-icon>
+                  <v-icon size="20" color="var(--cb-primary)">mdi-check-circle</v-icon>
                   {{ t('subscription_management.status') }}
                 </div>
                 <div class="info-value">
@@ -84,21 +84,21 @@
               <div class="subscription-info-grid mt-4">
                 <div class="info-item">
                   <div class="info-label">
-                    <v-icon size="20" color="#667eea">mdi-view-grid</v-icon>
+                    <v-icon size="20" color="var(--cb-primary)">mdi-view-grid</v-icon>
                     {{ t('subscription_management.active_workspaces_label') }}
                   </div>
                   <div class="info-value">{{ workspaceQuota.activeWorkspaceCount }}</div>
                 </div>
                 <div class="info-item">
                   <div class="info-label">
-                    <v-icon size="20" color="#667eea">mdi-account-multiple</v-icon>
+                    <v-icon size="20" color="var(--cb-primary)">mdi-account-multiple</v-icon>
                     {{ t('subscription_management.collaborative_workspaces_label') }}
                   </div>
                   <div class="info-value">{{ workspaceQuota.activeCollaborativeWorkspaceCount }}</div>
                 </div>
                 <div class="info-item">
                   <div class="info-label">
-                    <v-icon size="20" color="#667eea">mdi-account</v-icon>
+                    <v-icon size="20" color="var(--cb-primary)">mdi-account</v-icon>
                     {{ t('subscription_management.personal_workspaces_label') }}
                   </div>
                   <div class="info-value">{{ workspaceQuota.activePersonalWorkspaceCount }}</div>
@@ -110,12 +110,12 @@
       </div>
 
       <!-- Card de Mudança de Plano -->
-      <div class="modern-card mb-6">
-        <div class="card-header">
-          <div class="card-header-row">
+      <div class="cb-card mb-6">
+        <div class="cb-card__header">
+          <div class="cb-card__header card-header-row">
             <div>
-              <h2 class="card-title">
-                <v-icon color="#667eea" class="mr-2">mdi-swap-horizontal</v-icon>
+              <h2 class="cb-card__title">
+                <v-icon color="var(--cb-primary)" class="mr-2">mdi-swap-horizontal</v-icon>
                 {{ t('subscription_management.change_plan_title') }}
               </h2>
               <p class="card-description">{{ t('subscription_management.change_plan_instructions') }}</p>
@@ -123,7 +123,7 @@
             <v-btn
               variant="text"
               size="small"
-              color="#667eea"
+              color="var(--cb-primary)"
               class="details-btn"
               @click="openPlanDetails"
             >
@@ -132,7 +132,7 @@
             </v-btn>
           </div>
         </div>
-        <div class="card-content">
+        <div class="cb-card__body">
           <v-radio-group v-model="selectedPlan" class="plan-radio-group">
             <div v-if="isTenantMode" class="plan-group-label">{{ t('subscription_management.starter_group') }}</div>
             <div class="plan-option" :class="{ 'disabled': currentPlan === 'MONTHLY' }">
@@ -140,7 +140,7 @@
                 :label="t('subscription_management.starter_monthly_name')"
                 value="MONTHLY"
                 :disabled="currentPlan === 'MONTHLY'"
-                color="#667eea"
+                color="var(--cb-primary)"
               >
                 <template v-slot:label>
                   <div class="plan-label">
@@ -156,7 +156,7 @@
               <v-chip 
                 v-if="currentPlan === 'MONTHLY'" 
                 size="small" 
-                color="#667eea"
+                color="var(--cb-primary)"
                 class="current-badge"
               >
                 {{ t('subscription_management.current') }}
@@ -168,7 +168,7 @@
                 :label="t('subscription_management.starter_annual_name')"
                 value="ANNUAL"
                 :disabled="currentPlan === 'ANNUAL'"
-                color="#667eea"
+                color="var(--cb-primary)"
               >
                 <template v-slot:label>
                   <div class="plan-label">
@@ -189,7 +189,7 @@
               <v-chip 
                 v-if="currentPlan === 'ANNUAL'" 
                 size="small" 
-                color="#667eea"
+                color="var(--cb-primary)"
                 class="current-badge"
               >
                 {{ t('subscription_management.current') }}
@@ -204,7 +204,7 @@
                   :label="t('subscription_management.team_monthly_name')" 
                   value="BUSINESS_MONTHLY"
                   :disabled="currentPlan === 'BUSINESS_MONTHLY'"
-                  color="#667eea"
+                  color="var(--cb-primary)"
                 >
                   <template v-slot:label>
                     <div class="plan-label">
@@ -220,7 +220,7 @@
                 <v-chip 
                   v-if="currentPlan === 'BUSINESS_MONTHLY'" 
                   size="small" 
-                  color="#667eea"
+                  color="var(--cb-primary)"
                   class="current-badge"
                 >
                   {{ t('subscription_management.current') }}
@@ -232,7 +232,7 @@
                   :label="t('subscription_management.team_annual_name')" 
                   value="BUSINESS_ANNUAL"
                   :disabled="currentPlan === 'BUSINESS_ANNUAL'"
-                  color="#667eea"
+                  color="var(--cb-primary)"
                 >
                   <template v-slot:label>
                     <div class="plan-label">
@@ -253,7 +253,7 @@
                 <v-chip 
                   v-if="currentPlan === 'BUSINESS_ANNUAL'" 
                   size="small" 
-                  color="#667eea"
+                  color="var(--cb-primary)"
                   class="current-badge"
                 >
                   {{ t('subscription_management.current') }}
@@ -267,7 +267,7 @@
             <v-btn 
               v-if="selectedPlan && currentPlan !== selectedPlan" 
               @click="handlePlanChange"
-              class="modern-btn gradient-btn mb-3"
+              color="var(--cb-primary)" class="mb-3"
               size="large"
               block
               :disabled="paymentSyncDegraded"
@@ -281,8 +281,8 @@
               v-if="selectedPlan && currentPlan !== selectedPlan" 
               @click="selectedPlan = currentPlan"
               variant="text"
-              color="#667eea"
-              class="modern-btn mb-3"
+              color="var(--cb-primary)"
+              class="mb-3"
               size="large"
               block
             >
@@ -295,8 +295,8 @@
               v-if="(!selectedPlan || currentPlan === selectedPlan) && isPremium"
               @click="openBillingPortal"
               variant="outlined"
-              color="#667eea"
-              class="modern-btn"
+              color="var(--cb-primary)"
+             
               size="large"
               block
               :disabled="paymentSyncDegraded"
@@ -355,7 +355,7 @@
             </div>
           </v-card-text>
           <v-card-actions class="justify-end">
-            <v-btn variant="text" color="#667eea" @click="showPlanDetails = false">
+            <v-btn variant="text" color="var(--cb-primary)" @click="showPlanDetails = false">
               {{ t('common.close') }}
             </v-btn>
           </v-card-actions>
@@ -363,15 +363,15 @@
       </v-dialog>
 
       <!-- Card de Cancelamento -->
-      <div v-if="subscriptionStatus === 'ACTIVE' || subscriptionStatus === 'TRIALING'" class="modern-card cancel-card">
-        <div class="card-header">
-          <h2 class="card-title">
+      <div v-if="subscriptionStatus === 'ACTIVE' || subscriptionStatus === 'TRIALING'" class="cb-card cancel-card">
+        <div class="cb-card__header">
+          <h2 class="cb-card__title">
             <v-icon color="#f44336" class="mr-2">mdi-alert-circle</v-icon>
             {{ t('subscription_management.danger_zone_title') }}
           </h2>
           <p class="card-description">{{ t('subscription_management.danger_zone_desc') }}</p>
         </div>
-        <div class="card-content">
+        <div class="cb-card__body">
           <div class="cancel-section">
             <div class="cancel-info">
               <div class="cancel-label">{{ t('subscription_management.cancel_subscription_label') }}</div>
@@ -381,7 +381,7 @@
               @click="cancelSubscription"
               color="error"
               variant="outlined"
-              class="modern-btn"
+             
               :disabled="paymentSyncDegraded"
             >
               <v-icon left>mdi-close-circle</v-icon>
@@ -944,35 +944,6 @@ watch(
 </script>
 
 <style scoped>
-/* Modern Cards */
-.modern-card {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-  overflow: hidden;
-}
-
-.v-theme--dark .modern-card {
-  background: #2a2a2a;
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-}
-
-.modern-card:hover {
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-}
-
-.v-theme--dark .modern-card:hover {
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
-}
-
-.card-header {
-  padding: 24px 24px 16px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-}
-
 .card-header-row {
   display: flex;
   align-items: center;
@@ -980,56 +951,23 @@ watch(
   gap: 16px;
 }
 
-.v-theme--dark .card-header {
-  border-bottom-color: rgba(255, 255, 255, 0.1);
-}
-
-.card-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #1a1a1a;
-  margin: 0;
-  display: flex;
-  align-items: center;
-}
-
-.v-theme--dark .card-title {
-  color: #ffffff;
-}
-
 .card-description {
-  color: #666;
+  color: var(--cb-ink-muted);
   margin: 8px 0 0;
   font-size: 0.95rem;
 }
 
-.v-theme--dark .card-description {
-  color: #b0b0b0;
-}
-
-.card-content {
-  padding: 24px;
-}
-
 /* Subscription Overview */
 .subscription-overview {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+  background: var(--cb-surface-soft);
   border-radius: 12px;
   padding: 20px;
 }
 
 .workspace-quota__description {
   margin-top: 6px;
-  color: #666;
+  color: var(--cb-ink-muted);
   font-size: 0.9rem;
-}
-
-.v-theme--dark .workspace-quota__description {
-  color: #b0b0b0;
-}
-
-.v-theme--dark .subscription-overview {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
 }
 
 .subscription-info-grid {
@@ -1038,59 +976,24 @@ watch(
   gap: 24px;
 }
 
-.info-item {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.info-label {
-  font-size: 0.875rem;
-  color: #666;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.v-theme--dark .info-label {
-  color: #b0b0b0;
-}
-
-.info-value {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #1a1a1a;
-}
-
-.v-theme--dark .info-value {
-  color: #ffffff;
-}
+.info-item  { display: flex; flex-direction: column; gap: 8px; }
+.info-label { font-size: 0.875rem; color: var(--cb-ink-muted); font-weight: 500; display: flex; align-items: center; gap: 6px; }
+.info-value { font-size: 1.25rem; font-weight: 600; color: var(--cb-ink); }
 
 /* Plan Options */
-.plan-radio-group {
-  margin-top: 8px;
-}
+.plan-radio-group { margin-top: 8px; }
 
 .plan-option {
   padding: 16px;
   border-radius: 12px;
-  background: rgba(102, 126, 234, 0.03);
+  background: color-mix(in srgb, var(--cb-primary) 3%, transparent);
   transition: all 0.3s ease;
   position: relative;
 }
 
-.v-theme--dark .plan-option {
-  background: rgba(102, 126, 234, 0.08);
-}
-
 .plan-option:hover:not(.disabled) {
-  background: rgba(102, 126, 234, 0.08);
+  background: color-mix(in srgb, var(--cb-primary) 8%, transparent);
   transform: translateX(4px);
-}
-
-.v-theme--dark .plan-option:hover:not(.disabled) {
-  background: rgba(102, 126, 234, 0.15);
 }
 
 .plan-option.disabled {
@@ -1098,50 +1001,12 @@ watch(
   background: rgba(0, 0, 0, 0.02);
 }
 
-.v-theme--dark .plan-option.disabled {
-  background: rgba(255, 255, 255, 0.02);
-}
+.plan-label   { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+.plan-name    { font-size: 1.1rem; font-weight: 600; color: var(--cb-ink); display: flex; align-items: center; }
+.plan-price   { font-size: 1.5rem; font-weight: 700; color: var(--cb-primary); margin-top: 4px; }
+.plan-description { font-size: 0.875rem; color: var(--cb-ink-muted); }
 
-.plan-label {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  width: 100%;
-}
-
-.plan-name {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #1a1a1a;
-  display: flex;
-  align-items: center;
-}
-
-.v-theme--dark .plan-name {
-  color: #ffffff;
-}
-
-.plan-price {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #667eea;
-  margin-top: 4px;
-}
-
-.plan-description {
-  font-size: 0.875rem;
-  color: #666;
-}
-
-.v-theme--dark .plan-description {
-  color: #b0b0b0;
-}
-
-.plan-strike {
-  text-decoration: line-through;
-  color: #9aa5b1;
-  margin-right: 6px;
-}
+.plan-strike { text-decoration: line-through; color: #9aa5b1; margin-right: 6px; }
 
 .plan-badge {
   display: inline-flex;
@@ -1163,35 +1028,13 @@ watch(
   margin: 8px 0 12px;
 }
 
-.v-theme--dark .plan-group-label {
-  color: #b9b9b9;
-}
+.current-badge { position: absolute; top: 16px; right: 16px; }
 
-.current-badge {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-}
-
-.details-card {
-  border-radius: 16px;
-}
-
-.details-title {
-  font-weight: 600;
-}
-
-.details-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 16px;
-}
-
-.details-col {
-  background: #f8f9fb;
-  border-radius: 12px;
-  padding: 16px;
-}
+/* Details panel */
+.details-card  { border-radius: 16px; }
+.details-title { font-weight: 600; }
+.details-grid  { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.details-col   { background: #f8f9fb; border-radius: 12px; padding: 16px; }
 
 .details-tag {
   display: inline-flex;
@@ -1205,73 +1048,19 @@ watch(
   margin-bottom: 10px;
 }
 
-.starter-tag {
-  background: rgba(243, 156, 18, 0.15);
-  color: #b06a0c;
-}
-
-.team-tag {
-  background: rgba(142, 68, 173, 0.15);
-  color: #5b2c6f;
-}
-
-.details-price {
-  font-size: 0.95rem;
-  color: #334155;
-  margin-bottom: 10px;
-}
-
-.details-price-row + .details-price-row {
-  margin-top: 6px;
-}
-
-.details-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  color: #475569;
-  font-size: 0.9rem;
-}
-
-.details-list li + li {
-  margin-top: 6px;
-}
-
-.details-btn {
-  white-space: nowrap;
-}
+.starter-tag  { background: rgba(243, 156, 18, 0.15); color: #b06a0c; }
+.team-tag     { background: rgba(142, 68, 173, 0.15); color: #5b2c6f; }
+.details-price { font-size: 0.95rem; color: #334155; margin-bottom: 10px; }
+.details-price-row + .details-price-row { margin-top: 6px; }
+.details-list  { list-style: none; padding: 0; margin: 0; color: #475569; font-size: 0.9rem; }
+.details-list li + li { margin-top: 6px; }
+.details-btn   { white-space: nowrap; }
 
 /* Action Buttons */
-.action-buttons {
-  margin-top: 24px;
-}
-
-.modern-btn {
-  text-transform: none;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  border-radius: 8px;
-  transition: all 0.3s ease;
-}
-
-.gradient-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-  color: white !important;
-}
-
-.gradient-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
-}
+.action-buttons { margin-top: 24px; }
 
 /* Cancel Card */
-.cancel-card {
-  border: 2px solid rgba(244, 67, 54, 0.2);
-}
-
-.v-theme--dark .cancel-card {
-  border-color: rgba(244, 67, 54, 0.3);
-}
+.cancel-card  { border: 2px solid rgba(244, 67, 54, 0.2); }
 
 .cancel-section {
   display: flex;
@@ -1281,51 +1070,15 @@ watch(
   flex-wrap: wrap;
 }
 
-.cancel-info {
-  flex: 1;
-  min-width: 250px;
-}
-
-.cancel-label {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #f44336;
-  margin-bottom: 4px;
-}
-
-.cancel-hint {
-  font-size: 0.875rem;
-  color: #666;
-}
-
-.v-theme--dark .cancel-hint {
-  color: #b0b0b0;
-}
+.cancel-info  { flex: 1; min-width: 250px; }
+.cancel-label { font-size: 1.1rem; font-weight: 600; color: #f44336; margin-bottom: 4px; }
+.cancel-hint  { font-size: 0.875rem; color: var(--cb-ink-muted); }
 
 /* Responsive */
 @media (max-width: 600px) {
-  .card-header,
-  .card-content {
-    padding: 16px;
-  }
-
-  .subscription-info-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .plan-price {
-    font-size: 1.25rem;
-  }
-
-  .cancel-section {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .current-badge {
-    position: static;
-    margin-top: 8px;
-    align-self: flex-start;
-  }
+  .subscription-info-grid { grid-template-columns: 1fr; }
+  .plan-price             { font-size: 1.25rem; }
+  .cancel-section         { flex-direction: column; align-items: stretch; }
+  .current-badge          { position: static; margin-top: 8px; align-self: flex-start; }
 }
 </style>

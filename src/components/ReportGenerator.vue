@@ -1,18 +1,18 @@
 <template>
     <div class="report-generator-wrapper">
-        <v-container class="modern-container">
-            <div class="modern-card">
-                <div class="card-header">
-                    <h2 class="card-title">
-                        <v-icon color="#667eea" class="mr-2">mdi-file-chart</v-icon>
+        <v-container class="cb-container">
+            <div class="cb-card">
+                <div class="cb-card__header">
+                    <h2 class="cb-card__title">
+                        <v-icon color="var(--cb-primary)" class="mr-2">mdi-file-chart</v-icon>
                         {{ $t('reportGenerator.title') }}
                     </h2>
                 </div>
-                <div class="card-content">
+                <div class="cb-card__body">
                     <v-row class="mb-4">
                         <v-col cols="12">
                             <div class="report-scope-row">
-                                <v-chip size="small" color="#667eea" variant="outlined">
+                                <v-chip size="small" color="var(--cb-primary)" variant="outlined">
                                     <v-icon start size="14">mdi-account-group-outline</v-icon>
                                     {{ $t('transactionVisibility.reportFilter') }}
                                 </v-chip>
@@ -28,7 +28,7 @@
                                 :label="$t('reportGenerator.report_type')" 
                                 variant="outlined"
                                 density="comfortable"
-                                color="#667eea"
+                                color="var(--cb-primary)"
                                 class="modern-input"
                             />
                         </v-col>
@@ -43,7 +43,7 @@
                                 :label="$t('reportGenerator.view_type')" 
                                 variant="outlined"
                                 density="comfortable"
-                                color="#667eea"
+                                color="var(--cb-primary)"
                                 class="modern-input"
                             />
                         </v-col>
@@ -60,7 +60,7 @@
                                 chips 
                                 variant="outlined"
                                 density="comfortable"
-                                color="#667eea"
+                                color="var(--cb-primary)"
                                 class="modern-input"
                                 :placeholder="$t('reportGenerator.all_categories_hint')"
                                 :hint="selectedCategories.length ? $t('reportGenerator.selected_categories_count', { count: selectedCategories.length }) : $t('reportGenerator.all_categories_hint')"
@@ -103,7 +103,7 @@
                                         v-bind="props" 
                                         variant="outlined"
                                         density="comfortable"
-                                        color="#667eea"
+                                        color="var(--cb-primary)"
                                         class="modern-input"
                                     />
                                 </template>
@@ -128,7 +128,7 @@
                                         v-bind="props" 
                                         variant="outlined"
                                         density="comfortable"
-                                        color="#667eea"
+                                        color="var(--cb-primary)"
                                         class="modern-input"
                                     />
                                 </template>
@@ -142,7 +142,7 @@
                                 v-model="includeProportions" 
                                 :label="$t('reportGenerator.include_proportions')" 
                                 density="comfortable"
-                                color="#667eea"
+                                color="var(--cb-primary)"
                                 hide-details 
                             />
                         </v-col>
@@ -155,7 +155,7 @@
                                 @click="generateReport('pdf')" 
                                 color="primary" 
                                 :disabled="loading" 
-                                class="modern-btn gradient-btn"
+                               
                                 size="large"
                             >
                                 <v-icon left>mdi-file-pdf-box</v-icon>
@@ -165,7 +165,7 @@
                                 @click="generateReport('xlsx')" 
                                 color="success" 
                                 :disabled="loading"
-                                class="modern-btn"
+                               
                                 size="large"
                             >
                                 <v-icon left>mdi-file-excel-box</v-icon>
@@ -442,159 +442,35 @@ export default {
 
 <style scoped>
 .report-generator-wrapper {
-    min-height: 100vh;
-    background: linear-gradient(135deg, #f5f7fa 0%, #e8eaf0 100%);
-    padding: 32px 0;
+  min-height: 100vh;
+  background: var(--cb-page-bg);
+  padding: 32px 0;
 }
 
-.v-theme--dark .report-generator-wrapper {
-    background: linear-gradient(135deg, #1e1e1e 0%, #141414 100%);
-}
-
-.modern-container {
-    max-width: 1200px;
-    padding-left: 16px;
-    padding-right: 16px;
-}
-
-@media (min-width: 600px) {
-    .modern-container {
-        padding-left: 24px;
-        padding-right: 24px;
-    }
-}
-
-/* Modern Card */
-.modern-card {
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    overflow: hidden;
-    border: 1px solid rgba(0, 0, 0, 0.05);
-    transition: all 0.3s ease;
-}
-
-.v-theme--dark .modern-card {
-    background: #2a2a2a;
-    border-color: rgba(255, 255, 255, 0.1);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-}
-
-.modern-card:hover {
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-}
-
-.v-theme--dark .modern-card:hover {
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
-}
-
-.card-header {
-    padding: 24px 28px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-    background: rgba(102, 126, 234, 0.03);
-}
-
-.v-theme--dark .card-header {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(102, 126, 234, 0.08);
-}
-
-.card-title {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: #1a1a1a;
-    display: flex;
-    align-items: center;
-    margin: 0;
-}
-
-.v-theme--dark .card-title {
-    color: #ffffff;
-}
-
-.card-content {
-    padding: 28px;
-}
-
-/* Inputs Modernos */
+/* Input focus ring */
 .modern-input :deep(.v-field) {
-    border-radius: 8px;
-    transition: all 0.3s ease;
+  border-radius: 8px;
+  transition: all 0.3s ease;
 }
 
 .modern-input :deep(.v-field--focused) {
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cb-primary) 10%, transparent);
 }
 
-/* Buttons */
-.modern-btn {
-    border-radius: 8px;
-    text-transform: none;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-    transition: all 0.3s ease;
-    padding: 12px 24px;
-}
-
-.gradient-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-    color: white !important;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-}
-
-.gradient-btn:hover:not(:disabled) {
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-    transform: translateY(-2px);
-}
-
-.gradient-btn:disabled {
-    opacity: 0.6;
-}
-
-.gap-2 {
-    gap: 12px;
-}
-
-/* Snackbar */
-.modern-snackbar {
-    border-radius: 8px;
-}
+.gap-2 { gap: 12px; }
+.modern-snackbar { border-radius: 8px; }
 
 /* Responsive */
 @media (max-width: 960px) {
-    .card-header {
-        padding: 20px;
-    }
-
-    .card-content {
-        padding: 20px;
-    }
+  .cb-card__header { padding: 20px; }
+  .cb-card__body   { padding: 20px; }
 }
 
 @media (max-width: 600px) {
-    .report-generator-wrapper {
-        padding: 20px 0;
-    }
-
-    .card-header {
-        padding: 16px 20px;
-    }
-
-    .card-title {
-        font-size: 1.2rem;
-    }
-
-    .card-content {
-        padding: 16px;
-    }
-
-    .modern-btn {
-        width: 100%;
-        margin-bottom: 8px;
-    }
-    
-    .d-flex.justify-end {
-        flex-direction: column;
-    }
+  .report-generator-wrapper { padding: 20px 0; }
+  .cb-card__header { padding: 16px 20px; }
+  .cb-card__title  { font-size: 1.2rem; }
+  .cb-card__body   { padding: 16px; }
+  .d-flex.justify-end { flex-direction: column; }
 }
 </style>

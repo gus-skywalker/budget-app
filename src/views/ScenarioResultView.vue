@@ -1,47 +1,18 @@
 <template>
-  <div class="planning-page">
-    <v-container class="modern-container scenario-result">
-      <div class="page-header">
-        <v-btn
-          class="back-btn"
-          variant="text"
-          color="primary"
-          @click="router.back()"
-          style="min-width: 0; padding: 0 4px 0 0; margin-bottom: 4px"
-        >
-          <v-icon start size="20">mdi-arrow-left</v-icon>
-          {{ t('common.back', 'Voltar') }}
-        </v-btn>
-        <div>
-          <h1 class="page-title">
-            {{ t('contentExperience.planning.scenarioResult.title') }}
-            <span v-if="result && result.scenarioName" class="scenario-name-badge">
-              — {{ result.scenarioName }}
-            </span>
-          </h1>
-          <p class="page-subtitle">{{ t('contentExperience.planning.scenarioResult.subtitle') }}</p>
-        </div>
-      </div>
+  <div class="cb-page">
+    <div class="cb-container scenario-result">
+      <page-header :title="t('contentExperience.planning.scenarioResult.title')" :meta="t('contentExperience.planning.scenarioResult.subtitle')">
+        <template #actions>
+          <v-btn variant="text" color="var(--cb-primary)" style="min-width:0;padding:0 4px 0 0" @click="router.back()">
+            <v-icon start size="20">mdi-arrow-left</v-icon>
+            {{ t('common.back', 'Voltar') }}
+          </v-btn>
+        </template>
+      </page-header>
 
       <div class="result-shell" v-if="result">
-        <v-alert
-          v-if="isScenarioLockedForEdit"
-          type="warning"
-          variant="tonal"
-          density="comfortable"
-          class="mb-3"
-        >
-          {{ t('contentExperience.planning.scenarioResult.lockedNotice') }}
-        </v-alert>
-        <v-alert
-          v-if="isShowingSavedSnapshot"
-          type="info"
-          variant="tonal"
-          density="comfortable"
-          class="mb-3"
-        >
-          {{ t('contentExperience.planning.scenarioResult.savedSnapshotNotice') }}
-        </v-alert>
+        <alert-strip v-if="isScenarioLockedForEdit" variant="warning" :description="t('contentExperience.planning.scenarioResult.lockedNotice')" />
+        <alert-strip v-if="isShowingSavedSnapshot" variant="info" :description="t('contentExperience.planning.scenarioResult.savedSnapshotNotice')" />
         <div class="hero-card">
           <span class="hero-card__label">{{
             t('contentExperience.planning.scenarioResult.monthlyImpact')
@@ -227,7 +198,7 @@
         <div class="result-actions">
           <v-btn
             class="result-action result-action--primary"
-            color="#4f46e5"
+            color="var(--cb-primary)"
             :loading="isCreatingDecision"
             :disabled="
               isCreatingDecision || isSaving || (isScenarioLockedForEdit && Boolean(scenarioId))
@@ -241,7 +212,7 @@
             v-if="canWriteScenarios"
             class="result-action"
             variant="tonal"
-            color="#667eea"
+            color="var(--cb-primary)"
             :loading="isSaving"
             :disabled="isSaving || isScenarioLockedForEdit"
             @click="saveScenario"
@@ -274,17 +245,17 @@
       </div>
 
       <div class="empty-results" v-else>
-        <v-icon color="#94a3b8" size="28">mdi-chart-timeline-variant</v-icon>
+        <v-icon color="var(--cb-ink-muted)" size="28">mdi-chart-timeline-variant</v-icon>
         <p>{{ t('planning.scenarios.results_placeholder') }}</p>
         <v-btn
-          color="#667eea"
+          color="var(--cb-primary)"
           variant="tonal"
           @click="router.push({ name: 'planning-scenarios-new' })"
         >
             {{ t('contentExperience.planning.scenarioResult.buildScenario') }}
         </v-btn>
       </div>
-    </v-container>
+    </div>
   </div>
 </template>
 
@@ -292,6 +263,8 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
+import PageHeader from '@/components/PageHeader.vue'
+import AlertStrip from '@/components/AlertStrip.vue'
 import DecisionService from '@/services/DecisionService'
 import ScenarioService, {
   type SavedScenario,
@@ -745,8 +718,8 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  background: #fff;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: var(--cb-surface);
+  border: 1px solid var(--cb-border-card);
   border-radius: 16px;
   padding: 20px;
   min-width: 0;
@@ -755,11 +728,23 @@ onMounted(() => {
 .hero-card {
   border-radius: 14px;
   padding: 18px;
-  background: linear-gradient(180deg, rgba(79, 70, 229, 0.1), rgba(79, 70, 229, 0.04));
-  border: 1px solid rgba(79, 70, 229, 0.25);
+  background: color-mix(in srgb, var(--cb-primary) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--cb-primary) 22%, transparent);
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.hero-card__label {
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  font-size: 0.75rem;
+  color: var(--cb-primary);
+  font-weight: 700;
+}
+
+.hero-card strong {
+  font-size: 2rem;
 }
 
 .debt-comparison {
@@ -778,8 +763,8 @@ onMounted(() => {
 .debt-option-card {
   border-radius: 16px;
   padding: 16px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  background: #fff;
+  border: 1px solid var(--cb-border-card);
+  background: var(--cb-surface);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -797,19 +782,7 @@ onMounted(() => {
 .debt-option-card__metrics {
   display: grid;
   gap: 6px;
-  color: #475569;
-}
-
-.hero-card__label {
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
-  font-size: 0.75rem;
-  color: #4338ca;
-  font-weight: 700;
-}
-
-.hero-card strong {
-  font-size: 2rem;
+  color: var(--cb-ink-secondary);
 }
 
 .metrics-grid {
@@ -820,7 +793,7 @@ onMounted(() => {
 }
 
 .metric-card {
-  border: 1px solid rgba(15, 23, 42, 0.1);
+  border: 1px solid var(--cb-border-card);
   border-radius: 12px;
   padding: 14px;
   display: flex;
@@ -830,7 +803,7 @@ onMounted(() => {
 }
 
 .metric-card span {
-  color: #64748b;
+  color: var(--cb-ink-muted);
   font-size: 0.86rem;
 }
 
@@ -862,7 +835,7 @@ onMounted(() => {
 .forecast-table td {
   text-align: left;
   padding: 8px;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  border-bottom: 1px solid var(--cb-border);
 }
 
 .empty-results {
@@ -870,52 +843,14 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  color: #64748b;
+  color: var(--cb-ink-muted);
   padding: 40px 16px;
   text-align: center;
 }
 
-.positive-value {
-  color: #0f766e;
-}
-
-.negative-value {
-  color: #b91c1c;
-}
-
-.warning-value {
-  color: #b45309;
-}
-
-.v-theme--dark .result-shell {
-  background: rgba(17, 24, 39, 0.9);
-  border-color: rgba(148, 163, 184, 0.16);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.24);
-}
-
-.v-theme--dark .metric-card {
-  background: rgba(30, 41, 59, 0.76);
-  border-color: rgba(148, 163, 184, 0.18);
-  color: #f8fafc;
-}
-
-.v-theme--dark .metric-card span,
-.v-theme--dark .empty-results {
-  color: #cbd5e1;
-}
-
-.v-theme--dark .forecast-table th,
-.v-theme--dark .forecast-table td {
-  border-bottom-color: rgba(148, 163, 184, 0.18);
-  color: #e5eefb;
-}
-
-@media (max-width: 960px) {
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-}
+.positive-value { color: var(--cb-positive); }
+.negative-value { color: var(--cb-risk); }
+.warning-value  { color: var(--cb-warning); }
 
 @media (max-width: 600px) {
   .scenario-result {
@@ -968,11 +903,11 @@ onMounted(() => {
   }
 
   .forecast-table tr {
-    border: 1px solid rgba(15, 23, 42, 0.08);
+    border: 1px solid var(--cb-border-card);
     border-radius: 12px;
     padding: 12px;
     margin-bottom: 10px;
-    background: rgba(248, 250, 252, 0.9);
+    background: var(--cb-surface-soft);
   }
 
   .forecast-table td {
@@ -986,7 +921,7 @@ onMounted(() => {
   .forecast-table td::before {
     content: attr(data-label);
     text-align: left;
-    color: #64748b;
+    color: var(--cb-ink-muted);
     font-weight: 600;
   }
 }

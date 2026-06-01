@@ -218,13 +218,13 @@ const handleSubmit = async () => {
 }
 
 .metrics article {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--cb-border-card);
   border-radius: 10px;
   padding: 0.75rem;
 }
 
 .decision-cards article {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--cb-border-card);
   border-radius: 10px;
   padding: 0.75rem;
 }
@@ -237,10 +237,10 @@ const handleSubmit = async () => {
 }
 
 .action-cards article {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--cb-border-card);
   border-radius: 10px;
   padding: 0.9rem;
-  background: #f8fafc;
+  background: var(--cb-surface-soft);
 }
 
 .action-cards h4,
@@ -254,8 +254,8 @@ const handleSubmit = async () => {
 }
 
 .insight {
-  background: #f8fafc;
-  border-left: 4px solid #2563eb;
+  background: var(--cb-surface-soft);
+  border-left: 4px solid var(--cb-primary);
   padding: 0.5rem 0.75rem;
   border-radius: 6px;
 }
@@ -269,7 +269,7 @@ const handleSubmit = async () => {
   margin: 0.25rem 0 0;
   font-size: 1rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--cb-ink);
 }
 
 .chip {
@@ -286,9 +286,9 @@ const handleSubmit = async () => {
   padding: 0.25rem 0.75rem;
 }
 
-.chip.surplus { background: #dcfce7; color: #15803d; }
-.chip.deficit { background: #fee2e2; color: #b91c1c; }
-.decision-pill.surplus { background: #dcfce7; color: #15803d; }
-.decision-pill.watch { background: #fef3c7; color: #b45309; }
-.decision-pill.deficit { background: #fee2e2; color: #b91c1c; }
+.chip.surplus { background: var(--cb-positive-bg); color: var(--cb-positive); }
+.chip.deficit { background: var(--cb-risk-bg); color: var(--cb-risk); }
+.decision-pill.surplus { background: var(--cb-positive-bg); color: var(--cb-positive); }
+.decision-pill.watch { background: var(--cb-warning-bg); color: var(--cb-warning); }
+.decision-pill.deficit { background: var(--cb-risk-bg); color: var(--cb-risk); }
 </style>

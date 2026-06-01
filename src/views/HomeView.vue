@@ -160,8 +160,8 @@ const quickActions = [
 }
 
 .action-card__kicker {
-  background: rgba(102, 126, 234, 0.1);
-  color: #4d59c7;
+  background: color-mix(in srgb, var(--cb-primary) 10%, transparent);
+  color: var(--cb-primary);
 }
 
 .action-card h2 {
@@ -195,8 +195,8 @@ const quickActions = [
 }
 
 .v-theme--dark .action-card__kicker {
-  background: rgba(129, 140, 248, 0.16);
-  color: #c7d2fe;
+  background: color-mix(in srgb, var(--cb-primary) 16%, transparent);
+  color: var(--cb-primary);
 }
 
 .v-theme--dark .hero-copy h1,

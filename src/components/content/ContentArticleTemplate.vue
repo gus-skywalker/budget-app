@@ -164,7 +164,7 @@ function goToCta() {
 .content-template__hero-copy {
   border-radius: 20px;
   padding: 24px;
-  background: linear-gradient(145deg, rgba(79, 70, 229, 0.06), rgba(255, 255, 255, 0.98));
+  background: linear-gradient(145deg, rgba(182, 85, 31, 0.06), rgba(255, 255, 255, 0.98));
 }
 
 .content-template--public .content-template__hero-copy {
@@ -227,8 +227,8 @@ function goToCta() {
   width: fit-content;
   border-radius: 999px;
   padding: 6px 12px;
-  background: rgba(79, 70, 229, 0.08);
-  color: #4338ca;
+  background: color-mix(in srgb, var(--cb-primary) 8%, transparent);
+  color: var(--cb-primary);
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.05em;

@@ -18,13 +18,13 @@
     </header>
 
     <section v-if="loading" class="shared-state">
-      <v-progress-circular indeterminate color="#667eea" />
+      <v-progress-circular indeterminate color="var(--cb-primary)" />
     </section>
 
     <section v-else-if="errorMessage" class="shared-state shared-state--error">
       <v-icon size="34">mdi-alert-circle-outline</v-icon>
       <p>{{ errorMessage }}</p>
-      <v-btn color="#667eea" variant="tonal" @click="loadReceivedAgreements">
+      <v-btn color="var(--cb-primary)" variant="tonal" @click="loadReceivedAgreements">
         {{ t('sharedWithMe.tryAgain') }}
       </v-btn>
     </section>
@@ -190,7 +190,7 @@ const toNumber = (value: number | string | null | undefined) => {
 .section-kicker {
   display: inline-block;
   margin-bottom: 6px;
-  color: #667eea;
+  color: var(--cb-primary);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -207,7 +207,7 @@ const toNumber = (value: number | string | null | undefined) => {
 .agreement-meta,
 .shared-state p {
   margin: 6px 0 0;
-  color: #64748b;
+  color: var(--cb-ink-muted);
 }
 
 .agreement-list {
@@ -218,8 +218,8 @@ const toNumber = (value: number | string | null | undefined) => {
 .agreement-item {
   display: grid;
   gap: 14px;
-  border: 1px solid rgba(15, 118, 110, 0.18);
-  background: rgba(240, 253, 250, 0.72);
+  border: 1px solid var(--cb-border-card);
+  background: var(--cb-surface-soft);
   border-radius: 8px;
   padding: 16px;
 }
@@ -260,14 +260,14 @@ const toNumber = (value: number | string | null | undefined) => {
 
 .agreement-details div,
 .obligation-row {
-  background: #fff;
+  background: var(--cb-surface);
   border-radius: 8px;
   padding: 10px 12px;
 }
 
 .agreement-details span,
 .obligation-row small {
-  color: #64748b;
+  color: var(--cb-ink-muted);
   font-size: 13px;
 }
 
@@ -292,12 +292,12 @@ const toNumber = (value: number | string | null | undefined) => {
   gap: 10px;
   min-height: 260px;
   text-align: center;
-  color: #64748b;
+  color: var(--cb-ink-muted);
 }
 
 .shared-state h2 {
   margin: 0;
-  color: #1f2937;
+  color: var(--cb-ink);
 }
 
 .shared-state--error {

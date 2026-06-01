@@ -1,21 +1,19 @@
 <template>
-  <div class="planning-page">
-    <v-container class="modern-container debt-scenario-builder">
-      <div class="page-header">
-        <div>
-          <h1 class="page-title">{{ t('contentExperience.planning.debtBuilder.title') }}</h1>
-          <p class="page-subtitle">{{ t('contentExperience.planning.debtBuilder.subtitle') }}</p>
-        </div>
-        <v-btn variant="text" color="#667eea" @click="router.push({ name: 'planning-scenarios' })">
-          <v-icon start>mdi-arrow-left</v-icon>
-          {{ t('contentExperience.planning.scenarioBuilder.backToList') }}
-        </v-btn>
-      </div>
+  <div class="cb-page">
+    <div class="cb-container debt-scenario-builder">
+      <page-header :title="t('contentExperience.planning.debtBuilder.title')" :meta="t('contentExperience.planning.debtBuilder.subtitle')">
+        <template #actions>
+          <v-btn variant="text" color="var(--cb-primary)" @click="router.push({ name: 'planning-scenarios' })">
+            <v-icon start>mdi-arrow-left</v-icon>
+            {{ t('contentExperience.planning.scenarioBuilder.backToList') }}
+          </v-btn>
+        </template>
+      </page-header>
 
       <div class="wizard-shell">
         <div class="wizard-steps">
           <span class="wizard-step">{{ t('contentExperience.planning.debtBuilder.stepFlow') }}</span>
-          <v-progress-linear :model-value="progress" color="#667eea" height="8" rounded />
+          <v-progress-linear :model-value="progress" color="var(--cb-primary)" height="8" rounded />
         </div>
 
         <section class="wizard-panel">
@@ -57,7 +55,7 @@
               <h2>{{ t('contentExperience.planning.debtBuilder.step2Title') }}</h2>
               <p>{{ t('contentExperience.planning.debtBuilder.step2Description') }}</p>
             </div>
-            <v-btn variant="tonal" color="#667eea" @click="addOption">
+            <v-btn variant="tonal" color="var(--cb-primary)" @click="addOption">
               <v-icon start>mdi-plus</v-icon>
               {{ t('contentExperience.planning.debtBuilder.addOption') }}
             </v-btn>
@@ -205,26 +203,19 @@
           <p>{{ t('contentExperience.planning.debtBuilder.step4Description') }}</p>
         </section>
 
-        <v-alert
-          v-if="validationErrors.length"
-          type="warning"
-          variant="tonal"
-          density="comfortable"
-        >
-          {{ validationErrors[0] }}
-        </v-alert>
+        <alert-strip v-if="validationErrors.length" variant="warning" :description="validationErrors[0]" />
 
         <div class="wizard-footer">
           <v-btn variant="text" @click="router.push({ name: 'planning-scenarios' })">
             {{ t('contentExperience.planning.debtBuilder.cancel') }}
           </v-btn>
-          <v-btn color="#667eea" size="large" :loading="isSimulating" @click="simulate">
+          <v-btn color="var(--cb-primary)" size="large" :loading="isSimulating" @click="simulate">
             <v-icon start>mdi-scale-balance</v-icon>
             {{ t('contentExperience.planning.debtBuilder.compareOptions') }}
           </v-btn>
         </div>
       </div>
-    </v-container>
+    </div>
   </div>
 </template>
 
@@ -232,6 +223,8 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
+import PageHeader from '@/components/PageHeader.vue'
+import AlertStrip from '@/components/AlertStrip.vue'
 import BudgetService from '@/services/BudgetService'
 import ScenarioService from '@/services/ScenarioService'
 import {
@@ -417,8 +410,8 @@ watch(
   display: flex;
   flex-direction: column;
   gap: 18px;
-  background: #fff;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: var(--cb-surface);
+  border: 1px solid var(--cb-border-card);
   border-radius: 18px;
   padding: 20px;
   min-width: 0;
@@ -432,7 +425,7 @@ watch(
 
 .wizard-step {
   font-size: 0.85rem;
-  color: #6366f1;
+  color: var(--cb-primary);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -442,10 +435,10 @@ watch(
   display: flex;
   flex-direction: column;
   gap: 14px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid var(--cb-border-card);
   border-radius: 16px;
   padding: 18px;
-  background: linear-gradient(180deg, rgba(248, 250, 252, 0.95), rgba(255, 255, 255, 1));
+  background: var(--cb-surface-soft);
 }
 
 .wizard-grid {
@@ -469,10 +462,10 @@ watch(
 }
 
 .option-card {
-  border: 1px solid rgba(99, 102, 241, 0.14);
+  border: 1px solid var(--cb-border-card);
   border-radius: 14px;
   padding: 16px;
-  background: #fff;
+  background: var(--cb-surface);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -495,20 +488,20 @@ watch(
 .summary-item {
   border-radius: 14px;
   padding: 14px;
-  background: rgba(79, 70, 229, 0.06);
-  border: 1px solid rgba(79, 70, 229, 0.12);
+  background: var(--cb-surface-soft);
+  border: 1px solid var(--cb-border-card);
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
 .summary-item span {
-  color: #64748b;
+  color: var(--cb-ink-muted);
   font-size: 0.9rem;
 }
 
 .summary-item strong {
-  color: #0f172a;
+  color: var(--cb-ink);
   font-size: 1.1rem;
 }
 
@@ -520,7 +513,6 @@ watch(
 }
 
 @media (max-width: 960px) {
-  .page-header,
   .panel-header {
     flex-direction: column;
     align-items: flex-start;
@@ -543,7 +535,6 @@ watch(
     grid-template-columns: 1fr;
   }
 
-  .page-header :deep(.v-btn),
   .panel-header :deep(.v-btn),
   .wizard-footer :deep(.v-btn) {
     width: 100%;

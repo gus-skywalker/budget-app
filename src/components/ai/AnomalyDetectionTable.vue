@@ -143,8 +143,8 @@ const handleSubmit = async () => {
   align-items: center;
   border-radius: 999px;
   padding: 0.2rem 0.65rem;
-  background: rgba(245, 158, 11, 0.12);
-  color: #b45309;
+  background: var(--cb-warning-bg);
+  color: var(--cb-warning);
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -152,7 +152,7 @@ const handleSubmit = async () => {
 
 .experimental-note {
   display: block;
-  color: #64748b;
+  color: var(--cb-ink-muted);
   margin-top: 0.35rem;
 }
 
@@ -162,13 +162,13 @@ const handleSubmit = async () => {
   margin: 1rem 0 1.25rem;
   padding: 0.9rem 1rem;
   border-radius: 12px;
-  background: rgba(248, 250, 252, 0.95);
-  color: #334155;
+  background: var(--cb-surface-soft);
+  color: var(--cb-ink);
 }
 
 .history-note {
   margin: 0.75rem 0 0;
-  color: #64748b;
+  color: var(--cb-ink-muted);
   font-size: 0.92rem;
 }
 
@@ -179,6 +179,6 @@ const handleSubmit = async () => {
   font-weight: 600;
 }
 
-.chip.high { background: #fee2e2; color: #b91c1c; }
-.chip.medium { background: #ffedd5; color: #9a3412; }
+.chip.high { background: var(--cb-risk-bg); color: var(--cb-risk); }
+.chip.medium { background: var(--cb-warning-bg); color: var(--cb-warning); }
 </style>

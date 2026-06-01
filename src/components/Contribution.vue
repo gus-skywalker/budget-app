@@ -8,14 +8,14 @@
                 required
                 variant="outlined"
                 density="comfortable"
-                color="#667eea"
+                color="var(--cb-primary)"
             ></v-text-field>
             <v-text-field
                 :label="$t('financial_goals.description_optional')"
                 v-model="contributionForm.description"
                 variant="outlined"
                 density="comfortable"
-                color="#667eea"
+                color="var(--cb-primary)"
             ></v-text-field>
         </div>
         <v-btn type="submit" color="primary" class="contribution-form__button">

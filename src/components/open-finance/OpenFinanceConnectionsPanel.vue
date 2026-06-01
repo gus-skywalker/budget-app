@@ -1,37 +1,37 @@
 <template>
   <div class="of-panel">
-    <section class="modern-card of-connect-card">
+    <section class="cb-card of-connect-card">
       <div class="of-connect-copy">
         <div class="of-title-row">
-          <v-icon color="#667eea">mdi-bank-outline</v-icon>
+          <v-icon color="var(--cb-primary)">mdi-bank-outline</v-icon>
           <h2>{{ t('openFinance.panel.connect_banks') }}</h2>
         </div>
         <p>{{ t('openFinance.panel.connect_description') }}</p>
         <div class="of-security-note">
-          <v-icon size="18" color="#667eea">mdi-shield-check-outline</v-icon>
+          <v-icon size="18" color="var(--cb-primary)">mdi-shield-check-outline</v-icon>
           <span>{{ t('openFinance.panel.security_note') }}</span>
         </div>
       </div>
-      <v-btn class="gradient-btn" :disabled="!canManage" @click="wizardOpen = true">
+      <v-btn color="var(--cb-primary)" :disabled="!canManage" @click="wizardOpen = true">
         <v-icon start>mdi-plus</v-icon>
         {{ t('openFinance.panel.add_connection') }}
       </v-btn>
     </section>
 
-    <section class="modern-card mt-6">
+    <section class="cb-card mt-6">
       <div class="of-section-header">
         <div>
           <h3>{{ t('openFinance.panel.existing_connections') }}</h3>
           <p>{{ t('openFinance.panel.existing_connections_description') }}</p>
         </div>
-        <v-btn variant="text" color="#667eea" :loading="loading" @click="$emit('refresh')">
+        <v-btn variant="text" color="var(--cb-primary)" :loading="loading" @click="$emit('refresh')">
           <v-icon start>mdi-refresh</v-icon>
           {{ t('openFinance.panel.refresh') }}
         </v-btn>
       </div>
 
       <div v-if="!connections.length" class="of-empty">
-        <v-icon size="42" color="#667eea">mdi-bank-plus</v-icon>
+        <v-icon size="42" color="var(--cb-primary)">mdi-bank-plus</v-icon>
         <strong>{{ t('openFinance.panel.empty_title') }}</strong>
         <span>{{ t('openFinance.panel.empty_description') }}</span>
       </div>
@@ -122,7 +122,7 @@
               v-if="showContinueAuthorization(connection)"
               size="small"
               variant="tonal"
-              color="#667eea"
+              color="var(--cb-primary)"
               @click="openAuthorization(connection)"
             >
               {{ t('openFinance.panel.continue_authorization') }}
@@ -142,7 +142,7 @@
               v-if="showRefresh(connection)"
               size="small"
               variant="outlined"
-              color="#667eea"
+              color="var(--cb-primary)"
               :loading="busyConnectionId === connection.id"
               :disabled="!canManage"
               @click="refreshStatus(connection)"
@@ -174,7 +174,7 @@
       </div>
     </section>
 
-    <section class="modern-card mt-6">
+    <section class="cb-card mt-6">
       <div class="of-section-header">
         <div>
           <h3>{{ t('openFinance.panel.operational_health') }}</h3>
@@ -745,19 +745,8 @@ const extractErrorMessage = (error: any, fallback: string) => (
   max-width: 240px;
 }
 
-.v-theme--dark .of-sync-policy {
-  color: #cbd5e1;
-}
 
-.v-theme--dark .of-planning-share {
-  background: rgba(148, 163, 184, 0.12);
-  border-color: rgba(148, 163, 184, 0.22);
-}
 
-.v-theme--dark .of-planning-share strong,
-.v-theme--dark .of-planning-share span {
-  color: #cbd5e1;
-}
 
 .of-connection__actions {
   display: flex;
@@ -793,10 +782,6 @@ const extractErrorMessage = (error: any, fallback: string) => (
   color: #1f2937;
 }
 
-.gradient-btn {
-  color: white;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
 
 @media (max-width: 960px) {
   .of-connect-card,

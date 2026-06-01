@@ -23,7 +23,7 @@
           <v-btn
             size="x-small"
             variant="outlined"
-            color="#667eea"
+            color="var(--cb-primary)"
             :loading="resolvingAction === 'keep-existing'"
             :disabled="Boolean(resolvingAction)"
             @click.stop="$emit('resolveConflict', { income, action: 'keep-existing' })"
@@ -33,7 +33,7 @@
           <v-btn
             size="x-small"
             variant="tonal"
-            color="#667eea"
+            color="var(--cb-primary)"
             :loading="resolvingAction === 'create-new'"
             :disabled="Boolean(resolvingAction)"
             @click.stop="$emit('resolveConflict', { income, action: 'create-new' })"
@@ -149,7 +149,7 @@ export default {
       const status = this.income?.reconciliationStatus
       if (status === 'CONFLICT_DUPLICATE') return 'warning'
       if (status === 'MATCHED_AND_CANCELLED') return 'error'
-      return '#667eea'
+      return 'var(--cb-primary)'
     },
     openFinanceSharingColor() {
       const tone = this.income?.openFinanceSharingTone
@@ -157,7 +157,7 @@ export default {
       if (tone === 'admin-shared') return 'info'
       if (tone === 'planning-only') return 'warning'
       if (tone === 'private') return 'grey'
-      return '#667eea'
+      return 'var(--cb-primary)'
     }
   },
   methods: {
@@ -193,20 +193,21 @@ export default {
 }
 
 .income-btn-group {
-  gap: 2px;
-  opacity: 0.38;
+  gap: 6px;
+  opacity: 0.56;
   transition: opacity 0.2s ease;
 }
 
 .income-item:hover .income-btn-group,
 .income-item:focus-within .income-btn-group {
-  opacity: 0.85;
+  opacity: 0.95;
 }
 
 .income-action-btn {
-  width: 26px !important;
-  height: 26px !important;
-  border-radius: 5px !important;
+  min-width: 36px !important;
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 9px !important;
   color: rgba(15, 23, 42, 0.46) !important;
   transition:
     color 0.18s ease,
@@ -215,7 +216,8 @@ export default {
 }
 
 .income-action-btn .v-icon {
-  font-size: 14px !important;
+  line-height: 36px;
+  font-size: 18px !important;
   transition: color 0.18s ease;
 }
 

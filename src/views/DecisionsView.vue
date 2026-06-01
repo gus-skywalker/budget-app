@@ -1,394 +1,361 @@
 <template>
-  <div class="decisions-page">
-    <v-container class="modern-container">
-      <div class="page-header">
-        <div>
-          <h1 class="page-title">{{ $t('decisions.title') }}</h1>
-          <p class="page-subtitle">{{ $t('decisions.subtitle') }}</p>
+  <div class="cb-page">
+    <div class="cb-container">
+
+      <!-- Page Header -->
+      <page-header :title="t('decisions.title')" :summary-items="decisionSummaryItems" />
+
+      <!-- Success alert -->
+      <alert-strip
+        v-if="successMessage"
+        variant="positive"
+        :title="successMessage"
+      >
+        <template #actions>
+          <v-btn size="x-small" variant="text" color="var(--cb-positive)" style="text-transform:none" @click="successMessage = ''">
+            {{ t('common.close') }}
+          </v-btn>
+        </template>
+      </alert-strip>
+
+      <!-- Filter bar -->
+      <div class="cb-filter-bar" style="margin-bottom:20px">
+        <div class="cb-filter-chips">
+          <button
+            class="cb-chip"
+            :class="{ 'cb-chip--active': decisionFilter === 'open' }"
+            @click="decisionFilter = 'open'"
+          >
+            <v-icon size="12" start>mdi-clock-outline</v-icon>
+            {{ t('decisions.filter_open', { count: openDecisionCount }) }}
+          </button>
+          <button
+            class="cb-chip"
+            :class="{ 'cb-chip--active': decisionFilter === 'withDecision' }"
+            @click="decisionFilter = 'withDecision'"
+          >
+            <v-icon size="12" start>mdi-vote-outline</v-icon>
+            {{ t('decisions.filter_with_decision', { count: withDecisionCount }) }}
+          </button>
+          <button
+            class="cb-chip"
+            :class="{ 'cb-chip--active': decisionFilter === 'closed' }"
+            @click="decisionFilter = 'closed'"
+          >
+            <v-icon size="12" start>mdi-check-circle-outline</v-icon>
+            {{ t('decisions.filter_closed', { count: closedDecisionCount }) }}
+          </button>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <v-btn size="small" class="cb-btn-primary" @click="openDecisionCreationDialog">
+            <v-icon start size="14">mdi-plus-circle-outline</v-icon>
+            {{ t('decisions.new_from_scenario') }}
+          </v-btn>
+          <v-btn size="small" variant="text" color="var(--cb-ink-secondary)" style="text-transform:none" @click="goToScenarios">
+            <v-icon start size="14">mdi-arrow-left</v-icon>
+            {{ t('decisions.back_to_scenarios') }}
+          </v-btn>
+          <v-btn
+            v-if="selectedScenarioIds.length"
+            size="small"
+            variant="tonal"
+            color="var(--cb-accent)"
+            style="text-transform:none"
+            @click="reviewSelectedScenario"
+          >
+            <v-icon start size="14">mdi-chart-timeline-variant</v-icon>
+            {{ t('decisions.review_in_scenarios') }}
+          </v-btn>
+          <v-btn
+            v-if="selectedScenarioIds.length"
+            size="small"
+            variant="text"
+            color="var(--cb-accent)"
+            style="text-transform:none"
+            @click="goToInsights"
+          >
+            <v-icon start size="14">mdi-brain</v-icon>
+            {{ t('decisions.open_in_insights') }}
+          </v-btn>
         </div>
       </div>
 
-      <div class="modern-card">
-        <div class="card-header">
-          <h2 class="card-title">
-            <v-icon color="#667eea" class="mr-2">mdi-lightbulb-outline</v-icon>
-            {{ $t('decisions.list_title') }}
-          </h2>
-        </div>
-        <div class="card-content">
-          <div class="decisions-toolbar">
-            <p class="decisions-note">
-              {{ decisionsSourceNote }}
-            </p>
-            <div class="decisions-toolbar__actions">
-              <v-btn-toggle
-                v-model="decisionFilter"
-                mandatory
-                divided
-                color="#667eea"
-                class="decisions-filter-toggle"
-              >
-                <v-btn value="open">{{ $t('decisions.filter_open', { count: openDecisionCount }) }}</v-btn>
-                <v-btn value="withDecision">{{ $t('decisions.filter_with_decision', { count: withDecisionCount }) }}</v-btn>
-                <v-btn value="closed">{{ $t('decisions.filter_closed', { count: closedDecisionCount }) }}</v-btn>
-              </v-btn-toggle>
-              <v-btn variant="tonal" color="#4f46e5" @click="openDecisionCreationDialog">
-                <v-icon start>mdi-plus-circle-outline</v-icon>
-                {{ $t('decisions.new_from_scenario') }}
-              </v-btn>
-              <v-btn variant="text" color="#667eea" @click="goToScenarios">
-                <v-icon start>mdi-arrow-left</v-icon>
-                {{ $t('decisions.back_to_scenarios') }}
-              </v-btn>
-              <v-btn
-                v-if="selectedScenarioIds.length"
-                variant="tonal"
-                color="#667eea"
-                @click="reviewSelectedScenario"
-              >
-                <v-icon start>mdi-chart-timeline-variant</v-icon>
-                {{ $t('decisions.review_in_scenarios') }}
-              </v-btn>
-              <v-btn
-                v-if="selectedScenarioIds.length"
-                variant="text"
-                color="#667eea"
-                @click="goToInsights"
-              >
-                <v-icon start>mdi-brain</v-icon>
-                {{ $t('decisions.open_in_insights') }}
-              </v-btn>
-            </div>
-          </div>
+      <!-- Loading / Error states -->
+      <div v-if="isLoading" style="padding:48px;text-align:center">
+        <v-progress-circular indeterminate color="var(--cb-primary)" size="32" />
+      </div>
+      <div v-else-if="error" style="padding:48px;text-align:center">
+        <v-icon color="var(--cb-risk)" size="32" style="display:block;margin:0 auto 12px">mdi-alert-circle-outline</v-icon>
+        <p style="color:var(--cb-ink-muted)">{{ error }}</p>
+      </div>
 
-          <div v-if="isLoading" class="empty-state">
-            <v-icon color="#94a3b8" size="28">mdi-timer-sand</v-icon>
-            <p>{{ $t('decisions.loading') }}</p>
-          </div>
+      <!-- Decision Cards -->
+      <template v-else-if="filteredDecisionCards.length">
+        <!-- Source note -->
+        <p v-if="decisionsSourceNote" style="font-size:.8rem;color:var(--cb-ink-muted);margin-bottom:16px">{{ decisionsSourceNote }}</p>
 
-          <div v-else-if="error" class="empty-state empty-state--error">
-            <v-icon color="#ef4444" size="28">mdi-alert-circle-outline</v-icon>
-            <p>{{ error }}</p>
-          </div>
-
-          <v-alert
-            v-if="successMessage"
-            type="success"
-            variant="tonal"
-            density="comfortable"
-            closable
-            @click:close="successMessage = ''"
+        <div class="cb-decisions-list">
+          <div
+            v-for="decision in filteredDecisionCards"
+            :key="decision.scenarioId"
+            class="cb-decision-card"
+            :class="decisionFilter === 'open' ? 'cb-decision-card--open' : ''"
           >
-            {{ successMessage }}
-          </v-alert>
-
-          <div v-if="!isLoading && !error && filteredDecisionCards.length" class="decisions-grid">
-            <div v-for="decision in filteredDecisionCards" :key="decision.scenarioId" class="decision-card">
-              <div class="decision-card__header">
-                <div class="decision-card__title-wrap">
-                  <h3 class="decision-card__title">{{ decision.title }}</h3>
-                  <p class="decision-card__scenario">{{ decision.scenarioLabel }}</p>
-                </div>
-                <v-chip size="small" variant="tonal" :color="decision.statusColor" class="decision-status-chip">
-                  {{ decision.status }}
-                </v-chip>
+            <!-- Card header -->
+            <div class="cb-decision-card__head">
+              <div>
+                <h3 class="cb-decision-card__title">{{ decision.title }}</h3>
+                <p class="cb-decision-card__scenario">{{ decision.scenarioLabel }}</p>
               </div>
+              <v-chip size="small" variant="tonal" :color="decision.statusColor">
+                {{ decision.status }}
+              </v-chip>
+            </div>
 
-              <div class="decision-impact">
-                <div class="decision-impact__label">{{ $t('decisions.impact_title') }}</div>
-                <div class="decision-impact__value" :class="decision.impactTone">
-                  {{ decision.impactDisplay }}
-                </div>
-                <div class="decision-impact__subtitle">{{ $t('decisions.impact_cashflow_subtitle') }}</div>
-                <div class="decision-impact__details">
-                  <span>{{ $t('decisions.final_balance_label') }}: <strong>{{ formatCurrency(decision.finalBalance) }}</strong></span>
-                  <span>{{ $t('decisions.risk_month_label') }}: <strong>{{ decision.riskMonth }}</strong></span>
-                </div>
+            <!-- Impact strip -->
+            <div class="cb-decision-card__impact">
+              <span class="cb-decision-card__impact-label">{{ t('decisions.impact_title') }}</span>
+              <span class="cb-decision-card__impact-value" :class="decision.impactTone">{{ decision.impactDisplay }}</span>
+              <span class="cb-decision-card__impact-meta">{{ t('decisions.impact_cashflow_subtitle') }}</span>
+              <span>{{ t('decisions.final_balance_label') }}: <strong>{{ formatCurrency(decision.finalBalance) }}</strong></span>
+              <span>{{ t('decisions.risk_month_label') }}: <strong>{{ decision.riskMonth }}</strong></span>
+            </div>
+
+            <p class="cb-decision-card__consequence">{{ decision.consequenceMessage }}</p>
+
+            <!-- Voting section -->
+            <div v-if="decision.decisionId" class="cb-decision-card__votes">
+              <div class="cb-decision-card__votes-header">
+                <strong>{{ t('decisions.team_decision_title') }}</strong>
+                <span style="font-size:.8rem;color:var(--cb-ink-muted)">{{ t('decisions.votes_breakdown', { approve: decision.approveVotes, reject: decision.rejectVotes }) }}</span>
               </div>
-
-              <p class="decision-card__description">{{ decision.consequenceMessage }}</p>
-
-              <div class="decision-votes decision-votes--featured" v-if="decision.decisionId">
-                <div class="decision-votes__summary">
-                  <strong>{{ $t('decisions.team_decision_title') }}</strong>
-                  <span>{{ $t('decisions.votes_breakdown', { approve: decision.approveVotes, reject: decision.rejectVotes }) }}</span>
-                </div>
-                <p v-if="decision.approveVotes + decision.rejectVotes === 0" class="decision-votes__hint">
-                  {{ $t('decisions.no_votes_hint') }}
-                </p>
-                <div class="decision-votes__actions">
-                  <v-btn
-                    variant="tonal"
-                    size="small"
-                    :color="decision.currentUserVote === 'APPROVE' ? 'success' : undefined"
-                    :disabled="!decision.isOpenDecision"
-                    :loading="activeDecisionId === decision.decisionId && decisionAction === 'vote-approve'"
-                    class="decision-vote-btn"
-                    @click="openVoteDialog(decision.decisionId, 'APPROVE')"
-                  >
-                    <v-icon start size="18">mdi-thumb-up-outline</v-icon>
-                    {{ $t('decisions.vote_approve') }}
-                  </v-btn>
-                  <v-btn
-                    variant="tonal"
-                    size="small"
-                    :color="decision.currentUserVote === 'REJECT' ? 'error' : undefined"
-                    :disabled="!decision.isOpenDecision"
-                    :loading="activeDecisionId === decision.decisionId && decisionAction === 'vote-reject'"
-                    class="decision-vote-btn"
-                    @click="openVoteDialog(decision.decisionId, 'REJECT')"
-                  >
-                    <v-icon start size="18">mdi-thumb-down-outline</v-icon>
-                    {{ $t('decisions.vote_reject') }}
-                  </v-btn>
-                  <v-btn
-                    v-if="decision.currentUserVote"
-                    variant="text"
-                    size="small"
-                    color="#667eea"
-                    :loading="activeDecisionId === decision.decisionId && decisionAction === 'vote-clear'"
-                    @click="clearDecisionVote(decision.decisionId)"
-                  >
-                    <v-icon start size="16">mdi-close-circle-outline</v-icon>
-                    {{ $t('decisions.vote_clear') }}
-                  </v-btn>
-                </div>
-                <p v-if="decision.currentUserVote" class="decision-votes__current">
-                  {{ $t('decisions.vote_current', { vote: decision.currentUserVote === 'APPROVE' ? $t('decisions.vote_approve') : $t('decisions.vote_reject') }) }}
-                </p>
+              <p v-if="decision.approveVotes + decision.rejectVotes === 0" style="font-size:.8rem;color:var(--cb-ink-muted);margin:4px 0 8px">{{ t('decisions.no_votes_hint') }}</p>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                <v-btn
+                  variant="tonal"
+                  size="small"
+                  :color="decision.currentUserVote === 'APPROVE' ? 'success' : undefined"
+                  :disabled="!decision.isOpenDecision"
+                  :loading="activeDecisionId === decision.decisionId && decisionAction === 'vote-approve'"
+                  @click="openVoteDialog(decision.decisionId, 'APPROVE')"
+                >
+                  <v-icon start size="16">mdi-thumb-up-outline</v-icon>
+                  {{ t('decisions.vote_approve') }}
+                </v-btn>
+                <v-btn
+                  variant="tonal"
+                  size="small"
+                  :color="decision.currentUserVote === 'REJECT' ? 'error' : undefined"
+                  :disabled="!decision.isOpenDecision"
+                  :loading="activeDecisionId === decision.decisionId && decisionAction === 'vote-reject'"
+                  @click="openVoteDialog(decision.decisionId, 'REJECT')"
+                >
+                  <v-icon start size="16">mdi-thumb-down-outline</v-icon>
+                  {{ t('decisions.vote_reject') }}
+                </v-btn>
+                <v-btn
+                  v-if="decision.currentUserVote"
+                  variant="text"
+                  size="small"
+                  color="var(--cb-ink-muted)"
+                  :loading="activeDecisionId === decision.decisionId && decisionAction === 'vote-clear'"
+                  @click="clearDecisionVote(decision.decisionId)"
+                >
+                  <v-icon start size="14">mdi-close-circle-outline</v-icon>
+                  {{ t('decisions.vote_clear') }}
+                </v-btn>
+                <span v-if="decision.currentUserVote" style="font-size:.75rem;color:var(--cb-accent);font-weight:600">
+                  {{ t('decisions.vote_current', { vote: decision.currentUserVote === 'APPROVE' ? t('decisions.vote_approve') : t('decisions.vote_reject') }) }}
+                </span>
               </div>
+            </div>
 
-              <div v-if="decision.decisionId" class="decision-reasoning">
-                <div class="decision-reasoning__header">
-                  <strong>{{ $t('decisions.team_reasoning_title') }}</strong>
-                  <span>{{ $t('decisions.reasoning_summary', { approve: decision.approveVotes, reject: decision.rejectVotes }) }}</span>
-                </div>
-                <p v-if="!decision.teamReasoning.length" class="decision-reasoning__empty">
-                  {{ $t('decisions.no_reasoning') }}
-                </p>
-                <div v-else class="decision-reasoning__groups">
-                  <div v-if="decision.approvalReasoning.length" class="decision-reasoning__group">
-                    <p class="decision-reasoning__group-title">{{ $t('decisions.reasoning_approvals') }}</p>
-                    <div v-for="vote in decision.approvalReasoning" :key="vote.id" class="decision-reasoning__item">
-                      <p class="decision-reasoning__line">
-                        <span class="decision-reasoning__vote decision-reasoning__vote--approve">✔</span>
-                        <strong>{{ vote.userLabel }}</strong>
-                        <span v-if="vote.justification">: "{{ vote.preview }}"</span>
-                        <span v-else> {{ $t('decisions.reasoning_voted_approve') }}</span>
-                      </p>
-                      <button
-                        v-if="vote.shouldTruncate"
-                        type="button"
-                        class="decision-reasoning__toggle"
-                        @click="toggleJustification(vote.id)"
-                      >
-                        {{ vote.isExpanded ? $t('decisions.show_less') : $t('decisions.show_more') }}
-                      </button>
-                    </div>
-                  </div>
-                  <div v-if="decision.rejectionReasoning.length" class="decision-reasoning__group">
-                    <p class="decision-reasoning__group-title">{{ $t('decisions.reasoning_rejections') }}</p>
-                    <div v-for="vote in decision.rejectionReasoning" :key="vote.id" class="decision-reasoning__item">
-                      <p class="decision-reasoning__line">
-                        <span class="decision-reasoning__vote decision-reasoning__vote--reject">✖</span>
-                        <strong>{{ vote.userLabel }}</strong>
-                        <span v-if="vote.justification">: "{{ vote.preview }}"</span>
-                        <span v-else> {{ $t('decisions.reasoning_voted_reject') }}</span>
-                      </p>
-                      <button
-                        v-if="vote.shouldTruncate"
-                        type="button"
-                        class="decision-reasoning__toggle"
-                        @click="toggleJustification(vote.id)"
-                      >
-                        {{ vote.isExpanded ? $t('decisions.show_less') : $t('decisions.show_more') }}
-                      </button>
-                    </div>
-                  </div>
+            <!-- Reasoning -->
+            <div v-if="decision.decisionId && decision.teamReasoning?.length" class="cb-decision-card__reasoning">
+              <div v-if="decision.approvalReasoning.length">
+                <p class="cb-decision-card__reasoning-group">{{ t('decisions.reasoning_approvals') }}</p>
+                <div v-for="vote in decision.approvalReasoning" :key="vote.id" class="cb-decision-card__reasoning-item">
+                  <span class="decision-reasoning__vote decision-reasoning__vote--approve">✔</span>
+                  <strong>{{ vote.userLabel }}</strong>
+                  <span v-if="vote.justification">: "{{ vote.preview }}"</span>
+                  <span v-else> {{ t('decisions.reasoning_voted_approve') }}</span>
+                  <button v-if="vote.shouldTruncate" type="button" class="decision-reasoning__toggle" @click="toggleJustification(vote.id)">
+                    {{ vote.isExpanded ? t('decisions.show_less') : t('decisions.show_more') }}
+                  </button>
                 </div>
               </div>
-
-              <div class="decision-card__metrics">
-                <div class="decision-metric">
-                  <span>{{ $t('decisions.final_balance') }}</span>
-                  <strong>{{ formatCurrency(decision.finalBalance) }}</strong>
-                </div>
-                <div class="decision-metric">
-                  <span>{{ $t('decisions.available_for_goals') }}</span>
-                  <strong>{{ formatCurrency(decision.availableForGoals) }}</strong>
-                </div>
-                <div class="decision-metric">
-                  <span>{{ $t('decisions.risk_month') }}</span>
-                  <strong>{{ decision.riskMonth }}</strong>
+              <div v-if="decision.rejectionReasoning.length">
+                <p class="cb-decision-card__reasoning-group">{{ t('decisions.reasoning_rejections') }}</p>
+                <div v-for="vote in decision.rejectionReasoning" :key="vote.id" class="cb-decision-card__reasoning-item">
+                  <span class="decision-reasoning__vote decision-reasoning__vote--reject">✖</span>
+                  <strong>{{ vote.userLabel }}</strong>
+                  <span v-if="vote.justification">: "{{ vote.preview }}"</span>
+                  <span v-else> {{ t('decisions.reasoning_voted_reject') }}</span>
+                  <button v-if="vote.shouldTruncate" type="button" class="decision-reasoning__toggle" @click="toggleJustification(vote.id)">
+                    {{ vote.isExpanded ? t('decisions.show_less') : t('decisions.show_more') }}
+                  </button>
                 </div>
               </div>
+            </div>
 
-              <div class="decision-card__meta">
-                <span>{{ decision.goalsImpact }}</span>
-                <span v-if="decision.persistedAt">{{ decision.persistedAt }}</span>
+            <!-- Metrics -->
+            <div class="cb-decision-card__metrics">
+              <div class="cb-decision-card__metric">
+                <span>{{ t('decisions.final_balance') }}</span>
+                <strong>{{ formatCurrency(decision.finalBalance) }}</strong>
               </div>
-
-              <div class="decision-card__actions">
-                <template v-if="!decision.decisionId">
-                  <v-btn
-                    variant="tonal"
-                    color="#667eea"
-                    size="large"
-                    :loading="activeDecisionId === decision.scenarioId && decisionAction === 'create'"
-                    @click="trackDecision(decision.scenarioId)"
-                  >
-                    <v-icon start>mdi-bookmark-plus-outline</v-icon>
-                    {{ $t('decisions.track_decision') }}
-                  </v-btn>
-                </template>
-                <template v-else>
-                  <v-tooltip
-                    v-if="decision.isOpenDecision && !decision.canApply"
-                    :text="$t('decisions.not_enough_approvals')"
-                    location="top"
-                  >
-                    <template #activator="{ props }">
-                      <span v-bind="props">
-                        <v-btn
-                          variant="flat"
-                          color="success"
-                          size="x-large"
-                          class="decision-card__execute-btn"
-                          disabled
-                        >
-                          <v-icon start>mdi-flash-outline</v-icon>
-                          {{ $t('decisions.execute_decision') }}
-                        </v-btn>
-                      </span>
-                    </template>
-                  </v-tooltip>
-                  <v-btn
-                    v-else-if="decision.isOpenDecision"
-                    variant="flat"
-                    color="success"
-                    size="x-large"
-                    class="decision-card__execute-btn"
-                    :loading="activeDecisionId === decision.decisionId && decisionAction === 'apply'"
-                    @click="applyDecision(decision.decisionId)"
-                  >
-                    <v-icon start>mdi-flash-outline</v-icon>
-                    {{ $t('decisions.execute_decision') }}
-                  </v-btn>
-                </template>
-                <div class="decision-card__secondary-actions">
-                  <v-btn
-                    v-if="decision.decisionId"
-                    variant="text"
-                    size="small"
-                    color="#0ea5e9"
-                    @click="copyPublicDecisionLink(decision.decisionId)"
-                  >
-                    <v-icon start size="16">mdi-link-variant</v-icon>
-                    {{ $t('decisions.copy_public_link') }}
-                  </v-btn>
-                  <v-btn
-                    v-if="decision.isOpenDecision"
-                    variant="outlined"
-                    size="small"
-                    color="error"
-                    :loading="activeDecisionId === decision.decisionId && decisionAction === 'reject'"
-                    @click="updateDecisionStatus(decision.decisionId || '', 'REJECTED')"
-                  >
-                    <v-icon start size="16">mdi-close</v-icon>
-                    {{ $t('decisions.reject_action') }}
-                  </v-btn>
-                  <v-btn variant="text" size="small" color="#667eea" @click="openScenario(decision.scenarioId)">
-                    <v-icon start size="16">mdi-pencil-outline</v-icon>
-                    {{ $t('decisions.open_scenario') }}
-                  </v-btn>
-                  <v-btn variant="text" size="small" color="#667eea" @click="viewImpact">
-                    <v-icon start size="16">mdi-chart-line</v-icon>
-                    {{ $t('decisions.view_impact') }}
-                  </v-btn>
-                </div>
+              <div class="cb-decision-card__metric">
+                <span>{{ t('decisions.available_for_goals') }}</span>
+                <strong>{{ formatCurrency(decision.availableForGoals) }}</strong>
               </div>
+              <div class="cb-decision-card__metric">
+                <span>{{ t('decisions.risk_month') }}</span>
+                <strong>{{ decision.riskMonth }}</strong>
+              </div>
+            </div>
 
-              <div v-if="decision.decisionId" class="decision-comments">
-                <v-expansion-panels variant="accordion" class="decision-discussion">
-                  <v-expansion-panel>
-                    <v-expansion-panel-title>
-                      <div class="decision-comments__header">
-                        <strong>{{ $t('decisions.team_discussion_title') }}</strong>
-                        <span>{{ $t('decisions.comments_count_label', { count: decision.comments.length }) }}</span>
-                      </div>
-                    </v-expansion-panel-title>
-                    <v-expansion-panel-text>
-                      <div v-if="decision.comments.length" class="decision-comments__list">
-                        <div
-                          v-for="comment in decision.comments"
-                          :key="comment.id"
-                          class="decision-comment"
-                        >
-                          <div class="decision-comment__avatar">{{ comment.initials }}</div>
-                          <div class="decision-comment__content">
-                            <p>{{ comment.body }}</p>
-                            <span v-if="comment.createdAt">{{ comment.authorLabel }} • {{ formatDate(comment.createdAt) }}</span>
-                          </div>
+            <div class="cb-decision-card__meta-row">
+              <span>{{ decision.goalsImpact }}</span>
+              <span v-if="decision.persistedAt" style="color:var(--cb-ink-muted);font-size:.75rem">{{ decision.persistedAt }}</span>
+            </div>
+
+            <!-- Primary Actions -->
+            <div class="cb-decision-card__actions">
+              <template v-if="!decision.decisionId">
+                <v-btn
+                  class="cb-btn-accent"
+                  size="large"
+                  :loading="activeDecisionId === decision.scenarioId && decisionAction === 'create'"
+                  @click="trackDecision(decision.scenarioId)"
+                >
+                  <v-icon start size="16">mdi-bookmark-plus-outline</v-icon>
+                  {{ t('decisions.track_decision') }}
+                </v-btn>
+              </template>
+              <template v-else>
+                <v-tooltip
+                  v-if="decision.isOpenDecision && !decision.canApply"
+                  :text="t('decisions.not_enough_approvals')"
+                  location="top"
+                >
+                  <template #activator="{ props }">
+                    <span v-bind="props">
+                      <v-btn variant="flat" color="success" size="large" disabled>
+                        <v-icon start>mdi-flash-outline</v-icon>
+                        {{ t('decisions.execute_decision') }}
+                      </v-btn>
+                    </span>
+                  </template>
+                </v-tooltip>
+                <v-btn
+                  v-else-if="decision.isOpenDecision"
+                  variant="flat"
+                  color="success"
+                  size="large"
+                  :loading="activeDecisionId === decision.decisionId && decisionAction === 'apply'"
+                  @click="applyDecision(decision.decisionId)"
+                >
+                  <v-icon start>mdi-flash-outline</v-icon>
+                  {{ t('decisions.execute_decision') }}
+                </v-btn>
+              </template>
+
+              <!-- Secondary actions row -->
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+                <v-btn v-if="decision.decisionId" variant="text" size="small" color="var(--cb-accent)" style="text-transform:none" @click="copyPublicDecisionLink(decision.decisionId)">
+                  <v-icon start size="14">mdi-link-variant</v-icon>
+                  {{ t('decisions.copy_public_link') }}
+                </v-btn>
+                <v-btn v-if="decision.isOpenDecision" variant="outlined" size="small" color="error" style="text-transform:none" :loading="activeDecisionId === decision.decisionId && decisionAction === 'reject'" @click="updateDecisionStatus(decision.decisionId || '', 'REJECTED')">
+                  <v-icon start size="14">mdi-close</v-icon>
+                  {{ t('decisions.reject_action') }}
+                </v-btn>
+                <v-btn variant="text" size="small" color="var(--cb-primary)" style="text-transform:none" @click="openScenario(decision.scenarioId)">
+                  <v-icon start size="14">mdi-pencil-outline</v-icon>
+                  {{ t('decisions.open_scenario') }}
+                </v-btn>
+                <v-btn variant="text" size="small" color="var(--cb-primary)" style="text-transform:none" @click="viewImpact">
+                  <v-icon start size="14">mdi-chart-line</v-icon>
+                  {{ t('decisions.view_impact') }}
+                </v-btn>
+              </div>
+            </div>
+
+            <!-- Discussion (collapsible) -->
+            <div v-if="decision.decisionId" class="cb-decision-card__discussion">
+              <v-expansion-panels variant="accordion">
+                <v-expansion-panel>
+                  <v-expansion-panel-title>
+                    <strong>{{ t('decisions.team_discussion_title') }}</strong>
+                    <span style="margin-left:8px;font-size:.8rem;color:var(--cb-ink-muted)">{{ t('decisions.comments_count_label', { count: decision.comments.length }) }}</span>
+                  </v-expansion-panel-title>
+                  <v-expansion-panel-text>
+                    <div v-if="decision.comments.length" style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px">
+                      <div v-for="comment in decision.comments" :key="comment.id" style="display:flex;gap:10px;align-items:flex-start">
+                        <div class="decision-comment__avatar">{{ comment.initials }}</div>
+                        <div>
+                          <p style="margin:0;font-size:.875rem">{{ comment.body }}</p>
+                          <span v-if="comment.createdAt" style="font-size:.75rem;color:var(--cb-ink-muted)">{{ comment.authorLabel }} · {{ formatDate(comment.createdAt) }}</span>
                         </div>
                       </div>
-                      <p v-else class="decision-comments__empty">
-                        {{ $t('decisions.no_comments_hint') }}
-                      </p>
+                    </div>
+                    <p v-else style="font-size:.85rem;color:var(--cb-ink-muted);margin-bottom:12px">{{ t('decisions.no_comments_hint') }}</p>
 
-                      <div class="decision-comments__composer">
-                        <v-text-field
-                          v-model="commentDrafts[decision.decisionId]"
-                          :label="$t('decisions.add_comment_placeholder')"
-                          variant="outlined"
-                          density="comfortable"
-                          hide-details="auto"
-                          :disabled="!decision.isOpenDecision"
-                          @keyup.enter="addDecisionComment(decision.decisionId)"
-                        />
-                        <v-btn
-                          color="#667eea"
-                          variant="tonal"
-                          :disabled="!commentDrafts[decision.decisionId]?.trim() || !decision.isOpenDecision"
-                          :loading="activeDecisionId === decision.decisionId && decisionAction === 'comment'"
-                          @click="addDecisionComment(decision.decisionId)"
-                        >
-                          <v-icon start>mdi-comment-plus-outline</v-icon>
-                          {{ $t('decisions.add_comment') }}
-                        </v-btn>
-                      </div>
-                    </v-expansion-panel-text>
-                  </v-expansion-panel>
-                </v-expansion-panels>
-                <p v-if="!decision.isOpenDecision" class="decision-comments__hint">
-                  {{ $t('decisions.discussion_closed_hint') }}
-                </p>
-              </div>
-              <div v-if="decision.decisionId && decision.isOpenDecision && !decision.canApply" class="decision-apply-hint">
-                <v-icon size="16" color="#ef4444">mdi-information-outline</v-icon>
-                <span>{{ decision.applyBlockedReason || $t('decisions.not_enough_approvals') }}</span>
-              </div>
+                    <div style="display:flex;gap:8px;align-items:flex-start" v-if="decision.isOpenDecision">
+                      <v-text-field
+                        v-model="commentDrafts[decision.decisionId]"
+                        :label="t('decisions.add_comment_placeholder')"
+                        variant="outlined"
+                        density="comfortable"
+                        hide-details="auto"
+                        style="flex:1"
+                        @keyup.enter="addDecisionComment(decision.decisionId)"
+                      />
+                      <v-btn
+                        color="var(--cb-accent)"
+                        variant="tonal"
+                        :disabled="!commentDrafts[decision.decisionId]?.trim()"
+                        :loading="activeDecisionId === decision.decisionId && decisionAction === 'comment'"
+                        @click="addDecisionComment(decision.decisionId)"
+                      >
+                        <v-icon>mdi-comment-plus-outline</v-icon>
+                      </v-btn>
+                    </div>
+                    <p v-if="!decision.isOpenDecision" style="font-size:.8rem;color:var(--cb-ink-muted);margin-top:8px">{{ t('decisions.discussion_closed_hint') }}</p>
+                  </v-expansion-panel-text>
+                </v-expansion-panel>
+              </v-expansion-panels>
+            </div>
+
+            <!-- Apply blocked hint -->
+            <div v-if="decision.decisionId && decision.isOpenDecision && !decision.canApply" class="cb-decision-card__blocked-hint">
+              <v-icon size="14" color="var(--cb-risk)">mdi-information-outline</v-icon>
+              <span>{{ decision.applyBlockedReason || t('decisions.not_enough_approvals') }}</span>
             </div>
           </div>
-
-          <div v-else-if="!isLoading && !error" class="empty-state">
-            <v-icon color="#94a3b8" size="28">mdi-lightbulb-auto-outline</v-icon>
-            <p>{{ emptyDecisionMessage }}</p>
-            <v-btn color="#667eea" variant="tonal" @click="goToScenarios">
-              <v-icon start>mdi-layers-triple-outline</v-icon>
-              {{ $t('decisions.empty_cta') }}
-            </v-btn>
-          </div>
         </div>
-      </div>
-    </v-container>
+      </template>
 
+      <!-- Empty state -->
+      <div v-else-if="!isLoading && !error" style="padding:64px 24px;text-align:center">
+        <v-icon size="48" color="var(--cb-ink-disabled)" style="display:block;margin:0 auto 16px">mdi-lightbulb-auto-outline</v-icon>
+        <p style="font-family:var(--cb-font-heading);font-size:1rem;font-weight:600;color:var(--cb-ink);margin:0 0 16px">{{ emptyDecisionMessage }}</p>
+        <v-btn class="cb-btn-primary" @click="goToScenarios">
+          <v-icon start size="14">mdi-layers-triple-outline</v-icon>
+          {{ t('decisions.empty_cta') }}
+        </v-btn>
+      </div>
+
+    </div><!-- end cb-container -->
+
+    <!-- Vote dialog -->
     <v-dialog v-model="voteDialog.open" max-width="560">
       <v-card>
-        <v-card-title>{{ $t('decisions.vote_dialog_title') }}</v-card-title>
+        <v-card-title>{{ t('decisions.vote_dialog_title') }}</v-card-title>
         <v-card-text>
           <v-textarea
             v-model="voteDialog.justification"
-            :label="$t('decisions.vote_dialog_placeholder')"
+            :label="t('decisions.vote_dialog_placeholder')"
             variant="outlined"
             counter="500"
             maxlength="500"
@@ -398,22 +365,23 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn variant="text" @click="closeVoteDialog">{{ $t('decisions.cancel') }}</v-btn>
+          <v-btn variant="text" @click="closeVoteDialog">{{ t('decisions.cancel') }}</v-btn>
           <v-btn
-            color="#4f46e5"
+            color="var(--cb-accent)"
             variant="flat"
             :loading="Boolean(voteDialog.decisionId) && activeDecisionId === voteDialog.decisionId && (decisionAction === 'vote-approve' || decisionAction === 'vote-reject')"
             @click="submitVoteFromDialog"
           >
-            {{ $t('decisions.submit_vote') }}
+            {{ t('decisions.submit_vote') }}
           </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
+    <!-- Create decision from scenario dialog -->
     <v-dialog v-model="decisionCreationDialogOpen" max-width="640">
       <v-card>
-        <v-card-title>{{ $t('decisions.choose_scenario') }}</v-card-title>
+        <v-card-title>{{ t('decisions.choose_scenario') }}</v-card-title>
         <v-card-text>
           <div v-if="availableScenariosForDecision.length" class="decision-create-list">
             <button
@@ -427,25 +395,25 @@
                 <strong>{{ scenario.name }}</strong>
                 <p>{{ scenario.summary || t('decisions.scenario_label', { name: scenario.name }) }}</p>
               </div>
-              <v-icon v-if="selectedScenarioToCreate === scenario.id" color="#4f46e5">mdi-check-circle</v-icon>
+              <v-icon v-if="selectedScenarioToCreate === scenario.id" color="var(--cb-accent)">mdi-check-circle</v-icon>
             </button>
           </div>
-          <div v-else class="empty-state">
-            <v-icon color="#94a3b8" size="28">mdi-lightbulb-auto-outline</v-icon>
-            <p>{{ $t('decisions.no_available_scenarios') }}</p>
+          <div v-else style="padding:32px;text-align:center">
+            <v-icon color="var(--cb-ink-disabled)" size="28">mdi-lightbulb-auto-outline</v-icon>
+            <p style="font-size:.875rem;color:var(--cb-ink-muted);margin-top:8px">{{ t('decisions.no_available_scenarios') }}</p>
           </div>
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn variant="text" @click="closeDecisionCreationDialog">{{ $t('decisions.cancel') }}</v-btn>
+          <v-btn variant="text" @click="closeDecisionCreationDialog">{{ t('decisions.cancel') }}</v-btn>
           <v-btn
-            color="#4f46e5"
+            color="var(--cb-accent)"
             variant="flat"
             :disabled="!selectedScenarioToCreate"
             :loading="Boolean(selectedScenarioToCreate) && activeDecisionId === selectedScenarioToCreate && decisionAction === 'create'"
             @click="createDecisionFromSelectedScenario"
           >
-            {{ $t('decisions.create_decision') }}
+            {{ t('decisions.create_decision') }}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -457,6 +425,8 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
+import PageHeader from '@/components/PageHeader.vue'
+import AlertStrip from '@/components/AlertStrip.vue'
 import ScenarioService, { type SavedScenario, type ScenarioDeltaType, type ScenarioSimulationResponse } from '@/services/ScenarioService'
 import DecisionService, { type DecisionComment, type DecisionVote, type DecisionVoteValue, type PersistedDecision, type PersistedDecisionStatus } from '@/services/DecisionService'
 
@@ -649,6 +619,14 @@ const openDecisionCount = computed(() =>
 const closedDecisionCount = computed(() =>
   decisionCards.value.filter((decision) => Boolean(decision.persistedStatus) && decision.persistedStatus !== 'OPEN').length
 )
+
+const decisionSummaryItems = computed(() => [
+  { label: t('decisions.filter_open', { count: openDecisionCount.value }), value: String(openDecisionCount.value) },
+  { divider: true },
+  { label: t('decisions.filter_with_decision', { count: withDecisionCount.value }), value: String(withDecisionCount.value) },
+  { divider: true },
+  { label: t('decisions.filter_closed', { count: closedDecisionCount.value }), value: String(closedDecisionCount.value) },
+])
 
 const filteredDecisionCards = computed(() => {
   if (decisionFilter.value === 'open') {
@@ -1012,438 +990,16 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.decisions-page {
-  min-height: 100vh;
-  background: linear-gradient(135deg, rgba(245, 247, 250, 1) 0%, rgba(232, 234, 240, 1) 100%);
-  padding: 32px 0;
-}
-
-.v-theme--dark .decisions-page {
-  background: linear-gradient(135deg, rgba(30, 30, 30, 1) 0%, rgba(20, 20, 20, 1) 100%);
-}
-
-.modern-container {
-  max-width: 1200px;
-  padding-left: 16px;
-  padding-right: 16px;
-}
-
-.page-header {
-  margin-bottom: 32px;
-}
-
-.page-title {
-  font-size: 2.2rem;
-  font-weight: 700;
-  margin: 0 0 8px;
-  color: #1a1a1a;
-}
-
-.v-theme--dark .page-title {
-  color: #ffffff;
-}
-
-.page-subtitle {
-  margin: 0;
-  color: #666;
-  font-size: 1rem;
-}
-
-.v-theme--dark .page-subtitle {
-  color: #b0b0b0;
-}
-
-.modern-card {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  overflow: hidden;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.v-theme--dark .modern-card {
-  background: #2a2a2a;
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-}
-
-.card-header {
-  padding: 20px 24px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-  background: rgba(102, 126, 234, 0.03);
-}
-
-.v-theme--dark .card-header {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(102, 126, 234, 0.08);
-}
-
-.card-title {
-  font-size: 1.3rem;
+/* ── Decision reasoning vote chips ─────── */
+.decision-reasoning__toggle {
+  width: fit-content;
+  border: 0;
+  background: transparent;
+  color: var(--cb-accent);
+  font-size: 0.82rem;
   font-weight: 600;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  color: #1a1a1a;
-}
-
-.v-theme--dark .card-title {
-  color: #ffffff;
-}
-
-.card-content {
-  padding: 24px;
-  display: grid;
-  gap: 18px;
-}
-
-.decisions-toolbar {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  align-items: flex-start;
-}
-
-.decisions-toolbar__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: flex-end;
-}
-
-.decisions-filter-toggle {
-  margin-right: 4px;
-}
-
-.decisions-note {
-  margin: 0;
-  color: #64748b;
-  line-height: 1.5;
-  max-width: 720px;
-}
-
-.decisions-grid {
-  display: grid;
-  gap: 16px;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-}
-
-.decision-card {
-  border-radius: 14px;
-  padding: 20px;
-  background: rgba(102, 126, 234, 0.04);
-  border: 1px solid rgba(102, 126, 234, 0.14);
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.04);
-  display: grid;
-  gap: 16px;
-}
-
-.v-theme--dark .decision-card {
-  background: rgba(102, 126, 234, 0.14);
-  border-color: rgba(102, 126, 234, 0.2);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
-}
-
-.decision-card__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.decision-card__title-wrap {
-  display: grid;
-  gap: 4px;
-}
-
-.decision-card__title {
-  margin: 0;
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: #1a1a1a;
-}
-
-.v-theme--dark .decision-card__title {
-  color: #ffffff;
-}
-
-.decision-card__scenario {
-  margin: 0;
-  color: #667085;
-  font-size: 0.9rem;
-}
-
-.decision-impact {
-  display: grid;
-  gap: 6px;
-  padding: 16px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.78);
-  border: 1px solid rgba(148, 163, 184, 0.12);
-}
-
-.decision-impact__label {
-  font-size: 0.75rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #64748b;
-}
-
-.decision-impact__value {
-  font-size: clamp(1.9rem, 4vw, 2.6rem);
-  font-weight: 800;
-  line-height: 1;
-}
-
-.decision-impact__subtitle {
-  color: #64748b;
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-
-.decision-impact__details {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 18px;
-  color: #475569;
-  font-size: 0.88rem;
-}
-
-.decision-impact__details strong {
-  color: #0f172a;
-}
-
-.decision-impact--positive {
-  color: #15803d;
-}
-
-.decision-impact--negative {
-  color: #dc2626;
-}
-
-.decision-impact--neutral {
-  color: #64748b;
-}
-
-.v-theme--dark .decision-impact {
-  background: rgba(15, 23, 42, 0.35);
-  border-color: rgba(148, 163, 184, 0.14);
-}
-
-.v-theme--dark .decision-impact__details strong {
-  color: #ffffff;
-}
-
-.decision-card__description {
-  margin: 0;
-  color: #475569;
-  font-size: 0.95rem;
-  line-height: 1.5;
-}
-
-.v-theme--dark .decision-card__description,
-.v-theme--dark .decision-card__scenario {
-  color: #cbd5e1;
-}
-
-.decision-card__metrics {
-  display: grid;
-  gap: 10px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.decision-metric {
-  display: grid;
-  gap: 4px;
-  padding: 12px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(148, 163, 184, 0.14);
-}
-
-.decision-metric span {
-  font-size: 0.75rem;
-  color: #64748b;
-  text-transform: uppercase;
-  font-weight: 700;
-}
-
-.decision-metric strong {
-  color: #0f172a;
-  font-size: 1rem;
-}
-
-.v-theme--dark .decision-metric {
-  background: rgba(15, 23, 42, 0.42);
-  border-color: rgba(148, 163, 184, 0.16);
-}
-
-.v-theme--dark .decision-metric strong {
-  color: #f8fafc;
-}
-
-.decision-card__meta {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 0.9rem;
-  color: #4a4a4a;
-}
-
-.decision-card__actions {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding-top: 4px;
-  border-top: 1px solid rgba(148, 163, 184, 0.16);
-}
-
-.decision-card__execute-btn {
-  width: 100%;
-  justify-content: flex-start;
-  min-height: 52px;
-  font-size: 1rem;
-  letter-spacing: 0.01em;
-  box-shadow: 0 10px 24px rgba(22, 163, 74, 0.18);
-}
-
-.decision-card__secondary-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-}
-
-.decision-status-chip {
-  font-weight: 700;
-}
-
-.decision-votes {
-  display: grid;
-  gap: 10px;
-  padding: 12px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.62);
-  border: 1px solid rgba(148, 163, 184, 0.14);
-}
-
-.decision-votes--featured {
-  background: rgba(255, 255, 255, 0.82);
-  border-color: rgba(102, 126, 234, 0.18);
-}
-
-.v-theme--dark .decision-votes {
-  background: rgba(15, 23, 42, 0.42);
-  border-color: rgba(148, 163, 184, 0.16);
-}
-
-.v-theme--dark .decision-votes--featured {
-  background: rgba(15, 23, 42, 0.58);
-  border-color: rgba(129, 140, 248, 0.24);
-}
-
-.decision-votes__summary {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: center;
-  color: #475569;
-  font-size: 0.9rem;
-}
-
-.decision-votes__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.decision-vote-btn {
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
-}
-
-.decision-vote-btn:hover {
-  transform: translateY(-1px);
-}
-
-.decision-votes__hint {
-  margin: 0;
-  color: #64748b;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-.decision-votes__current {
-  margin: 0;
-  color: #64748b;
-  font-size: 0.9rem;
-}
-
-.decision-reasoning {
-  display: grid;
-  gap: 10px;
-  padding: 12px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(148, 163, 184, 0.14);
-}
-
-.v-theme--dark .decision-reasoning {
-  background: rgba(15, 23, 42, 0.42);
-  border-color: rgba(148, 163, 184, 0.16);
-}
-
-.decision-reasoning__header {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  align-items: center;
-  color: #475569;
-  font-size: 0.9rem;
-}
-
-.decision-reasoning__empty {
-  margin: 0;
-  color: #64748b;
-  font-size: 0.88rem;
-}
-
-.decision-reasoning__groups {
-  display: grid;
-  gap: 10px;
-}
-
-.decision-reasoning__group {
-  display: grid;
-  gap: 6px;
-}
-
-.decision-reasoning__group-title {
-  margin: 0;
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #64748b;
-  font-weight: 700;
-}
-
-.decision-reasoning__item {
-  display: grid;
-  gap: 4px;
-}
-
-.decision-reasoning__line {
-  margin: 0;
-  color: #334155;
-  font-size: 0.9rem;
-  line-height: 1.4;
-}
-
-.v-theme--dark .decision-reasoning__header,
-.v-theme--dark .decision-reasoning__empty,
-.v-theme--dark .decision-reasoning__group-title,
-.v-theme--dark .decision-reasoning__line {
-  color: #cbd5e1;
+  cursor: pointer;
+  padding: 0;
 }
 
 .decision-reasoning__vote {
@@ -1453,139 +1009,23 @@ onMounted(async () => {
   font-weight: 700;
 }
 
-.decision-reasoning__vote--approve {
-  color: #15803d;
-}
+.decision-reasoning__vote--approve { color: var(--cb-positive); }
+.decision-reasoning__vote--reject  { color: var(--cb-risk); }
 
-.decision-reasoning__vote--reject {
-  color: #dc2626;
-}
-
-.decision-reasoning__toggle {
-  width: fit-content;
-  border: 0;
-  background: transparent;
-  color: #4f46e5;
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 0;
-}
-
-.decision-comments {
-  display: grid;
-  gap: 10px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(148, 163, 184, 0.16);
-}
-
-.decision-discussion {
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid rgba(148, 163, 184, 0.2);
-}
-
-.decision-comments__header {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  color: #475569;
-  font-size: 0.9rem;
-}
-
-.decision-comments__list {
-  display: grid;
-  gap: 8px;
-}
-
-.decision-comment {
-  display: grid;
-  grid-template-columns: 36px 1fr;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(148, 163, 184, 0.14);
-}
-
-.v-theme--dark .decision-comment {
-  background: rgba(15, 23, 42, 0.42);
-  border-color: rgba(148, 163, 184, 0.16);
-}
-
+/* ── Comment avatar ─────────────────────── */
 .decision-comment__avatar {
   width: 36px;
   height: 36px;
   border-radius: 999px;
   display: grid;
   place-items: center;
-  background: rgba(79, 70, 229, 0.12);
-  color: #4338ca;
+  background: var(--cb-primary-bg);
+  color: var(--cb-primary);
   font-size: 0.78rem;
   font-weight: 700;
 }
 
-.decision-comment__content {
-  display: grid;
-  gap: 4px;
-}
-
-.decision-comment p,
-.decision-comment span,
-.decision-comments__empty {
-  margin: 0;
-  color: #475569;
-}
-
-.decision-comment span {
-  font-size: 0.82rem;
-  color: #64748b;
-}
-
-.v-theme--dark .decision-comment p,
-.v-theme--dark .decision-comment span,
-.v-theme--dark .decision-comments__empty,
-.v-theme--dark .decision-comments__header {
-  color: #cbd5e1;
-}
-
-.decision-comments__composer {
-  display: grid;
-  gap: 10px;
-}
-
-.decision-comments__hint,
-.decision-apply-hint {
-  margin: 0;
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  color: #b91c1c;
-  font-size: 0.85rem;
-}
-
-.empty-state {
-  display: grid;
-  gap: 8px;
-  justify-items: center;
-  text-align: center;
-  padding: 32px 18px;
-  border-radius: 14px;
-  background: rgba(248, 250, 252, 0.7);
-  border: 1px dashed rgba(148, 163, 184, 0.35);
-  color: #64748b;
-}
-
-.v-theme--dark .empty-state {
-  background: rgba(15, 23, 42, 0.38);
-  border-color: rgba(148, 163, 184, 0.24);
-  color: #cbd5e1;
-}
-
-.empty-state--error {
-  color: #b91c1c;
-}
-
+/* ── Create-from-scenario picker ────────── */
 .decision-create-list {
   display: grid;
   gap: 10px;
@@ -1594,54 +1034,194 @@ onMounted(async () => {
 }
 
 .decision-create-item {
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  border-radius: 12px;
+  border: 1px solid var(--cb-border-card);
+  border-radius: var(--cb-radius-card);
   padding: 12px;
-  background: #fff;
+  background: var(--cb-surface);
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
   text-align: left;
   cursor: pointer;
-}
-
-.v-theme--dark .decision-create-item {
-  background: rgba(15, 23, 42, 0.42);
-  border-color: rgba(148, 163, 184, 0.2);
-  color: #f8fafc;
+  color: var(--cb-ink);
 }
 
 .decision-create-item p {
   margin: 4px 0 0;
-  color: #64748b;
+  color: var(--cb-ink-muted);
   font-size: 0.86rem;
 }
 
-.v-theme--dark .decision-create-item p {
-  color: #cbd5e1;
+/* ── Decision card (cb-* layout) ────────── */
+.cb-decisions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cb-decision-card {
+  background: var(--cb-surface);
+  border-radius: var(--cb-radius-card);
+  border: 1px solid var(--cb-border-card);
+  padding: 20px 24px;
+  box-shadow: var(--cb-shadow-card);
+}
+
+.cb-decision-card--open {
+  border-left: 3px solid var(--cb-primary);
+}
+
+.cb-decision-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.cb-decision-card__title {
+  font-family: var(--cb-font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--cb-ink);
+  margin: 0 0 2px;
+}
+
+.cb-decision-card__scenario {
+  font-size: .8rem;
+  color: var(--cb-ink-muted);
+  margin: 0;
+}
+
+.cb-decision-card__impact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  align-items: center;
+  background: rgba(23,32,51,.03);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  font-size: .82rem;
+}
+
+.cb-decision-card__impact-label {
+  font-weight: 600;
+  color: var(--cb-ink-secondary);
+}
+
+.cb-decision-card__impact-value {
+  font-family: var(--cb-font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.cb-decision-card__impact-meta {
+  color: var(--cb-ink-muted);
+  font-size: .75rem;
+}
+
+.cb-decision-card__consequence {
+  font-size: .875rem;
+  color: var(--cb-ink-secondary);
+  margin: 0 0 14px;
+}
+
+.cb-decision-card__votes {
+  border-top: 1px solid var(--cb-border);
+  padding-top: 14px;
+  margin-bottom: 14px;
+}
+
+.cb-decision-card__votes-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: .875rem;
+}
+
+.cb-decision-card__reasoning {
+  background: rgba(23,32,51,.03);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  font-size: .8rem;
+}
+
+.cb-decision-card__reasoning-group {
+  font-weight: 600;
+  font-size: .75rem;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--cb-ink-muted);
+  margin: 8px 0 4px;
+}
+
+.cb-decision-card__reasoning-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.cb-decision-card__metrics {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.cb-decision-card__metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: .8rem;
+}
+
+.cb-decision-card__metric span {
+  color: var(--cb-ink-muted);
+}
+
+.cb-decision-card__metric strong {
+  font-family: var(--cb-font-heading);
+  font-size: .95rem;
+  color: var(--cb-ink);
+}
+
+.cb-decision-card__meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: .8rem;
+  color: var(--cb-ink-muted);
+  margin-bottom: 14px;
+}
+
+.cb-decision-card__actions {
+  border-top: 1px solid var(--cb-border);
+  padding-top: 14px;
+  margin-bottom: 12px;
+}
+
+.cb-decision-card__discussion {
+  margin-top: 12px;
+}
+
+.cb-decision-card__blocked-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .8rem;
+  color: var(--cb-risk);
+  margin-top: 8px;
 }
 
 @media (max-width: 900px) {
-  .decisions-toolbar {
+  .cb-decision-card__head {
     flex-direction: column;
-  }
-
-  .decisions-toolbar__actions {
-    justify-content: flex-start;
-  }
-
-  .decision-card__metrics {
-    grid-template-columns: 1fr;
-  }
-
-  .decision-card__actions {
-    align-items: stretch;
-  }
-
-  .decision-card__secondary-actions {
-    flex-direction: column;
-    align-items: stretch;
   }
 }
 </style>

@@ -1,68 +1,54 @@
 <template>
-    <div class="report-view-container">
-        <v-container>
-            <v-row>
-                <v-col cols="12">
-                    <h1>{{ $t('report_view.title') }}</h1>
-                    <p class="report-view-subtitle">{{ $t('report_view.subtitle') }}</p>
-                    <v-alert
-                      type="info"
-                      variant="tonal"
-                      class="report-view-scope-alert"
-                    >
-                      {{ $t('transactionVisibility.reportScopeNote') }}
-                    </v-alert>
-                    <report-generator
-                      :initial-report-type="initialReportType"
-                      :initial-start-date="initialStartDate"
-                      :initial-end-date="initialEndDate"
-                      :initial-category-filter="initialCategoryFilter"
-                    />
-                </v-col>
-            </v-row>
-        </v-container>
+  <div class="cb-page">
+    <div class="cb-container">
+      <page-header :title="t('report_view.title')" :meta="t('report_view.subtitle')" />
+
+      <div class="cb-scope-note">
+        <v-icon size="14" color="var(--cb-ink-muted)">mdi-account-group-outline</v-icon>
+        <span>{{ t('transactionVisibility.reportScopeNote') }}</span>
+      </div>
+
+      <report-generator
+        :initial-report-type="initialReportType"
+        :initial-start-date="initialStartDate"
+        :initial-end-date="initialEndDate"
+        :initial-category-filter="initialCategoryFilter"
+      />
     </div>
+  </div>
 </template>
 
-<script>
-import ReportGenerator from "@/components/ReportGenerator.vue";
+<script setup lang="ts">
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import ReportGenerator from '@/components/ReportGenerator.vue'
+import PageHeader from '@/components/PageHeader.vue'
 
-export default {
-    components: {
-        ReportGenerator,
-    },
-    computed: {
-        initialReportType() {
-            return typeof this.$route?.query?.reportType === 'string' ? this.$route.query.reportType : 'expenses'
-        },
-        initialStartDate() {
-            return typeof this.$route?.query?.startDate === 'string' ? this.$route.query.startDate : null
-        },
-        initialEndDate() {
-            return typeof this.$route?.query?.endDate === 'string' ? this.$route.query.endDate : null
-        },
-        initialCategoryFilter() {
-            return typeof this.$route?.query?.category === 'string' ? this.$route.query.category : null
-        },
-    },
-};
+const { t } = useI18n()
+const route = useRoute()
+
+const initialReportType = computed(() =>
+  typeof route.query?.reportType === 'string' ? route.query.reportType : 'expenses'
+)
+const initialStartDate = computed(() =>
+  typeof route.query?.startDate === 'string' ? route.query.startDate : null
+)
+const initialEndDate = computed(() =>
+  typeof route.query?.endDate === 'string' ? route.query.endDate : null
+)
+const initialCategoryFilter = computed(() =>
+  typeof route.query?.category === 'string' ? route.query.category : null
+)
 </script>
 
 <style scoped>
-.report-view-container {
-    padding: 20px;
-}
-
-.report-view-subtitle {
-    color: rgba(0, 0, 0, 0.62);
-    margin: 8px 0 20px;
-}
-
-.report-view-scope-alert {
-    margin-bottom: 20px;
-}
-
-.v-theme--dark .report-view-subtitle {
-    color: rgba(255, 255, 255, 0.72);
+.cb-scope-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .82rem;
+  color: var(--cb-ink-muted);
+  margin-bottom: 20px;
 }
 </style>

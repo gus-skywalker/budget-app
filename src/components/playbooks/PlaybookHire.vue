@@ -180,7 +180,7 @@ function goToScenario() {
 .playbook-hero__copy {
   border-radius: 28px;
   padding: 28px;
-  background: linear-gradient(145deg, rgba(79, 70, 229, 0.08), rgba(255, 255, 255, 0.96));
+  background: linear-gradient(145deg, rgba(182, 85, 31, 0.08), rgba(255, 255, 255, 0.96));
 }
 
 .playbook-badge {
@@ -216,8 +216,8 @@ function goToScenario() {
   width: fit-content;
   border-radius: 999px;
   padding: 6px 12px;
-  background: rgba(79, 70, 229, 0.08);
-  color: #4338ca;
+  background: color-mix(in srgb, var(--cb-primary) 8%, transparent);
+  color: var(--cb-primary);
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.05em;

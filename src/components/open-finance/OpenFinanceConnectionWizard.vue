@@ -34,7 +34,7 @@
             :label="t('openFinance.wizard.search_bank')"
             variant="outlined"
             density="comfortable"
-            color="#667eea"
+            color="var(--cb-primary)"
             hide-details
             class="mb-4"
           />
@@ -90,7 +90,7 @@
               :label="holderType === 'CPF' ? 'CPF' : 'CNPJ'"
               variant="outlined"
               density="comfortable"
-              color="#667eea"
+              color="var(--cb-primary)"
               :loading="holdersLoading || cnpjLookupLoading"
               :hint="holderLookupHint"
               :maxlength="holderType === 'CPF' ? 14 : 18"
@@ -110,7 +110,7 @@
                   <span v-if="lookupHolderResult.city || lookupHolderResult.state">{{ [lookupHolderResult.city, lookupHolderResult.state].filter(Boolean).join(' - ') }}</span>
                 </div>
                 <div class="of-holder-card__actions">
-                  <v-btn size="small" color="#667eea" variant="tonal" @click="lookupHolderResult && continueWithHolder(lookupHolderResult)">
+                  <v-btn size="small" color="var(--cb-primary)" variant="tonal" @click="lookupHolderResult && continueWithHolder(lookupHolderResult)">
                     {{ t('openFinance.wizard.continue_with_data') }}
                   </v-btn>
                   <v-btn size="small" variant="text" @click="lookupHolderResult && editHolder(lookupHolderResult)">
@@ -133,40 +133,40 @@
               :label="holderType === 'CPF' ? 'CPF' : 'CNPJ'"
               variant="outlined"
               density="comfortable"
-              color="#667eea"
+              color="var(--cb-primary)"
               readonly
             />
-            <v-text-field v-model="payerName" :label="holderType === 'CPF' ? t('openFinance.wizard.full_name') : t('openFinance.wizard.company_name')" variant="outlined" density="comfortable" color="#667eea" />
-            <v-text-field v-model="holderEmail" :label="t('openFinance.wizard.email')" type="email" variant="outlined" density="comfortable" color="#667eea" />
-            <v-text-field v-model="holderPhone" :label="t('openFinance.wizard.optional_phone')" variant="outlined" density="comfortable" color="#667eea" />
+            <v-text-field v-model="payerName" :label="holderType === 'CPF' ? t('openFinance.wizard.full_name') : t('openFinance.wizard.company_name')" variant="outlined" density="comfortable" color="var(--cb-primary)" />
+            <v-text-field v-model="holderEmail" :label="t('openFinance.wizard.email')" type="email" variant="outlined" density="comfortable" color="var(--cb-primary)" />
+            <v-text-field v-model="holderPhone" :label="t('openFinance.wizard.optional_phone')" variant="outlined" density="comfortable" color="var(--cb-primary)" />
             <v-text-field
               v-model="zipcode"
               :label="t('openFinance.wizard.zipcode')"
               variant="outlined"
               density="comfortable"
-              color="#667eea"
+              color="var(--cb-primary)"
               :loading="cepLookupLoading"
               :hint="cepLookupHint"
               persistent-hint
               @blur="prepareZipcodeAutofill"
             />
-            <v-text-field v-model="street" :label="t('openFinance.wizard.street')" variant="outlined" density="comfortable" color="#667eea" />
-            <v-text-field v-model="addressNumber" :label="t('openFinance.wizard.address_number')" variant="outlined" density="comfortable" color="#667eea" />
-            <v-text-field v-model="addressComplement" :label="t('openFinance.wizard.address_complement')" variant="outlined" density="comfortable" color="#667eea" />
-            <v-text-field v-model="neighborhood" :label="t('openFinance.wizard.neighborhood')" variant="outlined" density="comfortable" color="#667eea" />
-            <v-text-field v-model="city" :label="t('openFinance.wizard.city')" variant="outlined" density="comfortable" color="#667eea" />
-            <v-text-field v-model="state" :label="t('openFinance.wizard.state')" variant="outlined" density="comfortable" color="#667eea" maxlength="2" />
+            <v-text-field v-model="street" :label="t('openFinance.wizard.street')" variant="outlined" density="comfortable" color="var(--cb-primary)" />
+            <v-text-field v-model="addressNumber" :label="t('openFinance.wizard.address_number')" variant="outlined" density="comfortable" color="var(--cb-primary)" />
+            <v-text-field v-model="addressComplement" :label="t('openFinance.wizard.address_complement')" variant="outlined" density="comfortable" color="var(--cb-primary)" />
+            <v-text-field v-model="neighborhood" :label="t('openFinance.wizard.neighborhood')" variant="outlined" density="comfortable" color="var(--cb-primary)" />
+            <v-text-field v-model="city" :label="t('openFinance.wizard.city')" variant="outlined" density="comfortable" color="var(--cb-primary)" />
+            <v-text-field v-model="state" :label="t('openFinance.wizard.state')" variant="outlined" density="comfortable" color="var(--cb-primary)" maxlength="2" />
           </div>
         </section>
 
         <section v-else-if="step === 'account'" class="of-step-panel">
           <h4>{{ t('openFinance.wizard.account_data_title') }}</h4>
           <div class="of-form-grid">
-            <v-text-field v-model="agency" :label="t('openFinance.wizard.agency')" variant="outlined" density="comfortable" color="#667eea" maxlength="8" inputmode="numeric" @update:model-value="agency = onlyDigits(String($event)).slice(0, 8)" />
-            <v-text-field v-model="agencyDigit" :label="t('openFinance.wizard.optional_agency_digit')" variant="outlined" density="comfortable" color="#667eea" maxlength="2" @update:model-value="agencyDigit = sanitizeDigit(String($event), 2)" />
-            <v-text-field v-model="accountNumber" :label="t('openFinance.wizard.account')" variant="outlined" density="comfortable" color="#667eea" maxlength="20" inputmode="numeric" @update:model-value="accountNumber = onlyDigits(String($event)).slice(0, 20)" />
-            <v-text-field v-model="accountNumberDigit" :label="t('openFinance.wizard.account_digit')" variant="outlined" density="comfortable" color="#667eea" maxlength="2" @update:model-value="accountNumberDigit = sanitizeDigit(String($event), 2)" />
-            <v-text-field v-model="displayName" :label="t('openFinance.wizard.display_name')" variant="outlined" density="comfortable" color="#667eea" class="of-form-grid__wide" />
+            <v-text-field v-model="agency" :label="t('openFinance.wizard.agency')" variant="outlined" density="comfortable" color="var(--cb-primary)" maxlength="8" inputmode="numeric" @update:model-value="agency = onlyDigits(String($event)).slice(0, 8)" />
+            <v-text-field v-model="agencyDigit" :label="t('openFinance.wizard.optional_agency_digit')" variant="outlined" density="comfortable" color="var(--cb-primary)" maxlength="2" @update:model-value="agencyDigit = sanitizeDigit(String($event), 2)" />
+            <v-text-field v-model="accountNumber" :label="t('openFinance.wizard.account')" variant="outlined" density="comfortable" color="var(--cb-primary)" maxlength="20" inputmode="numeric" @update:model-value="accountNumber = onlyDigits(String($event)).slice(0, 20)" />
+            <v-text-field v-model="accountNumberDigit" :label="t('openFinance.wizard.account_digit')" variant="outlined" density="comfortable" color="var(--cb-primary)" maxlength="2" @update:model-value="accountNumberDigit = sanitizeDigit(String($event), 2)" />
+            <v-text-field v-model="displayName" :label="t('openFinance.wizard.display_name')" variant="outlined" density="comfortable" color="var(--cb-primary)" class="of-form-grid__wide" />
             <v-select
               v-model="statementType"
               :items="statementTypeOptions"
@@ -175,7 +175,7 @@
               :label="t('openFinance.wizard.initial_statement_type')"
               variant="outlined"
               density="comfortable"
-              color="#667eea"
+              color="var(--cb-primary)"
             />
             <v-text-field
               v-if="statementType === 'CREDIT_CARD'"
@@ -183,7 +183,7 @@
               :label="t('openFinance.wizard.card_last_digits')"
               variant="outlined"
               density="comfortable"
-              color="#667eea"
+              color="var(--cb-primary)"
               maxlength="4"
               inputmode="numeric"
               @update:model-value="cardNumber = onlyDigits(String($event)).slice(0, 4)"
@@ -196,7 +196,7 @@
                   :key="option"
                   size="small"
                   variant="tonal"
-                  color="#667eea"
+                  color="var(--cb-primary)"
                   @click="cardNumber = option"
                 >
                   {{ option }}
@@ -226,10 +226,10 @@
         </section>
 
         <section v-else class="of-step-panel of-status-panel">
-          <v-icon size="46" color="#667eea">mdi-bank-transfer-out</v-icon>
+          <v-icon size="46" color="var(--cb-primary)">mdi-bank-transfer-out</v-icon>
           <h4>{{ t('openFinance.wizard.authorization_in_progress') }}</h4>
           <p>{{ t('openFinance.wizard.authorization_in_progress_description') }}</p>
-          <v-btn v-if="authorizationLink" color="#667eea" variant="tonal" @click="openAuthorizationLink">
+          <v-btn v-if="authorizationLink" color="var(--cb-primary)" variant="tonal" @click="openAuthorizationLink">
             <v-icon start>mdi-open-in-new</v-icon>
             {{ t('openFinance.wizard.open_authorization') }}
           </v-btn>
@@ -240,7 +240,7 @@
         <v-btn variant="text" @click="previousStep" :disabled="stepIndex === 0 || submitting">{{ t('common.back') }}</v-btn>
         <v-spacer />
         <v-btn variant="text" @click="close" :disabled="submitting">{{ t('common.cancel') }}</v-btn>
-        <v-btn class="gradient-btn" :loading="submitting" @click="advance">
+        <v-btn color="var(--cb-primary)" :loading="submitting" @click="advance">
           {{ step === 'review' ? t('openFinance.wizard.continue_to_bank') : step === 'authorization' || step === 'status' ? t('openFinance.wizard.finish') : t('openFinance.wizard.continue') }}
         </v-btn>
       </v-card-actions>
@@ -934,7 +934,7 @@ const extractErrorMessage = (error: any, fallback: string) => (
 }
 
 .of-wizard__eyebrow {
-  color: #667eea;
+  color: var(--cb-primary);
   font-size: 0.78rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -960,7 +960,7 @@ const extractErrorMessage = (error: any, fallback: string) => (
   place-items: center;
   width: 24px;
   height: 24px;
-  border: 1px solid rgba(102, 126, 234, 0.25);
+  border: 1px solid var(--cb-border-card);
   border-radius: 50%;
 }
 
@@ -972,8 +972,8 @@ const extractErrorMessage = (error: any, fallback: string) => (
 .of-step--active span,
 .of-step--done span {
   color: white;
-  background: #667eea;
-  border-color: #667eea;
+  background: var(--cb-primary);
+  border-color: var(--cb-primary);
 }
 
 .of-step-panel h4 {
@@ -1003,7 +1003,7 @@ const extractErrorMessage = (error: any, fallback: string) => (
   gap: 16px;
   align-items: start;
   padding: 14px;
-  border: 1px solid rgba(102, 126, 234, 0.24);
+  border: 1px solid var(--cb-border-card);
   border-radius: 8px;
   background: #f8fafc;
 }
@@ -1024,7 +1024,7 @@ const extractErrorMessage = (error: any, fallback: string) => (
 }
 
 .of-holder-card__eyebrow {
-  color: #667eea !important;
+  color: var(--cb-primary) !important;
   font-size: 0.76rem !important;
   font-weight: 700;
   text-transform: uppercase;
@@ -1050,8 +1050,8 @@ const extractErrorMessage = (error: any, fallback: string) => (
 
 .of-bank-option--selected,
 .of-choice--selected {
-  border-color: #667eea;
-  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.14);
+  border-color: var(--cb-primary);
+  box-shadow: var(--cb-shadow-card);
 }
 
 .of-bank-mark {
@@ -1160,10 +1160,6 @@ const extractErrorMessage = (error: any, fallback: string) => (
   padding: 14px 24px 22px;
 }
 
-.gradient-btn {
-  color: white;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
 
 @media (max-width: 760px) {
   .of-steps {

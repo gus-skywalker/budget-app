@@ -25,7 +25,7 @@
           <v-chip
             v-if="hasSuggestionReady"
             size="x-small"
-            color="#667eea"
+            color="var(--cb-primary)"
             variant="tonal"
           >
             {{ $t('expenseItem.suggestionReady') }}
@@ -33,7 +33,7 @@
           <v-btn
             size="x-small"
             variant="text"
-            color="#667eea"
+            color="var(--cb-primary)"
             :loading="aiSuggesting"
             :disabled="aiSuggesting"
             @click.stop="$emit('suggestCategory', expense)"
@@ -45,7 +45,7 @@
             v-if="hasSuggestionReady"
             size="x-small"
             variant="text"
-            color="#667eea"
+            color="var(--cb-primary)"
             @click.stop="handleSelect"
           >
             <v-icon start size="14">mdi-check-decagram</v-icon>
@@ -53,7 +53,7 @@
           </v-btn>
         </div>
         <div v-if="suggestionDetails" class="suggestion-details">
-          <v-chip size="small" color="#667eea" variant="outlined">
+          <v-chip size="small" color="var(--cb-primary)" variant="outlined">
             <v-icon start size="14">mdi-shape-outline</v-icon>
             {{ $t('expenseItem.suggestedCategoryLabel') }}: {{ suggestionDetails.categoryName }}
           </v-chip>
@@ -71,7 +71,7 @@
           </div>
           <v-btn
             size="x-small"
-            color="#667eea"
+            color="var(--cb-primary)"
             variant="tonal"
             :loading="isApplyingSuggestion"
             :disabled="isApplyingSuggestion"
@@ -88,7 +88,7 @@
           <v-btn
             size="x-small"
             variant="outlined"
-            color="#667eea"
+            color="var(--cb-primary)"
             :loading="resolvingAction === 'keep-existing'"
             :disabled="Boolean(resolvingAction)"
             @click.stop="$emit('resolveConflict', { expense, action: 'keep-existing' })"
@@ -98,7 +98,7 @@
           <v-btn
             size="x-small"
             variant="tonal"
-            color="#667eea"
+            color="var(--cb-primary)"
             :loading="resolvingAction === 'create-new'"
             :disabled="Boolean(resolvingAction)"
             @click.stop="$emit('resolveConflict', { expense, action: 'create-new' })"
@@ -126,7 +126,7 @@
             v-for="agreement in sharedAgreements"
             :key="agreement.id"
             size="x-small"
-            color="#0f766e"
+            color="var(--cb-accent)"
             variant="tonal"
             @click.stop="toggleAgreementVisibility"
           >
@@ -459,7 +459,7 @@ export default {
       const status = this.expense?.reconciliationStatus;
       if (status === 'CONFLICT_DUPLICATE') return 'warning';
       if (status === 'MATCHED_AND_CANCELLED') return 'error';
-      return '#667eea';
+      return 'var(--cb-primary)';
     },
     openFinanceSharingColor() {
       const tone = this.expense?.openFinanceSharingTone;
@@ -467,7 +467,7 @@ export default {
       if (tone === 'admin-shared') return 'info';
       if (tone === 'planning-only') return 'warning';
       if (tone === 'private') return 'grey';
-      return '#667eea';
+      return 'var(--cb-primary)';
     },
     hasAlerts() {
       return Array.isArray(this.expense.alerts) && this.expense.alerts.length > 0;
@@ -813,23 +813,23 @@ export default {
 
 .expense-actions {
   display: flex;
-  gap: 2px;
+  gap: 6px;
   align-items: center;
-  opacity: 0.38;
+  opacity: 0.56;
   transition: opacity 0.2s ease;
 }
 
 .expense-item:hover .expense-actions,
 .expense-item:focus-within .expense-actions {
-  opacity: 0.85;
+  opacity: 0.95;
 }
 
 .expense-action-btn {
-  min-width: 26px !important;
-  width: 26px !important;
-  height: 26px !important;
+  min-width: 36px !important;
+  width: 36px !important;
+  height: 36px !important;
   padding: 0 !important;
-  border-radius: 5px !important;
+  border-radius: 9px !important;
   color: rgba(15, 23, 42, 0.46) !important;
   transition:
     color 0.18s ease,
@@ -838,8 +838,8 @@ export default {
 }
 
 .expense-action-btn .v-icon {
-  line-height: 26px;
-  font-size: 14px !important;
+  line-height: 36px;
+  font-size: 18px !important;
   transition: color 0.18s ease;
 }
 

@@ -145,7 +145,7 @@ defineEmits([
   color: #cbd5e1;
 }
 .segment.active {
-  background: #667eea;
+  background: var(--cb-primary);
   color: #fff;
 }
 

@@ -123,7 +123,7 @@ const deliveryColor = (status?: string) => {
   if (status === 'PARTIAL') return 'warning'
   if (status === 'FAILED') return 'error'
   if (status === 'SKIPPED') return 'grey'
-  return '#667eea'
+  return 'var(--cb-primary)'
 }
 
 const deliveryIcon = (status?: string) => {

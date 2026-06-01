@@ -1,25 +1,20 @@
 <template>
-  <div class="activity-page">
-    <v-container class="modern-container">
-      <div class="page-header">
-        <div>
-          <h1 class="page-title">{{ $t('overview.activity_title') }}</h1>
-          <p class="page-subtitle">{{ $t('activity.subtitle') }}</p>
-        </div>
-        <v-btn variant="text" color="#667eea" @click="$router.push('/dashboard')">
-          <v-icon start>mdi-arrow-left</v-icon>
-          {{ $t('activity.back_to_dashboard') }}
-        </v-btn>
-      </div>
+  <div class="cb-page">
+    <div class="cb-container">
+      <page-header :title="t('overview.activity_title')" :meta="t('activity.subtitle')">
+        <template #actions>
+          <v-btn variant="text" color="var(--cb-primary)" @click="$router.push('/dashboard')">
+            <v-icon start>mdi-arrow-left</v-icon>
+            {{ t('activity.back_to_dashboard') }}
+          </v-btn>
+        </template>
+      </page-header>
 
-      <div class="modern-card">
-        <div class="card-content">
-          <div class="scope-badge-row">
-            <v-chip size="small" color="#667eea" variant="outlined">
-              <v-icon start size="14">mdi-account-group-outline</v-icon>
-              {{ $t('overview.activity_badge') }}
-            </v-chip>
-            <span class="scope-badge-note">{{ $t('overview.activity_scope_note') }}</span>
+      <div class="cb-card">
+        <div class="cb-card__body">
+          <div class="cb-scope-note">
+            <v-icon size="14" color="var(--cb-ink-muted)">mdi-account-group-outline</v-icon>
+            <span>{{ t('overview.activity_badge') }} — {{ t('overview.activity_scope_note') }}</span>
           </div>
 
           <div class="activity-filters">
@@ -28,15 +23,15 @@
               :key="filter.value"
               size="small"
               :variant="selectedFilter === filter.value ? 'flat' : 'outlined'"
-              :color="selectedFilter === filter.value ? '#667eea' : undefined"
+              :color="selectedFilter === filter.value ? 'var(--cb-primary)' : undefined"
               @click="selectedFilter = filter.value"
             >
               {{ filter.title }}
             </v-chip>
           </div>
 
-          <div v-if="loading" class="empty-state">
-            <p>{{ $t('overview.activity_loading') }}</p>
+          <div v-if="loading" class="cb-empty-state">
+            <p>{{ t('overview.activity_loading') }}</p>
           </div>
 
           <div v-else-if="filteredActivity.length" class="activity-feed">
@@ -50,33 +45,34 @@
               </div>
               <div class="activity-row__content">
                 <div class="activity-row__header">
-                  <strong>{{ event.title || $t('overview.activity_fallback_title') }}</strong>
+                  <strong>{{ event.title || t('overview.activity_fallback_title') }}</strong>
                   <span class="activity-row__time">{{ formatActivityTime(event.createdAt) }}</span>
                 </div>
-                <p class="activity-row__description">{{ event.description || $t('overview.activity_fallback_description') }}</p>
+                <p class="activity-row__description">{{ event.description || t('overview.activity_fallback_description') }}</p>
                 <div class="activity-row__meta">
                   <span>{{ actorLabel(event.actorUserId) }}</span>
                   <v-btn
                     v-if="activityRoute(event)"
                     size="x-small"
                     variant="text"
-                    color="#667eea"
+                    color="var(--cb-primary)"
                     @click="openActivity(event)"
                   >
                     <v-icon start size="14">mdi-open-in-new</v-icon>
-                    {{ $t('overview.activity_open') }}
+                    {{ t('overview.activity_open') }}
                   </v-btn>
                 </div>
               </div>
             </div>
           </div>
 
-          <div v-else class="empty-state">
-            <p>{{ selectedFilter === 'all' ? $t('overview.activity_empty') : $t('overview.activity_empty_filtered') }}</p>
+          <div v-else class="cb-empty-state">
+            <v-icon size="40" color="var(--cb-ink-muted)">mdi-calendar-blank-outline</v-icon>
+            <p>{{ selectedFilter === 'all' ? t('overview.activity_empty') : t('overview.activity_empty_filtered') }}</p>
           </div>
         </div>
       </div>
-    </v-container>
+    </div>
   </div>
 </template>
 
@@ -85,6 +81,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import ActivityService, { type WorkspaceActivityEvent } from '@/services/ActivityService'
+import PageHeader from '@/components/PageHeader.vue'
 
 const { t, locale } = useI18n()
 const router = useRouter()
@@ -135,7 +132,7 @@ const activityFilterKey = (event: WorkspaceActivityEvent) => {
 
 const activityAccent = (event: WorkspaceActivityEvent) => {
   const type = String(event?.eventType || '')
-  if (type.startsWith('TRANSACTION_SHARED_')) return { icon: 'mdi-swap-horizontal-bold', color: '#667eea' }
+  if (type.startsWith('TRANSACTION_SHARED_')) return { icon: 'mdi-swap-horizontal-bold', color: 'var(--cb-primary)' }
   if (type.startsWith('SCENARIO_')) return { icon: 'mdi-chart-timeline-variant', color: '#7c3aed' }
   if (type.startsWith('DECISION_')) return { icon: 'mdi-gavel', color: '#ea580c' }
   return { icon: 'mdi-bell-outline', color: '#64748b' }
@@ -184,79 +181,20 @@ onMounted(loadActivity)
 </script>
 
 <style scoped>
-.activity-page {
-  min-height: 100vh;
-  background: linear-gradient(135deg, rgba(245, 247, 250, 1) 0%, rgba(232, 234, 240, 1) 100%);
-  padding: 32px 0;
-}
-
-.v-theme--dark .activity-page {
-  background: linear-gradient(135deg, rgba(30, 30, 30, 1) 0%, rgba(20, 20, 20, 1) 100%);
-}
-
-.modern-container {
-  max-width: 1200px;
-  padding-left: 16px;
-  padding-right: 16px;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 24px;
-}
-
-.page-title {
-  font-size: 2.2rem;
-  font-weight: 700;
-  margin: 0 0 8px;
-  color: #1a1a1a;
-}
-
-.page-subtitle {
-  margin: 0;
-  color: #64748b;
-  font-size: 1rem;
-}
-
-.modern-card {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.v-theme--dark .modern-card {
-  background: #2a2a2a;
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-.card-content {
-  padding: 24px;
-}
-
-.scope-badge-row {
+.cb-scope-note {
   display: flex;
   align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.scope-badge-note,
-.activity-row__time,
-.activity-row__meta,
-.activity-row__description {
-  color: #64748b;
+  gap: 6px;
+  font-size: .82rem;
+  color: var(--cb-ink-muted);
+  margin-bottom: 16px;
 }
 
 .activity-filters {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-  margin: 14px 0 18px;
+  margin-bottom: 18px;
 }
 
 .activity-feed {
@@ -270,7 +208,7 @@ onMounted(loadActivity)
   gap: 12px;
   align-items: flex-start;
   padding: 14px 0;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+  border-bottom: 1px solid var(--cb-border-card);
 }
 
 .activity-row:last-child {
@@ -284,7 +222,7 @@ onMounted(loadActivity)
   border-radius: 12px;
   display: grid;
   place-items: center;
-  background: rgba(102, 126, 234, 0.08);
+  background: color-mix(in srgb, var(--cb-primary) 8%, transparent);
 }
 
 .activity-row__content {
@@ -297,7 +235,13 @@ onMounted(loadActivity)
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
-  color: #0f172a;
+  color: var(--cb-ink);
+}
+
+.activity-row__time,
+.activity-row__meta,
+.activity-row__description {
+  color: var(--cb-ink-muted);
 }
 
 .activity-row__description {
@@ -313,31 +257,5 @@ onMounted(loadActivity)
   gap: 12px;
   flex-wrap: wrap;
   font-size: 0.86rem;
-}
-
-.empty-state {
-  display: grid;
-  gap: 8px;
-  justify-items: center;
-  text-align: center;
-  padding: 32px 18px;
-  border-radius: 14px;
-  background: rgba(248, 250, 252, 0.7);
-  border: 1px dashed rgba(148, 163, 184, 0.35);
-  color: #64748b;
-}
-
-.v-theme--dark .page-title,
-.v-theme--dark .activity-row__header {
-  color: #ffffff;
-}
-
-.v-theme--dark .page-subtitle,
-.v-theme--dark .scope-badge-note,
-.v-theme--dark .activity-row__time,
-.v-theme--dark .activity-row__meta,
-.v-theme--dark .activity-row__description,
-.v-theme--dark .empty-state {
-  color: #cbd5e1;
 }
 </style>

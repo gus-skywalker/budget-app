@@ -84,12 +84,6 @@ const router = createRouter({
       component: ReportView,
       meta: { requiresAuth: true, requiresWorkspace: true }
     },
-    {
-      path: '/financialgoal',
-      name: 'financialgoal',
-      component: GoalView,
-      meta: { requiresAuth: true, requiresWorkspace: true }
-    },
     // PLANEJAMENTO E ANÁLISE
     {
       path: '/planning/budget',

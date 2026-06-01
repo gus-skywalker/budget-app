@@ -132,6 +132,13 @@ const mainNavSections = computed<NavSection[]>(() => [
         disabled: false
       },
       {
+        key: 'cashflow',
+        title: t('sidebar.cashflow'),
+        icon: 'mdi-chart-waterfall',
+        to: { name: 'cashflow' },
+        disabled: false
+      },
+      {
         key: 'shared-with-me',
         title: t('sidebar.shared_with_me'),
         icon: 'mdi-handshake-outline',
@@ -407,27 +414,27 @@ function isItemActive(item: NavItem): boolean {
 }
 
 .active-nav-item.v-list-item--active {
-  background: rgba(79, 70, 229, 0.1);
+  background: color-mix(in srgb, var(--cb-primary) 10%, transparent);
 }
 
 .v-theme--dark .active-nav-item.v-list-item--active {
-  background: rgba(99, 102, 241, 0.2);
+  background: color-mix(in srgb, var(--cb-primary) 20%, transparent);
 }
 
 .primary-nav-item {
-  background: rgba(79, 70, 229, 0.12);
-  border: 1px solid rgba(79, 70, 229, 0.28);
+  background: color-mix(in srgb, var(--cb-primary) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--cb-primary) 28%, transparent);
   border-radius: 10px;
   margin: 2px 6px;
 }
 
 .primary-nav-item:hover {
-  background: rgba(79, 70, 229, 0.16);
+  background: color-mix(in srgb, var(--cb-primary) 16%, transparent);
 }
 
 .v-theme--dark .primary-nav-item {
-  background: rgba(99, 102, 241, 0.22);
-  border-color: rgba(129, 140, 248, 0.4);
+  background: color-mix(in srgb, var(--cb-primary) 22%, transparent);
+  border-color: color-mix(in srgb, var(--cb-primary) 40%, transparent);
 }
 
 .workspace-switcher-wrapper {
