@@ -24,6 +24,13 @@ const { routerPush, routerReplace, scenarioServiceMock, decisionServiceMock, bud
 }))
 
 vi.mock('vue-router', () => ({
+  createRouter: () => ({
+    beforeEach: vi.fn(),
+    afterEach: vi.fn(),
+    push: routerPush,
+    replace: routerReplace,
+  }),
+  createWebHistory: () => ({}),
   useRouter: () => ({
     push: routerPush,
     replace: routerReplace,
@@ -48,10 +55,29 @@ vi.mock('@/services/BudgetService', () => ({
   default: budgetServiceMock,
 }))
 
+vi.mock('@/plugins/userStore', () => ({
+  useUserStore: () => ({
+    canWrite: true,
+  }),
+}))
+
 vi.mock('vue-i18n', () => ({
   useI18n: () => ({
     locale: ref('pt'),
-    t: (key: string) => key,
+    t: (key: string) => {
+      const messages: Record<string, string> = {
+        'contentExperience.planning.scenarioResult.cheapestOption': 'Cheapest option',
+        'contentExperience.planning.scenarioResult.recommendedOption': 'Recommended option',
+        'contentExperience.planning.scenarioResult.forecastDetails': 'Forecast details',
+        'contentExperience.planning.scenarioResult.saveAndCreateDecision': 'Save and create decision',
+      }
+      return messages[key] || key
+    },
+  }),
+  createI18n: () => ({
+    global: {
+      t: (key: string) => key,
+    },
   }),
 }))
 

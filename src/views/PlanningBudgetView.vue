@@ -38,6 +38,12 @@
             <span>{{ t('planning.budget.lines_count', { count: activeBudget.lines?.length || 0 }) }}</span>
             <span>{{ baselineSourceLabel(activeBudget) }}</span>
           </div>
+          <div class="cb-active-budget-card__baseline">
+            <span>{{ t('planning.budget.scenario_starting_point') }}</span>
+            <strong :class="activeBudget.net < 0 ? 'cb-summary-item__value--negative' : 'cb-summary-item__value--positive'">
+              {{ formatCurrency(activeBudget.net) }}/{{ t('planning.budget.month_short') }}
+            </strong>
+          </div>
           <alert-strip v-if="activeBaselineNotice" variant="info" :description="activeBaselineNotice" />
         </div>
 
@@ -54,6 +60,7 @@
           <div class="cb-baseline-option cb-card">
             <v-icon color="var(--cb-positive)" size="26">mdi-bank-transfer-in</v-icon>
             <div class="cb-baseline-option__body">
+              <span class="cb-baseline-option__tag">{{ t('planning.budget.source_tag_suggested') }}</span>
               <h4>{{ t('planning.budget.suggested_from_transactions') }}</h4>
               <p>{{ suggestionMessage }}</p>
             </div>
@@ -71,6 +78,7 @@
           <div class="cb-baseline-option cb-card">
             <v-icon color="var(--cb-accent)" size="26">mdi-finance</v-icon>
             <div class="cb-baseline-option__body">
+              <span class="cb-baseline-option__tag">{{ t('planning.budget.source_tag_real') }}</span>
               <h4>{{ t('planning.budget.real_baseline_openfinance') }}</h4>
               <p>{{ consolidatedBaselineMessage }}</p>
             </div>
@@ -88,6 +96,7 @@
           <div class="cb-baseline-option cb-card">
             <v-icon color="var(--cb-primary)" size="26">mdi-pencil-outline</v-icon>
             <div class="cb-baseline-option__body">
+              <span class="cb-baseline-option__tag">{{ t('planning.budget.source_tag_manual') }}</span>
               <h4>{{ t('planning.budget.quick_manual_baseline') }}</h4>
               <p>{{ t('planning.budget.quick_manual_description') }}</p>
             </div>
@@ -423,21 +432,14 @@ const usableAlternativeBudgets = computed(() =>
     (budget) => budget.id !== activeBudget.value?.id && hasUsableBudgetBaseline(budget)
   )
 )
+const hasVisibleOpenFinanceConnection = computed(() =>
+  visibleOpenFinanceConnections.value.some(isConnectedOpenFinanceConnection)
+)
 const hasVisiblePlanningSharedConnection = computed(() =>
-  visibleOpenFinanceConnections.value.some(
-    (connection) =>
-      connection.payerDocumentType === 'CPF' &&
-      connection.planningSharingLevel === 'PLANNING_IMPACT_ONLY' &&
-      (connection.status === 'CONNECTED' || connection.status === 'ERROR')
-  )
+  visibleOpenFinanceConnections.value.some(isPlanningSharedConnection)
 )
 const hasVisiblePrivateOnlyPlanningSource = computed(() =>
-  visibleOpenFinanceConnections.value.some(
-    (connection) =>
-      connection.payerDocumentType === 'CPF' &&
-      connection.planningSharingLevel === 'PRIVATE' &&
-      (connection.status === 'CONNECTED' || connection.status === 'ERROR')
-  )
+  visibleOpenFinanceConnections.value.some(isPrivateOnlyPlanningSource)
 )
 const planningSharingDisabledNotice = computed(() =>
   hasVisiblePrivateOnlyPlanningSource.value && !hasVisiblePlanningSharedConnection.value
@@ -447,12 +449,16 @@ const suggestionMessage = computed(() =>
     ? t('planning.budget.suggestion_message_ready')
     : planningSharingDisabledNotice.value
       ? t('planning.budget.suggestion_message_sharing_disabled')
-      : t('planning.budget.suggestion_message_unavailable')
+      : hasVisibleOpenFinanceConnection.value
+        ? t('planning.budget.suggestion_message_synced_no_data')
+        : t('planning.budget.suggestion_message_unavailable')
 )
 const consolidatedBaselineMessage = computed(() =>
   planningSharingDisabledNotice.value
     ? t('planning.budget.consolidated_message_sharing_disabled')
-    : t('planning.budget.consolidated_message_ready')
+    : hasVisibleOpenFinanceConnection.value
+      ? t('planning.budget.consolidated_message_ready')
+      : t('planning.budget.consolidated_message_connect')
 )
 const activeBaselineNotice = computed(() => {
   if (!activeBudget.value || !isOpenFinanceAggregatedBaseline(activeBudget.value)) {
@@ -497,6 +503,22 @@ const createManualLine = (defaults?: Partial<ManualBudgetLine>): ManualBudgetLin
 const hasUsableBudgetBaseline = (budget: Budget): boolean =>
   Array.isArray(budget.lines) &&
   budget.lines.some((line) => Number(line.plannedAmount || 0) > 0)
+
+const isConnectedOpenFinanceConnection = (connection: OpenFinanceConnection): boolean =>
+  connection.status === 'CONNECTED' || connection.status === 'ERROR'
+
+const isPlanningSharedConnection = (connection: OpenFinanceConnection): boolean => {
+  if (!isConnectedOpenFinanceConnection(connection)) return false
+  if (connection.payerDocumentType === 'CNPJ') {
+    return connection.sharingPolicy === 'BUSINESS_SHARED' || connection.accessScope === 'WORKSPACE_SHARED'
+  }
+  return connection.planningSharingLevel === 'PLANNING_IMPACT_ONLY' || connection.sharingPolicy === 'PLANNING_IMPACT_ONLY'
+}
+
+const isPrivateOnlyPlanningSource = (connection: OpenFinanceConnection): boolean =>
+  isConnectedOpenFinanceConnection(connection) &&
+  connection.payerDocumentType === 'CPF' &&
+  (connection.planningSharingLevel === 'PRIVATE' || connection.sharingPolicy === 'PRIVATE_ONLY')
 
 const findActiveBudget = (budgets: Budget[]): Budget | null =>
   budgets.find((budget) => budget.status === 'ACTIVE' && hasUsableBudgetBaseline(budget)) || null
@@ -588,7 +610,9 @@ const generateRealBaseline = async () => {
     if (!data || data.status === 'NO_DATA' || !data.budgetId) {
       emptyBudgetMessage.value = planningSharingDisabledNotice.value
         ? t('planning.budget.generate_real_sharing_disabled')
-        : t('planning.budget.generate_real_no_data')
+        : hasVisibleOpenFinanceConnection.value
+          ? t('planning.budget.generate_real_no_data')
+          : t('planning.budget.generate_real_no_connection')
       return
     }
     await loadCurrentBudget()
@@ -830,6 +854,24 @@ onMounted(async () => {
   margin-bottom: 12px;
 }
 
+.cb-active-budget-card__baseline {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--cb-border, rgba(23,32,51,.08));
+  border-radius: 8px;
+  background: rgba(255,255,255,.72);
+  font-size: .82rem;
+  color: var(--cb-ink-muted);
+  margin-bottom: 12px;
+}
+
+.cb-active-budget-card__baseline strong {
+  font-family: var(--cb-font-heading);
+  font-size: .95rem;
+}
+
 /* Baseline option cards */
 .cb-baseline-options {
   display: flex;
@@ -855,6 +897,16 @@ onMounted(async () => {
   font-weight: 700;
   color: var(--cb-ink);
   margin: 0 0 4px;
+}
+
+.cb-baseline-option__tag {
+  display: inline-block;
+  margin-bottom: 5px;
+  font-size: .68rem;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--cb-ink-muted);
 }
 
 .cb-baseline-option__body p {

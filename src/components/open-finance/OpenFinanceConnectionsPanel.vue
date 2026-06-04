@@ -161,6 +161,7 @@
               DEV sync
             </v-btn>
             <v-btn
+              v-if="showDisconnect(connection)"
               size="small"
               variant="text"
               color="error"
@@ -298,6 +299,7 @@ const showDevSync = (connection: OpenFinanceConnection) => (
   isDevMode
   && (connection.status === 'CONNECTED' || ['AUTHORIZED_READY', 'AUTHORIZED_SYNCING', 'DELAYED_PROVIDER', 'ERROR'].includes(String(connection.consentStatus || '')))
 )
+const showDisconnect = (connection: OpenFinanceConnection) => connection.status !== 'NOT_CONNECTED' && connection.consentStatus !== 'REVOKED'
 const showBackendSyncPolicy = (connection: OpenFinanceConnection) => ['AUTHORIZED_READY', 'AUTHORIZED_SYNCING'].includes(String(connection.consentStatus || '')) || isRecoverableSyncError(connection)
 const syncPolicyLabel = (connection: OpenFinanceConnection) => connection.consentStatus === 'AUTHORIZED_SYNCING'
   ? t('openFinance.panel.sync_in_progress')

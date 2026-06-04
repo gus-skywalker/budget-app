@@ -136,12 +136,40 @@
           </div>
         </div>
 
+        <div v-if="!isManualTypedScenario" class="projection-basis">
+          <div class="projection-basis__copy">
+            <span>{{ t('contentExperience.planning.scenarioResult.projectionBasisLabel') }}</span>
+            <p>{{ projectionBasisText }}</p>
+          </div>
+          <div class="projection-basis__formula">
+            <div>
+              <span>{{ t('contentExperience.planning.scenarioResult.initialBalance') }}</span>
+              <strong>{{ formatCurrency(result.currentBalance) }}</strong>
+            </div>
+            <div>
+              <span>{{ t('contentExperience.planning.scenarioResult.monthlyBaseline') }}</span>
+              <strong>{{ formatSignedCurrency(result.baselineMonthlyNet) }}</strong>
+            </div>
+            <div>
+              <span>{{ t('contentExperience.planning.scenarioResult.monthlyScenarioNet') }}</span>
+              <strong :class="{ 'negative-value': scenarioMonthlyNet < 0 }">{{ formatSignedCurrency(scenarioMonthlyNet) }}</strong>
+            </div>
+            <div>
+              <span>{{ t('contentExperience.planning.scenarioResult.baselineFinalBalance') }}</span>
+              <strong>{{ formatCurrency(baselineFinalBalance) }}</strong>
+            </div>
+          </div>
+        </div>
+
         <v-expansion-panels v-if="!isManualTypedScenario" variant="accordion">
           <v-expansion-panel>
             <v-expansion-panel-title>{{
               t('contentExperience.planning.scenarioResult.forecastDetails')
             }}</v-expansion-panel-title>
             <v-expansion-panel-text>
+              <p class="forecast-explainer">
+                {{ t('contentExperience.planning.scenarioResult.forecastExplainer') }}
+              </p>
               <div class="forecast-table">
                 <table>
                   <thead>
@@ -336,6 +364,20 @@ const decisionLabel = computed(() => {
   return t('planning.scenarios.status_no_data')
 })
 
+const scenarioMonthlyNet = computed(() =>
+  Number(result.value?.baselineMonthlyNet || 0) + Number(result.value?.scenarioMonthlyImpact || 0)
+)
+
+const baselineFinalBalance = computed(() => {
+  const forecast = result.value?.forecast || []
+  const last = forecast[forecast.length - 1]
+  if (last) return Number(last.baselineProjectedBalance || 0)
+  return (
+    Number(result.value?.currentBalance || 0) +
+    Number(result.value?.baselineMonthlyNet || 0) * Number(result.value?.months || 0)
+  )
+})
+
 const formatCurrency = (value: number) =>
   Number(value || 0).toLocaleString(
     locale.value === 'en'
@@ -352,6 +394,17 @@ const formatSignedCurrency = (value: number) => {
   const absolute = formatCurrency(Math.abs(value))
   return value > 0 ? `+${absolute}` : value < 0 ? `-${absolute}` : absolute
 }
+
+const projectionBasisText = computed(() => {
+  if (!result.value) return ''
+  return t('contentExperience.planning.scenarioResult.projectionBasisText', {
+    initial: formatCurrency(result.value.currentBalance),
+    baseline: formatSignedCurrency(result.value.baselineMonthlyNet),
+    impact: formatSignedCurrency(result.value.scenarioMonthlyImpact),
+    scenarioNet: formatSignedCurrency(scenarioMonthlyNet.value),
+    months: result.value.months
+  })
+})
 
 const consequenceMessage = computed(() => {
   if (!result.value) return ''
@@ -811,6 +864,50 @@ onMounted(() => {
   font-size: 1.2rem;
 }
 
+.projection-basis {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, .8fr);
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid var(--cb-border-card);
+  border-radius: 12px;
+  background: var(--cb-surface-soft);
+  min-width: 0;
+}
+
+.projection-basis__copy span,
+.projection-basis__formula span {
+  color: var(--cb-ink-muted);
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.projection-basis__copy p {
+  margin: 6px 0 0;
+  color: var(--cb-ink-secondary);
+  line-height: 1.5;
+}
+
+.projection-basis__formula {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.projection-basis__formula div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.projection-basis__formula strong {
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+}
+
 .result-actions {
   display: flex;
   flex-wrap: wrap;
@@ -823,6 +920,13 @@ onMounted(() => {
 
 .forecast-table {
   overflow-x: auto;
+}
+
+.forecast-explainer {
+  margin: 0 0 12px;
+  color: var(--cb-ink-secondary);
+  font-size: .9rem;
+  line-height: 1.5;
 }
 
 .forecast-table table {
@@ -866,7 +970,9 @@ onMounted(() => {
   }
 
   .metrics-grid,
-  .debt-options-grid {
+  .debt-options-grid,
+  .projection-basis,
+  .projection-basis__formula {
     grid-template-columns: 1fr;
   }
 

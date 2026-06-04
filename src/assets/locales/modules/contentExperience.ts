@@ -332,6 +332,15 @@ export default {
           risk: 'Risco',
           predictability: 'Previsibilidade',
           forecastDetails: 'Detalhes da projeção',
+          projectionBasisLabel: 'Base matemática',
+          projectionBasisText:
+            'A projeção acumula no tempo: começa em {initial}, soma {baseline} de baseline por mês e aplica {impact} de impacto recorrente. Com o cenário, o líquido mensal projetado vira {scenarioNet} por {months} meses.',
+          initialBalance: 'Saldo inicial',
+          monthlyBaseline: 'Baseline mensal',
+          monthlyScenarioNet: 'Líquido com cenário',
+          baselineFinalBalance: 'Base sem cenário',
+          forecastExplainer:
+            'Cada linha mostra saldo acumulado projetado até aquele mês, não uma reserva fixa disponível hoje.',
           impactedGoals: 'Metas impactadas',
           noImpactedGoals:
             'Nenhuma meta impactada encontrada para esta simulação.',
@@ -751,6 +760,15 @@ export default {
           risk: 'Risk',
           predictability: 'Predictability',
           forecastDetails: 'Forecast details',
+          projectionBasisLabel: 'Math basis',
+          projectionBasisText:
+            'The forecast compounds over time: it starts at {initial}, adds {baseline} of monthly baseline, and applies {impact} of recurring impact. With the scenario, projected monthly net becomes {scenarioNet} for {months} months.',
+          initialBalance: 'Initial balance',
+          monthlyBaseline: 'Monthly baseline',
+          monthlyScenarioNet: 'Net with scenario',
+          baselineFinalBalance: 'Baseline without scenario',
+          forecastExplainer:
+            'Each row shows projected accumulated balance through that month, not a fixed reserve available today.',
           impactedGoals: 'Impacted goals',
           noImpactedGoals: 'No impacted goals found for this simulation.',
           createDecision: 'Create decision',

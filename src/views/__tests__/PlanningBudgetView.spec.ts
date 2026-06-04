@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { config, mount } from '@vue/test-utils'
 import { createVuetify } from 'vuetify'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
@@ -24,6 +24,12 @@ const { routerPush, budgetServiceMock, openFinanceServiceMock } = vi.hoisted(() 
 }))
 
 vi.mock('vue-router', () => ({
+  createRouter: () => ({
+    beforeEach: vi.fn(),
+    afterEach: vi.fn(),
+    push: routerPush,
+  }),
+  createWebHistory: () => ({}),
   useRouter: () => ({
     push: routerPush,
   }),
@@ -32,6 +38,39 @@ vi.mock('vue-router', () => ({
 vi.mock('vue-i18n', () => ({
   useI18n: () => ({
     locale: ref('pt'),
+    t: (key: string, params?: Record<string, unknown>) => {
+      const messages: Record<string, string> = {
+        'planning.budget.create_baseline': 'Create baseline',
+        'planning.budget.suggested_from_transactions': 'Suggested budget from transactions',
+        'planning.budget.generate_suggested_budget': 'Generate Suggested Budget',
+        'planning.budget.suggested_budget': 'Suggested Budget',
+        'planning.budget.activate_this_plan': 'Activate This Plan',
+        'planning.budget.suggested_budget_activated': 'Budget activated from recent financial activity.',
+        'planning.budget.real_baseline_openfinance': 'Real baseline from OpenFinance',
+        'planning.budget.generate_real_baseline': 'Generate Real Baseline',
+        'planning.budget.generate_real_no_data': 'There is an OpenFinance connection, but no visible posted totals for this period or recent average yet.',
+        'planning.budget.generate_real_no_connection': 'No shared/synced OpenFinance connection is available to generate the real baseline.',
+        'planning.budget.generate_real_sharing_disabled': 'OpenFinance planning sharing is currently disabled.',
+        'planning.budget.real_baseline_activated': 'OpenFinance baseline activated.',
+        'planning.budget.source_openfinance': 'OpenFinance baseline',
+        'planning.budget.title_openfinance_baseline': 'OpenFinance consolidated baseline',
+        'planning.budget.active_baseline_snapshot': 'This OpenFinance baseline is a saved monthly snapshot.',
+        'planning.budget.active_baseline_sharing_disabled': 'OpenFinance planning sharing is currently disabled. This baseline remains available as the last saved snapshot, but new recalculations from this source are blocked until planning impact sharing is enabled again.',
+        'planning.budget.suggestion_message_unavailable': 'No editable suggestions are ready yet',
+        'planning.budget.suggestion_message_synced_no_data': 'There is an OpenFinance connection, but no visible posted transactions yet to build editable suggestions.',
+        'planning.budget.consolidated_message_ready': 'Create the official planning baseline as a forecast monthly net.',
+        'planning.budget.consolidated_message_connect': 'Connect or sync OpenFinance to create a real baseline from aggregated totals.',
+        'planning.budget.consolidated_message_sharing_disabled': 'OpenFinance planning sharing is currently disabled.',
+        'planning.budget.create_manually': 'Create Manually',
+        'planning.budget.activate_quick_baseline': 'Activate Quick Baseline',
+      }
+      return messages[key] || (params ? `${key} ${JSON.stringify(params)}` : key)
+    },
+  }),
+  createI18n: () => ({
+    global: {
+      t: (key: string) => key,
+    },
   }),
 }))
 
@@ -41,6 +80,12 @@ vi.mock('@/services/BudgetService', () => ({
 
 vi.mock('@/services/OpenFinanceService', () => ({
   default: openFinanceServiceMock,
+}))
+
+vi.mock('@/plugins/userStore', () => ({
+  useUserStore: () => ({
+    isTenantAdmin: true,
+  }),
 }))
 
 const vuetify = createVuetify({ components, directives })
@@ -53,6 +98,13 @@ class ResizeObserverMock {
 
 if (!(globalThis as any).ResizeObserver) {
   ;(globalThis as any).ResizeObserver = ResizeObserverMock
+}
+
+config.global.stubs = {
+  VNavigationDrawer: {
+    props: ['modelValue'],
+    template: '<aside v-if="modelValue"><slot /></aside>',
+  },
 }
 
 const flushPromises = async () => {
@@ -137,7 +189,7 @@ describe('PlanningBudgetView suggestion flow', () => {
     })
 
     await flushPromises()
-    expect(wrapper.text()).toContain('Create baseline')
+    expect(wrapper.text()).toContain('Suggested budget from transactions')
     expect(budgetServiceMock.getSuggestions).toHaveBeenCalledTimes(1)
 
     const generateButton = wrapper.findAll('button').find((btn) => btn.text().includes('Generate Suggested Budget'))
@@ -429,7 +481,7 @@ describe('PlanningBudgetView suggestion flow', () => {
     expect(budgetServiceMock.generateBaseline).toHaveBeenCalledTimes(1)
     expect(wrapper.text()).toContain('OpenFinance baseline activated.')
     expect(wrapper.text()).toContain('OpenFinance consolidated baseline')
-    expect(wrapper.text()).toContain('This OpenFinance baseline is a saved snapshot.')
+    expect(wrapper.text()).toContain('This OpenFinance baseline is a saved monthly snapshot.')
   })
 
   it('explains that an existing OpenFinance baseline remains as a snapshot when planning sharing is disabled', async () => {
@@ -505,7 +557,81 @@ describe('PlanningBudgetView suggestion flow', () => {
     await flushPromises()
 
     expect(wrapper.text()).toContain('This baseline remains available as the last saved snapshot')
-    expect(wrapper.text()).toContain('planning impact sharing to be enabled again')
+    expect(wrapper.text()).toContain('planning impact sharing is enabled again')
     expect(wrapper.text()).toContain('OpenFinance planning sharing is currently disabled')
+  })
+
+  it('treats CNPJ shared OpenFinance connections as planning-visible', async () => {
+    budgetServiceMock.list.mockResolvedValue({
+      data: [
+        {
+          id: 'manual-budget-1',
+          workspaceId: '11111111-1111-1111-1111-111111111111',
+          periodMonth: 5,
+          periodYear: 2026,
+          status: 'ACTIVE',
+          totalIncome: 5000,
+          totalExpense: 0,
+          net: 5000,
+          lines: [{ id: 'line-1', category: 'Manual net baseline', type: 'INCOME', plannedAmount: 5000 }],
+        },
+      ],
+    })
+    budgetServiceMock.getSuggestions.mockResolvedValue({
+      data: {
+        workspaceId: '11111111-1111-1111-1111-111111111111',
+        month: 5,
+        year: 2026,
+        suggestedIncome: 0,
+        suggestedExpense: 0,
+        net: 0,
+        lines: [],
+      },
+    })
+    openFinanceServiceMock.listConnections.mockResolvedValue({
+      data: [
+        {
+          id: 'connection-cnpj-1',
+          provider: 'TECNOSPEED',
+          institutionKey: 'nubank',
+          institutionName: 'Nubank',
+          status: 'CONNECTED',
+          accessScope: 'WORKSPACE_SHARED',
+          sharingPolicy: 'BUSINESS_SHARED',
+          planningSharingLevel: null,
+          consentStatus: 'AUTHORIZED_READY',
+          payerDocumentType: 'CNPJ',
+          displayName: 'Nubank',
+          connectedByUserId: 'owner-1',
+          connectedByRole: 'ROLE_OWNER',
+          openfinanceId: 'of-1',
+          openfinanceLink: null,
+          statementType: 'BANK',
+          cardNumber: null,
+          linkedAccountsCount: 1,
+          lastErrorSummary: null,
+          connectedAt: null,
+          readyForSyncAt: null,
+          lastSyncedAt: null,
+          lastSyncFrom: null,
+          lastSyncTo: null,
+        },
+      ],
+    })
+
+    const wrapper = mount(PlanningBudgetView, {
+      global: {
+        plugins: [vuetify],
+        mocks: {
+          $t: (key: string) => key,
+        },
+      },
+    })
+
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Real baseline from OpenFinance')
+    expect(wrapper.text()).toContain('forecast monthly net')
+    expect(wrapper.text()).not.toContain('OpenFinance planning sharing is currently disabled')
   })
 })
