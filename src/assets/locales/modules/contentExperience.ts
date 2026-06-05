@@ -320,6 +320,15 @@ export default {
           savedSnapshotNotice:
             'Mostrando os valores salvos do snapshot. Use “Recalcular” para atualizar com os dados atuais de baseline.',
           monthlyImpact: 'Impacto mensal',
+          listenAdvisor: 'Ouvir assessor',
+          stopAdvisor: 'Parar áudio',
+          advisorSpeechFinalBalance: 'No fim do período, o saldo projetado fica em {amount}.',
+          advisorSpeechWatch:
+            'A projeção parte de {baseline} por mês. Este cenário aplica {impact} por mês, então o líquido projetado fica em {scenarioNet}. Em {months} meses, o saldo final fica em {finalBalance}. A decisão continua positiva, mas pressiona {goal}.',
+          advisorSpeechStable:
+            'A projeção parte de {baseline} por mês. Este cenário aplica {impact} por mês, então o líquido projetado fica em {scenarioNet}. Em {months} meses, o saldo final fica em {finalBalance}. A decisão parece sustentável neste horizonte.',
+          advisorSpeechActionNeeded:
+            'A projeção parte de {baseline} por mês. Este cenário aplica {impact} por mês, então o líquido projetado fica em {scenarioNet}. Há risco de caixa até {riskMonth}. Revise antes de decidir.',
           cheapestOption: 'Opção mais barata',
           safestOption: 'Opção mais segura',
           recommendedOption: 'Opção recomendada',
@@ -341,6 +350,7 @@ export default {
           baselineFinalBalance: 'Base sem cenário',
           forecastExplainer:
             'Cada linha mostra saldo acumulado projetado até aquele mês, não uma reserva fixa disponível hoje.',
+          goalsFallback: 'suas metas',
           impactedGoals: 'Metas impactadas',
           noImpactedGoals:
             'Nenhuma meta impactada encontrada para esta simulação.',
@@ -748,6 +758,15 @@ export default {
           savedSnapshotNotice:
             'Showing saved snapshot values. Use “Recalculate” to refresh with current baseline data.',
           monthlyImpact: 'Monthly impact',
+          listenAdvisor: 'Listen to advisor',
+          stopAdvisor: 'Stop audio',
+          advisorSpeechFinalBalance: 'By the end of the period, projected balance is {amount}.',
+          advisorSpeechWatch:
+            'The forecast starts from {baseline} per month. This scenario applies {impact} per month, so projected net becomes {scenarioNet}. After {months} months, final projected balance is {finalBalance}. The decision stays positive, but pressures {goal}.',
+          advisorSpeechStable:
+            'The forecast starts from {baseline} per month. This scenario applies {impact} per month, so projected net becomes {scenarioNet}. After {months} months, final projected balance is {finalBalance}. The decision looks sustainable in this horizon.',
+          advisorSpeechActionNeeded:
+            'The forecast starts from {baseline} per month. This scenario applies {impact} per month, so projected net becomes {scenarioNet}. Cash may be at risk by {riskMonth}. Review before deciding.',
           cheapestOption: 'Cheapest option',
           safestOption: 'Safest option',
           recommendedOption: 'Recommended option',
@@ -769,6 +788,7 @@ export default {
           baselineFinalBalance: 'Baseline without scenario',
           forecastExplainer:
             'Each row shows projected accumulated balance through that month, not a fixed reserve available today.',
+          goalsFallback: 'your goals',
           impactedGoals: 'Impacted goals',
           noImpactedGoals: 'No impacted goals found for this simulation.',
           createDecision: 'Create decision',

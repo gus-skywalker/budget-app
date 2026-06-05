@@ -11,6 +11,7 @@
 import { defineStore } from 'pinia'
 import WorkspaceService from '@/services/WorkspaceService'
 import AuthService from '@/services/AuthService'
+import { normalizeAppVoice, type AppVoice } from '@/utils/appVoiceTypes'
 
 let refreshTimer: number | null = null
 
@@ -134,6 +135,7 @@ type State = {
   currentWorkspaceId: string | null
   tenantRole: string | null
   language: string
+  appVoice: AppVoice
   preferredMode: 'personal' | 'tenant' | null
   preferredWorkspaceId: string | null
   refreshInFlight: boolean
@@ -149,6 +151,7 @@ export const useUserStore = defineStore({
     currentWorkspaceId: null,
     tenantRole: null,
     language: 'PT',
+    appVoice: 'default',
     preferredMode: null,
     preferredWorkspaceId: null,
     refreshInFlight: false,
@@ -170,6 +173,7 @@ export const useUserStore = defineStore({
     isTenantAdmin: (state): boolean => TENANT_ADMIN_ROLES.includes((state.tenantRole || '').toUpperCase()),
     canWrite: (state): boolean => TENANT_WRITE_ROLES.includes((state.tenantRole || '').toUpperCase()),
     getLanguage: (state): string => state.language,
+    getAppVoice: (state): AppVoice => state.appVoice,
     getPreferredMode: (state): 'personal' | 'tenant' | null => state.preferredMode,
     getPreferredWorkspaceId: (state): string | null => state.preferredWorkspaceId,
     getApiLanguage: (state): string => {
@@ -184,7 +188,8 @@ export const useUserStore = defineStore({
         'userPreference',
         JSON.stringify({
           preferredMode: this.preferredMode,
-          preferredWorkspaceId: this.preferredWorkspaceId
+          preferredWorkspaceId: this.preferredWorkspaceId,
+          appVoice: this.appVoice
         })
       )
     },
@@ -196,6 +201,7 @@ export const useUserStore = defineStore({
         const parsed = JSON.parse(raw)
         const mode = parsed?.preferredMode
         const workspaceId = parsed?.preferredWorkspaceId
+        const appVoice = parsed?.appVoice
 
         if (mode === 'personal' || mode === 'tenant' || mode === null) {
           this.preferredMode = mode
@@ -203,6 +209,7 @@ export const useUserStore = defineStore({
         if (typeof workspaceId === 'string' || workspaceId === null) {
           this.preferredWorkspaceId = workspaceId
         }
+        this.appVoice = normalizeAppVoice(appVoice)
       } catch {
         // ignore
       }
@@ -260,6 +267,11 @@ export const useUserStore = defineStore({
     setLanguage(language: string) {
       this.language = language
       this.saveState()
+    },
+
+    setAppVoice(appVoice: string) {
+      this.appVoice = normalizeAppVoice(appVoice)
+      this.savePreference()
     },
 
     resetAccountScopedState() {
@@ -320,6 +332,7 @@ export const useUserStore = defineStore({
       this.currentWorkspaceId = null
       this.tenantRole = null
       this.language = 'PT'
+      this.appVoice = 'default'
       this.refreshInFlight = false
       this.saveState()
     },
@@ -329,9 +342,10 @@ export const useUserStore = defineStore({
         token: this.token,
         auth: this.auth,
         user: this.user,
-        currentWorkspaceId: this.currentWorkspaceId,
-        tenantRole: this.tenantRole,
-        language: this.language
+          currentWorkspaceId: this.currentWorkspaceId,
+          tenantRole: this.tenantRole,
+          language: this.language,
+          appVoice: this.appVoice
       }))
     },
 
@@ -349,6 +363,7 @@ export const useUserStore = defineStore({
           this.currentWorkspaceId = state.currentWorkspaceId ?? null
           this.tenantRole = state.tenantRole
           this.language = state.language || 'PT'
+          this.appVoice = normalizeAppVoice(state.appVoice)
 
           if (this.currentWorkspaceId && !this.tenantRole) {
             this.tenantRole = workspaceRoleOf(findWorkspaceById(this.user.workspaces || [], this.currentWorkspaceId))
@@ -740,6 +755,7 @@ export const useUserStore = defineStore({
       this.currentWorkspaceId = null
       this.tenantRole = null
       this.language = 'PT'
+      this.appVoice = 'default'
       this.refreshInFlight = false
       // Não chama saveState() para evitar regravação
       setTimeout(() => {

@@ -152,6 +152,28 @@
       "dark_theme_label": "Dark Theme",
       "dark_theme_hint": "Enable to reduce screen brightness"
     },
+    "app_voice": {
+      "label": "App voice",
+      "hint": "Choose how CoBudget speaks in supporting copy. Numbers, risk, billing, and OpenFinance stay neutral.",
+      "select_label": "Language style",
+      "preview_label": "Preview",
+      "options": {
+        "default": "Professional default",
+        "warm": "Warm and clear",
+        "nordeste": "Brazilian Northeast playful",
+        "gaucho": "Gaúcho direct",
+        "carioca_funk": "Carioca/funk entrepreneur",
+        "founder": "Founder mode"
+      },
+      "previews": {
+        "default": "This scenario keeps the reading objective, clear, and professional.",
+        "warm": "Let’s read this decision calmly: the app explains the impact without making it feel heavy.",
+        "nordeste": "A playful Brazilian Portuguese voice for supporting copy.",
+        "gaucho": "A direct Brazilian Portuguese voice for supporting copy.",
+        "carioca_funk": "An energetic Brazilian Portuguese voice for supporting copy.",
+        "founder": "Runway, margin, and decision-making: the app speaks in growth mode."
+      }
+    },
     "save_preferences": "Save Preferences",
     "bank_connections": {
       "title": "Connect Banks",

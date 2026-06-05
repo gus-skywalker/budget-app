@@ -151,6 +151,28 @@
       "dark_theme_label": "Tema Escuro",
       "dark_theme_hint": "Ative para reduzir o brilho da tela"
     },
+    "app_voice": {
+      "label": "Voz do app",
+      "hint": "Escolha como o CoBudget fala nos textos de apoio. Números, risco, billing e OpenFinance continuam neutros.",
+      "select_label": "Estilo de linguagem",
+      "preview_label": "Prévia",
+      "options": {
+        "default": "Padrão profissional",
+        "warm": "Leve e acolhedora",
+        "nordeste": "Nordestina divertida",
+        "gaucho": "Gaúcha direta",
+        "carioca_funk": "Carioca/funk empreendedor",
+        "founder": "Founder mode"
+      },
+      "previews": {
+        "default": "Este cenário mantém a leitura objetiva, clara e profissional.",
+        "warm": "Vamos olhar essa decisão com calma: o app explica o impacto sem pesar a mão.",
+        "nordeste": "Bora ver essa conta direitinho, sem aperreio e sem deixar o caixa se perder.",
+        "gaucho": "Conta clara, sem rodeio: o app mostra onde aperta e onde sobra.",
+        "carioca_funk": "Bora ver se esse corre fecha no positivo e ainda deixa espaço pra meta.",
+        "founder": "Runway, margem e decisão: o app fala no modo crescimento com clareza."
+      }
+    },
     "save_preferences": "Salvar Preferências",
     "bank_connections": {
       "title": "Conectar Bancos",

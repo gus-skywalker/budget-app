@@ -350,6 +350,31 @@
                       </template>
                     </v-switch>
                   </div>
+
+                  <v-divider class="my-4"></v-divider>
+
+                  <div class="setting-item setting-item--stacked">
+                    <div class="setting-info full-width">
+                      <div class="setting-label">{{ $t('account_management.app_voice.label') }}</div>
+                      <div class="setting-hint">{{ $t('account_management.app_voice.hint') }}</div>
+                    </div>
+                    <v-select
+                      v-model="appVoice"
+                      :items="appVoiceOptions"
+                      item-title="title"
+                      item-value="value"
+                      :label="$t('account_management.app_voice.select_label')"
+                      variant="outlined"
+                      density="comfortable"
+                      color="var(--cb-primary)"
+                      prepend-inner-icon="mdi-account-voice"
+                      class="modern-input"
+                    />
+                    <div class="voice-preview">
+                      <span>{{ $t('account_management.app_voice.preview_label') }}</span>
+                      <p>{{ appVoicePreview }}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -759,6 +784,7 @@ import type {
   OpenFinanceSyncHistoryItem,
 } from '@/types/openFinance';
 import { toUiLocale, toUserLanguageCode } from '@/utils/languageUtils';
+import { APP_VOICES, type AppVoice } from '@/utils/appVoiceTypes';
 
 const userStore = useUserStore();
 const theme = useTheme();
@@ -861,6 +887,14 @@ const dailyDigestEmail = ref(true)
 const darkTheme = ref(false)
 const alertDays = ref(1);
 const alertOptions = [1, 2, 3, 5, 7, 10];
+const appVoice = ref<AppVoice>(userStore.getAppVoice)
+const appVoiceOptions = computed(() =>
+  APP_VOICES.map((voice) => ({
+    value: voice,
+    title: t(`account_management.app_voice.options.${voice}`)
+  }))
+)
+const appVoicePreview = computed(() => t(`account_management.app_voice.previews.${appVoice.value}`))
 
 // Watch para aplicar o tema quando o switch mudar
 watch(darkTheme, (newValue) => {
@@ -1629,6 +1663,8 @@ const resolveOpenFinanceConflict = async (conflictId: string, action: 'keep-exis
 }
 
 const saveAlertSettings = async () => {
+  userStore.setAppVoice(appVoice.value)
+
   try {
     const settings: UserSettings = {
       alertDaysBefore: alertDays.value,
@@ -1685,6 +1721,28 @@ const saveAlertSettings = async () => {
 .setting-info.full-width { width: 100%; }
 .setting-label       { font-size: 1rem; font-weight: 600; color: var(--cb-ink); margin-bottom: 4px; }
 .setting-hint        { font-size: 0.85rem; color: var(--cb-ink-muted); line-height: 1.4; }
+.setting-item--stacked { align-items: stretch; flex-direction: column; }
+.voice-preview {
+  border: 1px solid var(--cb-border-card);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--cb-surface-soft);
+}
+.voice-preview span {
+  display: block;
+  color: var(--cb-ink-muted);
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+.voice-preview p {
+  color: var(--cb-ink-secondary);
+  font-size: .9rem;
+  line-height: 1.45;
+  margin: 0;
+}
 
 /* ── Integration item ────────────────────────────────────────────────────── */
 .integration-item {

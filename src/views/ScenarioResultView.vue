@@ -15,7 +15,10 @@
         <alert-strip v-if="isShowingSavedSnapshot" variant="info" :description="t('contentExperience.planning.scenarioResult.savedSnapshotNotice')" />
         <div class="hero-card">
           <span class="hero-card__label">{{
-            t('contentExperience.planning.scenarioResult.monthlyImpact')
+            tVoice(
+              'scenarioResult.monthlyImpact',
+              'contentExperience.planning.scenarioResult.monthlyImpact'
+            )
           }}</span>
           <strong
             :class="{
@@ -25,7 +28,23 @@
           >
             {{ formatSignedCurrency(result.scenarioMonthlyImpact) }}
           </strong>
-          <p>{{ result.summary || consequenceMessage }}</p>
+          <p>{{ scenarioSummary }}</p>
+          <div v-if="isSpeechSupported" class="hero-card__voice-actions">
+            <v-btn
+              size="small"
+              variant="tonal"
+              color="var(--cb-primary)"
+              :aria-label="isSpeaking ? t('contentExperience.planning.scenarioResult.stopAdvisor') : t('contentExperience.planning.scenarioResult.listenAdvisor')"
+              @click="toggleAdvisorSpeech"
+            >
+              <v-icon start>{{ isSpeaking ? 'mdi-stop-circle-outline' : 'mdi-volume-high' }}</v-icon>
+              {{
+                isSpeaking
+                  ? t('contentExperience.planning.scenarioResult.stopAdvisor')
+                  : t('contentExperience.planning.scenarioResult.listenAdvisor')
+              }}
+            </v-btn>
+          </div>
         </div>
 
         <div v-if="isManualTypedScenario && result.debtComparison" class="debt-comparison">
@@ -138,7 +157,12 @@
 
         <div v-if="!isManualTypedScenario" class="projection-basis">
           <div class="projection-basis__copy">
-            <span>{{ t('contentExperience.planning.scenarioResult.projectionBasisLabel') }}</span>
+            <span>{{
+              tVoice(
+                'scenarioResult.projectionBasisLabel',
+                'contentExperience.planning.scenarioResult.projectionBasisLabel'
+              )
+            }}</span>
             <p>{{ projectionBasisText }}</p>
           </div>
           <div class="projection-basis__formula">
@@ -168,7 +192,12 @@
             }}</v-expansion-panel-title>
             <v-expansion-panel-text>
               <p class="forecast-explainer">
-                {{ t('contentExperience.planning.scenarioResult.forecastExplainer') }}
+                {{
+                  tVoice(
+                    'scenarioResult.forecastExplainer',
+                    'contentExperience.planning.scenarioResult.forecastExplainer'
+                  )
+                }}
               </p>
               <div class="forecast-table">
                 <table>
@@ -288,7 +317,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import PageHeader from '@/components/PageHeader.vue'
@@ -318,10 +347,12 @@ import {
   type DebtScenarioSnapshot
 } from '@/utils/debtScenario'
 import { useUserStore } from '@/plugins/userStore'
+import { useAppVoice } from '@/utils/appVoice'
 
 const route = useRoute()
 const router = useRouter()
 const { t, locale } = useI18n()
+const { appVoice, tVoice } = useAppVoice()
 const userStore = useUserStore()
 const DECISIONS_FLASH_SUCCESS_KEY = 'decisions-flash-success'
 
@@ -334,8 +365,12 @@ const errorMessage = ref('')
 const successMessage = ref('')
 const isShowingSavedSnapshot = ref(false)
 const isScenarioLockedForEdit = ref(false)
+const isSpeaking = ref(false)
 const debtSnapshot = ref<DebtScenarioSnapshot | null>(null)
 const canWriteScenarios = computed(() => userStore.canWrite)
+const isSpeechSupported = computed(() =>
+  typeof window !== 'undefined' && 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window
+)
 
 const snapshot = reactive<ScenarioWizardSnapshot>({
   scenarioName: '',
@@ -405,6 +440,130 @@ const projectionBasisText = computed(() => {
     months: result.value.months
   })
 })
+
+const firstImpactedGoalName = computed(() =>
+  String(result.value?.impactedGoalNames?.[0] || '').trim()
+)
+
+const scenarioSummary = computed(() => {
+  if (!result.value) return ''
+  if (appVoice.value === 'default') {
+    return result.value.summary || consequenceMessage.value
+  }
+
+  const commonParams = {
+    amount: formatCurrency(Math.abs(result.value.scenarioMonthlyImpact)),
+    count: result.value.impactedGoalsCount || result.value.impactedGoalNames?.length || 0,
+    goal: firstImpactedGoalName.value || t('contentExperience.planning.scenarioResult.goalsFallback'),
+    riskMonth: result.value.firstRiskMonth || t('planning.scenarios.no_risk_month'),
+    scenarioNet: formatSignedCurrency(scenarioMonthlyNet.value)
+  }
+
+  if (result.value.decisionStatus === 'ACTION_NEEDED') {
+    return tVoice(
+      'scenarioResult.summary.actionNeeded',
+      'planning.scenarios.consequence_negative',
+      commonParams
+    )
+  }
+  if (result.value.decisionStatus === 'WATCH') {
+    return tVoice(
+      'scenarioResult.summary.watch',
+      'planning.scenarios.consequence_negative',
+      commonParams
+    )
+  }
+  if (result.value.decisionStatus === 'STABLE') {
+    return tVoice(
+      'scenarioResult.summary.stable',
+      'planning.scenarios.consequence_positive',
+      commonParams
+    )
+  }
+  return result.value.summary || consequenceMessage.value
+})
+
+const advisorSpeechText = computed(() => {
+  if (!result.value) return ''
+
+  const commonParams = {
+    baseline: formatSignedCurrency(result.value.baselineMonthlyNet),
+    impact: formatSignedCurrency(result.value.scenarioMonthlyImpact),
+    scenarioNet: formatSignedCurrency(scenarioMonthlyNet.value),
+    finalBalance: formatCurrency(result.value.projectedFinalBalance),
+    months: result.value.months,
+    count: result.value.impactedGoalsCount || result.value.impactedGoalNames?.length || 0,
+    goal: firstImpactedGoalName.value || t('contentExperience.planning.scenarioResult.goalsFallback'),
+    riskMonth: result.value.firstRiskMonth || t('planning.scenarios.no_risk_month')
+  }
+
+  if (result.value.decisionStatus === 'ACTION_NEEDED') {
+    return tVoice(
+      'scenarioResult.advisorSpeech.actionNeeded',
+      'contentExperience.planning.scenarioResult.advisorSpeechActionNeeded',
+      commonParams
+    )
+  }
+  if (result.value.decisionStatus === 'WATCH') {
+    return tVoice(
+      'scenarioResult.advisorSpeech.watch',
+      'contentExperience.planning.scenarioResult.advisorSpeechWatch',
+      commonParams
+    )
+  }
+  if (result.value.decisionStatus === 'STABLE') {
+    return tVoice(
+      'scenarioResult.advisorSpeech.stable',
+      'contentExperience.planning.scenarioResult.advisorSpeechStable',
+      commonParams
+    )
+  }
+  return [
+    scenarioSummary.value,
+    projectionBasisText.value,
+    t('contentExperience.planning.scenarioResult.advisorSpeechFinalBalance', {
+      amount: formatCurrency(result.value.projectedFinalBalance)
+    })
+  ].filter(Boolean).join(' ')
+})
+
+const resolveSpeechLocale = (): string => {
+  if (locale.value === 'en') return 'en-US'
+  if (locale.value === 'fr') return 'fr-FR'
+  if (locale.value === 'es') return 'es-ES'
+  return 'pt-BR'
+}
+
+const stopAdvisorSpeech = () => {
+  if (!isSpeechSupported.value) return
+  window.speechSynthesis.cancel()
+  isSpeaking.value = false
+}
+
+const toggleAdvisorSpeech = () => {
+  if (!isSpeechSupported.value) return
+  if (isSpeaking.value) {
+    stopAdvisorSpeech()
+    return
+  }
+
+  const text = advisorSpeechText.value.trim()
+  if (!text) return
+
+  window.speechSynthesis.cancel()
+  const utterance = new SpeechSynthesisUtterance(text)
+  utterance.lang = resolveSpeechLocale()
+  utterance.rate = appVoice.value === 'carioca_funk' ? 1.05 : 0.96
+  utterance.pitch = appVoice.value === 'founder' ? 0.95 : 1
+  utterance.onend = () => {
+    isSpeaking.value = false
+  }
+  utterance.onerror = () => {
+    isSpeaking.value = false
+  }
+  isSpeaking.value = true
+  window.speechSynthesis.speak(utterance)
+}
 
 const consequenceMessage = computed(() => {
   if (!result.value) return ''
@@ -760,6 +919,10 @@ const newScenario = async () => {
 onMounted(() => {
   void loadResult()
 })
+
+onUnmounted(() => {
+  stopAdvisorSpeech()
+})
 </script>
 
 <style scoped>
@@ -798,6 +961,13 @@ onMounted(() => {
 
 .hero-card strong {
   font-size: 2rem;
+}
+
+.hero-card__voice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
 }
 
 .debt-comparison {
