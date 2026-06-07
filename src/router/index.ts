@@ -421,11 +421,11 @@ router.beforeEach((to, from, next) => {
   // Se está indo para choose-plan e tem plano no localStorage
   if (to.name === 'choose-plan' && localStorage.getItem('selectedPlan')) {
     const plan = localStorage.getItem('selectedPlan')
-    localStorage.removeItem('selectedPlan') // Limpa o storage
-    if (isAuthenticated) {
+    if (isAuthenticated && plan) {
+      localStorage.removeItem('selectedPlan') // Limpa o storage só quando já conseguimos restaurar o plano
       next({
         name: 'choose-plan',
-        query: { plan: plan }
+        query: { plan }
       })
       return
     }

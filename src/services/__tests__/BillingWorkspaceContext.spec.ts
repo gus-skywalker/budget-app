@@ -44,27 +44,45 @@ describe('BillingWorkspaceContext', () => {
 
   it('stores and restores checkout context without ownership fields', () => {
     saveBillingCheckoutContext({
-      workspaceId: 'workspace-9',
-      workspaceName: 'Operations',
+      workspaceId: null,
+      workspaceName: null,
+      billingAccountId: 'billing-account-9',
       plan: 'BUSINESS_MONTHLY',
       correlationId: 'corr-9',
       storedAt: 123,
     })
 
     expect(readBillingCheckoutContext()).toEqual({
-      workspaceId: 'workspace-9',
-      workspaceName: 'Operations',
+      workspaceId: null,
+      workspaceName: null,
+      billingAccountId: 'billing-account-9',
       plan: 'BUSINESS_MONTHLY',
+      promotionClaimId: null,
+      promotionCampaignKey: null,
+      promotionDiscountPercent: null,
       correlationId: 'corr-9',
       storedAt: 123,
     })
   })
 
-  it('clears invalid stored checkout context', () => {
-    sessionStorage.setItem('billing.checkout.context', JSON.stringify({ workspaceId: '' }))
+  it('restores checkout context even without a workspace id', () => {
+    sessionStorage.setItem('billing.checkout.context', JSON.stringify({
+      billingAccountId: 'billing-account-10',
+      plan: 'BUSINESS_ANNUAL',
+      storedAt: 456,
+    }))
 
-    expect(readBillingCheckoutContext()).toBeNull()
-    expect(sessionStorage.getItem('billing.checkout.context')).toBeNull()
+    expect(readBillingCheckoutContext()).toEqual({
+      workspaceId: null,
+      workspaceName: null,
+      billingAccountId: 'billing-account-10',
+      plan: 'BUSINESS_ANNUAL',
+      promotionClaimId: null,
+      promotionCampaignKey: null,
+      promotionDiscountPercent: null,
+      correlationId: null,
+      storedAt: 456,
+    })
   })
 
   it('clears stored checkout context explicitly', () => {
@@ -74,4 +92,3 @@ describe('BillingWorkspaceContext', () => {
     expect(readBillingCheckoutContext()).toBeNull()
   })
 })
-

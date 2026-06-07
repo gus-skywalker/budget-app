@@ -12,6 +12,9 @@ export interface StartSubscriptionRequest extends PricingContextPayload {
   plan: string
   actor: string
   billingAccountId?: string | null
+  promotionClaimId?: string | null
+  promotionCampaignKey?: string | null
+  promotionDiscountPercent?: number | null
   correlationId: string
   /** Backend command idempotency key */
   messageId: string
@@ -111,6 +114,14 @@ export default {
     return axiosInterceptor.get<BillingSummaryResponse>('/billing/access', {
       params: {
         workspaceId
+      }
+    })
+  },
+
+  getBillingSummaryByBillingAccount(billingAccountId: string) {
+    return axiosInterceptor.get<BillingSummaryResponse>('/billing/access', {
+      params: {
+        billingAccountId
       }
     })
   }

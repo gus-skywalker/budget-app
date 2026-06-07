@@ -757,6 +757,7 @@ export const useUserStore = defineStore({
       this.language = 'PT'
       this.appVoice = 'default'
       this.refreshInFlight = false
+      sessionStorage.setItem('auth.logout.skipBootstrap', String(Date.now()))
       // Não chama saveState() para evitar regravação
       setTimeout(() => {
         sessionStorage.removeItem('userStore')

@@ -7,6 +7,7 @@ export interface BillingDecisionRequest {
   plan: string
   actor: string
   billingAccountId?: string | null
+  workspaceId?: string | null
 
   /** Tracing (backend expects/accepts correlationId in body) */
   correlationId?: string

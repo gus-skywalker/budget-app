@@ -87,29 +87,36 @@ export default {
     } catch (error) {
       console.error('Erro ao verificar status da assinatura:', error);
       this.error = 'Não foi possível verificar o status da sua assinatura. Por favor, contate o suporte.';
+      if (this.sessionId) {
+        setTimeout(() => {
+          this.$router.replace({ name: 'dashboard' })
+        }, 2500)
+      }
     } finally {
       this.loading = false;
     }
   },
 
   methods: {
-    resolveWorkspaceContext() {
+    resolveCheckoutContext() {
       const savedContext = readBillingCheckoutContext()
-      if (savedContext?.workspaceId) {
+      if (savedContext?.workspaceId || savedContext?.billingAccountId) {
         return savedContext
       }
 
       const userStore = useUserStore();
       const workspaceContext = resolveAnyWorkspaceContext(userStore)
-      if (!workspaceContext) {
-        throw new Error('Workspace não identificado');
+      if (workspaceContext) {
+        return workspaceContext
       }
 
-      return workspaceContext
+      throw new Error('Contexto de cobrança não identificado');
     },
 
     async checkSubscriptionStatus() {
-      const { workspaceId } = this.resolveWorkspaceContext()
+      const context = this.resolveCheckoutContext()
+      const workspaceId = context.workspaceId || null
+      const billingAccountId = context.billingAccountId || null
 
       // Poll budget-api until webhook projection becomes premium=true.
       const startedAt = Date.now();
@@ -117,10 +124,19 @@ export default {
       const intervalMs = 2000;
 
       while (Date.now() - startedAt < timeoutMs) {
-        const response = await BillingOrchestrationService.getBillingSummary(workspaceId);
+        if (!workspaceId && !billingAccountId) {
+          throw new Error('Contexto de cobrança não identificado')
+        }
+
+        const response = workspaceId
+          ? await BillingOrchestrationService.getBillingSummary(workspaceId)
+          : await BillingOrchestrationService.getBillingSummaryByBillingAccount(billingAccountId)
         if (response.data?.hasPremiumAccess) {
           this.subscriptionDetails = response.data;
           clearBillingCheckoutContext()
+          setTimeout(() => {
+            this.$router.replace({ name: 'dashboard' })
+          }, 1200)
           return;
         }
         await new Promise(resolve => setTimeout(resolve, intervalMs));

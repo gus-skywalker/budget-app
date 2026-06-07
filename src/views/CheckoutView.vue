@@ -52,6 +52,17 @@
                             </div>
                             <div class="summary-price">{{ formattedPlanPrice }}</div>
                         </div>
+                        <div v-if="formattedPromoPrice && promotionClaim" class="promo-summary">
+                            <v-chip color="var(--cb-accent)" variant="tonal" size="small">
+                                {{ t('checkout.promo_badge', { percent: promotionClaim.discountPercent }) }}
+                            </v-chip>
+                            <p>
+                                {{ t('checkout.promo_summary', {
+                                    amount: formattedPromoPrice,
+                                    percent: promotionClaim.discountPercent,
+                                }) }}
+                            </p>
+                        </div>
 
                         <div class="summary-meta">
                             <div class="meta-card">
@@ -142,6 +153,32 @@
                 </aside>
             </div>
         </section>
+
+        <v-dialog v-model="promotionDialogOpen" max-width="560" persistent>
+            <v-card class="promo-dialog">
+                <v-card-title class="promo-dialog__title">
+                    <v-icon color="var(--cb-accent)" class="mr-2">mdi-ticket-percent-outline</v-icon>
+                    {{ t('checkout.promo_dialog_title') }}
+                </v-card-title>
+                <v-card-text class="promo-dialog__content">
+                    <p class="promo-dialog__lead">
+                        {{ t('checkout.promo_dialog_lead', { percent: promotionClaim?.discountPercent || 30 }) }}
+                    </p>
+                    <div class="promo-dialog__highlight">
+                        <p>{{ t('checkout.promo_dialog_body') }}</p>
+                    </div>
+                </v-card-text>
+                <v-card-actions class="promo-dialog__actions">
+                    <v-spacer />
+                    <v-btn variant="text" @click="promotionDialogOpen = false">
+                        {{ t('common.close') }}
+                    </v-btn>
+                    <v-btn color="var(--cb-primary)" variant="flat" @click="continueCheckout">
+                        {{ t('checkout.promo_continue') }}
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
     </v-container>
 </template>
 
@@ -156,10 +193,11 @@ import { createMessageId } from '@/utils/messageId'
 import { buildBillingPricingContext, formatConvertedPriceFromBRL } from '@/utils/pricing'
 import BillingOrchestrationService from '@/services/BillingOrchestrationService'
 import BillingDecisionService from '@/services/BillingDecisionService'
+import BillingPromotionService from '@/services/BillingPromotionService'
 import {
     clearBillingCheckoutContext,
     readBillingCheckoutContext,
-    requireActiveWorkspaceContext,
+    resolveAnyWorkspaceContext,
     saveBillingCheckoutContext,
 } from '@/services/BillingWorkspaceContext'
 
@@ -175,6 +213,30 @@ export default {
         const error = ref(null);
         const accepted = ref(false)
         const operationStatus = ref(null)
+        const promotionDialogOpen = ref(false)
+        const promotionClaim = ref(null)
+        const pendingCheckoutContext = ref(null)
+        const promoFlowStarted = ref(false)
+        const checkoutContext = computed(() => readBillingCheckoutContext())
+
+        const readSelectedPlanFallback = () => {
+            if (typeof window === 'undefined' || typeof window.localStorage === 'undefined') {
+                return ''
+            }
+
+            const storedPlan = window.localStorage.getItem('selectedPlan')
+            return typeof storedPlan === 'string' ? storedPlan.trim() : ''
+        }
+
+        const resolveSelectedPlan = () => {
+            const queryPlan = typeof route.query.plan === 'string' ? route.query.plan.trim() : ''
+            if (queryPlan) return queryPlan
+            const storedPlan = checkoutContext.value?.plan ? String(checkoutContext.value.plan).trim() : ''
+            if (storedPlan) return storedPlan
+            const fallbackPlan = readSelectedPlanFallback()
+            if (fallbackPlan) return fallbackPlan
+            return ''
+        }
 
         const getBillingContext = () => buildBillingPricingContext({
             uiLocale: String(route.query.uiLocale || userStore.language || '').toLowerCase() || null,
@@ -183,7 +245,7 @@ export default {
         })
 
         const planDetails = computed(() => {
-            const planId = route.query.plan;
+            const planId = resolveSelectedPlan()
             return planId && PLAN_DETAILS[planId] ? PLAN_DETAILS[planId] : null;
         });
 
@@ -197,6 +259,18 @@ export default {
             })
             const suffix = planDetails.value.billingPeriod === 'year' ? t('checkout.period_year') : t('checkout.period_month')
             return `${amount} / ${suffix}`
+        })
+
+        const formattedPromoPrice = computed(() => {
+            if (!planDetails.value || !promotionClaim.value?.discountPercent) return null
+            const discount = Number(promotionClaim.value.discountPercent || 0)
+            const discountedAmount = Math.round(planDetails.value.amount * (100 - discount) / 100)
+            const billing = getBillingContext()
+            return formatConvertedPriceFromBRL({
+                amountInBRL: discountedAmount,
+                targetCurrency: billing.preferredCurrency,
+                uiLocale: billing.uiLocale
+            })
         })
 
         const pollOperation = async (messageId) => {
@@ -226,15 +300,43 @@ export default {
             }
         }
 
+        const startSubscriptionDispatch = async () => {
+            if (!pendingCheckoutContext.value) {
+                throw new Error(t('checkout.billing_command_failed'))
+            }
+
+            const messageId = createMessageId()
+            const payload = pendingCheckoutContext.value
+
+            await BillingOrchestrationService.startSubscription({
+                plan: String(payload.plan),
+                actor: String(payload.actor),
+                billingAccountId: payload.billingAccountId || null,
+                correlationId: String(payload.correlationId),
+                messageId,
+                promotionClaimId: payload.promotionClaimId || null,
+                promotionCampaignKey: payload.promotionCampaignKey || null,
+                promotionDiscountPercent: payload.promotionDiscountPercent ?? null,
+                ...getBillingContext()
+            })
+
+            accepted.value = true
+            await pollOperation(messageId)
+        }
+
         const initializeCheckout = async () => {
             loading.value = true
             error.value = null
             accepted.value = false
+            promotionDialogOpen.value = false
+            promotionClaim.value = null
+            pendingCheckoutContext.value = null
 
             try {
-                const plan = route.query.plan;
+                const plan = resolveSelectedPlan()
                 if (!plan) {
-                    error.value = t('checkout.no_plan_selected');
+                    error.value = t('checkout.no_plan_selected')
+                    router.replace({ name: 'choose-plan' })
                     return
                 }
 
@@ -245,13 +347,16 @@ export default {
                 }
 
                 const correlationId = createCorrelationId()
-                const workspaceContext = requireActiveWorkspaceContext(userStore)
+                const workspaceContext = resolveAnyWorkspaceContext(userStore)
+                const workspaceId = workspaceContext?.workspaceId || null
+                const workspaceName = workspaceContext?.workspaceName || null
 
                 const decisionResp = await BillingDecisionService.decide(
                     {
                         plan: String(plan),
                         actor: String(user.id),
                         billingAccountId: readBillingCheckoutContext()?.billingAccountId || null,
+                        workspaceId,
                         ...getBillingContext()
                     },
                     correlationId
@@ -266,29 +371,53 @@ export default {
 
                 saveBillingCheckoutContext({
                     plan: String(plan),
-                    workspaceId: workspaceContext.workspaceId,
-                    workspaceName: workspaceContext.workspaceName,
+                    workspaceId,
+                    workspaceName,
                     billingAccountId: decision.billingAccountId || null,
                     correlationId: String(decision.correlationId || correlationId),
                 })
 
-                // New checkout attempt must use a fresh command id.
-                // Reusing messageId can return stale/expired checkout URLs from old operations.
-                const messageId = createMessageId()
-
-                await BillingOrchestrationService.startSubscription({
+                pendingCheckoutContext.value = {
                     plan: String(plan),
                     actor: String(user.id),
                     billingAccountId: decision.billingAccountId || null,
                     correlationId: String(decision.correlationId || correlationId),
-                    messageId,
-                    ...getBillingContext()
-                })
+                    workspaceId,
+                }
 
-                accepted.value = true
+                try {
+                    const promoResponse = await BillingPromotionService.claim({
+                        workspaceId,
+                        billingAccountId: decision.billingAccountId || null,
+                        plan: String(plan),
+                        actor: String(user.id),
+                        correlationId: String(decision.correlationId || correlationId),
+                    })
 
-                // Best-effort polling for dispatcher progress (doesn't assume checkoutUrl exists yet)
-                await pollOperation(messageId)
+                    promotionClaim.value = promoResponse.data
+                    if (pendingCheckoutContext.value) {
+                        pendingCheckoutContext.value.promotionClaimId = promoResponse.data.claimId
+                        pendingCheckoutContext.value.promotionCampaignKey = 'launch-30-15'
+                        pendingCheckoutContext.value.promotionDiscountPercent = promoResponse.data.discountPercent || null
+                    }
+                    saveBillingCheckoutContext({
+                        plan: String(plan),
+                        workspaceId,
+                        workspaceName,
+                        billingAccountId: decision.billingAccountId || null,
+                        promotionClaimId: promoResponse.data.claimId,
+                        promotionCampaignKey: 'launch-30-15',
+                        promotionDiscountPercent: promoResponse.data.discountPercent || null,
+                        correlationId: String(decision.correlationId || correlationId),
+                    })
+                    promotionDialogOpen.value = true
+                    loading.value = false
+                    return
+                } catch (promoError) {
+                    console.warn('Promotion claim unavailable, continuing checkout without discount', promoError)
+                }
+
+                await startSubscriptionDispatch()
 
             } catch (err) {
                 error.value = err?.response?.data?.error || err?.message || String(err);
@@ -302,14 +431,31 @@ export default {
             initializeCheckout();
         });
 
+        const continueCheckout = async () => {
+            promotionDialogOpen.value = false
+            loading.value = true
+            error.value = null
+            try {
+                await startSubscriptionDispatch()
+            } catch (err) {
+                error.value = err?.response?.data?.error || err?.message || String(err)
+            } finally {
+                loading.value = false
+            }
+        }
+
         return {
             loading,
             error,
             accepted,
             planDetails,
             formattedPlanPrice,
+            formattedPromoPrice,
             operationStatus,
             initializeCheckout,
+            continueCheckout,
+            promotionDialogOpen,
+            promotionClaim,
             t
         };
     }
@@ -484,6 +630,19 @@ p {
     border-top: 1px solid rgba(23, 32, 51, 0.08);
 }
 
+.promo-summary {
+    margin-top: 16px;
+    padding: 16px;
+    border-radius: 20px;
+    background: rgba(32, 95, 99, 0.08);
+    border: 1px solid rgba(32, 95, 99, 0.12);
+    color: var(--ink);
+}
+
+.promo-summary p {
+    margin-top: 10px;
+}
+
 .summary-header {
     display: flex;
     justify-content: space-between;
@@ -531,6 +690,39 @@ p {
     flex-wrap: wrap;
     gap: 12px;
     margin-top: 24px;
+}
+
+.promo-dialog {
+    border-radius: 24px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(242, 236, 227, 0.92) 100%);
+}
+
+.promo-dialog__title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-top: 24px;
+    padding-bottom: 12px;
+}
+
+.promo-dialog__content {
+    padding-top: 0;
+}
+
+.promo-dialog__lead {
+    font-size: 1rem;
+    color: var(--ink);
+}
+
+.promo-dialog__highlight {
+    margin-top: 14px;
+    padding: 16px;
+    border-radius: 18px;
+    background: rgba(32, 95, 99, 0.08);
+}
+
+.promo-dialog__actions {
+    padding: 12px 24px 24px;
 }
 
 .btn {

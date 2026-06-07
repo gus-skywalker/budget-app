@@ -379,11 +379,22 @@ const userLogin = async () => {
         console.warn('Não foi possível reconciliar/hidratar workspaces no login.', hydrateError)
       }
 
+      const redirectTarget = readInviteAcceptanceRedirect() || route.query.redirect
+      const storedSelectedPlan =
+        typeof window !== 'undefined' && typeof window.localStorage !== 'undefined'
+          ? window.localStorage.getItem('selectedPlan')
+          : null
+      const normalizedRedirect = typeof redirectTarget === 'string' ? redirectTarget : ''
+      const billingFlowPlan = typeof route.query.plan === 'string' && route.query.plan.trim()
+        ? route.query.plan.trim()
+        : storedSelectedPlan?.trim() || null
+      const isBillingFlow = normalizedRedirect.startsWith('/choose-plan') || normalizedRedirect.startsWith('/checkout')
+
       const onboarding = await OnboardingOrchestrator.resolvePostAuthRoute({
         router,
         userStore: store,
-        redirect: readInviteAcceptanceRedirect() || route.query.redirect,
-        plan: route.query.plan,
+        redirect: isBillingFlow && billingFlowPlan ? '/checkout' : redirectTarget,
+        plan: isBillingFlow ? billingFlowPlan : route.query.plan,
         defaultRedirect: '/dashboard'
       })
 

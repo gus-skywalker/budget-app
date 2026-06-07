@@ -50,6 +50,22 @@
       </div>
     </section>
 
+    <section v-if="promotion?.campaignKey" class="section-block promo-section">
+      <div class="shell">
+        <div class="promo-banner">
+          <div>
+            <span class="section-kicker">{{ $t('choosePlan.promo_kicker') }}</span>
+            <h2>{{ promotion.name }}</h2>
+            <p>{{ promotion.description }}</p>
+          </div>
+          <div class="promo-stats">
+            <strong>{{ promotion.remainingClaims }} / {{ promotion.maxClaims }}</strong>
+            <span>{{ $t('choosePlan.promo_remaining') }}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section id="plans" class="plans-section section-block">
       <div class="shell">
         <div class="section-heading">
@@ -208,6 +224,7 @@
 <script>
 import FAQ from '@/components/FAQ.vue'
 import OnboardingOrchestrator from '@/services/OnboardingOrchestrator'
+import BillingPromotionService from '@/services/BillingPromotionService'
 import { PLAN_DETAILS } from '@/constants/plans'
 import { formatConvertedPriceFromBRL, resolvePricingCurrency } from '@/utils/pricing'
 import { useUserStore } from '@/plugins/userStore'
@@ -235,6 +252,8 @@ export default {
       ],
       selectedPlan: null,
       planDetails: PLAN_DETAILS,
+      promotion: null,
+      promotionLoading: false,
       aiFeatures: [
         { icon: 'mdi-chart-box-outline', labelKey: 'choosePlan.ai_feature_1' },
         { icon: 'mdi-bell-alert-outline', labelKey: 'choosePlan.ai_feature_2' },
@@ -279,9 +298,22 @@ export default {
     const preselectedPlan = this.$route?.query?.plan
     if (typeof preselectedPlan === 'string' && preselectedPlan.trim()) {
       this.redirectToCheckout(preselectedPlan.trim())
+      return
     }
+    this.loadPromotion()
   },
   methods: {
+    async loadPromotion() {
+      try {
+        this.promotionLoading = true
+        const response = await BillingPromotionService.getCurrent(null, null)
+        this.promotion = response.data || null
+      } catch (error) {
+        console.warn('No active promotion data available', error)
+      } finally {
+        this.promotionLoading = false
+      }
+    },
     async redirectToCheckout(plan) {
       try {
         this.selectedPlan = plan
@@ -400,6 +432,53 @@ export default {
 
 .plan-hero {
   padding: 72px 0 44px;
+}
+
+.promo-section {
+  padding-top: 0;
+}
+
+.promo-banner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: center;
+  padding: 24px 28px;
+  border-radius: 24px;
+  border: 1px solid rgba(32, 95, 99, 0.12);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(245, 240, 232, 0.95));
+  box-shadow: var(--shadow-soft);
+}
+
+.promo-banner h2 {
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.promo-banner p {
+  max-width: 68ch;
+}
+
+.promo-stats {
+  display: grid;
+  gap: 6px;
+  justify-items: end;
+  min-width: 160px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: rgba(32, 95, 99, 0.08);
+  color: var(--accent-strong);
+  text-align: right;
+}
+
+.promo-stats strong {
+  font-size: 1.7rem;
+  line-height: 1;
+}
+
+.promo-stats span {
+  color: var(--ink-soft);
+  font-weight: 600;
 }
 
 .hero-grid {
@@ -857,6 +936,17 @@ p {
 
   .plan-cta {
     grid-template-columns: 1fr;
+  }
+
+  .promo-banner {
+    grid-template-columns: 1fr;
+    padding: 20px;
+  }
+
+  .promo-stats {
+    justify-items: start;
+    text-align: left;
+    min-width: 0;
   }
 }
 </style>

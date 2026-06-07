@@ -10,10 +10,13 @@ export interface ActiveWorkspaceContext {
 }
 
 export interface BillingCheckoutContext {
-  workspaceId: string
+  workspaceId?: string | null
   workspaceName?: string | null
   billingAccountId?: string | null
   plan?: string | null
+  promotionClaimId?: string | null
+  promotionCampaignKey?: string | null
+  promotionDiscountPercent?: number | null
   correlationId?: string | null
   storedAt: number
 }
@@ -65,15 +68,24 @@ export const saveBillingCheckoutContext = (context: Omit<BillingCheckoutContext,
   if (!canUseSessionStorage()) return
 
   const workspaceId = String(context.workspaceId || '').trim()
-  if (!workspaceId) return
 
   const payload: BillingCheckoutContext = {
-    workspaceId,
+    workspaceId: workspaceId || null,
     workspaceName: context.workspaceName ?? null,
     billingAccountId: context.billingAccountId ?? null,
     plan: context.plan ?? null,
     correlationId: context.correlationId ?? null,
     storedAt: context.storedAt ?? Date.now(),
+  }
+
+  if (context.promotionClaimId != null) {
+    payload.promotionClaimId = context.promotionClaimId
+  }
+  if (context.promotionCampaignKey != null) {
+    payload.promotionCampaignKey = context.promotionCampaignKey
+  }
+  if (context.promotionDiscountPercent != null) {
+    payload.promotionDiscountPercent = context.promotionDiscountPercent
   }
 
   window.sessionStorage.setItem(CHECKOUT_CONTEXT_STORAGE_KEY, JSON.stringify(payload))
@@ -88,16 +100,15 @@ export const readBillingCheckoutContext = (): BillingCheckoutContext | null => {
   try {
     const parsed = JSON.parse(raw)
     const workspaceId = String(parsed?.workspaceId || '').trim()
-    if (!workspaceId) {
-      clearBillingCheckoutContext()
-      return null
-    }
 
     return {
-      workspaceId,
+      workspaceId: workspaceId || null,
       workspaceName: parsed?.workspaceName ? String(parsed.workspaceName) : null,
       billingAccountId: parsed?.billingAccountId ? String(parsed.billingAccountId) : null,
       plan: parsed?.plan ? String(parsed.plan) : null,
+      promotionClaimId: parsed?.promotionClaimId ? String(parsed.promotionClaimId) : null,
+      promotionCampaignKey: parsed?.promotionCampaignKey ? String(parsed.promotionCampaignKey) : null,
+      promotionDiscountPercent: parsed?.promotionDiscountPercent != null ? Number(parsed.promotionDiscountPercent) : null,
       correlationId: parsed?.correlationId ? String(parsed.correlationId) : null,
       storedAt: Number(parsed?.storedAt || Date.now()),
     }

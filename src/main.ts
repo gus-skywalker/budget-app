@@ -23,6 +23,12 @@ async function restoreSession() {
   userStore.loadState()
   updateI18nLocale(userStore.getLanguage || 'PT')
 
+  const logoutBootstrapMarker = sessionStorage.getItem('auth.logout.skipBootstrap')
+  if (logoutBootstrapMarker) {
+    sessionStorage.removeItem('auth.logout.skipBootstrap')
+    return
+  }
+
   if (!userStore.isAuthenticated) {
     try {
       const bootstrap = await AuthService.bootstrapSession()

@@ -750,6 +750,7 @@ const startCheckoutSession = async () => {
         plan,
         actor: actorUserId.value,
         billingAccountId: billingAccountId.value,
+        workspaceId: workspaceContext.workspaceId,
         ...getBillingContext()
       },
       correlationId

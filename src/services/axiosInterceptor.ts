@@ -115,6 +115,14 @@ axiosInstance.interceptors.response.use(
       ? error.response?.data
       : JSON.stringify(error.response?.data || {})
     const looksLikeExpiredJwt = /jwt.*(expired|no longer valid|expiration time|invalidjwt)/i.test(String(errorBody || ''))
+    const userStore = useUserStore()
+
+    // Quando já estamos deslogados, não tentamos "ressuscitar" a sessão com refresh.
+    // Isso evita loops de refresh/login depois do logout ou em rotas públicas.
+    if (!userStore.isAuthenticated && !userStore.getToken) {
+      return Promise.reject(error)
+    }
+
     // Fluxo principal: 401 visível -> tenta refresh
     if ((status === 401 || status === 403 || (status === 500 && looksLikeExpiredJwt)) && !originalRequest._retry) {
       if (isRefreshing) {
@@ -129,7 +137,6 @@ axiosInstance.interceptors.response.use(
       }
       originalRequest._retry = true
       isRefreshing = true
-      const userStore = useUserStore()
       try {
         // Use the userStore action for refresh logic
         const success = await userStore.tryRefreshToken()

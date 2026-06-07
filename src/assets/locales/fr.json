@@ -1475,6 +1475,8 @@
     "monthly_short": "Mensuel",
     "annual_short_discount": "Annuel -20%",
     "best_offer": "Meilleure offre",
+    "promo_kicker": "Campagne de lancement",
+    "promo_remaining": "places restantes",
     "starter_feature_1": "jusqu'à 4 membres par workspace et 4 workspaces",
     "starter_feature_2": "Open Finance, Nubank legacy et rapprochement",
     "starter_feature_3": "IA, catégorisation intelligente et prévisions",
