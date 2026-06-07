@@ -207,8 +207,8 @@
                     :disabled="!canSuggestGoalCategory"
                     @click="suggestGoalCategory"
                   >
-                    <v-icon start>mdi-brain</v-icon>
-                    {{ $t('financial_goals.ai_suggest_category') }}
+                    <v-icon start>{{ canUseAi ? 'mdi-brain' : 'mdi-lock-outline' }}</v-icon>
+                    {{ canUseAi ? $t('financial_goals.ai_suggest_category') : $t('financial_goals.ai_upgrade_cta') }}
                   </v-btn>
                   <span v-if="goalCategorySuggestion" class="goal-ai-row__meta">
                     {{ goalCategorySuggestionSourceLabel(goalCategorySuggestion.source) }}
@@ -506,6 +506,8 @@ import FinancialGoalService from '@/services/FinancialGoalService';
 import ContributionComponent from '@/components/Contribution.vue';
 import DataService from '@/services/DataService';
 import AiService from '@/services/aiService';
+import BillingOrchestrationService from '@/services/BillingOrchestrationService';
+import { useUserStore } from '@/plugins/userStore';
 
 export default {
   components: {
@@ -537,6 +539,7 @@ export default {
       },
       isSuggestingGoalCategory: false,
       goalCategorySuggestion: null,
+      billingSummary: null,
       snackbar: {
         show: false,
         message: '',
@@ -556,8 +559,18 @@ export default {
     },
   },
   computed: {
+    currentWorkspaceId() {
+      const userStore = useUserStore();
+      return userStore.getCurrentWorkspaceId || userStore.getPreferredWorkspaceId || userStore.getWorkspaces?.[0]?.workspaceId || '';
+    },
+    canUseAi() {
+      const capabilities = this.billingSummary?.capabilities;
+      if (!capabilities) return false;
+      if (typeof capabilities.aiEnabled === 'boolean') return capabilities.aiEnabled;
+      return Boolean(this.billingSummary?.hasPremiumAccess);
+    },
     canSuggestGoalCategory() {
-      return Boolean(String(this.goalForm.name || '').trim());
+      return this.canUseAi && Boolean(String(this.goalForm.name || '').trim());
     },
     disposableIncome() {
       const income = Number(this.monthOverview.totalIncome || 0);
@@ -822,6 +835,21 @@ export default {
           console.error('Erro ao buscar visão geral do mês:', error);
         });
     },
+    loadBillingCapabilities() {
+      const workspaceId = this.currentWorkspaceId;
+      if (!workspaceId) {
+        this.billingSummary = null;
+        return Promise.resolve();
+      }
+      return BillingOrchestrationService.getBillingSummary(workspaceId)
+        .then((response) => {
+          this.billingSummary = response?.data || null;
+        })
+        .catch((error) => {
+          console.error('Erro ao carregar capacidades do plano:', error);
+          this.billingSummary = null;
+        });
+    },
     normalizeTranslatedCollection(payload) {
       if (Array.isArray(payload)) return payload;
       if (!payload || typeof payload !== 'object') return [];
@@ -944,6 +972,11 @@ export default {
       return source === 'AI_FALLBACK' && (confidence <= 0.5 || reasoning === 'model-error');
     },
     suggestGoalCategory() {
+      if (!this.canUseAi) {
+        this.showSnackbar(this.$t('financial_goals.ai_premium_locked'), 'info');
+        this.$router.push({ name: 'choose-plan', query: { feature: 'ai' } });
+        return;
+      }
       const description = String(this.goalForm.name || '').trim();
       if (!description) {
         return;
@@ -1201,6 +1234,7 @@ export default {
     }
   },
   mounted() {
+    this.loadBillingCapabilities();
     this.fetchCategories();
     this.fetchFinancialGoals();
     this.fetchMonthOverview();

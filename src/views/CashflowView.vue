@@ -16,7 +16,7 @@
           </h2>
         </div>
         <div class="cb-card__body">
-          <CashflowDashboard />
+          <CashflowDashboard :enabled="canUseAdvancedCashflow" @upgrade="goToChoosePlan('advanced-cashflow')" />
         </div>
       </div>
 
@@ -67,8 +67,8 @@
             </div>
           </div>
           <div class="insights-grid">
-            <MonthlyExpensesPrediction />
-            <AnomalyDetectionTable />
+            <MonthlyExpensesPrediction :enabled="canUseAi" @upgrade="goToChoosePlan('ai')" />
+            <AnomalyDetectionTable :enabled="canUseAi" @upgrade="goToChoosePlan('ai')" />
           </div>
         </div>
       </div>
@@ -79,15 +79,35 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import CashflowDashboard from '@/components/ai/CashflowDashboard.vue'
 import MonthlyExpensesPrediction from '@/components/ai/MonthlyExpensesPrediction.vue'
 import AnomalyDetectionTable from '@/components/ai/AnomalyDetectionTable.vue'
 import AiService from '@/services/aiService'
+import BillingOrchestrationService, { type BillingSummaryResponse } from '@/services/BillingOrchestrationService'
+import { useUserStore } from '@/plugins/userStore'
 import PageHeader from '@/components/PageHeader.vue'
 
 const { t, locale } = useI18n()
+const router = useRouter()
+const userStore = useUserStore()
 
 const predictionSummary = ref<any | null>(null)
+const billingSummary = ref<BillingSummaryResponse | null>(null)
+
+const currentWorkspaceId = computed(() =>
+  userStore.getCurrentWorkspaceId || userStore.getPreferredWorkspaceId || userStore.getWorkspaces[0]?.workspaceId || ''
+)
+
+const capabilityValue = (name: keyof NonNullable<BillingSummaryResponse['capabilities']>) => {
+  const capabilities = billingSummary.value?.capabilities
+  if (!capabilities) return false
+  const explicit = capabilities[name]
+  if (typeof explicit === 'boolean') return explicit
+  return Boolean(capabilities.advancedToolsEnabled || billingSummary.value?.hasPremiumAccess)
+}
+const canUseAi = computed(() => capabilityValue('aiEnabled'))
+const canUseAdvancedCashflow = computed(() => capabilityValue('advancedCashflowEnabled'))
 
 const creditCardShare = computed(() => Number(predictionSummary.value?.creditCardShare || 0))
 const creditCardShareLabel = computed(() => `${Math.round(creditCardShare.value * 100)}%`)
@@ -104,7 +124,31 @@ const formatCurrency = (value: number) =>
     { style: 'currency', currency: 'BRL' }
   )
 
+const loadBillingCapabilities = async () => {
+  const workspaceId = currentWorkspaceId.value
+  if (!workspaceId) {
+    billingSummary.value = null
+    return
+  }
+  try {
+    const { data } = await BillingOrchestrationService.getBillingSummary(workspaceId)
+    billingSummary.value = data || null
+  } catch (error) {
+    console.error('Error loading plan capabilities:', error)
+    billingSummary.value = null
+  }
+}
+
+const goToChoosePlan = (feature: string) => {
+  router.push({ name: 'choose-plan', query: { feature } })
+}
+
 onMounted(async () => {
+  await loadBillingCapabilities()
+  if (!canUseAi.value) {
+    predictionSummary.value = null
+    return
+  }
   try {
     const { data } = await AiService.predictMonthlyExpenses({ forecastMonths: 3 })
     predictionSummary.value = data

@@ -15,6 +15,13 @@
         :description="openFinanceVisibilityMessage"
       />
 
+      <alert-strip
+        v-else-if="!canUseConnectedFinance"
+        variant="info"
+        :title="t('accounts.connected_finance_locked_title')"
+        :description="t('accounts.connected_finance_locked_description')"
+      />
+
       <div class="cb-card accounts-optout-card">
         <div class="cb-card__header">
           <h2 class="cb-card__title">
@@ -31,8 +38,8 @@
           </p>
           <div class="story-actions">
             <v-btn color="var(--cb-primary)" variant="tonal" @click="goToConnections">
-              <v-icon start>mdi-link-variant-off</v-icon>
-              Ir para Conexões
+              <v-icon start>{{ canUseConnectedFinance ? 'mdi-link-variant-off' : 'mdi-lock-open-outline' }}</v-icon>
+              {{ canUseConnectedFinance ? t('accounts.go_to_connections') : t('accounts.open_finance_upgrade_cta') }}
             </v-btn>
             <v-btn variant="text" @click="openLegalDoc('privacy-policy')">Política de Privacidade</v-btn>
             <v-btn variant="text" @click="openLegalDoc('terms-of-use')">Termos de Uso</v-btn>
@@ -111,6 +118,7 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import FinancialReadService from '@/services/FinancialReadService'
 import OpenFinanceService from '@/services/OpenFinanceService'
+import BillingOrchestrationService, { type BillingSummaryResponse } from '@/services/BillingOrchestrationService'
 import { bankLogoPath, genericBankLogo } from '@/data/openFinanceInstitutions'
 import type { AccountView } from '@/types/financialRead'
 import type { OpenFinanceConnection } from '@/types/openFinance'
@@ -126,10 +134,20 @@ const accounts = ref<AccountView[]>([])
 const loading = ref(false)
 const conflictCount = ref(0)
 const openFinanceConnections = ref<OpenFinanceConnection[]>([])
+const billingSummary = ref<BillingSummaryResponse | null>(null)
 const failedAccountLogos = ref<Record<string, boolean>>({})
 const ACTIVE_OPEN_FINANCE_STATUSES = new Set(['CONNECTED', 'ERROR'])
+const currentWorkspaceId = computed(() =>
+  userStore.getCurrentWorkspaceId || userStore.getPreferredWorkspaceId || userStore.getWorkspaces[0]?.workspaceId || ''
+)
 const currentRole = computed(() => String(userStore.getCurrentRole || '').toUpperCase())
 const isOwnerOrAdmin = computed(() => ['ROLE_OWNER', 'ROLE_ADMIN'].includes(currentRole.value))
+const canUseConnectedFinance = computed(() => {
+  const capabilities = billingSummary.value?.capabilities
+  if (!capabilities) return false
+  if (typeof capabilities.connectedFinanceEnabled === 'boolean') return capabilities.connectedFinanceEnabled
+  return Boolean(capabilities.advancedToolsEnabled || billingSummary.value?.hasPremiumAccess)
+})
 
 const activeOpenFinanceConnections = computed(() => {
   return openFinanceConnections.value.filter((connection) => ACTIVE_OPEN_FINANCE_STATUSES.has(String(connection.status || '').toUpperCase()))
@@ -274,12 +292,19 @@ const markAccountLogoAsFailed = (accountId: string) => {
 const fetchAccounts = async () => {
   loading.value = true
   try {
-    const [accountsResponse, conflictsResponse, connectionsResponse] = await Promise.all([
-      FinancialReadService.fetchAccounts(),
+    const accountsResponse = await FinancialReadService.fetchAccounts()
+    accounts.value = accountsResponse.data || []
+
+    if (!canUseConnectedFinance.value) {
+      conflictCount.value = 0
+      openFinanceConnections.value = []
+      return
+    }
+
+    const [conflictsResponse, connectionsResponse] = await Promise.all([
       OpenFinanceService.listReconciliationConflicts(),
       OpenFinanceService.listConnections(),
     ])
-    accounts.value = accountsResponse.data || []
     conflictCount.value = Array.isArray(conflictsResponse.data) ? conflictsResponse.data.length : 0
     openFinanceConnections.value = Array.isArray(connectionsResponse.data) ? connectionsResponse.data : []
   } catch (error) {
@@ -289,7 +314,26 @@ const fetchAccounts = async () => {
   }
 }
 
+const loadBillingCapabilities = async () => {
+  const workspaceId = currentWorkspaceId.value
+  if (!workspaceId) {
+    billingSummary.value = null
+    return
+  }
+  try {
+    const { data } = await BillingOrchestrationService.getBillingSummary(workspaceId)
+    billingSummary.value = data || null
+  } catch (error) {
+    console.error('Erro ao carregar capacidades do plano:', error)
+    billingSummary.value = null
+  }
+}
+
 const goToConnections = () => {
+  if (!canUseConnectedFinance.value) {
+    router.push({ name: 'choose-plan', query: { feature: 'connected-finance' } })
+    return
+  }
   router.push({ name: 'settings', query: { tab: 'connections' } })
 }
 
@@ -298,7 +342,10 @@ const openLegalDoc = (routeName: 'privacy-policy' | 'terms-of-use' | 'cookie-pol
   window.open(resolved.href, '_blank', 'noopener,noreferrer')
 }
 
-onMounted(fetchAccounts)
+onMounted(async () => {
+  await loadBillingCapabilities()
+  await fetchAccounts()
+})
 </script>
 
 <style scoped>

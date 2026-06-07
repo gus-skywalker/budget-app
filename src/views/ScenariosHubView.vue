@@ -8,8 +8,8 @@
             {{ t('planning.scenarios.new_scenario') }}
           </v-btn>
           <v-btn v-if="canWriteScenarios" variant="tonal" color="var(--cb-accent)" @click="createDebtScenario">
-            <v-icon start>mdi-credit-card-fast-outline</v-icon>
-            {{ t('planning.scenarios.debt_payment_decision') }}
+            <v-icon start>{{ canUseAdvancedScenarios ? 'mdi-credit-card-fast-outline' : 'mdi-lock-outline' }}</v-icon>
+            {{ canUseAdvancedScenarios ? t('planning.scenarios.debt_payment_decision') : t('planning.scenarios.advanced_scenarios_locked_cta') }}
           </v-btn>
         </template>
       </page-header>
@@ -154,6 +154,7 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import ScenarioService, { type SavedScenario } from '@/services/ScenarioService'
 import DecisionService from '@/services/DecisionService'
+import BillingOrchestrationService, { type BillingSummaryResponse } from '@/services/BillingOrchestrationService'
 import { useUserStore } from '@/plugins/userStore'
 import PageHeader from '@/components/PageHeader.vue'
 import AlertStrip from '@/components/AlertStrip.vue'
@@ -169,7 +170,17 @@ const errorMessage = ref('')
 const savedScenarios = ref<SavedScenario[]>([])
 const scenariosLockedForMutation = ref<Set<string>>(new Set())
 const scenariosWithAnyDecision = ref<Set<string>>(new Set())
+const billingSummary = ref<BillingSummaryResponse | null>(null)
 const canWriteScenarios = computed(() => userStore.canWrite)
+const currentWorkspaceId = computed(() =>
+  userStore.getCurrentWorkspaceId || userStore.getPreferredWorkspaceId || userStore.getWorkspaces[0]?.workspaceId || ''
+)
+const canUseAdvancedScenarios = computed(() => {
+  const capabilities = billingSummary.value?.capabilities
+  if (!capabilities) return false
+  if (typeof capabilities.advancedScenariosEnabled === 'boolean') return capabilities.advancedScenariosEnabled
+  return Boolean(capabilities.advancedToolsEnabled || billingSummary.value?.hasPremiumAccess)
+})
 
 const formatCurrency = (value: number) =>
   Number(value || 0).toLocaleString(
@@ -262,6 +273,11 @@ const createScenario = async () => {
 }
 
 const createDebtScenario = async () => {
+  if (!canUseAdvancedScenarios.value) {
+    errorMessage.value = t('planning.scenarios.advanced_scenarios_locked')
+    await router.push({ name: 'choose-plan', query: { feature: 'advanced-scenarios' } })
+    return
+  }
   await router.push({ name: 'planning-scenarios-debt-new', query: { from: 'hub' } })
 }
 
@@ -329,8 +345,23 @@ const createDecisionFromScenario = async (scenario: SavedScenario) => {
   }
 }
 
-onMounted(() => {
-  void loadSavedScenarios()
+const loadBillingCapabilities = async () => {
+  const workspaceId = currentWorkspaceId.value
+  if (!workspaceId) {
+    billingSummary.value = null
+    return
+  }
+  try {
+    const { data } = await BillingOrchestrationService.getBillingSummary(workspaceId)
+    billingSummary.value = data || null
+  } catch (error) {
+    console.error(error)
+    billingSummary.value = null
+  }
+}
+
+onMounted(async () => {
+  await Promise.allSettled([loadBillingCapabilities(), loadSavedScenarios()])
 })
 </script>
 

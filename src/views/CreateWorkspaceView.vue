@@ -192,6 +192,7 @@ const route = useRoute()
 const userStore = useUserStore()
 const currentWorkspaceCount = computed(() => userStore.getWorkspaces?.length || 0)
 const currentPlanTier = ref<'FREE' | 'STARTER' | 'TEAM' | null>(null)
+const currentPlanMaxWorkspaces = ref<number | null>(null)
 const isLoadingPlanAccess = ref(false)
 const redirectTarget = computed(() =>
   OnboardingOrchestrator.resolveOnboardingTargetPath({
@@ -200,7 +201,16 @@ const redirectTarget = computed(() =>
     defaultRedirect: '/dashboard'
   })
 )
-const reachedWorkspaceLimit = computed(() => currentPlanTier.value === 'FREE' && currentWorkspaceCount.value >= 1)
+const fallbackWorkspaceLimitByPlan = {
+  FREE: 2,
+  STARTER: 4,
+  TEAM: 6
+} as const
+const reachedWorkspaceLimit = computed(() => {
+  const tier = currentPlanTier.value || 'FREE'
+  const maxWorkspaces = currentPlanMaxWorkspaces.value ?? fallbackWorkspaceLimitByPlan[tier]
+  return currentWorkspaceCount.value >= maxWorkspaces
+})
 
 const form = ref<any>(null)
 const valid = ref(false)
@@ -355,19 +365,23 @@ const showSnackbar = (message: string, color: string = 'success') => {
 
 const goToUpgrade = () => {
   upgradeSnackbar.value = false
-  router.push({ name: 'choose-plan', query: { plan: 'BUSINESS_ANNUAL' } })
+  const suggestedPlan = currentPlanTier.value === 'STARTER' ? 'BUSINESS_ANNUAL' : 'MONTHLY'
+  router.push({ name: 'choose-plan', query: { plan: suggestedPlan } })
 }
 
 const loadPlanAccess = async () => {
   const workspaceContext = resolveAnyWorkspaceContext(userStore)
   if (!workspaceContext) {
     currentPlanTier.value = 'FREE'
+    currentPlanMaxWorkspaces.value = 2
     return
   }
 
   try {
     isLoadingPlanAccess.value = true
     const access = await BillingOrchestrationService.getBillingSummary(workspaceContext.workspaceId)
+    const maxWorkspaces = Number(access.data?.planLimits?.maxWorkspaces)
+    currentPlanMaxWorkspaces.value = Number.isFinite(maxWorkspaces) && maxWorkspaces > 0 ? maxWorkspaces : null
     const tier = String(access.data?.currentPlanTier || '').toUpperCase()
     if (tier === 'FREE' || tier === 'STARTER' || tier === 'TEAM') {
       currentPlanTier.value = tier

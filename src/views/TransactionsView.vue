@@ -153,7 +153,7 @@
             </div>
           </div>
           <div style="display:flex;gap:8px">
-            <v-btn size="small" variant="tonal" color="var(--cb-accent)" :loading="isBatchSuggestingExpenseCategories" @click="suggestUncategorizedExpensesInBatch">
+            <v-btn size="small" variant="tonal" color="var(--cb-accent)" :loading="isBatchSuggestingExpenseCategories" :disabled="!canUseAi" @click="suggestUncategorizedExpensesInBatch">
               <v-icon start size="14">mdi-brain</v-icon>
               {{ $t('expense.ai_queue_suggest') }}
             </v-btn>
@@ -402,6 +402,7 @@ import ExpenseService from '@/services/ExpenseService'
 import OpenFinanceService from '@/services/OpenFinanceService'
 import DataService from '@/services/DataService'
 import AiService from '@/services/aiService'
+import BillingOrchestrationService from '@/services/BillingOrchestrationService'
 import FinancialReadService, { NO_FINANCIAL_ACCOUNT_ERROR_MESSAGE } from '@/services/FinancialReadService'
 import NotificationService from '@/services/NotificationService'
 import SharedExpenseAgreementService from '@/services/SharedExpenseAgreementService'
@@ -581,6 +582,7 @@ export default {
         { titleKey: 'transactionVisibility.private', value: 'PRIVATE' },
       ],
       openFinanceConflicts: [],
+      billingSummary: null,
       resolvingConflictId: null,
       resolvingConflictAction: null,
       routeExpenseAccountId: null,
@@ -802,7 +804,23 @@ export default {
       return this.$t('transactions.empty.expense_conflicts')
     },
     canSuggestExpenseCategory() {
-      return Boolean(String(this.expense.description || '').trim()) && parseCurrencyToNumber(this.expense.amount) !== null
+      return this.canUseAi && Boolean(String(this.expense.description || '').trim()) && parseCurrencyToNumber(this.expense.amount) !== null
+    },
+    currentWorkspaceId() {
+      const userStore = useUserStore()
+      return userStore.getCurrentWorkspaceId || userStore.getPreferredWorkspaceId || userStore.getWorkspaces?.[0]?.workspaceId || ''
+    },
+    canUseConnectedFinance() {
+      const capabilities = this.billingSummary?.capabilities
+      if (!capabilities) return false
+      if (typeof capabilities.connectedFinanceEnabled === 'boolean') return capabilities.connectedFinanceEnabled
+      return Boolean(capabilities.advancedToolsEnabled || this.billingSummary?.hasPremiumAccess)
+    },
+    canUseAi() {
+      const capabilities = this.billingSummary?.capabilities
+      if (!capabilities) return false
+      if (typeof capabilities.aiEnabled === 'boolean') return capabilities.aiEnabled
+      return Boolean(this.billingSummary?.hasPremiumAccess)
     },
     // --- summary strip ---
     monthlyIncomeTotal() {
@@ -832,7 +850,8 @@ export default {
       return found ? `${found.name} ${year}` : `${month}/${year}`
     },
   },
-  mounted() {
+  async mounted() {
+    await this.loadBillingCapabilities();
     this.applyBudgetQueryFilters();
     this.fetchCategories();
     this.fetchPaymentMethods();
@@ -1282,6 +1301,11 @@ export default {
         : this.$t('expense.ai_feedback_adjusted')
     },
     suggestExpenseCategory() {
+      if (!this.canUseAi) {
+        this.showToast(this.$t('expense.ai_premium_locked'), 'info')
+        this.$router.push({ name: 'choose-plan', query: { feature: 'ai' } })
+        return
+      }
       const parsedAmount = parseCurrencyToNumber(this.expense.amount)
       const description = String(this.expense.description || '').trim()
       if (!description || parsedAmount === null) {
@@ -1330,6 +1354,11 @@ export default {
       this.expenseCategorySuggestion = null
     },
     handleSuggestExpenseCategoryInline(expense) {
+      if (!this.canUseAi) {
+        this.showToast(this.$t('expense.ai_premium_locked'), 'info')
+        this.$router.push({ name: 'choose-plan', query: { feature: 'ai' } })
+        return
+      }
       if (!expense?.description) {
         this.showToast(this.$t('expense.ai_missing_context'), 'warning')
         return
@@ -1379,6 +1408,11 @@ export default {
         })
     },
     suggestUncategorizedExpensesInBatch() {
+      if (!this.canUseAi) {
+        this.showToast(this.$t('expense.ai_premium_locked'), 'info')
+        this.$router.push({ name: 'choose-plan', query: { feature: 'ai' } })
+        return
+      }
       const candidates = this.uncategorizedExpenses
         .filter((expense) => expense?.description)
         .map((expense) => ({
@@ -1664,6 +1698,21 @@ export default {
         this.expense.accountId = defaultAccountId
       }
     },
+    loadBillingCapabilities() {
+      const workspaceId = this.currentWorkspaceId
+      if (!workspaceId) {
+        this.billingSummary = null
+        return Promise.resolve()
+      }
+      return BillingOrchestrationService.getBillingSummary(workspaceId)
+        .then((response) => {
+          this.billingSummary = response?.data || null
+        })
+        .catch((error) => {
+          console.error('Erro ao carregar capacidades do plano:', error)
+          this.billingSummary = null
+        })
+    },
     fetchFinancialAccounts() {
       this.isLoadingFinancialAccounts = true
       FinancialReadService.fetchAccounts()
@@ -1684,6 +1733,11 @@ export default {
         })
     },
     fetchOpenFinanceConnections() {
+      if (!this.canUseConnectedFinance) {
+        this.openFinanceConnections = []
+        this.applyOpenFinanceContextToCollections()
+        return Promise.resolve()
+      }
       return OpenFinanceService.listConnections()
         .then((response) => {
           this.openFinanceConnections = Array.isArray(response?.data) ? response.data : []
@@ -1746,6 +1800,12 @@ export default {
         })
     },
     fetchOpenFinanceConflicts() {
+      if (!this.canUseConnectedFinance) {
+        this.openFinanceConflicts = []
+        this.monthlyIncomes = this.monthlyIncomes.map((income) => this.enrichIncomeWithConflict(income))
+        this.monthlyExpenses = this.monthlyExpenses.map((expense) => this.enrichExpenseWithConflict(expense))
+        return Promise.resolve()
+      }
       return OpenFinanceService.listReconciliationConflicts()
         .then((response) => {
           this.openFinanceConflicts = Array.isArray(response?.data) ? response.data : []
@@ -2266,6 +2326,11 @@ export default {
         })
     },
     handleResolveExpenseConflict({ expense, action }) {
+      if (!this.canUseConnectedFinance) {
+        this.showToast(this.$t('categories_page.connected_finance_locked'), 'info')
+        this.$router.push({ name: 'choose-plan', query: { feature: 'connected-finance' } })
+        return
+      }
       const conflictId = expense?.reconciliationConflictId
       if (!conflictId) {
         this.showToast('Conflito Open Finance não encontrado para esta despesa.', 'warning')
@@ -2297,6 +2362,11 @@ export default {
         })
     },
     handleResolveIncomeConflict({ income, action }) {
+      if (!this.canUseConnectedFinance) {
+        this.showToast(this.$t('categories_page.connected_finance_locked'), 'info')
+        this.$router.push({ name: 'choose-plan', query: { feature: 'connected-finance' } })
+        return
+      }
       const conflictId = income?.reconciliationConflictId
       if (!conflictId) {
         this.showToast('Conflito Open Finance não encontrado para esta receita.', 'warning')

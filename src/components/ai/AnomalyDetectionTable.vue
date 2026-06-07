@@ -14,6 +14,11 @@
       <span>{{ t('ai.anomaly.history_scope_description') }}</span>
     </div>
 
+    <div v-if="!enabled" class="locked-state">
+      <p>{{ t('ai.common.ai_locked') }}</p>
+      <button type="button" @click="$emit('upgrade')">{{ t('ai.common.upgrade_cta') }}</button>
+    </div>
+
     <form class="ai-form" @submit.prevent="handleSubmit">
       <label>
         {{ t('ai.anomaly.window_days') }}
@@ -27,7 +32,7 @@
 
       <p class="history-note">{{ t('ai.anomaly.scope_window', { days: windowDays }) }}</p>
 
-      <button type="submit" :disabled="isLoading">
+      <button type="submit" :disabled="isLoading || !enabled">
         {{ isLoading ? t('ai.common.processing') : t('ai.anomaly.submit') }}
       </button>
       <p v-if="error" class="error">{{ error }}</p>
@@ -81,6 +86,11 @@ import type { AnomalyDetectionItem, AnomalyDetectionResponse, AnomalySeverity } 
 
 const { t } = useI18n()
 
+const props = withDefaults(defineProps<{ enabled?: boolean }>(), {
+  enabled: true
+})
+defineEmits<{ (event: 'upgrade'): void }>()
+
 const sensitivity = ref(1.5)
 const windowDays = ref(90)
 const isLoading = ref(false)
@@ -108,6 +118,10 @@ const anomalySuggestion = (item: AnomalyDetectionItem) => {
 }
 
 const handleSubmit = async () => {
+  if (!props.enabled) {
+    error.value = t('ai.common.ai_locked')
+    return
+  }
   error.value = ''
   isLoading.value = true
   response.value = null

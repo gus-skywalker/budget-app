@@ -70,8 +70,8 @@
               :disabled="isGeneratingSuggestion"
               @click="generateSuggestion"
             >
-              <v-icon start>mdi-auto-fix</v-icon>
-              {{ t('planning.budget.generate_suggested_budget') }}
+              <v-icon start>{{ canUsePlanningIntelligence ? 'mdi-auto-fix' : 'mdi-lock-outline' }}</v-icon>
+              {{ canUsePlanningIntelligence ? t('planning.budget.generate_suggested_budget') : t('planning.budget.upgrade_to_unlock') }}
             </v-btn>
           </div>
 
@@ -88,8 +88,8 @@
               :disabled="isGeneratingRealBaseline"
               @click="generateRealBaseline"
             >
-              <v-icon start>mdi-chart-box-outline</v-icon>
-              {{ t('planning.budget.generate_real_baseline') }}
+              <v-icon start>{{ canUseConnectedFinance ? 'mdi-chart-box-outline' : 'mdi-lock-outline' }}</v-icon>
+              {{ canUseConnectedFinance ? t('planning.budget.generate_real_baseline') : t('planning.budget.upgrade_to_unlock') }}
             </v-btn>
           </div>
 
@@ -356,6 +356,7 @@ import BudgetService, {
   type BudgetSuggestionLine
 } from '@/services/BudgetService'
 import OpenFinanceService from '@/services/OpenFinanceService'
+import BillingOrchestrationService, { type BillingSummaryResponse } from '@/services/BillingOrchestrationService'
 import type { OpenFinanceConnection } from '@/types/openFinance'
 import { useUserStore } from '@/plugins/userStore'
 import PageHeader from '@/components/PageHeader.vue'
@@ -385,6 +386,7 @@ const allBudgets = ref<Budget[]>([])
 const suggestion = ref<BudgetSuggestion | null>(null)
 const hasSuggestionData = ref(false)
 const visibleOpenFinanceConnections = ref<OpenFinanceConnection[]>([])
+const billingSummary = ref<BillingSummaryResponse | null>(null)
 const showSuggestionEditor = ref(false)
 const showManualEditor = ref(false)
 const bannerMessage = ref('')
@@ -394,6 +396,18 @@ const editableSuggestionLines = ref<BudgetSuggestionLine[]>([])
 const editableManualLines = ref<ManualBudgetLine[]>([])
 const manualMode = ref<ManualBudgetMode>('quick')
 const quickBaselineAmount = ref<number | null>(null)
+const currentWorkspaceId = computed(() =>
+  userStore.getCurrentWorkspaceId || userStore.getPreferredWorkspaceId || userStore.getWorkspaces[0]?.workspaceId || ''
+)
+const capabilityValue = (name: keyof NonNullable<BillingSummaryResponse['capabilities']>) => {
+  const capabilities = billingSummary.value?.capabilities
+  if (!capabilities) return false
+  const explicit = capabilities[name]
+  if (typeof explicit === 'boolean') return explicit
+  return Boolean(capabilities.advancedToolsEnabled || billingSummary.value?.hasPremiumAccess)
+}
+const canUsePlanningIntelligence = computed(() => capabilityValue('planningIntelligenceEnabled'))
+const canUseConnectedFinance = computed(() => capabilityValue('connectedFinanceEnabled'))
 
 const now = computed(() => new Date())
 const suggestedIncomeTotal = computed(() =>
@@ -445,7 +459,9 @@ const planningSharingDisabledNotice = computed(() =>
   hasVisiblePrivateOnlyPlanningSource.value && !hasVisiblePlanningSharedConnection.value
 )
 const suggestionMessage = computed(() =>
-  hasSuggestionData.value
+  !canUsePlanningIntelligence.value
+    ? t('planning.budget.suggestion_message_locked')
+    : hasSuggestionData.value
     ? t('planning.budget.suggestion_message_ready')
     : planningSharingDisabledNotice.value
       ? t('planning.budget.suggestion_message_sharing_disabled')
@@ -454,7 +470,9 @@ const suggestionMessage = computed(() =>
         : t('planning.budget.suggestion_message_unavailable')
 )
 const consolidatedBaselineMessage = computed(() =>
-  planningSharingDisabledNotice.value
+  !canUseConnectedFinance.value
+    ? t('planning.budget.consolidated_message_locked')
+    : planningSharingDisabledNotice.value
     ? t('planning.budget.consolidated_message_sharing_disabled')
     : hasVisibleOpenFinanceConnection.value
       ? t('planning.budget.consolidated_message_ready')
@@ -551,6 +569,10 @@ const loadCurrentBudget = async () => {
 }
 
 const loadOpenFinancePlanningContext = async () => {
+  if (!canUseConnectedFinance.value) {
+    visibleOpenFinanceConnections.value = []
+    return
+  }
   try {
     const { data } = await OpenFinanceService.listConnections()
     visibleOpenFinanceConnections.value = Array.isArray(data) ? data : []
@@ -561,6 +583,11 @@ const loadOpenFinancePlanningContext = async () => {
 }
 
 const preloadSuggestionAvailability = async () => {
+  if (!canUsePlanningIntelligence.value) {
+    suggestion.value = null
+    hasSuggestionData.value = false
+    return
+  }
   try {
     const { data } = await BudgetService.getSuggestions(now.value.getMonth() + 1, now.value.getFullYear())
     suggestion.value = data
@@ -573,6 +600,11 @@ const preloadSuggestionAvailability = async () => {
 }
 
 const generateSuggestion = async () => {
+  if (!canUsePlanningIntelligence.value) {
+    emptyBudgetMessage.value = t('planning.budget.planning_intelligence_locked')
+    await router.push({ name: 'choose-plan', query: { feature: 'planning-intelligence' } })
+    return
+  }
   isGeneratingSuggestion.value = true
   showManualEditor.value = false
   bannerMessage.value = ''
@@ -600,6 +632,11 @@ const generateSuggestion = async () => {
 }
 
 const generateRealBaseline = async () => {
+  if (!canUseConnectedFinance.value) {
+    emptyBudgetMessage.value = t('planning.budget.connected_finance_locked')
+    await router.push({ name: 'choose-plan', query: { feature: 'connected-finance' } })
+    return
+  }
   isGeneratingRealBaseline.value = true
   bannerMessage.value = ''
   emptyBudgetMessage.value = ''
@@ -782,6 +819,21 @@ const goToScenarioCreation = async () => {
   await router.push({ name: 'planning-scenarios-new' })
 }
 
+const loadBillingCapabilities = async () => {
+  const workspaceId = currentWorkspaceId.value
+  if (!workspaceId) {
+    billingSummary.value = null
+    return
+  }
+  try {
+    const { data } = await BillingOrchestrationService.getBillingSummary(workspaceId)
+    billingSummary.value = data || null
+  } catch (error) {
+    console.error(error)
+    billingSummary.value = null
+  }
+}
+
 const confidenceColor = (confidence?: string) => {
   if (confidence === 'HIGH') return 'success'
   if (confidence === 'MEDIUM') return 'warning'
@@ -812,6 +864,7 @@ const baselineTitle = (budget: Budget): string => {
 }
 
 onMounted(async () => {
+  await loadBillingCapabilities()
   await Promise.all([loadCurrentBudget(), loadOpenFinancePlanningContext()])
 })
 </script>

@@ -59,6 +59,36 @@
         </div>
 
         <div class="plans-grid">
+          <article class="plan-card free">
+            <div class="plan-head">
+              <span class="plan-tag free-tag">{{ $t('choosePlan.free_tag') }}</span>
+              <h3>{{ $t('choosePlan.free_name') }}</h3>
+              <p class="plan-subtitle">{{ $t('choosePlan.free_subtitle') }}</p>
+            </div>
+
+            <div class="price-stack">
+              <div class="price-row free-price">
+                <span class="price-label">{{ $t('choosePlan.free_price_label') }}</span>
+                <span class="price-amount">{{ $t('choosePlan.free_price') }}</span>
+              </div>
+            </div>
+
+            <ul class="feature-list">
+              <li v-for="item in freeFeatures" :key="item.labelKey">
+                <div class="icon-chip icon-chip-contrast icon-chip-small">
+                  <v-icon size="18">{{ item.icon }}</v-icon>
+                </div>
+                <span>{{ $t(item.labelKey) }}</span>
+              </li>
+            </ul>
+
+            <div class="plan-cta">
+              <button class="btn btn-outline free-outline" type="button" @click.prevent="goToApp">
+                {{ $t('choosePlan.free_cta') }}
+              </button>
+            </div>
+          </article>
+
           <article class="plan-card starter">
             <div class="plan-head">
               <span class="plan-tag starter-tag">{{ $t('choosePlan.starter_tag') }}</span>
@@ -211,6 +241,13 @@ export default {
         { icon: 'mdi-piggy-bank-outline', labelKey: 'choosePlan.ai_feature_3' },
         { icon: 'mdi-tag-multiple-outline', labelKey: 'choosePlan.ai_feature_4' },
       ],
+      freeFeatures: [
+        { icon: 'mdi-briefcase-outline', labelKey: 'choosePlan.free_feature_1' },
+        { icon: 'mdi-account-outline', labelKey: 'choosePlan.free_feature_2' },
+        { icon: 'mdi-shape-outline', labelKey: 'choosePlan.free_feature_3' },
+        { icon: 'mdi-chart-timeline-variant', labelKey: 'choosePlan.free_feature_4' },
+        { icon: 'mdi-lightbulb-on-outline', labelKey: 'choosePlan.free_feature_5' },
+      ],
       starterFeatures: [
         { icon: 'mdi-account-group-outline', labelKey: 'choosePlan.starter_feature_1' },
         { icon: 'mdi-view-dashboard-outline', labelKey: 'choosePlan.starter_feature_2' },
@@ -271,6 +308,14 @@ export default {
       } catch (error) {
         this.handleError(error)
       }
+    },
+
+    goToApp() {
+      if (this.isAuthenticated) {
+        this.$router.push({ name: 'dashboard' })
+        return
+      }
+      this.$router.push({ name: 'login', query: { signup: 'true' } })
     },
 
     handleError(error) {
@@ -520,7 +565,7 @@ p {
 }
 
 .plans-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: stretch;
 }
 
@@ -535,6 +580,10 @@ p {
 
 .plan-card.starter {
   background: linear-gradient(180deg, #fff 0%, #fcf5ec 100%);
+}
+
+.plan-card.free {
+  background: linear-gradient(180deg, #fff 0%, #f7faf8 100%);
 }
 
 .plan-card.team {
@@ -570,6 +619,11 @@ p {
 .starter-tag {
   background: rgba(182, 85, 31, 0.12);
   color: var(--brand-strong);
+}
+
+.free-tag {
+  background: rgba(32, 95, 99, 0.1);
+  color: var(--accent-strong);
 }
 
 .team-tag {
@@ -609,6 +663,11 @@ p {
 .price-row.annual {
   border: 1px dashed rgba(23, 32, 51, 0.12);
   background: rgba(255, 255, 255, 0.8);
+}
+
+.free-price {
+  min-height: 118px;
+  align-content: center;
 }
 
 .team-highlight,
@@ -687,6 +746,12 @@ p {
 .starter-outline {
   border-color: rgba(182, 85, 31, 0.28);
   color: var(--brand-strong);
+}
+
+.free-outline {
+  grid-column: 1 / -1;
+  border-color: rgba(32, 95, 99, 0.22);
+  color: var(--accent-strong);
 }
 
 .starter-solid {

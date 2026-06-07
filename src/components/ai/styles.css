@@ -65,6 +65,24 @@ button.danger {
   background: #dc2626;
 }
 
+.locked-state {
+  display: grid;
+  gap: 0.75rem;
+  border: 1px solid var(--cb-border-card);
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+  background: var(--cb-surface-soft);
+  color: var(--cb-ink-secondary);
+}
+
+.locked-state p {
+  margin: 0;
+}
+
+.locked-state button {
+  width: fit-content;
+}
+
 .error {
   color: #dc2626;
 }

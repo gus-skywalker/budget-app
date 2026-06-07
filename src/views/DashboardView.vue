@@ -1160,6 +1160,9 @@ export default {
       showAllComparisonLines: false,
       showTrendsChart: false,
       hasPremiumAccess: false,
+      canUseConnectedFinance: false,
+      canUseAdvancedCashflow: false,
+      canUseAi: false,
       cashflowInsightsSummary: null,
       expensePredictionSummary: null,
       selectedTimePeriod: '3m',
@@ -1250,6 +1253,8 @@ export default {
       const refreshToken = this.beginRequest('refreshDashboard')
       this.refreshing = true
 
+      await this.fetchPremiumFeatureSummaries()
+
       await Promise.allSettled([
         this.fetchOverviewCoreSnapshot(),
         this.fetchAccounts(),
@@ -1257,7 +1262,6 @@ export default {
         this.fetchOpenFinanceConflicts(),
         this.fetchOpenFinanceObservabilitySummary(),
         this.fetchRecentActivity(),
-        this.fetchPremiumFeatureSummaries(),
         this.fetchDecisionImpact(),
         this.fetchFinancialInsights(),
         this.fetchBudgetComparison(),
@@ -1618,6 +1622,10 @@ export default {
         })
     },
     fetchOpenFinanceConflicts() {
+      if (!this.canUseConnectedFinance) {
+        this.openFinanceConflictCount = 0
+        return Promise.resolve()
+      }
       const requestToken = this.beginRequest('openFinanceConflicts')
       return OpenFinanceService.listReconciliationConflicts()
         .then((response) => {
@@ -1631,6 +1639,10 @@ export default {
         })
     },
     fetchOpenFinanceObservabilitySummary() {
+      if (!this.canUseConnectedFinance) {
+        this.openFinanceObservabilitySummary = null
+        return Promise.resolve()
+      }
       const requestToken = this.beginRequest('openFinanceObservability')
       return OpenFinanceService.getObservabilitySummary()
         .then((response) => {
@@ -1671,6 +1683,9 @@ export default {
       if (!workspaceContext) {
         if (!this.isLatestRequest('premiumFeatureSummaries', requestToken)) return
         this.hasPremiumAccess = false
+        this.canUseConnectedFinance = false
+        this.canUseAdvancedCashflow = false
+        this.canUseAi = false
         this.cashflowInsightsSummary = null
         this.expensePredictionSummary = null
         return
@@ -1679,14 +1694,29 @@ export default {
       try {
         const response = await BillingOrchestrationService.getBillingSummary(workspaceContext.workspaceId)
         if (!this.isLatestRequest('premiumFeatureSummaries', requestToken)) return
-        this.hasPremiumAccess = Boolean(response?.data?.hasPremiumAccess)
+        const summary = response?.data || {}
+        const capabilities = summary.capabilities || {}
+        const fallbackPremium = Boolean(summary.hasPremiumAccess)
+        this.hasPremiumAccess = fallbackPremium
+        this.canUseConnectedFinance = typeof capabilities.connectedFinanceEnabled === 'boolean'
+          ? capabilities.connectedFinanceEnabled
+          : Boolean(capabilities.advancedToolsEnabled || fallbackPremium)
+        this.canUseAdvancedCashflow = typeof capabilities.advancedCashflowEnabled === 'boolean'
+          ? capabilities.advancedCashflowEnabled
+          : Boolean(capabilities.advancedToolsEnabled || fallbackPremium)
+        this.canUseAi = typeof capabilities.aiEnabled === 'boolean'
+          ? capabilities.aiEnabled
+          : Boolean(fallbackPremium)
       } catch (error) {
         console.error('Error checking premium access:', error)
         if (!this.isLatestRequest('premiumFeatureSummaries', requestToken)) return
         this.hasPremiumAccess = false
+        this.canUseConnectedFinance = false
+        this.canUseAdvancedCashflow = false
+        this.canUseAi = false
       }
 
-      if (!this.hasPremiumAccess) {
+      if (!this.canUseAdvancedCashflow && !this.canUseAi) {
         if (!this.isLatestRequest('premiumFeatureSummaries', requestToken)) return
         this.cashflowInsightsSummary = null
         this.expensePredictionSummary = null
@@ -1754,6 +1784,10 @@ export default {
       }).format(date)
     },
     fetchCashflowInsightsSummary() {
+      if (!this.canUseAdvancedCashflow && !this.canUseAi) {
+        this.cashflowInsightsSummary = null
+        return
+      }
       AiService.getCashflowInsights({ months: 6 })
         .then((response) => {
           this.cashflowInsightsSummary = response?.data || null
@@ -1764,6 +1798,10 @@ export default {
         })
     },
     fetchExpensePredictionSummary() {
+      if (!this.canUseAi) {
+        this.expensePredictionSummary = null
+        return
+      }
       AiService.predictMonthlyExpenses({ forecastMonths: 3 })
         .then((response) => {
           this.expensePredictionSummary = response?.data || null

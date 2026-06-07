@@ -9,6 +9,11 @@
       {{ t('ai.savings_plan.empty_goals') }}
     </div>
 
+    <div v-if="!enabled" class="locked-state">
+      <p>{{ t('ai.common.ai_locked') }}</p>
+      <button type="button" @click="$emit('upgrade')">{{ t('ai.common.upgrade_cta') }}</button>
+    </div>
+
     <template v-else>
       <label>
         {{ t('ai.savings_plan.goal') }}
@@ -76,6 +81,11 @@ interface FinancialGoalLike {
 
 const { t, locale } = useI18n()
 
+const props = withDefaults(defineProps<{ enabled?: boolean }>(), {
+  enabled: true
+})
+defineEmits<{ (event: 'upgrade'): void }>()
+
 const goals = ref<FinancialGoalLike[]>([])
 const selectedGoalId = ref('')
 const isLoading = ref(false)
@@ -110,6 +120,10 @@ const loadGoals = async () => {
 }
 
 const handleSubmit = async () => {
+  if (!props.enabled) {
+    error.value = t('ai.common.ai_locked')
+    return
+  }
   if (!selectedGoal.value) {
     error.value = t('ai.savings_plan.error_select_goal')
     return

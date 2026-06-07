@@ -4,8 +4,8 @@
       <page-header :title="$t('categories_page.title')" :meta="$t('categories_page.subtitle')">
         <template #actions>
           <v-btn variant="outlined" color="var(--cb-primary)" @click="goToOpenFinanceSettings">
-            <v-icon start>mdi-bank-outline</v-icon>
-            {{ $t('categories_page.open_finance') }}
+            <v-icon start>{{ canUseConnectedFinance ? 'mdi-bank-outline' : 'mdi-lock-outline' }}</v-icon>
+            {{ canUseConnectedFinance ? $t('categories_page.open_finance') : $t('categories_page.open_finance_upgrade_cta') }}
           </v-btn>
           <v-btn
             v-if="activeTab === 'categories'"
@@ -242,7 +242,22 @@
                 </div>
               </div>
 
-              <div v-if="unmappedBankCategories.length" class="mapping-queue">
+              <v-alert
+                v-if="!canUseConnectedFinance"
+                type="info"
+                variant="tonal"
+                class="mb-4"
+              >
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+                  <span>{{ $t('categories_page.connected_finance_locked') }}</span>
+                  <v-btn size="small" variant="tonal" color="var(--cb-accent)" @click="goToOpenFinanceSettings">
+                    <v-icon start size="14">mdi-lock-open-outline</v-icon>
+                    {{ $t('categories_page.open_finance_upgrade_cta') }}
+                  </v-btn>
+                </div>
+              </v-alert>
+
+              <div v-else-if="unmappedBankCategories.length" class="mapping-queue">
                 <article v-for="bankCategory in unmappedBankCategories" :key="bankCategory.id" class="mapping-queue__row">
                   <div>
                     <div class="mapping-queue__name">{{ bankCategory.name || bankCategory.id }}</div>
@@ -825,6 +840,8 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import DataService from '@/services/DataService'
 import OpenFinanceService from '@/services/OpenFinanceService'
+import BillingOrchestrationService, { type BillingSummaryResponse } from '@/services/BillingOrchestrationService'
+import { useUserStore } from '@/plugins/userStore'
 import type { OpenFinanceBankCategory, OpenFinanceCategoryMapping } from '@/types/openFinance'
 
 type CategoriesTab = 'categories' | 'tags' | 'automations'
@@ -905,6 +922,7 @@ interface ApiAutomationItem {
 
 const { locale, t } = useI18n()
 const router = useRouter()
+const userStore = useUserStore()
 
 const activeTab = ref<CategoriesTab>('categories')
 const categories = ref<CategoryItem[]>([])
@@ -912,6 +930,7 @@ const tags = ref<TagItem[]>([])
 const automations = ref<AutomationItem[]>([])
 const bankCategories = ref<OpenFinanceBankCategory[]>([])
 const bankMappings = ref<OpenFinanceCategoryMapping[]>([])
+const billingSummary = ref<BillingSummaryResponse | null>(null)
 const loading = ref(false)
 const loadingTags = ref(false)
 const loadingAutomations = ref(false)
@@ -953,6 +972,16 @@ const mappingSelections = ref<Record<string, number | null>>({})
 const feedback = ref<{ type: 'success' | 'error'; message: string }>({
   type: 'success',
   message: '',
+})
+
+const currentWorkspaceId = computed(() =>
+  userStore.getCurrentWorkspaceId || userStore.getPreferredWorkspaceId || userStore.getWorkspaces[0]?.workspaceId || ''
+)
+const canUseConnectedFinance = computed(() => {
+  const capabilities = billingSummary.value?.capabilities
+  if (!capabilities) return false
+  if (typeof capabilities.connectedFinanceEnabled === 'boolean') return capabilities.connectedFinanceEnabled
+  return Boolean(capabilities.advancedToolsEnabled || billingSummary.value?.hasPremiumAccess)
 })
 
 const categoryColorOptions = [
@@ -1181,6 +1210,13 @@ const fetchCategories = async () => {
       .map(mapApiCategory)
       .filter((category): category is CategoryItem => Boolean(category))
 
+    if (!canUseConnectedFinance.value) {
+      bankCategories.value = []
+      bankMappings.value = []
+      mappingSelections.value = {}
+      return
+    }
+
     const [bankCategoriesResult, mappingsResult] = await Promise.allSettled([
       OpenFinanceService.listBankCategories(),
       OpenFinanceService.listCategoryMappings(),
@@ -1207,6 +1243,21 @@ const fetchCategories = async () => {
     }
   } finally {
     loading.value = false
+  }
+}
+
+const loadBillingCapabilities = async () => {
+  const workspaceId = currentWorkspaceId.value
+  if (!workspaceId) {
+    billingSummary.value = null
+    return
+  }
+  try {
+    const { data } = await BillingOrchestrationService.getBillingSummary(workspaceId)
+    billingSummary.value = data || null
+  } catch (error) {
+    console.error('Erro ao carregar capacidades do plano:', error)
+    billingSummary.value = null
   }
 }
 
@@ -1462,6 +1513,14 @@ const saveAutomation = async () => {
 }
 
 const saveMapping = async (bankCategoryId: string) => {
+  if (!canUseConnectedFinance.value) {
+    feedback.value = {
+      type: 'error',
+      message: t('categories_page.connected_finance_locked'),
+    }
+    goToOpenFinanceSettings()
+    return
+  }
   const categoryId = mappingSelections.value[bankCategoryId]
   if (!categoryId) {
     return
@@ -1487,6 +1546,14 @@ const saveMapping = async (bankCategoryId: string) => {
 }
 
 const removeMapping = async (bankCategoryId: string) => {
+  if (!canUseConnectedFinance.value) {
+    feedback.value = {
+      type: 'error',
+      message: t('categories_page.connected_finance_locked'),
+    }
+    goToOpenFinanceSettings()
+    return
+  }
   busyBankCategoryId.value = bankCategoryId
   try {
     await OpenFinanceService.deleteCategoryMapping(bankCategoryId, false)
@@ -1587,6 +1654,10 @@ const applyAutomation = async (automation: AutomationItem) => {
 }
 
 const goToOpenFinanceSettings = () => {
+  if (!canUseConnectedFinance.value) {
+    router.push({ name: 'choose-plan', query: { feature: 'connected-finance' } })
+    return
+  }
   router.push({ name: 'settings', query: { tab: 'connections' } })
 }
 
@@ -1608,6 +1679,7 @@ watch(editorDirection, () => {
 })
 
 onMounted(async () => {
+  await loadBillingCapabilities()
   await Promise.all([fetchCategories(), fetchTags(), fetchAutomations()])
 })
 

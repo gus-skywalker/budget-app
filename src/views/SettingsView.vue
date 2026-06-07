@@ -400,15 +400,30 @@
         <v-window-item value="connections">
           <v-row>
             <v-col cols="12" md="10" lg="8">
-              <OpenFinanceConnectionsPanel
-                :connections="openFinanceConnections"
-                :loading="openFinanceConnectionsLoading"
-                :can-manage="canManageOpenFinance"
-                @refresh="refreshOpenFinanceConnectionsPanel"
-                @feedback="openFinanceFeedback = $event"
-              />
+              <v-alert
+                v-if="!canUseConnectedFinance"
+                type="info"
+                variant="tonal"
+                class="mb-6"
+              >
+                {{ $t('openFinance.settings.connected_finance_locked') }}
+                <template #append>
+                  <v-btn size="small" variant="text" color="var(--cb-primary)" @click="goToChoosePlan">
+                    {{ $t('planning.budget.upgrade_to_unlock') }}
+                  </v-btn>
+                </template>
+              </v-alert>
 
-              <div class="cb-card mt-6">
+              <template v-else>
+                <OpenFinanceConnectionsPanel
+                  :connections="openFinanceConnections"
+                  :loading="openFinanceConnectionsLoading"
+                  :can-manage="canManageOpenFinance"
+                  @refresh="refreshOpenFinanceConnectionsPanel"
+                  @feedback="openFinanceFeedback = $event"
+                />
+
+                <div class="cb-card mt-6">
                 <div class="cb-card__header">
                   <h2 class="cb-card__title">
                     <v-icon color="var(--cb-primary)" class="mr-2">mdi-history</v-icon>
@@ -461,9 +476,9 @@
                     </div>
                   </div>
                 </div>
-              </div>
+                </div>
 
-              <div class="cb-card mt-6">
+                <div class="cb-card mt-6">
                 <div class="cb-card__header">
                   <h2 class="cb-card__title">
                     <v-icon color="var(--cb-primary)" class="mr-2">mdi-file-compare</v-icon>
@@ -548,9 +563,9 @@
                     </div>
                   </div>
                 </div>
-              </div>
+                </div>
 
-              <div class="cb-card mt-6">
+                <div class="cb-card mt-6">
                 <div class="cb-card__header">
                   <h2 class="cb-card__title">
                     <v-icon color="var(--cb-primary)" class="mr-2">mdi-shape-plus</v-icon>
@@ -658,7 +673,8 @@
                     </div>
                   </div>
                 </div>
-              </div>
+                </div>
+              </template>
 
               <div class="cb-card mt-6">
                 <div class="cb-card__header">
@@ -769,6 +785,7 @@ import OpenFinanceConnectionsPanel from '@/components/open-finance/OpenFinanceCo
 import DataService from '@/services/DataService';
 import FinancialReadService from '@/services/FinancialReadService';
 import OpenFinanceService from '@/services/OpenFinanceService';
+import BillingOrchestrationService, { type BillingSummaryResponse } from '@/services/BillingOrchestrationService';
 import AuthService from '@/services/AuthService';
 import NotificationService, {
   type NotificationPreferenceMap,
@@ -888,6 +905,7 @@ const darkTheme = ref(false)
 const alertDays = ref(1);
 const alertOptions = [1, 2, 3, 5, 7, 10];
 const appVoice = ref<AppVoice>(userStore.getAppVoice)
+const billingSummary = ref<BillingSummaryResponse | null>(null)
 const appVoiceOptions = computed(() =>
   APP_VOICES.map((voice) => ({
     value: voice,
@@ -1152,6 +1170,34 @@ const canManageOpenFinance = computed(() => {
   const role = String(userStore.getTenantRole || '').toUpperCase()
   return role === 'ROLE_OWNER' || role === 'ROLE_ADMIN'
 })
+const currentWorkspaceId = computed(() =>
+  userStore.getCurrentWorkspaceId || userStore.getPreferredWorkspaceId || userStore.getWorkspaces[0]?.workspaceId || ''
+)
+const canUseConnectedFinance = computed(() => {
+  const capabilities = billingSummary.value?.capabilities
+  if (!capabilities) return false
+  if (typeof capabilities.connectedFinanceEnabled === 'boolean') return capabilities.connectedFinanceEnabled
+  return Boolean(capabilities.advancedToolsEnabled || billingSummary.value?.hasPremiumAccess)
+})
+
+const loadBillingCapabilities = async () => {
+  const workspaceId = currentWorkspaceId.value
+  if (!workspaceId) {
+    billingSummary.value = null
+    return
+  }
+  try {
+    const { data } = await BillingOrchestrationService.getBillingSummary(workspaceId)
+    billingSummary.value = data || null
+  } catch (error) {
+    console.error('Erro ao carregar capacidades do plano:', error)
+    billingSummary.value = null
+  }
+}
+
+const goToChoosePlan = () => {
+  router.push({ name: 'choose-plan', query: { feature: 'connected-finance' } })
+}
 
 const loadOpenFinanceConflicts = async () => {
   openFinanceLoadingConflicts.value = true
@@ -1311,6 +1357,15 @@ const loadOpenFinanceCategoryMappings = async () => {
 }
 
 const loadConnectionsTabData = async () => {
+  await loadBillingCapabilities()
+  if (!canUseConnectedFinance.value) {
+    openFinanceConnections.value = []
+    openFinanceSyncHistory.value = []
+    openFinanceConflicts.value = []
+    openFinanceBankCategories.value = []
+    openFinanceCategoryMappings.value = []
+    return
+  }
   await Promise.allSettled([
     loadInternalCategories(),
     refreshOpenFinanceConnectionsPanel(),

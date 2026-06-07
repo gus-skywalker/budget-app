@@ -55,12 +55,12 @@ export function getFreePlanLimitType(error: any): FreePlanLimitType | null {
 
   const normalized = message.toLowerCase()
   if (
-    normalized.includes('free plan limit reached')
+    normalized.includes('plan workspace limit reached')
     && normalized.includes('workspace')
   ) {
     return 'workspace'
   }
-  if (normalized.includes('free plan member limit reached') || normalized.includes('member limit')) {
+  if (normalized.includes('plan member limit reached') || normalized.includes('member limit')) {
     return 'member'
   }
   return null
@@ -71,13 +71,13 @@ function normalizeFreePlanLimitMessage(message: string): string {
 
   const normalized = message.toLowerCase()
   if (
-    normalized.includes('free plan limit reached')
+    normalized.includes('plan workspace limit reached')
     && normalized.includes('workspace')
   ) {
-    return 'Limite do plano gratuito: 1 workspace. Faça upgrade para Premium para criar mais workspaces.'
+    return 'Limite de workspaces do plano atingido. Faça upgrade para criar mais workspaces.'
   }
-  if (normalized.includes('free plan member limit reached') || normalized.includes('member limit')) {
-    return 'Limite do plano gratuito: 20 membros por workspace. Faça upgrade para Premium para adicionar mais membros.'
+  if (normalized.includes('plan member limit reached') || normalized.includes('member limit')) {
+    return 'Limite de membros do plano atingido. Faça upgrade para adicionar mais membros.'
   }
 
   return message

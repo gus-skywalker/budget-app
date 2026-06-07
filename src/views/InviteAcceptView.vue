@@ -32,7 +32,20 @@ async function syncWorkspacesAfterAccept() {
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     try {
       const workspacesRes = await WorkspaceService.getAll()
-      const workspaces = Array.isArray(workspacesRes?.data) ? workspacesRes.data : []
+      const fetchedWorkspaces = Array.isArray(workspacesRes?.data) ? workspacesRes.data : []
+      const workspaces = [...fetchedWorkspaces]
+      const hasAcceptedWorkspace = Boolean(
+        acceptedWorkspaceId.value
+        && workspaces.some((workspace: any) => String(workspace?.workspaceId || '').trim() === acceptedWorkspaceId.value)
+      )
+      const optimisticAcceptedWorkspace = acceptedWorkspaceId.value && !hasAcceptedWorkspace
+        ? (userStore.getWorkspaces || []).find((workspace: any) => String(workspace?.workspaceId || '').trim() === acceptedWorkspaceId.value)
+        : null
+
+      if (optimisticAcceptedWorkspace) {
+        workspaces.push(optimisticAcceptedWorkspace)
+      }
+
       userStore.setWorkspaces(workspaces as any)
 
       if (!workspaces.length) {
@@ -46,11 +59,11 @@ async function syncWorkspacesAfterAccept() {
 
       const targetWorkspaceId = String(
         matchingAcceptedWorkspace?.workspaceId
-        || (workspaces.length === 1 ? workspaces[0]?.workspaceId : '')
+        || (!acceptedWorkspaceId.value && workspaces.length === 1 ? workspaces[0]?.workspaceId : '')
         || ''
       ).trim()
 
-      if (targetWorkspaceId && !userStore.isTenantMode) {
+      if (targetWorkspaceId) {
         await userStore.selectWorkspace(targetWorkspaceId)
       }
 

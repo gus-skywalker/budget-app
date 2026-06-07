@@ -129,13 +129,28 @@
                 <strong>{{ t('decisions.team_decision_title') }}</strong>
                 <span style="font-size:.8rem;color:var(--cb-ink-muted)">{{ t('decisions.votes_breakdown', { approve: decision.approveVotes, reject: decision.rejectVotes }) }}</span>
               </div>
+              <v-alert
+                v-if="!canUseCollaboration"
+                type="info"
+                variant="tonal"
+                density="compact"
+                class="mb-3"
+              >
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+                  <span>{{ t('decisions.collaboration_locked') }}</span>
+                  <v-btn size="x-small" variant="tonal" color="var(--cb-accent)" @click="goToChoosePlan">
+                    <v-icon start size="14">mdi-lock-open-outline</v-icon>
+                    {{ t('decisions.collaboration_locked_cta') }}
+                  </v-btn>
+                </div>
+              </v-alert>
               <p v-if="decision.approveVotes + decision.rejectVotes === 0" style="font-size:.8rem;color:var(--cb-ink-muted);margin:4px 0 8px">{{ t('decisions.no_votes_hint') }}</p>
               <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
                 <v-btn
                   variant="tonal"
                   size="small"
                   :color="decision.currentUserVote === 'APPROVE' ? 'success' : undefined"
-                  :disabled="!decision.isOpenDecision"
+                  :disabled="!decision.isOpenDecision || !canUseCollaboration"
                   :loading="activeDecisionId === decision.decisionId && decisionAction === 'vote-approve'"
                   @click="openVoteDialog(decision.decisionId, 'APPROVE')"
                 >
@@ -146,7 +161,7 @@
                   variant="tonal"
                   size="small"
                   :color="decision.currentUserVote === 'REJECT' ? 'error' : undefined"
-                  :disabled="!decision.isOpenDecision"
+                  :disabled="!decision.isOpenDecision || !canUseCollaboration"
                   :loading="activeDecisionId === decision.decisionId && decisionAction === 'vote-reject'"
                   @click="openVoteDialog(decision.decisionId, 'REJECT')"
                 >
@@ -158,6 +173,7 @@
                   variant="text"
                   size="small"
                   color="var(--cb-ink-muted)"
+                  :disabled="!canUseCollaboration"
                   :loading="activeDecisionId === decision.decisionId && decisionAction === 'vote-clear'"
                   @click="clearDecisionVote(decision.decisionId)"
                 >
@@ -234,8 +250,8 @@
               </template>
               <template v-else>
                 <v-tooltip
-                  v-if="decision.isOpenDecision && !decision.canApply"
-                  :text="t('decisions.not_enough_approvals')"
+                  v-if="decision.isOpenDecision && (!decision.canApply || !canUseCollaboration)"
+                  :text="canUseCollaboration ? t('decisions.not_enough_approvals') : t('decisions.collaboration_locked')"
                   location="top"
                 >
                   <template #activator="{ props }">
@@ -290,7 +306,22 @@
                     <span style="margin-left:8px;font-size:.8rem;color:var(--cb-ink-muted)">{{ t('decisions.comments_count_label', { count: decision.comments.length }) }}</span>
                   </v-expansion-panel-title>
                   <v-expansion-panel-text>
-                    <div v-if="decision.comments.length" style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px">
+                    <v-alert
+                      v-if="!canUseCollaboration"
+                      type="info"
+                      variant="tonal"
+                      density="compact"
+                      class="mb-3"
+                    >
+                      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+                        <span>{{ t('decisions.collaboration_locked_discussion') }}</span>
+                        <v-btn size="x-small" variant="tonal" color="var(--cb-accent)" @click="goToChoosePlan">
+                          <v-icon start size="14">mdi-lock-open-outline</v-icon>
+                          {{ t('decisions.collaboration_locked_cta') }}
+                        </v-btn>
+                      </div>
+                    </v-alert>
+                    <div v-if="canUseCollaboration && decision.comments.length" style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px">
                       <div v-for="comment in decision.comments" :key="comment.id" style="display:flex;gap:10px;align-items:flex-start">
                         <div class="decision-comment__avatar">{{ comment.initials }}</div>
                         <div>
@@ -299,9 +330,9 @@
                         </div>
                       </div>
                     </div>
-                    <p v-else style="font-size:.85rem;color:var(--cb-ink-muted);margin-bottom:12px">{{ t('decisions.no_comments_hint') }}</p>
+                    <p v-else-if="canUseCollaboration" style="font-size:.85rem;color:var(--cb-ink-muted);margin-bottom:12px">{{ t('decisions.no_comments_hint') }}</p>
 
-                    <div style="display:flex;gap:8px;align-items:flex-start" v-if="decision.isOpenDecision">
+                    <div style="display:flex;gap:8px;align-items:flex-start" v-if="decision.isOpenDecision && canUseCollaboration">
                       <v-text-field
                         v-model="commentDrafts[decision.decisionId]"
                         :label="t('decisions.add_comment_placeholder')"
@@ -429,10 +460,13 @@ import PageHeader from '@/components/PageHeader.vue'
 import AlertStrip from '@/components/AlertStrip.vue'
 import ScenarioService, { type SavedScenario, type ScenarioDeltaType, type ScenarioSimulationResponse } from '@/services/ScenarioService'
 import DecisionService, { type DecisionComment, type DecisionVote, type DecisionVoteValue, type PersistedDecision, type PersistedDecisionStatus } from '@/services/DecisionService'
+import BillingOrchestrationService, { type BillingSummaryResponse } from '@/services/BillingOrchestrationService'
+import { useUserStore } from '@/plugins/userStore'
 
 const { t, locale } = useI18n()
 const route = useRoute()
 const router = useRouter()
+const userStore = useUserStore()
 const DECISIONS_FLASH_SUCCESS_KEY = 'decisions-flash-success'
 
 const isLoading = ref(false)
@@ -444,6 +478,7 @@ const savedScenarios = ref<SavedScenario[]>([])
 const selectedScenarioIds = ref<string[]>([])
 const simulations = ref<Array<{ scenario: SavedScenario; result: ScenarioSimulationResponse }>>([])
 const persistedDecisions = ref<PersistedDecision[]>([])
+const billingSummary = ref<BillingSummaryResponse | null>(null)
 const commentDrafts = ref<Record<string, string>>({})
 const expandedJustifications = ref<Record<string, boolean>>({})
 const decisionFilter = ref<'open' | 'withDecision' | 'closed'>('open')
@@ -459,6 +494,16 @@ const voteDialog = ref<{
   decisionId: null,
   voteValue: null,
   justification: '',
+})
+
+const currentWorkspaceId = computed(() =>
+  userStore.getCurrentWorkspaceId || userStore.getPreferredWorkspaceId || userStore.getWorkspaces[0]?.workspaceId || ''
+)
+const canUseCollaboration = computed(() => {
+  const capabilities = billingSummary.value?.capabilities
+  if (!capabilities) return false
+  if (typeof capabilities.collaborationEnabled === 'boolean') return capabilities.collaborationEnabled
+  return Boolean(capabilities.advancedToolsEnabled || billingSummary.value?.hasPremiumAccess)
 })
 
 const formatCurrency = (value: number) =>
@@ -748,6 +793,25 @@ const loadPersistedDecisions = async () => {
   persistedDecisions.value = Array.isArray(decisionsResponse.data) ? decisionsResponse.data : []
 }
 
+const loadBillingCapabilities = async () => {
+  const workspaceId = currentWorkspaceId.value
+  if (!workspaceId) {
+    billingSummary.value = null
+    return
+  }
+  try {
+    const { data } = await BillingOrchestrationService.getBillingSummary(workspaceId)
+    billingSummary.value = data || null
+  } catch (billingError) {
+    console.error('Erro ao carregar capacidades do plano:', billingError)
+    billingSummary.value = null
+  }
+}
+
+const goToChoosePlan = async () => {
+  await router.push({ name: 'choose-plan', query: { feature: 'collaboration' } })
+}
+
 const goToScenarios = async () => {
   await router.push({
     path: '/planning/scenarios',
@@ -839,6 +903,11 @@ const updateDecisionStatus = async (decisionId: string, status: PersistedDecisio
 }
 
 const applyDecision = async (decisionId: string) => {
+  if (!canUseCollaboration.value) {
+    error.value = t('decisions.collaboration_locked')
+    await goToChoosePlan()
+    return
+  }
   activeDecisionId.value = decisionId
   decisionAction.value = 'apply'
   successMessage.value = ''
@@ -881,6 +950,11 @@ const copyPublicDecisionLink = async (decisionId: string) => {
 }
 
 const addDecisionComment = async (decisionId: string) => {
+  if (!canUseCollaboration.value) {
+    error.value = t('decisions.collaboration_locked_discussion')
+    await goToChoosePlan()
+    return
+  }
   const body = commentDrafts.value[decisionId]?.trim()
   if (!body) {
     return
@@ -906,6 +980,11 @@ const addDecisionComment = async (decisionId: string) => {
 }
 
 const voteDecision = async (decisionId: string, voteValue: DecisionVoteValue, justification?: string | null) => {
+  if (!canUseCollaboration.value) {
+    error.value = t('decisions.collaboration_locked')
+    await goToChoosePlan()
+    return
+  }
   activeDecisionId.value = decisionId
   decisionAction.value = voteValue === 'APPROVE' ? 'vote-approve' : 'vote-reject'
   try {
@@ -921,6 +1000,11 @@ const voteDecision = async (decisionId: string, voteValue: DecisionVoteValue, ju
 }
 
 const clearDecisionVote = async (decisionId: string) => {
+  if (!canUseCollaboration.value) {
+    error.value = t('decisions.collaboration_locked')
+    await goToChoosePlan()
+    return
+  }
   activeDecisionId.value = decisionId
   decisionAction.value = 'vote-clear'
   try {
@@ -936,6 +1020,11 @@ const clearDecisionVote = async (decisionId: string) => {
 }
 
 const openVoteDialog = (decisionId: string, voteValue: DecisionVoteValue) => {
+  if (!canUseCollaboration.value) {
+    error.value = t('decisions.collaboration_locked')
+    void goToChoosePlan()
+    return
+  }
   voteDialog.value.open = true
   voteDialog.value.decisionId = decisionId
   voteDialog.value.voteValue = voteValue
@@ -985,7 +1074,10 @@ onMounted(async () => {
       successMessage.value = t('decisions.created_success')
     }
   }
-  await loadDecisionCards()
+  await Promise.allSettled([
+    loadBillingCapabilities(),
+    loadDecisionCards(),
+  ])
 })
 </script>
 

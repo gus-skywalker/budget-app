@@ -47,6 +47,21 @@ const createBillingSummaryResponse = (workspaceId?: string) => {
       activeCollaborativeWorkspaceCount: workspaces.length,
       activePersonalWorkspaceCount: 0
     },
+    planLimits: {
+      maxWorkspaces: 2,
+      maxMembersPerWorkspace: 1,
+      maxSavedScenarios: 3,
+      maxSavedDecisions: 3
+    },
+    capabilities: {
+      aiEnabled: false,
+      connectedFinanceEnabled: false,
+      collaborationEnabled: false,
+      planningIntelligenceEnabled: false,
+      advancedScenariosEnabled: false,
+      advancedCashflowEnabled: false,
+      advancedToolsEnabled: false
+    },
     checkedAt: new Date().toISOString()
   }
 }

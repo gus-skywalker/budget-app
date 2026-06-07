@@ -72,6 +72,21 @@ export interface BillingSummaryResponse {
     activeCollaborativeWorkspaceCount: number
     activePersonalWorkspaceCount: number
   }
+  planLimits?: {
+    maxWorkspaces: number
+    maxMembersPerWorkspace: number
+    maxSavedScenarios?: number
+    maxSavedDecisions?: number
+  }
+  capabilities?: {
+    aiEnabled: boolean
+    connectedFinanceEnabled?: boolean
+    collaborationEnabled?: boolean
+    planningIntelligenceEnabled?: boolean
+    advancedScenariosEnabled?: boolean
+    advancedCashflowEnabled?: boolean
+    advancedToolsEnabled: boolean
+  }
   checkedAt: string
 }
 

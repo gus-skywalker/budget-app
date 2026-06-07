@@ -14,6 +14,11 @@
       <span>{{ t('ai.monthly_prediction.history_scope_description') }}</span>
     </div>
 
+    <div v-if="!enabled" class="locked-state">
+      <p>{{ t('ai.common.ai_locked') }}</p>
+      <button type="button" @click="$emit('upgrade')">{{ t('ai.common.upgrade_cta') }}</button>
+    </div>
+
     <form class="ai-form" @submit.prevent="handleSubmit">
       <label>
         {{ t('ai.monthly_prediction.months_to_forecast') }}
@@ -38,7 +43,7 @@
         }}
       </p>
 
-      <button type="submit" :disabled="isLoading">
+      <button type="submit" :disabled="isLoading || !enabled">
         {{ isLoading ? t('ai.common.calculating') : t('ai.monthly_prediction.submit') }}
       </button>
       <p v-if="error" class="error">{{ error }}</p>
@@ -117,6 +122,11 @@ interface TranslatedCategoryOption {
 }
 
 const { t, locale } = useI18n()
+
+const props = withDefaults(defineProps<{ enabled?: boolean }>(), {
+  enabled: true
+})
+defineEmits<{ (event: 'upgrade'): void }>()
 
 const forecastMonths = ref(3)
 const selectedCategory = ref('')
@@ -242,6 +252,10 @@ const loadCategories = async () => {
 }
 
 const handleSubmit = async () => {
+  if (!props.enabled) {
+    error.value = t('ai.common.ai_locked')
+    return
+  }
   error.value = ''
   isLoading.value = true
   prediction.value = null

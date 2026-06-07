@@ -5,13 +5,18 @@
       <p>{{ t('ai.cashflow.description') }}</p>
     </header>
 
+    <div v-if="!enabled" class="locked-state">
+      <p>{{ t('ai.common.advanced_cashflow_locked') }}</p>
+      <button type="button" @click="$emit('upgrade')">{{ t('ai.common.upgrade_cta') }}</button>
+    </div>
+
     <form class="ai-form" @submit.prevent="handleSubmit">
       <label>
         {{ t('ai.cashflow.months') }}
         <input v-model.number="months" type="number" min="1" max="12" />
       </label>
 
-      <button type="submit" :disabled="isLoading">{{ isLoading ? t('ai.common.loading') : t('ai.cashflow.update') }}</button>
+      <button type="submit" :disabled="isLoading || !enabled">{{ isLoading ? t('ai.common.loading') : t('ai.cashflow.update') }}</button>
       <p v-if="error" class="error">{{ error }}</p>
     </form>
 
@@ -109,6 +114,11 @@ import type { CashflowInsightsResponse } from '../../services/aiService'
 
 const { t } = useI18n()
 
+const props = withDefaults(defineProps<{ enabled?: boolean }>(), {
+  enabled: true
+})
+defineEmits<{ (event: 'upgrade'): void }>()
+
 const months = ref(6)
 const isLoading = ref(false)
 const error = ref('')
@@ -184,6 +194,10 @@ const statusLabel = (status: string) => {
 }
 
 const handleSubmit = async () => {
+  if (!props.enabled) {
+    error.value = t('ai.common.advanced_cashflow_locked')
+    return
+  }
   error.value = ''
   isLoading.value = true
 
