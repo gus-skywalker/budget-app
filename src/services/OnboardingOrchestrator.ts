@@ -129,7 +129,7 @@ const targetRequiresBusinessTenant = (targetPath: string): boolean => {
   const path = url.pathname
   const plan = url.searchParams.get('plan')
   if (!isBusinessPlan(plan)) return false
-  return path === '/choose-plan' || path === '/checkout'
+  return path === '/choose-plan'
 }
 
 const createWorkspaceRoute = (targetPath: string): RouteLocationRaw => ({
@@ -219,7 +219,7 @@ export const resolveOnboardingBannerState = (input: OnboardingBannerInput): Onbo
   const targetPath = buildRedirectPath(input.currentPath, input.currentQuery)
   const isBillingRoute = input.currentPath === '/choose-plan' || input.currentPath === '/checkout'
   const plan = readQueryString(input.currentQuery, 'plan')
-  const requiresBusinessTenant = isBillingRoute && isBusinessPlan(plan)
+  const requiresBusinessTenant = input.currentPath === '/choose-plan' && isBusinessPlan(plan)
   const requiresTenantContext = Boolean(input.requiresWorkspace || input.requiresTenant || requiresBusinessTenant)
 
   const steps = {

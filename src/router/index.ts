@@ -310,7 +310,7 @@ const router = createRouter({
       path: '/checkout',
       name: 'checkout',
       component: () => import('@/views/CheckoutView.vue'),
-      meta: { requiresAuth: true, requiresWorkspace: true }
+      meta: { requiresAuth: true }
     },
     {
       path: '/select-workspace',
@@ -424,7 +424,7 @@ router.beforeEach((to, from, next) => {
     if (isAuthenticated && plan) {
       localStorage.removeItem('selectedPlan') // Limpa o storage só quando já conseguimos restaurar o plano
       next({
-        name: 'choose-plan',
+        name: 'checkout',
         query: { plan }
       })
       return

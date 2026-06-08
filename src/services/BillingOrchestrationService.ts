@@ -12,6 +12,7 @@ export interface StartSubscriptionRequest extends PricingContextPayload {
   plan: string
   actor: string
   billingAccountId?: string | null
+  workspaceId?: string | null
   promotionClaimId?: string | null
   promotionCampaignKey?: string | null
   promotionDiscountPercent?: number | null

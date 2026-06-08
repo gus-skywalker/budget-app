@@ -277,23 +277,37 @@ export default {
             const startedAt = Date.now()
             const timeoutMs = 30000
             const intervalMs = 1500
+            const notFoundGraceMs = 10000
 
             while (Date.now() - startedAt < timeoutMs) {
-                const resp = await BillingOrchestrationService.getOperationStatus(messageId)
-                operationStatus.value = resp.data
+                try {
+                    const resp = await BillingOrchestrationService.getOperationStatus(messageId)
+                    operationStatus.value = resp.data
 
-                const redirectUrl = resp.data.redirectUrl
-                if (redirectUrl) {
-                    window.location.href = redirectUrl
-                    return
-                }
+                    const redirectUrl = resp.data.redirectUrl
+                    if (redirectUrl) {
+                        window.location.href = redirectUrl
+                        return
+                    }
 
-                if (resp.data.status === 'FAILED') {
-                    throw new Error(resp.data.lastError || t('checkout.billing_command_failed'))
-                }
+                    if (resp.data.status === 'FAILED') {
+                        throw new Error(resp.data.lastError || t('checkout.billing_command_failed'))
+                    }
 
-                if (resp.data.status === 'DISPATCHED') {
-                    return
+                    if (resp.data.status === 'DISPATCHED') {
+                        return
+                    }
+                } catch (pollError) {
+                    const statusCode = pollError?.response?.status
+                    const errorMessage = pollError?.response?.data?.error
+                    if (statusCode === 404 || errorMessage === 'operation not found') {
+                        if (Date.now() - startedAt < notFoundGraceMs) {
+                            await new Promise(resolve => setTimeout(resolve, intervalMs))
+                            continue
+                        }
+                        throw new Error(t('checkout.billing_command_failed'))
+                    }
+                    throw pollError
                 }
 
                 await new Promise(resolve => setTimeout(resolve, intervalMs))
@@ -312,6 +326,7 @@ export default {
                 plan: String(payload.plan),
                 actor: String(payload.actor),
                 billingAccountId: payload.billingAccountId || null,
+                workspaceId: payload.workspaceId || null,
                 correlationId: String(payload.correlationId),
                 messageId,
                 promotionClaimId: payload.promotionClaimId || null,
@@ -350,6 +365,21 @@ export default {
                 const workspaceContext = resolveAnyWorkspaceContext(userStore)
                 const workspaceId = workspaceContext?.workspaceId || null
                 const workspaceName = workspaceContext?.workspaceName || null
+
+                const storedCheckoutContext = checkoutContext.value
+                if (
+                    storedCheckoutContext?.promotionClaimId ||
+                    storedCheckoutContext?.promotionCampaignKey ||
+                    storedCheckoutContext?.promotionDiscountPercent != null
+                ) {
+                    saveBillingCheckoutContext({
+                        plan: String(plan),
+                        workspaceId: storedCheckoutContext.workspaceId ?? workspaceId,
+                        workspaceName: storedCheckoutContext.workspaceName ?? workspaceName,
+                        billingAccountId: storedCheckoutContext.billingAccountId ?? null,
+                        correlationId,
+                    })
+                }
 
                 const decisionResp = await BillingDecisionService.decide(
                     {

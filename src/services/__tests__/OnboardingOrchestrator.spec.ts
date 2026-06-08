@@ -87,7 +87,7 @@ describe('OnboardingOrchestrator', () => {
     expect(selectWorkspace).toHaveBeenCalledWith('workspace-1')
   })
 
-  it('requires explicit workspace selection for business plan when tenant is not selected', async () => {
+  it('allows business checkout to proceed without tenant context', async () => {
     const userStore = createUserStoreMock({
       getWorkspaces: [{ workspaceId: 'workspace-a' }, { workspaceId: 'workspace-b' }],
       isTenantMode: false
@@ -101,11 +101,8 @@ describe('OnboardingOrchestrator', () => {
       })
     )
 
-    expect(result.state).toBe('WORKSPACE_SELECTION_REQUIRED')
-    expect(result.route).toEqual({
-      name: 'select-workspace',
-      query: { redirect: '/choose-plan?plan=BUSINESS_MONTHLY' }
-    })
+    expect(result.state).toBe('READY_BILLING_DECISION')
+    expect(result.route).toEqual({ path: '/checkout?plan=BUSINESS_MONTHLY' })
   })
 
   it('resolves banner state to workspace required when no workspace exists', () => {
@@ -126,7 +123,7 @@ describe('OnboardingOrchestrator', () => {
     })
   })
 
-  it('resolves banner state to workspace selection for business checkout without tenant context', () => {
+  it('keeps business checkout banner ready without requiring workspace context', () => {
     const banner = resolveOnboardingBannerState({
       isAuthenticated: true,
       hasWorkspaces: true,
@@ -135,12 +132,8 @@ describe('OnboardingOrchestrator', () => {
       currentQuery: { plan: 'BUSINESS_MONTHLY' }
     })
 
-    expect(banner.visible).toBe(true)
-    expect(banner.phase).toBe('WORKSPACE_SELECTION_REQUIRED')
-    expect(banner.ctaRoute).toEqual({
-      name: 'select-workspace',
-      query: { redirect: '/choose-plan?plan=BUSINESS_MONTHLY' }
-    })
+    expect(banner.visible).toBe(false)
+    expect(banner.phase).toBe('READY')
   })
 
   it('hides banner when onboarding state is ready', () => {
