@@ -54,13 +54,13 @@ const createBillingSummaryResponse = (workspaceId?: string) => {
       maxSavedDecisions: 3
     },
     capabilities: {
-      aiEnabled: false,
-      connectedFinanceEnabled: false,
+      aiEnabled: true,
+      connectedFinanceEnabled: true,
       collaborationEnabled: false,
-      planningIntelligenceEnabled: false,
+      planningIntelligenceEnabled: true,
       advancedScenariosEnabled: false,
       advancedCashflowEnabled: false,
-      advancedToolsEnabled: false
+      advancedToolsEnabled: true
     },
     checkedAt: new Date().toISOString()
   }
@@ -252,6 +252,128 @@ const createBudgetSuggestionResponse = () => {
   }
 }
 
+type DevBudgetLineType = 'INCOME' | 'EXPENSE'
+
+type DevBudgetLine = {
+  id: string
+  category: string
+  type: DevBudgetLineType
+  plannedAmount: number
+}
+
+type DevBudget = {
+  id: string
+  workspaceId: string
+  periodMonth: number
+  periodYear: number
+  status: 'DRAFT' | 'ACTIVE'
+  totalIncome: number
+  totalExpense: number
+  net: number
+  createdAt: string
+  updatedAt: string
+  lines: DevBudgetLine[]
+}
+
+const devBudgets = new Map<string, DevBudget>()
+
+const currentDevWorkspaceId = () => listDevQuickAccessWorkspaces()[0]?.workspaceId || 'dev-workspace'
+
+const recalculateDevBudget = (budget: DevBudget): DevBudget => {
+  const totalIncome = budget.lines
+    .filter((line) => line.type === 'INCOME')
+    .reduce((total, line) => total + Number(line.plannedAmount || 0), 0)
+  const totalExpense = budget.lines
+    .filter((line) => line.type === 'EXPENSE')
+    .reduce((total, line) => total + Number(line.plannedAmount || 0), 0)
+
+  budget.totalIncome = Number(totalIncome.toFixed(2))
+  budget.totalExpense = Number(totalExpense.toFixed(2))
+  budget.net = Number((totalIncome - totalExpense).toFixed(2))
+  budget.updatedAt = new Date().toISOString()
+  return budget
+}
+
+const listDevBudgets = (month?: unknown, year?: unknown) => {
+  const workspaceId = currentDevWorkspaceId()
+  const requestedMonth = Number(month || 0)
+  const requestedYear = Number(year || 0)
+  return Array.from(devBudgets.values()).filter((budget) => {
+    if (budget.workspaceId !== workspaceId) return false
+    if (requestedMonth && budget.periodMonth !== requestedMonth) return false
+    if (requestedYear && budget.periodYear !== requestedYear) return false
+    return true
+  })
+}
+
+const createDevBudget = (payload: Record<string, any> = {}): DevBudget => {
+  const now = new Date().toISOString()
+  const budget: DevBudget = {
+    id: `dev-budget-${Date.now()}-${Math.round(Math.random() * 10000)}`,
+    workspaceId: String(payload.workspaceId || currentDevWorkspaceId()),
+    periodMonth: Number(payload.periodMonth || new Date().getMonth() + 1),
+    periodYear: Number(payload.periodYear || new Date().getFullYear()),
+    status: payload.status === 'ACTIVE' ? 'ACTIVE' : 'DRAFT',
+    totalIncome: 0,
+    totalExpense: 0,
+    net: 0,
+    createdAt: now,
+    updatedAt: now,
+    lines: []
+  }
+  devBudgets.set(budget.id, budget)
+  return budget
+}
+
+const addDevBudgetLine = (budgetId: string, payload: Record<string, any> = {}) => {
+  const budget = devBudgets.get(budgetId)
+  if (!budget) return { success: false }
+
+  const line: DevBudgetLine = {
+    id: `dev-budget-line-${Date.now()}-${Math.round(Math.random() * 10000)}`,
+    category: String(payload.category || 'Linha manual'),
+    type: payload.type === 'INCOME' ? 'INCOME' : 'EXPENSE',
+    plannedAmount: Number(payload.plannedAmount || 0)
+  }
+  budget.lines.push(line)
+  return recalculateDevBudget(budget)
+}
+
+const activateDevBudget = (budgetId: string) => {
+  const budget = devBudgets.get(budgetId)
+  if (!budget) return { success: false }
+
+  listDevBudgets(budget.periodMonth, budget.periodYear).forEach((item) => {
+    item.status = item.id === budget.id ? 'ACTIVE' : 'DRAFT'
+    item.updatedAt = new Date().toISOString()
+  })
+  return recalculateDevBudget(budget)
+}
+
+const deleteDevBudget = (budgetId: string) => {
+  return { success: devBudgets.delete(budgetId) }
+}
+
+const createDevBudgetFromSuggestion = (payload: Record<string, any> = {}) => {
+  const budget = createDevBudget({
+    workspaceId: payload.workspaceId,
+    periodMonth: payload.month,
+    periodYear: payload.year,
+    status: 'DRAFT'
+  })
+
+  const lines = Array.isArray(payload.lines) ? payload.lines : []
+  lines.forEach((line) => {
+    addDevBudgetLine(budget.id, {
+      category: line.category,
+      type: line.type,
+      plannedAmount: Number(line.suggestedAmount || 0)
+    })
+  })
+
+  return recalculateDevBudget(budget)
+}
+
 const createGeneratedBaselineResponse = () => {
   const postedOpenFinance = devTransactions().filter(
     (transaction) => transaction.source === 'OPEN_FINANCE' && transaction.status === 'POSTED'
@@ -263,8 +385,45 @@ const createGeneratedBaselineResponse = () => {
     .filter((transaction) => transaction.direction === 'OUTFLOW')
     .reduce((total, transaction) => total + Number(transaction.amount || 0), 0)
 
+  if (!postedOpenFinance.length) {
+    return {
+      budgetId: undefined,
+      month: new Date().getMonth() + 1,
+      year: new Date().getFullYear(),
+      incomeTotal: 0,
+      expenseTotal: 0,
+      netAmount: 0,
+      source: 'OPEN_FINANCE_AGGREGATED',
+      status: 'NO_DATA'
+    }
+  }
+
+  const budget = createDevBudget({
+    periodMonth: new Date().getMonth() + 1,
+    periodYear: new Date().getFullYear(),
+    status: 'ACTIVE'
+  })
+
+  if (incomeTotal > 0) {
+    addDevBudgetLine(budget.id, {
+      category: 'OpenFinance Aggregated Income',
+      type: 'INCOME',
+      plannedAmount: incomeTotal
+    })
+  }
+
+  if (expenseTotal > 0) {
+    addDevBudgetLine(budget.id, {
+      category: 'OpenFinance Aggregated Expense',
+      type: 'EXPENSE',
+      plannedAmount: expenseTotal
+    })
+  }
+
+  activateDevBudget(budget.id)
+
   return {
-    budgetId: `dev-budget-${Date.now()}`,
+    budgetId: budget.id,
     month: new Date().getMonth() + 1,
     year: new Date().getFullYear(),
     incomeTotal: Number(incomeTotal.toFixed(2)),
@@ -511,16 +670,39 @@ const buildDataForRequest = (config: AxiosRequestConfig) => {
     return createBudgetSuggestionResponse()
   }
 
+  if (path === '/budgets/from-suggestion' && method === 'post') {
+    return createDevBudgetFromSuggestion(readJsonBody(config.data))
+  }
+
   if (path === '/budgets/generate-baseline') {
     return createGeneratedBaselineResponse()
   }
 
+  if (path === '/budgets/current' && method === 'get') {
+    return listDevBudgets(config.params?.month, config.params?.year)
+      .find((budget) => budget.status === 'ACTIVE') || null
+  }
+
   if (path === '/budgets') {
-    return method === 'get' ? [] : { id: `dev-budget-${Date.now()}`, status: 'DRAFT' }
+    return method === 'get'
+      ? listDevBudgets(config.params?.month, config.params?.year)
+      : createDevBudget(readJsonBody(config.data))
+  }
+
+  if (path.startsWith('/budgets/') && path.endsWith('/activate') && method === 'post') {
+    return activateDevBudget(path.split('/')[2])
+  }
+
+  if (path.startsWith('/budgets/') && !path.includes('/lines') && method === 'delete') {
+    return deleteDevBudget(path.split('/')[2])
+  }
+
+  if (path.startsWith('/budgets/') && path.endsWith('/lines') && method === 'post') {
+    return addDevBudgetLine(path.split('/')[2], readJsonBody(config.data))
   }
 
   if (path.startsWith('/budgets/')) {
-    return { success: true }
+    return devBudgets.get(path.split('/')[2]) || { success: true }
   }
 
   if (path === '/categories' || path === '/categories/translated') {

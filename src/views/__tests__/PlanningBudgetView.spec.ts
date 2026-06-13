@@ -6,7 +6,7 @@ import * as directives from 'vuetify/directives'
 import { ref } from 'vue'
 import PlanningBudgetView from '@/views/PlanningBudgetView.vue'
 
-const { routerPush, budgetServiceMock, openFinanceServiceMock } = vi.hoisted(() => ({
+const { routerPush, budgetServiceMock, openFinanceServiceMock, billingOrchestrationServiceMock } = vi.hoisted(() => ({
   routerPush: vi.fn(),
   budgetServiceMock: {
     list: vi.fn(),
@@ -16,10 +16,14 @@ const { routerPush, budgetServiceMock, openFinanceServiceMock } = vi.hoisted(() 
     createFromSuggestion: vi.fn(),
     create: vi.fn(),
     addLine: vi.fn(),
+    deleteBudget: vi.fn(),
     activate: vi.fn(),
   },
   openFinanceServiceMock: {
     listConnections: vi.fn(),
+  },
+  billingOrchestrationServiceMock: {
+    getBillingSummary: vi.fn(),
   },
 }))
 
@@ -63,6 +67,17 @@ vi.mock('vue-i18n', () => ({
         'planning.budget.consolidated_message_sharing_disabled': 'OpenFinance planning sharing is currently disabled.',
         'planning.budget.create_manually': 'Create Manually',
         'planning.budget.activate_quick_baseline': 'Activate Quick Baseline',
+        'planning.budget.use_detailed_budget': 'Use Detailed Budget',
+        'planning.budget.activate_detailed_budget': 'Activate Detailed Budget',
+        'planning.budget.add_line': 'Add Line',
+        'planning.budget.default_income_category': 'Income',
+        'planning.budget.default_expense_category': 'Operations',
+        'planning.budget.set_active': 'Set Active',
+        'planning.budget.delete_baseline': 'Delete baseline',
+        'planning.budget.delete_baseline_confirm_title': 'Delete baseline?',
+        'planning.budget.delete_baseline_confirm_message': 'This version will no longer appear.',
+        'planning.budget.baseline_deleted': 'Baseline deleted.',
+        'planning.budget.delete_baseline_error': 'Could not delete baseline.',
       }
       return messages[key] || (params ? `${key} ${JSON.stringify(params)}` : key)
     },
@@ -82,9 +97,16 @@ vi.mock('@/services/OpenFinanceService', () => ({
   default: openFinanceServiceMock,
 }))
 
+vi.mock('@/services/BillingOrchestrationService', () => ({
+  default: billingOrchestrationServiceMock,
+}))
+
 vi.mock('@/plugins/userStore', () => ({
   useUserStore: () => ({
     isTenantAdmin: true,
+    getCurrentWorkspaceId: '11111111-1111-1111-1111-111111111111',
+    getPreferredWorkspaceId: '11111111-1111-1111-1111-111111111111',
+    getWorkspaces: [{ workspaceId: '11111111-1111-1111-1111-111111111111' }],
   }),
 }))
 
@@ -100,10 +122,26 @@ if (!(globalThis as any).ResizeObserver) {
   ;(globalThis as any).ResizeObserver = ResizeObserverMock
 }
 
+if (!(globalThis as any).visualViewport) {
+  ;(globalThis as any).visualViewport = {
+    width: 1024,
+    height: 768,
+    offsetLeft: 0,
+    offsetTop: 0,
+    scale: 1,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  }
+}
+
 config.global.stubs = {
   VNavigationDrawer: {
     props: ['modelValue'],
     template: '<aside v-if="modelValue"><slot /></aside>',
+  },
+  VDialog: {
+    props: ['modelValue'],
+    template: '<section v-if="modelValue"><slot /></section>',
   },
 }
 
@@ -116,6 +154,16 @@ describe('PlanningBudgetView suggestion flow', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     openFinanceServiceMock.listConnections.mockResolvedValue({ data: [] })
+    billingOrchestrationServiceMock.getBillingSummary.mockResolvedValue({
+      data: {
+        hasPremiumAccess: true,
+        capabilities: {
+          planningIntelligenceEnabled: true,
+          connectedFinanceEnabled: true,
+          advancedToolsEnabled: true,
+        },
+      },
+    })
   })
 
   it('supports no active budget -> generate suggestion -> edit -> activate this plan', async () => {
@@ -370,6 +418,204 @@ describe('PlanningBudgetView suggestion flow', () => {
       plannedAmount: 1200,
     })
     expect(budgetServiceMock.activate).toHaveBeenCalledWith('manual-budget-1')
+  })
+
+  it('includes newly added detailed manual lines in the saved baseline totals', async () => {
+    budgetServiceMock.list
+      .mockResolvedValueOnce({ data: [] })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: 'manual-budget-1',
+            workspaceId: '11111111-1111-1111-1111-111111111111',
+            periodMonth: 5,
+            periodYear: 2026,
+            status: 'ACTIVE',
+            totalIncome: 3000,
+            totalExpense: 1500,
+            net: 1500,
+            lines: [
+              { id: 'line-1', category: 'Income', type: 'INCOME', plannedAmount: 3000 },
+              { id: 'line-2', category: 'Operations', type: 'EXPENSE', plannedAmount: 1000 },
+              { id: 'line-3', category: 'Operations', type: 'EXPENSE', plannedAmount: 500 },
+            ],
+          },
+        ],
+      })
+    budgetServiceMock.getSuggestions.mockResolvedValue({
+      data: {
+        workspaceId: '11111111-1111-1111-1111-111111111111',
+        month: 5,
+        year: 2026,
+        lines: [],
+      },
+    })
+    budgetServiceMock.create.mockResolvedValue({ data: { id: 'manual-budget-1' } })
+    budgetServiceMock.addLine.mockResolvedValue({ data: {} })
+    budgetServiceMock.activate.mockResolvedValue({ data: { id: 'manual-budget-1', status: 'ACTIVE' } })
+
+    const wrapper = mount(PlanningBudgetView, {
+      global: {
+        plugins: [vuetify],
+        mocks: {
+          $t: (key: string) => key,
+        },
+      },
+    })
+
+    await flushPromises()
+
+    const manualButton = wrapper.findAll('button').find((btn) => btn.text().includes('Create Manually'))
+    expect(manualButton).toBeTruthy()
+    await manualButton!.trigger('click')
+    await flushPromises()
+
+    const detailedButton = wrapper.findAll('button').find((btn) => btn.text().includes('Use Detailed Budget'))
+    expect(detailedButton).toBeTruthy()
+    await detailedButton!.trigger('click')
+    await flushPromises()
+
+    let numberInputs = wrapper.findAll('input[type="number"]')
+    await numberInputs[0].setValue('3000')
+    await numberInputs[1].setValue('1000')
+    await flushPromises()
+
+    const addLineButton = wrapper.findAll('button').find((btn) => btn.text().includes('Add Line'))
+    expect(addLineButton).toBeTruthy()
+    await addLineButton!.trigger('click')
+    await flushPromises()
+
+    numberInputs = wrapper.findAll('input[type="number"]')
+    await numberInputs[2].setValue('500')
+    await flushPromises()
+
+    const activateButton = wrapper.findAll('button').find((btn) => btn.text().includes('Activate Detailed Budget'))
+    expect(activateButton).toBeTruthy()
+    await activateButton!.trigger('click')
+    await flushPromises()
+
+    expect(budgetServiceMock.addLine).toHaveBeenCalledTimes(3)
+    expect(budgetServiceMock.addLine).toHaveBeenNthCalledWith(1, 'manual-budget-1', {
+      category: 'Income',
+      type: 'INCOME',
+      plannedAmount: 3000,
+    })
+    expect(budgetServiceMock.addLine).toHaveBeenNthCalledWith(2, 'manual-budget-1', {
+      category: 'Operations',
+      type: 'EXPENSE',
+      plannedAmount: 1000,
+    })
+    expect(budgetServiceMock.addLine).toHaveBeenNthCalledWith(3, 'manual-budget-1', {
+      category: 'Operations',
+      type: 'EXPENSE',
+      plannedAmount: 500,
+    })
+    expect(wrapper.text()).toContain('R$ 1.500,00')
+  })
+
+  it('opens editable suggestion lines when the API returns aggregate totals without category lines', async () => {
+    budgetServiceMock.list.mockResolvedValue({ data: [] })
+    budgetServiceMock.getSuggestions.mockResolvedValue({
+      data: {
+        workspaceId: '11111111-1111-1111-1111-111111111111',
+        month: 5,
+        year: 2026,
+        suggestedIncome: 3000,
+        suggestedExpense: 1500,
+        net: 1500,
+        lines: [],
+      },
+    })
+
+    const wrapper = mount(PlanningBudgetView, {
+      global: {
+        plugins: [vuetify],
+        mocks: {
+          $t: (key: string) => key,
+        },
+      },
+    })
+
+    await flushPromises()
+
+    const generateButton = wrapper.findAll('button').find((btn) => btn.text().includes('Generate Suggested Budget'))
+    expect(generateButton).toBeTruthy()
+    await generateButton!.trigger('click')
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Suggested Budget')
+    expect(wrapper.text()).toContain('Income')
+    expect(wrapper.text()).toContain('Operations')
+    expect(wrapper.text()).not.toContain('planning.budget.generate_suggestion_no_data')
+  })
+
+  it('deletes an available inactive baseline from the list', async () => {
+    const activeBudget = {
+      id: 'active-budget-1',
+      workspaceId: '11111111-1111-1111-1111-111111111111',
+      periodMonth: 5,
+      periodYear: 2026,
+      status: 'ACTIVE',
+      totalIncome: 5000,
+      totalExpense: 0,
+      net: 5000,
+      lines: [{ id: 'line-1', category: 'Manual net baseline', type: 'INCOME', plannedAmount: 5000 }],
+    }
+    const inactiveBudget = {
+      id: 'inactive-budget-1',
+      workspaceId: '11111111-1111-1111-1111-111111111111',
+      periodMonth: 5,
+      periodYear: 2026,
+      status: 'DRAFT',
+      totalIncome: 3000,
+      totalExpense: 1000,
+      net: 2000,
+      lines: [
+        { id: 'line-2', category: 'Income', type: 'INCOME', plannedAmount: 3000 },
+        { id: 'line-3', category: 'Operations', type: 'EXPENSE', plannedAmount: 1000 },
+      ],
+    }
+    budgetServiceMock.list
+      .mockResolvedValueOnce({ data: [activeBudget, inactiveBudget] })
+      .mockResolvedValueOnce({ data: [activeBudget] })
+    budgetServiceMock.getSuggestions.mockResolvedValue({
+      data: {
+        workspaceId: '11111111-1111-1111-1111-111111111111',
+        month: 5,
+        year: 2026,
+        lines: [],
+      },
+    })
+    budgetServiceMock.deleteBudget.mockResolvedValue({ status: 204 })
+
+    const wrapper = mount(PlanningBudgetView, {
+      global: {
+        plugins: [vuetify],
+        mocks: {
+          $t: (key: string) => key,
+        },
+      },
+    })
+
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('R$ 2.000,00')
+    const deleteButton = wrapper.findAll('button').find((btn) => btn.attributes('aria-label') === 'Delete baseline')
+    expect(deleteButton).toBeTruthy()
+    await deleteButton!.trigger('click')
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Delete baseline?')
+    expect(budgetServiceMock.deleteBudget).not.toHaveBeenCalled()
+
+    const confirmButton = wrapper.findAll('button').find((btn) => btn.text().includes('Delete baseline'))
+    expect(confirmButton).toBeTruthy()
+    await confirmButton!.trigger('click')
+    await flushPromises()
+
+    expect(budgetServiceMock.deleteBudget).toHaveBeenCalledWith('inactive-budget-1')
+    expect(wrapper.text()).toContain('Baseline deleted.')
+    expect(wrapper.text()).not.toContain('R$ 2.000,00')
   })
 
   it('shows the OpenFinance baseline source even when no suggestion lines are available', async () => {

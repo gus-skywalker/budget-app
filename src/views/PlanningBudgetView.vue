@@ -125,15 +125,27 @@
                 <span>{{ t('planning.budget.net') }}</span>
                 <strong :class="{ 'cb-summary-item__value--negative': budget.net < 0 }">{{ formatCurrency(budget.net) }}</strong>
               </div>
-              <v-btn
-                class="cb-btn-secondary"
-                variant="tonal"
-                :loading="activatingBudgetId === budget.id"
-                :disabled="Boolean(activatingBudgetId)"
-                @click="activateExistingBudget(budget)"
-              >
-                {{ t('planning.budget.set_active') }}
-              </v-btn>
+              <div class="cb-alt-budget-row__actions">
+                <v-btn
+                  class="cb-btn-secondary"
+                  variant="tonal"
+                  :loading="activatingBudgetId === budget.id"
+                  :disabled="Boolean(activatingBudgetId) || Boolean(deletingBudgetId)"
+                  @click="activateExistingBudget(budget)"
+                >
+                  {{ t('planning.budget.set_active') }}
+                </v-btn>
+                <v-btn
+                  icon
+                  variant="text"
+                  color="error"
+                  :aria-label="t('planning.budget.delete_baseline')"
+                  :disabled="Boolean(activatingBudgetId) || Boolean(deletingBudgetId)"
+                  @click="requestDeleteBudget(budget)"
+                >
+                  <v-icon>mdi-delete-outline</v-icon>
+                </v-btn>
+              </div>
             </div>
           </div>
         </div>
@@ -150,12 +162,18 @@
     >
       <div class="cb-drawer-header">
         <div class="cb-drawer-header__title">
-          {{ showSuggestionEditor ? t('planning.budget.suggested_budget') : t('planning.budget.quick_baseline') }}
+          {{ editorTitle }}
         </div>
         <v-btn icon variant="text" @click="closeEditor">
           <v-icon>mdi-close</v-icon>
         </v-btn>
       </div>
+      <alert-strip
+        v-if="editorErrorMessage"
+        class="cb-editor-alert"
+        variant="info"
+        :description="editorErrorMessage"
+      />
 
       <!-- Suggestion editor -->
       <div v-if="showSuggestionEditor && suggestion" class="cb-editor-body">
@@ -342,6 +360,38 @@
         </div>
       </div>
     </v-navigation-drawer>
+
+    <v-dialog v-model="deleteBaselineDialog" max-width="520">
+      <v-card>
+        <v-card-title class="text-h6">
+          {{ t('planning.budget.delete_baseline_confirm_title') }}
+        </v-card-title>
+        <v-card-text>
+          <p class="mb-2">
+            {{ t('planning.budget.delete_baseline_confirm_message') }}
+          </p>
+          <div v-if="budgetPendingDeletion" class="cb-delete-baseline-summary">
+            <span>{{ baselineTitle(budgetPendingDeletion) }}</span>
+            <strong>{{ formatCurrency(budgetPendingDeletion.net) }}</strong>
+          </div>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" :disabled="Boolean(deletingBudgetId)" @click="cancelDeleteBudget">
+            {{ t('common.cancel') }}
+          </v-btn>
+          <v-btn
+            color="error"
+            variant="elevated"
+            :loading="Boolean(deletingBudgetId)"
+            @click="confirmDeleteBudget"
+          >
+            <v-icon start>mdi-delete-outline</v-icon>
+            {{ t('planning.budget.delete_baseline') }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -381,6 +431,7 @@ const isGeneratingSuggestion = ref(false)
 const isGeneratingRealBaseline = ref(false)
 const isUsingSuggestedPlan = ref(false)
 const activatingBudgetId = ref<string | null>(null)
+const deletingBudgetId = ref<string | null>(null)
 const activeBudget = ref<Budget | null>(null)
 const allBudgets = ref<Budget[]>([])
 const suggestion = ref<BudgetSuggestion | null>(null)
@@ -389,8 +440,11 @@ const visibleOpenFinanceConnections = ref<OpenFinanceConnection[]>([])
 const billingSummary = ref<BillingSummaryResponse | null>(null)
 const showSuggestionEditor = ref(false)
 const showManualEditor = ref(false)
+const deleteBaselineDialog = ref(false)
+const budgetPendingDeletion = ref<Budget | null>(null)
 const bannerMessage = ref('')
 const emptyBudgetMessage = ref('')
+const editorErrorMessage = ref('')
 const canManageBudget = computed(() => userStore.isTenantAdmin)
 const editableSuggestionLines = ref<BudgetSuggestionLine[]>([])
 const editableManualLines = ref<ManualBudgetLine[]>([])
@@ -438,7 +492,7 @@ const manualNetTotal = computed(() => manualIncomeTotal.value - manualExpenseTot
 const hasQuickBaselineValue = computed(() => Number(quickBaselineAmount.value || 0) !== 0)
 const hasManualBudgetValues = computed(() =>
   editableManualLines.value.some(
-    (line) => line.category.trim().length > 0 && Number(line.plannedAmount || 0) > 0
+    (line) => manualLineCategory(line).length > 0 && Number(line.plannedAmount || 0) > 0
   )
 )
 const usableAlternativeBudgets = computed(() =>
@@ -500,9 +554,16 @@ const budgetSummaryItems = computed(() => {
   ]
 })
 
+const editorTitle = computed(() => {
+  if (showSuggestionEditor.value) return t('planning.budget.suggested_budget')
+  if (manualMode.value === 'detailed') return t('planning.budget.detailed_manual_budget')
+  return t('planning.budget.quick_baseline')
+})
+
 const closeEditor = () => {
   showSuggestionEditor.value = false
   showManualEditor.value = false
+  editorErrorMessage.value = ''
 }
 
 const formatCurrency = (value: number) =>
@@ -513,10 +574,51 @@ const formatCurrency = (value: number) =>
 
 const createManualLine = (defaults?: Partial<ManualBudgetLine>): ManualBudgetLine => ({
   id: defaults?.id || crypto.randomUUID(),
-  category: defaults?.category || '',
+  category: defaults?.category || (defaults?.type === 'INCOME'
+    ? t('planning.budget.default_income_category')
+    : t('planning.budget.default_expense_category')),
   type: defaults?.type || 'EXPENSE',
   plannedAmount: Number(defaults?.plannedAmount || 0),
 })
+
+const manualLineCategory = (line: Pick<ManualBudgetLine, 'category' | 'type'>): string => {
+  const category = line.category.trim()
+  if (category) return category
+  return line.type === 'INCOME'
+    ? t('planning.budget.default_income_category')
+    : t('planning.budget.default_expense_category')
+}
+
+const editableLinesFromSuggestion = (data?: BudgetSuggestion | null): BudgetSuggestionLine[] => {
+  const lines = Array.isArray(data?.lines) ? data.lines : []
+  if (lines.length) {
+    return lines.map((line) => ({
+      ...line,
+      suggestedAmount: Number(line.suggestedAmount || 0),
+    }))
+  }
+
+  const fallbackLines: BudgetSuggestionLine[] = []
+  const suggestedIncome = Number(data?.suggestedIncome || 0)
+  const suggestedExpense = Number(data?.suggestedExpense || 0)
+  if (suggestedIncome > 0) {
+    fallbackLines.push({
+      category: t('planning.budget.default_income_category'),
+      type: 'INCOME',
+      suggestedAmount: suggestedIncome,
+      confidence: 'LOW',
+    })
+  }
+  if (suggestedExpense > 0) {
+    fallbackLines.push({
+      category: t('planning.budget.default_expense_category'),
+      type: 'EXPENSE',
+      suggestedAmount: suggestedExpense,
+      confidence: 'LOW',
+    })
+  }
+  return fallbackLines
+}
 
 const hasUsableBudgetBaseline = (budget: Budget): boolean =>
   Array.isArray(budget.lines) &&
@@ -591,7 +693,7 @@ const preloadSuggestionAvailability = async () => {
   try {
     const { data } = await BudgetService.getSuggestions(now.value.getMonth() + 1, now.value.getFullYear())
     suggestion.value = data
-    hasSuggestionData.value = Array.isArray(data?.lines) && data.lines.length > 0
+    hasSuggestionData.value = editableLinesFromSuggestion(data).length > 0
   } catch (error) {
     console.error(error)
     suggestion.value = null
@@ -612,10 +714,7 @@ const generateSuggestion = async () => {
   try {
     const { data } = await BudgetService.getSuggestions(now.value.getMonth() + 1, now.value.getFullYear())
     suggestion.value = data
-    editableSuggestionLines.value = (data?.lines || []).map((line) => ({
-      ...line,
-      suggestedAmount: Number(line.suggestedAmount || 0),
-    }))
+    editableSuggestionLines.value = editableLinesFromSuggestion(data)
     showSuggestionEditor.value = editableSuggestionLines.value.length > 0
     hasSuggestionData.value = editableSuggestionLines.value.length > 0
     if (!hasSuggestionData.value) {
@@ -700,10 +799,12 @@ const startManualBudget = () => {
   showManualEditor.value = true
   manualMode.value = 'quick'
   quickBaselineAmount.value = null
+  editorErrorMessage.value = ''
 }
 
 const startDetailedManualBudget = () => {
   manualMode.value = 'detailed'
+  editorErrorMessage.value = ''
   editableManualLines.value = [
     createManualLine({ category: t('planning.budget.default_income_category'), type: 'INCOME' }),
     createManualLine({ category: t('planning.budget.default_expense_category'), type: 'EXPENSE' }),
@@ -724,17 +825,19 @@ const cancelManualBudget = () => {
   manualMode.value = 'quick'
   quickBaselineAmount.value = null
   editableManualLines.value = []
+  editorErrorMessage.value = ''
 }
 
 const createQuickBaselineBudget = async () => {
   const baselineAmount = Number(quickBaselineAmount.value || 0)
 
   if (baselineAmount === 0) {
-    emptyBudgetMessage.value = t('planning.budget.quick_baseline_required')
+    editorErrorMessage.value = t('planning.budget.quick_baseline_required')
     return
   }
 
   isCreatingManualBudget.value = true
+  editorErrorMessage.value = ''
   try {
     const { data: createdBudget } = await BudgetService.create({
       periodMonth: now.value.getMonth() + 1,
@@ -743,6 +846,7 @@ const createQuickBaselineBudget = async () => {
     })
 
     if (!createdBudget?.id) {
+      editorErrorMessage.value = t('planning.budget.manual_budget_error')
       return
     }
 
@@ -753,11 +857,12 @@ const createQuickBaselineBudget = async () => {
     })
 
     await BudgetService.activate(createdBudget.id)
-    await loadCurrentBudget()
     showManualEditor.value = false
     bannerMessage.value = t('planning.budget.quick_baseline_activated')
+    await loadCurrentBudget()
   } catch (error) {
     console.error(error)
+    editorErrorMessage.value = t('planning.budget.manual_budget_error')
   } finally {
     isCreatingManualBudget.value = false
   }
@@ -765,6 +870,7 @@ const createQuickBaselineBudget = async () => {
 
 const activateExistingBudget = async (budget: Budget) => {
   activatingBudgetId.value = budget.id
+  emptyBudgetMessage.value = ''
   try {
     await BudgetService.activate(budget.id)
     await loadCurrentBudget()
@@ -776,21 +882,56 @@ const activateExistingBudget = async (budget: Budget) => {
   }
 }
 
+const requestDeleteBudget = (budget: Budget) => {
+  budgetPendingDeletion.value = budget
+  deleteBaselineDialog.value = true
+  emptyBudgetMessage.value = ''
+}
+
+const cancelDeleteBudget = () => {
+  if (deletingBudgetId.value) return
+  deleteBaselineDialog.value = false
+  budgetPendingDeletion.value = null
+}
+
+const confirmDeleteBudget = async () => {
+  const budget = budgetPendingDeletion.value
+  if (!budget) return
+
+  deletingBudgetId.value = budget.id
+  emptyBudgetMessage.value = ''
+  bannerMessage.value = ''
+  try {
+    await BudgetService.deleteBudget(budget.id)
+    allBudgets.value = allBudgets.value.filter((item) => item.id !== budget.id)
+    deleteBaselineDialog.value = false
+    budgetPendingDeletion.value = null
+    bannerMessage.value = t('planning.budget.baseline_deleted')
+    await loadCurrentBudget()
+  } catch (error) {
+    console.error(error)
+    emptyBudgetMessage.value = t('planning.budget.delete_baseline_error')
+  } finally {
+    deletingBudgetId.value = null
+  }
+}
+
 const createManualBudget = async () => {
   const lines = editableManualLines.value
     .map((line) => ({
-      category: line.category.trim(),
+      category: manualLineCategory(line),
       type: line.type,
       plannedAmount: Number(line.plannedAmount || 0),
     }))
     .filter((line) => line.category.length > 0 && line.plannedAmount > 0)
 
   if (!lines.length) {
-    emptyBudgetMessage.value = t('planning.budget.manual_budget_required')
+    editorErrorMessage.value = t('planning.budget.manual_budget_required')
     return
   }
 
   isCreatingManualBudget.value = true
+  editorErrorMessage.value = ''
   try {
     const { data: createdBudget } = await BudgetService.create({
       periodMonth: now.value.getMonth() + 1,
@@ -799,17 +940,21 @@ const createManualBudget = async () => {
     })
 
     if (!createdBudget?.id) {
+      editorErrorMessage.value = t('planning.budget.manual_budget_error')
       return
     }
 
-    await Promise.all(lines.map((line) => BudgetService.addLine(createdBudget.id, line)))
+    for (const line of lines) {
+      await BudgetService.addLine(createdBudget.id, line)
+    }
 
     await BudgetService.activate(createdBudget.id)
-    await loadCurrentBudget()
     showManualEditor.value = false
     bannerMessage.value = t('planning.budget.manual_budget_activated')
+    await loadCurrentBudget()
   } catch (error) {
     console.error(error)
+    editorErrorMessage.value = t('planning.budget.manual_budget_error')
   } finally {
     isCreatingManualBudget.value = false
   }
@@ -1036,7 +1181,38 @@ onMounted(async () => {
   color: var(--cb-ink);
 }
 
+.cb-alt-budget-row__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.cb-delete-baseline-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--cb-border, rgba(23,32,51,.08));
+  border-radius: 8px;
+  background: rgba(23,32,51,.03);
+}
+
+.cb-delete-baseline-summary span {
+  font-size: .85rem;
+  color: var(--cb-ink-secondary);
+}
+
+.cb-delete-baseline-summary strong {
+  color: var(--cb-ink);
+}
+
 /* Editor drawer */
+.cb-editor-alert {
+  margin: 16px 24px 0;
+}
+
 .cb-editor-body {
   padding: 20px 24px;
   display: flex;

@@ -149,6 +149,9 @@ export default {
   deleteLine(budgetId: string, lineId: string) {
     return axiosInterceptor.delete(`/budgets/${budgetId}/lines/${lineId}`)
   },
+  deleteBudget(budgetId: string) {
+    return axiosInterceptor.delete(`/budgets/${budgetId}`)
+  },
   activate(budgetId: string) {
     return axiosInterceptor.post<Budget>(`/budgets/${budgetId}/activate`)
   },
