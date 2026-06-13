@@ -613,6 +613,33 @@ import 'chartjs-adapter-moment'
 
 Chart.register(...registerables)
 
+const createEmptyDashboardSummary = () => ({
+  totalBalance: 0,
+  monthlyIncome: 0,
+  monthlyExpenses: 0,
+  topCategories: [],
+})
+
+const createEmptyChartData = () => ({
+  labels: [],
+  datasets: [
+    {
+      label: 'Income',
+      backgroundColor: 'rgba(75, 192, 192, 0.2)',
+      borderColor: 'rgba(75, 192, 192, 1)',
+      borderWidth: 1,
+      data: []
+    },
+    {
+      label: 'Expenses',
+      backgroundColor: 'rgba(255, 99, 132, 0.2)',
+      borderColor: 'rgba(255, 99, 132, 1)',
+      borderWidth: 1,
+      data: []
+    }
+  ]
+})
+
 export default {
   name: 'DashboardView',
   setup() {
@@ -1131,12 +1158,7 @@ export default {
       refreshing: false,
       requestTokens: {},
       dashboardLoading: false,
-      dashboardSummary: {
-        totalBalance: 0,
-        monthlyIncome: 0,
-        monthlyExpenses: 0,
-        topCategories: [],
-      },
+      dashboardSummary: createEmptyDashboardSummary(),
       accounts: [],
       monthTransactions: [],
       drillDownDialog: false,
@@ -1188,25 +1210,7 @@ export default {
         { title: 'Annual 2022', value: '2022' },
         { title: 'Annual 2023', value: '2023' }
       ],
-      chartData: {
-        labels: [],
-        datasets: [
-          {
-            label: 'Income',
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-            borderColor: 'rgba(75, 192, 192, 1)',
-            borderWidth: 1,
-            data: []
-          },
-          {
-            label: 'Expenses',
-            backgroundColor: 'rgba(255, 99, 132, 0.2)',
-            borderColor: 'rgba(255, 99, 132, 1)',
-            borderWidth: 1,
-            data: []
-          }
-        ]
-      }
+      chartData: createEmptyChartData()
     }
   },
   mounted() {
@@ -1236,11 +1240,56 @@ export default {
     },
     currentWorkspaceId(next, prev) {
       if (next && next !== prev) {
+        this.resetWorkspaceScopedDashboardState()
         this.refreshDashboard('workspace-change')
       }
     },
   },
   methods: {
+    invalidateInFlightRequests() {
+      const tokens = this.requestTokens || {}
+      Object.keys(tokens).forEach((key) => {
+        tokens[key] = Number(tokens[key] || 0) + 1
+      })
+      this.requestTokens = { ...tokens }
+    },
+    resetWorkspaceScopedDashboardState() {
+      this.invalidateInFlightRequests()
+      this.refreshing = false
+      this.dashboardLoading = true
+      this.dashboardSummary = createEmptyDashboardSummary()
+      this.accounts = []
+      this.monthTransactions = []
+      this.drillDownDialog = false
+      this.drillDownCategory = null
+      this.drillDownAccountId = null
+      this.openFinanceObservabilitySummary = null
+      this.openFinanceConflictCount = 0
+      this.activityLoading = false
+      this.goalsAtRisk = []
+      this.goalOpportunities = []
+      this.upcomingExpenses = []
+      this.approvedDecisionCards = []
+      this.approvedDecisionImpactTotal = 0
+      this.financialInsights = []
+      this.financialInsightsLoading = false
+      this.budgetComparison = null
+      this.budgetComparisonLoading = false
+      this.budgetComparisonState = 'idle'
+      this.showAllComparisonLines = false
+      this.hasPremiumAccess = false
+      this.canUseConnectedFinance = false
+      this.canUseAdvancedCashflow = false
+      this.canUseAi = false
+      this.cashflowInsightsSummary = null
+      this.expensePredictionSummary = null
+      this.expenseCategories = []
+      this.chartData = createEmptyChartData()
+      if (this.chart) {
+        this.chart.destroy()
+        this.chart = null
+      }
+    },
     beginRequest(key) {
       const next = Number(this.requestTokens?.[key] || 0) + 1
       this.requestTokens[key] = next

@@ -2,7 +2,7 @@
 <script setup lang="ts">
 import { RouterView, useRoute, useRouter } from 'vue-router'
 import { KeepAlive } from 'vue'
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import SideBar from './components/SideBar.vue'
 import ContextBadge from '@/components/ContextBadge.vue'
 import OnboardingStatusBanner from '@/components/OnboardingStatusBanner.vue'
@@ -27,13 +27,20 @@ const focusedOnboardingRoutes = new Set([
 const notifications = ref<Notification[]>([])
 const showNotificationsPopup = ref(false)
 const unreadCount = ref(0)
+const workspaceViewEpoch = ref(0)
 
 // Computed property to check if the user is authenticated
 const isAuthenticated = computed(() => userStore.isAuthenticated)
+const currentWorkspaceId = computed(() => userStore.getCurrentWorkspaceId)
 const showFocusedOnboardingChrome = computed(
   () => !focusedOnboardingRoutes.has(String(route.name || ''))
 )
 const hideAppChrome = computed(() => Boolean(route.meta?.hideAppChrome))
+const workspaceScopedViewKey = computed(() => {
+  const routeKey = String(route.name || route.path || 'view')
+  const workspaceKey = currentWorkspaceId.value || 'personal'
+  return `${routeKey}:${workspaceKey}:${workspaceViewEpoch.value}`
+})
 
 // Função para fazer polling de notificações
 function pollNotifications() {
@@ -150,6 +157,14 @@ onMounted(() => {
   pollingInterval = setInterval(pollNotifications, 180000) // Polling a cada 3 minutos
 })
 
+watch(currentWorkspaceId, (nextWorkspaceId, previousWorkspaceId) => {
+  if (nextWorkspaceId === previousWorkspaceId) return
+  workspaceViewEpoch.value += 1
+  notifications.value = []
+  unreadCount.value = 0
+  pollNotifications()
+})
+
 onUnmounted(() => {
   // Limpar o intervalo de polling
   if (pollingInterval) {
@@ -179,9 +194,17 @@ onUnmounted(() => {
       />
       <RouterView v-slot="{ Component, route: viewRoute }">
         <KeepAlive include="DashboardView">
-          <component :is="Component" v-if="viewRoute.meta?.keepAlive" />
+          <component
+            :is="Component"
+            v-if="viewRoute.meta?.keepAlive"
+            :key="workspaceScopedViewKey"
+          />
         </KeepAlive>
-        <component :is="Component" v-if="!viewRoute.meta?.keepAlive" />
+        <component
+          :is="Component"
+          v-if="!viewRoute.meta?.keepAlive"
+          :key="workspaceScopedViewKey"
+        />
       </RouterView>
     </v-main>
     <PrivacyControls />
