@@ -9,6 +9,7 @@
           <span class="income-date-text">{{ income.date }}</span>
           <span v-if="income.openFinance" class="income-meta-tag">· {{ $t('incomeItem.open_finance') }}</span>
           <span v-if="income.openFinanceDocumentType" class="income-meta-tag">· {{ income.openFinanceDocumentType }}</span>
+          <span v-if="paymentMethodLabel" class="income-meta-tag">· {{ paymentMethodLabel }}</span>
           <span v-if="income.excludedFromPlanning" class="income-meta-tag income-meta-tag--warn">· {{ $t('incomeItem.excludedFromPlanning') }}</span>
           <span v-if="income.visibilityScope === 'PRIVATE'" class="income-meta-tag">· {{ visibilityScopeLabel }}</span>
           <v-chip v-if="income.reconciliationStatus" :color="reconciliationColor" size="x-small" variant="tonal" class="ml-1">{{ reconciliationLabel }}</v-chip>
@@ -158,6 +159,22 @@ export default {
       if (tone === 'planning-only') return 'warning'
       if (tone === 'private') return 'grey'
       return 'var(--cb-primary)'
+    },
+    paymentMethodLabel() {
+      if (this.income?.paymentMethodName) {
+        return this.income.paymentMethodName
+      }
+      const paymentMethod = this.income?.paymentMethod
+      if (paymentMethod && typeof paymentMethod === 'object') {
+        return paymentMethod.name || ''
+      }
+      if (paymentMethod && typeof paymentMethod === 'string' && Number.isNaN(Number(paymentMethod))) {
+        return paymentMethod
+      }
+      if (this.income?.openFinance && !this.income?.paymentMethodId) {
+        return this.$t('transactions.payment_method_not_informed_open_finance')
+      }
+      return ''
     }
   },
   methods: {

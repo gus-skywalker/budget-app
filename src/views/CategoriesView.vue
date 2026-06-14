@@ -799,13 +799,6 @@
               class="modern-input"
             />
 
-            <v-switch
-              v-model="automationEditorOverwrite"
-              color="var(--cb-primary)"
-              hide-details
-              :label="$t('categories_page.overwrite_existing_category')"
-            />
-
             <div class="preview-card">
               <div class="placeholder-state__icon automation-preview__icon">
                 <v-icon size="28">mdi-tune-variant</v-icon>
@@ -1163,7 +1156,7 @@ const mapApiAutomation = (automation: ApiAutomationItem): AutomationItem | null 
     matchValue,
     targetCategoryId,
     targetCategoryName: typeof automation.targetCategoryName === 'string' ? automation.targetCategoryName : null,
-    overwriteExistingCategory: automation.overwriteExistingCategory === true,
+    overwriteExistingCategory: false,
     active: automation.active !== false,
   }
 }
@@ -1365,7 +1358,7 @@ const startEditAutomation = (automation: AutomationItem) => {
   automationEditorOperator.value = automation.matchOperator
   automationEditorMatchValue.value = automation.matchValue
   automationEditorCategoryId.value = automation.targetCategoryId
-  automationEditorOverwrite.value = automation.overwriteExistingCategory === true
+  automationEditorOverwrite.value = false
   automationDrawer.value = true
 }
 
@@ -1483,7 +1476,7 @@ const saveAutomation = async () => {
       matchOperator: automationEditorOperator.value,
       matchValue: automationEditorMatchValue.value.trim(),
       targetCategoryId: automationEditorCategoryId.value,
-      overwriteExistingCategory: automationEditorOverwrite.value,
+      overwriteExistingCategory: false,
     }
 
     if (editingAutomationId.value) {

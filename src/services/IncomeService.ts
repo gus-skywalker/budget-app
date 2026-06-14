@@ -17,13 +17,17 @@ const toPositiveAmount = (value: unknown) => {
   return Math.abs(amount)
 }
 
+const toPaymentMethodId = (value: unknown) =>
+  typeof value === 'number' && Number.isFinite(value) ? value : null
+
 const mapTransactionToIncome = (transaction: TransactionView) => ({
   id: transaction.id,
   date: transaction.date,
   amount: Math.abs(transaction.amount),
   description: transaction.description,
-  paymentMethod: null,
-  paymentMethodId: null,
+  paymentMethod: transaction.paymentMethodId ?? transaction.paymentMethodName ?? null,
+  paymentMethodId: transaction.paymentMethodId ?? null,
+  paymentMethodName: transaction.paymentMethodName ?? null,
   isRecurring: false,
   status: transaction.status,
   source: transaction.source ?? 'MANUAL',
@@ -53,6 +57,8 @@ async function toIncomeTransactionRequest(data: any): Promise<TransactionRequest
         direction: 'INFLOW',
         amount: toPositiveAmount(data?.amount),
         categoryId: null,
+        paymentMethodId: toPaymentMethodId(data?.paymentMethod),
+        paymentMethodName: data?.paymentMethodName ?? null,
       },
     ],
     visibilityScope: toTransactionVisibilityScopeRequest(data?.visibilityScope),

@@ -322,6 +322,7 @@
     "ai_missing_context": "Add at least description and amount to request a suggestion.",
     "ai_no_suggestion": "No reliable category suggestion was found for this expense yet.",
     "ai_suggestion_failed": "Failed to generate a category suggestion.",
+    "ai_service_unavailable": "AI category suggestion is unavailable right now.",
     "ai_suggestion_applied": "Suggested category applied.",
     "ai_premium_locked": "AI category suggestions are available on Starter. On Free, use manual categories and local automation rules.",
     "ai_queue_title": "Uncategorized review queue",
@@ -419,6 +420,7 @@
     "confirm": "Confirm",
     "edit": "Edit",
     "save": "Save",
+    "resolve": "Resolve",
     "remove": "Remove",
     "clear": "Clear",
     "cancel_edit": "Cancel Editing",
@@ -689,6 +691,8 @@
   },
   "transactions": {
     "subtitle": "Manage manual income and expenses, follow Open Finance entries, and control what enters planning.",
+    "add_expense": "Save expense",
+    "payment_method_not_informed_open_finance": "Not provided by Open Finance",
     "applied_filter": "Applied filter",
     "filters": {
       "open_finance": "Open Finance",

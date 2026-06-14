@@ -80,6 +80,33 @@
         </v-row>
       </section>
 
+      <!-- Trends Chart -->
+      <section class="section-block">
+        <div class="section-header cb-collapsible-header" style="cursor:pointer" @click="showTrendsChart = !showTrendsChart">
+          <h2 class="section-title">
+            <v-icon color="var(--cb-primary)" size="18" class="mr-1">mdi-chart-line</v-icon>
+            {{ $t('trends.title') }}
+          </h2>
+          <v-icon size="20" color="var(--cb-ink-muted)">{{ showTrendsChart ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+        </div>
+        <div v-if="showTrendsChart" style="padding-top:12px">
+          <v-row align="center" class="filters-row">
+            <v-col cols="12" md="6" lg="4">
+              <v-select :label="$t('trends.select_chart_type')" variant="outlined" v-model="chartType" :items="chartTypes" @update:modelValue="updateCharts" class="modern-select" color="var(--cb-primary)" />
+            </v-col>
+            <v-col cols="12" md="6" lg="4">
+              <v-select :label="$t('trends.select_time_period')" variant="outlined" v-model="selectedTimePeriod" :items="timePeriods" @update:modelValue="updateCharts" class="modern-select" color="var(--cb-primary)" />
+            </v-col>
+            <v-col cols="12" md="6" lg="4">
+              <v-select :label="$t('trends.select_expense_category')" variant="outlined" v-model="selectedCategory" :items="expenseCategories" item-title="name" item-value="code" clearable @update:modelValue="updateCharts" class="modern-select" color="var(--cb-primary)" />
+            </v-col>
+          </v-row>
+          <div class="chart-wrapper">
+            <canvas ref="trendsChart"></canvas>
+          </div>
+        </div>
+      </section>
+
       <!-- Cashflow Decision (promoted to top) -->
       <section class="section-block">
         <div class="section-header">
@@ -507,33 +534,6 @@
         </div>
         <div v-else class="projection-placeholder">
           <p>{{ $t('overview.projection_placeholder') }}</p>
-        </div>
-      </section>
-
-      <!-- Trends Chart (collapsible, moved to bottom) -->
-      <section class="section-block">
-        <div class="section-header cb-collapsible-header" style="cursor:pointer" @click="showTrendsChart = !showTrendsChart">
-          <h2 class="section-title">
-            <v-icon color="var(--cb-primary)" size="18" class="mr-1">mdi-chart-line</v-icon>
-            {{ $t('trends.title') }}
-          </h2>
-          <v-icon size="20" color="var(--cb-ink-muted)">{{ showTrendsChart ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
-        </div>
-        <div v-if="showTrendsChart" style="padding-top:12px">
-          <v-row align="center" class="filters-row">
-            <v-col cols="12" md="6" lg="4">
-              <v-select :label="$t('trends.select_chart_type')" variant="outlined" v-model="chartType" :items="chartTypes" @update:modelValue="updateCharts" class="modern-select" color="var(--cb-primary)" />
-            </v-col>
-            <v-col cols="12" md="6" lg="4">
-              <v-select :label="$t('trends.select_time_period')" variant="outlined" v-model="selectedTimePeriod" :items="timePeriods" @update:modelValue="updateCharts" class="modern-select" color="var(--cb-primary)" />
-            </v-col>
-            <v-col cols="12" md="6" lg="4">
-              <v-select :label="$t('trends.select_expense_category')" variant="outlined" v-model="selectedCategory" :items="expenseCategories" item-title="name" item-value="code" clearable @update:modelValue="updateCharts" class="modern-select" color="var(--cb-primary)" />
-            </v-col>
-          </v-row>
-          <div class="chart-wrapper">
-            <canvas ref="trendsChart"></canvas>
-          </div>
         </div>
       </section>
 
@@ -1180,7 +1180,7 @@ export default {
       budgetComparisonLoading: false,
       budgetComparisonState: 'idle',
       showAllComparisonLines: false,
-      showTrendsChart: false,
+      showTrendsChart: true,
       hasPremiumAccess: false,
       canUseConnectedFinance: false,
       canUseAdvancedCashflow: false,

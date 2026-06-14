@@ -23,6 +23,13 @@ export interface TransactionView {
   amount: number
   direction: TransactionDirection
   category: string | null
+  categoryId?: number | null
+  categoryCode?: string | null
+  categoryName?: string | null
+  categoryDisplayColor?: string | null
+  categoryDisplayIcon?: string | null
+  paymentMethodId?: number | null
+  paymentMethodName?: string | null
   accountId: string | null
   accountName: string | null
   status: string
@@ -43,6 +50,8 @@ export interface LedgerEntryRequest {
   direction: TransactionDirection
   amount: number
   categoryId?: number | null
+  paymentMethodId?: number | null
+  paymentMethodName?: string | null
 }
 
 export interface TransactionRequest {

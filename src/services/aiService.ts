@@ -117,6 +117,7 @@ export interface AutoCategorizeSuggestion {
   suggestedCategory: CategorySuggestion
   alternativeCategories: CategorySuggestion[]
   reasoning?: string
+  source?: string
 }
 
 export interface AutoCategorizeRequest {
@@ -125,6 +126,7 @@ export interface AutoCategorizeRequest {
 
 export interface AutoCategorizeResponse {
   suggestions: AutoCategorizeSuggestion[]
+  reason?: string
 }
 
 export interface SavingsRecommendationRequest {

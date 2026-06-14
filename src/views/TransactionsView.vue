@@ -25,7 +25,7 @@
             @click="openFormDrawer('expense')"
           >
             <v-icon start size="14">mdi-plus</v-icon>
-            {{ $t('transactions.add_expense') || $t('expense.save') }}
+            {{ $t('transactions.add_expense') }}
           </v-btn>
         </template>
       </page-header>
@@ -291,6 +291,9 @@
             </v-col>
             <v-col cols="12">
               <v-select :label="$t('common.payment_method')" v-model="income.paymentMethod" :items="paymentMethods" item-title="name" item-value="id" variant="outlined" density="comfortable" color="var(--cb-accent)" class="modern-input" />
+              <div v-if="shouldShowOpenFinancePaymentFallback(income)" class="open-finance-field-note">
+                {{ openFinancePaymentMethodLabel(income) }}
+              </div>
             </v-col>
             <v-col cols="12">
               <v-select :label="$t('transactionVisibility.label')" v-model="income.visibilityScope" :items="localizedTransactionVisibilityOptions" item-title="title" item-value="value" variant="outlined" density="comfortable" color="var(--cb-accent)" class="modern-input" :hint="transactionVisibilityHint(income.visibilityScope)" persistent-hint />
@@ -324,16 +327,19 @@
               <v-select :label="$t('common.category')" v-model="expense.category" :items="categories" item-title="name" item-value="id" variant="outlined" density="comfortable" color="var(--cb-primary)" class="modern-input">
                 <template #item="{ item, props }">
                   <v-list-item v-bind="props">
-                    <template #prepend><v-icon :icon="categoryIcons[item.raw.code]" class="mr-2" /></template>
+                    <template #prepend><v-icon :icon="resolveCategoryIcon(item.raw)" :color="resolveCategoryColor(item.raw)" class="mr-2" /></template>
                   </v-list-item>
                 </template>
                 <template #selection="{ item, props }">
-                  <v-chip v-bind="props" class="ma-1" small><v-icon left :icon="categoryIcons[item.raw.code]" />{{ item.raw.name }}</v-chip>
+                  <v-chip v-bind="props" class="ma-1" small><v-icon left :icon="resolveCategoryIcon(item.raw)" :color="resolveCategoryColor(item.raw)" />{{ item.raw.name }}</v-chip>
                 </template>
               </v-select>
             </v-col>
             <v-col cols="12" sm="6">
               <v-select :label="$t('common.payment_method')" v-model="expense.paymentMethod" :items="paymentMethods" item-title="name" item-value="id" variant="outlined" density="comfortable" color="var(--cb-primary)" class="modern-input" />
+              <div v-if="shouldShowOpenFinancePaymentFallback(expense)" class="open-finance-field-note">
+                {{ openFinancePaymentMethodLabel(expense) }}
+              </div>
             </v-col>
             <v-col cols="12">
               <div class="ai-category-row">
@@ -535,6 +541,8 @@ export default {
         amount: '0',
         description: '',
         paymentMethod: null,
+        paymentMethodName: null,
+        openFinance: false,
         isRecurring: false,
         accountId: null,
         visibilityScope: 'WORKSPACE',
@@ -545,6 +553,8 @@ export default {
         description: '',
         category: null,
         paymentMethod: null,
+        paymentMethodName: null,
+        openFinance: false,
         selectedUsers: [],
         accountId: null,
         openFinanceBankCategoryId: null,
@@ -1180,6 +1190,7 @@ export default {
         amount,
         description,
         paymentMethod: paymentMethodId,
+        paymentMethodName: this.income.paymentMethodName ?? null,
         isRecurring,
         accountId,
         visibilityScope,
@@ -1201,6 +1212,7 @@ export default {
         description,
         category: categoryId,
         paymentMethod: paymentMethodId,
+        paymentMethodName: this.expense.paymentMethodName ?? null,
         selectedUsers: sanitizedSelectedUsers,
         accountId,
         visibilityScope,
@@ -1227,6 +1239,18 @@ export default {
       const translated = this.$t(translationKey)
       return translated !== translationKey ? translated : (category.name || categoryCode)
     },
+    resolveCategoryIcon(category) {
+      return category?.displayIcon || this.categoryIcons?.[category?.code] || 'mdi-shape-outline'
+    },
+    resolveCategoryColor(category) {
+      return category?.displayColor || 'var(--cb-primary)'
+    },
+    shouldShowOpenFinancePaymentFallback(transaction) {
+      return Boolean(transaction?.openFinance && !transaction?.paymentMethod)
+    },
+    openFinancePaymentMethodLabel(transaction) {
+      return transaction?.paymentMethodName || this.$t('transactions.payment_method_not_informed_open_finance')
+    },
     getExpenseSuggestionDetails(expense) {
       const suggestion = this.getStoredExpenseSuggestion(expense?.id)
       const suggestedCategory = suggestion?.suggestedCategory
@@ -1234,9 +1258,14 @@ export default {
         return null
       }
 
+      const category = this.categories.find((item) => item.id === suggestedCategory.id)
+        || this.categories.find((item) => item.code && item.code === suggestedCategory.code)
+        || suggestedCategory
       const confidence = Number(suggestedCategory.confidence || 0)
       return {
-        categoryName: this.translateCategoryLabel(suggestedCategory),
+        categoryName: this.translateCategoryLabel(category),
+        categoryIcon: this.resolveCategoryIcon(category),
+        categoryColor: this.resolveCategoryColor(category),
         sourceLabel: this.expenseCategorySuggestionSourceLabel(suggestion.source),
         confidenceLabel: Number.isFinite(confidence) && confidence > 0
           ? this.$t('expense.ai_confidence_short', { value: Math.round(confidence * 100) })
@@ -1300,6 +1329,15 @@ export default {
         ? this.$t('expense.ai_feedback_accepted')
         : this.$t('expense.ai_feedback_adjusted')
     },
+    isAiServiceUnavailableResponse(data) {
+      return data?.reason === 'AI_SERVICE_UNAVAILABLE'
+    },
+    isAiServiceUnavailableError(error) {
+      return error?.response?.status === 503 || error?.response?.data?.reason === 'AI_SERVICE_UNAVAILABLE'
+    },
+    showAiServiceUnavailableToast() {
+      this.showToast(this.$t('expense.ai_service_unavailable'), 'warning')
+    },
     suggestExpenseCategory() {
       if (!this.canUseAi) {
         this.showToast(this.$t('expense.ai_premium_locked'), 'info')
@@ -1330,6 +1368,10 @@ export default {
         .then(({ data }) => {
           const suggestion = Array.isArray(data?.suggestions) ? data.suggestions[0] : null
           if (!suggestion?.suggestedCategory || this.isWeakCategorySuggestion(suggestion)) {
+            if (this.isAiServiceUnavailableResponse(data)) {
+              this.showAiServiceUnavailableToast()
+              return
+            }
             this.showToast(this.$t('expense.ai_no_suggestion'), 'info')
             return
           }
@@ -1337,6 +1379,10 @@ export default {
         })
         .catch((error) => {
           console.error('Error suggesting expense category:', error)
+          if (this.isAiServiceUnavailableError(error)) {
+            this.showAiServiceUnavailableToast()
+            return
+          }
           this.showToast(this.$t('expense.ai_suggestion_failed'), 'error')
         })
         .finally(() => {
@@ -1380,6 +1426,10 @@ export default {
           const suggestion = Array.isArray(data?.suggestions) ? data.suggestions[0] : null
           const suggestedCategoryId = suggestion?.suggestedCategory?.id
           if (!suggestedCategoryId || this.isWeakCategorySuggestion(suggestion)) {
+            if (this.isAiServiceUnavailableResponse(data)) {
+              this.showAiServiceUnavailableToast()
+              return
+            }
             this.showToast(this.$t('expense.ai_no_suggestion'), 'info')
             return
           }
@@ -1401,6 +1451,10 @@ export default {
         })
         .catch((error) => {
           console.error('Error suggesting inline expense category:', error)
+          if (this.isAiServiceUnavailableError(error)) {
+            this.showAiServiceUnavailableToast()
+            return
+          }
           this.showToast(this.$t('expense.ai_suggestion_failed'), 'error')
         })
         .finally(() => {
@@ -1446,6 +1500,10 @@ export default {
           this.batchExpenseCategorySuggestions = nextSuggestions
 
           if (!storedCount) {
+            if (this.isAiServiceUnavailableResponse(data)) {
+              this.showAiServiceUnavailableToast()
+              return
+            }
             this.showToast(this.$t('expense.ai_no_suggestion'), 'info')
             return
           }
@@ -1454,6 +1512,10 @@ export default {
         })
         .catch((error) => {
           console.error('Error suggesting uncategorized expenses in batch:', error)
+          if (this.isAiServiceUnavailableError(error)) {
+            this.showAiServiceUnavailableToast()
+            return
+          }
           this.showToast(this.$t('expense.ai_suggestion_failed'), 'error')
         })
         .finally(() => {
@@ -1481,6 +1543,7 @@ export default {
             description: expense.description,
             category: suggestion.suggestedCategory.id,
             paymentMethod: expense.paymentMethodId ?? this.resolvePaymentMethodId(expense.paymentMethod) ?? null,
+            paymentMethodName: expense.paymentMethodName ?? null,
             selectedUsers: [],
             accountId: expense.accountId ?? null,
           })
@@ -1515,6 +1578,7 @@ export default {
           description: expense.description,
           category: suggestedCategoryId,
           paymentMethod: expense.paymentMethodId ?? this.resolvePaymentMethodId(expense.paymentMethod) ?? null,
+          paymentMethodName: expense.paymentMethodName ?? null,
           selectedUsers: Array.isArray(expense.users) ? expense.users.map((user) => user.id ?? user.userId).filter(Boolean) : [],
           accountId: expense.accountId ?? null,
         })
@@ -2020,6 +2084,8 @@ export default {
         amount: '0',
         description: '',
         paymentMethod: null,
+        paymentMethodName: null,
+        openFinance: false,
         isRecurring: false,
         accountId: this.getDefaultFinancialAccountId(),
         visibilityScope: 'WORKSPACE',
@@ -2035,6 +2101,8 @@ export default {
         description: '',
         category: null,
         paymentMethod: null,
+        paymentMethodName: null,
+        openFinance: false,
         selectedUsers: [],
         accountId: this.getDefaultFinancialAccountId(),
         openFinanceBankCategoryId: null,
@@ -2202,6 +2270,8 @@ export default {
         paymentMethod: this.resolvePaymentMethodId(
           income.paymentMethod ?? income.paymentMethodId ?? null
         ),
+        paymentMethodName: income.paymentMethodName ?? null,
+        openFinance: income.openFinance ?? false,
         isRecurring: income.isRecurring ?? false,
         accountId: income.accountId ?? null,
         visibilityScope: income.visibilityScope ?? 'WORKSPACE',
@@ -2231,6 +2301,8 @@ export default {
         paymentMethod: this.resolvePaymentMethodId(
           expense.paymentMethod ?? expense.paymentMethodId ?? null
         ),
+        paymentMethodName: expense.paymentMethodName ?? null,
+        openFinance: expense.openFinance ?? false,
         selectedUsers: Array.isArray(expense.users)
           ? expense.users.map((user) => user.userId ?? user.id ?? user)
           : [],
@@ -2633,6 +2705,13 @@ export default {
 /* ── Form inputs ───────────────────────── */
 .modern-input {
   margin-bottom: 4px;
+}
+
+.open-finance-field-note {
+  color: var(--cb-ink-muted);
+  font-size: 0.82rem;
+  line-height: 1.35;
+  margin: -2px 0 4px;
 }
 
 .modern-input :deep(.v-field) {

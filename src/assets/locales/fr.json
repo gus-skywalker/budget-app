@@ -292,6 +292,7 @@
     "ai_missing_context": "Ajoutez au moins une description et un montant pour demander une suggestion.",
     "ai_no_suggestion": "Aucune suggestion de catégorie fiable trouvée pour cette dépense pour le moment.",
     "ai_suggestion_failed": "Échec de la génération d'une suggestion de catégorie.",
+    "ai_service_unavailable": "La suggestion par IA est indisponible pour le moment.",
     "ai_suggestion_applied": "Catégorie suggérée appliquée.",
     "ai_queue_title": "File de révision sans catégorie",
     "ai_queue_summary": "{total} dépense(s) sans catégorie • {suggested} suggestion(s) prête(s)",
@@ -384,6 +385,12 @@
     "year": "Année",
     "close": "Fermer",
     "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "edit": "Modifier",
+    "save": "Enregistrer",
+    "resolve": "Résoudre",
+    "remove": "Supprimer",
+    "clear": "Effacer",
     "cancel_edit": "Annuler la modification"
   },
   "categories": {
@@ -586,6 +593,34 @@
     "submitSuccess": "Commentaire ajouté avec succès.",
     "submitError": "Impossible d'ajouter le commentaire pour le moment.",
     "loadError": "Impossible de charger les commentaires pour le moment."
+  },
+  "transactions": {
+    "subtitle": "Gérez les revenus et dépenses manuels, suivez les écritures Open Finance et contrôlez ce qui entre dans la planification.",
+    "add_expense": "Enregistrer la dépense",
+    "payment_method_not_informed_open_finance": "Non communiqué par Open Finance",
+    "applied_filter": "Filtre appliqué",
+    "filters": {
+      "open_finance": "Open Finance",
+      "conflicts": "Conflits",
+      "open_finance_only": "Open Finance uniquement"
+    },
+    "empty": {
+      "open_finance_income": "Aucun revenu Open Finance sur cette période.",
+      "open_finance_expense": "Aucune dépense Open Finance sur cette période.",
+      "income_conflicts": "Aucun conflit de rapprochement sur les revenus pour cette période.",
+      "expense_conflicts": "Aucun conflit de rapprochement sur les dépenses pour cette période."
+    },
+    "open_finance_shared_label": "Source Open Finance partagée",
+    "open_finance_shared_note": "Source Open Finance visible dans le workspace selon la politique de partage actuelle.",
+    "open_finance_business_shared_label": "Source entreprise partagée",
+    "open_finance_business_shared_note": "Source CNPJ partagée avec le workspace pour les opérations et la planification.",
+    "open_finance_personal_admin_label": "Source personnelle partagée avec les admins",
+    "open_finance_personal_admin_note": "Cette transaction vient d'une source CPF partagée avec les owners et admins.",
+    "open_finance_personal_admin_restricted_note": "Cette source CPF a un partage administratif, mais l'accès reste restreint pour votre rôle.",
+    "open_finance_planning_only_label": "Planification uniquement",
+    "open_finance_planning_only_note": "Source CPF utilisée uniquement dans les agrégats de planification. Les détails restent privés.",
+    "open_finance_private_label": "Source personnelle privée",
+    "open_finance_private_note": "Source CPF privée, sans partage opérationnel au-delà du propriétaire de la connexion."
   },
   "trends": {
     "title": "Tendances dans le temps",

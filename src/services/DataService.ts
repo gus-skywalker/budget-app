@@ -94,6 +94,10 @@ export default {
   applyCategoryAutomation(id: number): Promise<any> {
     return axiosInterceptor.post(`${API_URL}/category-automations/${id}/apply`, {})
   },
+
+  previewCategoryAutomation(id: number): Promise<any> {
+    return axiosInterceptor.post(`${API_URL}/category-automations/${id}/preview`, {})
+  },
   
   /**
    * Busca métodos de pagamento traduzidos

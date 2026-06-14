@@ -319,6 +319,7 @@
     "ai_missing_context": "Informe pelo menos descrição e valor para pedir uma sugestão.",
     "ai_no_suggestion": "Ainda não encontramos uma sugestão confiável de categoria para esta despesa.",
     "ai_suggestion_failed": "Falha ao gerar sugestão de categoria.",
+    "ai_service_unavailable": "Sugestão por IA indisponível no momento.",
     "ai_suggestion_applied": "Categoria sugerida aplicada.",
     "ai_premium_locked": "Sugestões de categoria com IA estão disponíveis no Starter. No Free, use categorias manuais e regras automáticas locais.",
     "ai_queue_title": "Fila de revisão sem categoria",
@@ -416,6 +417,7 @@
     "confirm": "Confirmar",
     "edit": "Editar",
     "save": "Salvar",
+    "resolve": "Resolver",
     "remove": "Remover",
     "clear": "Limpar",
     "cancel_edit": "Cancelar Edição",
@@ -683,6 +685,8 @@
   },
   "transactions": {
     "subtitle": "Gerencie entradas e despesas manuais, acompanhe lançamentos Open Finance e controle o que entra no planejamento.",
+    "add_expense": "Salvar despesa",
+    "payment_method_not_informed_open_finance": "Não informado pelo Open Finance",
     "applied_filter": "Filtro aplicado",
     "filters": {
       "open_finance": "Open Finance",

@@ -18,14 +18,21 @@ const toPositiveAmount = (value: unknown) => {
   return Math.abs(amount)
 }
 
-const toCategoryObject = (categoryName: string | null) => {
-  if (!categoryName) {
+const toPaymentMethodId = (value: unknown) =>
+  typeof value === 'number' && Number.isFinite(value) ? value : null
+
+const toCategoryObject = (transaction: TransactionView) => {
+  const categoryName = transaction.categoryName ?? transaction.category ?? null
+  const categoryCode = transaction.categoryCode ?? categoryName
+  if (!categoryName && !transaction.categoryId) {
     return null
   }
   return {
-    id: null,
-    code: categoryName,
+    id: transaction.categoryId ?? null,
+    code: categoryCode,
     name: categoryName,
+    displayColor: transaction.categoryDisplayColor ?? null,
+    displayIcon: transaction.categoryDisplayIcon ?? null,
   }
 }
 
@@ -43,10 +50,11 @@ const mapTransactionToExpense = (transaction: TransactionView) => ({
   date: transaction.date,
   amount: Math.abs(transaction.amount),
   description: transaction.description,
-  category: toCategoryObject(transaction.category),
-  categoryId: null,
-  paymentMethod: null,
-  paymentMethodId: null,
+  category: toCategoryObject(transaction),
+  categoryId: transaction.categoryId ?? null,
+  paymentMethod: transaction.paymentMethodId ?? transaction.paymentMethodName ?? null,
+  paymentMethodId: transaction.paymentMethodId ?? null,
+  paymentMethodName: transaction.paymentMethodName ?? null,
   users: [],
   attachments: [],
   alerts: [],
@@ -80,6 +88,8 @@ async function toExpenseTransactionRequest(data: any): Promise<TransactionReques
         direction: 'OUTFLOW',
         amount: toPositiveAmount(data?.amount),
         categoryId: data?.category ?? null,
+        paymentMethodId: toPaymentMethodId(data?.paymentMethod),
+        paymentMethodName: data?.paymentMethodName ?? null,
       },
     ],
     visibilityScope: toTransactionVisibilityScopeRequest(data?.visibilityScope),

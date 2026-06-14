@@ -7,8 +7,12 @@
         </v-list-item-title>
         <div class="expense-meta-line">
           <span class="expense-date-text">{{ expense.date }}</span>
-          <span v-if="expense.category" class="expense-meta-tag">· {{ translatedCategoryName }}</span>
+          <span v-if="expense.category" class="expense-meta-tag">
+            · <v-icon size="14" :color="categoryColor">{{ categoryIcon }}</v-icon>
+            {{ translatedCategoryName }}
+          </span>
           <span v-else class="expense-meta-tag expense-meta-tag--warn">· {{ $t('expenseItem.uncategorized') }}</span>
+          <span v-if="paymentMethodLabel" class="expense-meta-tag">· {{ paymentMethodLabel }}</span>
           <span v-if="expense.openFinance" class="expense-meta-tag">· {{ $t('expenseItem.openFinance') }}</span>
           <span v-if="expense.openFinanceDocumentType" class="expense-meta-tag">· {{ expense.openFinanceDocumentType }}</span>
           <span v-if="expense.excludedFromPlanning" class="expense-meta-tag expense-meta-tag--warn">· {{ $t('expenseItem.excludedFromPlanning') }}</span>
@@ -53,8 +57,8 @@
           </v-btn>
         </div>
         <div v-if="suggestionDetails" class="suggestion-details">
-          <v-chip size="small" color="var(--cb-primary)" variant="outlined">
-            <v-icon start size="14">mdi-shape-outline</v-icon>
+          <v-chip size="small" :color="suggestionDetails.categoryColor || 'var(--cb-primary)'" variant="outlined">
+            <v-icon start size="14">{{ suggestionDetails.categoryIcon || 'mdi-shape-outline' }}</v-icon>
             {{ $t('expenseItem.suggestedCategoryLabel') }}: {{ suggestionDetails.categoryName }}
           </v-chip>
           <v-chip size="small" variant="text">
@@ -482,6 +486,29 @@ export default {
       const key = `categories.${code}`;
       const translated = this.$t(key);
       return translated !== key ? translated : (category.name || code);
+    },
+    categoryIcon() {
+      const category = this.expense?.category;
+      return category?.displayIcon || this.categoryIcons?.[category?.code] || 'mdi-shape-outline';
+    },
+    categoryColor() {
+      return this.expense?.category?.displayColor || 'var(--cb-primary)';
+    },
+    paymentMethodLabel() {
+      if (this.expense?.paymentMethodName) {
+        return this.expense.paymentMethodName;
+      }
+      const paymentMethod = this.expense?.paymentMethod;
+      if (paymentMethod && typeof paymentMethod === 'object') {
+        return paymentMethod.name || '';
+      }
+      if (paymentMethod && typeof paymentMethod === 'string' && Number.isNaN(Number(paymentMethod))) {
+        return paymentMethod;
+      }
+      if (this.expense?.openFinance && !this.expense?.paymentMethodId) {
+        return this.$t('transactions.payment_method_not_informed_open_finance');
+      }
+      return '';
     },
   },
   data() {
