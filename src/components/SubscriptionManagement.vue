@@ -392,6 +392,9 @@
       </div>
     </v-col>
   </v-row>
+  <v-snackbar v-model="notification.show" :color="notification.color" timeout="5000">
+    {{ notification.message }}
+  </v-snackbar>
 </template>
 
 <script setup lang="ts">
@@ -409,6 +412,7 @@ import { createCorrelationId } from '@/utils/correlation'
 import { PLAN_DETAILS, type PlanId } from '@/constants/plans';
 import { buildBillingPricingContext, formatConvertedPriceFromBRL, resolvePricingCurrency } from '@/utils/pricing'
 import { createMessageId } from '@/utils/messageId'
+import { parseApiError } from '@/utils/errorHandler'
 
 // Provide typed translation function for template (instead of relying on this.$t)
 const { t, locale } = useI18n()
@@ -453,8 +457,24 @@ const selectedPlan = ref<MaybePlanId>(''); // Para atualizar o plano
 const hasPremiumAccess = ref(false);
 const lastLoadedPlan = ref<MaybePlanId>('');
 const showPlanDetails = ref(false);
+const notification = ref({
+  show: false,
+  message: '',
+  color: 'info' as 'success' | 'error' | 'info' | 'warning',
+});
 
 const plans = PLAN_DETAILS;
+
+const showNotification = (
+  message: string,
+  color: 'success' | 'error' | 'info' | 'warning' = 'info'
+) => {
+  notification.value = {
+    show: true,
+    message,
+    color,
+  }
+}
 
 const isPlanId = (value: string | null | undefined): value is PlanId => {
   return (
@@ -714,11 +734,11 @@ const loadSubscriptionDetails = async () => {
 
 const handlePlanChange = async () => {
   if (paymentSyncDegraded.value) {
-    alert(t('subscription_management.payment_sync_actions_disabled'))
+    showNotification(t('subscription_management.payment_sync_actions_disabled'), 'warning')
     return
   }
   if (!isPlanId(selectedPlan.value)) {
-    alert(t('subscription_management.error_invalid_plan'));
+    showNotification(t('subscription_management.error_invalid_plan'), 'error');
     return;
   }
   if (isPremium.value) {
@@ -731,12 +751,12 @@ const handlePlanChange = async () => {
 const startCheckoutSession = async () => {
   try {
     if (!actorUserId.value) {
-      alert(t('subscription_management.error_checkout_later'))
+      showNotification(t('subscription_management.error_checkout_later'), 'error')
       return
     }
 
     if (!isPlanId(selectedPlan.value)) {
-      alert(t('subscription_management.error_invalid_plan'))
+      showNotification(t('subscription_management.error_invalid_plan'), 'error')
       return
     }
 
@@ -759,7 +779,7 @@ const startCheckoutSession = async () => {
     const decision = decisionResp.data
 
     if (decision.action === 'NOOP_ALREADY_PREMIUM') {
-      alert(t('subscription_management.already_premium'))
+      showNotification(t('subscription_management.already_premium'), 'info')
       await loadSubscriptionDetails()
       return
     }
@@ -781,7 +801,7 @@ const startCheckoutSession = async () => {
     })
   } catch (error) {
     console.error(t('subscription_management.error_start_checkout'), error);
-    alert(t('subscription_management.error_checkout_later'));
+    showNotification(parseApiError(error, t('subscription_management.error_checkout_later')), 'error');
   }
 };
 
@@ -789,11 +809,11 @@ const startCheckoutSession = async () => {
 const openBillingPortal = async (targetPlan?: PlanId) => {
   try {
     if (!actorUserId.value) {
-      alert(t('subscription_management.error_portal_later'))
+      showNotification(t('subscription_management.error_portal_later'), 'error')
       return
     }
     if (paymentSyncDegraded.value) {
-      alert(t('subscription_management.payment_sync_actions_disabled'))
+      showNotification(t('subscription_management.payment_sync_actions_disabled'), 'warning')
       return
     }
 
@@ -830,13 +850,12 @@ const openBillingPortal = async (targetPlan?: PlanId) => {
     }
 
     const errorMsg = portalResult.lastError
-      ? t('subscription_management.portal_unavailable', { error: portalResult.lastError })
+      ? t('subscription_management.error_portal_later')
       : t('subscription_management.portal_preparing')
-    alert(errorMsg)
+    showNotification(errorMsg, portalResult.lastError ? 'error' : 'info')
   } catch (error) {
     console.error(t('subscription_management.error_request_portal'), error)
-    const apiError = (error as any)?.response?.data?.error
-    alert(apiError ? t('subscription_management.error_open_portal', { error: apiError }) : t('subscription_management.error_portal_later'))
+    showNotification(parseApiError(error, t('subscription_management.error_portal_later')), 'error')
   }
 };
 
@@ -889,11 +908,11 @@ const pollPortalUrl = async (
 const cancelSubscription = async () => {
   try {
     if (!actorUserId.value) {
-      alert(t('subscription_management.error_cancel_later'))
+      showNotification(t('subscription_management.error_cancel_later'), 'error')
       return
     }
     if (paymentSyncDegraded.value) {
-      alert(t('subscription_management.payment_sync_actions_disabled'))
+      showNotification(t('subscription_management.payment_sync_actions_disabled'), 'warning')
       return
     }
 
@@ -916,11 +935,11 @@ const cancelSubscription = async () => {
       messageId
     })
 
-    alert(t('subscription_management.cancel_requested'))
+    showNotification(t('subscription_management.cancel_requested'), 'success')
     await loadSubscriptionDetails()
   } catch (error) {
     console.error(t('subscription_management.error_cancel_request'), error)
-    alert(t('subscription_management.error_cancel_later'))
+    showNotification(parseApiError(error, t('subscription_management.error_cancel_later')), 'error')
   }
 };
 

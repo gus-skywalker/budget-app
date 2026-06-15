@@ -27,14 +27,22 @@ const currentWorkspaceName = computed(() => {
   return workspace?.workspaceName || null
 })
 
+const tenantRoleLabel = computed(() => {
+  const role = String(tenantRole.value || '').trim()
+  if (!role) return ''
+  const key = `workspaceSwitcher.roles.${role.toUpperCase()}`
+  const translated = t(key)
+  return translated !== key ? translated : ''
+})
+
 const contextLabel = computed(() => {
   if (!isTenantMode.value || !currentWorkspaceId.value) {
     return t('context_badge.personal')
   }
 
   return t('context_badge.workspace', {
-    workspace: currentWorkspaceName.value || currentWorkspaceId.value,
-    role: tenantRole.value ? ` (${tenantRole.value})` : ''
+    workspace: currentWorkspaceName.value || t('context_badge.unnamed_workspace'),
+    role: tenantRoleLabel.value ? ` · ${tenantRoleLabel.value}` : ''
   })
 })
 

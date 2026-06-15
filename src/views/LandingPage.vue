@@ -435,6 +435,13 @@
                 isSubmitting ? $t('landingPage.contact.sending') : $t('landingPage.contact.send')
               }}
             </button>
+            <p
+              v-if="contactFeedback.message"
+              class="contact-feedback"
+              :class="`contact-feedback--${contactFeedback.type}`"
+            >
+              {{ contactFeedback.message }}
+            </p>
           </form>
         </div>
       </section>
@@ -490,6 +497,7 @@ import { PLAN_DETAILS } from '@/constants/plans'
 import { useUserStore } from '@/plugins/userStore'
 import NotificationService from '@/services/NotificationService'
 import OnboardingOrchestrator from '@/services/OnboardingOrchestrator'
+import { parseApiError } from '@/utils/errorHandler'
 import { formatConvertedPriceFromBRL, resolvePricingCurrency } from '@/utils/pricing'
 
 export default {
@@ -501,6 +509,10 @@ export default {
       contactForm: {
         name: '',
         email: '',
+        message: ''
+      },
+      contactFeedback: {
+        type: 'info',
         message: ''
       },
       isSubmitting: false,
@@ -651,8 +663,12 @@ export default {
         .join('')
     },
     async handleSubmit() {
+      this.contactFeedback = { type: 'info', message: '' }
       if (!this.contactForm.email.includes('@')) {
-        alert(this.$t('landingPage.contact.invalidEmail'))
+        this.contactFeedback = {
+          type: 'error',
+          message: this.$t('landingPage.contact.invalidEmail')
+        }
         return
       }
 
@@ -662,13 +678,17 @@ export default {
 
       try {
         await NotificationService.sendContactForm(this.contactForm)
-        alert(this.$t('landingPage.contact.success'))
+        this.contactFeedback = {
+          type: 'success',
+          message: this.$t('landingPage.contact.success')
+        }
         this.contactForm = { name: '', email: '', message: '' }
       } catch (error) {
         console.error('Erro ao enviar mensagem:', error)
-        const errorMessage =
-          error.response?.data?.error || this.$t('landingPage.contact.errorDefault')
-        alert(errorMessage)
+        this.contactFeedback = {
+          type: 'error',
+          message: parseApiError(error, this.$t('landingPage.contact.errorDefault'))
+        }
       } finally {
         this.isSubmitting = false
       }
@@ -1682,6 +1702,23 @@ p {
   outline: none;
   border-color: rgba(32, 95, 99, 0.45);
   box-shadow: 0 0 0 4px rgba(32, 95, 99, 0.1);
+}
+
+.contact-feedback {
+  margin: 0;
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-weight: 700;
+}
+
+.contact-feedback--success {
+  background: rgba(32, 95, 99, 0.1);
+  color: #205f63;
+}
+
+.contact-feedback--error {
+  background: rgba(192, 57, 43, 0.1);
+  color: #a93226;
 }
 
 .landing-footer {

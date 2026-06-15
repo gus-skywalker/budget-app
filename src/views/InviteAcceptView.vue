@@ -6,6 +6,7 @@ import { useUserStore } from '@/plugins/userStore'
 import WorkspaceInviteService from '@/services/WorkspaceInviteService'
 import WorkspaceService from '@/services/WorkspaceService'
 import OnboardingOrchestrator from '@/services/OnboardingOrchestrator'
+import { parseApiError } from '@/utils/errorHandler'
 import {
   clearInviteAcceptanceContext,
   readInviteAcceptanceToken,
@@ -167,7 +168,7 @@ async function processInviteAccept() {
       errorMessage.value = t('invites.different_account')
       return
     }
-    errorMessage.value = error?.response?.data?.error || error?.response?.data || t('invites.accept_error')
+    errorMessage.value = parseApiError(error, t('invites.accept_error'))
   } finally {
     loading.value = false
   }

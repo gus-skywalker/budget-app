@@ -468,10 +468,9 @@
                         <span v-if="item.localDuplicateCount !== undefined">{{ $t('openFinance.settings.metric_local_duplicates', { count: item.localDuplicateCount }) }}</span>
                         <span>{{ $t('openFinance.settings.metric_conflicts', { count: item.reconciliationConflicts }) }}</span>
                         <span>{{ $t('openFinance.settings.metric_rate_limit', { count: item.accountsSkippedDueToRateLimit }) }}</span>
-                        <span v-if="item.providerProtocolId">{{ $t('openFinance.settings.protocol', { id: item.providerProtocolId }) }}</span>
                       </div>
-                      <div v-if="item.errorSummary" class="sync-history-error" :title="item.errorSummary">
-                        {{ item.errorSummary }}
+                      <div v-if="item.errorSummary" class="sync-history-error" :title="sanitizeOpenFinanceUserMessage(item.errorSummary)">
+                        {{ sanitizeOpenFinanceUserMessage(item.errorSummary) }}
                       </div>
                     </div>
                   </div>
@@ -526,7 +525,7 @@
                         <div class="conflict-title-row">
                           <div class="conflict-title">{{ conflict.description }}</div>
                           <v-chip size="small" color="warning" variant="tonal">
-                            {{ conflict.rawStatus || $t('openFinance.settings.no_status') }}
+                            {{ formatOpenFinanceConflictStatus(conflict.rawStatus) }}
                           </v-chip>
                         </div>
                         <div class="conflict-meta">
@@ -802,6 +801,8 @@ import type {
 } from '@/types/openFinance';
 import { toUiLocale, toUserLanguageCode } from '@/utils/languageUtils';
 import { APP_VOICES, type AppVoice } from '@/utils/appVoiceTypes';
+import { parseApiError } from '@/utils/errorHandler';
+import { sanitizeOpenFinanceMessage } from '@/utils/openFinanceErrors';
 
 const userStore = useUserStore();
 const theme = useTheme();
@@ -1101,6 +1102,22 @@ const formatOpenFinanceConsentStatus = (status: string) => {
   return labels[status] || status
 }
 
+const formatOpenFinanceConflictStatus = (status: string | null | undefined) => {
+  const normalized = String(status || '').trim().toUpperCase()
+  if (!normalized) return t('openFinance.settings.status_review_needed')
+  if (normalized.includes('CONFLICT') || normalized.includes('DUPLICATE')) {
+    return t('openFinance.settings.status_review_needed')
+  }
+  if (normalized.includes('CANCEL')) {
+    return t('openFinance.settings.status_cancelled_by_bank')
+  }
+  return t('openFinance.settings.status_review_needed')
+}
+
+const sanitizeOpenFinanceUserMessage = (message: string | null | undefined) => {
+  return sanitizeOpenFinanceMessage(message, t('openFinance.feedback.provider_technical_error'))
+}
+
 const digitsOnly = (value: string | null | undefined) => String(value || '').replace(/\D/g, '')
 
 const nullableText = (value: unknown) => {
@@ -1109,11 +1126,7 @@ const nullableText = (value: unknown) => {
 }
 
 const extractErrorMessage = (error: any, fallback: string) => {
-  return (
-    error?.response?.data?.message ||
-    (typeof error?.response?.data === 'string' ? error.response.data : null) ||
-    fallback
-  )
+  return parseApiError(error, fallback)
 }
 
 const filteredOpenFinanceCategoryRows = computed(() => {
@@ -1424,12 +1437,9 @@ const loadUserProfile = async () => {
         : Boolean(fallbackUser?.isFederatedAccount)
     })
   } catch (error: any) {
-    const backendMessage =
-      error?.response?.data?.message ||
-      (typeof error?.response?.data === 'string' ? error.response.data : null)
     profileFeedback.value = {
       type: 'error',
-      message: backendMessage || t('account_management.profile_load_error')
+      message: parseApiError(error, t('account_management.profile_load_error'))
     }
   } finally {
     isLoadingProfile.value = false
@@ -1504,12 +1514,9 @@ const saveProfile = async () => {
       message: t('account_management.profile_save_success')
     }
   } catch (error: any) {
-    const backendMessage =
-      error?.response?.data?.message ||
-      (typeof error?.response?.data === 'string' ? error.response.data : null)
     profileFeedback.value = {
       type: 'error',
-      message: backendMessage || t('account_management.profile_save_error')
+      message: parseApiError(error, t('account_management.profile_save_error'))
     }
   } finally {
     isSavingProfile.value = false
@@ -1543,12 +1550,9 @@ const deleteAccount = async () => {
     userStore.logout()
     await router.push({ name: 'login', query: { accountDeleted: 'true' } })
   } catch (error: any) {
-    const backendMessage =
-      error?.response?.data?.message ||
-      (typeof error?.response?.data === 'string' ? error.response.data : null)
     profileFeedback.value = {
       type: 'error',
-      message: backendMessage || t('account_management.delete_account_error')
+      message: parseApiError(error, t('account_management.delete_account_error'))
     }
   } finally {
     deletingAccount.value = false
@@ -1593,13 +1597,9 @@ const changePassword = async () => {
       message: t('account_management.password_change_success')
     }
   } catch (error: any) {
-    const backendMessage =
-      error?.response?.data?.message ||
-      (typeof error?.response?.data === 'string' ? error.response.data : null)
-
     passwordFeedback.value = {
       type: 'error',
-      message: backendMessage || t('account_management.password_change_error')
+      message: parseApiError(error, t('account_management.password_change_error'))
     }
   } finally {
     isChangingPassword.value = false

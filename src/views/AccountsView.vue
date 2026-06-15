@@ -73,7 +73,7 @@
                   </span>
                   <div>
                     <h3 class="account-card__title">{{ account.name }}</h3>
-                    <p class="account-card__subtitle">{{ account.provider }} • {{ account.accountType }}</p>
+                    <p class="account-card__subtitle">{{ account.accountType || t('accounts.account_type_unavailable') }}</p>
                   </div>
                 </div>
                 <v-chip size="small" variant="tonal" color="var(--cb-accent)">{{ account.currency }}</v-chip>
@@ -155,9 +155,9 @@ const activeOpenFinanceConnections = computed(() => {
 
 const openFinanceVisibilityMessage = computed(() => {
   if (isOwnerOrAdmin.value) {
-    return 'Fontes CNPJ aparecem como compartilhadas com o workspace. Em fontes CPF, "Planejamento apenas" alimenta só o baseline; "Compartilhado com admins" libera visibilidade operacional para owners e admins.'
+    return 'Fontes CNPJ aparecem como compartilhadas com o espaço. Em fontes CPF, "Planejamento apenas" alimenta só o baseline; "Compartilhado com administradores" libera visibilidade operacional para proprietários e administradores.'
   }
-  return 'Fontes CNPJ compartilhadas aparecem normalmente neste workspace. Fontes CPF continuam privadas para a sua role, exceto pelo impacto agregado de planejamento quando o owner habilita esse nível.'
+  return 'Fontes CNPJ compartilhadas aparecem normalmente neste espaço. Fontes CPF continuam privadas para a sua permissão, exceto pelo impacto agregado de planejamento quando o proprietário habilita esse nível.'
 })
 
 const visibleAccounts = computed(() => {
@@ -241,14 +241,14 @@ const findConnectionForAccount = (account: AccountView) => {
 const connectionSharingBadge = (connection?: OpenFinanceConnection | null) => {
   if (!connection) return null
   if (connection.payerDocumentType === 'CNPJ') {
-    return { label: 'Compartilhado com workspace', color: 'success' }
+    return { label: 'Compartilhado com espaço', color: 'success' }
   }
   const level = connection.planningSharingLevel || connection.sharingPolicy
   if (level === 'PLANNING_IMPACT_ONLY') {
     return { label: 'Planejamento apenas', color: 'warning' }
   }
   if (level === 'PERSONAL_SHARED') {
-    return { label: 'Compartilhado com admins', color: 'info' }
+    return { label: 'Compartilhado com administradores', color: 'info' }
   }
   return { label: 'Privado', color: 'grey' }
 }
@@ -256,7 +256,7 @@ const connectionSharingBadge = (connection?: OpenFinanceConnection | null) => {
 const connectionSharingNote = (connection?: OpenFinanceConnection | null) => {
   if (!connection) return ''
   if (connection.payerDocumentType === 'CNPJ') {
-    return 'Fonte empresarial compartilhada com o workspace para uso operacional e planejamento.'
+    return 'Fonte empresarial compartilhada com o espaço para uso operacional e planejamento.'
   }
   const level = connection.planningSharingLevel || connection.sharingPolicy
   if (level === 'PLANNING_IMPACT_ONLY') {
@@ -264,8 +264,8 @@ const connectionSharingNote = (connection?: OpenFinanceConnection | null) => {
   }
   if (level === 'PERSONAL_SHARED') {
     return isOwnerOrAdmin.value
-      ? 'Fonte pessoal compartilhada com owners e admins para visibilidade operacional.'
-      : 'Fonte pessoal com compartilhamento administrativo. Esse nível não libera detalhes para a sua role.'
+      ? 'Fonte pessoal compartilhada com proprietários e administradores para visibilidade operacional.'
+      : 'Fonte pessoal com compartilhamento administrativo. Esse nível não libera detalhes para a sua permissão.'
   }
   return 'Fonte pessoal privada. Sem compartilhamento operacional nem impacto em planejamento.'
 }

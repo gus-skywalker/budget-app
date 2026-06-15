@@ -194,6 +194,7 @@ import { buildBillingPricingContext, formatConvertedPriceFromBRL } from '@/utils
 import BillingOrchestrationService from '@/services/BillingOrchestrationService'
 import BillingDecisionService from '@/services/BillingDecisionService'
 import BillingPromotionService from '@/services/BillingPromotionService'
+import { parseApiError } from '@/utils/errorHandler'
 import {
     clearBillingCheckoutContext,
     readBillingCheckoutContext,
@@ -291,7 +292,7 @@ export default {
                     }
 
                     if (resp.data.status === 'FAILED') {
-                        throw new Error(resp.data.lastError || t('checkout.billing_command_failed'))
+                        throw new Error(t('checkout.billing_command_failed'))
                     }
 
                     if (resp.data.status === 'DISPATCHED') {
@@ -450,7 +451,7 @@ export default {
                 await startSubscriptionDispatch()
 
             } catch (err) {
-                error.value = err?.response?.data?.error || err?.message || String(err);
+                error.value = parseApiError(err, t('checkout.billing_command_failed'));
                 console.error('Erro ao iniciar checkout:', err);
             } finally {
                 loading.value = false;
@@ -468,7 +469,7 @@ export default {
             try {
                 await startSubscriptionDispatch()
             } catch (err) {
-                error.value = err?.response?.data?.error || err?.message || String(err)
+                error.value = parseApiError(err, t('checkout.billing_command_failed'))
             } finally {
                 loading.value = false
             }

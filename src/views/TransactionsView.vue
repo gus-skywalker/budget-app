@@ -181,11 +181,8 @@
               :has-suggestion-ready="Boolean(getStoredExpenseSuggestion(item.id))"
               :suggestion-details="getExpenseSuggestionDetails(item)"
               :is-applying-suggestion="applyingExpenseSuggestionId === item.id"
-              @attachFiles="handleAttachFiles"
-              @removeAttachment="handleRemoveAttachment"
-              @downloadAttachment="handleDownloadAttachment"
               @sendReminder="handleSendReminder"
-              @shareExpense="handleShareExpense"
+              @openAttachments="openTransactionAttachments"
               @agreementCreated="handleSharedAgreementCreated"
               @agreementUpdated="handleSharedAgreementUpdated"
               @agreementError="handleSharedAgreementError"
@@ -195,7 +192,7 @@
               @openComments="openTransactionComments"
               @deleteExpense="deleteExpense"
               @togglePlanningExclusion="toggleExpensePlanningExclusion"
-              @select="startEditingExpense"
+              @select="openTransactionDetails('expense', item)"
             />
           </v-list>
           <div v-else-if="!isLoadingExpenses" style="padding:40px 24px;text-align:center">
@@ -230,7 +227,7 @@
               @togglePlanningExclusion="toggleIncomePlanningExclusion"
               @resolveConflict="handleResolveIncomeConflict"
               @openComments="openTransactionComments"
-              @select="startEditingIncome"
+              @select="openTransactionDetails('income', item)"
             />
           </v-list>
           <div v-else-if="!isLoadingIncomes" style="padding:40px 24px;text-align:center">
@@ -255,6 +252,181 @@
       </div><!-- end list card -->
 
     </div><!-- end cb-container -->
+
+    <!-- DETAILS DRAWER (right side slide-over) -->
+    <v-navigation-drawer
+      v-model="transactionDetailsPanel.show"
+      location="right"
+      :width="440"
+      temporary
+      class="transaction-details-drawer"
+    >
+      <div v-if="selectedTransactionDetails" class="transaction-details-panel">
+        <div class="transaction-details-panel__header">
+          <div class="transaction-details-panel__title-group">
+            <span class="transaction-details-panel__eyebrow">
+              {{ transactionTypeLabel(transactionDetailsPanel.type) }}
+            </span>
+            <h2>{{ selectedTransactionDetails.description }}</h2>
+            <span class="transaction-details-panel__date">{{ formatDetailsDate(selectedTransactionDetails.date) }}</span>
+          </div>
+          <v-btn icon size="small" variant="text" @click="closeTransactionDetails">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </div>
+
+        <div class="transaction-details-panel__amount">
+          {{ formatTransactionAmount(selectedTransactionDetails) }}
+        </div>
+
+        <div class="transaction-details-panel__actions">
+          <v-btn size="small" class="cb-btn-primary" @click="editSelectedTransaction">
+            <v-icon start size="14">mdi-pencil-outline</v-icon>
+            {{ $t('transactions.details.edit') }}
+          </v-btn>
+        </div>
+
+        <section class="transaction-details-section">
+          <span class="transaction-details-section__label">{{ $t('transactions.details.summary') }}</span>
+          <div class="transaction-details-grid">
+            <div v-if="transactionDetailsPanel.type === 'expense'" class="transaction-details-field">
+              <span>{{ $t('common.category') }}</span>
+              <strong>
+                <v-icon
+                  v-if="transactionCategoryIcon(selectedTransactionDetails)"
+                  size="15"
+                  :color="transactionCategoryColor(selectedTransactionDetails)"
+                >
+                  {{ transactionCategoryIcon(selectedTransactionDetails) }}
+                </v-icon>
+                {{ transactionCategoryLabel(selectedTransactionDetails) }}
+              </strong>
+            </div>
+            <div class="transaction-details-field">
+              <span>{{ $t('common.payment_method') }}</span>
+              <strong>{{ transactionPaymentMethodLabel(selectedTransactionDetails) }}</strong>
+            </div>
+            <div class="transaction-details-field">
+              <span>{{ $t('transactionVisibility.label') }}</span>
+              <strong>{{ transactionVisibilityLabel(selectedTransactionDetails) }}</strong>
+            </div>
+            <div class="transaction-details-field">
+              <span>{{ $t('transactions.details.planning') }}</span>
+              <strong>{{ transactionPlanningLabel(selectedTransactionDetails) }}</strong>
+            </div>
+          </div>
+        </section>
+
+        <section v-if="hasTransactionCollaboration(selectedTransactionDetails)" class="transaction-details-section">
+          <span class="transaction-details-section__label">{{ $t('transactions.details.collaboration_tracking') }}</span>
+          <div class="transaction-details-list">
+            <div v-if="canShowTransactionComments(selectedTransactionDetails)" class="transaction-details-list__row transaction-details-list__row--action">
+              <div>
+                <span>{{ $t('transactions.details.comments') }}</span>
+                <strong>{{ transactionCommentsStatusLabel(selectedTransactionDetails) }}</strong>
+              </div>
+              <v-btn
+                size="x-small"
+                variant="tonal"
+                color="var(--cb-primary)"
+                @click="openSelectedTransactionComments"
+              >
+                {{ $t('transactions.details.open') }}
+              </v-btn>
+            </div>
+            <div v-if="canShowTransactionAgreements(selectedTransactionDetails)" class="transaction-details-list__row transaction-details-list__row--action">
+              <div>
+                <span>{{ transactionAgreementTitle(selectedTransactionDetails) }}</span>
+                <strong>{{ transactionAgreementStatusLabel(selectedTransactionDetails) }}</strong>
+              </div>
+              <v-btn
+                size="x-small"
+                variant="tonal"
+                color="var(--cb-primary)"
+                @click="handleTransactionAgreementAction(selectedTransactionDetails)"
+              >
+                {{ transactionAgreementActionLabel(selectedTransactionDetails) }}
+              </v-btn>
+            </div>
+            <div v-if="canShowTransactionAttachments(selectedTransactionDetails)" class="transaction-details-list__row transaction-details-list__row--action">
+              <div>
+                <span>{{ $t('transactions.details.attachments') }}</span>
+                <strong>{{ transactionAttachmentStatusLabel(selectedTransactionDetails) }}</strong>
+              </div>
+              <v-btn
+                size="x-small"
+                variant="tonal"
+                color="var(--cb-primary)"
+                :loading="transactionAttachmentStatus(selectedTransactionDetails) === 'loading'"
+                @click="handleTransactionAttachmentAction(selectedTransactionDetails)"
+              >
+                {{ transactionAttachmentActionLabel(selectedTransactionDetails) }}
+              </v-btn>
+            </div>
+            <shared-expense-agreement-visibility
+              v-if="transactionAgreementVisibilityOpen && transactionAgreements(selectedTransactionDetails).length"
+              :agreements="transactionAgreements(selectedTransactionDetails)"
+            />
+          </div>
+        </section>
+
+        <section v-if="transactionDetailsPanel.type === 'expense'" class="transaction-details-section">
+          <span class="transaction-details-section__label">{{ $t('transactions.details.categorization') }}</span>
+          <div class="transaction-details-list">
+            <div class="transaction-details-list__row">
+              <span>{{ $t('transactions.details.source') }}</span>
+              <strong>{{ categorizationSourceLabel(selectedTransactionDetails.categorizationSource) }}</strong>
+            </div>
+            <div v-if="shouldShowCategorizationReason(selectedTransactionDetails.categorizationReason)" class="transaction-details-list__row">
+              <span>{{ $t('transactions.details.reason') }}</span>
+              <strong>{{ selectedTransactionDetails.categorizationReason }}</strong>
+            </div>
+            <div v-if="selectedTransactionDetails.categorizedAt" class="transaction-details-list__row">
+              <span>{{ $t('transactions.details.categorized_at') }}</span>
+              <strong>{{ formatDetailsDateTime(selectedTransactionDetails.categorizedAt) }}</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="transaction-details-section">
+          <span class="transaction-details-section__label">{{ $t('transactions.details.financial_origin') }}</span>
+          <div class="transaction-details-list">
+            <div class="transaction-details-list__row">
+              <span>{{ $t('transactions.details.origin') }}</span>
+              <strong>{{ transactionOriginLabel(selectedTransactionDetails) }}</strong>
+            </div>
+            <div v-if="selectedTransactionDetails.openFinanceDocumentType" class="transaction-details-list__row">
+              <span>{{ $t('transactions.details.source_type') }}</span>
+              <strong>{{ transactionDocumentTypeLabel(selectedTransactionDetails) }}</strong>
+            </div>
+            <div v-if="selectedTransactionDetails.openFinanceSharingLabel" class="transaction-details-list__row">
+              <span>{{ $t('transactions.details.sharing') }}</span>
+              <strong>{{ selectedTransactionDetails.openFinanceSharingLabel }}</strong>
+            </div>
+            <p v-if="selectedTransactionDetails.openFinanceSharingNote" class="transaction-details-note">
+              {{ selectedTransactionDetails.openFinanceSharingNote }}
+            </p>
+          </div>
+        </section>
+
+        <section
+          v-if="selectedTransactionDetails.reconciliationStatus || selectedTransactionDetails.reconciliationConflictReason"
+          class="transaction-details-section"
+        >
+          <span class="transaction-details-section__label">{{ $t('transactions.details.reconciliation') }}</span>
+          <div class="transaction-details-list">
+            <div v-if="selectedTransactionDetails.reconciliationStatus" class="transaction-details-list__row">
+              <span>{{ $t('transactions.details.status') }}</span>
+              <strong>{{ transactionReconciliationLabel(selectedTransactionDetails) }}</strong>
+            </div>
+            <div v-if="selectedTransactionDetails.reconciliationConflictReason" class="transaction-details-list__row">
+              <span>{{ $t('transactions.details.conflict_reason') }}</span>
+              <strong>{{ selectedTransactionDetails.reconciliationConflictReason }}</strong>
+            </div>
+          </div>
+        </section>
+      </div>
+    </v-navigation-drawer>
 
     <!-- FORM DRAWER (right side slide-over) -->
     <v-navigation-drawer
@@ -393,8 +565,31 @@
       :submitting="transactionCommentsDialog.submitting"
       :comments="transactionCommentsDialog.comments"
       :transaction-description="transactionCommentsDialog.transactionDescription"
+      :current-user-id="currentUserId"
+      :author-directory="transactionCommentAuthorDirectory"
       @update:visible="handleCommentsDialogVisibility"
       @submit="submitTransactionComment"
+    />
+    <TransactionAttachmentsDialog
+      v-if="transactionAttachmentsDialog.expense"
+      v-model="transactionAttachmentsDialog.show"
+      :transaction="transactionAttachmentsDialog.expense"
+      :attachments="activeAttachmentState.attachments"
+      :status="activeAttachmentState.status"
+      @upload="handleAttachFiles"
+      @download="handleDownloadAttachment"
+      @remove="handleRemoveAttachment"
+      @share="handleShareExpense"
+      @retry="reloadActiveTransactionAttachments"
+    />
+    <SharedExpenseAgreementDialog
+      v-if="transactionAgreementDialog.expense"
+      v-model="transactionAgreementDialog.show"
+      :expense="transactionAgreementDialog.expense"
+      :agreement="transactionAgreementDialog.agreement"
+      @created="handlePanelSharedAgreementCreated"
+      @updated="handlePanelSharedAgreementUpdated"
+      @error="handlePanelSharedAgreementError"
     />
   </div>
 </template>
@@ -403,6 +598,9 @@
 import IncomeItem from '../components/IncomeItem.vue'
 import ExpenseItem from '../components/ExpenseItem.vue'
 import TransactionCommentsDialog from '@/components/TransactionCommentsDialog.vue'
+import TransactionAttachmentsDialog from '@/components/TransactionAttachmentsDialog.vue'
+import SharedExpenseAgreementDialog from '@/components/SharedExpenseAgreementDialog.vue'
+import SharedExpenseAgreementVisibility from '@/components/SharedExpenseAgreementVisibility.vue'
 import IncomeService from '@/services/IncomeService'
 import ExpenseService from '@/services/ExpenseService'
 import OpenFinanceService from '@/services/OpenFinanceService'
@@ -524,6 +722,9 @@ export default {
     IncomeItem,
     ExpenseItem,
     TransactionCommentsDialog,
+    TransactionAttachmentsDialog,
+    SharedExpenseAgreementDialog,
+    SharedExpenseAgreementVisibility,
     PageHeader,
     AlertStrip,
   },
@@ -653,6 +854,22 @@ export default {
         transactionDescription: '',
         comments: [],
       },
+      transactionDetailsPanel: {
+        show: false,
+        type: null,
+        transaction: null,
+      },
+      transactionAgreementDialog: {
+        show: false,
+        expense: null,
+        agreement: null,
+      },
+      transactionAgreementVisibilityOpen: false,
+      transactionAttachmentsDialog: {
+        show: false,
+        expense: null,
+      },
+      attachmentStateByTransactionId: {},
       alertSettings: null,
       // --- drawer & tab state ---
       showFormDrawer: false,
@@ -661,6 +878,22 @@ export default {
     }
   },
   computed: {
+    selectedTransactionDetails() {
+      return this.transactionDetailsPanel.transaction
+    },
+    currentUserId() {
+      const userStore = useUserStore()
+      return userStore.getUser?.id ? String(userStore.getUser.id) : ''
+    },
+    transactionCommentAuthorDirectory() {
+      return (this.users || []).map((user) => ({
+        id: user.id,
+        name: user.name,
+      }))
+    },
+    activeAttachmentState() {
+      return this.attachmentStateFor(this.transactionAttachmentsDialog.expense)
+    },
     financialAccountsHint() {
       return this.financialAccounts.length
         ? this.$t('common.account_hint')
@@ -895,11 +1128,375 @@ export default {
   methods: {
     // --- drawer helpers ---
     openFormDrawer(mode) {
+      this.closeTransactionDetails()
       this.formMode = mode || 'expense'
       this.showFormDrawer = true
     },
     closeFormDrawer() {
       this.showFormDrawer = false
+    },
+    openTransactionDetails(type, transaction) {
+      if (!transaction) return
+      this.showFormDrawer = false
+      this.transactionAgreementVisibilityOpen = false
+      this.transactionDetailsPanel = {
+        show: true,
+        type,
+        transaction,
+      }
+    },
+    closeTransactionDetails() {
+      this.transactionDetailsPanel.show = false
+    },
+    editSelectedTransaction() {
+      const transaction = this.selectedTransactionDetails
+      const type = this.transactionDetailsPanel.type
+      if (!transaction) return
+      this.closeTransactionDetails()
+      if (type === 'income') {
+        this.startEditingIncome(transaction)
+      } else {
+        this.startEditingExpense(transaction)
+      }
+    },
+    openSelectedTransactionComments() {
+      const transaction = this.selectedTransactionDetails
+      if (!transaction) return
+      this.openTransactionComments(transaction)
+    },
+    canShowTransactionComments(transaction) {
+      return transaction?.visibilityScope === 'WORKSPACE'
+    },
+    transactionCommentsStatusLabel(transaction) {
+      if (!this.canShowTransactionComments(transaction)) {
+        return this.$t('transactions.details.comments_unavailable')
+      }
+      return this.$t('transactions.details.comments_available')
+    },
+    hasTransactionCollaboration(transaction) {
+      return this.canShowTransactionComments(transaction)
+        || this.canShowTransactionAgreements(transaction)
+        || this.canShowTransactionAttachments(transaction)
+    },
+    canShowTransactionAttachments(transaction) {
+      return this.transactionDetailsPanel.type === 'expense' && Boolean(transaction?.id)
+    },
+    emptyAttachmentState() {
+      return {
+        status: 'notLoaded',
+        attachments: [],
+        error: null,
+      }
+    },
+    attachmentStateFor(transaction) {
+      if (!transaction?.id) return this.emptyAttachmentState()
+      return this.attachmentStateByTransactionId[transaction.id] || this.emptyAttachmentState()
+    },
+    setAttachmentState(transactionId, patch) {
+      if (!transactionId) return
+      const previous = this.attachmentStateByTransactionId[transactionId] || this.emptyAttachmentState()
+      this.attachmentStateByTransactionId = {
+        ...this.attachmentStateByTransactionId,
+        [transactionId]: {
+          ...previous,
+          ...patch,
+        },
+      }
+    },
+    transactionAttachmentStatus(transaction) {
+      return this.attachmentStateFor(transaction).status
+    },
+    transactionAttachments(transaction) {
+      return this.attachmentStateFor(transaction).attachments
+    },
+    transactionAttachmentStatusLabel(transaction) {
+      const state = this.attachmentStateFor(transaction)
+      if (state.status === 'loading') return this.$t('transactions.details.attachments_loading')
+      if (state.status === 'error') return this.$t('transactions.details.attachments_error')
+      if (state.status === 'notLoaded') return this.$t('transactions.details.attachments_not_loaded')
+      const count = state.attachments.length
+      if (!count) return this.$t('transactions.details.no_attachments')
+      return this.$t('transactions.details.attachments_count', { count })
+    },
+    transactionAttachmentActionLabel(transaction) {
+      const state = this.attachmentStateFor(transaction)
+      if (state.status === 'error') return this.$t('transactions.details.retry')
+      if (state.status === 'notLoaded') return this.$t('transactions.details.view_attachments')
+      if (state.status === 'loaded' && !state.attachments.length) return this.$t('transactions.details.add')
+      return this.$t('transactions.details.view')
+    },
+    handleTransactionAttachmentAction(transaction) {
+      this.openTransactionAttachments(transaction)
+    },
+    canShowTransactionAgreements(transaction) {
+      return this.transactionDetailsPanel.type === 'expense' && Boolean(transaction?.id)
+    },
+    transactionAgreements(transaction) {
+      return Array.isArray(transaction?.sharedAgreements) ? transaction.sharedAgreements : []
+    },
+    activeTransactionAgreements(transaction) {
+      return this.transactionAgreements(transaction).filter((agreement) => !['CANCELLED', 'DECLINED'].includes(String(agreement?.status || '').toUpperCase()))
+    },
+    transactionAgreementTitle(transaction) {
+      const count = this.activeTransactionAgreements(transaction).length
+      return count > 1 ? this.$t('transactions.details.agreements') : this.$t('transactions.details.agreement')
+    },
+    transactionAgreementParticipantCount(agreement) {
+      const participants = Array.isArray(agreement?.participants) ? agreement.participants : []
+      if (participants.length) {
+        const uniqueKeys = new Set(participants.map((participant) => (
+          participant?.id || participant?.userId || participant?.email || participant?.displayName
+        )).filter(Boolean))
+        return uniqueKeys.size || participants.length
+      }
+      return agreement?.counterpartyEmail ? 1 : 0
+    },
+    transactionAgreementStatusLabel(transaction) {
+      const agreements = this.activeTransactionAgreements(transaction)
+      if (!agreements.length) {
+        return this.$t('transactions.details.no_agreement')
+      }
+      if (agreements.length > 1) {
+        return this.$t('transactions.details.agreements_active', { count: agreements.length })
+      }
+      const participants = this.transactionAgreementParticipantCount(agreements[0])
+      if (participants > 0) {
+        return this.$t('transactions.details.agreement_with_participants', { count: participants })
+      }
+      return this.$t('transactions.details.agreement_defined')
+    },
+    transactionAgreementActionLabel(transaction) {
+      const agreements = this.activeTransactionAgreements(transaction)
+      if (!agreements.length) return this.$t('transactions.details.create')
+      if (agreements.length > 1) return this.$t('transactions.details.view')
+      return this.$t('transactions.details.open')
+    },
+    handleTransactionAgreementAction(transaction) {
+      const agreements = this.activeTransactionAgreements(transaction)
+      if (agreements.length > 1) {
+        this.transactionAgreementVisibilityOpen = !this.transactionAgreementVisibilityOpen
+        return
+      }
+      this.openSelectedTransactionAgreementDialog(transaction, agreements[0] || null)
+    },
+    openSelectedTransactionAgreementDialog(transaction, agreement = null) {
+      if (!transaction?.id) return
+      this.transactionAgreementDialog = {
+        show: true,
+        expense: transaction,
+        agreement,
+      }
+    },
+    openTransactionAttachments(expense) {
+      if (!expense?.id) return
+      const currentExpense = this.findMonthlyExpenseById(expense.id) || expense
+      this.transactionAttachmentsDialog = {
+        show: true,
+        expense: currentExpense,
+      }
+      this.loadTransactionAttachments(expense.id).catch(() => {})
+    },
+    reloadActiveTransactionAttachments() {
+      const expenseId = this.transactionAttachmentsDialog.expense?.id
+      if (!expenseId) return
+      this.loadTransactionAttachments(expenseId).catch(() => {})
+    },
+    loadTransactionAttachments(expenseId) {
+      if (!expenseId) return Promise.resolve()
+      this.setAttachmentState(expenseId, { status: 'loading', error: null })
+      return ExpenseService.listAttachments(expenseId)
+        .then((response) => {
+          const attachments = Array.isArray(response?.data) ? response.data : []
+          this.setAttachmentState(expenseId, {
+            status: 'loaded',
+            attachments,
+            error: null,
+          })
+          this.applyExpenseAttachments(expenseId, attachments)
+        })
+        .catch((error) => {
+          console.error('Erro ao carregar anexos:', error)
+          this.setAttachmentState(expenseId, {
+            status: 'error',
+            error,
+          })
+          this.showToast(this.$t('transactionAttachments.load_error'), 'error')
+          throw error
+        })
+    },
+    transactionTypeLabel(type) {
+      return type === 'income'
+        ? this.$t('transactions.details.transaction_type_income')
+        : this.$t('transactions.details.transaction_type_expense')
+    },
+    transactionCategoryObject(transaction) {
+      const category = transaction?.category
+      if (category && typeof category === 'object') {
+        return category
+      }
+
+      const categoryId = transaction?.categoryId ?? category
+      if (categoryId !== null && categoryId !== undefined && categoryId !== '') {
+        const matched = this.categories.find((item) => String(item.id) === String(categoryId))
+        if (matched) return matched
+      }
+
+      if (transaction?.categoryName || transaction?.categoryCode) {
+        return {
+          name: transaction.categoryName,
+          code: transaction.categoryCode,
+          displayIcon: transaction.categoryDisplayIcon,
+          displayColor: transaction.categoryDisplayColor,
+        }
+      }
+
+      return null
+    },
+    transactionCategoryLabel(transaction) {
+      const category = this.transactionCategoryObject(transaction)
+      return category ? this.translateCategoryLabel(category) : this.$t('expenseItem.uncategorized')
+    },
+    transactionCategoryIcon(transaction) {
+      const category = this.transactionCategoryObject(transaction)
+      if (!category) return ''
+      return category.displayIcon || this.categoryIcons?.[category.code] || 'mdi-shape-outline'
+    },
+    transactionCategoryColor(transaction) {
+      const category = this.transactionCategoryObject(transaction)
+      return category?.displayColor || 'var(--cb-primary)'
+    },
+    transactionPaymentMethodLabel(transaction) {
+      if (transaction?.paymentMethodName) {
+        return transaction.paymentMethodName
+      }
+      const paymentMethod = transaction?.paymentMethod
+      if (paymentMethod && typeof paymentMethod === 'object') {
+        return paymentMethod.name || this.$t('transactions.details.not_informed')
+      }
+      if (paymentMethod && typeof paymentMethod === 'string' && Number.isNaN(Number(paymentMethod))) {
+        return paymentMethod
+      }
+      if (this.isOpenFinanceTransaction(transaction)) {
+        return this.openFinancePaymentMethodLabel(transaction)
+      }
+      return this.$t('transactions.details.not_informed')
+    },
+    transactionVisibilityLabel(transaction) {
+      return transaction?.visibilityScope === 'PRIVATE'
+        ? this.$t('transactionVisibility.private')
+        : this.$t('transactionVisibility.workspace')
+    },
+    transactionPlanningLabel(transaction) {
+      if (transaction?.excludedFromPlanning) {
+        return this.$t('transactions.details.planning_excluded')
+      }
+      if (transaction?.openFinanceSharingTone === 'planning-only') {
+        return this.$t('transactions.details.planning_only')
+      }
+      return this.$t('transactions.details.planning_included')
+    },
+    transactionOriginLabel(transaction) {
+      if (this.isOpenFinanceTransaction(transaction)) {
+        return this.$t('transactions.details.open_finance_source')
+      }
+      const source = this.normalizedTransactionSource(transaction)
+      if (source === 'MANUAL') {
+        return this.$t('transactions.details.manual_source')
+      }
+      return this.$t('transactions.details.origin_not_registered')
+    },
+    transactionDocumentTypeLabel(transaction) {
+      const documentType = String(transaction?.openFinanceDocumentType || '').toUpperCase()
+      if (documentType === 'CNPJ') return this.$t('transactions.details.document_business')
+      if (documentType === 'CPF') return this.$t('transactions.details.document_personal')
+      return this.$t('transactions.details.not_informed')
+    },
+    categorizationSourceLabel(source) {
+      const normalized = String(source || 'UNKNOWN').toUpperCase()
+      const key = `transactions.details.categorization_sources.${normalized}`
+      const translated = this.$t(key)
+      return translated !== key ? translated : this.$t('transactions.details.categorization_sources.UNKNOWN')
+    },
+    shouldShowCategorizationReason(reason) {
+      const value = String(reason || '').trim()
+      if (!value) return false
+      const normalized = value.toLowerCase()
+      const technicalPatterns = [
+        /^[A-Z0-9_:-]+$/,
+        /exception|stacktrace|localhost|connection refused|processingexception/i,
+        /ai_service|fallback|provider|protocol|rawstatus/i,
+        /^\{.*\}$/,
+      ]
+      return !technicalPatterns.some((pattern) => pattern.test(value) || pattern.test(normalized))
+    },
+    normalizedTransactionSource(transaction) {
+      return String(transaction?.source || '').trim().toUpperCase()
+    },
+    isOpenFinanceTransaction(transaction) {
+      const source = this.normalizedTransactionSource(transaction)
+      return source === 'OPEN_FINANCE' || Boolean(transaction?.openFinance)
+    },
+    transactionCurrency(transaction) {
+      if (transaction?.currency) return transaction.currency
+      const account = this.financialAccounts.find((item) => item.id === transaction?.accountId)
+      return account?.currency || 'BRL'
+    },
+    getDetailsLocaleCode() {
+      const uiLocale = this.$i18n?.locale || 'pt'
+      const localeMap = {
+        pt: 'pt-BR',
+        en: 'en-US',
+        es: 'es-ES',
+        fr: 'fr-FR',
+      }
+      return localeMap[uiLocale] || 'pt-BR'
+    },
+    formatTransactionAmount(transaction) {
+      const rawAmount = transaction?.amount
+      if (typeof rawAmount === 'string' && rawAmount.trim() && Number.isNaN(Number(rawAmount))) {
+        return rawAmount
+      }
+      const amount = Number(rawAmount)
+      if (!Number.isFinite(amount)) {
+        return this.$t('transactions.details.not_informed')
+      }
+      return new Intl.NumberFormat(this.getDetailsLocaleCode(), {
+        style: 'currency',
+        currency: this.transactionCurrency(transaction),
+      }).format(Math.abs(amount))
+    },
+    transactionReconciliationLabel(transaction) {
+      const status = transaction?.reconciliationStatus
+      if (!status) return this.$t('transactions.details.not_informed')
+      const base = this.transactionDetailsPanel.type === 'income' ? 'incomeItem' : 'expenseItem'
+      const key = `${base}.reconciliation.${status}`
+      const translated = this.$t(key)
+      return translated !== key ? translated : this.$t('transactions.details.status_review_needed')
+    },
+    parseDetailsDate(value) {
+      if (!value) return null
+      if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        const date = new Date(`${value}T00:00:00`)
+        return Number.isNaN(date.getTime()) ? null : date
+      }
+      const date = new Date(value)
+      return Number.isNaN(date.getTime()) ? null : date
+    },
+    formatDetailsDate(value) {
+      const date = this.parseDetailsDate(value)
+      if (!date) return value || this.$t('transactions.details.not_informed')
+      return new Intl.DateTimeFormat(this.getDetailsLocaleCode(), {
+        dateStyle: 'medium',
+      }).format(date)
+    },
+    formatDetailsDateTime(value) {
+      if (!value) return this.$t('transactions.details.not_informed')
+      const date = this.parseDetailsDate(value)
+      if (!date) return value
+      return new Intl.DateTimeFormat(this.getDetailsLocaleCode(), {
+        dateStyle: 'short',
+        timeStyle: 'short',
+      }).format(date)
     },
     // --- month navigation ---
     goToPrevMonth() {
@@ -1815,7 +2412,7 @@ export default {
         .then((response) => {
           this.financialAccounts = (response.data || []).map((account) => ({
             ...account,
-            displayName: `${account.name} • ${account.provider} • ${account.currency}`
+            displayName: [account.name, account.currency].filter(Boolean).join(' • ')
           }))
           this.applyDefaultFinancialAccount()
           this.applyOpenFinanceContextToCollections()
@@ -2503,13 +3100,15 @@ export default {
     },
     handleAttachFiles({ expense, files }) {
       const expenseId = expense.id
+      this.setAttachmentState(expenseId, { status: 'loading', error: null })
       ExpenseService.uploadAttachment(expenseId, files)
-        .then((response) => {
-          this.applyExpenseAttachments(expenseId, response?.data)
+        .then(() => this.loadTransactionAttachments(expenseId))
+        .then(() => {
           this.showToast('Anexo salvo.', 'success')
         })
         .catch((error) => {
           console.error('Erro ao anexar arquivos:', error)
+          this.setAttachmentState(expenseId, { status: 'error', error })
           this.showToast('Falha ao anexar arquivo.', 'error')
         })
     },
@@ -2532,8 +3131,8 @@ export default {
         })
 
         try {
-          const uploadResponse = await ExpenseService.uploadAttachment(expense.id, formData)
-          this.applyExpenseAttachments(expense.id, uploadResponse?.data)
+          await ExpenseService.uploadAttachment(expense.id, formData)
+          await this.loadTransactionAttachments(expense.id)
         } catch (error) {
           console.error('Erro ao anexar arquivos antes de compartilhar:', error)
           this.showToast('Falha ao anexar arquivo antes do envio.', 'error')
@@ -2569,6 +3168,7 @@ export default {
           attachments: updatedAttachments,
         }
       }
+      this.syncSelectedTransactionAttachmentState(expenseId)
     },
     handleSharedAgreementCreated({ expense, agreement }) {
       const expenseId = expense?.id || agreement?.transactionId
@@ -2601,6 +3201,7 @@ export default {
       } else {
         this.showToast('Combinado de divisão criado.', 'success')
       }
+      this.syncSelectedTransactionAgreementState(expenseId)
     },
     handleSharedAgreementUpdated({ expense, agreement }) {
       const expenseId = expense?.id || agreement?.transactionId
@@ -2633,27 +3234,72 @@ export default {
       } else {
         this.showToast('Combinado de divisão atualizado.', 'success')
       }
+      this.syncSelectedTransactionAgreementState(expenseId)
     },
     handleSharedAgreementError({ error }) {
       console.error('Erro ao criar combinado de divisão:', error)
       this.showToast('Falha ao criar combinado de divisão.', 'error')
     },
+    handlePanelSharedAgreementCreated(agreement) {
+      const expense = this.transactionAgreementDialog.expense
+      this.handleSharedAgreementCreated({ expense, agreement })
+      const updatedExpense = this.findMonthlyExpenseById(expense?.id || agreement?.transactionId)
+      this.transactionAgreementDialog = {
+        show: true,
+        expense: updatedExpense || expense,
+        agreement,
+      }
+      this.transactionAgreementVisibilityOpen = true
+    },
+    handlePanelSharedAgreementUpdated(agreement) {
+      const expense = this.transactionAgreementDialog.expense
+      this.handleSharedAgreementUpdated({ expense, agreement })
+      const updatedExpense = this.findMonthlyExpenseById(expense?.id || agreement?.transactionId)
+      this.transactionAgreementDialog = {
+        show: true,
+        expense: updatedExpense || expense,
+        agreement,
+      }
+      this.transactionAgreementVisibilityOpen = true
+    },
+    handlePanelSharedAgreementError(error) {
+      this.handleSharedAgreementError({ error })
+    },
+    findMonthlyExpenseById(expenseId) {
+      if (!expenseId) return null
+      return this.monthlyExpenses.find((item) => item.id === expenseId) || null
+    },
+    syncSelectedTransactionAgreementState(expenseId) {
+      const updatedExpense = this.findMonthlyExpenseById(expenseId)
+      if (!updatedExpense) return
+      if (this.transactionDetailsPanel.transaction?.id === expenseId) {
+        this.transactionDetailsPanel.transaction = updatedExpense
+      }
+      if (this.transactionAgreementDialog.expense?.id === expenseId) {
+        this.transactionAgreementDialog.expense = updatedExpense
+      }
+    },
+    syncSelectedTransactionAttachmentState(expenseId) {
+      const updatedExpense = this.findMonthlyExpenseById(expenseId)
+      if (!updatedExpense) return
+      if (this.transactionDetailsPanel.transaction?.id === expenseId) {
+        this.transactionDetailsPanel.transaction = updatedExpense
+      }
+      if (this.transactionAttachmentsDialog.expense?.id === expenseId) {
+        this.transactionAttachmentsDialog.expense = updatedExpense
+      }
+    },
     handleRemoveAttachment({ expenseId, attachmentId }) {
+      this.setAttachmentState(expenseId, { status: 'loading', error: null })
       ExpenseService.removeAttachment(expenseId, attachmentId)
+        .then(() => this.loadTransactionAttachments(expenseId))
         .then(() => {
-          const expenseIndex = this.monthlyExpenses.findIndex((item) => item.id === expenseId)
-          if (expenseIndex !== -1) {
-            const currentAttachments = Array.isArray(this.monthlyExpenses[expenseIndex].attachments)
-              ? this.monthlyExpenses[expenseIndex].attachments
-              : []
-            this.monthlyExpenses[expenseIndex] = {
-              ...this.monthlyExpenses[expenseIndex],
-              attachments: currentAttachments.filter((attachment) => attachment.id !== attachmentId),
-            }
-          }
+          this.showToast(this.$t('transactionAttachments.remove_success'), 'success')
         })
         .catch(error => {
           console.error('Erro ao remover o anexo:', error)
+          this.setAttachmentState(expenseId, { status: 'error', error })
+          this.showToast(this.$t('transactionAttachments.remove_error'), 'error')
         })
     },
     handleDownloadAttachment({ expenseId, attachmentId, fileName }) {
@@ -2735,6 +3381,174 @@ export default {
 
 <style scoped>
 /* ── Form inputs ───────────────────────── */
+.transaction-details-drawer {
+  max-width: 100vw;
+}
+
+.transaction-details-drawer :deep(.v-navigation-drawer__content) {
+  background: var(--cb-surface);
+}
+
+.transaction-details-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-height: 100%;
+  padding: 22px;
+}
+
+.transaction-details-panel__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.transaction-details-panel__title-group {
+  min-width: 0;
+}
+
+.transaction-details-panel__eyebrow {
+  color: var(--cb-ink-muted);
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.transaction-details-panel__header h2 {
+  color: var(--cb-ink);
+  font-family: var(--cb-font-heading);
+  font-size: 1.15rem;
+  line-height: 1.25;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.transaction-details-panel__date {
+  color: var(--cb-ink-muted);
+  display: inline-block;
+  font-size: 0.82rem;
+  margin-top: 6px;
+}
+
+.transaction-details-panel__amount {
+  color: var(--cb-ink);
+  font-family: var(--cb-font-heading);
+  font-size: 1.45rem;
+  font-weight: 850;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.transaction-details-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.transaction-details-section {
+  border-top: 1px solid rgba(23, 32, 51, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 16px;
+}
+
+.transaction-details-section__label {
+  color: var(--cb-ink-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.transaction-details-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.transaction-details-field,
+.transaction-details-list__row {
+  background: rgba(23, 32, 51, 0.035);
+  border: 1px solid rgba(23, 32, 51, 0.06);
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.transaction-details-field span,
+.transaction-details-list__row span {
+  color: var(--cb-ink-muted);
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.transaction-details-field strong,
+.transaction-details-list__row strong {
+  align-items: center;
+  color: var(--cb-ink);
+  display: inline-flex;
+  gap: 6px;
+  font-size: 0.88rem;
+  font-weight: 750;
+  line-height: 1.35;
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.transaction-details-list__row--action {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.transaction-details-list__row--action > div {
+  min-width: 0;
+}
+
+.transaction-details-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.transaction-details-note {
+  background: rgba(23, 32, 51, 0.035);
+  border-radius: 8px;
+  color: var(--cb-ink-secondary);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  margin: 0;
+  padding: 10px;
+}
+
+@media (max-width: 560px) {
+  .transaction-details-drawer {
+    width: 100vw !important;
+  }
+
+  .transaction-details-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .transaction-details-panel {
+    padding: 18px;
+  }
+
+  .transaction-details-list__row--action {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
 .modern-input {
   margin-bottom: 4px;
 }

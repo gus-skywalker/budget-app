@@ -218,6 +218,10 @@
         <FAQ :faqs="faqs" />
       </div>
     </section>
+
+    <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="4000">
+      {{ snackbar.message }}
+    </v-snackbar>
   </v-container>
 </template>
 
@@ -228,6 +232,7 @@ import BillingPromotionService from '@/services/BillingPromotionService'
 import { PLAN_DETAILS } from '@/constants/plans'
 import { formatConvertedPriceFromBRL, resolvePricingCurrency } from '@/utils/pricing'
 import { useUserStore } from '@/plugins/userStore'
+import { parseApiError } from '@/utils/errorHandler'
 
 export default {
   name: 'ChoosePlan',
@@ -254,6 +259,11 @@ export default {
       planDetails: PLAN_DETAILS,
       promotion: null,
       promotionLoading: false,
+      snackbar: {
+        show: false,
+        message: '',
+        color: 'error',
+      },
       aiFeatures: [
         { icon: 'mdi-chart-box-outline', labelKey: 'choosePlan.ai_feature_1' },
         { icon: 'mdi-bell-alert-outline', labelKey: 'choosePlan.ai_feature_2' },
@@ -352,7 +362,7 @@ export default {
 
     handleError(error) {
       console.error('Erro no processo de checkout:', error)
-      const errorMessage = error.response?.data?.error || error.message || this.$t('choosePlan.error_continue_process')
+      const errorMessage = parseApiError(error, this.$t('choosePlan.error_continue_process'))
 
       if (this.$vuetify) {
         this.$vuetify.notify({
@@ -360,7 +370,11 @@ export default {
           text: errorMessage,
         })
       } else {
-        alert(errorMessage)
+        this.snackbar = {
+          show: true,
+          message: errorMessage,
+          color: 'error',
+        }
       }
     },
     formatAmount(amount) {

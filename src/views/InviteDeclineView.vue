@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import WorkspaceInviteService from '@/services/WorkspaceInviteService'
+import { parseApiError } from '@/utils/errorHandler'
 
 const route = useRoute()
 const { t } = useI18n()
@@ -22,7 +23,7 @@ async function processInviteDecline() {
     await WorkspaceInviteService.declineInvite(token.value)
     done.value = true
   } catch (error: any) {
-    errorMessage.value = error?.response?.data?.error || error?.response?.data || t('invites.decline_error')
+    errorMessage.value = parseApiError(error, t('invites.decline_error'))
   } finally {
     loading.value = false
   }

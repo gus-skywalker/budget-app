@@ -12,10 +12,44 @@ export interface ApiError {
  * Parse API error response following the B2B contract format
  * Expected format: { error: string, message: string, details?: any }
  */
-export function parseApiError(error: any): string {
+const TECHNICAL_ERROR_PATTERNS = [
+  'exception',
+  'stacktrace',
+  'stack trace',
+  'io.quarkus',
+  'org.hibernate',
+  'psqlexception',
+  'sqlstate',
+  'constraintviolation',
+  'failed to fetch',
+  'network error',
+  'internal server error',
+  'connection refused',
+  'econnrefused',
+  'timeout',
+  'localhost',
+  'response.data',
+]
+
+function isTechnicalMessage(message: string): boolean {
+  const normalized = message.toLowerCase()
+  return TECHNICAL_ERROR_PATTERNS.some((pattern) => normalized.includes(pattern))
+}
+
+function toSafeMessage(message: string | null | undefined, fallback: string): string {
+  const normalizedLimitMessage = normalizeFreePlanLimitMessage(String(message || '').trim())
+  if (!normalizedLimitMessage) return fallback
+  if (isTechnicalMessage(normalizedLimitMessage)) return fallback
+  return normalizedLimitMessage
+}
+
+export function parseApiError(
+  error: any,
+  fallback = 'Não foi possível concluir a ação agora. Tente novamente em alguns minutos.'
+): string {
   // If error is already a string, return it
   if (typeof error === 'string') {
-    return error
+    return toSafeMessage(error, fallback)
   }
 
   // Check for axios error response
@@ -24,27 +58,26 @@ export function parseApiError(error: any): string {
     
     // If data is a string, return it
     if (typeof data === 'string') {
-      return normalizeFreePlanLimitMessage(data)
+      return toSafeMessage(data, fallback)
     }
     
     // If data follows the standard format
     if (data.message) {
-      return normalizeFreePlanLimitMessage(data.message)
+      return toSafeMessage(data.message, fallback)
     }
     
-    // If data has error field
-    if (data.error) {
-      return typeof data.error === 'string' ? normalizeFreePlanLimitMessage(data.error) : 'An error occurred'
+    if (data.title) {
+      return toSafeMessage(data.title, fallback)
     }
   }
 
   // Check for error message property
   if (error.message) {
-    return normalizeFreePlanLimitMessage(error.message)
+    return toSafeMessage(error.message, fallback)
   }
 
   // Default fallback
-  return 'An unexpected error occurred. Please try again.'
+  return fallback
 }
 
 export type FreePlanLimitType = 'workspace' | 'member'

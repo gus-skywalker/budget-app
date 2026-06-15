@@ -789,14 +789,13 @@ const sendInvite = async () => {
   inviteLoading.value = true
   try {
     const inviteEmail = inviteForm.value.email
-    const response = await WorkspaceInviteService.inviteUser(currentWorkspaceId.value, inviteEmail, inviteForm.value.role)
+    await WorkspaceInviteService.inviteUser(currentWorkspaceId.value, inviteEmail, inviteForm.value.role)
     inviteForm.value.email = ''
     inviteForm.value.role = 'ROLE_MEMBER'
     await nextTick()
     ;(inviteFormRef.value as any)?.resetValidation?.()
     await loadInvites()
-    const backendMessage = response?.data?.message
-    showSnackbar(backendMessage || `${t('workspaceSettings.success_invite_sent_generic')} (${inviteEmail})`)
+    showSnackbar(`${t('workspaceSettings.success_invite_sent_generic')} (${inviteEmail})`)
   } catch (error) {
     showSnackbar(parseApiError(error), 'error')
     const limitType = getFreePlanLimitType(error)
@@ -1060,7 +1059,7 @@ const getRoleLabel = (role: string) => {
   if (t(`workspaceSettings.roles.${role}`) !== `workspaceSettings.roles.${role}`) {
     return t(`workspaceSettings.roles.${role}`)
   }
-  return role
+  return t('workspaceSettings.roles.ROLE_MEMBER')
 }
 
 watch([currentWorkspaceId, canManageWorkspace, canViewWorkspaceMembers], async ([workspaceId, canManage, canViewMembers]) => {

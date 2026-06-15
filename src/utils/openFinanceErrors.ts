@@ -13,6 +13,15 @@ const TECHNICAL_ERROR_PATTERNS = [
   'violates foreign key constraint',
   'update or delete on table',
   'delete from public.',
+  'connection refused',
+  'localhost',
+  'stacktrace',
+  'stack trace',
+  'provider',
+  'protocol',
+  'rawstatus',
+  'DEV sync',
+  'backend',
 ]
 
 const GENERIC_ERROR_MESSAGES = [
@@ -28,6 +37,7 @@ export const isTechnicalOpenFinanceError = (message: string | null | undefined) 
 export const sanitizeOpenFinanceMessage = (message: string | null | undefined, fallback: string) => {
   const text = String(message || '').trim()
   if (!text) return fallback
+  if (/^[A-Z0-9_:-]+$/.test(text)) return fallback
   if (GENERIC_ERROR_MESSAGES.some((generic) => text.toLowerCase() === generic.toLowerCase())) {
     return fallback
   }

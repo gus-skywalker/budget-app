@@ -66,7 +66,7 @@ const mapTransactionToExpense = (transaction: TransactionView) => ({
   group: null,
   groupId: null,
   status: transaction.status,
-  source: transaction.source ?? 'MANUAL',
+  source: transaction.source ?? null,
   accountId: transaction.accountId,
   accountName: transaction.accountName,
   openFinance: transaction.openFinance ?? false,
@@ -123,8 +123,9 @@ export default {
       payload.append('kind', 'PROOF_OF_PAYMENT')
       return FinancialReadService.uploadTransactionAttachment(expenseId, payload, config)
     })
-    await Promise.all(uploads)
-
+    return Promise.all(uploads)
+  },
+  async listAttachments(expenseId: string): Promise<any> {
     const list = await FinancialReadService.listTransactionAttachments(expenseId)
     return {
       data: (list.data || []).map(mapAttachmentToLegacy),

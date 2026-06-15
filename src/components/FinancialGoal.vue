@@ -1105,7 +1105,7 @@ export default {
         const daysRemaining = (deadline - today) / (1000 * 60 * 60 * 24);
 
         if (daysRemaining <= 7 && goal.progress < 100) {
-          alert(this.$t('financial_goals.deadline_alert', { goal: goal.name }));
+          this.showSnackbar(this.$t('financial_goals.deadline_alert', { goal: goal.name }), 'warning');
         }
       });
     },

@@ -63,7 +63,6 @@
                 <v-chip size="small" variant="tonal" :color="statusUi(connection.consentStatus).color">
                   {{ statusUi(connection.consentStatus).label }}
                 </v-chip>
-                <span v-if="connection.lastProviderStatus" class="of-provider-status">{{ connection.lastProviderStatus }}</span>
               </div>
 
               <div v-if="connection.lastProviderStatusCheckedAt" class="of-connection__meta">
@@ -158,7 +157,7 @@
               :disabled="!canManage"
               @click="syncNowForDev(connection)"
             >
-              DEV sync
+              {{ t('openFinance.panel.sync_now') }}
             </v-btn>
             <v-btn
               v-if="showDisconnect(connection)"

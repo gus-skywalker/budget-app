@@ -273,6 +273,7 @@ import { readInviteAcceptanceRedirect } from '@/utils/inviteAcceptanceContext'
 import AuthService from '@/services/AuthService'
 import OnboardingOrchestrator from '@/services/OnboardingOrchestrator'
 import { activateDevQuickAccess, clearDevQuickAccess } from '@/utils/devQuickAccess'
+import { parseApiError } from '@/utils/errorHandler'
 
 const router = useRouter()
 const route = useRoute()
@@ -349,15 +350,7 @@ const getLoginErrorMessage = (err) => {
     return t('authentication.messages.server_unavailable')
   }
 
-  if (typeof data === 'string' && data.trim()) {
-    return data
-  }
-
-  if (data?.message) {
-    return data.message
-  }
-
-  return t('authentication.messages.login_unavailable')
+  return parseApiError(err, t('authentication.messages.login_unavailable'))
 }
 
 const userLogin = async () => {

@@ -375,6 +375,7 @@ import {
   getBlogTemplateEntry
 } from '@/content/blogTemplates'
 import NotificationService, { type ContactSubmissionResponse } from '@/services/NotificationService'
+import { parseApiError } from '@/utils/errorHandler'
 
 const router = useRouter()
 const route = useRoute()
@@ -529,8 +530,7 @@ async function handleNewsletterSubmit() {
     newsletterEmail.value = ''
   } catch (error: any) {
     console.error('Erro ao enviar inscricao do blog:', error)
-    newsletterErrorMessage.value =
-      error?.response?.data?.error || t('contentExperience.blog.newsletter.error')
+    newsletterErrorMessage.value = parseApiError(error, t('contentExperience.blog.newsletter.error'))
   } finally {
     isSubmittingNewsletter.value = false
   }

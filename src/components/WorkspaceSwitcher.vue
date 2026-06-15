@@ -38,6 +38,9 @@
       </v-list-item>
     </v-list>
   </v-menu>
+  <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="4000">
+    {{ snackbar.message }}
+  </v-snackbar>
 </template>
 
 <script setup>
@@ -50,6 +53,11 @@ const userStore = useUserStore()
 const router = useRouter()
 const { t } = useI18n()
 const isLoading = ref(false)
+const snackbar = ref({
+  show: false,
+  message: '',
+  color: 'error',
+})
 
 const workspaces = computed(() => userStore.getWorkspaces)
 const currentWorkspaceId = computed(() => userStore.getCurrentWorkspaceId)
@@ -58,8 +66,16 @@ const currentWorkspaceName = computed(() => {
   const current = workspaces.value.find(
     (workspace) => workspace.workspaceId === currentWorkspaceId.value
   )
-  return current?.workspaceName || current?.workspaceId || t('workspaceSwitcher.select_workspace')
+  return current?.workspaceName || t('workspaceSwitcher.select_workspace')
 })
+
+const showMessage = (message, color = 'error') => {
+  snackbar.value = {
+    show: true,
+    message,
+    color,
+  }
+}
 
 const switchWorkspace = async (workspace) => {
   const workspaceId = workspace.workspaceId
@@ -70,7 +86,7 @@ const switchWorkspace = async (workspace) => {
       await router.push('/dashboard')
     } catch (err) {
       console.error('Erro ao trocar workspace:', err)
-      alert(t('workspaceSwitcher.error_switch'))
+      showMessage(t('workspaceSwitcher.error_switch'))
     } finally {
       isLoading.value = false
     }
@@ -89,7 +105,7 @@ const getRoleLabel = (role) => {
   if (t(`workspaceSwitcher.roles.${role}`) !== `workspaceSwitcher.roles.${role}`) {
     return t(`workspaceSwitcher.roles.${role}`)
   }
-  return role
+  return ''
 }
 </script>
 

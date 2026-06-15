@@ -1,11 +1,9 @@
 <template>
   <v-dialog v-model="internalVisible" max-width="640">
     <v-card>
-      <v-card-title class="d-flex justify-space-between align-center">
+      <v-card-title class="comments-header">
         <span>{{ $t('transactionComments.title') }}</span>
-        <v-chip v-if="transactionDescription" size="small" variant="tonal" color="var(--cb-primary)">
-          {{ transactionDescription }}
-        </v-chip>
+        <small v-if="transactionDescription">{{ transactionDescription }}</small>
       </v-card-title>
       <v-card-text>
         <p class="comments-subtitle">{{ $t('transactionComments.subtitle') }}</p>
@@ -18,7 +16,7 @@
         <div v-else-if="comments.length" class="comments-list">
           <div v-for="comment in comments" :key="comment.id" class="comment-card">
             <div class="comment-card__header">
-              <strong>{{ comment.authorUserId }}</strong>
+              <strong>{{ commentAuthorLabel(comment) }}</strong>
               <span>{{ formatDate(comment.createdAt) }}</span>
             </div>
             <p>{{ comment.body }}</p>
@@ -56,19 +54,42 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { TransactionCommentView } from '@/types/financialRead'
 
+type CommentAuthorDirectoryItem = {
+  id?: string | number | null
+  name?: string | null
+  displayName?: string | null
+  username?: string | null
+}
+
 const props = defineProps<{
   visible: boolean
   loading: boolean
   submitting: boolean
   comments: TransactionCommentView[]
   transactionDescription?: string
+  currentUserId?: string | number | null
+  authorDirectory?: CommentAuthorDirectoryItem[]
 }>()
 
 const emit = defineEmits(['update:visible', 'submit'])
-const { locale } = useI18n()
+const { locale, t } = useI18n()
 
 const internalVisible = ref(props.visible)
 const draftComment = ref('')
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+const normalizeIdentity = (value?: string | number | null) => String(value ?? '').trim().toLowerCase()
+
+const safeDisplayName = (value?: string | null) => {
+  const normalized = String(value || '').trim()
+  if (!normalized) return ''
+  if (uuidPattern.test(normalized)) return ''
+  if (emailPattern.test(normalized)) return ''
+  return normalized
+}
+
+const commentAuthorDirectory = computed(() => Array.isArray(props.authorDirectory) ? props.authorDirectory : [])
 
 watch(() => props.visible, (value) => {
   internalVisible.value = value
@@ -86,6 +107,42 @@ const formatDate = (value: string) => {
   return new Intl.DateTimeFormat(localeCode, { dateStyle: 'short', timeStyle: 'short' }).format(date)
 }
 
+const findAuthorInDirectory = (authorUserId?: string | null) => {
+  const normalizedAuthorId = normalizeIdentity(authorUserId)
+  if (!normalizedAuthorId) return null
+  return commentAuthorDirectory.value.find((author) => normalizeIdentity(author.id) === normalizedAuthorId) || null
+}
+
+const commentAuthorLabel = (comment: TransactionCommentView) => {
+  const authorUserId = String(comment.authorUserId || '')
+  const currentUserId = normalizeIdentity(props.currentUserId)
+  if (authorUserId && currentUserId && normalizeIdentity(authorUserId) === currentUserId) {
+    return t('transactionComments.you')
+  }
+
+  const commentWithOptionalIdentity = comment as TransactionCommentView & {
+    authorName?: string | null
+    authorDisplayName?: string | null
+    displayName?: string | null
+    username?: string | null
+    name?: string | null
+  }
+  const commentName = safeDisplayName(
+    commentWithOptionalIdentity.authorDisplayName
+      || commentWithOptionalIdentity.authorName
+      || commentWithOptionalIdentity.displayName
+      || commentWithOptionalIdentity.username
+      || commentWithOptionalIdentity.name
+  )
+  if (commentName) return commentName
+
+  const directoryAuthor = findAuthorInDirectory(authorUserId)
+  const directoryName = safeDisplayName(directoryAuthor?.displayName || directoryAuthor?.name || directoryAuthor?.username || null)
+  if (directoryName) return directoryName
+
+  return t('transactionComments.spaceMember')
+}
+
 const submit = () => {
   const body = draftComment.value.trim()
   if (!body) return
@@ -95,6 +152,29 @@ const submit = () => {
 </script>
 
 <style scoped>
+.comments-header {
+  align-items: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.comments-header span {
+  color: var(--cb-ink);
+  font-family: var(--cb-font-heading);
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.comments-header small {
+  color: #64748b;
+  font-size: 0.82rem;
+  font-weight: 500;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
 .comments-subtitle {
   color: #64748b;
   margin-bottom: 16px;
@@ -121,6 +201,12 @@ const submit = () => {
   font-size: 0.85rem;
 }
 
+.comment-card__header strong {
+  color: #334155;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .comment-card p {
   margin: 0;
   color: #1f2937;
@@ -135,9 +221,14 @@ const submit = () => {
 }
 
 .v-theme--dark .comments-subtitle,
+.v-theme--dark .comments-header small,
 .v-theme--dark .comment-card__header,
 .v-theme--dark .comments-empty {
   color: #cbd5e1;
+}
+
+.v-theme--dark .comment-card__header strong {
+  color: #ffffff;
 }
 
 .v-theme--dark .comment-card p {

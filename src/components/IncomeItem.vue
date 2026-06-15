@@ -1,26 +1,58 @@
 <template>
   <v-list-item class="income-item" @click="handleSelect">
-    <v-row align="center">
-      <v-col cols="9" md="8">
-        <v-list-item-title>
-          {{ income.description }}
-        </v-list-item-title>
+    <div class="income-item-layout">
+      <div class="income-content">
+        <div class="income-primary-row">
+          <v-list-item-title class="income-description">
+            {{ income.description }}
+          </v-list-item-title>
+          <span class="income-amount-text">{{ income.amount }}</span>
+        </div>
+
+        <div
+          v-if="income.isRecurring || income.reconciliationStatus || income.excludedFromPlanning"
+          class="income-status-row"
+        >
+          <v-chip
+            v-if="income.isRecurring"
+            color="blue"
+            dark
+            size="small"
+            variant="tonal"
+          >
+            {{ $t('incomeItem.recurring_income') }}
+          </v-chip>
+          <v-chip
+            v-if="income.reconciliationStatus"
+            :color="reconciliationColor"
+            size="small"
+            variant="tonal"
+          >
+            {{ reconciliationLabel }}
+          </v-chip>
+          <v-chip
+            v-if="income.excludedFromPlanning"
+            size="small"
+            color="warning"
+            variant="tonal"
+          >
+            {{ $t('incomeItem.excludedFromPlanning') }}
+          </v-chip>
+        </div>
+
         <div class="income-meta-line">
           <span class="income-date-text">{{ income.date }}</span>
-          <span v-if="income.openFinance" class="income-meta-tag">· {{ $t('incomeItem.open_finance') }}</span>
-          <span v-if="income.openFinanceDocumentType" class="income-meta-tag">· {{ income.openFinanceDocumentType }}</span>
-          <span v-if="paymentMethodLabel" class="income-meta-tag">· {{ paymentMethodLabel }}</span>
-          <span v-if="income.excludedFromPlanning" class="income-meta-tag income-meta-tag--warn">· {{ $t('incomeItem.excludedFromPlanning') }}</span>
-          <span v-if="income.visibilityScope === 'PRIVATE'" class="income-meta-tag">· {{ visibilityScopeLabel }}</span>
-          <v-chip v-if="income.reconciliationStatus" :color="reconciliationColor" size="x-small" variant="tonal" class="ml-1">{{ reconciliationLabel }}</v-chip>
+          <span v-if="income.openFinance" class="income-meta-tag income-meta-tag--origin">{{ $t('incomeItem.open_finance') }}</span>
+          <span v-if="income.visibilityScope === 'PRIVATE'" class="income-meta-tag">{{ visibilityScopeLabel }}</span>
+          <span v-if="paymentMethodLabel" class="income-meta-tag">{{ paymentMethodLabel }}</span>
         </div>
-        <div v-if="income.openFinance && income.openFinanceSharingLabel" class="of-sharing-row">
+
+        <div v-if="income.openFinance && income.openFinanceSharingLabel" class="of-sharing-row income-detail-row">
           <v-chip size="x-small" variant="tonal" :color="openFinanceSharingColor">
             {{ income.openFinanceSharingLabel }}
           </v-chip>
-          <span v-if="income.openFinanceSharingNote" class="of-sharing-note">{{ income.openFinanceSharingNote }}</span>
         </div>
-        <div v-if="income.reconciliationConflictId" class="conflict-resolution-row">
+        <div v-if="income.reconciliationConflictId" class="conflict-resolution-row income-detail-row">
           <v-btn
             size="x-small"
             variant="outlined"
@@ -42,62 +74,51 @@
             {{ $t('incomeItem.create_new') }}
           </v-btn>
         </div>
-        <v-chip
-          v-if="income.isRecurring"
-          color="blue"
-          dark
-          size="small"
-          class="mt-1"
+      </div>
+
+      <div class="income-btn-group">
+        <v-btn
+          v-if="income.visibilityScope === 'WORKSPACE'"
+          icon
+          size="x-small"
+          variant="text"
+          class="income-action-btn income-action-btn--share"
+          @click.stop="$emit('openComments', income)"
         >
-          {{ $t('incomeItem.recurring_income') }}
-        </v-chip>
-      </v-col>
-      <v-col cols="3" md="4" class="d-flex flex-column align-end income-actions">
-        <span class="income-amount-text">{{ income.amount }}</span>
-        <div class="income-btn-group d-flex align-center">
-          <v-btn
-            v-if="income.visibilityScope === 'WORKSPACE'"
-            icon
-            size="x-small"
-            variant="text"
-            class="income-action-btn income-action-btn--share"
-            @click.stop="$emit('openComments', income)"
-          >
-            <v-icon size="15">mdi-comment-text-outline</v-icon>
-          </v-btn>
-          <v-btn
-            icon
-            size="x-small"
-            variant="text"
-            class="income-action-btn income-action-btn--timer"
-            @click.stop="handleToggleRecurring"
-          >
-            <v-icon size="15">{{ income.isRecurring ? 'mdi-star-outline' : 'mdi-star' }}</v-icon>
-          </v-btn>
-          <v-btn
-            v-if="income.openFinance"
-            icon
-            size="x-small"
-            variant="text"
-            class="income-action-btn income-action-btn--planning"
-            :title="income.excludedFromPlanning ? $t('incomeItem.restorePlanning') : $t('incomeItem.excludeFromPlanning')"
-            @click.stop="$emit('togglePlanningExclusion', income)"
-          >
-            <v-icon size="15">{{ income.excludedFromPlanning ? 'mdi-plus-circle-outline' : 'mdi-minus-circle-outline' }}</v-icon>
-          </v-btn>
-          <v-btn
-            v-else
-            icon
-            size="x-small"
-            variant="text"
-            class="income-action-btn income-action-btn--delete"
-            @click.stop="$emit('deleteIncome', income)"
-          >
-            <v-icon size="15">mdi-delete</v-icon>
-          </v-btn>
-        </div>
-      </v-col>
-    </v-row>
+          <v-icon size="15">mdi-comment-text-outline</v-icon>
+        </v-btn>
+        <v-btn
+          icon
+          size="x-small"
+          variant="text"
+          class="income-action-btn income-action-btn--timer"
+          @click.stop="handleToggleRecurring"
+        >
+          <v-icon size="15">{{ income.isRecurring ? 'mdi-star-outline' : 'mdi-star' }}</v-icon>
+        </v-btn>
+        <v-btn
+          v-if="income.openFinance"
+          icon
+          size="x-small"
+          variant="text"
+          class="income-action-btn income-action-btn--planning"
+          :title="income.excludedFromPlanning ? $t('incomeItem.restorePlanning') : $t('incomeItem.excludeFromPlanning')"
+          @click.stop="$emit('togglePlanningExclusion', income)"
+        >
+          <v-icon size="15">{{ income.excludedFromPlanning ? 'mdi-plus-circle-outline' : 'mdi-minus-circle-outline' }}</v-icon>
+        </v-btn>
+        <v-btn
+          v-else
+          icon
+          size="x-small"
+          variant="text"
+          class="income-action-btn income-action-btn--delete"
+          @click.stop="$emit('deleteIncome', income)"
+        >
+          <v-icon size="15">mdi-delete</v-icon>
+        </v-btn>
+      </div>
+    </div>
 
     <!-- Diálogo para escolher a quantidade de meses -->
     <v-dialog v-model="recurrenceDialog" persistent max-width="400px">
@@ -209,9 +230,54 @@ export default {
   cursor: pointer;
 }
 
-.income-btn-group {
+.income-item-layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+}
+
+.income-content {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.income-primary-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+}
+
+.income-description {
+  min-width: 0;
+  color: var(--cb-ink);
+  font-family: var(--cb-font-heading);
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.35;
+  white-space: normal;
+}
+
+.income-status-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
-  opacity: 0.56;
+  margin-top: 6px;
+}
+
+.income-btn-group {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-width: 104px;
+  margin-top: 2px;
+  opacity: 0.38;
   transition: opacity 0.2s ease;
 }
 
@@ -221,10 +287,10 @@ export default {
 }
 
 .income-action-btn {
-  min-width: 36px !important;
-  width: 36px !important;
-  height: 36px !important;
-  border-radius: 9px !important;
+  min-width: 30px !important;
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 8px !important;
   color: rgba(15, 23, 42, 0.46) !important;
   transition:
     color 0.18s ease,
@@ -233,8 +299,8 @@ export default {
 }
 
 .income-action-btn .v-icon {
-  line-height: 36px;
-  font-size: 18px !important;
+  line-height: 30px;
+  font-size: 16px !important;
   transition: color 0.18s ease;
 }
 
@@ -300,15 +366,15 @@ export default {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin: 8px 0 4px;
+  margin: 0;
 }
 
 .income-meta-line {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 2px;
+  gap: 6px;
+  margin-top: 6px;
 }
 
 .of-sharing-row {
@@ -316,7 +382,7 @@ export default {
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  margin-top: 6px;
+  margin-top: 0;
 }
 
 .of-sharing-note {
@@ -335,11 +401,30 @@ export default {
   color: rgba(0, 0, 0, 0.45);
 }
 
+.income-meta-tag--origin {
+  color: rgba(0, 0, 0, 0.36);
+  font-weight: 500;
+}
+
+.income-meta-tag::before {
+  content: '·';
+  margin-right: 6px;
+  color: rgba(0, 0, 0, 0.32);
+}
+
 .income-amount-text {
-  font-weight: 600;
-  font-size: 0.9rem;
+  color: var(--cb-ink);
+  flex: 0 0 auto;
+  font-family: var(--cb-font-heading);
+  font-weight: 800;
+  font-size: 0.98rem;
+  line-height: 1.35;
   white-space: nowrap;
-  margin-bottom: 4px;
+  text-align: right;
+}
+
+.income-detail-row {
+  margin-top: 8px;
 }
 
 .v-theme--dark .income-date-text,
@@ -347,7 +432,32 @@ export default {
   color: rgba(255, 255, 255, 0.5);
 }
 
+.v-theme--dark .income-meta-tag::before {
+  color: rgba(255, 255, 255, 0.32);
+}
+
 .v-theme--dark .of-sharing-note {
   color: rgba(255, 255, 255, 0.64);
+}
+
+@media (max-width: 600px) {
+  .income-item-layout {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .income-primary-row {
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .income-btn-group {
+    width: 100%;
+    max-width: none;
+    justify-content: flex-start;
+    margin-left: 0;
+    margin-top: 4px;
+    opacity: 0.72;
+  }
 }
 </style>

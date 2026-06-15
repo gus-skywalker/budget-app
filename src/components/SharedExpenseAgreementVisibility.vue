@@ -82,7 +82,7 @@ const agreementSubtitle = (agreement: SharedExpenseAgreement) => {
 }
 
 const participantLabel = (participant: SharedExpenseParticipant) => {
-  return participant.displayName || participant.email || participant.userId || t('sharedExpenseAgreement.visibility.participant')
+  return participant.displayName || t('sharedExpenseAgreement.visibility.participant')
 }
 
 const participantKey = (participant: SharedExpenseParticipant) => {

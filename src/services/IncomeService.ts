@@ -35,7 +35,7 @@ const mapTransactionToIncome = (transaction: TransactionView) => ({
   paymentMethodName: transaction.paymentMethodName ?? null,
   isRecurring: false,
   status: transaction.status,
-  source: transaction.source ?? 'MANUAL',
+  source: transaction.source ?? null,
   accountId: transaction.accountId,
   accountName: transaction.accountName,
   openFinance: transaction.openFinance ?? false,
