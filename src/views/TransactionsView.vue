@@ -1205,6 +1205,7 @@ export default {
       } = this.expense
 
       const sanitizedSelectedUsers = Array.isArray(selectedUsers) ? [...selectedUsers] : []
+      const categorizationMetadata = this.categorizationMetadataForCategory(categoryId)
 
       return {
         date: normalizedDate,
@@ -1213,6 +1214,7 @@ export default {
         category: categoryId,
         paymentMethod: paymentMethodId,
         paymentMethodName: this.expense.paymentMethodName ?? null,
+        ...categorizationMetadata,
         selectedUsers: sanitizedSelectedUsers,
         accountId,
         visibilityScope,
@@ -1250,6 +1252,34 @@ export default {
     },
     openFinancePaymentMethodLabel(transaction) {
       return transaction?.paymentMethodName || this.$t('transactions.payment_method_not_informed_open_finance')
+    },
+    categorizationMetadataForCategory(categoryId) {
+      const suggestion = this.resolveActiveExpenseSuggestion()
+      if (!suggestion?.suggestedCategory?.id || Number(suggestion.suggestedCategory.id) !== Number(categoryId)) {
+        return {}
+      }
+      return this.categorizationMetadataFromSuggestion(suggestion)
+    },
+    categorizationMetadataFromSuggestion(suggestion) {
+      const source = this.normalizeAcceptedCategorizationSource(suggestion?.source)
+      if (!source) {
+        return {}
+      }
+      return {
+        categorizationSource: source,
+        categorizationReason: suggestion?.reasoning || null,
+        categorizationRuleId: null,
+      }
+    },
+    normalizeAcceptedCategorizationSource(source) {
+      const normalized = String(source || '').trim().toUpperCase()
+      if (normalized === 'HISTORY' || normalized === 'DOMAIN_ALIAS') {
+        return normalized
+      }
+      if (normalized === 'AI' || normalized === 'AI_FALLBACK') {
+        return 'AI'
+      }
+      return null
     },
     getExpenseSuggestionDetails(expense) {
       const suggestion = this.getStoredExpenseSuggestion(expense?.id)
@@ -1544,6 +1574,7 @@ export default {
             category: suggestion.suggestedCategory.id,
             paymentMethod: expense.paymentMethodId ?? this.resolvePaymentMethodId(expense.paymentMethod) ?? null,
             paymentMethodName: expense.paymentMethodName ?? null,
+            ...this.categorizationMetadataFromSuggestion(suggestion),
             selectedUsers: [],
             accountId: expense.accountId ?? null,
           })
@@ -1579,6 +1610,7 @@ export default {
           category: suggestedCategoryId,
           paymentMethod: expense.paymentMethodId ?? this.resolvePaymentMethodId(expense.paymentMethod) ?? null,
           paymentMethodName: expense.paymentMethodName ?? null,
+          ...this.categorizationMetadataFromSuggestion(suggestion),
           selectedUsers: Array.isArray(expense.users) ? expense.users.map((user) => user.id ?? user.userId).filter(Boolean) : [],
           accountId: expense.accountId ?? null,
         })

@@ -28,6 +28,11 @@ export interface TransactionView {
   categoryName?: string | null
   categoryDisplayColor?: string | null
   categoryDisplayIcon?: string | null
+  categorizationSource?: string | null
+  categorizationReason?: string | null
+  categorizationRuleId?: number | null
+  categorizedAt?: string | null
+  categorizedByUserId?: string | null
   paymentMethodId?: number | null
   paymentMethodName?: string | null
   accountId: string | null
@@ -52,6 +57,9 @@ export interface LedgerEntryRequest {
   categoryId?: number | null
   paymentMethodId?: number | null
   paymentMethodName?: string | null
+  categorizationSource?: string | null
+  categorizationReason?: string | null
+  categorizationRuleId?: number | null
 }
 
 export interface TransactionRequest {
