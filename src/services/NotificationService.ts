@@ -63,7 +63,23 @@ export interface TransactionShareEmailRequest {
   destinationEmail: string
 }
 
+export interface TransactionReminder {
+  id?: number
+  transactionId: string
+  alertDate: string
+  status?: string
+  methods: string[]
+  createdAt?: string
+  processedAt?: string | null
+}
+
+export interface TransactionReminderRequest {
+  alertDate: string
+  methods: string[]
+}
+
 const API_URL = `${import.meta.env.VITE_API_BASE_URL}/notifications`
+const TRANSACTIONS_API_URL = `${import.meta.env.VITE_API_BASE_URL}/transactions`
 
 const NotificationService = {
   getNotifications(): Promise<any> {
@@ -82,11 +98,14 @@ const NotificationService = {
   getAlertSettings(): Promise<any> {
     return axiosInterceptor.get(`${API_URL}/settings`)
   },
-  scheduleExpenseAlert(expenseRequest: any): Promise<any> {
-    return axiosInterceptor.post(`${API_URL}/alerts/schedule`, expenseRequest)
+  getTransactionReminder(transactionId: string): Promise<{ status: number; data?: TransactionReminder }> {
+    return axiosInterceptor.get(`${TRANSACTIONS_API_URL}/${transactionId}/reminder`)
   },
-  updateExpenseAlert(expenseRequest: any): Promise<any> {
-    return axiosInterceptor.put(`${API_URL}/alerts/update`, expenseRequest)
+  upsertTransactionReminder(transactionId: string, request: TransactionReminderRequest): Promise<{ data: TransactionReminder }> {
+    return axiosInterceptor.put(`${TRANSACTIONS_API_URL}/${transactionId}/reminder`, request)
+  },
+  deleteTransactionReminder(transactionId: string): Promise<void> {
+    return axiosInterceptor.delete(`${TRANSACTIONS_API_URL}/${transactionId}/reminder`)
   },
   sendTransactionShareEmail(request: TransactionShareEmailRequest): Promise<any> {
     return axiosInterceptor.post(`${API_URL}/transaction-share/email`, request)

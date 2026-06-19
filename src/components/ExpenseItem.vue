@@ -162,9 +162,9 @@
             {{ user.name }}
           </v-chip>
         </v-list-item-subtitle>
-        <v-list-item-subtitle v-if="hasAlerts" class="expense-detail-note">
+        <v-list-item-subtitle v-if="hasReminder" class="expense-detail-note">
           <v-chip color="orange" dark size="x-small">
-            {{ $t('expenseItem.alertConfigured') }}
+            {{ $t('expenseItem.reminderConfigured') }}
           </v-chip>
         </v-list-item-subtitle>
         <div v-if="sharedAgreements.length" class="agreement-summary-row expense-detail-row">
@@ -229,7 +229,8 @@
           icon
           size="x-small"
           variant="text"
-          @click.stop="openAlertDialog"
+          :title="$t('transactionReminder.title')"
+          @click.stop="$emit('openReminder', expense)"
           class="expense-action-btn expense-action-btn--timer"
         >
           <v-icon size="15">mdi-alarm</v-icon>
@@ -257,116 +258,6 @@
         </v-btn>
       </div>
     </div>
-
-    <v-dialog v-model="isAlertDialogOpen" max-width="600px">
-      <v-card>
-        <v-card-title>{{ $t('expenseItem.configureAlert') }}</v-card-title>
-        <v-divider></v-divider>
-
-        <v-card-text>
-          <v-list-subheader>{{ $t('expenseItem.configuredAlerts') }}</v-list-subheader>
-          <v-list dense v-if="expense.alerts && expense.alerts.length">
-            <v-list-item v-for="(alert, index) in expense.alerts" :key="index">
-              <v-list-item-title>
-                  <v-chip color="blue" dark>
-                    {{ $t('expenseItem.alertDate') }}: {{ formatAlertDate(alert.alertDate) }}
-                  </v-chip>
-              </v-list-item-title>
-              <v-list-item-subtitle>
-                  <v-chip color="green" dark>
-                    {{ $t('expenseItem.status') }}: {{ alert.status }}
-                  </v-chip>
-              </v-list-item-subtitle>
-              <v-list-item-subtitle>
-                <strong>{{ $t('expenseItem.methods') }}:</strong> {{ formatMethods(alert.methods) }}
-              </v-list-item-subtitle>
-              <v-list-item-subtitle>
-                <strong>{{ $t('expenseItem.recurrence') }}:</strong>
-                <span v-if="alert.recurrenceInterval">{{ formatRecurrence(alert.recurrenceInterval) }}</span>
-                <span v-else>{{ $t('expenseItem.notRecurring') }}</span>
-              </v-list-item-subtitle>
-            </v-list-item>
-          </v-list>
-          <v-list v-else>
-            <v-list-item>
-              <v-list-item-title>{{ $t('expenseItem.noAlerts') }}</v-list-item-title>
-            </v-list-item>
-          </v-list>
-
-          <v-divider class="my-4"></v-divider>
-          <v-list-subheader>{{ $t('expenseItem.configureNewAlert') }}</v-list-subheader>
-          <v-radio-group v-model="useDefaultAlertDays" row>
-            <v-radio :label="$t('expenseItem.useDefaultAlertDays', { days: defaultAlertDays })" :value="true"></v-radio>
-            <v-radio :label="$t('expenseItem.customAlertDays')" :value="false"></v-radio>
-          </v-radio-group>
-
-          <v-text-field
-            v-if="!useDefaultAlertDays"
-            v-model="customAlertDays"
-            type="number"
-            min="1"
-            max="30"
-            :label="$t('expenseItem.daysBeforeAlert')"
-            :placeholder="$t('expenseItem.daysBeforeAlertPlaceholder')"
-            :rules="customAlertDaysRules"
-            dense
-            outlined
-          >
-            <template #prepend>
-              <v-icon>mdi-calendar</v-icon>
-            </template>
-          </v-text-field>
-
-          <v-switch v-model="isRecurring" :label="$t('expenseItem.setAsRecurring')">
-            <template #prepend>
-              <v-icon>mdi-repeat</v-icon>
-            </template>
-          </v-switch>
-
-          <v-select
-            v-if="isRecurring"
-            v-model="recurrenceInterval"
-            :items="['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY']"
-            :label="$t('expenseItem.recurrenceInterval')"
-            :placeholder="$t('expenseItem.selectFrequency')"
-            dense
-            outlined
-          >
-            <template #prepend>
-              <v-icon>mdi-timer</v-icon>
-            </template>
-          </v-select>
-
-          <v-text-field
-            v-if="isRecurring"
-            v-model="recurrenceEndDate"
-            type="date"
-            :label="$t('expenseItem.recurrenceEndDate')"
-            dense
-            outlined
-          >
-            <template #prepend>
-              <v-icon>mdi-calendar-end</v-icon>
-            </template>
-          </v-text-field>
-        </v-card-text>
-
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn text @click="isAlertDialogOpen = false">{{ $t('common.cancel') }}</v-btn>
-          <v-btn color="red" text @click="resetAlertForm">{{ $t('expenseItem.reset') }}</v-btn>
-          <v-btn color="green" dark text @click="saveAlert">{{ $t('expenseItem.save') }}</v-btn>
-        </v-card-actions>
-      </v-card>
-
-      <v-snackbar v-model="snackbar" color="green" top>
-        {{ snackbarMessage }}
-        <template #action="{ attrs }">
-          <v-btn text v-bind="attrs" @click="snackbar = false">{{ $t('expenseItem.close') }}</v-btn>
-        </template>
-      </v-snackbar>
-    </v-dialog>
-
     <shared-expense-agreement-dialog
       v-model="isAgreementDialogOpen"
       :expense="expense"
@@ -393,9 +284,9 @@ export default {
       type: Object,
       required: true,
     },
-    alertSettings: {
+    reminderState: {
       type: Object,
-      default: () => null,
+      default: () => ({ status: 'notLoaded', reminder: null }),
     },
     resolvingAction: {
       type: String,
@@ -418,7 +309,7 @@ export default {
       default: false,
     },
   },
-  emits: ['deleteExpense', 'togglePlanningExclusion', 'sendReminder', 'select', 'resolveConflict', 'suggestCategory', 'applySuggestion', 'openComments', 'openAttachments', 'agreementCreated', 'agreementUpdated', 'agreementError'],
+  emits: ['deleteExpense', 'togglePlanningExclusion', 'select', 'resolveConflict', 'suggestCategory', 'applySuggestion', 'openComments', 'openAttachments', 'openReminder', 'agreementCreated', 'agreementUpdated', 'agreementError'],
   computed: {
     visibilityScopeLabel() {
       const scope = this.expense?.visibilityScope === 'PRIVATE' ? 'private' : 'workspace'
@@ -445,8 +336,8 @@ export default {
       if (tone === 'private') return 'grey';
       return 'var(--cb-primary)';
     },
-    hasAlerts() {
-      return Array.isArray(this.expense.alerts) && this.expense.alerts.length > 0;
+    hasReminder() {
+      return this.reminderState?.status === 'loaded' && Boolean(this.reminderState?.reminder);
     },
     translatedCategoryName() {
       const category = this.expense?.category;
@@ -484,8 +375,6 @@ export default {
     },
   },
   data() {
-    const defaultAlertDays = Number(this.alertSettings?.alertDaysBefore) || 3;
-
     return {
       categoryIcons: {
         groceries: 'mdi-cart',
@@ -506,55 +395,19 @@ export default {
       isAgreementDialogOpen: false,
       editingAgreement: null,
       isAgreementVisibilityOpen: false,
-      isAlertDialogOpen: false,
-      useDefaultAlertDays: true,
-      defaultAlertDays,
-      customAlertDays: defaultAlertDays,
-      isRecurring: false,
-      recurrenceInterval: null,
-      recurrenceEndDate: null,
-      customAlertDaysRules: [
-        (value) => !!value || this.$t('expenseItem.alertDaysRequired'),
-        (value) => value > 0 || this.$t('expenseItem.alertDaysPositive'),
-        (value) => value <= 30 || this.$t('expenseItem.alertDaysMax'),
-      ],
-      snackbar: false,
-      snackbarMessage: '',
       sharedAgreements: [],
     };
   },
   mounted() {
     this.sharedAgreements = this.expense.sharedAgreements || [];
-    this.initializeAlertState();
   },
   watch: {
-    alertSettings: {
-      handler(newSettings) {
-        const resolved = Number(newSettings?.alertDaysBefore) || 3;
-        this.defaultAlertDays = resolved;
-        if (this.useDefaultAlertDays) {
-          this.customAlertDays = resolved;
-        }
-      },
-      immediate: true,
-      deep: true,
-    },
     expense: {
       handler() {
         this.sharedAgreements = this.expense.sharedAgreements || [];
-        this.initializeAlertState();
       },
       immediate: true,
       deep: true,
-    },
-    isRecurring(newValue) {
-      if (!newValue) {
-        this.recurrenceInterval = null;
-        this.recurrenceEndDate = null;
-      } else {
-        this.recurrenceInterval = 'MONTHLY';
-        this.recurrenceEndDate = this.recurrenceEndDate || new Date().toISOString().split('T')[0];
-      }
     },
   },
   methods: {
@@ -563,29 +416,6 @@ export default {
         return;
       }
       this.$emit('select', this.expense);
-    },
-    initializeAlertState() {
-      const alerts = Array.isArray(this.expense?.alerts) ? this.expense.alerts : [];
-      const existingAlert = alerts.length ? alerts[0] : null;
-
-      if (existingAlert) {
-        const fallbackDays = this.defaultAlertDays;
-        const extractedDays = Number(
-          existingAlert.daysBefore ?? existingAlert.alertDaysBefore ?? existingAlert.daysBeforeAlert,
-        );
-
-        this.useDefaultAlertDays = !Number.isFinite(extractedDays);
-        this.customAlertDays = Number.isFinite(extractedDays) ? extractedDays : fallbackDays;
-        this.isRecurring = Boolean(existingAlert.recurrenceInterval);
-        this.recurrenceInterval = existingAlert.recurrenceInterval ?? null;
-        this.recurrenceEndDate = existingAlert.recurrenceEndDate ?? existingAlert.endDate ?? null;
-      } else {
-        this.useDefaultAlertDays = true;
-        this.customAlertDays = this.defaultAlertDays;
-        this.isRecurring = false;
-        this.recurrenceInterval = null;
-        this.recurrenceEndDate = null;
-      }
     },
     openAgreementDialog() {
       this.editingAgreement = this.sharedAgreements.length ? this.sharedAgreements[0] : null;
@@ -641,55 +471,6 @@ export default {
         style: 'currency',
         currency: 'BRL',
       }).format(Number.isFinite(number) ? number : 0);
-    },
-    openAlertDialog() {
-      this.isAlertDialogOpen = true;
-    },
-    formatAlertDate(date) {
-      const options = { year: 'numeric', month: 'long', day: 'numeric' };
-      return new Date(date).toLocaleDateString(this.getFormattingLocale(), options);
-    },
-    formatMethods(methods) {
-      return Array.isArray(methods) ? methods.join(', ') : '';
-    },
-    formatRecurrence(recurrenceInterval) {
-      const map = {
-        DAILY: this.$t('expenseItem.recurrenceOptions.daily'),
-        WEEKLY: this.$t('expenseItem.recurrenceOptions.weekly'),
-        MONTHLY: this.$t('expenseItem.recurrenceOptions.monthly'),
-        YEARLY: this.$t('expenseItem.recurrenceOptions.yearly'),
-      };
-      return map[recurrenceInterval] || this.$t('expenseItem.unknown');
-    },
-    getFormattingLocale() {
-      const locale = this.$i18n?.locale || 'pt';
-      if (locale === 'en') return 'en-US';
-      if (locale === 'fr') return 'fr-FR';
-      if (locale === 'es') return 'es-ES';
-      return 'pt-BR';
-    },
-    saveAlert() {
-      const daysBefore = this.useDefaultAlertDays ? this.defaultAlertDays : this.customAlertDays;
-
-      const alertData = {
-        expense: this.expense,
-        daysBefore,
-        isRecurring: this.isRecurring,
-        recurrenceInterval: this.isRecurring ? this.recurrenceInterval : null,
-        recurrenceEndDate: this.isRecurring ? this.recurrenceEndDate : null,
-      };
-
-      this.$emit('sendReminder', alertData);
-      this.snackbarMessage = this.$t('expenseItem.alertSaved');
-      this.snackbar = true;
-      this.isAlertDialogOpen = false;
-    },
-    resetAlertForm() {
-      this.useDefaultAlertDays = true;
-      this.customAlertDays = this.defaultAlertDays;
-      this.isRecurring = false;
-      this.recurrenceInterval = null;
-      this.recurrenceEndDate = null;
     },
   },
 };

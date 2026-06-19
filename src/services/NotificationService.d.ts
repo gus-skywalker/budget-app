@@ -80,6 +80,21 @@ declare module '@/services/NotificationService' {
     destinationEmail: string
   }
 
+  export interface TransactionReminder {
+    id?: number
+    transactionId: string
+    alertDate: string
+    status?: string
+    methods: string[]
+    createdAt?: string
+    processedAt?: string | null
+  }
+
+  export interface TransactionReminderRequest {
+    alertDate: string
+    methods: string[]
+  }
+
   export function accept(notificationId: number): Promise<void>
   export function decline(notificationId: number): Promise<void>
   export function getNotifications(): Promise<{ data: any[] }>
@@ -89,6 +104,7 @@ declare module '@/services/NotificationService' {
   export function getAlertSettings(): Promise<UserSettings>
   export function getPreferences(): Promise<{ data: NotificationPreferenceMap }>
   export function updatePreferences(preferences: NotificationPreferenceUpdate[]): Promise<{ data: NotificationPreferenceMap }>
-  export function scheduleExpenseAlert(notification: ExpenseNotification): Promise<void>
-  export function updateExpenseAlert(notification: ExpenseNotification): Promise<void>
+  export function getTransactionReminder(transactionId: string): Promise<{ status: number; data?: TransactionReminder }>
+  export function upsertTransactionReminder(transactionId: string, request: TransactionReminderRequest): Promise<{ data: TransactionReminder }>
+  export function deleteTransactionReminder(transactionId: string): Promise<void>
 }

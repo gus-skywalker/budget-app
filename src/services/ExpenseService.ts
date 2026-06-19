@@ -62,7 +62,6 @@ const mapTransactionToExpense = (transaction: TransactionView) => ({
   paymentMethodName: transaction.paymentMethodName ?? null,
   users: [],
   attachments: [],
-  alerts: [],
   group: null,
   groupId: null,
   status: transaction.status,

@@ -175,13 +175,13 @@
               v-for="(item, index) in filteredMonthlyExpenses"
               :key="index"
               :expense="item"
-              :alert-settings="alertSettings"
+              :reminder-state="reminderStateFor(item)"
               :resolving-action="resolvingConflictId === item.reconciliationConflictId ? resolvingConflictAction : null"
               :ai-suggesting="aiSuggestingExpenseId === item.id"
               :has-suggestion-ready="Boolean(getStoredExpenseSuggestion(item.id))"
               :suggestion-details="getExpenseSuggestionDetails(item)"
               :is-applying-suggestion="applyingExpenseSuggestionId === item.id"
-              @sendReminder="handleSendReminder"
+              @openReminder="openTransactionReminder"
               @openAttachments="openTransactionAttachments"
               @agreementCreated="handleSharedAgreementCreated"
               @agreementUpdated="handleSharedAgreementUpdated"
@@ -361,6 +361,21 @@
                 @click="handleTransactionAttachmentAction(selectedTransactionDetails)"
               >
                 {{ transactionAttachmentActionLabel(selectedTransactionDetails) }}
+              </v-btn>
+            </div>
+            <div v-if="canShowTransactionReminder(selectedTransactionDetails)" class="transaction-details-list__row transaction-details-list__row--action">
+              <div>
+                <span>{{ $t('transactions.details.personal_reminder') }}</span>
+                <strong>{{ transactionReminderStatusLabel(selectedTransactionDetails) }}</strong>
+              </div>
+              <v-btn
+                v-if="transactionReminderStatus(selectedTransactionDetails) !== 'loading'"
+                size="x-small"
+                variant="tonal"
+                color="var(--cb-primary)"
+                @click="handleTransactionReminderAction(selectedTransactionDetails)"
+              >
+                {{ transactionReminderActionLabel(selectedTransactionDetails) }}
               </v-btn>
             </div>
             <shared-expense-agreement-visibility
@@ -582,6 +597,17 @@
       @share="handleShareExpense"
       @retry="reloadActiveTransactionAttachments"
     />
+    <TransactionReminderDialog
+      v-if="transactionReminderDialog.expense"
+      v-model="transactionReminderDialog.show"
+      :transaction="transactionReminderDialog.expense"
+      :state="activeReminderState"
+      :saving="transactionReminderDialog.saving"
+      :deleting="transactionReminderDialog.deleting"
+      @save="saveTransactionReminder"
+      @remove="deleteTransactionReminder"
+      @retry="reloadActiveTransactionReminder"
+    />
     <SharedExpenseAgreementDialog
       v-if="transactionAgreementDialog.expense"
       v-model="transactionAgreementDialog.show"
@@ -599,6 +625,7 @@ import IncomeItem from '../components/IncomeItem.vue'
 import ExpenseItem from '../components/ExpenseItem.vue'
 import TransactionCommentsDialog from '@/components/TransactionCommentsDialog.vue'
 import TransactionAttachmentsDialog from '@/components/TransactionAttachmentsDialog.vue'
+import TransactionReminderDialog from '@/components/TransactionReminderDialog.vue'
 import SharedExpenseAgreementDialog from '@/components/SharedExpenseAgreementDialog.vue'
 import SharedExpenseAgreementVisibility from '@/components/SharedExpenseAgreementVisibility.vue'
 import IncomeService from '@/services/IncomeService'
@@ -723,6 +750,7 @@ export default {
     ExpenseItem,
     TransactionCommentsDialog,
     TransactionAttachmentsDialog,
+    TransactionReminderDialog,
     SharedExpenseAgreementDialog,
     SharedExpenseAgreementVisibility,
     PageHeader,
@@ -870,7 +898,13 @@ export default {
         expense: null,
       },
       attachmentStateByTransactionId: {},
-      alertSettings: null,
+      transactionReminderDialog: {
+        show: false,
+        expense: null,
+        saving: false,
+        deleting: false,
+      },
+      reminderStateByTransactionId: {},
       // --- drawer & tab state ---
       showFormDrawer: false,
       formMode: 'expense',
@@ -893,6 +927,9 @@ export default {
     },
     activeAttachmentState() {
       return this.attachmentStateFor(this.transactionAttachmentsDialog.expense)
+    },
+    activeReminderState() {
+      return this.reminderStateFor(this.transactionReminderDialog.expense)
     },
     financialAccountsHint() {
       return this.financialAccounts.length
@@ -1101,7 +1138,6 @@ export default {
     this.fetchFinancialAccounts();
     this.fetchOpenFinanceConnections();
     this.fetchShareableUsers();
-    this.fetchAlertSettings();
     this.fetchOpenFinanceConflicts();
     this.fetchMonthlyIncomes();
     this.fetchMonthlyExpenses();
@@ -1177,8 +1213,12 @@ export default {
       return this.canShowTransactionComments(transaction)
         || this.canShowTransactionAgreements(transaction)
         || this.canShowTransactionAttachments(transaction)
+        || this.canShowTransactionReminder(transaction)
     },
     canShowTransactionAttachments(transaction) {
+      return this.transactionDetailsPanel.type === 'expense' && Boolean(transaction?.id)
+    },
+    canShowTransactionReminder(transaction) {
       return this.transactionDetailsPanel.type === 'expense' && Boolean(transaction?.id)
     },
     emptyAttachmentState() {
@@ -1197,6 +1237,28 @@ export default {
       const previous = this.attachmentStateByTransactionId[transactionId] || this.emptyAttachmentState()
       this.attachmentStateByTransactionId = {
         ...this.attachmentStateByTransactionId,
+        [transactionId]: {
+          ...previous,
+          ...patch,
+        },
+      }
+    },
+    emptyReminderState() {
+      return {
+        status: 'notLoaded',
+        reminder: null,
+        error: null,
+      }
+    },
+    reminderStateFor(transaction) {
+      if (!transaction?.id) return this.emptyReminderState()
+      return this.reminderStateByTransactionId[transaction.id] || this.emptyReminderState()
+    },
+    setReminderState(transactionId, patch) {
+      if (!transactionId) return
+      const previous = this.reminderStateByTransactionId[transactionId] || this.emptyReminderState()
+      this.reminderStateByTransactionId = {
+        ...this.reminderStateByTransactionId,
         [transactionId]: {
           ...previous,
           ...patch,
@@ -1227,6 +1289,37 @@ export default {
     },
     handleTransactionAttachmentAction(transaction) {
       this.openTransactionAttachments(transaction)
+    },
+    transactionReminderStatus(transaction) {
+      return this.reminderStateFor(transaction).status
+    },
+    transactionReminderStatusLabel(transaction) {
+      const state = this.reminderStateFor(transaction)
+      if (state.status === 'loading') return this.$t('transactions.details.reminder_loading')
+      if (state.status === 'error') return this.$t('transactions.details.reminder_error')
+      if (state.status === 'notLoaded') return this.$t('transactions.details.reminder_not_loaded')
+      if (state.status === 'empty') return this.$t('transactions.details.no_reminder')
+      if (state.status === 'loaded' && state.reminder?.alertDate) {
+        return this.$t('transactions.details.reminder_configured', {
+          date: this.formatDetailsDateTime(state.reminder.alertDate),
+        })
+      }
+      return this.$t('transactions.details.no_reminder')
+    },
+    transactionReminderActionLabel(transaction) {
+      const state = this.reminderStateFor(transaction)
+      if (state.status === 'error') return this.$t('transactions.details.retry')
+      if (state.status === 'empty') return this.$t('transactions.details.create')
+      if (state.status === 'loaded') return this.$t('transactions.details.edit')
+      return this.$t('transactions.details.view')
+    },
+    handleTransactionReminderAction(transaction) {
+      const state = this.reminderStateFor(transaction)
+      if (state.status === 'error') {
+        this.loadTransactionReminder(transaction.id).catch(() => {})
+        return
+      }
+      this.openTransactionReminder(transaction)
     },
     canShowTransactionAgreements(transaction) {
       return this.transactionDetailsPanel.type === 'expense' && Boolean(transaction?.id)
@@ -1295,6 +1388,94 @@ export default {
         expense: currentExpense,
       }
       this.loadTransactionAttachments(expense.id).catch(() => {})
+    },
+    openTransactionReminder(expense) {
+      if (!expense?.id) return
+      const currentExpense = this.findMonthlyExpenseById(expense.id) || expense
+      const currentState = this.reminderStateFor(currentExpense)
+      this.transactionReminderDialog = {
+        show: true,
+        expense: currentExpense,
+        saving: false,
+        deleting: false,
+      }
+      if (currentState.status === 'notLoaded') {
+        this.loadTransactionReminder(expense.id).catch(() => {})
+      }
+    },
+    reloadActiveTransactionReminder() {
+      const expenseId = this.transactionReminderDialog.expense?.id
+      if (!expenseId) return
+      this.loadTransactionReminder(expenseId).catch(() => {})
+    },
+    loadTransactionReminder(expenseId) {
+      if (!expenseId) return Promise.resolve()
+      this.setReminderState(expenseId, { status: 'loading', error: null })
+      return NotificationService.getTransactionReminder(expenseId)
+        .then((response) => {
+          if (response?.status === 204 || !response?.data) {
+            this.setReminderState(expenseId, { status: 'empty', reminder: null, error: null })
+            return
+          }
+          this.setReminderState(expenseId, { status: 'loaded', reminder: response.data, error: null })
+        })
+        .catch((error) => {
+          console.error('Erro ao carregar lembrete:', error)
+          this.setReminderState(expenseId, {
+            status: 'error',
+            reminder: null,
+            error: this.$t('transactionReminder.load_error'),
+          })
+          throw error
+        })
+    },
+    saveTransactionReminder(payload) {
+      const transactionId = payload?.transactionId || this.transactionReminderDialog.expense?.id
+      if (!transactionId) return
+      this.transactionReminderDialog.saving = true
+      NotificationService.upsertTransactionReminder(transactionId, {
+        alertDate: payload.alertDate,
+        methods: payload.methods,
+      })
+        .then((response) => {
+          this.setReminderState(transactionId, {
+            status: 'loaded',
+            reminder: response.data,
+            error: null,
+          })
+          this.transactionReminderDialog.show = false
+          this.showToast(this.$t('transactionReminder.save_success'), 'success')
+        })
+        .catch((error) => {
+          console.error('Erro ao salvar lembrete:', error)
+          this.setReminderState(transactionId, {
+            status: 'error',
+            reminder: this.reminderStateByTransactionId[transactionId]?.reminder || null,
+            error: this.$t('transactionReminder.save_error'),
+          })
+          this.showToast(this.$t('transactionReminder.save_error'), 'error')
+        })
+        .finally(() => {
+          this.transactionReminderDialog.saving = false
+        })
+    },
+    deleteTransactionReminder() {
+      const transactionId = this.transactionReminderDialog.expense?.id
+      if (!transactionId) return
+      this.transactionReminderDialog.deleting = true
+      NotificationService.deleteTransactionReminder(transactionId)
+        .then(() => {
+          this.setReminderState(transactionId, { status: 'empty', reminder: null, error: null })
+          this.transactionReminderDialog.show = false
+          this.showToast(this.$t('transactionReminder.remove_success'), 'success')
+        })
+        .catch((error) => {
+          console.error('Erro ao remover lembrete:', error)
+          this.showToast(this.$t('transactionReminder.remove_error'), 'error')
+        })
+        .finally(() => {
+          this.transactionReminderDialog.deleting = false
+        })
     },
     reloadActiveTransactionAttachments() {
       const expenseId = this.transactionAttachmentsDialog.expense?.id
@@ -2483,15 +2664,6 @@ export default {
           this.users = []
         })
     },
-    fetchAlertSettings() {
-      NotificationService.getAlertSettings()
-        .then((response) => {
-          this.alertSettings = response.data || null
-        })
-        .catch((error) => {
-          console.error('Erro ao buscar configurações de alerta:', error)
-        })
-    },
     fetchOpenFinanceConflicts() {
       if (!this.canUseConnectedFinance) {
         this.openFinanceConflicts = []
@@ -3332,31 +3504,6 @@ export default {
           console.error('Erro ao baixar o anexo:', error)
           this.showToast('Falha ao baixar anexo', 'error')
         })
-    },
-    async handleSendReminder(alertData) {
-      const userStore = useUserStore();
-
-      const alarmData = {
-        user: userStore.getUser,
-        expense: alertData.expense,
-        daysBefore: alertData.daysBefore,
-        isRecurring: alertData.isRecurring,
-        recurrenceInterval: alertData.recurrenceInterval,
-        recurrenceEndDate: alertData.recurrenceEndDate,
-      };
-
-      try {
-
-        if (alertData.expense.alerts && alertData.expense.alerts.length > 0) {
-
-          await NotificationService.updateExpenseAlert(alarmData);
-        } else {
-
-          await NotificationService.scheduleExpenseAlert(alarmData);
-        }
-      } catch (error) {
-        console.error('Erro ao processar o alerta:', error);
-      }
     },
     showToast(message, color = 'success') {
       this.snackbar.text = message;
