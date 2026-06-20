@@ -1003,6 +1003,12 @@
   --cb-shadow-elevated:   0 8px 28px rgba(0, 0, 0, 0.60);
 }
 
+/* Vuetify applies theme classes to overlay roots. Keep the root transparent;
+   active overlays still use their scrim/content layers normally. */
+.v-overlay {
+  background: transparent !important;
+}
+
 /* System dark (when Vuetify not manually toggled) */
 @media (prefers-color-scheme: dark) {
   :root {
