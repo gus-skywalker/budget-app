@@ -10,12 +10,25 @@ export type ScenarioDeltaType =
   | 'MONTHLY_EXPENSE'
   | 'ONE_TIME_INCOME'
   | 'ONE_TIME_EXPENSE'
+  | 'INCOME_INCREASE'
+  | 'EXPENSE_INCREASE'
+  | 'INCOME_REDUCTION'
+  | 'EXPENSE_REDUCTION'
+  | 'PERCENT_INCOME_INCREASE'
+  | 'PERCENT_EXPENSE_INCREASE'
+  | 'PERCENT_INCOME_REDUCTION'
+  | 'PERCENT_EXPENSE_REDUCTION'
+
+export type ScenarioTemporalType = 'SINGLE' | 'FIXED_PERIOD' | 'ONGOING'
 
 export interface ScenarioDeltaInput {
   label?: string
   type: ScenarioDeltaType
+  temporalType?: ScenarioTemporalType
   amount: number
+  percentage?: number
   startMonthOffset?: number
+  endMonthOffset?: number
 }
 
 export interface ScenarioSimulationRequest {
@@ -40,6 +53,18 @@ export interface ScenarioForecastItem {
   status: string
 }
 
+export interface ScenarioProjectionItem {
+  period: string
+  baselineIncome: number
+  baselineExpense: number
+  baselineBalance: number
+  scenarioIncome: number
+  scenarioExpense: number
+  scenarioBalance: number
+  changeImpact: number
+  sources: string[]
+}
+
 export interface ScenarioSimulationResponse {
   scenarioName: string
   scenarioType?: string
@@ -55,6 +80,7 @@ export interface ScenarioSimulationResponse {
   impactedGoalsCount: number
   summary?: string
   forecast: ScenarioForecastItem[]
+  projection?: ScenarioProjectionItem[]
   impactedGoalNames: string[]
   debtComparison?: DebtPaymentComparison | null
 }
@@ -76,6 +102,7 @@ export interface SavedScenario {
   deltas: ScenarioDeltaInput[]
   lines?: ScenarioLine[]
   forecast?: ScenarioForecastItem[]
+  projection?: ScenarioProjectionItem[]
   impactedGoalNames?: string[]
   debtInput?: DebtPaymentScenarioInput | null
   debtComparison?: DebtPaymentComparison | null

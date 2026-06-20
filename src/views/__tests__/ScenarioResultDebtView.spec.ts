@@ -63,13 +63,22 @@ vi.mock('@/plugins/userStore', () => ({
 
 vi.mock('vue-i18n', () => ({
   useI18n: () => ({
-    locale: ref('pt'),
+    locale: ref('en'),
     t: (key: string) => {
       const messages: Record<string, string> = {
         'contentExperience.planning.scenarioResult.cheapestOption': 'Cheapest option',
         'contentExperience.planning.scenarioResult.recommendedOption': 'Recommended option',
-        'contentExperience.planning.scenarioResult.forecastDetails': 'Forecast details',
+        'contentExperience.planning.scenarioResult.forecastDetails': 'Projection rows',
         'contentExperience.planning.scenarioResult.saveAndCreateDecision': 'Save and create decision',
+        'planning.scenarios.table_month': 'Month',
+        'planning.scenarios.table_baseline_flow': 'Baseline income / expense',
+        'planning.scenarios.table_scenario_flow': 'Scenario income / expense',
+        'planning.scenarios.table_baseline': 'Baseline balance',
+        'planning.scenarios.table_scenario': 'Scenario balance',
+        'planning.scenarios.table_delta': 'Impact',
+        'planning.scenarios.table_sources': 'Sources',
+        'planning.scenarios.source_confirmed': 'Budget',
+        'planning.scenarios.source_scenario_change': 'Scenario change',
       }
       return messages[key] || key
     },
@@ -195,7 +204,7 @@ describe('ScenarioResultView debt scenario', () => {
     expect(wrapper.text()).toContain('Bridge credit')
     expect(wrapper.text()).toContain('Recommended option')
     expect(wrapper.text()).toContain('Installment card')
-    expect(wrapper.text()).not.toContain('Forecast details')
+    expect(wrapper.text()).not.toContain('Projection rows')
     expect(wrapper.text()).not.toContain('planning.scenarios.final_balance')
 
     const createDecisionButton = wrapper.findAll('button').find((button) => button.text().includes('Save and create decision'))
@@ -206,5 +215,73 @@ describe('ScenarioResultView debt scenario', () => {
     expect(scenarioServiceMock.save).toHaveBeenCalledTimes(1)
     expect(decisionServiceMock.createFromScenario).toHaveBeenCalledWith('scenario-debt-1')
     expect(routerPush).toHaveBeenCalled()
+  })
+
+  it('renders projection rows instead of legacy forecast rows for budget scenarios', async () => {
+    sessionStorage.clear()
+    sessionStorage.setItem(
+      'planning-scenario-latest-result',
+      JSON.stringify({
+        scenarioId: 'preview',
+        result: {
+          scenarioName: 'Budget change',
+          sourceType: 'BUDGET_BASED',
+          months: 2,
+          currentBalance: 1000,
+          baselineMonthlyNet: 600,
+          scenarioMonthlyImpact: -150,
+          projectedFinalBalance: 1900,
+          decisionStatus: 'WATCH',
+          availableForGoals: 450,
+          impactedGoalsCount: 0,
+          summary: 'Watch the expense ramp.',
+          forecast: [
+            {
+              month: '2026-07',
+              baselineProjectedBalance: 1600,
+              scenarioProjectedBalance: 1450,
+              deltaImpact: -150,
+              status: 'surplus',
+            },
+          ],
+          projection: [
+            {
+              period: '2026-07',
+              baselineIncome: 4000,
+              baselineExpense: 3400,
+              baselineBalance: 1600,
+              scenarioIncome: 4000,
+              scenarioExpense: 3550,
+              scenarioBalance: 1450,
+              changeImpact: -150,
+              sources: ['CONFIRMED', 'SCENARIO_CHANGE'],
+            },
+          ],
+          impactedGoalNames: [],
+        },
+      }),
+    )
+
+    const wrapper = mount(ScenarioResultView, {
+      global: {
+        plugins: [vuetify],
+        mocks: {
+          $t: (key: string) => key,
+        },
+      },
+    })
+
+    await flushPromises()
+    expect(wrapper.text()).toContain('Projection rows')
+
+    const projectionTitle = wrapper.findAll('.v-expansion-panel-title').find((item) => item.text().includes('Projection rows'))
+    expect(projectionTitle).toBeTruthy()
+    await projectionTitle!.trigger('click')
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('2026-07')
+    expect(wrapper.text()).toContain('Budget')
+    expect(wrapper.text()).toContain('Scenario change')
+    expect(wrapper.text()).toContain('R$4,000.00 / R$3,400.00')
   })
 })

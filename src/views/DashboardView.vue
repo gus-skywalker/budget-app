@@ -264,7 +264,7 @@
                   <span class="info-label">{{ $t('overview.goal_pace') }}</span>
                   <v-chip size="small" color="warning" variant="tonal">{{ paceStatusLabel(goal.paceStatus) }}</v-chip>
                 </div>
-                <p class="context-message">{{ goal.insightMessage }}</p>
+                <p class="context-message">{{ localizeKnownCashflowText(goal.insightMessage) }}</p>
               </div>
             </div>
           </div>
@@ -499,7 +499,7 @@
                   <span class="info-label">{{ $t('overview.goal_pace') }}</span>
                   <v-chip size="small" color="success" variant="tonal">{{ paceStatusLabel(goal.paceStatus) }}</v-chip>
                 </div>
-                <p class="context-message">{{ goal.insightMessage }}</p>
+                <p class="context-message">{{ localizeKnownCashflowText(goal.insightMessage) }}</p>
               </div>
             </div>
           </div>
@@ -513,6 +513,10 @@
       <section class="section-block">
         <div class="section-header">
           <h2 class="section-title">{{ $t('overview.projection_title') }}</h2>
+          <div class="section-meta-pill">
+            <v-icon size="16">mdi-history</v-icon>
+            <span>{{ $t('overview.projection_source_recent') }}</span>
+          </div>
         </div>
         <div v-if="hasProjectionData" class="projection-grid">
           <div class="projection-card">
@@ -910,7 +914,7 @@ export default {
         decisions.push({
           severity: 'high',
           title: this.$t('overview.decision_review_goal_title', { goal: primaryGoal.name }),
-          description: primaryGoal.insightMessage || this.$t('overview.decision_review_goal_desc'),
+          description: this.localizeKnownCashflowText(primaryGoal.insightMessage) || this.$t('overview.decision_review_goal_desc'),
           impact: this.$t('overview.decision_review_goal_impact', {
             amount: this.formatCurrency(primaryGoal.suggestedContributionAmount || 0),
           }),
@@ -935,7 +939,7 @@ export default {
         decisions.push({
           severity: 'opportunity',
           title: this.$t('overview.decision_accelerate_goal_title', { goal: firstGoal.name }),
-          description: firstGoal.insightMessage || this.$t('overview.decision_accelerate_goal_desc'),
+          description: this.localizeKnownCashflowText(firstGoal.insightMessage) || this.$t('overview.decision_accelerate_goal_desc'),
           impact: this.$t('overview.decision_accelerate_goal_impact', {
             amount: this.formatCurrency(firstGoal.suggestedContributionAmount || 0),
           }),
@@ -981,19 +985,20 @@ export default {
     },
     cashflowDecisionSummary() {
       const insights = Array.isArray(this.cashflowDecisionData?.insights) ? this.cashflowDecisionData.insights : []
-      return insights.find((item) => item && item.trim()) || ''
+      const text = insights.find((item) => item && item.trim()) || ''
+      return this.localizeKnownCashflowText(text)
     },
     cashflowPrimaryDriver() {
-      return this.cashflowDecisionData?.primaryDriver || this.cashflowFallbackPrimaryDriver
+      return this.localizeKnownCashflowText(this.cashflowDecisionData?.primaryDriver) || this.cashflowFallbackPrimaryDriver
     },
     cashflowRecommendedAction() {
-      return this.cashflowDecisionData?.recommendedAction || this.cashflowFallbackRecommendedAction
+      return this.localizeKnownCashflowText(this.cashflowDecisionData?.recommendedAction) || this.cashflowFallbackRecommendedAction
     },
     cashflowRecommendedActionAmount() {
       return Number(this.cashflowDecisionData?.recommendedActionAmount || this.cashflowDecisionData?.requiredMonthlyAdjustment || 0)
     },
     cashflowOpportunityMessage() {
-      return this.cashflowDecisionData?.opportunityMessage || this.cashflowFallbackOpportunity
+      return this.localizeKnownCashflowText(this.cashflowDecisionData?.opportunityMessage) || this.cashflowFallbackOpportunity
     },
     creditCardShareValue() {
       return Number(this.expensePredictionSummary?.creditCardShare || 0)
@@ -1246,6 +1251,62 @@ export default {
     },
   },
   methods: {
+    parseBackendAmount(value) {
+      const raw = String(value || '').trim()
+      if (!raw) return 0
+      if (raw.includes(',')) {
+        return Number(raw.replace(/\./g, '').replace(',', '.')) || 0
+      }
+      return Number(raw.replace(/,/g, '')) || 0
+    },
+    localizeKnownCashflowText(text) {
+      const value = String(text || '').trim()
+      if (!value) return ''
+
+      const amount = (raw) => this.formatCurrency(this.parseBackendAmount(raw))
+      let match = value.match(/^Your recent monthly cashflow is positive by about R\$ ([\d.,]+) on average\.$/)
+      if (match) return this.$t('overview.cashflow_insight_recent_positive', { amount: amount(match[1]) })
+      match = value.match(/^Your recent monthly cashflow is negative by about R\$ ([\d.,]+) on average\.$/)
+      if (match) return this.$t('overview.cashflow_insight_recent_negative', { amount: amount(match[1]) })
+      match = value.match(/^Recent monthly averages are around R\$ ([\d.,]+) in income and R\$ ([\d.,]+) in expenses\.$/)
+      if (match) return this.$t('overview.cashflow_insight_recent_averages', { income: amount(match[1]), expenses: amount(match[2]) })
+      match = value.match(/^At the current pace, (\d+) projected month\(s\) may end in deficit\.$/)
+      if (match) return this.$t('overview.cashflow_insight_projected_deficit', { count: Number(match[1]) })
+      if (value === 'At the current pace, the next projected months remain in surplus.') {
+        return this.$t('overview.cashflow_insight_projected_surplus')
+      }
+      match = value.match(/^(\d+) financial goal\(s\) are already at risk with the current pace\.$/)
+      if (match) return this.$t('overview.cashflow_insight_goals_at_risk', { count: Number(match[1]) })
+      match = value.match(/^(\d+) financial goal\(s\) are currently on track with your recent cashflow\.$/)
+      if (match) return this.$t('overview.cashflow_insight_goals_on_track', { count: Number(match[1]) })
+      match = value.match(/^A monthly adjustment of about R\$ ([\d.,]+) would stabilize the current cashflow pace\.$/)
+      if (match) return this.$t('overview.cashflow_insight_monthly_adjustment', { amount: amount(match[1]) })
+      match = value.match(/^Your recent cashflow leaves about R\$ ([\d.,]+) per month available for goals or strategic reserves\.$/)
+      if (match) return this.$t('overview.cashflow_insight_available_for_goals', { amount: amount(match[1]) })
+      match = value.match(/^Recent expenses are outpacing income by about R\$ ([\d.,]+) per month, which pressures the near-term cashflow\.$/)
+      if (match) return this.$t('overview.cashflow_primary_driver_negative', { amount: amount(match[1]) })
+      if (value === 'Reduce monthly outflows or increase income before the first projected deficit month.') {
+        return this.$t('overview.cashflow_recommended_action_negative')
+      }
+      match = value.match(/^The goal "(.+)" is the main source of pressure right now and needs about R\$ ([\d.,]+) more per month to stay on pace\.$/)
+      if (match) return this.$t('overview.cashflow_primary_driver_goal_with_amount', { goal: match[1], amount: amount(match[2]) })
+      if (value === 'Review the riskiest goal first and adjust the monthly contribution plan.') {
+        return this.$t('overview.cashflow_recommended_action_goal')
+      }
+      match = value.match(/^Recent income of about R\$ ([\d.,]+) per month is still covering expenses of around R\$ ([\d.,]+) without pushing the cashflow into deficit\.$/)
+      if (match) return this.$t('overview.cashflow_primary_driver_balanced', { income: amount(match[1]), expenses: amount(match[2]) })
+      if (value === 'Maintain the current pace and review whether part of the surplus should be reserved for goals.') {
+        return this.$t('overview.cashflow_recommended_action_positive')
+      }
+      match = value.match(/^You have room to accelerate the goal "(.+)" with roughly R\$ ([\d.,]+) per month of recent cashflow margin\.$/)
+      if (match) return this.$t('overview.cashflow_opportunity_goal', { goal: match[1], amount: amount(match[2]) })
+      match = value.match(/^At the current pace, you are about R\$ ([\d.,]+) per month short of reaching this goal on time\.$/)
+      if (match) return this.$t('overview.goal_insight_monthly_shortfall', { amount: amount(match[1]) })
+      if (value === 'There is not enough financial history yet to build a reliable cashflow trend.' || value === 'Cashflow insights are not available for this account yet.') {
+        return this.$t('overview.cashflow_insight_not_enough_history')
+      }
+      return value
+    },
     invalidateInFlightRequests() {
       const tokens = this.requestTokens || {}
       Object.keys(tokens).forEach((key) => {
@@ -2266,6 +2327,19 @@ export default {
   font-weight: 700;
   color: var(--cb-ink);
   margin: 0;
+}
+
+.section-meta-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--cb-primary) 9%, transparent);
+  color: var(--cb-primary);
+  font-size: .78rem;
+  font-weight: 700;
+  padding: 5px 9px;
+  white-space: nowrap;
 }
 
 /* ── Projection cards ────────────────────── */

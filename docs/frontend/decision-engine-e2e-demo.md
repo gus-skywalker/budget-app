@@ -39,6 +39,16 @@ Não enviar contexto para destinos que não consomem esse contexto.
 - Não reutilizar cenário atual implicitamente.
 - Reuso só é permitido quando explícito (`cloneFrom`/`resume`).
 
+### 3.4 Contrato visual da projeção
+- A tela de resultado deve mostrar projeção como comparação rápida, não como explicação longa.
+- O saldo inicial exibido no cenário deve bater com o saldo real agregado das contas quando houver contas no workspace.
+- O baseline mensal vem do orçamento ativo; se o orçamento for fixo/manual, ele é a base “sem cenário”.
+- O cenário é apenas a camada de mudanças sobre o baseline.
+- A tabela deve manter poucas colunas: mês, base, com cenário, impacto e fontes.
+- Receita/despesa ficam como texto secundário dentro das células de saldo, não como colunas extras.
+- Fontes aparecem como chips curtos (`Orçamento`, `Projetado`, `Mudança do cenário`, `Forecast legado`).
+- Evitar texto explicativo longo; o usuário precisa entender por varredura visual.
+
 ## 4) Governança de cenário após votos (imutabilidade)
 
 Se a decisão vinculada ao cenário já tiver pelo menos 1 voto:
@@ -64,6 +74,11 @@ Referência arquitetural: `docs/adr/ADR-005-scenario-versioning-after-decision-v
 2. Clique `Simulate scenario`.
 3. Confirme resultado em `/planning/scenarios/preview` (ou `:id` após salvar).
 4. Clique `Save scenario`.
+5. Confirme que os números-chave batem:
+   - saldo inicial igual ao saldo real do overview quando houver contas;
+   - base mensal igual ao orçamento ativo;
+   - impacto mensal igual à diferença entre base e cenário;
+   - média mensal igual à média dos impactos da tabela.
 
 ### 5.3 Decisão
 1. Na tela de resultado, clique `Create decision` (ou `Save and create decision`).

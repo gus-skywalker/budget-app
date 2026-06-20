@@ -39,10 +39,34 @@
     </div>
 
     <div class="change-inputs">
+      <v-select
+        :model-value="adjustment.valueMode"
+        @update:model-value="updateValueMode"
+        :items="valueModeOptions"
+        item-title="title"
+        item-value="value"
+        :label="t('contentExperience.planning.adjustmentCard.valueMode', 'Value mode')"
+        variant="outlined"
+        density="comfortable"
+        hide-details="auto"
+        class="change-input"
+      />
+      <v-select
+        :model-value="adjustment.temporalType"
+        @update:model-value="updateTemporalType"
+        :items="temporalOptions"
+        item-title="title"
+        item-value="value"
+        :label="t('contentExperience.planning.adjustmentCard.timing', 'Timing')"
+        variant="outlined"
+        density="comfortable"
+        hide-details="auto"
+        class="change-input"
+      />
       <v-text-field
-        :model-value="adjustment.monthlyChange"
-        @update:model-value="$emit('update:monthlyChange', $event)"
-        :label="t('contentExperience.planning.adjustmentCard.monthlyChange')"
+        :model-value="displayAmount"
+        @update:model-value="updateAmount"
+        :label="amountLabel"
         type="number"
         min="0"
         variant="outlined"
@@ -51,42 +75,263 @@
         class="change-input"
         :style="{ borderRadius: '8px' }"
       />
-      <v-text-field
-        :model-value="adjustment.oneTimeChange"
-        @update:model-value="$emit('update:oneTimeChange', $event)"
-        :label="t('contentExperience.planning.adjustmentCard.oneTimeChange')"
-        type="number"
-        min="0"
+      <v-select
+        :model-value="adjustment.startMonthOffset"
+        @update:model-value="updateStartMonth"
+        :items="monthOptions"
+        item-title="title"
+        item-value="value"
+        :label="t('contentExperience.planning.adjustmentCard.startMonth', 'Starts in')"
         variant="outlined"
         density="comfortable"
         hide-details="auto"
         class="change-input"
-        :style="{ borderRadius: '8px' }"
       />
+      <v-select
+        v-if="adjustment.temporalType === 'FIXED_PERIOD'"
+        :model-value="adjustment.endMonthOffset"
+        @update:model-value="updateEndMonth"
+        :items="endMonthOptions"
+        item-title="title"
+        item-value="value"
+        :label="t('contentExperience.planning.adjustmentCard.endMonth', 'Ends in')"
+        variant="outlined"
+        density="comfortable"
+        hide-details="auto"
+        class="change-input"
+      />
+    </div>
+
+    <div class="change-summary">
+      <v-icon size="18">mdi-calendar-check-outline</v-icon>
+      <span>{{ summaryText }}</span>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import type { ScenarioTemporalType } from '@/services/ScenarioService'
+import type { AdjustmentValueMode } from '@/utils/scenarioWizard'
 
-defineProps<{
+const props = defineProps<{
   adjustment: {
     label?: string
     flow: 'INCOME' | 'EXPENSE'
+    valueMode: AdjustmentValueMode
+    temporalType: ScenarioTemporalType
+    amount: number
+    percentage: number
+    startMonthOffset: number
+    endMonthOffset: number | null
     monthlyChange: number
     oneTimeChange: number
   }
 }>()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const flowOptions = ['INCOME', 'EXPENSE'] as const
-defineEmits([
+const emit = defineEmits([
   'update:label',
   'update:flow',
+  'update:valueMode',
+  'update:temporalType',
+  'update:amount',
+  'update:percentage',
+  'update:startMonthOffset',
+  'update:endMonthOffset',
   'update:monthlyChange',
   'update:oneTimeChange',
   'remove'
 ])
+
+const valueModeOptions = computed(() => [
+  { title: t('contentExperience.planning.adjustmentCard.amountMode', 'Fixed value'), value: 'AMOUNT' },
+  { title: t('contentExperience.planning.adjustmentCard.percentageMode', 'Percentage of budget'), value: 'PERCENTAGE' },
+])
+
+const temporalOptions = computed(() => [
+  { title: t('contentExperience.planning.adjustmentCard.ongoing', 'Every month') },
+  { title: t('contentExperience.planning.adjustmentCard.fixedPeriod', 'For a period') },
+  { title: t('contentExperience.planning.adjustmentCard.single', 'One time'), value: 'SINGLE' },
+].map((item, index) => ({
+  ...item,
+  value: (['ONGOING', 'FIXED_PERIOD', 'SINGLE'] as const)[index],
+})))
+
+const monthFormatterLocale = computed(() => {
+  if (locale.value === 'en') return 'en-US'
+  if (locale.value === 'fr') return 'fr-FR'
+  if (locale.value === 'es') return 'es-ES'
+  return 'pt-BR'
+})
+
+const monthLabel = (offset: number) => {
+  const date = new Date()
+  date.setDate(1)
+  date.setMonth(date.getMonth() + 1 + Math.max(0, Math.trunc(Number(offset || 0))))
+  const label = new Intl.DateTimeFormat(monthFormatterLocale.value, {
+    month: 'short',
+    year: 'numeric',
+  }).format(date)
+  return label.replace('.', '')
+}
+
+const monthOptions = computed(() =>
+  Array.from({ length: 24 }, (_, offset) => ({
+    title: offset === 0
+      ? t('contentExperience.planning.adjustmentCard.nextMonthLabel', { month: monthLabel(offset) })
+      : monthLabel(offset),
+    value: offset,
+  })),
+)
+
+const normalizedStartOffset = computed(() => Math.max(0, Math.trunc(Number(props.adjustment.startMonthOffset || 0))))
+
+const normalizedEndOffset = computed(() => {
+  const raw = props.adjustment.endMonthOffset == null
+    ? normalizedStartOffset.value
+    : Number(props.adjustment.endMonthOffset || 0)
+  return Math.max(normalizedStartOffset.value, Math.trunc(raw))
+})
+
+const endMonthOptions = computed(() =>
+  monthOptions.value
+    .filter((item) => item.value >= normalizedStartOffset.value)
+    .map((item) => ({
+      ...item,
+      title: `${item.title} · ${durationLabel(item.value)}`,
+    })),
+)
+
+const displayAmount = computed(() => {
+  if (props.adjustment.valueMode === 'PERCENTAGE') {
+    return props.adjustment.percentage || 0
+  }
+  return props.adjustment.amount || (
+    props.adjustment.temporalType === 'SINGLE'
+      ? props.adjustment.oneTimeChange
+      : props.adjustment.monthlyChange
+  )
+})
+
+const amountLabel = computed(() => {
+  if (props.adjustment.valueMode === 'PERCENTAGE') {
+    return t('contentExperience.planning.adjustmentCard.percentageChange', 'Percentage')
+  }
+  if (props.adjustment.temporalType === 'SINGLE') {
+    return t('contentExperience.planning.adjustmentCard.oneTimeChange')
+  }
+  return t('contentExperience.planning.adjustmentCard.monthlyChange')
+})
+
+const valueSummary = computed(() => {
+  const target = props.adjustment.flow === 'INCOME'
+    ? t('contentExperience.planning.adjustmentCard.incomeTarget', 'income')
+    : t('contentExperience.planning.adjustmentCard.expenseTarget', 'expense')
+  const value = Number(displayAmount.value || 0)
+  if (props.adjustment.valueMode === 'PERCENTAGE') {
+    return t('contentExperience.planning.adjustmentCard.summaryPercentage', {
+      target,
+      value: formatNumber(value),
+    })
+  }
+  return t('contentExperience.planning.adjustmentCard.summaryAmount', {
+    target,
+    value: formatCurrency(value),
+  })
+})
+
+const durationMonths = computed(() => {
+  if (props.adjustment.temporalType === 'SINGLE') return 1
+  if (props.adjustment.temporalType === 'FIXED_PERIOD') {
+    return normalizedEndOffset.value - normalizedStartOffset.value + 1
+  }
+  return null
+})
+
+const durationLabel = (endOffset: number) => {
+  const months = endOffset - normalizedStartOffset.value + 1
+  return t('contentExperience.planning.adjustmentCard.durationMonths', { count: months })
+}
+
+const timingSummary = computed(() => {
+  const start = monthLabel(normalizedStartOffset.value)
+  if (props.adjustment.temporalType === 'SINGLE') {
+    return t('contentExperience.planning.adjustmentCard.summarySingle', { month: start })
+  }
+  if (props.adjustment.temporalType === 'FIXED_PERIOD') {
+    return t('contentExperience.planning.adjustmentCard.summaryFixed', {
+      start,
+      end: monthLabel(normalizedEndOffset.value),
+      count: durationMonths.value || 1,
+    })
+  }
+  return t('contentExperience.planning.adjustmentCard.summaryOngoing', { month: start })
+})
+
+const summaryText = computed(() => `${timingSummary.value} · ${valueSummary.value}`)
+
+const formatNumber = (value: number) =>
+  Number(value || 0).toLocaleString(monthFormatterLocale.value, {
+    maximumFractionDigits: 2,
+  })
+
+const formatCurrency = (value: number) =>
+  Number(value || 0).toLocaleString(monthFormatterLocale.value, {
+    style: 'currency',
+    currency: 'BRL',
+  })
+
+const updateValueMode = (value: AdjustmentValueMode) => {
+  emit('update:valueMode', value)
+  if (value === 'PERCENTAGE') {
+    emit('update:amount', 0)
+    emit('update:percentage', props.adjustment.percentage || 0)
+    return
+  }
+  const amount = props.adjustment.amount || props.adjustment.monthlyChange || props.adjustment.oneTimeChange || 0
+  emit('update:amount', amount)
+}
+
+const updateTemporalType = (value: ScenarioTemporalType) => {
+  emit('update:temporalType', value)
+  if (value === 'FIXED_PERIOD' && props.adjustment.endMonthOffset == null) {
+    emit('update:endMonthOffset', normalizedStartOffset.value)
+  }
+  if (value !== 'FIXED_PERIOD') {
+    emit('update:endMonthOffset', null)
+  }
+}
+
+const updateStartMonth = (value: number) => {
+  const start = Math.max(0, Math.trunc(Number(value || 0)))
+  emit('update:startMonthOffset', start)
+  if (props.adjustment.temporalType === 'FIXED_PERIOD' && normalizedEndOffset.value < start) {
+    emit('update:endMonthOffset', start)
+  }
+}
+
+const updateEndMonth = (value: number) => {
+  const end = Math.max(normalizedStartOffset.value, Math.trunc(Number(value || 0)))
+  emit('update:endMonthOffset', end)
+}
+
+const updateAmount = (value: unknown) => {
+  const numeric = Number(value || 0)
+  emit('update:amount', numeric)
+  if (props.adjustment.valueMode === 'PERCENTAGE') {
+    emit('update:percentage', numeric)
+    return
+  }
+  if (props.adjustment.temporalType === 'SINGLE') {
+    emit('update:oneTimeChange', numeric)
+    emit('update:monthlyChange', 0)
+    return
+  }
+  emit('update:monthlyChange', numeric)
+  emit('update:oneTimeChange', 0)
+}
 </script>
 
 <style scoped>
@@ -151,8 +396,26 @@ defineEmits([
 
 .change-inputs {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+}
+
+.change-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--cb-primary) 8%, transparent);
+  color: var(--cb-ink-secondary);
+  font-size: .88rem;
+  font-weight: 600;
+  line-height: 1.35;
+  padding: 10px 12px;
+}
+
+.change-summary :deep(.v-icon) {
+  color: var(--cb-primary);
+  flex: 0 0 auto;
 }
 @media (max-width: 600px) {
   .change-inputs {

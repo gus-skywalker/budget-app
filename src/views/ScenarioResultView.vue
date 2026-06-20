@@ -207,22 +207,34 @@
                       <th>{{ t('planning.scenarios.table_baseline') }}</th>
                       <th>{{ t('planning.scenarios.table_scenario') }}</th>
                       <th>{{ t('planning.scenarios.table_delta') }}</th>
+                      <th>{{ t('planning.scenarios.table_sources') }}</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="item in result.forecast" :key="item.month">
-                      <td :data-label="t('planning.scenarios.table_month')">{{ item.month }}</td>
+                    <tr v-for="item in projectionRows" :key="item.period">
+                      <td :data-label="t('planning.scenarios.table_month')">{{ item.period }}</td>
                       <td :data-label="t('planning.scenarios.table_baseline')">
-                        {{ formatCurrency(item.baselineProjectedBalance) }}
+                        <div class="projection-cell">
+                          <strong>{{ formatCurrency(item.baselineBalance) }}</strong>
+                          <span v-if="!item.isLegacyForecast">{{ formatFlow(item.baselineIncome, item.baselineExpense) }}</span>
+                        </div>
                       </td>
                       <td :data-label="t('planning.scenarios.table_scenario')">
-                        {{ formatCurrency(item.scenarioProjectedBalance) }}
+                        <div class="projection-cell">
+                          <strong>{{ formatCurrency(item.scenarioBalance) }}</strong>
+                          <span v-if="!item.isLegacyForecast">{{ formatFlow(item.scenarioIncome, item.scenarioExpense) }}</span>
+                        </div>
                       </td>
                       <td
                         :data-label="t('planning.scenarios.table_delta')"
-                        :class="{ 'negative-value': item.deltaImpact < 0 }"
+                        :class="{ 'negative-value': item.changeImpact < 0, 'positive-value': item.changeImpact > 0 }"
                       >
-                        {{ formatCurrency(item.deltaImpact) }}
+                        {{ formatSignedCurrency(item.changeImpact) }}
+                      </td>
+                      <td :data-label="t('planning.scenarios.table_sources')">
+                        <div class="source-chips">
+                          <span v-for="source in sourceLabels(item.sources)" :key="source">{{ source }}</span>
+                        </div>
                       </td>
                     </tr>
                   </tbody>
@@ -325,6 +337,7 @@ import AlertStrip from '@/components/AlertStrip.vue'
 import DecisionService from '@/services/DecisionService'
 import ScenarioService, {
   type SavedScenario,
+  type ScenarioProjectionItem,
   type ScenarioSimulationResponse
 } from '@/services/ScenarioService'
 import BudgetService from '@/services/BudgetService'
@@ -372,6 +385,10 @@ const isSpeechSupported = computed(() =>
   typeof window !== 'undefined' && 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window
 )
 
+type ProjectionDisplayRow = ScenarioProjectionItem & {
+  isLegacyForecast?: boolean
+}
+
 const snapshot = reactive<ScenarioWizardSnapshot>({
   scenarioName: '',
   months: 6,
@@ -404,13 +421,43 @@ const scenarioMonthlyNet = computed(() =>
 )
 
 const baselineFinalBalance = computed(() => {
-  const forecast = result.value?.forecast || []
-  const last = forecast[forecast.length - 1]
-  if (last) return Number(last.baselineProjectedBalance || 0)
+  const last = projectionRows.value[projectionRows.value.length - 1]
+  if (last) return Number(last.baselineBalance || 0)
   return (
     Number(result.value?.currentBalance || 0) +
     Number(result.value?.baselineMonthlyNet || 0) * Number(result.value?.months || 0)
   )
+})
+
+const projectionRows = computed<ProjectionDisplayRow[]>(() => {
+  const projection = result.value?.projection
+  if (Array.isArray(projection) && projection.length) {
+    return projection.map((item) => ({
+      period: item.period,
+      baselineIncome: Number(item.baselineIncome || 0),
+      baselineExpense: Number(item.baselineExpense || 0),
+      baselineBalance: Number(item.baselineBalance || 0),
+      scenarioIncome: Number(item.scenarioIncome || 0),
+      scenarioExpense: Number(item.scenarioExpense || 0),
+      scenarioBalance: Number(item.scenarioBalance || 0),
+      changeImpact: Number(item.changeImpact || 0),
+      sources: Array.isArray(item.sources) ? item.sources : [],
+    }))
+  }
+
+  const forecast = result.value?.forecast || []
+  return forecast.map((item) => ({
+    period: item.month,
+    baselineIncome: 0,
+    baselineExpense: 0,
+    baselineBalance: Number(item.baselineProjectedBalance || 0),
+    scenarioIncome: 0,
+    scenarioExpense: 0,
+    scenarioBalance: Number(item.scenarioProjectedBalance || 0),
+    changeImpact: Number(item.deltaImpact || 0),
+    sources: ['LEGACY_FORECAST'],
+    isLegacyForecast: true,
+  }))
 })
 
 const formatCurrency = (value: number) =>
@@ -428,6 +475,22 @@ const formatCurrency = (value: number) =>
 const formatSignedCurrency = (value: number) => {
   const absolute = formatCurrency(Math.abs(value))
   return value > 0 ? `+${absolute}` : value < 0 ? `-${absolute}` : absolute
+}
+
+const formatFlow = (income: number, expense: number) => {
+  if (!income && !expense) return '—'
+  return `${formatCurrency(income)} / ${formatCurrency(expense)}`
+}
+
+const sourceLabels = (sources: string[] = []) => {
+  if (!sources.length) return ['—']
+  const labels: Record<string, string> = {
+    CONFIRMED: t('planning.scenarios.source_confirmed', 'Budget'),
+    PROJECTED: t('planning.scenarios.source_projected', 'Projected'),
+    SCENARIO_CHANGE: t('planning.scenarios.source_scenario_change', 'Scenario change'),
+    LEGACY_FORECAST: t('planning.scenarios.source_legacy_forecast', 'Legacy forecast'),
+  }
+  return sources.map((source) => labels[source] || source)
 }
 
 const projectionBasisText = computed(() => {
@@ -641,6 +704,7 @@ const buildResultFromSavedScenario = (saved: SavedScenario): ScenarioSimulationR
   impactedGoalsCount: Number(saved.impactedGoalsCount || 0),
   summary: saved.summary || '',
   forecast: saved.forecast || [],
+  projection: saved.projection || [],
   impactedGoalNames: saved.impactedGoalNames || [],
   debtComparison: saved.debtComparison || null
 })
@@ -652,7 +716,11 @@ const hasPersistedScenarioResult = (saved: SavedScenario): boolean => {
     saved.scenarioMonthlyImpact != null ||
     saved.impactedGoalsCount != null
   if (saved.sourceType === 'MANUAL_TYPED') return hasMetrics
-  return hasMetrics && Array.isArray(saved.forecast) && saved.forecast.length > 0
+  return (
+    hasMetrics &&
+    ((Array.isArray(saved.projection) && saved.projection.length > 0) ||
+      (Array.isArray(saved.forecast) && saved.forecast.length > 0))
+  )
 }
 
 const loadResult = async () => {
@@ -1110,6 +1178,39 @@ onUnmounted(() => {
   text-align: left;
   padding: 8px;
   border-bottom: 1px solid var(--cb-border);
+}
+
+.projection-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.projection-cell strong {
+  font-size: .96rem;
+}
+
+.projection-cell span {
+  color: var(--cb-ink-muted);
+  font-size: .78rem;
+  white-space: nowrap;
+}
+
+.source-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.source-chips span {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--cb-primary) 10%, transparent);
+  color: var(--cb-primary);
+  font-size: .72rem;
+  font-weight: 700;
+  padding: 3px 7px;
+  white-space: nowrap;
 }
 
 .empty-results {

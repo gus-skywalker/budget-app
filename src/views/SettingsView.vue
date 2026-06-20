@@ -918,6 +918,9 @@ const appVoicePreview = computed(() => t(`account_management.app_voice.previews.
 // Watch para aplicar o tema quando o switch mudar
 watch(darkTheme, (newValue) => {
   theme.global.name.value = newValue ? 'dark' : 'light';
+  requestAnimationFrame(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  });
 });
 
 watch(locale, () => {

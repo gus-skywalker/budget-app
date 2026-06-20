@@ -1,13 +1,29 @@
 import type { Budget } from '@/services/BudgetService'
-import type { SavedScenario, ScenarioDeltaInput, ScenarioDeltaType, ScenarioLine, ScenarioLineAdjustment, ScenarioSimulationRequest } from '@/services/ScenarioService'
+import type {
+  SavedScenario,
+  ScenarioDeltaInput,
+  ScenarioDeltaType,
+  ScenarioLine,
+  ScenarioLineAdjustment,
+  ScenarioSimulationRequest,
+  ScenarioTemporalType,
+} from '@/services/ScenarioService'
 import i18n from '@/i18n'
 
 export type AdjustmentFlow = 'INCOME' | 'EXPENSE'
+export type AdjustmentValueMode = 'AMOUNT' | 'PERCENTAGE'
 
 export type SimpleScenarioAdjustment = {
   id: string
   label?: string
   flow: AdjustmentFlow
+  originalDeltaType?: ScenarioDeltaType
+  valueMode: AdjustmentValueMode
+  temporalType: ScenarioTemporalType
+  amount: number
+  percentage: number
+  startMonthOffset: number
+  endMonthOffset: number | null
   monthlyChange: number
   oneTimeChange: number
 }
@@ -27,14 +43,38 @@ export type ScenarioWizardSnapshot = {
   scenarioLines: EditableScenarioLine[]
 }
 
-const STORAGE_KEY = 'planning-scenario-wizard-v2'
+const STORAGE_KEY = 'planning-scenario-wizard-v3'
+
+const numberOrZero = (value: unknown): number => {
+  const numeric = Number(value || 0)
+  return Number.isFinite(numeric) ? numeric : 0
+}
 
 export const createAdjustment = (defaults?: Partial<SimpleScenarioAdjustment>): SimpleScenarioAdjustment => ({
   id: defaults?.id || crypto.randomUUID(),
   label: defaults?.label || '',
   flow: defaults?.flow || 'EXPENSE',
-  monthlyChange: Number(defaults?.monthlyChange || 0),
-  oneTimeChange: Number(defaults?.oneTimeChange || 0),
+  originalDeltaType: defaults?.originalDeltaType,
+  valueMode: defaults?.valueMode || 'AMOUNT',
+  temporalType:
+    defaults?.temporalType ||
+    (numberOrZero(defaults?.oneTimeChange) > 0 && numberOrZero(defaults?.monthlyChange) === 0
+      ? 'SINGLE'
+      : 'ONGOING'),
+  amount:
+    defaults?.amount != null
+      ? numberOrZero(defaults.amount)
+      : numberOrZero(defaults?.oneTimeChange) > 0 && numberOrZero(defaults?.monthlyChange) === 0
+        ? numberOrZero(defaults?.oneTimeChange)
+        : numberOrZero(defaults?.monthlyChange),
+  percentage: numberOrZero(defaults?.percentage),
+  startMonthOffset: Math.max(0, Math.trunc(numberOrZero(defaults?.startMonthOffset))),
+  endMonthOffset:
+    defaults?.endMonthOffset == null
+      ? null
+      : Math.max(0, Math.trunc(numberOrZero(defaults.endMonthOffset))),
+  monthlyChange: numberOrZero(defaults?.monthlyChange),
+  oneTimeChange: numberOrZero(defaults?.oneTimeChange),
 })
 
 export const buildScenarioLinesFromBudget = (budget?: Budget | null): EditableScenarioLine[] => {
@@ -65,35 +105,77 @@ const flowToType = (flow: AdjustmentFlow, periodicity: 'MONTHLY' | 'ONE_TIME'): 
 }
 
 const typeToFlow = (type: ScenarioDeltaType): AdjustmentFlow =>
-  type === 'MONTHLY_INCOME' || type === 'ONE_TIME_INCOME' ? 'INCOME' : 'EXPENSE'
+  type === 'MONTHLY_INCOME' ||
+  type === 'ONE_TIME_INCOME' ||
+  type === 'INCOME_INCREASE' ||
+  type === 'PERCENT_INCOME_INCREASE' ||
+  type === 'EXPENSE_REDUCTION' ||
+  type === 'PERCENT_EXPENSE_REDUCTION'
+    ? 'INCOME'
+    : 'EXPENSE'
+
+const isPercentageDeltaType = (type: ScenarioDeltaType) => type.startsWith('PERCENT_')
+
+const percentageTypeForFlow = (flow: AdjustmentFlow): ScenarioDeltaType =>
+  flow === 'INCOME' ? 'PERCENT_INCOME_INCREASE' : 'PERCENT_EXPENSE_INCREASE'
+
+const typeForAdjustment = (
+  adjustment: SimpleScenarioAdjustment,
+  temporalType: ScenarioTemporalType,
+): ScenarioDeltaType => {
+  if (adjustment.originalDeltaType?.includes('REDUCTION')) {
+    return adjustment.originalDeltaType
+  }
+  if (adjustment.valueMode === 'PERCENTAGE') {
+    return percentageTypeForFlow(adjustment.flow)
+  }
+  return flowToType(adjustment.flow, temporalType === 'SINGLE' ? 'ONE_TIME' : 'MONTHLY')
+}
+
+const inferTemporalType = (delta: ScenarioDeltaInput): ScenarioTemporalType => {
+  if (delta.temporalType) return delta.temporalType
+  if (delta.type === 'ONE_TIME_INCOME' || delta.type === 'ONE_TIME_EXPENSE') return 'SINGLE'
+  if (delta.endMonthOffset != null) return 'FIXED_PERIOD'
+  return 'ONGOING'
+}
+
+const amountForAdjustment = (adjustment: SimpleScenarioAdjustment): number => {
+  if (adjustment.valueMode === 'PERCENTAGE') {
+    return numberOrZero(adjustment.percentage || adjustment.amount)
+  }
+  if (adjustment.amount > 0) return numberOrZero(adjustment.amount)
+  return adjustment.temporalType === 'SINGLE'
+    ? numberOrZero(adjustment.oneTimeChange)
+    : numberOrZero(adjustment.monthlyChange)
+}
 
 export const buildManualDeltas = (adjustments: SimpleScenarioAdjustment[]): ScenarioDeltaInput[] =>
-  adjustments.flatMap((adjustment, index) => {
-    const labelBase = adjustment.label?.trim() || `Change ${index + 1}`
-    const monthlyAmount = Number(adjustment.monthlyChange || 0)
-    const oneTimeAmount = Number(adjustment.oneTimeChange || 0)
-    const items: ScenarioDeltaInput[] = []
+  adjustments
+    .map<ScenarioDeltaInput | null>((adjustment, index) => {
+      const labelBase = adjustment.label?.trim() || `Change ${index + 1}`
+      const value = amountForAdjustment(adjustment)
+      if (value <= 0) return null
 
-    if (monthlyAmount > 0) {
-      items.push({
-        label: `${labelBase} (monthly)`,
-        type: flowToType(adjustment.flow, 'MONTHLY'),
-        amount: monthlyAmount,
-        startMonthOffset: 0,
-      })
-    }
+      const temporalType = adjustment.temporalType || 'ONGOING'
+      const isPercentage = adjustment.valueMode === 'PERCENTAGE'
+      const type = typeForAdjustment(adjustment, temporalType)
+      const startMonthOffset = Math.max(0, Math.trunc(numberOrZero(adjustment.startMonthOffset)))
+      const endMonthOffset =
+        temporalType === 'FIXED_PERIOD'
+          ? Math.max(startMonthOffset, Math.trunc(numberOrZero(adjustment.endMonthOffset ?? startMonthOffset)))
+          : undefined
 
-    if (oneTimeAmount > 0) {
-      items.push({
-        label: `${labelBase} (one-time)`,
-        type: flowToType(adjustment.flow, 'ONE_TIME'),
-        amount: oneTimeAmount,
-        startMonthOffset: 0,
-      })
-    }
-
-    return items
-  })
+      return {
+        label: labelBase,
+        type,
+        temporalType,
+        amount: value,
+        percentage: isPercentage ? value : undefined,
+        startMonthOffset,
+        endMonthOffset,
+      }
+    })
+    .filter((item): item is ScenarioDeltaInput => item !== null)
 
 export const buildLineDerivedDeltas = (scenarioLines: EditableScenarioLine[]): ScenarioDeltaInput[] =>
   scenarioLines
@@ -149,45 +231,29 @@ export const mapDeltasToSimpleAdjustments = (deltas: ScenarioDeltaInput[] = []):
   const meaningfulDeltas = deltas.filter((delta) => !String(delta.label || '').startsWith('Baseline adjustment:'))
   if (!meaningfulDeltas.length) return [createAdjustment()]
 
-  const grouped = new Map<string, { label: string; flow: AdjustmentFlow; monthlyChange: number; oneTimeChange: number }>()
-
-  meaningfulDeltas.forEach((delta, index) => {
+  return meaningfulDeltas.map((delta, index) => {
     const flow = typeToFlow(delta.type)
-    const isMonthly = delta.type === 'MONTHLY_INCOME' || delta.type === 'MONTHLY_EXPENSE'
+    const temporalType = inferTemporalType(delta)
+    const valueMode = isPercentageDeltaType(delta.type) ? 'PERCENTAGE' : 'AMOUNT'
+    const value = numberOrZero(valueMode === 'PERCENTAGE' ? delta.percentage ?? delta.amount : delta.amount)
     const label = String(delta.label || '').trim()
-    const hasGeneratedSuffix = /\((monthly|one-time)\)\s*$/i.test(label)
     const baseLabel = label.replace(/\s*\((monthly|one-time)\)\s*$/i, '').trim()
-    const key = hasGeneratedSuffix
-      ? `${flow}:${baseLabel || 'change'}`
-      : `${flow}:${baseLabel || `delta-${index + 1}`}:${isMonthly ? 'm' : 'o'}`
 
-    const existing = grouped.get(key)
-    if (existing) {
-      if (isMonthly) {
-        existing.monthlyChange += Number(delta.amount || 0)
-      } else {
-        existing.oneTimeChange += Number(delta.amount || 0)
-      }
-      return
-    }
-
-    grouped.set(key, {
+    return createAdjustment({
+      id: `${index + 1}`,
       label: baseLabel,
       flow,
-      monthlyChange: isMonthly ? Number(delta.amount || 0) : 0,
-      oneTimeChange: isMonthly ? 0 : Number(delta.amount || 0),
+      originalDeltaType: delta.type,
+      valueMode,
+      temporalType,
+      amount: value,
+      percentage: valueMode === 'PERCENTAGE' ? value : 0,
+      startMonthOffset: numberOrZero(delta.startMonthOffset),
+      endMonthOffset: delta.endMonthOffset == null ? null : numberOrZero(delta.endMonthOffset),
+      monthlyChange: temporalType === 'SINGLE' ? 0 : value,
+      oneTimeChange: temporalType === 'SINGLE' ? value : 0,
     })
   })
-
-  return Array.from(grouped.values()).map((item, index) =>
-    createAdjustment({
-      id: `${index + 1}`,
-      label: item.label,
-      flow: item.flow,
-      monthlyChange: item.monthlyChange,
-      oneTimeChange: item.oneTimeChange,
-    }),
-  )
 }
 
 export const snapshotFromSavedScenario = (
@@ -212,7 +278,7 @@ export const saveWizardSnapshot = (snapshot: ScenarioWizardSnapshot) => {
 }
 
 export const loadWizardSnapshot = (): ScenarioWizardSnapshot | null => {
-  const raw = window.sessionStorage.getItem(STORAGE_KEY)
+  const raw = window.sessionStorage.getItem(STORAGE_KEY) || window.sessionStorage.getItem('planning-scenario-wizard-v2')
   if (!raw) return null
   try {
     const parsed = JSON.parse(raw) as ScenarioWizardSnapshot
@@ -232,10 +298,13 @@ export const loadWizardSnapshot = (): ScenarioWizardSnapshot | null => {
 
 export const clearWizardSnapshot = () => {
   window.sessionStorage.removeItem(STORAGE_KEY)
+  window.sessionStorage.removeItem('planning-scenario-wizard-v2')
 }
 
 export const monthlyImpactEstimate = (snapshot: ScenarioWizardSnapshot): number =>
   buildManualDeltas(snapshot.adjustments).reduce((total, delta) => {
+    if (delta.type.startsWith('PERCENT_')) return total
+    if (delta.temporalType === 'SINGLE') return total
     if (delta.type === 'MONTHLY_INCOME') return total + Number(delta.amount || 0)
     if (delta.type === 'MONTHLY_EXPENSE') return total - Number(delta.amount || 0)
     return total

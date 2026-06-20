@@ -62,45 +62,22 @@
           </div>
 
           <div class="adjustments-list">
-            <div v-for="adjustment in snapshot.adjustments" :key="adjustment.id" class="adjustment-card">
-              <div class="adjustment-row">
-                <v-text-field
-                  v-model="adjustment.label"
-                  :label="t('contentExperience.planning.scenarioEditor.labelField', 'Label (optional)')"
-                  variant="outlined"
-                  density="comfortable"
-                  hide-details="auto"
-                />
-                <v-btn-toggle v-model="adjustment.flow" mandatory divided color="var(--cb-primary)">
-                  <v-btn value="INCOME">{{ t('common.income', 'Income') }}</v-btn>
-                  <v-btn value="EXPENSE">{{ t('common.expense', 'Expense') }}</v-btn>
-                </v-btn-toggle>
-              </div>
-
-              <div class="adjustment-row adjustment-row--numbers">
-                <v-text-field
-                  v-model.number="adjustment.monthlyChange"
-                  :label="t('contentExperience.planning.scenarioEditor.monthlyChangeField', 'Monthly change')"
-                  type="number"
-                  min="0"
-                  variant="outlined"
-                  density="comfortable"
-                  hide-details="auto"
-                />
-                <v-text-field
-                  v-model.number="adjustment.oneTimeChange"
-                  :label="t('contentExperience.planning.scenarioEditor.oneTimeChangeField', 'One-time change')"
-                  type="number"
-                  min="0"
-                  variant="outlined"
-                  density="comfortable"
-                  hide-details="auto"
-                />
-                <v-btn icon variant="text" color="error" @click="removeAdjustment(adjustment.id)">
-                  <v-icon>mdi-delete-outline</v-icon>
-                </v-btn>
-              </div>
-            </div>
+            <ScenarioChangeCard
+              v-for="(adjustment, idx) in snapshot.adjustments"
+              :key="adjustment.id"
+              :adjustment="adjustment"
+              @update:label="(val) => (snapshot.adjustments[idx].label = val)"
+              @update:flow="(val) => (snapshot.adjustments[idx].flow = val)"
+              @update:valueMode="(val) => (snapshot.adjustments[idx].valueMode = val)"
+              @update:temporalType="(val) => (snapshot.adjustments[idx].temporalType = val)"
+              @update:amount="(val) => (snapshot.adjustments[idx].amount = Number(val || 0))"
+              @update:percentage="(val) => (snapshot.adjustments[idx].percentage = Number(val || 0))"
+              @update:startMonthOffset="(val) => (snapshot.adjustments[idx].startMonthOffset = Number(val || 0))"
+              @update:endMonthOffset="(val) => (snapshot.adjustments[idx].endMonthOffset = val == null || val === '' ? null : Number(val))"
+              @update:monthlyChange="(val) => (snapshot.adjustments[idx].monthlyChange = val)"
+              @update:oneTimeChange="(val) => (snapshot.adjustments[idx].oneTimeChange = val)"
+              @remove="removeAdjustment(adjustment.id)"
+            />
           </div>
 
           <div class="editor-actions-inline">
@@ -149,6 +126,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import PageHeader from '@/components/PageHeader.vue'
+import ScenarioChangeCard from '@/components/ScenarioChangeCard.vue'
 import BudgetService from '@/services/BudgetService'
 import ScenarioService from '@/services/ScenarioService'
 import DecisionService from '@/services/DecisionService'
