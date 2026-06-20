@@ -224,6 +224,16 @@
                     >
                       {{ $t('categories_page.deactivate') }}
                     </v-btn>
+                    <v-btn
+                      v-if="!category.systemDefined && category.active === false"
+                      size="small"
+                      variant="text"
+                      color="success"
+                      :loading="activatingCategoryId === category.id"
+                      @click="activateCategory(category)"
+                    >
+                      {{ $t('categories_page.activate') }}
+                    </v-btn>
                   </div>
                 </article>
               </div>
@@ -399,6 +409,16 @@
                   >
                     {{ $t('categories_page.deactivate') }}
                   </v-btn>
+                  <v-btn
+                    v-if="tag.active === false"
+                    size="small"
+                    variant="text"
+                    color="success"
+                    :loading="activatingTagId === tag.id"
+                    @click="activateTag(tag)"
+                  >
+                    {{ $t('categories_page.activate') }}
+                  </v-btn>
                 </div>
               </article>
             </div>
@@ -507,6 +527,16 @@
                     size="small"
                     variant="outlined"
                     color="var(--cb-primary)"
+                    :loading="previewingAutomationId === automation.id"
+                    :disabled="automation.active === false"
+                    @click="previewAutomation(automation)"
+                  >
+                    {{ $t('categories_page.preview') }}
+                  </v-btn>
+                  <v-btn
+                    size="small"
+                    variant="outlined"
+                    color="var(--cb-primary)"
                     :loading="applyingAutomationId === automation.id"
                     :disabled="automation.active === false"
                     @click="applyAutomation(automation)"
@@ -526,6 +556,45 @@
                   >
                     {{ $t('categories_page.deactivate') }}
                   </v-btn>
+                  <v-btn
+                    v-if="automation.active === false"
+                    size="small"
+                    variant="text"
+                    color="success"
+                    :loading="activatingAutomationId === automation.id"
+                    @click="activateAutomation(automation)"
+                  >
+                    {{ $t('categories_page.activate') }}
+                  </v-btn>
+                </div>
+
+                <div v-if="automationPreviews[automation.id]" class="automation-preview-panel">
+                  <div class="automation-preview-panel__summary">
+                    {{
+                      $t('categories_page.automation_preview_summary', {
+                        candidates: automationPreviews[automation.id].candidates,
+                        evaluated: automationPreviews[automation.id].evaluated,
+                      })
+                    }}
+                  </div>
+                  <div v-if="automationPreviews[automation.id].examples.length" class="automation-preview-panel__examples">
+                    <div
+                      v-for="example in automationPreviews[automation.id].examples"
+                      :key="`${example.transactionId}-${example.suggestedCategoryId}`"
+                      class="automation-preview-example"
+                    >
+                      <div>
+                        <strong>{{ example.description }}</strong>
+                        <span>{{ example.reason }}</span>
+                      </div>
+                      <v-chip size="small" variant="tonal" color="primary">
+                        {{ automationPreviewCategoryName(example.suggestedCategoryId) }}
+                      </v-chip>
+                    </div>
+                  </div>
+                  <p v-else class="automation-preview-panel__empty">
+                    {{ $t('categories_page.automation_preview_empty') }}
+                  </p>
                 </div>
               </article>
             </div>
@@ -913,6 +982,23 @@ interface ApiAutomationItem {
   active?: boolean
 }
 
+interface AutomationPreviewExample {
+  transactionId: string
+  description: string
+  amount?: number | string | null
+  date?: string | null
+  currentCategoryId?: number | null
+  suggestedCategoryId: number
+  reason?: string | null
+}
+
+interface AutomationPreview {
+  ruleId: number
+  evaluated: number
+  candidates: number
+  examples: AutomationPreviewExample[]
+}
+
 const { locale, t } = useI18n()
 const router = useRouter()
 const userStore = useUserStore()
@@ -946,11 +1032,13 @@ const editorDisplayIcon = ref<string | null>('mdi-shape-outline')
 const editingCategoryId = ref<number | null>(null)
 const savingCategory = ref(false)
 const deactivatingCategoryId = ref<number | null>(null)
+const activatingCategoryId = ref<number | null>(null)
 const editingTagId = ref<number | null>(null)
 const tagEditorName = ref('')
 const tagEditorColor = ref<string | null>('#667EEA')
 const savingTag = ref(false)
 const deactivatingTagId = ref<number | null>(null)
+const activatingTagId = ref<number | null>(null)
 const editingAutomationId = ref<number | null>(null)
 const automationEditorName = ref('')
 const automationEditorOperator = ref<AutomationOperator>('CONTAINS')
@@ -959,7 +1047,10 @@ const automationEditorCategoryId = ref<number | null>(null)
 const automationEditorOverwrite = ref(false)
 const savingAutomation = ref(false)
 const deactivatingAutomationId = ref<number | null>(null)
+const activatingAutomationId = ref<number | null>(null)
 const applyingAutomationId = ref<number | null>(null)
+const previewingAutomationId = ref<number | null>(null)
+const automationPreviews = ref<Record<number, AutomationPreview>>({})
 const busyBankCategoryId = ref<string | null>(null)
 const mappingSelections = ref<Record<string, number | null>>({})
 const feedback = ref<{ type: 'success' | 'error'; message: string }>({
@@ -1161,6 +1252,33 @@ const mapApiAutomation = (automation: ApiAutomationItem): AutomationItem | null 
   }
 }
 
+const mapApiAutomationPreview = (payload: any): AutomationPreview => ({
+  ruleId: Number(payload?.ruleId || 0),
+  evaluated: Number(payload?.evaluated || 0),
+  candidates: Number(payload?.candidates || 0),
+  examples: Array.isArray(payload?.examples)
+    ? payload.examples
+      .map((example: any): AutomationPreviewExample | null => {
+        const transactionId = String(example?.transactionId || '').trim()
+        const description = String(example?.description || '').trim()
+        const suggestedCategoryId = Number(example?.suggestedCategoryId)
+        if (!transactionId || !description || !Number.isFinite(suggestedCategoryId)) {
+          return null
+        }
+        return {
+          transactionId,
+          description,
+          amount: example?.amount ?? null,
+          date: typeof example?.date === 'string' ? example.date : null,
+          currentCategoryId: typeof example?.currentCategoryId === 'number' ? example.currentCategoryId : null,
+          suggestedCategoryId,
+          reason: typeof example?.reason === 'string' ? example.reason : null,
+        }
+      })
+      .filter((example: AutomationPreviewExample | null): example is AutomationPreviewExample => Boolean(example))
+    : [],
+})
+
 const parentCategoryOptions = computed(() =>
   categoriesWithMappings.value
     .filter((category) =>
@@ -1193,6 +1311,10 @@ const automationCategoryName = (automation: AutomationItem) =>
   categoriesWithMappings.value.find((category) => category.id === automation.targetCategoryId)?.name
     || automation.targetCategoryName
     || 'Categoria selecionada'
+
+const automationPreviewCategoryName = (categoryId: number) =>
+  categoriesWithMappings.value.find((category) => category.id === categoryId)?.name
+    || t('categories_page.selected_category_fallback')
 
 const fetchCategories = async () => {
   loading.value = true
@@ -1277,6 +1399,7 @@ const fetchAutomations = async () => {
     const automationsResponse = await DataService.listCategoryAutomations()
     const payload: ApiAutomationItem[] = Array.isArray(automationsResponse.data) ? automationsResponse.data : []
     automations.value = payload.map(mapApiAutomation).filter((automation): automation is AutomationItem => Boolean(automation))
+    automationPreviews.value = {}
   } catch (error) {
     console.error('Erro ao carregar automações:', error)
     feedback.value = {
@@ -1588,6 +1711,29 @@ const deactivateCategory = async (category: CategoryItem) => {
   }
 }
 
+const activateCategory = async (category: CategoryItem) => {
+  if (!category.id) {
+    return
+  }
+
+  activatingCategoryId.value = category.id
+  try {
+    await DataService.activateCategory(category.id)
+    feedback.value = {
+      type: 'success',
+      message: t('categories_page.category_activate_success'),
+    }
+    await fetchCategories()
+  } catch (error: any) {
+    feedback.value = {
+      type: 'error',
+      message: error?.response?.data?.message || t('categories_page.category_activate_error'),
+    }
+  } finally {
+    activatingCategoryId.value = null
+  }
+}
+
 const deactivateTag = async (tag: TagItem) => {
   deactivatingTagId.value = tag.id
   try {
@@ -1607,6 +1753,25 @@ const deactivateTag = async (tag: TagItem) => {
   }
 }
 
+const activateTag = async (tag: TagItem) => {
+  activatingTagId.value = tag.id
+  try {
+    await DataService.activateTag(tag.id)
+    feedback.value = {
+      type: 'success',
+      message: t('categories_page.tag_activate_success'),
+    }
+    await fetchTags()
+  } catch (error: any) {
+    feedback.value = {
+      type: 'error',
+      message: error?.response?.data?.message || t('categories_page.tag_activate_error'),
+    }
+  } finally {
+    activatingTagId.value = null
+  }
+}
+
 const deactivateAutomation = async (automation: AutomationItem) => {
   deactivatingAutomationId.value = automation.id
   try {
@@ -1623,6 +1788,43 @@ const deactivateAutomation = async (automation: AutomationItem) => {
     }
   } finally {
     deactivatingAutomationId.value = null
+  }
+}
+
+const activateAutomation = async (automation: AutomationItem) => {
+  activatingAutomationId.value = automation.id
+  try {
+    await DataService.activateCategoryAutomation(automation.id)
+    feedback.value = {
+      type: 'success',
+      message: t('categories_page.automation_activate_success'),
+    }
+    await fetchAutomations()
+  } catch (error: any) {
+    feedback.value = {
+      type: 'error',
+      message: error?.response?.data?.message || t('categories_page.automation_activate_error'),
+    }
+  } finally {
+    activatingAutomationId.value = null
+  }
+}
+
+const previewAutomation = async (automation: AutomationItem) => {
+  previewingAutomationId.value = automation.id
+  try {
+    const response = await DataService.previewCategoryAutomation(automation.id)
+    automationPreviews.value = {
+      ...automationPreviews.value,
+      [automation.id]: mapApiAutomationPreview(response?.data),
+    }
+  } catch (error: any) {
+    feedback.value = {
+      type: 'error',
+      message: error?.response?.data?.message || t('categories_page.automation_preview_error'),
+    }
+  } finally {
+    previewingAutomationId.value = null
   }
 }
 
@@ -1947,6 +2149,51 @@ watch(locale, () => {
   margin-top: 14px;
   flex-wrap: wrap;
 }
+
+.automation-preview-panel {
+  border: 1px solid var(--cb-border-card);
+  border-radius: 8px;
+  background: var(--cb-surface-soft);
+  margin-top: 16px;
+  padding: 14px;
+}
+
+.automation-preview-panel__summary {
+  color: var(--cb-ink);
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.automation-preview-panel__examples {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.automation-preview-example {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--cb-border-card);
+  border-radius: 8px;
+  background: var(--cb-surface);
+  padding: 12px;
+}
+
+.automation-preview-example strong {
+  display: block;
+  color: var(--cb-ink);
+  font-size: 0.95rem;
+}
+
+.automation-preview-example span,
+.automation-preview-panel__empty {
+  color: var(--cb-ink-muted);
+  font-size: 0.88rem;
+}
+
+.automation-preview-panel__empty { margin: 0; }
 
 .automation-condition-grid {
   display: grid;

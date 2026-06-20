@@ -59,6 +59,10 @@ export default {
     return axiosInterceptor.delete(`${API_URL}/categories/${id}`)
   },
 
+  activateCategory(id: number): Promise<any> {
+    return axiosInterceptor.post(`${API_URL}/categories/${id}/activate`, {})
+  },
+
   listTags(): Promise<any> {
     return axiosInterceptor.get(`${API_URL}/tags`)
   },
@@ -75,6 +79,10 @@ export default {
     return axiosInterceptor.delete(`${API_URL}/tags/${id}`)
   },
 
+  activateTag(id: number): Promise<any> {
+    return axiosInterceptor.post(`${API_URL}/tags/${id}/activate`, {})
+  },
+
   listCategoryAutomations(): Promise<any> {
     return axiosInterceptor.get(`${API_URL}/category-automations`)
   },
@@ -89,6 +97,10 @@ export default {
 
   deactivateCategoryAutomation(id: number): Promise<any> {
     return axiosInterceptor.delete(`${API_URL}/category-automations/${id}`)
+  },
+
+  activateCategoryAutomation(id: number): Promise<any> {
+    return axiosInterceptor.post(`${API_URL}/category-automations/${id}/activate`, {})
   },
 
   applyCategoryAutomation(id: number): Promise<any> {

@@ -540,20 +540,24 @@ async function handleNewsletterSubmit() {
 
 <style scoped>
 #blog-page {
-  --page-bg: #f8fafc;
-  --surface: #ffffff;
-  --surface-soft: #f8fafc;
-  --ink: #0f172a;
-  --ink-soft: #475569;
+  --page-bg: var(--cb-page-bg);
+  --surface: var(--cb-surface);
+  --surface-soft: var(--cb-surface-soft);
+  --ink: var(--cb-ink);
+  --ink-soft: var(--cb-ink-secondary);
   --line: rgba(15, 23, 42, 0.08);
   --brand: var(--cb-primary);
-  --brand-strong: var(--cb-primary);
-  --accent-soft: color-mix(in srgb, var(--cb-primary) 8%, transparent);
-  --shadow-soft: 0 12px 24px rgba(15, 23, 42, 0.06);
-  background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+  --brand-strong: var(--cb-primary-hover);
+  --accent-soft: var(--cb-primary-bg);
+  --shadow-soft: var(--cb-shadow-card);
+  background: var(--page-bg);
   color: var(--ink);
   max-width: none !important;
   padding: 0 !important;
+}
+
+#blog-page.blog-page--app {
+  --line: var(--cb-border-card);
 }
 
 #blog-page.blog-page--public {
@@ -573,17 +577,28 @@ async function handleNewsletterSubmit() {
     linear-gradient(180deg, #fbf8f2 0%, #f8f4ed 52%, #fdfaf5 100%);
 }
 
-:global(.v-theme--dark) #blog-page:not(.blog-page--public) {
+:global(.v-theme--dark) #blog-page.blog-page--app {
   --page-bg: var(--cb-page-bg);
   --surface: var(--cb-surface);
   --surface-soft: var(--cb-surface-soft);
   --ink: var(--cb-ink);
-  --ink-soft: var(--cb-ink-muted);
+  --ink-soft: var(--cb-ink-secondary);
   --line: var(--cb-border-card);
   --accent-soft: var(--cb-primary-bg);
-  --shadow-soft: var(--cb-shadow-elevated);
-  background: var(--cb-page-bg);
-  color: var(--cb-ink);
+  --shadow-soft: var(--cb-shadow-card);
+}
+
+@media (prefers-color-scheme: dark) {
+  #blog-page.blog-page--app {
+    --page-bg: var(--cb-page-bg);
+    --surface: var(--cb-surface);
+    --surface-soft: var(--cb-surface-soft);
+    --ink: var(--cb-ink);
+    --ink-soft: var(--cb-ink-secondary);
+    --line: var(--cb-border-card);
+    --accent-soft: var(--cb-primary-bg);
+    --shadow-soft: var(--cb-shadow-card);
+  }
 }
 
 #blog-page :deep(*) {
@@ -626,7 +641,7 @@ async function handleNewsletterSubmit() {
   position: sticky;
   top: 0;
   z-index: 40;
-  background: rgba(248, 250, 252, 0.92);
+  background: color-mix(in srgb, var(--page-bg) 92%, transparent);
   border-bottom: 1px solid var(--line);
   backdrop-filter: blur(10px);
 }
@@ -715,7 +730,7 @@ h3 {
 
 .blog-nav__link:hover,
 .post-card__link:hover {
-  background: rgba(15, 23, 42, 0.05);
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
   color: var(--brand-strong);
 }
 
@@ -1012,9 +1027,9 @@ h3 {
   gap: 14px;
   padding: 16px 18px;
   border-radius: 20px;
-  border: 1px solid rgba(15, 118, 110, 0.16);
-  background: linear-gradient(135deg, rgba(240, 253, 250, 0.96), rgba(236, 253, 245, 0.92));
-  color: #134e4a;
+  border: 1px solid color-mix(in srgb, var(--cb-positive) 26%, transparent);
+  background: color-mix(in srgb, var(--cb-positive) 12%, var(--surface));
+  color: var(--ink);
   animation: newsletter-confirmation-enter 220ms ease-out;
 }
 
@@ -1030,8 +1045,8 @@ h3 {
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  background: rgba(15, 118, 110, 0.12);
-  box-shadow: 0 0 0 0 rgba(15, 118, 110, 0.22);
+  background: color-mix(in srgb, var(--cb-positive) 14%, transparent);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--cb-positive) 22%, transparent);
   animation: newsletter-confirmation-pulse 1.8s ease-out 1;
 }
 
@@ -1048,7 +1063,7 @@ h3 {
 
 .newsletter-confirmation__hint {
   font-size: 0.92rem;
-  color: rgba(19, 78, 74, 0.78);
+  color: var(--ink-soft);
 }
 
 .newsletter-feedback--success {
@@ -1056,7 +1071,7 @@ h3 {
 }
 
 .newsletter-feedback--error {
-  color: #b91c1c;
+  color: var(--cb-risk);
 }
 
 .newsletter-form input {
@@ -1087,15 +1102,15 @@ h3 {
 
 @keyframes newsletter-confirmation-pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(15, 118, 110, 0.22);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--cb-positive) 22%, transparent);
     transform: scale(0.94);
   }
   45% {
-    box-shadow: 0 0 0 12px rgba(15, 118, 110, 0);
+    box-shadow: 0 0 0 12px color-mix(in srgb, var(--cb-positive) 0%, transparent);
     transform: scale(1);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(15, 118, 110, 0);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--cb-positive) 0%, transparent);
   }
 }
 
