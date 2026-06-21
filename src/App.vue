@@ -11,11 +11,13 @@ import PrivacyControls from '@/components/compliance/PrivacyControls.vue'
 import { useUserStore } from '@/plugins/userStore'
 import NotificationService from '@/services/NotificationService'
 import type { Notification } from '@/services/NotificationService'
+import { useTheme } from 'vuetify'
 
 // Access the Pinia store
 const userStore = useUserStore()
 const route = useRoute()
 const router = useRouter()
+const theme = useTheme()
 const focusedOnboardingRoutes = new Set([
   'create-workspace',
   'select-workspace',
@@ -41,6 +43,16 @@ const workspaceScopedViewKey = computed(() => {
   const workspaceKey = currentWorkspaceId.value || 'personal'
   return `${routeKey}:${workspaceKey}:${workspaceViewEpoch.value}`
 })
+
+watch(
+  () => userStore.getPreferredTheme,
+  (preferredTheme) => {
+    if (preferredTheme) {
+      theme.global.name.value = preferredTheme
+    }
+  },
+  { immediate: true }
+)
 
 // Função para fazer polling de notificações
 function pollNotifications() {

@@ -831,14 +831,12 @@ const loadAlertSettings = async () => {
     alertDays.value = settings.alertDaysBefore ?? 1;
     notificationEmail.value = settings.notificationEmail ?? true;
     notificationPush.value = settings.notificationPush ?? true;
-    darkTheme.value = settings.darkTheme ?? false;
-    
-    // Sincronizar com o tema atual do Vuetify
-    darkTheme.value = theme.global.current.value.dark;
   } catch (error) {
     // Endpoint legado pode não existir mais em alguns ambientes.
     console.warn('Configurações legadas de alerta indisponíveis:', error);
   }
+
+  darkTheme.value = userStore.getPreferredTheme === 'dark' || theme.global.current.value.dark;
 
   try {
     const preferencesResponse = await NotificationService.getPreferences()
@@ -902,7 +900,7 @@ const profileLocale = ref(locale.value)
 const notificationEmail = ref(true)
 const notificationPush = ref(true)
 const dailyDigestEmail = ref(true)
-const darkTheme = ref(false)
+const darkTheme = ref(userStore.getPreferredTheme === 'dark' || theme.global.current.value.dark)
 const alertDays = ref(1);
 const alertOptions = [1, 2, 3, 5, 7, 10];
 const appVoice = ref<AppVoice>(userStore.getAppVoice)
@@ -917,8 +915,14 @@ const appVoicePreview = computed(() => t(`account_management.app_voice.previews.
 
 // Watch para aplicar o tema quando o switch mudar
 watch(darkTheme, (newValue) => {
-  theme.global.name.value = newValue ? 'dark' : 'light';
+  const nextTheme = newValue ? 'dark' : 'light'
+  theme.global.name.value = nextTheme;
+  userStore.setPreferredTheme(nextTheme);
 });
+
+watch(appVoice, (newValue) => {
+  userStore.setAppVoice(newValue)
+})
 
 watch(locale, () => {
   loadInternalCategories()

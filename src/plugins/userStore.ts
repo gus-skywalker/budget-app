@@ -136,6 +136,7 @@ type State = {
   tenantRole: string | null
   language: string
   appVoice: AppVoice
+  preferredTheme: 'light' | 'dark' | null
   preferredMode: 'personal' | 'tenant' | null
   preferredWorkspaceId: string | null
   refreshInFlight: boolean
@@ -152,6 +153,7 @@ export const useUserStore = defineStore({
     tenantRole: null,
     language: 'PT',
     appVoice: 'default',
+    preferredTheme: null,
     preferredMode: null,
     preferredWorkspaceId: null,
     refreshInFlight: false,
@@ -174,6 +176,7 @@ export const useUserStore = defineStore({
     canWrite: (state): boolean => TENANT_WRITE_ROLES.includes((state.tenantRole || '').toUpperCase()),
     getLanguage: (state): string => state.language,
     getAppVoice: (state): AppVoice => state.appVoice,
+    getPreferredTheme: (state): 'light' | 'dark' | null => state.preferredTheme,
     getPreferredMode: (state): 'personal' | 'tenant' | null => state.preferredMode,
     getPreferredWorkspaceId: (state): string | null => state.preferredWorkspaceId,
     getApiLanguage: (state): string => {
@@ -189,6 +192,7 @@ export const useUserStore = defineStore({
         JSON.stringify({
           preferredMode: this.preferredMode,
           preferredWorkspaceId: this.preferredWorkspaceId,
+          preferredTheme: this.preferredTheme,
           appVoice: this.appVoice
         })
       )
@@ -201,6 +205,7 @@ export const useUserStore = defineStore({
         const parsed = JSON.parse(raw)
         const mode = parsed?.preferredMode
         const workspaceId = parsed?.preferredWorkspaceId
+        const preferredTheme = parsed?.preferredTheme
         const appVoice = parsed?.appVoice
 
         if (mode === 'personal' || mode === 'tenant' || mode === null) {
@@ -208,6 +213,9 @@ export const useUserStore = defineStore({
         }
         if (typeof workspaceId === 'string' || workspaceId === null) {
           this.preferredWorkspaceId = workspaceId
+        }
+        if (preferredTheme === 'light' || preferredTheme === 'dark' || preferredTheme === null) {
+          this.preferredTheme = preferredTheme
         }
         this.appVoice = normalizeAppVoice(appVoice)
       } catch {
@@ -274,6 +282,11 @@ export const useUserStore = defineStore({
       this.savePreference()
     },
 
+    setPreferredTheme(theme: 'light' | 'dark') {
+      this.preferredTheme = theme
+      this.savePreference()
+    },
+
     resetAccountScopedState() {
       this.user = {}
       this.currentWorkspaceId = null
@@ -333,6 +346,7 @@ export const useUserStore = defineStore({
       this.tenantRole = null
       this.language = 'PT'
       this.appVoice = 'default'
+      this.preferredTheme = null
       this.refreshInFlight = false
       this.saveState()
     },
@@ -345,6 +359,7 @@ export const useUserStore = defineStore({
           currentWorkspaceId: this.currentWorkspaceId,
           tenantRole: this.tenantRole,
           language: this.language,
+          preferredTheme: this.preferredTheme,
           appVoice: this.appVoice
       }))
     },
@@ -363,6 +378,9 @@ export const useUserStore = defineStore({
           this.currentWorkspaceId = state.currentWorkspaceId ?? null
           this.tenantRole = state.tenantRole
           this.language = state.language || 'PT'
+          this.preferredTheme = state.preferredTheme === 'light' || state.preferredTheme === 'dark'
+            ? state.preferredTheme
+            : null
           this.appVoice = normalizeAppVoice(state.appVoice)
 
           if (this.currentWorkspaceId && !this.tenantRole) {

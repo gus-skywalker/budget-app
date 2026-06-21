@@ -232,7 +232,9 @@ describe('UserStore', () => {
     it('should load preferred context from localStorage', () => {
       localStorage.setItem('userPreference', JSON.stringify({
         preferredMode: 'tenant',
-        preferredWorkspaceId: 'comp-pref'
+        preferredWorkspaceId: 'comp-pref',
+        preferredTheme: 'dark',
+        appVoice: 'founder'
       }))
 
       const store = useUserStore()
@@ -240,6 +242,19 @@ describe('UserStore', () => {
 
       expect(store.getPreferredMode).toBe('tenant')
       expect(store.getPreferredWorkspaceId).toBe('comp-pref')
+      expect(store.getPreferredTheme).toBe('dark')
+      expect(store.getAppVoice).toBe('founder')
+    })
+
+    it('should persist preferred theme and app voice locally', () => {
+      const store = useUserStore()
+
+      store.setPreferredTheme('dark')
+      store.setAppVoice('warm')
+
+      const saved = JSON.parse(localStorage.getItem('userPreference')!)
+      expect(saved.preferredTheme).toBe('dark')
+      expect(saved.appVoice).toBe('warm')
     })
   })
 

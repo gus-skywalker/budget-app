@@ -71,6 +71,7 @@ function redirectToOAuth2LoginPage() {
 function toggleTheme() {
   const currentTheme = theme.global.current.value.dark ? 'light' : 'dark'
   theme.global.name.value = currentTheme
+  userStore.setPreferredTheme(currentTheme)
   requestAnimationFrame(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
   })
