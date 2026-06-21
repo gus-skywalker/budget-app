@@ -309,8 +309,39 @@
           </v-btn>
         </div>
 
-        <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
-        <p v-if="successMessage" class="success-message">{{ successMessage }}</p>
+        <v-alert
+          v-if="errorMessage"
+          type="error"
+          variant="tonal"
+          density="comfortable"
+          class="scenario-feedback"
+        >
+          {{ errorMessage }}
+        </v-alert>
+
+        <div v-if="successMessage" class="scenario-feedback scenario-feedback--success">
+          <div class="scenario-feedback__icon">
+            <v-icon size="24">mdi-check-circle-outline</v-icon>
+          </div>
+          <div class="scenario-feedback__body">
+            <strong>{{ successMessage }}</strong>
+            <span>{{ t('planning.scenarios.save_success_next_step') }}</span>
+          </div>
+          <div class="scenario-feedback__actions">
+            <v-btn size="small" variant="tonal" color="success" @click="createDecisionFromScenario">
+              <v-icon start size="18">mdi-lightbulb-outline</v-icon>
+              {{ t('contentExperience.planning.scenarioResult.createDecision') }}
+            </v-btn>
+            <v-btn
+              size="small"
+              variant="text"
+              color="success"
+              @click="router.push({ name: 'planning-scenarios' })"
+            >
+              {{ t('planning.scenarios.saved_title') }}
+            </v-btn>
+          </div>
+        </div>
       </div>
 
       <div class="empty-results" v-else>
@@ -911,7 +942,11 @@ const saveScenario = async () => {
     }
   } catch (e) {
     console.error(e)
-    errorMessage.value = t('planning.scenarios.save_error')
+    const status = extractErrorStatus(e)
+    errorMessage.value =
+      status === 403
+        ? t('planning.scenarios.save_forbidden')
+        : t('planning.scenarios.save_error')
   } finally {
     isSaving.value = false
   }
@@ -1156,6 +1191,53 @@ onUnmounted(() => {
   min-width: 0;
 }
 
+.scenario-feedback {
+  margin-top: 2px;
+}
+
+.scenario-feedback--success {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--cb-positive) 24%, transparent);
+  background: color-mix(in srgb, var(--cb-positive) 9%, var(--cb-surface));
+  color: var(--cb-ink);
+}
+
+.scenario-feedback__icon {
+  color: var(--cb-positive);
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+}
+
+.scenario-feedback__body {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.scenario-feedback__body strong {
+  color: var(--cb-ink);
+}
+
+.scenario-feedback__body span {
+  color: var(--cb-ink-secondary);
+  line-height: 1.4;
+}
+
+.scenario-feedback__actions {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 .forecast-table {
   overflow-x: auto;
 }
@@ -1254,6 +1336,19 @@ onUnmounted(() => {
   }
 
   .result-actions :deep(.v-btn) {
+    width: 100%;
+  }
+
+  .scenario-feedback--success {
+    flex-direction: column;
+  }
+
+  .scenario-feedback__actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .scenario-feedback__actions :deep(.v-btn) {
     width: 100%;
   }
 
