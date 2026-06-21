@@ -129,6 +129,39 @@ export interface AutoCategorizeResponse {
   reason?: string
 }
 
+export interface ApplyOpenFinanceCategorizationRequest {
+  month?: number
+  year?: number
+  fromDate?: string
+  toDate?: string
+  limit?: number
+}
+
+export interface AppliedCategorizationItem {
+  transactionId: string
+  date?: string
+  description?: string
+  amount?: number
+  categoryId?: number
+  categoryCode?: string
+  categoryName?: string
+  confidence?: number
+  source?: string
+  status?: string
+  reason?: string
+}
+
+export interface ApplyOpenFinanceCategorizationResponse {
+  scanned: number
+  candidates: number
+  suggested: number
+  applied: number
+  skipped: number
+  noSuggestion: number
+  reason?: string
+  items: AppliedCategorizationItem[]
+}
+
 export interface SavingsRecommendationRequest {
   savingsGoalAmount?: number
   targetDate?: string
@@ -216,6 +249,13 @@ const AiService = {
     return axiosInterceptor.post<AutoCategorizeResponse>(
     '/ai/categorize',
     //   '/ai/auto-categorize',
+      payload,
+      { baseURL: AI_BASE_URL }
+    )
+  },
+  applyOpenFinanceCategorization(payload: ApplyOpenFinanceCategorizationRequest) {
+    return axiosInterceptor.post<ApplyOpenFinanceCategorizationResponse>(
+      '/ai/categorize/open-finance/apply',
       payload,
       { baseURL: AI_BASE_URL }
     )

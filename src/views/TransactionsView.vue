@@ -151,8 +151,22 @@
             <div style="font-size:.8rem;color:var(--cb-ink-muted)">
               {{ $t('expense.ai_queue_summary', { total: uncategorizedExpenses.length, suggested: uncategorizedSuggestionCount }) }}
             </div>
+            <div v-if="uncategorizedOpenFinanceExpenses.length" class="open-finance-ai-summary">
+              {{ $t('expense.open_finance_ai_queue_summary', { total: uncategorizedOpenFinanceExpenses.length }) }}
+            </div>
           </div>
-          <div style="display:flex;gap:8px">
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <v-btn
+              v-if="uncategorizedOpenFinanceExpenses.length"
+              size="small"
+              class="cb-btn-primary"
+              :loading="isAutoClassifyingOpenFinance"
+              :disabled="!canUseAi || isBatchSuggestingExpenseCategories || isApplyingBatchExpenseSuggestions"
+              @click="classifyOpenFinanceExpensesInBatch"
+            >
+              <v-icon start size="14">mdi-bank-transfer</v-icon>
+              {{ $t('expense.open_finance_ai_classify') }}
+            </v-btn>
             <v-btn size="small" variant="tonal" color="var(--cb-accent)" :loading="isBatchSuggestingExpenseCategories" :disabled="!canUseAi" @click="suggestUncategorizedExpensesInBatch">
               <v-icon start size="14">mdi-brain</v-icon>
               {{ $t('expense.ai_queue_suggest') }}
@@ -163,6 +177,34 @@
             </v-btn>
           </div>
         </div>
+      </div>
+
+      <div v-if="activeTab === 'expense'" class="daily-consumption-report">
+        <div class="daily-consumption-report__header">
+          <div>
+            <div class="cb-card__title">{{ $t('expense.daily_report_title') }}</div>
+            <p>{{ $t('expense.daily_report_summary', dailyConsumptionSummary) }}</p>
+          </div>
+          <div class="daily-consumption-report__total">
+            <span>{{ $t('expense.daily_report_total') }}</span>
+            <strong>{{ formatMoney(dailyConsumptionSummary.total) }}</strong>
+          </div>
+        </div>
+        <div v-if="dailyConsumptionRows.length" class="daily-consumption-report__rows">
+          <div
+            v-for="row in dailyConsumptionRows"
+            :key="row.date"
+            class="daily-consumption-report__row"
+          >
+            <span class="daily-consumption-report__date">{{ formatDailyReportDate(row.date) }}</span>
+            <span class="daily-consumption-report__category">{{ row.topCategoryLabel }}</span>
+            <span class="daily-consumption-report__meta">
+              {{ $t('expense.daily_report_row_meta', { count: row.count, openFinance: row.openFinanceCount }) }}
+            </span>
+            <strong>{{ formatMoney(row.total) }}</strong>
+          </div>
+        </div>
+        <p v-else class="daily-consumption-report__empty">{{ $t('expense.daily_report_empty') }}</p>
       </div>
 
       <!-- Transaction List Card -->
@@ -842,6 +884,7 @@ export default {
       ],
       years,
       monthlyExpenses: [],
+      dailyReportExpenses: [],
       monthlyIncomes: [],
       incomePagination: {
         limit: 20,
@@ -869,6 +912,7 @@ export default {
       batchExpenseCategorySuggestions: {},
       isBatchSuggestingExpenseCategories: false,
       isApplyingBatchExpenseSuggestions: false,
+      isAutoClassifyingOpenFinance: false,
       snackbar: {
         show: false,
         text: '',
@@ -1007,6 +1051,9 @@ export default {
     uncategorizedExpenses() {
       return this.monthlyExpenses.filter((expense) => !expense?.category)
     },
+    uncategorizedOpenFinanceExpenses() {
+      return this.uncategorizedExpenses.filter((expense) => this.isOpenFinanceTransaction(expense))
+    },
     uncategorizedSuggestionCount() {
       return this.uncategorizedExpenses.filter((expense) => Boolean(this.getStoredExpenseSuggestion(expense.id))).length
     },
@@ -1109,6 +1156,61 @@ export default {
     monthlyExpenseTotal() {
       return this.monthlyExpenses.reduce((sum, t) => sum + (Number(t.amount) || 0), 0)
     },
+    dailyConsumptionRows() {
+      const rowsByDate = new Map()
+      const source = this.dailyReportExpenses.length ? this.dailyReportExpenses : this.monthlyExpenses
+
+      source.forEach((expense) => {
+        const date = this.normalizeDate(expense?.date)
+        if (!date) return
+
+        const current = rowsByDate.get(date) || {
+          date,
+          total: 0,
+          count: 0,
+          openFinanceCount: 0,
+          categories: new Map(),
+        }
+        const amount = Math.abs(Number(expense?.amount || 0))
+        const categoryLabel = this.transactionCategoryLabel(expense)
+        current.total += amount
+        current.count += 1
+        if (this.isOpenFinanceTransaction(expense)) {
+          current.openFinanceCount += 1
+        }
+        current.categories.set(categoryLabel, (current.categories.get(categoryLabel) || 0) + amount)
+        rowsByDate.set(date, current)
+      })
+
+      return Array.from(rowsByDate.values())
+        .map((row) => {
+          const [topCategoryLabel] = Array.from(row.categories.entries())
+            .sort((left, right) => right[1] - left[1])[0] || [this.$t('expenseItem.uncategorized')]
+          return {
+            date: row.date,
+            total: row.total,
+            count: row.count,
+            openFinanceCount: row.openFinanceCount,
+            topCategoryLabel,
+          }
+        })
+        .sort((left, right) => right.date.localeCompare(left.date))
+    },
+    dailyConsumptionSummary() {
+      const rows = this.dailyConsumptionRows
+      const total = rows.reduce((sum, row) => sum + row.total, 0)
+      const openFinanceTotal = (this.dailyReportExpenses.length ? this.dailyReportExpenses : this.monthlyExpenses)
+        .filter((expense) => this.isOpenFinanceTransaction(expense))
+        .reduce((sum, expense) => sum + Math.abs(Number(expense?.amount || 0)), 0)
+      return {
+        total,
+        days: rows.length,
+        average: rows.length ? total / rows.length : 0,
+        openFinance: openFinanceTotal,
+        averageFormatted: this.formatMoney(rows.length ? total / rows.length : 0),
+        openFinanceFormatted: this.formatMoney(openFinanceTotal),
+      }
+    },
     transactionSummaryItems() {
       const locale = this.$i18n?.locale || 'pt-BR'
       const currency = 'BRL'
@@ -1141,6 +1243,7 @@ export default {
     this.fetchOpenFinanceConflicts();
     this.fetchMonthlyIncomes();
     this.fetchMonthlyExpenses();
+    this.fetchDailyConsumptionExpenses();
   },
   watch: {
     '$i18n.locale'(newLocale) {
@@ -1645,6 +1748,22 @@ export default {
         style: 'currency',
         currency: this.transactionCurrency(transaction),
       }).format(Math.abs(amount))
+    },
+    formatMoney(amount, currency = 'BRL') {
+      const numericAmount = Number(amount || 0)
+      return new Intl.NumberFormat(this.getDetailsLocaleCode(), {
+        style: 'currency',
+        currency,
+      }).format(Math.abs(numericAmount))
+    },
+    formatDailyReportDate(value) {
+      const date = this.parseDetailsDate(value)
+      if (!date) return value || ''
+      return new Intl.DateTimeFormat(this.getDetailsLocaleCode(), {
+        day: '2-digit',
+        month: 'short',
+        weekday: 'short',
+      }).format(date)
     },
     transactionReconciliationLabel(transaction) {
       const status = transaction?.reconciliationStatus
@@ -2269,13 +2388,8 @@ export default {
           this.aiSuggestingExpenseId = null
         })
     },
-    suggestUncategorizedExpensesInBatch() {
-      if (!this.canUseAi) {
-        this.showToast(this.$t('expense.ai_premium_locked'), 'info')
-        this.$router.push({ name: 'choose-plan', query: { feature: 'ai' } })
-        return
-      }
-      const candidates = this.uncategorizedExpenses
+    buildAutoCategorizeCandidates(expenses) {
+      return (Array.isArray(expenses) ? expenses : [])
         .filter((expense) => expense?.description)
         .map((expense) => ({
           expenseId: expense.id,
@@ -2284,54 +2398,71 @@ export default {
           paymentMethodId: expense.paymentMethodId ?? this.resolvePaymentMethodId(expense.paymentMethod) ?? undefined,
           bankCategoryId: expense.openFinanceBankCategoryId ?? undefined,
         }))
+    },
+    storeBatchExpenseSuggestions(data) {
+      const suggestions = Array.isArray(data?.suggestions) ? data.suggestions : []
+      const nextSuggestions = { ...this.batchExpenseCategorySuggestions }
+      let storedCount = 0
+
+      suggestions.forEach((suggestion) => {
+        if (!suggestion?.expenseId || !suggestion?.suggestedCategory?.id || this.isWeakCategorySuggestion(suggestion)) {
+          return
+        }
+        nextSuggestions[suggestion.expenseId] = suggestion
+        storedCount += 1
+      })
+
+      this.batchExpenseCategorySuggestions = nextSuggestions
+      return storedCount
+    },
+    async suggestExpensesInBatch(expenses, { showSuccess = true } = {}) {
+      if (!this.canUseAi) {
+        this.showToast(this.$t('expense.ai_premium_locked'), 'info')
+        this.$router.push({ name: 'choose-plan', query: { feature: 'ai' } })
+        return 0
+      }
+      const candidates = this.buildAutoCategorizeCandidates(expenses)
 
       if (!candidates.length) {
         this.showToast(this.$t('expense.ai_no_pending_uncategorized'), 'info')
-        return
+        return 0
       }
 
       this.isBatchSuggestingExpenseCategories = true
-      AiService.autoCategorize({ expenses: candidates })
-        .then(({ data }) => {
-          const suggestions = Array.isArray(data?.suggestions) ? data.suggestions : []
-          const nextSuggestions = { ...this.batchExpenseCategorySuggestions }
-          let storedCount = 0
+      try {
+        const { data } = await AiService.autoCategorize({ expenses: candidates })
+        const storedCount = this.storeBatchExpenseSuggestions(data)
 
-          suggestions.forEach((suggestion) => {
-            if (!suggestion?.expenseId || !suggestion?.suggestedCategory?.id || this.isWeakCategorySuggestion(suggestion)) {
-              return
-            }
-            nextSuggestions[suggestion.expenseId] = suggestion
-            storedCount += 1
-          })
-
-          this.batchExpenseCategorySuggestions = nextSuggestions
-
-          if (!storedCount) {
-            if (this.isAiServiceUnavailableResponse(data)) {
-              this.showAiServiceUnavailableToast()
-              return
-            }
-            this.showToast(this.$t('expense.ai_no_suggestion'), 'info')
-            return
-          }
-
-          this.showToast(this.$t('expense.ai_queue_suggestions_ready', { count: storedCount }), 'success')
-        })
-        .catch((error) => {
-          console.error('Error suggesting uncategorized expenses in batch:', error)
-          if (this.isAiServiceUnavailableError(error)) {
+        if (!storedCount) {
+          if (this.isAiServiceUnavailableResponse(data)) {
             this.showAiServiceUnavailableToast()
-            return
+            return 0
           }
-          this.showToast(this.$t('expense.ai_suggestion_failed'), 'error')
-        })
-        .finally(() => {
-          this.isBatchSuggestingExpenseCategories = false
-        })
+          this.showToast(this.$t('expense.ai_no_suggestion'), 'info')
+          return 0
+        }
+
+        if (showSuccess) {
+          this.showToast(this.$t('expense.ai_queue_suggestions_ready', { count: storedCount }), 'success')
+        }
+        return storedCount
+      } catch (error) {
+        console.error('Error suggesting uncategorized expenses in batch:', error)
+        if (this.isAiServiceUnavailableError(error)) {
+          this.showAiServiceUnavailableToast()
+          return 0
+        }
+        this.showToast(this.$t('expense.ai_suggestion_failed'), 'error')
+        return 0
+      } finally {
+        this.isBatchSuggestingExpenseCategories = false
+      }
     },
-    async applyBatchExpenseSuggestions() {
-      const candidates = this.uncategorizedExpenses
+    suggestUncategorizedExpensesInBatch() {
+      return this.suggestExpensesInBatch(this.uncategorizedExpenses)
+    },
+    async applyBatchExpenseSuggestions(expenses = this.uncategorizedExpenses, { clearAllSuggestions = true } = {}) {
+      const candidates = (Array.isArray(expenses) ? expenses : [])
         .map((expense) => ({ expense, suggestion: this.getStoredExpenseSuggestion(expense.id) }))
         .filter(({ suggestion }) => Boolean(suggestion?.suggestedCategory?.id))
 
@@ -2359,14 +2490,60 @@ export default {
           appliedCount += 1
         }
 
-        this.batchExpenseCategorySuggestions = {}
+        if (clearAllSuggestions) {
+          this.batchExpenseCategorySuggestions = {}
+        } else {
+          candidates.forEach(({ expense }) => this.clearStoredExpenseSuggestion(expense.id))
+        }
         this.showToast(this.$t('expense.ai_queue_apply_success', { count: appliedCount }), 'success')
         await this.fetchMonthlyExpenses()
+        await this.fetchDailyConsumptionExpenses()
       } catch (error) {
         console.error('Error applying batch expense suggestions:', error)
         this.showToast(this.$t('expense.ai_queue_apply_failed'), 'error')
       } finally {
         this.isApplyingBatchExpenseSuggestions = false
+      }
+    },
+    async classifyOpenFinanceExpensesInBatch() {
+      if (!this.uncategorizedOpenFinanceExpenses.length) {
+        this.showToast(this.$t('expense.ai_no_pending_uncategorized'), 'info')
+        return
+      }
+      if (!this.canUseAi) {
+        this.showToast(this.$t('expense.ai_premium_locked'), 'info')
+        this.$router.push({ name: 'choose-plan', query: { feature: 'ai' } })
+        return
+      }
+
+      this.isAutoClassifyingOpenFinance = true
+      try {
+        const { data } = await AiService.applyOpenFinanceCategorization({
+          month: this.selectedExpenseMonth,
+          year: this.selectedExpenseYear,
+          limit: 1000,
+        })
+        if (this.isAiServiceUnavailableResponse(data)) {
+          this.showAiServiceUnavailableToast()
+        }
+        const appliedCount = Number(data?.applied || 0)
+        if (!appliedCount) {
+          this.showToast(this.$t('expense.ai_no_suggestion'), 'info')
+          return
+        }
+        this.batchExpenseCategorySuggestions = {}
+        this.showToast(this.$t('expense.ai_queue_apply_success', { count: appliedCount }), 'success')
+        await this.fetchMonthlyExpenses()
+        await this.fetchDailyConsumptionExpenses()
+      } catch (error) {
+        console.error('Error applying Open Finance categorization:', error)
+        if (this.isAiServiceUnavailableError(error)) {
+          this.showAiServiceUnavailableToast()
+          return
+        }
+        this.showToast(this.$t('expense.ai_queue_apply_failed'), 'error')
+      } finally {
+        this.isAutoClassifyingOpenFinance = false
       }
     },
     async applyStoredExpenseSuggestionInline(expense) {
@@ -2396,6 +2573,7 @@ export default {
         this.clearStoredExpenseSuggestion(expense.id)
         this.showToast(this.$t('expense.ai_feedback_accepted'), 'success')
         await this.fetchMonthlyExpenses()
+        await this.fetchDailyConsumptionExpenses()
       } catch (error) {
         console.error('Error applying inline expense suggestion:', error)
         this.showToast(this.$t('expense.ai_queue_apply_failed'), 'error')
@@ -2689,6 +2867,7 @@ export default {
     resetExpensePaginationAndFetch() {
       this.expensePagination.offset = 0
       this.fetchMonthlyExpenses()
+      this.fetchDailyConsumptionExpenses()
     },
     goToPreviousIncomePage() {
       if (!this.canGoToPreviousIncomePage) {
@@ -3170,6 +3349,24 @@ export default {
           });
       }
       return Promise.resolve()
+    },
+    fetchDailyConsumptionExpenses() {
+      const monthNumber = this.selectedExpenseMonth
+      const yearNumber = this.selectedExpenseYear
+      if (monthNumber === null) {
+        this.dailyReportExpenses = []
+        return Promise.resolve()
+      }
+
+      return ExpenseService.fetchMonthlyExpenses(monthNumber, yearNumber, { limit: 1000, offset: 0 })
+        .then((response) => {
+          const page = response?.data || {}
+          this.dailyReportExpenses = this.normalizeCollection(page).map((expense) => this.enrichExpenseWithConflict(expense))
+        })
+        .catch((error) => {
+          console.error('Error fetching daily consumption expenses:', error)
+          this.dailyReportExpenses = []
+        })
     },
     loadSharedExpenseAgreements() {
       if (!this.monthlyExpenses.length) {
@@ -3719,6 +3916,122 @@ export default {
 /* ── Snackbar ───────────────────────────── */
 .modern-snackbar {
   border-radius: 8px;
+}
+
+.open-finance-ai-summary {
+  margin-top: 4px;
+  font-size: 0.78rem;
+  color: var(--cb-accent);
+}
+
+.daily-consumption-report {
+  background: var(--cb-surface-card);
+  border: 1px solid var(--cb-border-card);
+  border-radius: 8px;
+  box-shadow: var(--cb-shadow-soft);
+  margin-bottom: 12px;
+  padding: 16px;
+}
+
+.daily-consumption-report__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.daily-consumption-report__header p {
+  color: var(--cb-ink-muted);
+  font-size: 0.84rem;
+  margin: 4px 0 0;
+}
+
+.daily-consumption-report__total {
+  text-align: right;
+  min-width: 148px;
+}
+
+.daily-consumption-report__total span {
+  display: block;
+  color: var(--cb-ink-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.daily-consumption-report__total strong {
+  color: var(--cb-ink);
+  font-family: var(--cb-font-heading);
+  font-size: 1.1rem;
+}
+
+.daily-consumption-report__rows {
+  display: grid;
+  gap: 6px;
+}
+
+.daily-consumption-report__row {
+  align-items: center;
+  background: color-mix(in srgb, var(--cb-surface-card) 92%, var(--cb-accent));
+  border: 1px solid var(--cb-border-soft);
+  border-radius: 8px;
+  color: var(--cb-ink);
+  cursor: default;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(92px, 0.9fr) minmax(120px, 1.2fr) minmax(150px, 1fr) minmax(96px, auto);
+  padding: 10px 12px;
+  text-align: left;
+  width: 100%;
+}
+
+.daily-consumption-report__date,
+.daily-consumption-report__row strong {
+  font-family: var(--cb-font-heading);
+  font-weight: 700;
+}
+
+.daily-consumption-report__category,
+.daily-consumption-report__meta {
+  color: var(--cb-ink-muted);
+  font-size: 0.82rem;
+  min-width: 0;
+}
+
+.daily-consumption-report__category {
+  color: var(--cb-ink-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.daily-consumption-report__row strong {
+  text-align: right;
+}
+
+.daily-consumption-report__empty {
+  color: var(--cb-ink-muted);
+  font-size: 0.88rem;
+  margin: 0;
+}
+
+@media (max-width: 720px) {
+  .daily-consumption-report__header {
+    flex-direction: column;
+  }
+
+  .daily-consumption-report__total {
+    text-align: left;
+  }
+
+  .daily-consumption-report__row {
+    grid-template-columns: 1fr;
+  }
+
+  .daily-consumption-report__row strong {
+    text-align: left;
+  }
 }
 
 /* ── AI category suggestions ───────────── */
