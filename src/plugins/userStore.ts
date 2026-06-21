@@ -619,6 +619,7 @@ export const useUserStore = defineStore({
       if (accessToken) {
         this.token = accessToken
         this.auth = true
+        this.syncFromToken(accessToken)
       }
 
       const userLanguage = response.language || this.language || 'PT'
@@ -639,10 +640,6 @@ export const useUserStore = defineStore({
         workspaces: (response.workspaces || this.user.workspaces || []).map((workspace: WorkspaceClaim) => normalizeWorkspace(workspace)),
         userRoles: normalizedUserRoles
       })
-
-      if (accessToken) {
-        this.syncFromToken(accessToken)
-      }
 
       const workspaceId = response.workspaceId || this.getCurrentWorkspaceId
       const tenantRole = response.tenantRole || this.tenantRole
@@ -775,11 +772,8 @@ export const useUserStore = defineStore({
       this.language = 'PT'
       this.appVoice = 'default'
       this.refreshInFlight = false
+      sessionStorage.removeItem('userStore')
       sessionStorage.setItem('auth.logout.skipBootstrap', String(Date.now()))
-      // Não chama saveState() para evitar regravação
-      setTimeout(() => {
-        sessionStorage.removeItem('userStore')
-      }, 0)
     }
   }
 })
