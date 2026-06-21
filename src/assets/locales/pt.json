@@ -359,6 +359,35 @@
     "title": "Relatórios",
     "subtitle": "Gere relatórios de receitas e despesas com os filtros mais importantes para a análise."
   },
+  "reportAnalytics": {
+    "eyebrow": "Analytics",
+    "title": "Leitura financeira do período",
+    "totalSpent": "Total gasto",
+    "income": "Receita",
+    "expenses": "Gasto",
+    "partialResult": "Resultado parcial",
+    "excluded": "Excluído",
+    "comparison": "{value} vs período anterior",
+    "noComparison": "Sem período anterior para comparar",
+    "categorySpend": "Gastos por categoria",
+    "categorySpendSubtitle": "Veja onde o consumo se concentra no período selecionado.",
+    "categories": "categorias",
+    "resultTitle": "Resultado parcial",
+    "resultSubtitle": "Receita, gastos e itens excluídos do planejamento.",
+    "flowTitle": "Fluxo por categoria",
+    "flowSubtitle": "Uma leitura simples do dinheiro saindo para as principais categorias.",
+    "noExpenses": "Nenhuma despesa encontrada neste período.",
+    "noFlow": "Sem fluxo suficiente para este período.",
+    "periods": {
+      "week": "Esta semana",
+      "month": "Este mês",
+      "lastMonth": "Mês passado",
+      "threeMonths": "Últimos 3 meses",
+      "sixMonths": "Últimos 6 meses",
+      "twelveMonths": "Últimos 12 meses",
+      "year": "Este ano"
+    }
+  },
   "onboarding": {
     "eyebrow": "Onboarding",
     "step_badge": "Etapa {current}/3",
@@ -977,6 +1006,14 @@
       "eyebrow": "Hub de classificação",
       "title": "Taxonomia pronta para budget, IA e cenários",
       "description": "Organize o catálogo do espaço, resolva vínculos Open Finance e prepare a base que alimenta classificação, orçamento e simulações."
+    },
+    "monthly_spend": {
+      "eyebrow": "Consumo por categoria",
+      "description": "Gastos reais de {month}, excluindo itens fora do planejamento.",
+      "active_categories": "categorias com gasto",
+      "open_finance_items": "itens Open Finance",
+      "transactions": "transações",
+      "empty": "Nenhuma despesa categorizada encontrada no mês atual."
     },
     "tag_insight": {
       "eyebrow": "Classificação transversal",

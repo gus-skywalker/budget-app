@@ -94,6 +94,58 @@
             </div>
           </section>
 
+          <section class="category-spend-board">
+            <div class="category-spend-board__summary">
+              <div>
+                <span class="eyebrow">{{ $t('categories_page.monthly_spend.eyebrow') }}</span>
+                <h2>{{ formatMoney(categorySpendSummary.total) }}</h2>
+                <p>{{ $t('categories_page.monthly_spend.description', { month: categorySpendMonthLabel }) }}</p>
+              </div>
+              <div class="category-spend-board__meta">
+                <div>
+                  <span>{{ categorySpendRows.length }}</span>
+                  <small>{{ $t('categories_page.monthly_spend.active_categories') }}</small>
+                </div>
+                <div>
+                  <span>{{ categorySpendSummary.openFinanceCount }}</span>
+                  <small>{{ $t('categories_page.monthly_spend.open_finance_items') }}</small>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="loadingCategorySpend" class="category-spend-board__loading">
+              <v-progress-circular indeterminate color="var(--cb-primary)" size="32" />
+            </div>
+
+            <div v-else-if="categorySpendRows.length" class="category-spend-board__content">
+              <div class="category-spend-board__donut" :style="{ background: categorySpendDonutGradient }">
+                <div>
+                  <strong>{{ topCategorySpend?.shareLabel }}</strong>
+                  <span>{{ topCategorySpend?.label }}</span>
+                </div>
+              </div>
+              <div class="category-spend-list">
+                <div
+                  v-for="row in categorySpendRows.slice(0, 7)"
+                  :key="row.key"
+                  class="category-spend-list__row"
+                >
+                  <span class="category-spend-list__swatch" :style="{ background: row.color }"></span>
+                  <div>
+                    <strong>{{ row.label }}</strong>
+                    <small>{{ row.count }} {{ $t('categories_page.monthly_spend.transactions') }}</small>
+                  </div>
+                  <span class="category-spend-list__bar">
+                    <i :style="{ width: `${row.share}%`, background: row.color }"></i>
+                  </span>
+                  <b>{{ formatMoney(row.amount) }}</b>
+                </div>
+              </div>
+            </div>
+
+            <p v-else class="category-spend-board__empty">{{ $t('categories_page.monthly_spend.empty') }}</p>
+          </section>
+
           <div class="content-grid">
             <section class="cb-card surface-card">
               <div class="surface-card__header">
@@ -901,9 +953,11 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import DataService from '@/services/DataService'
+import FinancialReadService from '@/services/FinancialReadService'
 import OpenFinanceService from '@/services/OpenFinanceService'
 import BillingOrchestrationService, { type BillingSummaryResponse } from '@/services/BillingOrchestrationService'
 import { useUserStore } from '@/plugins/userStore'
+import type { TransactionView } from '@/types/financialRead'
 import type { OpenFinanceBankCategory, OpenFinanceCategoryMapping } from '@/types/openFinance'
 
 type CategoriesTab = 'categories' | 'tags' | 'automations'
@@ -1011,8 +1065,10 @@ const bankCategories = ref<OpenFinanceBankCategory[]>([])
 const bankMappings = ref<OpenFinanceCategoryMapping[]>([])
 const billingSummary = ref<BillingSummaryResponse | null>(null)
 const loading = ref(false)
+const loadingCategorySpend = ref(false)
 const loadingTags = ref(false)
 const loadingAutomations = ref(false)
+const categorySpendTransactions = ref<TransactionView[]>([])
 const search = ref('')
 const tagSearch = ref('')
 const automationSearch = ref('')
@@ -1089,6 +1145,87 @@ const categoryIconOptions = [
   'mdi-school-outline',
   'mdi-cash-plus',
 ]
+
+const toIsoDate = (date: Date) => date.toISOString().split('T')[0]
+
+const currentMonthRange = computed(() => {
+  const today = new Date()
+  return {
+    fromDate: toIsoDate(new Date(today.getFullYear(), today.getMonth(), 1)),
+    toDate: toIsoDate(new Date(today.getFullYear(), today.getMonth() + 1, 0)),
+  }
+})
+
+const localeCode = computed(() => {
+  if (locale.value === 'pt') return 'pt-BR'
+  if (locale.value === 'en') return 'en-US'
+  if (locale.value === 'es') return 'es-ES'
+  return locale.value
+})
+
+const categorySpendMonthLabel = computed(() => new Intl.DateTimeFormat(localeCode.value, {
+  month: 'long',
+  year: 'numeric',
+}).format(new Date(`${currentMonthRange.value.fromDate}T00:00:00`)))
+
+const formatMoney = (value: number) => new Intl.NumberFormat(localeCode.value, {
+  style: 'currency',
+  currency: 'BRL',
+}).format(Number(value || 0))
+
+const transactionAmount = (transaction: TransactionView) => Math.abs(Number(transaction.amount || 0))
+
+const categorySpendRows = computed(() => {
+  const totals = new Map<string, { label: string; amount: number; color: string; count: number }>()
+  categorySpendTransactions.value
+    .filter((transaction) => transaction.direction === 'OUTFLOW' && !transaction.excludedFromPlanning)
+    .forEach((transaction) => {
+      const key = String(transaction.categoryId ?? transaction.categoryCode ?? transaction.categoryName ?? transaction.category ?? 'uncategorized')
+      const label = transaction.categoryName || transaction.category || t('expenseItem.uncategorized')
+      const current = totals.get(key) || {
+        label,
+        amount: 0,
+        color: transaction.categoryDisplayColor || categoryColorOptions[totals.size % categoryColorOptions.length],
+        count: 0,
+      }
+      current.amount += transactionAmount(transaction)
+      current.count += 1
+      totals.set(key, current)
+    })
+
+  const total = Array.from(totals.values()).reduce((sum, row) => sum + row.amount, 0)
+  return Array.from(totals.entries())
+    .map(([key, row]) => ({
+      key,
+      ...row,
+      share: total ? Math.max(3, (row.amount / total) * 100) : 0,
+      shareLabel: total ? `${Math.round((row.amount / total) * 100)}%` : '0%',
+    }))
+    .sort((left, right) => right.amount - left.amount)
+})
+
+const categorySpendSummary = computed(() => ({
+  total: categorySpendRows.value.reduce((sum, row) => sum + row.amount, 0),
+  openFinanceCount: categorySpendTransactions.value.filter((transaction) =>
+    transaction.source === 'OPEN_FINANCE' || transaction.openFinance === true,
+  ).length,
+}))
+
+const topCategorySpend = computed(() => categorySpendRows.value[0] || null)
+
+const categorySpendDonutGradient = computed(() => {
+  if (!categorySpendRows.value.length) {
+    return 'conic-gradient(var(--cb-border-soft) 0deg 360deg)'
+  }
+  let cursor = 0
+  const segments = categorySpendRows.value.map((row) => {
+    const start = cursor
+    const size = (row.amount / Math.max(categorySpendSummary.value.total, 1)) * 360
+    cursor += size
+    return `${row.color} ${start}deg ${cursor}deg`
+  })
+  return `conic-gradient(${segments.join(', ')})`
+})
 
 const automationOperatorOptions = computed(() => [
   { label: t('categories_page.operator_contains'), value: 'CONTAINS' },
@@ -1315,6 +1452,34 @@ const automationCategoryName = (automation: AutomationItem) =>
 const automationPreviewCategoryName = (categoryId: number) =>
   categoriesWithMappings.value.find((category) => category.id === categoryId)?.name
     || t('categories_page.selected_category_fallback')
+
+const fetchCategorySpend = async () => {
+  loadingCategorySpend.value = true
+  try {
+    const items: TransactionView[] = []
+    let offset = 0
+    const limit = 200
+    while (true) {
+      const response = await FinancialReadService.fetchTransactions({
+        ...currentMonthRange.value,
+        limit,
+        offset,
+      })
+      const pageItems = response.data.items || []
+      items.push(...pageItems)
+      offset += pageItems.length
+      if (!pageItems.length || offset >= response.data.total || items.length >= 1200) {
+        break
+      }
+    }
+    categorySpendTransactions.value = items
+  } catch (error) {
+    console.error('Erro ao carregar gastos por categoria:', error)
+    categorySpendTransactions.value = []
+  } finally {
+    loadingCategorySpend.value = false
+  }
+}
 
 const fetchCategories = async () => {
   loading.value = true
@@ -1838,6 +2003,7 @@ const applyAutomation = async (automation: AutomationItem) => {
       type: 'success',
       message: t('categories_page.automation_apply_success', { transactions: affectedTransactions, entries: affectedEntries }),
     }
+    await fetchCategorySpend()
   } catch (error: any) {
     feedback.value = {
       type: 'error',
@@ -1875,7 +2041,7 @@ watch(editorDirection, () => {
 
 onMounted(async () => {
   await loadBillingCapabilities()
-  await Promise.all([fetchCategories(), fetchTags(), fetchAutomations()])
+  await Promise.all([fetchCategories(), fetchTags(), fetchAutomations(), fetchCategorySpend()])
 })
 
 watch(locale, () => {
@@ -1968,6 +2134,157 @@ watch(locale, () => {
 
 .meta-chip span  { display: block; font-size: 1.5rem; font-weight: 700; color: var(--cb-ink); }
 .meta-chip small { color: var(--cb-ink-muted); }
+
+/* ── Monthly category spend ──────────────────────────────────────────────── */
+.category-spend-board {
+  background: var(--cb-surface);
+  border: 1px solid var(--cb-border-card);
+  border-radius: 8px;
+  margin-bottom: 24px;
+  padding: 24px;
+}
+
+.category-spend-board__summary {
+  align-items: flex-start;
+  display: flex;
+  gap: 24px;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.category-spend-board__summary h2 {
+  color: var(--cb-ink);
+  font-size: 2.3rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  margin: 0 0 6px;
+}
+
+.category-spend-board__summary p,
+.category-spend-board__empty {
+  color: var(--cb-ink-muted);
+  margin: 0;
+}
+
+.category-spend-board__meta {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(130px, 1fr));
+  min-width: 300px;
+}
+
+.category-spend-board__meta div {
+  background: var(--cb-surface-soft);
+  border: 1px solid var(--cb-border-card);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.category-spend-board__meta span {
+  color: var(--cb-ink);
+  display: block;
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+.category-spend-board__meta small,
+.category-spend-list__row small {
+  color: var(--cb-ink-muted);
+}
+
+.category-spend-board__loading {
+  display: grid;
+  min-height: 180px;
+  place-items: center;
+}
+
+.category-spend-board__content {
+  align-items: center;
+  display: grid;
+  gap: 28px;
+  grid-template-columns: 220px minmax(0, 1fr);
+}
+
+.category-spend-board__donut {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+
+.category-spend-board__donut > div {
+  align-items: center;
+  background: var(--cb-surface);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  height: 58%;
+  justify-content: center;
+  padding: 16px;
+  text-align: center;
+  width: 58%;
+}
+
+.category-spend-board__donut strong {
+  color: var(--cb-ink);
+  font-size: 1.35rem;
+}
+
+.category-spend-board__donut span {
+  color: var(--cb-ink-muted);
+  font-size: 0.78rem;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.category-spend-list {
+  display: grid;
+  gap: 12px;
+}
+
+.category-spend-list__row {
+  align-items: center;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 14px minmax(130px, 0.7fr) minmax(120px, 1fr) auto;
+}
+
+.category-spend-list__swatch {
+  border-radius: 999px;
+  height: 14px;
+  width: 14px;
+}
+
+.category-spend-list__row strong,
+.category-spend-list__row b {
+  color: var(--cb-ink);
+}
+
+.category-spend-list__row > div {
+  min-width: 0;
+}
+
+.category-spend-list__row > div strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.category-spend-list__bar {
+  background: var(--cb-border-soft);
+  border-radius: 999px;
+  height: 8px;
+  overflow: hidden;
+}
+
+.category-spend-list__bar i {
+  border-radius: inherit;
+  display: block;
+  height: 100%;
+}
 
 /* ── Content grid ────────────────────────────────────────────────────────── */
 .content-grid {
@@ -2343,6 +2660,8 @@ watch(locale, () => {
   .automation-card__main    { flex-direction: column; }
   .insight-band__headline   { flex-direction: column; }
   .insight-band__meta       { min-width: 0; width: 100%; }
+  .category-spend-board__content { grid-template-columns: 1fr; }
+  .category-spend-board__donut   { max-width: 260px; width: 100%; }
 }
 
 @media (max-width: 900px) {
@@ -2351,6 +2670,10 @@ watch(locale, () => {
   .filters-row--tags          { grid-template-columns: 1fr; }
   .mapping-queue__controls    { grid-template-columns: 1fr; }
   .automation-condition-grid  { grid-template-columns: 1fr; }
+  .category-spend-board__summary { flex-direction: column; }
+  .category-spend-board__meta    { min-width: 0; width: 100%; }
+  .category-spend-list__row      { grid-template-columns: 14px minmax(0, 1fr) auto; }
+  .category-spend-list__bar      { grid-column: 2 / -1; }
 }
 
 @media (max-width: 640px) {
@@ -2361,6 +2684,11 @@ watch(locale, () => {
   .drawer-shell__footer { padding-left: 16px; padding-right: 16px; }
 
   .stats-grid                  { grid-template-columns: 1fr; }
+  .category-spend-board        { padding: 18px; }
+  .category-spend-board__meta  { grid-template-columns: 1fr; }
+  .category-spend-list__row    { grid-template-columns: 14px minmax(0, 1fr); }
+  .category-spend-list__row b,
+  .category-spend-list__bar    { grid-column: 2 / -1; }
   .category-row__main          { flex-direction: column; }
   .category-row--child         { margin-left: 0; }
   .category-row__badges,

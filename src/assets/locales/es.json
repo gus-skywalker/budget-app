@@ -324,6 +324,35 @@
     "title": "Informes",
     "subtitle": "Genera informes de ingresos y gastos con los filtros más importantes para tu análisis."
   },
+  "reportAnalytics": {
+    "eyebrow": "Analytics",
+    "title": "Lectura financiera del período",
+    "totalSpent": "Total gastado",
+    "income": "Ingreso",
+    "expenses": "Gasto",
+    "partialResult": "Resultado parcial",
+    "excluded": "Excluido",
+    "comparison": "{value} vs período anterior",
+    "noComparison": "Sin período anterior para comparar",
+    "categorySpend": "Gastos por categoría",
+    "categorySpendSubtitle": "Mira dónde se concentra el consumo en el período seleccionado.",
+    "categories": "categorías",
+    "resultTitle": "Resultado parcial",
+    "resultSubtitle": "Ingresos, gastos e ítems excluidos de la planificación.",
+    "flowTitle": "Flujo por categoría",
+    "flowSubtitle": "Una lectura simple del dinero saliendo hacia las principales categorías.",
+    "noExpenses": "No se encontraron gastos en este período.",
+    "noFlow": "No hay flujo suficiente para este período.",
+    "periods": {
+      "week": "Esta semana",
+      "month": "Este mes",
+      "lastMonth": "Mes pasado",
+      "threeMonths": "Últimos 3 meses",
+      "sixMonths": "Últimos 6 meses",
+      "twelveMonths": "Últimos 12 meses",
+      "year": "Este año"
+    }
+  },
   "onboarding": {
     "eyebrow": "Onboarding",
     "step_badge": "Paso {current}/3",
@@ -771,7 +800,15 @@
     "list_title": "Categorías monitoreadas",
     "empty": "No se encontraron categorías.",
     "open_finance_upgrade_cta": "Activar Open Finance",
-    "connected_finance_locked": "Los mapeos bancarios y las categorías sincronizadas por Open Finance están disponibles en Starter. En Free, usa categorías y reglas automáticas locales."
+    "connected_finance_locked": "Los mapeos bancarios y las categorías sincronizadas por Open Finance están disponibles en Starter. En Free, usa categorías y reglas automáticas locales.",
+    "monthly_spend": {
+      "eyebrow": "Consumo por categoría",
+      "description": "Gastos reales de {month}, excluyendo ítems fuera de la planificación.",
+      "active_categories": "categorías con gasto",
+      "open_finance_items": "ítems Open Finance",
+      "transactions": "transacciones",
+      "empty": "No se encontraron gastos categorizados en el mes actual."
+    }
   },
   "planning": {
     "budget": {

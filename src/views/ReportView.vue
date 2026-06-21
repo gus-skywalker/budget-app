@@ -8,6 +8,8 @@
         <span>{{ t('transactionVisibility.reportScopeNote') }}</span>
       </div>
 
+      <report-analytics-panel />
+
       <report-generator
         :initial-report-type="initialReportType"
         :initial-start-date="initialStartDate"
@@ -22,6 +24,7 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import ReportAnalyticsPanel from '@/components/ReportAnalyticsPanel.vue'
 import ReportGenerator from '@/components/ReportGenerator.vue'
 import PageHeader from '@/components/PageHeader.vue'
 

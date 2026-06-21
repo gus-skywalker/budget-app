@@ -142,6 +142,13 @@ const mainNavSections = computed<NavSection[]>(() => [
         disabled: false
       },
       {
+        key: 'report',
+        title: t('sidebar.report'),
+        icon: 'mdi-chart-donut',
+        to: { name: 'report' },
+        disabled: false
+      },
+      {
         key: 'shared-with-me',
         title: t('sidebar.shared_with_me'),
         icon: 'mdi-handshake-outline',

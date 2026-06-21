@@ -80,6 +80,7 @@ const router = createRouter({
     },
     {
       path: '/report',
+      alias: ['/reports', '/app/report', '/app/reports'],
       name: 'report',
       component: ReportView,
       meta: { requiresAuth: true, requiresWorkspace: true }

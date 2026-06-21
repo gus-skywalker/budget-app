@@ -362,6 +362,35 @@
     "title": "Reports",
     "subtitle": "Generate expense and income reports with the filters that matter most."
   },
+  "reportAnalytics": {
+    "eyebrow": "Analytics",
+    "title": "Financial view for the period",
+    "totalSpent": "Total spent",
+    "income": "Income",
+    "expenses": "Spending",
+    "partialResult": "Partial result",
+    "excluded": "Excluded",
+    "comparison": "{value} vs previous period",
+    "noComparison": "No previous period to compare",
+    "categorySpend": "Spending by category",
+    "categorySpendSubtitle": "See where consumption is concentrated in the selected period.",
+    "categories": "categories",
+    "resultTitle": "Partial result",
+    "resultSubtitle": "Income, spending, and items excluded from planning.",
+    "flowTitle": "Category flow",
+    "flowSubtitle": "A simple view of money flowing out to the top categories.",
+    "noExpenses": "No expenses found in this period.",
+    "noFlow": "Not enough flow for this period.",
+    "periods": {
+      "week": "This week",
+      "month": "This month",
+      "lastMonth": "Last month",
+      "threeMonths": "Last 3 months",
+      "sixMonths": "Last 6 months",
+      "twelveMonths": "Last 12 months",
+      "year": "This year"
+    }
+  },
   "onboarding": {
     "eyebrow": "Onboarding",
     "step_badge": "Step {current}/3",
@@ -986,6 +1015,14 @@
       "eyebrow": "Classification hub",
       "title": "Taxonomy ready for budget, AI, and scenarios",
       "description": "Organize the workspace catalog, resolve Open Finance mappings, and prepare the base that feeds classification, budget, and simulations."
+    },
+    "monthly_spend": {
+      "eyebrow": "Consumption by category",
+      "description": "Real spending for {month}, excluding items outside planning.",
+      "active_categories": "categories with spend",
+      "open_finance_items": "Open Finance items",
+      "transactions": "transactions",
+      "empty": "No categorized expenses found in the current month."
     },
     "tag_insight": {
       "eyebrow": "Cross-cutting classification",
