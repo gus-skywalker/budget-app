@@ -203,8 +203,8 @@
     "cancel_subscription_hint": "Perderás acceso a funciones del plan pago al final del período actual",
     "change_plan_instructions": "Selecciona un nuevo plan si deseas cambiar tu suscripción. Serás redirigido al portal para completar el cambio.",
     "plans": {
-      "monthly": "Plan mensual - $27.50/mes",
-      "annual": "Plan anual - $330.00/año"
+      "monthly": "STARTER Mensual - R$29.00/mes",
+      "annual": "STARTER Anual - R$297.00/año"
     },
     "change_to": "Cambiar a {plan}",
     "manage_subscription": "Gestionar suscripción en el portal",

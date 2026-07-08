@@ -203,8 +203,8 @@
     "cancel_subscription_hint": "Vous perdrez l'accès aux fonctionnalités du plan payant à la fin de la période en cours",
     "change_plan_instructions": "Sélectionnez un nouveau forfait si vous souhaitez modifier votre abonnement. Vous serez redirigé vers le portail pour terminer la modification.",
     "plans": {
-      "monthly": "Forfait mensuel - 27,50 $/mois",
-      "annual": "Forfait annuel - 330,00 $/an"
+      "monthly": "STARTER mensuel - 29,00 R$/mois",
+      "annual": "STARTER annuel - 297,00 R$/an"
     },
     "change_to": "Passer à {plan}",
     "manage_subscription": "Gérer l'abonnement dans le portail",

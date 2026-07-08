@@ -232,8 +232,8 @@
     "cancel_subscription_hint": "You will lose access to paid-plan features at the end of the current period",
     "change_plan_instructions": "Select a new plan if you wish to change your subscription. You will be redirected to the portal to complete the change.",
     "plans": {
-      "monthly": "Monthly Plan - $27.50/month",
-      "annual": "Annual Plan - $330.00/year"
+      "monthly": "STARTER Monthly - R$29.00/month",
+      "annual": "STARTER Annual - R$297.00/year"
     },
     "change_to": "Change to {plan}",
     "manage_subscription": "Manage Subscription in Portal",
@@ -1167,6 +1167,11 @@
       "status_checked_at": "Status checked at {date}",
       "continue_authorization": "Continue authorization",
       "retry": "Try again",
+      "reconnect": "Reconnect",
+      "authorize_again": "Authorize again",
+      "reconnect_revoked_hint": "This authorization was revoked. Reconnect the account to receive data again.",
+      "reconnect_auth_error_hint": "The bank rejected the previous authorization. Reconnect the account to create a new consent.",
+      "reauthorize_hint": "This connection needs a new authorization before it can sync.",
       "refresh_status": "Refresh status",
       "disconnect": "Disconnect",
       "operational_health": "Operational health",

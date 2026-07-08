@@ -230,8 +230,8 @@
     "cancel_subscription_hint": "Você perderá acesso aos recursos do plano pago no fim do período atual",
     "change_plan_instructions": "Selecione um novo plano caso deseje alterar sua assinatura. Você será redirecionado ao portal para concluir a mudança.",
     "plans": {
-      "monthly": "STARTER Mensal - R$27,50/mês",
-      "annual": "STARTER Anual - R$330,00/ano"
+      "monthly": "STARTER Mensal - R$29,00/mês",
+      "annual": "STARTER Anual - R$297,00/ano"
     },
     "change_to": "Alterar para {plan}",
     "manage_subscription": "Gerenciar Assinatura no Portal",
@@ -1157,6 +1157,11 @@
       "status_checked_at": "Status checado em {date}",
       "continue_authorization": "Continuar autorização",
       "retry": "Tentar novamente",
+      "reconnect": "Reconectar",
+      "authorize_again": "Autorizar novamente",
+      "reconnect_revoked_hint": "Esta autorização foi revogada. Reconecte a conta para voltar a receber dados.",
+      "reconnect_auth_error_hint": "O banco recusou a autorização anterior. Reconecte a conta para gerar um novo consentimento.",
+      "reauthorize_hint": "Esta conexão precisa de uma nova autorização antes de sincronizar.",
       "refresh_status": "Atualizar status",
       "disconnect": "Desconectar",
       "operational_health": "Saúde operacional",

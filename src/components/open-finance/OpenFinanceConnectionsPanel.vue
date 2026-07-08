@@ -90,6 +90,10 @@
                 {{ connectionErrorSummary(connection) }}
               </p>
 
+              <p v-if="showReauthorizationPrompt(connection)" class="of-reconnect-hint">
+                {{ reauthorizationPrompt(connection) }}
+              </p>
+
               <p v-if="showBackendSyncPolicy(connection)" class="of-sync-policy">
                 {{ syncPolicyLabel(connection) }}
               </p>
@@ -135,7 +139,8 @@
               :disabled="!canManage"
               @click="retryAuthorization(connection)"
             >
-              {{ t('openFinance.panel.retry') }}
+              <v-icon start>{{ recoveryActionIcon(connection) }}</v-icon>
+              {{ recoveryActionLabel(connection) }}
             </v-btn>
             <v-btn
               v-if="showRefresh(connection)"
@@ -291,7 +296,16 @@ const statusUi = (status: string | null | undefined) => {
   return { label: label === labelKey ? key : label, color: consentStatusColor[key] || 'grey' }
 }
 const showContinueAuthorization = (connection: OpenFinanceConnection) => connection.consentStatus === 'PENDING_AUTHORIZATION' && Boolean(connection.authorizationLink || connection.openfinanceLink)
-const showRetry = (connection: OpenFinanceConnection) => ['AUTHORIZATION_EXPIRED', 'AUTHORIZATION_FAILED', 'USER_CANCELLED_AUTHORIZATION', 'REAUTH_REQUIRED'].includes(String(connection.consentStatus || ''))
+const providerStatusKey = (connection: OpenFinanceConnection) => String(connection.lastProviderStatus || '').trim().toUpperCase()
+const isProviderAuthorizationFailure = (connection: OpenFinanceConnection) => ['ERROR_401', 'ERROR_403'].includes(providerStatusKey(connection))
+const requiresReconnection = (connection: OpenFinanceConnection) => (
+  connection.consentStatus === 'REVOKED'
+  || (connection.consentStatus === 'ERROR' && isProviderAuthorizationFailure(connection))
+)
+const requiresAuthorizationRetry = (connection: OpenFinanceConnection) => (
+  ['AUTHORIZATION_EXPIRED', 'AUTHORIZATION_FAILED', 'USER_CANCELLED_AUTHORIZATION', 'REAUTH_REQUIRED'].includes(String(connection.consentStatus || ''))
+)
+const showRetry = (connection: OpenFinanceConnection) => requiresReconnection(connection) || requiresAuthorizationRetry(connection)
 const showRefresh = (connection: OpenFinanceConnection) => ['PENDING_AUTHORIZATION', 'CONSENT_GRANTED_WAITING_PROVIDER', 'DELAYED_PROVIDER'].includes(String(connection.consentStatus || ''))
 const isDevMode = import.meta.env.DEV
 const showDevSync = (connection: OpenFinanceConnection) => (
@@ -303,6 +317,20 @@ const showBackendSyncPolicy = (connection: OpenFinanceConnection) => ['AUTHORIZE
 const syncPolicyLabel = (connection: OpenFinanceConnection) => connection.consentStatus === 'AUTHORIZED_SYNCING'
   ? t('openFinance.panel.sync_in_progress')
   : t('openFinance.panel.sync_policy')
+const showReauthorizationPrompt = (connection: OpenFinanceConnection) => requiresReconnection(connection) || requiresAuthorizationRetry(connection)
+const reauthorizationPrompt = (connection: OpenFinanceConnection) => {
+  if (connection.consentStatus === 'REVOKED') return t('openFinance.panel.reconnect_revoked_hint')
+  if (isProviderAuthorizationFailure(connection)) return t('openFinance.panel.reconnect_auth_error_hint')
+  return t('openFinance.panel.reauthorize_hint')
+}
+const recoveryActionLabel = (connection: OpenFinanceConnection) => (
+  requiresReconnection(connection)
+    ? t('openFinance.panel.reconnect')
+    : t('openFinance.panel.authorize_again')
+)
+const recoveryActionIcon = (connection: OpenFinanceConnection) => (
+  requiresReconnection(connection) ? 'mdi-link-variant-plus' : 'mdi-shield-refresh-outline'
+)
 const currentUserId = computed(() => String(userStore.getUser?.id || '').trim())
 const showPlanningSharingControl = (connection: OpenFinanceConnection) => (
   connection.payerDocumentType === 'CPF'
@@ -708,6 +736,14 @@ const extractErrorMessage = (error: any, fallback: string) => (
   margin: 0;
   color: #64748b;
   font-size: 0.78rem;
+  line-height: 1.45;
+  max-width: 68ch;
+}
+
+.of-reconnect-hint {
+  margin: 0;
+  color: #92400e;
+  font-size: 0.82rem;
   line-height: 1.45;
   max-width: 68ch;
 }
