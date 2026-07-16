@@ -154,6 +154,9 @@
             <div v-if="uncategorizedOpenFinanceExpenses.length" class="open-finance-ai-summary">
               {{ $t('expense.open_finance_ai_queue_summary', { total: uncategorizedOpenFinanceExpenses.length }) }}
             </div>
+            <div v-if="openFinanceCategorizationResult" class="open-finance-ai-result">
+              {{ openFinanceCategorizationSummary }}
+            </div>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <v-btn
@@ -910,6 +913,7 @@ export default {
       applyingExpenseSuggestionId: null,
       expenseCategorySuggestion: null,
       batchExpenseCategorySuggestions: {},
+      openFinanceCategorizationResult: null,
       isBatchSuggestingExpenseCategories: false,
       isApplyingBatchExpenseSuggestions: false,
       isAutoClassifyingOpenFinance: false,
@@ -1059,6 +1063,18 @@ export default {
     },
     canApplyBatchExpenseSuggestions() {
       return this.uncategorizedExpenses.some((expense) => Boolean(this.getStoredExpenseSuggestion(expense.id)?.suggestedCategory?.id))
+    },
+    openFinanceCategorizationSummary() {
+      const result = this.openFinanceCategorizationResult
+      if (!result) {
+        return ''
+      }
+      return this.$t('expense.open_finance_ai_result_summary', {
+        candidates: Number(result.candidates || 0),
+        applied: Number(result.applied || 0),
+        noSuggestion: Number(result.noSuggestion || 0),
+        skipped: Number(result.skipped || 0),
+      })
     },
     hasActiveExpenseDrillDown() {
       return Boolean(this.routeExpenseAccountId || this.routeExpenseCategory || this.expenseListFilter === 'open-finance')
@@ -1262,6 +1278,12 @@ export default {
         this.resetExpensePaginationAndFetch()
       },
       deep: true,
+    },
+    selectedExpenseMonth() {
+      this.openFinanceCategorizationResult = null
+    },
+    selectedExpenseYear() {
+      this.openFinanceCategorizationResult = null
     },
   },
   methods: {
@@ -2523,16 +2545,17 @@ export default {
           year: this.selectedExpenseYear,
           limit: 1000,
         })
+        this.openFinanceCategorizationResult = data || null
         if (this.isAiServiceUnavailableResponse(data)) {
           this.showAiServiceUnavailableToast()
         }
         const appliedCount = Number(data?.applied || 0)
         if (!appliedCount) {
-          this.showToast(this.$t('expense.ai_no_suggestion'), 'info')
+          this.showToast(this.openFinanceCategorizationSummary || this.$t('expense.ai_no_suggestion'), 'info')
           return
         }
         this.batchExpenseCategorySuggestions = {}
-        this.showToast(this.$t('expense.ai_queue_apply_success', { count: appliedCount }), 'success')
+        this.showToast(this.openFinanceCategorizationSummary, 'success')
         await this.fetchMonthlyExpenses()
         await this.fetchDailyConsumptionExpenses()
       } catch (error) {
@@ -3922,6 +3945,12 @@ export default {
   margin-top: 4px;
   font-size: 0.78rem;
   color: var(--cb-accent);
+}
+
+.open-finance-ai-result {
+  margin-top: 6px;
+  font-size: 0.78rem;
+  color: var(--cb-ink-muted);
 }
 
 .daily-consumption-report {

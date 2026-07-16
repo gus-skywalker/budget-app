@@ -332,6 +332,7 @@
     "ai_no_pending_uncategorized": "Não há despesas sem categoria prontas para revisão em lote.",
     "open_finance_ai_queue_summary": "{total} despesa(s) Open Finance sem categoria neste mês.",
     "open_finance_ai_classify": "Classificar Open Finance",
+    "open_finance_ai_result_summary": "Open Finance: {candidates} analisada(s), {applied} categorizada(s), {noSuggestion} sem sugestão e {skipped} pulada(s).",
     "daily_report_title": "Consumo diário",
     "daily_report_summary": "{days} dia(s) com consumo • média {averageFormatted}/dia • Open Finance {openFinanceFormatted}",
     "daily_report_total": "Total no mês",

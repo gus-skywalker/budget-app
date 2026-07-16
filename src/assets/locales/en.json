@@ -335,6 +335,7 @@
     "ai_no_pending_uncategorized": "There are no uncategorized expenses ready for batch review.",
     "open_finance_ai_queue_summary": "{total} Open Finance expense(s) uncategorized this month.",
     "open_finance_ai_classify": "Classify Open Finance",
+    "open_finance_ai_result_summary": "Open Finance: {candidates} reviewed, {applied} categorized, {noSuggestion} without suggestion, and {skipped} skipped.",
     "daily_report_title": "Daily consumption",
     "daily_report_summary": "{days} day(s) with spend • avg {averageFormatted}/day • Open Finance {openFinanceFormatted}",
     "daily_report_total": "Month total",
