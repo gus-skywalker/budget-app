@@ -147,7 +147,7 @@
           </section>
 
           <div class="content-grid">
-            <section class="cb-card surface-card">
+            <section class="cb-card surface-card category-catalog-card">
               <div class="surface-card__header">
                 <div>
                   <h3 class="surface-card__title">{{ $t('categories_page.category_catalog_title') }}</h3>
@@ -155,7 +155,7 @@
                 </div>
               </div>
 
-              <div class="filters-row">
+              <div class="filters-row category-catalog-filters">
                 <v-text-field
                   v-model="search"
                   :label="$t('categories_page.search_category')"
@@ -163,21 +163,25 @@
                   variant="outlined"
                   density="comfortable"
                   color="var(--cb-primary)"
-                  class="modern-input"
+                  class="modern-input category-catalog-filters__search"
                   hide-details
                 />
-                <v-switch
-                  v-model="showMappedOnly"
-                  color="var(--cb-primary)"
-                  hide-details
-                  :label="$t('categories_page.mapped_only')"
-                />
-                <v-switch
-                  v-model="showInactiveCustom"
-                  color="var(--cb-primary)"
-                  hide-details
-                  :label="$t('categories_page.show_inactive_custom')"
-                />
+                <div class="category-catalog-filters__toggles">
+                  <v-switch
+                    v-model="showMappedOnly"
+                    color="var(--cb-primary)"
+                    hide-details
+                    class="category-catalog-filter-switch"
+                    :label="$t('categories_page.mapped_only')"
+                  />
+                  <v-switch
+                    v-model="showInactiveCustom"
+                    color="var(--cb-primary)"
+                    hide-details
+                    class="category-catalog-filter-switch"
+                    :label="$t('categories_page.show_inactive_custom')"
+                  />
+                </div>
               </div>
 
               <div v-if="loading" class="loading-state">
@@ -2311,6 +2315,41 @@ watch(locale, () => {
 .filters-row--tags { grid-template-columns: minmax(240px, 1fr) auto; }
 .modern-input { min-width: 0; }
 
+.category-catalog-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+}
+
+.category-catalog-filters__search {
+  flex: 1 1 320px;
+  min-width: min(100%, 280px);
+}
+
+.category-catalog-filters__toggles {
+  align-items: center;
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  justify-content: flex-end;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.category-catalog-filter-switch {
+  flex: 0 1 auto;
+  max-width: 100%;
+  min-width: max-content;
+}
+
+.category-catalog-filter-switch :deep(.v-label) {
+  line-height: 1.35;
+  overflow-wrap: normal;
+  white-space: normal;
+  word-break: normal;
+}
+
 /* ── States ──────────────────────────────────────────────────────────────── */
 .loading-state,
 .empty-state,
@@ -2674,9 +2713,29 @@ watch(locale, () => {
   .category-spend-board__meta    { min-width: 0; width: 100%; }
   .category-spend-list__row      { grid-template-columns: 14px minmax(0, 1fr) auto; }
   .category-spend-list__bar      { grid-column: 2 / -1; }
+
+  .category-catalog-filters__toggles {
+    justify-content: flex-start;
+    width: 100%;
+  }
 }
 
 @media (max-width: 640px) {
+  :deep(.cb-page-header) {
+    flex-direction: column;
+  }
+
+  :deep(.cb-page-header__actions) {
+    flex-shrink: 1;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  :deep(.cb-page-header__actions .v-btn) {
+    flex: 1 1 140px;
+    max-width: 100%;
+  }
+
   .tabs-shell__content,
   .surface-card,
   .drawer-shell__header,
@@ -2693,5 +2752,21 @@ watch(locale, () => {
   .category-row--child         { margin-left: 0; }
   .category-row__badges,
   .category-row__actions       { justify-content: flex-start; }
+
+  .category-catalog-filters {
+    gap: 10px;
+  }
+
+  .category-catalog-filters__search,
+  .category-catalog-filters__toggles,
+  .category-catalog-filter-switch {
+    flex-basis: 100%;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .category-catalog-filter-switch {
+    min-height: 48px;
+  }
 }
 </style>

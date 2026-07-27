@@ -146,7 +146,7 @@ export default {
   fetchMonthlyExpenses(
     monthNumber: number,
     year: number,
-    pagination: { limit?: number; offset?: number } = {}
+    pagination: { limit?: number; offset?: number; categoryId?: number; uncategorized?: boolean } = {}
   ): Promise<any> {
     const { fromDate, toDate } = getMonthDateRange(monthNumber, year)
 
@@ -154,6 +154,8 @@ export default {
       direction: 'OUTFLOW',
       fromDate,
       toDate,
+      categoryId: pagination.categoryId,
+      uncategorized: pagination.uncategorized,
       limit: pagination.limit,
       offset: pagination.offset,
     }).then((page) => ({

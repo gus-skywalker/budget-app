@@ -39,6 +39,11 @@ const buildTransactionParams = (params: TransactionQueryParams = {}) => ({
   ...(params.fromDate ? { fromDate: params.fromDate } : {}),
   ...(params.toDate ? { toDate: params.toDate } : {}),
   ...(params.accountId ? { accountId: params.accountId } : {}),
+  ...(params.direction ? { direction: params.direction } : {}),
+  ...(params.categoryId !== undefined ? { categoryId: params.categoryId } : {}),
+  ...(params.uncategorized !== undefined ? { uncategorized: params.uncategorized } : {}),
+  ...(params.excludedFromPlanning !== undefined ? { excludedFromPlanning: params.excludedFromPlanning } : {}),
+  ...(params.visibilityScope ? { visibilityScope: params.visibilityScope } : {}),
   limit: clampLimit(params.limit),
   offset: clampOffset(params.offset),
 })

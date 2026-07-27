@@ -26,6 +26,7 @@ export interface TransactionView {
   categoryId?: number | null
   categoryCode?: string | null
   categoryName?: string | null
+  categorySystemDefined?: boolean | null
   categoryDisplayColor?: string | null
   categoryDisplayIcon?: string | null
   categorizationSource?: string | null
@@ -111,6 +112,11 @@ export interface TransactionQueryParams {
   fromDate?: string
   toDate?: string
   accountId?: string
+  direction?: TransactionDirection
+  categoryId?: number
+  uncategorized?: boolean
+  excludedFromPlanning?: boolean
+  visibilityScope?: TransactionVisibilityScope
   limit?: number
   offset?: number
 }

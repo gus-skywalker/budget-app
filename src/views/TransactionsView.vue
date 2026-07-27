@@ -871,6 +871,8 @@ export default {
       resolvingConflictAction: null,
       routeExpenseAccountId: null,
       routeExpenseCategory: null,
+      routeExpenseCategoryId: null,
+      routeExpenseUncategorized: false,
       months: [
         { titleKey: 'common.months.january', value: 1 },
         { titleKey: 'common.months.february', value: 2 },
@@ -1077,9 +1079,12 @@ export default {
       })
     },
     hasActiveExpenseDrillDown() {
-      return Boolean(this.routeExpenseAccountId || this.routeExpenseCategory || this.expenseListFilter === 'open-finance')
+      return Boolean(this.routeExpenseAccountId || this.routeExpenseCategory || this.routeExpenseUncategorized || this.expenseListFilter === 'open-finance')
     },
     activeExpenseCategoryName() {
+      if (this.routeExpenseUncategorized) {
+        return this.$t('expenseItem.uncategorized')
+      }
       if (!this.routeExpenseCategory) {
         return null
       }
@@ -1870,9 +1875,15 @@ export default {
       }
 
       return items.filter((item) => {
-        const matchesCategory = this.routeExpenseCategory
-          ? item?.category === this.routeExpenseCategory
-          : true
+        const category = item?.category
+        const categoryCandidates = [item?.categoryId, category?.id, category?.code, category?.name]
+          .filter((value) => value !== null && value !== undefined)
+          .map(String)
+        const matchesCategory = this.routeExpenseUncategorized
+          ? !category && !item?.categoryId
+          : this.routeExpenseCategory
+            ? categoryCandidates.includes(String(this.routeExpenseCategory))
+            : true
         const matchesAccount = this.routeExpenseAccountId
           ? item?.accountId === this.routeExpenseAccountId
           : true
@@ -1897,6 +1908,9 @@ export default {
 
       this.routeExpenseAccountId = typeof query.accountId === 'string' ? query.accountId : null
       this.routeExpenseCategory = typeof query.category === 'string' ? query.category : null
+      const categoryId = Number(query.categoryId)
+      this.routeExpenseCategoryId = Number.isInteger(categoryId) && categoryId > 0 ? categoryId : null
+      this.routeExpenseUncategorized = query.uncategorized === '1'
       if (query.openFinance === '1') {
         this.incomeListFilter = 'open-finance'
         this.expenseListFilter = 'open-finance'
@@ -3355,7 +3369,11 @@ export default {
       const yearNumber = this.selectedExpenseYear;
       if (monthNumber !== null) {
         this.isLoadingExpenses = true;
-        return ExpenseService.fetchMonthlyExpenses(monthNumber, yearNumber, this.expensePagination)
+        return ExpenseService.fetchMonthlyExpenses(monthNumber, yearNumber, {
+          ...this.expensePagination,
+          categoryId: this.routeExpenseCategoryId || undefined,
+          uncategorized: this.routeExpenseUncategorized || undefined,
+        })
           .then((response) => {
             const page = response?.data || {}
             this.monthlyExpenses = this.normalizeCollection(page).map((expense) => this.enrichExpenseWithConflict(expense));
