@@ -146,9 +146,11 @@ export default {
   fetchMonthlyExpenses(
     monthNumber: number,
     year: number,
-    pagination: { limit?: number; offset?: number; categoryId?: number; uncategorized?: boolean } = {}
+    pagination: { limit?: number; offset?: number; categoryId?: number; uncategorized?: boolean; day?: string } = {}
   ): Promise<any> {
-    const { fromDate, toDate } = getMonthDateRange(monthNumber, year)
+    const monthRange = getMonthDateRange(monthNumber, year)
+    const fromDate = pagination.day || monthRange.fromDate
+    const toDate = pagination.day || monthRange.toDate
 
     return FinancialReadService.fetchTransactionsByDirection({
       direction: 'OUTFLOW',
@@ -164,5 +166,19 @@ export default {
         items: page.items.map(mapTransactionToExpense),
       },
     }))
+  },
+  fetchDailyExpenseSummary(
+    monthNumber: number,
+    year: number,
+    filters: { accountId?: string; categoryId?: number; uncategorized?: boolean } = {}
+  ): Promise<any> {
+    const { fromDate, toDate } = getMonthDateRange(monthNumber, year)
+    return FinancialReadService.fetchTransactionDailySummary({
+      fromDate,
+      toDate,
+      accountId: filters.accountId,
+      categoryId: filters.categoryId,
+      uncategorized: filters.uncategorized,
+    })
   },
 }

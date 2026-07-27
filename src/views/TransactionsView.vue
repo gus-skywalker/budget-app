@@ -131,11 +131,7 @@
         <div class="cb-alert-strip__body">
           <p class="cb-alert-strip__desc">
             {{ $t('transactions.applied_filter') }}:
-            <strong v-if="activeExpenseCategoryName">{{ activeExpenseCategoryName }}</strong>
-            <strong v-if="activeExpenseCategoryName && activeExpenseAccountName"> · </strong>
-            <strong v-if="activeExpenseAccountName">{{ activeExpenseAccountName }}</strong>
-            <strong v-if="(activeExpenseCategoryName || activeExpenseAccountName) && activeExpenseFilterLabel"> · </strong>
-            <strong v-if="activeExpenseFilterLabel">{{ activeExpenseFilterLabel }}</strong>
+            <strong>{{ activeExpenseDrillDownLabels.join(' · ') }}</strong>
           </p>
         </div>
         <div class="cb-alert-strip__actions">
@@ -182,33 +178,16 @@
         </div>
       </div>
 
-      <div v-if="activeTab === 'expense'" class="daily-consumption-report">
-        <div class="daily-consumption-report__header">
-          <div>
-            <div class="cb-card__title">{{ $t('expense.daily_report_title') }}</div>
-            <p>{{ $t('expense.daily_report_summary', dailyConsumptionSummary) }}</p>
-          </div>
-          <div class="daily-consumption-report__total">
-            <span>{{ $t('expense.daily_report_total') }}</span>
-            <strong>{{ formatMoney(dailyConsumptionSummary.total) }}</strong>
-          </div>
-        </div>
-        <div v-if="dailyConsumptionRows.length" class="daily-consumption-report__rows">
-          <div
-            v-for="row in dailyConsumptionRows"
-            :key="row.date"
-            class="daily-consumption-report__row"
-          >
-            <span class="daily-consumption-report__date">{{ formatDailyReportDate(row.date) }}</span>
-            <span class="daily-consumption-report__category">{{ row.topCategoryLabel }}</span>
-            <span class="daily-consumption-report__meta">
-              {{ $t('expense.daily_report_row_meta', { count: row.count, openFinance: row.openFinanceCount }) }}
-            </span>
-            <strong>{{ formatMoney(row.total) }}</strong>
-          </div>
-        </div>
-        <p v-else class="daily-consumption-report__empty">{{ $t('expense.daily_report_empty') }}</p>
-      </div>
+      <daily-expense-analysis
+        v-if="activeTab === 'expense'"
+        :rows="dailyConsumptionRows"
+        :selected-date="routeExpenseDay"
+        :loading="isLoadingDailyConsumption"
+        :error="dailyConsumptionError"
+        @select-date="selectExpenseDay"
+        @clear-date="clearSelectedExpenseDay"
+        @retry="fetchDailyConsumptionExpenses"
+      />
 
       <!-- Transaction List Card -->
       <div class="cb-card">
@@ -687,6 +666,7 @@ import WorkspaceService from '@/services/WorkspaceService'
 import { useUserStore } from '@/plugins/userStore'
 import PageHeader from '@/components/PageHeader.vue'
 import AlertStrip from '@/components/AlertStrip.vue'
+import DailyExpenseAnalysis from '@/components/DailyExpenseAnalysis.vue'
 
 const toLocalISODate = (date = new Date()) => {
   const timeOffset = date.getTimezoneOffset() * 60000
@@ -800,6 +780,7 @@ export default {
     SharedExpenseAgreementVisibility,
     PageHeader,
     AlertStrip,
+    DailyExpenseAnalysis,
   },
   data() {
     // const currentYear = new Date().getFullYear();
@@ -873,6 +854,7 @@ export default {
       routeExpenseCategory: null,
       routeExpenseCategoryId: null,
       routeExpenseUncategorized: false,
+      routeExpenseDay: null,
       months: [
         { titleKey: 'common.months.january', value: 1 },
         { titleKey: 'common.months.february', value: 2 },
@@ -889,7 +871,7 @@ export default {
       ],
       years,
       monthlyExpenses: [],
-      dailyReportExpenses: [],
+      dailyExpenseSummary: [],
       monthlyIncomes: [],
       incomePagination: {
         limit: 20,
@@ -903,6 +885,8 @@ export default {
       },
       isLoadingIncomes: false,
       isLoadingExpenses: false,
+      isLoadingDailyConsumption: false,
+      dailyConsumptionError: false,
       incomeListFilter: 'all',
       expenseListFilter: 'all',
       isEditingIncome: false,
@@ -1079,7 +1063,7 @@ export default {
       })
     },
     hasActiveExpenseDrillDown() {
-      return Boolean(this.routeExpenseAccountId || this.routeExpenseCategory || this.routeExpenseUncategorized || this.expenseListFilter === 'open-finance')
+      return Boolean(this.routeExpenseAccountId || this.routeExpenseCategory || this.routeExpenseUncategorized || this.routeExpenseDay || this.expenseListFilter === 'open-finance')
     },
     activeExpenseCategoryName() {
       if (this.routeExpenseUncategorized) {
@@ -1109,6 +1093,18 @@ export default {
         return this.$t('transactionVisibility.filters.private')
       }
       return null
+    },
+    activeExpenseDayLabel() {
+      if (!this.routeExpenseDay) return null
+      return this.$t('expense.daily_report_selected_day', { date: this.formatDailyReportDate(this.routeExpenseDay) })
+    },
+    activeExpenseDrillDownLabels() {
+      return [
+        this.activeExpenseCategoryName,
+        this.activeExpenseAccountName,
+        this.activeExpenseFilterLabel,
+        this.activeExpenseDayLabel,
+      ].filter(Boolean)
     },
     openFinanceConflictMap() {
       return this.openFinanceConflicts.reduce((accumulator, conflict) => {
@@ -1178,59 +1174,30 @@ export default {
       return this.monthlyExpenses.reduce((sum, t) => sum + (Number(t.amount) || 0), 0)
     },
     dailyConsumptionRows() {
-      const rowsByDate = new Map()
-      const source = this.dailyReportExpenses.length ? this.dailyReportExpenses : this.monthlyExpenses
+      const summaryByDate = new Map(
+        this.dailyExpenseSummary.map((day) => [day.date, {
+          total: Math.abs(Number(day.expenseAmount || 0)),
+          count: Number(day.transactionCount || 0),
+        }])
+      )
+      const now = new Date()
+      const isCurrentMonth = this.selectedExpenseMonth === now.getMonth() + 1 && this.selectedExpenseYear === now.getFullYear()
+      const windowEnd = isCurrentMonth
+        ? new Date(now.getFullYear(), now.getMonth(), now.getDate())
+        : new Date(this.selectedExpenseYear, this.selectedExpenseMonth, 0)
 
-      source.forEach((expense) => {
-        const date = this.normalizeDate(expense?.date)
-        if (!date) return
-
-        const current = rowsByDate.get(date) || {
-          date,
-          total: 0,
-          count: 0,
-          openFinanceCount: 0,
-          categories: new Map(),
+      const windowLength = Math.min(7, windowEnd.getDate())
+      return Array.from({ length: windowLength }, (_, index) => {
+        const date = new Date(windowEnd)
+        date.setDate(windowEnd.getDate() - (windowLength - 1 - index))
+        const isoDate = toLocalISODate(date)
+        const summary = summaryByDate.get(isoDate)
+        return {
+          date: isoDate,
+          total: summary?.total || 0,
+          count: summary?.count || 0,
         }
-        const amount = Math.abs(Number(expense?.amount || 0))
-        const categoryLabel = this.transactionCategoryLabel(expense)
-        current.total += amount
-        current.count += 1
-        if (this.isOpenFinanceTransaction(expense)) {
-          current.openFinanceCount += 1
-        }
-        current.categories.set(categoryLabel, (current.categories.get(categoryLabel) || 0) + amount)
-        rowsByDate.set(date, current)
       })
-
-      return Array.from(rowsByDate.values())
-        .map((row) => {
-          const [topCategoryLabel] = Array.from(row.categories.entries())
-            .sort((left, right) => right[1] - left[1])[0] || [this.$t('expenseItem.uncategorized')]
-          return {
-            date: row.date,
-            total: row.total,
-            count: row.count,
-            openFinanceCount: row.openFinanceCount,
-            topCategoryLabel,
-          }
-        })
-        .sort((left, right) => right.date.localeCompare(left.date))
-    },
-    dailyConsumptionSummary() {
-      const rows = this.dailyConsumptionRows
-      const total = rows.reduce((sum, row) => sum + row.total, 0)
-      const openFinanceTotal = (this.dailyReportExpenses.length ? this.dailyReportExpenses : this.monthlyExpenses)
-        .filter((expense) => this.isOpenFinanceTransaction(expense))
-        .reduce((sum, expense) => sum + Math.abs(Number(expense?.amount || 0)), 0)
-      return {
-        total,
-        days: rows.length,
-        average: rows.length ? total / rows.length : 0,
-        openFinance: openFinanceTotal,
-        averageFormatted: this.formatMoney(rows.length ? total / rows.length : 0),
-        openFinanceFormatted: this.formatMoney(openFinanceTotal),
-      }
     },
     transactionSummaryItems() {
       const locale = this.$i18n?.locale || 'pt-BR'
@@ -1834,7 +1801,13 @@ export default {
       } else {
         if (this.selectedExpenseMonth === 1) { this.selectedExpenseMonth = 12; this.selectedExpenseYear -= 1 }
         else { this.selectedExpenseMonth -= 1 }
-        this.resetExpensePaginationAndFetch()
+        const query = {
+          ...this.$route.query,
+          month: String(this.selectedExpenseMonth),
+          year: String(this.selectedExpenseYear),
+        }
+        delete query.day
+        this.$router.replace({ name: 'transactions', query })
       }
     },
     goToNextMonth() {
@@ -1845,7 +1818,13 @@ export default {
       } else {
         if (this.selectedExpenseMonth === 12) { this.selectedExpenseMonth = 1; this.selectedExpenseYear += 1 }
         else { this.selectedExpenseMonth += 1 }
-        this.resetExpensePaginationAndFetch()
+        const query = {
+          ...this.$route.query,
+          month: String(this.selectedExpenseMonth),
+          year: String(this.selectedExpenseYear),
+        }
+        delete query.day
+        this.$router.replace({ name: 'transactions', query })
       }
     },
     applyTransactionFilter(items, filter) {
@@ -1911,6 +1890,15 @@ export default {
       const categoryId = Number(query.categoryId)
       this.routeExpenseCategoryId = Number.isInteger(categoryId) && categoryId > 0 ? categoryId : null
       this.routeExpenseUncategorized = query.uncategorized === '1'
+      const routeDay = typeof query.day === 'string' ? query.day : ''
+      const parsedRouteDay = /^\d{4}-\d{2}-\d{2}$/.test(routeDay) ? new Date(`${routeDay}T00:00:00`) : null
+      const expectedMonthPrefix = `${this.selectedExpenseYear}-${String(this.selectedExpenseMonth).padStart(2, '0')}-`
+      this.routeExpenseDay = parsedRouteDay
+        && !Number.isNaN(parsedRouteDay.getTime())
+        && toLocalISODate(parsedRouteDay) === routeDay
+        && routeDay.startsWith(expectedMonthPrefix)
+        ? routeDay
+        : null
       if (query.openFinance === '1') {
         this.incomeListFilter = 'open-finance'
         this.expenseListFilter = 'open-finance'
@@ -1940,6 +1928,23 @@ export default {
           year: String(this.selectedExpenseYear),
         },
       })
+    },
+    selectExpenseDay(day) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(day || '')) return
+      this.$router.replace({
+        name: 'transactions',
+        query: {
+          ...this.$route.query,
+          month: String(this.selectedExpenseMonth),
+          year: String(this.selectedExpenseYear),
+          day,
+        },
+      })
+    },
+    clearSelectedExpenseDay() {
+      const query = { ...this.$route.query }
+      delete query.day
+      this.$router.replace({ name: 'transactions', query })
     },
     transactionVisibilityHint(scope) {
       if (scope === 'PRIVATE') {
@@ -3373,6 +3378,7 @@ export default {
           ...this.expensePagination,
           categoryId: this.routeExpenseCategoryId || undefined,
           uncategorized: this.routeExpenseUncategorized || undefined,
+          day: this.routeExpenseDay || undefined,
         })
           .then((response) => {
             const page = response?.data || {}
@@ -3395,18 +3401,27 @@ export default {
       const monthNumber = this.selectedExpenseMonth
       const yearNumber = this.selectedExpenseYear
       if (monthNumber === null) {
-        this.dailyReportExpenses = []
+        this.dailyExpenseSummary = []
         return Promise.resolve()
       }
 
-      return ExpenseService.fetchMonthlyExpenses(monthNumber, yearNumber, { limit: 1000, offset: 0 })
+      this.isLoadingDailyConsumption = true
+      this.dailyConsumptionError = false
+      return ExpenseService.fetchDailyExpenseSummary(monthNumber, yearNumber, {
+        accountId: this.routeExpenseAccountId || undefined,
+        categoryId: this.routeExpenseCategoryId || undefined,
+        uncategorized: this.routeExpenseUncategorized || undefined,
+      })
         .then((response) => {
-          const page = response?.data || {}
-          this.dailyReportExpenses = this.normalizeCollection(page).map((expense) => this.enrichExpenseWithConflict(expense))
+          this.dailyExpenseSummary = Array.isArray(response?.data?.days) ? response.data.days : []
         })
         .catch((error) => {
           console.error('Error fetching daily consumption expenses:', error)
-          this.dailyReportExpenses = []
+          this.dailyExpenseSummary = []
+          this.dailyConsumptionError = true
+        })
+        .finally(() => {
+          this.isLoadingDailyConsumption = false
         })
     },
     loadSharedExpenseAgreements() {
@@ -3969,116 +3984,6 @@ export default {
   margin-top: 6px;
   font-size: 0.78rem;
   color: var(--cb-ink-muted);
-}
-
-.daily-consumption-report {
-  background: var(--cb-surface-card);
-  border: 1px solid var(--cb-border-card);
-  border-radius: 8px;
-  box-shadow: var(--cb-shadow-soft);
-  margin-bottom: 12px;
-  padding: 16px;
-}
-
-.daily-consumption-report__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 12px;
-}
-
-.daily-consumption-report__header p {
-  color: var(--cb-ink-muted);
-  font-size: 0.84rem;
-  margin: 4px 0 0;
-}
-
-.daily-consumption-report__total {
-  text-align: right;
-  min-width: 148px;
-}
-
-.daily-consumption-report__total span {
-  display: block;
-  color: var(--cb-ink-muted);
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.daily-consumption-report__total strong {
-  color: var(--cb-ink);
-  font-family: var(--cb-font-heading);
-  font-size: 1.1rem;
-}
-
-.daily-consumption-report__rows {
-  display: grid;
-  gap: 6px;
-}
-
-.daily-consumption-report__row {
-  align-items: center;
-  background: color-mix(in srgb, var(--cb-surface-card) 92%, var(--cb-accent));
-  border: 1px solid var(--cb-border-soft);
-  border-radius: 8px;
-  color: var(--cb-ink);
-  cursor: default;
-  display: grid;
-  gap: 10px;
-  grid-template-columns: minmax(92px, 0.9fr) minmax(120px, 1.2fr) minmax(150px, 1fr) minmax(96px, auto);
-  padding: 10px 12px;
-  text-align: left;
-  width: 100%;
-}
-
-.daily-consumption-report__date,
-.daily-consumption-report__row strong {
-  font-family: var(--cb-font-heading);
-  font-weight: 700;
-}
-
-.daily-consumption-report__category,
-.daily-consumption-report__meta {
-  color: var(--cb-ink-muted);
-  font-size: 0.82rem;
-  min-width: 0;
-}
-
-.daily-consumption-report__category {
-  color: var(--cb-ink-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.daily-consumption-report__row strong {
-  text-align: right;
-}
-
-.daily-consumption-report__empty {
-  color: var(--cb-ink-muted);
-  font-size: 0.88rem;
-  margin: 0;
-}
-
-@media (max-width: 720px) {
-  .daily-consumption-report__header {
-    flex-direction: column;
-  }
-
-  .daily-consumption-report__total {
-    text-align: left;
-  }
-
-  .daily-consumption-report__row {
-    grid-template-columns: 1fr;
-  }
-
-  .daily-consumption-report__row strong {
-    text-align: left;
-  }
 }
 
 /* ── AI category suggestions ───────────── */

@@ -108,6 +108,17 @@ export interface PagedResponse<T> {
   offset: number
 }
 
+export interface TransactionDailySummaryDay {
+  date: string
+  expenseAmount: number
+  transactionCount: number
+}
+
+export interface TransactionDailySummaryResponse {
+  currency: string
+  days: TransactionDailySummaryDay[]
+}
+
 export interface TransactionQueryParams {
   fromDate?: string
   toDate?: string

@@ -6,6 +6,7 @@ import type {
   TransactionAttachmentListItem,
   TransactionCommentView,
   TransactionDirection,
+  TransactionDailySummaryResponse,
   TransactionPlanningExclusionRequest,
   TransactionQueryParams,
   TransactionRequest,
@@ -47,6 +48,11 @@ const buildTransactionParams = (params: TransactionQueryParams = {}) => ({
   limit: clampLimit(params.limit),
   offset: clampOffset(params.offset),
 })
+
+const buildTransactionFilterParams = (params: TransactionQueryParams = {}) => {
+  const { limit: _limit, offset: _offset, ...filters } = buildTransactionParams(params)
+  return filters
+}
 
 export const getMonthDateRange = (month: number, year: number) => {
   const fromDate = new Date(year, month - 1, 1)
@@ -148,6 +154,12 @@ export default {
 
   fetchTransaction(id: string) {
     return axiosInterceptor.get<TransactionView>(`${API_URL}/transactions/${id}`)
+  },
+
+  fetchTransactionDailySummary(params: TransactionQueryParams = {}) {
+    return axiosInterceptor.get<TransactionDailySummaryResponse>(`${API_URL}/transactions/daily-summary`, {
+      params: buildTransactionFilterParams(params),
+    })
   },
 
   createTransaction(payload: TransactionRequest) {

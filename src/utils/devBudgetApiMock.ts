@@ -6,6 +6,13 @@ import {
 } from '@/utils/devQuickAccess'
 
 const budgetApiBaseUrl = String(import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '')
+const budgetApiBasePath = (() => {
+  try {
+    return new URL(budgetApiBaseUrl).pathname.replace(/\/+$/, '')
+  } catch {
+    return ''
+  }
+})()
 
 const buildUrl = (url?: string, baseURL?: string) => {
   const resolvedBase = String(baseURL || budgetApiBaseUrl || 'http://localhost').replace(/\/+$/, '')
@@ -193,6 +200,24 @@ const createPagedTransactionsResponse = (config: AxiosRequestConfig) => {
     total: items.length,
     limit,
     offset
+  }
+}
+
+const createDailyTransactionsSummary = (config: AxiosRequestConfig) => {
+  const days = new Map<string, { date: string; expenseAmount: number; transactionCount: number }>()
+
+  filterTransactions(config)
+    .filter((transaction) => transaction.direction === 'OUTFLOW')
+    .forEach((transaction) => {
+      const current = days.get(transaction.date) || { date: transaction.date, expenseAmount: 0, transactionCount: 0 }
+      current.expenseAmount = Number((current.expenseAmount + Math.abs(Number(transaction.amount || 0))).toFixed(2))
+      current.transactionCount += 1
+      days.set(transaction.date, current)
+    })
+
+  return {
+    currency: 'BRL',
+    days: Array.from(days.values()).sort((left, right) => left.date.localeCompare(right.date))
   }
 }
 
@@ -569,7 +594,9 @@ const createAccount = () => openFinanceAccount()
 
 const buildDataForRequest = (config: AxiosRequestConfig) => {
   const url = buildUrl(config.url, config.baseURL)
-  const path = url.pathname
+  const path = budgetApiBasePath && url.pathname.startsWith(`${budgetApiBasePath}/`)
+    ? url.pathname.slice(budgetApiBasePath.length)
+    : url.pathname
   const method = String(config.method || 'get').toLowerCase()
 
   if (path === '/billing/access') {
@@ -617,6 +644,10 @@ const buildDataForRequest = (config: AxiosRequestConfig) => {
 
   if (path.startsWith('/accounts/')) {
     return createAccount()
+  }
+
+  if (path === '/transactions/daily-summary') {
+    return createDailyTransactionsSummary(config)
   }
 
   if (path === '/transactions') {
