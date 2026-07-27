@@ -855,6 +855,7 @@ export default {
       routeExpenseCategoryId: null,
       routeExpenseUncategorized: false,
       routeExpenseDay: null,
+      routeExpenseReportScope: null,
       months: [
         { titleKey: 'common.months.january', value: 1 },
         { titleKey: 'common.months.february', value: 2 },
@@ -1890,6 +1891,9 @@ export default {
       const categoryId = Number(query.categoryId)
       this.routeExpenseCategoryId = Number.isInteger(categoryId) && categoryId > 0 ? categoryId : null
       this.routeExpenseUncategorized = query.uncategorized === '1'
+      this.routeExpenseReportScope = query.reportScope === 'WORKSPACE_SHARED' || query.reportScope === 'VISIBLE_TO_ACTOR'
+        ? query.reportScope
+        : null
       const routeDay = typeof query.day === 'string' ? query.day : ''
       const parsedRouteDay = /^\d{4}-\d{2}-\d{2}$/.test(routeDay) ? new Date(`${routeDay}T00:00:00`) : null
       const expectedMonthPrefix = `${this.selectedExpenseYear}-${String(this.selectedExpenseMonth).padStart(2, '0')}-`
@@ -3379,6 +3383,7 @@ export default {
           categoryId: this.routeExpenseCategoryId || undefined,
           uncategorized: this.routeExpenseUncategorized || undefined,
           day: this.routeExpenseDay || undefined,
+          reportScope: this.routeExpenseReportScope || undefined,
         })
           .then((response) => {
             const page = response?.data || {}
@@ -3411,6 +3416,7 @@ export default {
         accountId: this.routeExpenseAccountId || undefined,
         categoryId: this.routeExpenseCategoryId || undefined,
         uncategorized: this.routeExpenseUncategorized || undefined,
+        reportScope: this.routeExpenseReportScope || undefined,
       })
         .then((response) => {
           this.dailyExpenseSummary = Array.isArray(response?.data?.days) ? response.data.days : []

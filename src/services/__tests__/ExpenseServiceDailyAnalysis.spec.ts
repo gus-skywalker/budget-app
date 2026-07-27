@@ -26,6 +26,19 @@ describe('ExpenseService daily analysis integration', () => {
     }))
   })
 
+  it('preserves a report scope when Transactions receives a report drill-down handoff', async () => {
+    const fetchTransactions = vi.spyOn(FinancialReadService, 'fetchTransactionsByDirection')
+      .mockResolvedValue({ items: [], total: 0, limit: 20, offset: 0 })
+
+    await ExpenseService.fetchMonthlyExpenses(7, 2026, {
+      reportScope: 'WORKSPACE_SHARED',
+    })
+
+    expect(fetchTransactions).toHaveBeenCalledWith(expect.objectContaining({
+      reportScope: 'WORKSPACE_SHARED',
+    }))
+  })
+
   it('loads only aggregated daily values for the selected monthly period', async () => {
     const fetchSummary = vi.spyOn(FinancialReadService, 'fetchTransactionDailySummary')
       .mockResolvedValue({ data: { days: [] } } as never)

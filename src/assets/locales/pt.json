@@ -408,6 +408,13 @@
     "openTransactions": "Abrir em Transações",
     "unknownCategory": "Categoria padrão sem tradução",
     "customCategory": "Categoria personalizada",
+    "scope": {
+      "label": "Escopo do relatório",
+      "visibleToMe": "Visível para mim",
+      "workspaceShared": "Somente dados compartilhados do espaço",
+      "visibleToMeDescription": "Pode conter seus dados pessoais e outros dados aos quais você recebeu acesso.",
+      "workspaceSharedDescription": "Contém apenas transações compartilhadas com o espaço."
+    },
     "periods": {
       "week": "Esta semana",
       "month": "Este mês",

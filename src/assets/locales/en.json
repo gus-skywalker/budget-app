@@ -411,6 +411,13 @@
     "openTransactions": "Open in Transactions",
     "unknownCategory": "Untranslated standard category",
     "customCategory": "Custom category",
+    "scope": {
+      "label": "Report scope",
+      "visibleToMe": "Visible to me",
+      "workspaceShared": "Shared workspace data only",
+      "visibleToMeDescription": "May include your personal data and other data you were granted access to.",
+      "workspaceSharedDescription": "Contains only transactions shared with the workspace."
+    },
     "periods": {
       "week": "This week",
       "month": "This month",

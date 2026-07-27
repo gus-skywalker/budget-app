@@ -4,6 +4,7 @@ import {
   normalizeTransactionVisibilityScope,
   toTransactionVisibilityScopeRequest,
   type TransactionAttachmentListItem,
+  type ReportScope,
   type TransactionRequest,
   type TransactionView,
 } from '@/types/financialRead'
@@ -146,7 +147,7 @@ export default {
   fetchMonthlyExpenses(
     monthNumber: number,
     year: number,
-    pagination: { limit?: number; offset?: number; categoryId?: number; uncategorized?: boolean; day?: string } = {}
+    pagination: { limit?: number; offset?: number; categoryId?: number; uncategorized?: boolean; day?: string; reportScope?: ReportScope } = {}
   ): Promise<any> {
     const monthRange = getMonthDateRange(monthNumber, year)
     const fromDate = pagination.day || monthRange.fromDate
@@ -158,6 +159,7 @@ export default {
       toDate,
       categoryId: pagination.categoryId,
       uncategorized: pagination.uncategorized,
+      reportScope: pagination.reportScope,
       limit: pagination.limit,
       offset: pagination.offset,
     }).then((page) => ({
@@ -170,7 +172,7 @@ export default {
   fetchDailyExpenseSummary(
     monthNumber: number,
     year: number,
-    filters: { accountId?: string; categoryId?: number; uncategorized?: boolean } = {}
+    filters: { accountId?: string; categoryId?: number; uncategorized?: boolean; reportScope?: ReportScope } = {}
   ): Promise<any> {
     const { fromDate, toDate } = getMonthDateRange(monthNumber, year)
     return FinancialReadService.fetchTransactionDailySummary({
@@ -179,6 +181,7 @@ export default {
       accountId: filters.accountId,
       categoryId: filters.categoryId,
       uncategorized: filters.uncategorized,
+      reportScope: filters.reportScope,
     })
   },
 }

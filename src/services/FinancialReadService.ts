@@ -45,6 +45,7 @@ const buildTransactionParams = (params: TransactionQueryParams = {}) => ({
   ...(params.uncategorized !== undefined ? { uncategorized: params.uncategorized } : {}),
   ...(params.excludedFromPlanning !== undefined ? { excludedFromPlanning: params.excludedFromPlanning } : {}),
   ...(params.visibilityScope ? { visibilityScope: params.visibilityScope } : {}),
+  ...(params.reportScope ? { reportScope: params.reportScope } : {}),
   limit: clampLimit(params.limit),
   offset: clampOffset(params.offset),
 })

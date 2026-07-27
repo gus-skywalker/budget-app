@@ -15,6 +15,7 @@ export type TransactionSource = 'MANUAL' | 'OPEN_FINANCE' | 'SYSTEM'
 export type TransactionStatus = 'PENDING' | 'POSTED' | 'CANCELLED'
 export type CanonicalTransactionVisibilityScope = 'PRIVATE' | 'WORKSPACE'
 export type TransactionVisibilityScope = CanonicalTransactionVisibilityScope
+export type ReportScope = 'VISIBLE_TO_ACTOR' | 'WORKSPACE_SHARED'
 
 export interface TransactionView {
   id: string
@@ -128,6 +129,7 @@ export interface TransactionQueryParams {
   uncategorized?: boolean
   excludedFromPlanning?: boolean
   visibilityScope?: TransactionVisibilityScope
+  reportScope?: ReportScope
   limit?: number
   offset?: number
 }

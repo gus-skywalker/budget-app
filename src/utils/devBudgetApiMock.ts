@@ -181,11 +181,13 @@ const filterTransactions = (config: AxiosRequestConfig) => {
   const fromDate = String(config.params?.fromDate || '')
   const toDate = String(config.params?.toDate || '')
   const accountId = String(config.params?.accountId || '')
+  const reportScope = String(config.params?.reportScope || '')
 
   return devTransactions().filter((transaction) => {
     if (fromDate && transaction.date < fromDate) return false
     if (toDate && transaction.date > toDate) return false
     if (accountId && transaction.accountId !== accountId) return false
+    if (reportScope === 'WORKSPACE_SHARED' && transaction.visibilityScope !== 'WORKSPACE') return false
     return true
   })
 }

@@ -1,4 +1,5 @@
 import axiosInterceptor from './axiosInterceptor'
+import type { ReportScope } from '@/types/financialRead'
 const API_URL = `${import.meta.env.VITE_API_BASE_URL}/reports`
 
 export interface ReportCategoryAggregate {
@@ -15,6 +16,7 @@ export interface ReportCategoryAggregate {
 export interface ReportAnalytics {
   fromDate: string
   toDate: string
+  reportScope: ReportScope
   currency: string
   income: number
   expenses: number
@@ -31,9 +33,9 @@ export default class ReportService {
     })
   }
 
-  analytics(fromDate: string, toDate: string) {
+  analytics(fromDate: string, toDate: string, reportScope: ReportScope = 'VISIBLE_TO_ACTOR') {
     return axiosInterceptor.get<ReportAnalytics>(`${API_URL}/analytics`, {
-      params: { fromDate, toDate },
+      params: { fromDate, toDate, reportScope },
     })
   }
 }

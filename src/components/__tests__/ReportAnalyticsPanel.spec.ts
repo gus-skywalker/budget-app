@@ -42,6 +42,10 @@ const messages: Record<string, string> = {
   'reportAnalytics.unknownCategory': 'Categoria padrão sem tradução',
   'reportAnalytics.customCategory': 'Categoria personalizada',
   'transactions.details.categorization_sources.UNKNOWN': 'Origem não registrada',
+  'reportAnalytics.scope.label': 'Escopo do relatório',
+  'reportAnalytics.scope.visibleToMe': 'Visível para mim',
+  'reportAnalytics.scope.workspaceShared': 'Somente dados compartilhados do espaço',
+  'reportAnalytics.scope.visibleToMeDescription': 'Pode conter seus dados pessoais.',
 }
 
 vi.mock('vue-i18n', () => ({
@@ -61,6 +65,7 @@ vi.mock('vue-i18n', () => ({
 const analytics = {
   fromDate: '2026-07-01',
   toDate: '2026-07-31',
+  reportScope: 'VISIBLE_TO_ACTOR' as const,
   currency: 'BRL',
   income: 300,
   expenses: 100,
@@ -129,13 +134,41 @@ describe('ReportAnalyticsPanel', () => {
 
     expect(fetchTransactionsMock).toHaveBeenCalledWith(expect.objectContaining({
       fromDate: '2026-07-01',
-      toDate: '2026-07-26',
+      toDate: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
       direction: 'OUTFLOW',
       categoryId: 7,
       excludedFromPlanning: false,
-      visibilityScope: 'WORKSPACE',
+      reportScope: 'VISIBLE_TO_ACTOR',
       limit: 12,
       offset: 0,
+    }))
+  })
+
+  it('loads both comparison periods in the actor-visible scope by default', async () => {
+    mountPanel()
+    await flushPromises()
+
+    expect(analyticsMock).toHaveBeenCalledWith(expect.any(String), expect.any(String), 'VISIBLE_TO_ACTOR')
+  })
+
+  it('propagates the selected scope to analytics, drill-down and Transactions navigation', async () => {
+    const wrapper = mountPanel()
+    await flushPromises()
+
+    ;(wrapper.vm as any).selectedReportScope = 'WORKSPACE_SHARED'
+    await flushPromises()
+    expect(analyticsMock).toHaveBeenLastCalledWith(expect.any(String), expect.any(String), 'WORKSPACE_SHARED')
+
+    await wrapper.get('.category-chart__row--interactive').trigger('click')
+    await flushPromises()
+    expect(fetchTransactionsMock).toHaveBeenLastCalledWith(expect.objectContaining({
+      reportScope: 'WORKSPACE_SHARED',
+    }))
+
+    const openTransactionsButton = wrapper.findAll('button').find((button) => button.text().includes('reportAnalytics.openTransactions'))
+    await openTransactionsButton!.trigger('click')
+    expect(routerPushMock).toHaveBeenCalledWith(expect.objectContaining({
+      query: expect.objectContaining({ reportScope: 'WORKSPACE_SHARED' }),
     }))
   })
 
@@ -220,6 +253,6 @@ describe('ReportAnalyticsPanel', () => {
     expect(wrapper.findAll('.drill-down__transaction')).toHaveLength(12)
     expect(wrapper.text()).toContain('Compra com uma descrição excepcionalmente longa para validar a legibilidade do detalhamento')
     expect(wrapper.text()).toMatch(/9\.876\.543,21/)
-    expect(wrapper.findAll('.select-stub')).toHaveLength(13)
+    expect(wrapper.findAll('.select-stub')).toHaveLength(14)
   })
 })

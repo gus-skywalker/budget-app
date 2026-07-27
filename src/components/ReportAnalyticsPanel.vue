@@ -7,6 +7,13 @@
       </div>
       <v-select v-model="selectedPeriod" :items="periodOptions" item-title="label" item-value="value"
         density="comfortable" variant="outlined" hide-details class="report-analytics__period" />
+      <div class="report-analytics__scope">
+        <v-select v-model="selectedReportScope" :items="reportScopeOptions" item-title="label" item-value="value"
+          :label="t('reportAnalytics.scope.label')" density="comfortable" variant="outlined" hide-details />
+        <small>{{ selectedReportScope === 'VISIBLE_TO_ACTOR'
+          ? t('reportAnalytics.scope.visibleToMeDescription')
+          : t('reportAnalytics.scope.workspaceSharedDescription') }}</small>
+      </div>
     </div>
 
     <v-alert v-if="loadError" type="error" variant="tonal" closable @click:close="loadError = false">
@@ -158,7 +165,7 @@ import { useDisplay } from 'vuetify'
 import DataService from '@/services/DataService'
 import FinancialReadService from '@/services/FinancialReadService'
 import ReportService, { type ReportAnalytics, type ReportCategoryAggregate } from '@/services/ReportService'
-import type { TransactionRequest, TransactionView } from '@/types/financialRead'
+import type { ReportScope, TransactionRequest, TransactionView } from '@/types/financialRead'
 import { localizeCategory } from '@/utils/categoryLocalization'
 
 type PeriodKey = 'week' | 'month' | 'lastMonth' | 'threeMonths' | 'sixMonths' | 'twelveMonths' | 'year'
@@ -170,6 +177,7 @@ const router = useRouter()
 const { mobile } = useDisplay()
 const reportService = new ReportService()
 const selectedPeriod = ref<PeriodKey>('month')
+const selectedReportScope = ref<ReportScope>('VISIBLE_TO_ACTOR')
 const isLoading = ref(false)
 const loadError = ref(false)
 const analytics = ref<ReportAnalytics | null>(null)
@@ -196,6 +204,11 @@ const periodOptions = computed(() => [
   { value: 'sixMonths', label: t('reportAnalytics.periods.sixMonths') },
   { value: 'twelveMonths', label: t('reportAnalytics.periods.twelveMonths') },
   { value: 'year', label: t('reportAnalytics.periods.year') },
+])
+
+const reportScopeOptions = computed(() => [
+  { value: 'VISIBLE_TO_ACTOR', label: t('reportAnalytics.scope.visibleToMe') },
+  { value: 'WORKSPACE_SHARED', label: t('reportAnalytics.scope.workspaceShared') },
 ])
 
 const colors = ['#647da8', '#08b6b3', '#ff2d2d', '#f57c00', '#bf2de2', '#0b87ef', '#4d46e8', '#12819a', '#26c561', '#ef4444']
@@ -262,8 +275,8 @@ const loadAnalytics = async () => {
     const current = resolveRange(selectedPeriod.value)
     const previous = previousRange(selectedPeriod.value)
     const [currentResponse, previousResponse] = await Promise.all([
-      reportService.analytics(current.fromDate, current.toDate),
-      reportService.analytics(previous.fromDate, previous.toDate),
+      reportService.analytics(current.fromDate, current.toDate, selectedReportScope.value),
+      reportService.analytics(previous.fromDate, previous.toDate, selectedReportScope.value),
     ])
     analytics.value = currentResponse.data
     previousAnalytics.value = previousResponse.data
@@ -371,7 +384,7 @@ const loadDrillDown = async () => {
       ...range,
       direction: 'OUTFLOW',
       excludedFromPlanning: false,
-      visibilityScope: 'WORKSPACE',
+      reportScope: selectedReportScope.value,
       categoryId: selectedCategory.value.uncategorized ? undefined : selectedCategory.value.categoryId || undefined,
       uncategorized: selectedCategory.value.uncategorized ? true : undefined,
       limit: drillDownLimit,
@@ -434,6 +447,7 @@ const openTransactionsPage = () => {
     query: {
       month: String(start.getUTCMonth() + 1),
       year: String(start.getUTCFullYear()),
+      reportScope: selectedReportScope.value,
       ...(selectedCategory.value?.uncategorized
         ? { uncategorized: '1' }
         : {
@@ -468,7 +482,7 @@ const categorizationSourceLabel = (source?: string | null) => {
   return te(key) ? t(key) : t('transactions.details.categorization_sources.UNKNOWN')
 }
 
-watch(selectedPeriod, () => {
+watch([selectedPeriod, selectedReportScope], () => {
   showAllCategories.value = false
   drillDownOpen.value = false
   loadAnalytics()
@@ -496,9 +510,14 @@ onMounted(loadAnalytics)
 .report-analytics__toolbar {
   align-items: center;
   display: flex;
+  flex-wrap: wrap;
   gap: 16px;
   justify-content: space-between;
   padding: 16px 18px;
+}
+
+.report-analytics__toolbar > :first-child {
+  flex: 1 1 220px;
 }
 
 .report-analytics__eyebrow {
@@ -517,7 +536,22 @@ onMounted(loadAnalytics)
 }
 
 .report-analytics__period {
+  flex: 0 1 220px;
   max-width: 220px;
+}
+
+.report-analytics__scope {
+  display: grid;
+  flex: 1 1 280px;
+  gap: 4px;
+  max-width: 360px;
+  min-width: 260px;
+}
+
+.report-analytics__scope small {
+  color: var(--cb-ink-muted);
+  font-size: 0.75rem;
+  line-height: 1.35;
 }
 
 .report-analytics__hero {
@@ -919,6 +953,11 @@ onMounted(loadAnalytics)
 
   .report-analytics__period {
     max-width: none;
+  }
+
+  .report-analytics__scope {
+    max-width: none;
+    min-width: 0;
   }
 
   .report-analytics__metric strong {
