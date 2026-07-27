@@ -17,15 +17,19 @@ const { routerPush, scenarioServiceMock, budgetServiceMock } = vi.hoisted(() => 
   },
 }))
 
-vi.mock('vue-router', () => ({
-  useRouter: () => ({
-    push: routerPush,
-  }),
-  useRoute: () => ({
-    params: {},
-    query: {},
-  }),
-}))
+vi.mock('vue-router', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('vue-router')>()
+  return {
+    ...actual,
+    useRouter: () => ({
+      push: routerPush,
+    }),
+    useRoute: () => ({
+      params: {},
+      query: {},
+    }),
+  }
+})
 
 vi.mock('@/services/ScenarioService', () => ({
   default: scenarioServiceMock,
@@ -36,9 +40,29 @@ vi.mock('@/services/BudgetService', () => ({
   default: budgetServiceMock,
 }))
 
+vi.mock('@/i18n', () => ({
+  default: {
+    global: {
+      locale: { value: 'en' },
+    },
+  },
+}))
+
 vi.mock('vue-i18n', () => ({
   useI18n: () => ({
-    locale: ref('pt'),
+    locale: ref('en'),
+    t: (key: string, params?: Record<string, unknown>) => {
+      const messages: Record<string, string> = {
+        'contentExperience.planning.debtBuilder.addOption': 'Add option',
+        'contentExperience.planning.debtBuilder.compareOptions': 'Compare options',
+        'contentExperience.planning.debtBuilder.optionLabel': 'Option {index}',
+      }
+      let value = messages[key] || key
+      Object.entries(params || {}).forEach(([name, replacement]) => {
+        value = value.replace(`{${name}}`, String(replacement))
+      })
+      return value
+    },
   }),
 }))
 

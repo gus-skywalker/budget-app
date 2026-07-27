@@ -87,7 +87,25 @@ describe('OnboardingOrchestrator', () => {
     expect(selectWorkspace).toHaveBeenCalledWith('workspace-1')
   })
 
-  it('allows business checkout to proceed without tenant context', async () => {
+  it('allows checkout to proceed without tenant context', async () => {
+    const userStore = createUserStoreMock({
+      getWorkspaces: [{ workspaceId: 'workspace-a' }, { workspaceId: 'workspace-b' }],
+      isTenantMode: false
+    })
+
+    const result = await OnboardingOrchestrator.resolvePostAuthRoute(
+      makeOptions({
+        userStore,
+        redirect: '/checkout',
+        plan: 'BUSINESS_MONTHLY'
+      })
+    )
+
+    expect(result.state).toBe('READY')
+    expect(result.route).toEqual({ path: '/checkout?plan=BUSINESS_MONTHLY' })
+  })
+
+  it('requires workspace selection while choosing a business plan', async () => {
     const userStore = createUserStoreMock({
       getWorkspaces: [{ workspaceId: 'workspace-a' }, { workspaceId: 'workspace-b' }],
       isTenantMode: false
@@ -101,8 +119,11 @@ describe('OnboardingOrchestrator', () => {
       })
     )
 
-    expect(result.state).toBe('READY_BILLING_DECISION')
-    expect(result.route).toEqual({ path: '/checkout?plan=BUSINESS_MONTHLY' })
+    expect(result.state).toBe('WORKSPACE_SELECTION_REQUIRED')
+    expect(result.route).toEqual({
+      name: 'select-workspace',
+      query: { redirect: '/choose-plan?plan=BUSINESS_MONTHLY' }
+    })
   })
 
   it('resolves banner state to workspace required when no workspace exists', () => {
@@ -123,12 +144,12 @@ describe('OnboardingOrchestrator', () => {
     })
   })
 
-  it('keeps business checkout banner ready without requiring workspace context', () => {
+  it('keeps checkout banner ready without requiring workspace context', () => {
     const banner = resolveOnboardingBannerState({
       isAuthenticated: true,
       hasWorkspaces: true,
       isTenantMode: false,
-      currentPath: '/choose-plan',
+      currentPath: '/checkout',
       currentQuery: { plan: 'BUSINESS_MONTHLY' }
     })
 
