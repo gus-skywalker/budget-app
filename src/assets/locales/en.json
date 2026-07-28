@@ -826,6 +826,7 @@
     "open_finance_personal_admin_restricted_note": "This CPF source has administrative sharing, but access for your role remains restricted.",
     "open_finance_planning_only_label": "Planning only",
     "open_finance_planning_only_note": "CPF source used only in planning aggregates. Details remain private.",
+    "open_finance_edit_notice": "This transaction came from Open Finance. Its date, amount, description, account and sharing are preserved from the bank; you can only adjust its category.",
     "open_finance_private_label": "Private personal source",
     "open_finance_private_note": "Private CPF source, with no operational sharing beyond the connection owner.",
     "details": {

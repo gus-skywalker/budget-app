@@ -120,6 +120,15 @@ export interface TransactionDailySummaryResponse {
   days: TransactionDailySummaryDay[]
 }
 
+export interface TransactionPeriodSummaryResponse {
+  currency: string
+  incomeAmount: number
+  expenseAmount: number
+  netAmount: number
+  incomeTransactionCount: number
+  expenseTransactionCount: number
+}
+
 export interface TransactionQueryParams {
   fromDate?: string
   toDate?: string
@@ -130,6 +139,8 @@ export interface TransactionQueryParams {
   excludedFromPlanning?: boolean
   visibilityScope?: TransactionVisibilityScope
   reportScope?: ReportScope
+  periodMonth?: number
+  periodYear?: number
   limit?: number
   offset?: number
 }

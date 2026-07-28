@@ -524,15 +524,18 @@
 
         <!-- EXPENSE FORM -->
         <template v-else>
+          <v-alert v-if="isEditingExpense && expense.openFinance" type="info" variant="tonal" density="comfortable" class="mb-4">
+            {{ $t('transactions.open_finance_edit_notice') }}
+          </v-alert>
           <v-row>
             <v-col cols="12" sm="6">
-              <v-text-field :label="$t('common.date')" type="date" v-model="expense.date" variant="outlined" density="comfortable" color="var(--cb-primary)" class="modern-input" />
+              <v-text-field :label="$t('common.date')" type="date" v-model="expense.date" :disabled="expense.openFinance" variant="outlined" density="comfortable" color="var(--cb-primary)" class="modern-input" />
             </v-col>
             <v-col cols="12" sm="6">
-              <v-text-field :label="$t('common.amount')" type="text" inputmode="decimal" :model-value="expense.amount" @update:model-value="onExpenseAmountInput" variant="outlined" density="comfortable" color="var(--cb-primary)" class="modern-input" :rules="[requiredAmount, validCurrencyFormat]" />
+              <v-text-field :label="$t('common.amount')" type="text" inputmode="decimal" :model-value="expense.amount" @update:model-value="onExpenseAmountInput" :disabled="expense.openFinance" variant="outlined" density="comfortable" color="var(--cb-primary)" class="modern-input" :rules="[requiredAmount, validCurrencyFormat]" />
             </v-col>
             <v-col cols="12">
-              <v-text-field :label="$t('common.description')" v-model="expense.description" variant="outlined" density="comfortable" color="var(--cb-primary)" class="modern-input" />
+              <v-text-field :label="$t('common.description')" v-model="expense.description" :disabled="expense.openFinance" variant="outlined" density="comfortable" color="var(--cb-primary)" class="modern-input" />
             </v-col>
             <v-col cols="12" sm="6">
               <v-select :label="$t('common.category')" v-model="expense.category" :items="categories" item-title="name" item-value="id" variant="outlined" density="comfortable" color="var(--cb-primary)" class="modern-input">
@@ -547,7 +550,7 @@
               </v-select>
             </v-col>
             <v-col cols="12" sm="6">
-              <v-select :label="$t('common.payment_method')" v-model="expense.paymentMethod" :items="paymentMethods" item-title="name" item-value="id" variant="outlined" density="comfortable" color="var(--cb-primary)" class="modern-input" />
+              <v-select :label="$t('common.payment_method')" v-model="expense.paymentMethod" :items="paymentMethods" item-title="name" item-value="id" :disabled="expense.openFinance" variant="outlined" density="comfortable" color="var(--cb-primary)" class="modern-input" />
               <div v-if="shouldShowOpenFinancePaymentFallback(expense)" class="open-finance-field-note">
                 {{ openFinancePaymentMethodLabel(expense) }}
               </div>
@@ -573,10 +576,10 @@
               </v-alert>
             </v-col>
             <v-col cols="12" sm="6">
-              <v-select :label="$t('common.account')" v-model="expense.accountId" :items="financialAccounts" item-title="displayName" item-value="id" variant="outlined" density="comfortable" color="var(--cb-primary)" class="modern-input" :disabled="isLoadingFinancialAccounts || !financialAccounts.length" :hint="financialAccountsHint" persistent-hint />
+              <v-select :label="$t('common.account')" v-model="expense.accountId" :items="financialAccounts" item-title="displayName" item-value="id" variant="outlined" density="comfortable" color="var(--cb-primary)" class="modern-input" :disabled="expense.openFinance || isLoadingFinancialAccounts || !financialAccounts.length" :hint="financialAccountsHint" persistent-hint />
             </v-col>
             <v-col cols="12" sm="6">
-              <v-select :label="$t('transactionVisibility.label')" v-model="expense.visibilityScope" :items="localizedTransactionVisibilityOptions" item-title="title" item-value="value" variant="outlined" density="comfortable" color="var(--cb-primary)" class="modern-input" :hint="transactionVisibilityHint(expense.visibilityScope)" persistent-hint />
+              <v-select :label="$t('transactionVisibility.label')" v-model="expense.visibilityScope" :items="localizedTransactionVisibilityOptions" item-title="title" item-value="value" :disabled="expense.openFinance" variant="outlined" density="comfortable" color="var(--cb-primary)" class="modern-input" :hint="transactionVisibilityHint(expense.visibilityScope)" persistent-hint />
             </v-col>
           </v-row>
           <v-btn color="var(--cb-primary)" @click="saveExpense" size="large" block style="text-transform:none;font-weight:600;letter-spacing:0;margin-top:8px">
@@ -658,7 +661,7 @@ import OpenFinanceService from '@/services/OpenFinanceService'
 import DataService from '@/services/DataService'
 import AiService from '@/services/aiService'
 import BillingOrchestrationService from '@/services/BillingOrchestrationService'
-import FinancialReadService, { NO_FINANCIAL_ACCOUNT_ERROR_MESSAGE } from '@/services/FinancialReadService'
+import FinancialReadService, { getMonthDateRange, NO_FINANCIAL_ACCOUNT_ERROR_MESSAGE } from '@/services/FinancialReadService'
 import NotificationService from '@/services/NotificationService'
 import SharedExpenseAgreementService from '@/services/SharedExpenseAgreementService'
 import UsersService from '@/services/UsersService'
@@ -874,6 +877,13 @@ export default {
       monthlyExpenses: [],
       dailyExpenseSummary: [],
       monthlyIncomes: [],
+      monthlyTransactionSummary: {
+        incomeAmount: 0,
+        expenseAmount: 0,
+        netAmount: 0,
+      },
+      isLoadingTransactionSummary: false,
+      transactionSummaryRequestId: 0,
       incomePagination: {
         limit: 20,
         offset: 0,
@@ -1169,10 +1179,13 @@ export default {
     },
     // --- summary strip ---
     monthlyIncomeTotal() {
-      return this.monthlyIncomes.reduce((sum, t) => sum + (Number(t.amount) || 0), 0)
+      return Number(this.monthlyTransactionSummary?.incomeAmount || 0)
     },
     monthlyExpenseTotal() {
-      return this.monthlyExpenses.reduce((sum, t) => sum + (Number(t.amount) || 0), 0)
+      return Number(this.monthlyTransactionSummary?.expenseAmount || 0)
+    },
+    monthlyNetTotal() {
+      return Number(this.monthlyTransactionSummary?.netAmount || 0)
     },
     dailyConsumptionRows() {
       const summaryByDate = new Map(
@@ -1204,7 +1217,7 @@ export default {
       const locale = this.$i18n?.locale || 'pt-BR'
       const currency = 'BRL'
       const fmt = (v) => Number(v || 0).toLocaleString(locale === 'pt' ? 'pt-BR' : locale, { style: 'currency', currency })
-      const net = this.monthlyIncomeTotal - this.monthlyExpenseTotal
+      const net = this.monthlyNetTotal
       return [
         { label: this.$t('income.title'), value: fmt(this.monthlyIncomeTotal), valueClass: 'cb-summary-item__value--positive' },
         { divider: true },
@@ -1233,6 +1246,7 @@ export default {
     this.fetchMonthlyIncomes();
     this.fetchMonthlyExpenses();
     this.fetchDailyConsumptionExpenses();
+    this.fetchMonthlyTransactionSummary();
   },
   watch: {
     '$i18n.locale'(newLocale) {
@@ -1249,14 +1263,26 @@ export default {
         }
         this.applyBudgetQueryFilters()
         this.resetExpensePaginationAndFetch()
+        this.fetchMonthlyTransactionSummary()
       },
       deep: true,
     },
     selectedExpenseMonth() {
       this.openFinanceCategorizationResult = null
+      if (this.activeTab === 'expense') this.fetchMonthlyTransactionSummary()
     },
     selectedExpenseYear() {
       this.openFinanceCategorizationResult = null
+      if (this.activeTab === 'expense') this.fetchMonthlyTransactionSummary()
+    },
+    selectedIncomeMonth() {
+      if (this.activeTab === 'income') this.fetchMonthlyTransactionSummary()
+    },
+    selectedIncomeYear() {
+      if (this.activeTab === 'income') this.fetchMonthlyTransactionSummary()
+    },
+    activeTab() {
+      this.fetchMonthlyTransactionSummary()
     },
   },
   methods: {
@@ -2543,6 +2569,7 @@ export default {
         this.showToast(this.$t('expense.ai_queue_apply_success', { count: appliedCount }), 'success')
         await this.fetchMonthlyExpenses()
         await this.fetchDailyConsumptionExpenses()
+        await this.fetchMonthlyTransactionSummary()
       } catch (error) {
         console.error('Error applying batch expense suggestions:', error)
         this.showToast(this.$t('expense.ai_queue_apply_failed'), 'error')
@@ -2581,6 +2608,7 @@ export default {
         this.showToast(this.openFinanceCategorizationSummary, 'success')
         await this.fetchMonthlyExpenses()
         await this.fetchDailyConsumptionExpenses()
+        await this.fetchMonthlyTransactionSummary()
       } catch (error) {
         console.error('Error applying Open Finance categorization:', error)
         if (this.isAiServiceUnavailableError(error)) {
@@ -2620,6 +2648,7 @@ export default {
         this.showToast(this.$t('expense.ai_feedback_accepted'), 'success')
         await this.fetchMonthlyExpenses()
         await this.fetchDailyConsumptionExpenses()
+        await this.fetchMonthlyTransactionSummary()
       } catch (error) {
         console.error('Error applying inline expense suggestion:', error)
         this.showToast(this.$t('expense.ai_queue_apply_failed'), 'error')
@@ -2915,6 +2944,47 @@ export default {
       this.fetchMonthlyExpenses()
       this.fetchDailyConsumptionExpenses()
     },
+    fetchMonthlyTransactionSummary() {
+      const month = this.activeTab === 'income' ? this.selectedIncomeMonth : this.selectedExpenseMonth
+      const year = this.activeTab === 'income' ? this.selectedIncomeYear : this.selectedExpenseYear
+      if (month === null || year === null) {
+        return Promise.resolve()
+      }
+
+      const { fromDate, toDate } = getMonthDateRange(month, year)
+      const isExpenseTab = this.activeTab === 'expense'
+      const requestId = ++this.transactionSummaryRequestId
+      this.isLoadingTransactionSummary = true
+      return FinancialReadService.fetchTransactionPeriodSummary({
+        fromDate: isExpenseTab && this.routeExpenseDay ? this.routeExpenseDay : fromDate,
+        toDate: isExpenseTab && this.routeExpenseDay ? this.routeExpenseDay : toDate,
+        periodMonth: isExpenseTab && this.routeExpenseDay ? undefined : month,
+        periodYear: isExpenseTab && this.routeExpenseDay ? undefined : year,
+        accountId: isExpenseTab ? this.routeExpenseAccountId || undefined : undefined,
+        categoryId: isExpenseTab ? this.routeExpenseCategoryId || undefined : undefined,
+        uncategorized: isExpenseTab ? this.routeExpenseUncategorized || undefined : undefined,
+        reportScope: isExpenseTab ? this.routeExpenseReportScope || undefined : undefined,
+      })
+        .then((response) => {
+          if (requestId !== this.transactionSummaryRequestId) return
+          const summary = response?.data || {}
+          this.monthlyTransactionSummary = {
+            incomeAmount: Number(summary.incomeAmount || 0),
+            expenseAmount: Number(summary.expenseAmount || 0),
+            netAmount: Number(summary.netAmount || 0),
+          }
+        })
+        .catch((error) => {
+          if (requestId !== this.transactionSummaryRequestId) return
+          console.error('Error fetching transaction period summary:', error)
+          this.monthlyTransactionSummary = { incomeAmount: 0, expenseAmount: 0, netAmount: 0 }
+        })
+        .finally(() => {
+          if (requestId === this.transactionSummaryRequestId) {
+            this.isLoadingTransactionSummary = false
+          }
+        })
+    },
     goToPreviousIncomePage() {
       if (!this.canGoToPreviousIncomePage) {
         return
@@ -3013,6 +3083,7 @@ export default {
           }
           this.resetIncomeForm()
           this.fetchMonthlyIncomes()
+          this.fetchMonthlyTransactionSummary()
         })
         .catch((error) => {
           console.error('Error saving income:', error)
@@ -3078,6 +3149,7 @@ export default {
           }
           this.resetExpenseForm()
           this.fetchMonthlyExpenses()
+          this.fetchMonthlyTransactionSummary()
         })
         .catch((error) => {
           console.error('Error saving expense:', error)
@@ -3161,6 +3233,7 @@ export default {
             if (incomeIndex !== -1) {
               this.monthlyIncomes.splice(incomeIndex, 1)
             }
+            this.fetchMonthlyTransactionSummary()
           })
           .catch((error) => {
             console.error('Failed to delete income:', error)
@@ -3181,6 +3254,7 @@ export default {
             if (expenseIndex !== -1) {
               this.monthlyExpenses.splice(expenseIndex, 1)
             }
+            this.fetchMonthlyTransactionSummary()
           })
           .catch((error) => {
             console.error('Failed to delete expense:', error)

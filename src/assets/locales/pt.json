@@ -820,6 +820,7 @@
     "open_finance_personal_admin_restricted_note": "Esta fonte CPF tem compartilhamento administrativo, mas o acesso pela sua permissão continua restrito.",
     "open_finance_planning_only_label": "Planejamento apenas",
     "open_finance_planning_only_note": "Fonte CPF usada apenas em agregados de planejamento. Os detalhes seguem privados.",
+    "open_finance_edit_notice": "Esta transação veio do Open Finance. Data, valor, descrição, conta e compartilhamento são preservados conforme o banco; você pode ajustar apenas a categoria.",
     "open_finance_private_label": "Fonte pessoal privada",
     "open_finance_private_note": "Fonte CPF privada, sem compartilhamento operacional além do dono da conexão.",
     "details": {

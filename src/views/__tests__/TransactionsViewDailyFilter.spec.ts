@@ -74,4 +74,22 @@ describe('TransactionsView daily filter route integration', () => {
     expect(rows[0]).toMatchObject({ total: 0, count: 0 })
     expect(rows[2]).toMatchObject({ total: 129.9, count: 2 })
   })
+
+  it('renders the canonical aggregate instead of the loaded list page in the summary strip', () => {
+    const summary = { incomeAmount: 900, expenseAmount: 640, netAmount: 260 }
+    const monthlyIncomeTotal = computed.monthlyIncomeTotal.call({ monthlyTransactionSummary: summary })
+    const monthlyExpenseTotal = computed.monthlyExpenseTotal.call({ monthlyTransactionSummary: summary })
+    const monthlyNetTotal = computed.monthlyNetTotal.call({ monthlyTransactionSummary: summary })
+    const items = computed.transactionSummaryItems.call({
+      monthlyIncomeTotal,
+      monthlyExpenseTotal,
+      monthlyNetTotal,
+      $i18n: { locale: 'pt' },
+      $t: (key: string) => key,
+    })
+
+    expect(items[0].value).toContain('900')
+    expect(items[2].value).toContain('640')
+    expect(items[4].value).toContain('260')
+  })
 })

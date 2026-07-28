@@ -7,6 +7,7 @@ import type {
   TransactionCommentView,
   TransactionDirection,
   TransactionDailySummaryResponse,
+  TransactionPeriodSummaryResponse,
   TransactionPlanningExclusionRequest,
   TransactionQueryParams,
   TransactionRequest,
@@ -46,6 +47,8 @@ const buildTransactionParams = (params: TransactionQueryParams = {}) => ({
   ...(params.excludedFromPlanning !== undefined ? { excludedFromPlanning: params.excludedFromPlanning } : {}),
   ...(params.visibilityScope ? { visibilityScope: params.visibilityScope } : {}),
   ...(params.reportScope ? { reportScope: params.reportScope } : {}),
+  ...(params.periodMonth ? { periodMonth: params.periodMonth } : {}),
+  ...(params.periodYear ? { periodYear: params.periodYear } : {}),
   limit: clampLimit(params.limit),
   offset: clampOffset(params.offset),
 })
@@ -159,6 +162,12 @@ export default {
 
   fetchTransactionDailySummary(params: TransactionQueryParams = {}) {
     return axiosInterceptor.get<TransactionDailySummaryResponse>(`${API_URL}/transactions/daily-summary`, {
+      params: buildTransactionFilterParams(params),
+    })
+  },
+
+  fetchTransactionPeriodSummary(params: TransactionQueryParams = {}) {
+    return axiosInterceptor.get<TransactionPeriodSummaryResponse>(`${API_URL}/transactions/summary`, {
       params: buildTransactionFilterParams(params),
     })
   },

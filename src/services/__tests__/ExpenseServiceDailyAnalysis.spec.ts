@@ -4,6 +4,7 @@ import FinancialReadService from '@/services/FinancialReadService'
 
 describe('ExpenseService daily analysis integration', () => {
   afterEach(() => {
+    vi.useRealTimers()
     vi.restoreAllMocks()
   })
 
@@ -52,6 +53,8 @@ describe('ExpenseService daily analysis integration', () => {
     expect(fetchSummary).toHaveBeenCalledWith({
       fromDate: '2026-07-01',
       toDate: '2026-07-31',
+      periodMonth: 7,
+      periodYear: 2026,
       accountId: '2712bb2c-66c7-4f36-a1fb-3c016646b4ab',
       categoryId: 7,
       uncategorized: false,

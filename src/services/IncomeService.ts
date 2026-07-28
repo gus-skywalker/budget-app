@@ -98,6 +98,8 @@ export default {
       direction: 'INFLOW',
       fromDate,
       toDate,
+      periodMonth: month,
+      periodYear: year,
       limit: pagination.limit,
       offset: pagination.offset,
     }).then((page) => ({

@@ -152,11 +152,14 @@ export default {
     const monthRange = getMonthDateRange(monthNumber, year)
     const fromDate = pagination.day || monthRange.fromDate
     const toDate = pagination.day || monthRange.toDate
+    const hasDayFilter = Boolean(pagination.day)
 
     return FinancialReadService.fetchTransactionsByDirection({
       direction: 'OUTFLOW',
       fromDate,
       toDate,
+      periodMonth: hasDayFilter ? undefined : monthNumber,
+      periodYear: hasDayFilter ? undefined : year,
       categoryId: pagination.categoryId,
       uncategorized: pagination.uncategorized,
       reportScope: pagination.reportScope,
@@ -178,6 +181,8 @@ export default {
     return FinancialReadService.fetchTransactionDailySummary({
       fromDate,
       toDate,
+      periodMonth: monthNumber,
+      periodYear: year,
       accountId: filters.accountId,
       categoryId: filters.categoryId,
       uncategorized: filters.uncategorized,
