@@ -47,7 +47,10 @@ const landingPageMessages = {
         card2Title: 'Decida junto com o time',
         card2Desc: 'Leve a simulação para uma decisão compartilhada, com contexto para todos.',
         card3Title: 'Veja impacto antes de agir',
-        card3Desc: 'Entenda como uma escolha afeta saldo, metas e risco nos próximos meses.'
+        card3Desc: 'Entenda como uma escolha afeta saldo, metas e risco nos próximos meses.',
+        expandVideo: 'Ampliar vídeo',
+        closeVideo: 'Fechar vídeo',
+        speedLabel: 'Velocidade'
       },
       how: {
         title: 'Como funciona',
@@ -224,7 +227,10 @@ const landingPageMessages = {
         card2Title: 'Decide with the team',
         card2Desc: 'Turn a simulation into a shared decision, with context for everyone.',
         card3Title: 'See impact before acting',
-        card3Desc: 'Understand how one choice affects balance, goals, and risk over the next months.'
+        card3Desc: 'Understand how one choice affects balance, goals, and risk over the next months.',
+        expandVideo: 'Expand video',
+        closeVideo: 'Close video',
+        speedLabel: 'Speed'
       },
       how: {
         title: 'How it works',
@@ -399,7 +405,10 @@ const landingPageMessages = {
         card2Title: 'Decide con el equipo',
         card2Desc: 'Convierte una simulación en una decisión compartida, con contexto para todos.',
         card3Title: 'Ve el impacto antes de actuar',
-        card3Desc: 'Entiende cómo una elección afecta saldo, metas y riesgo en los próximos meses.'
+        card3Desc: 'Entiende cómo una elección afecta saldo, metas y riesgo en los próximos meses.',
+        expandVideo: 'Ampliar video',
+        closeVideo: 'Cerrar video',
+        speedLabel: 'Velocidad'
       },
       how: {
         title: 'Cómo funciona',
@@ -574,7 +583,10 @@ const landingPageMessages = {
         card2Title: 'Décidez avec l’équipe',
         card2Desc: 'Transformez une simulation en décision partagée, avec du contexte pour chacun.',
         card3Title: 'Voyez l’impact avant d’agir',
-        card3Desc: 'Comprenez comment un choix affecte solde, objectifs et risque sur les prochains mois.'
+        card3Desc: 'Comprenez comment un choix affecte solde, objectifs et risque sur les prochains mois.',
+        expandVideo: 'Agrandir la vidéo',
+        closeVideo: 'Fermer la vidéo',
+        speedLabel: 'Vitesse'
       },
       how: {
         title: 'Comment ça marche',

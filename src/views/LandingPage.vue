@@ -151,7 +151,12 @@
               :key="item.titleKey"
               class="product-moment"
             >
-              <div class="product-moment__media">
+              <button
+                class="product-moment__media"
+                type="button"
+                :aria-label="$t('landingPage.productMoments.expandVideo')"
+                @click="openProductMoment(item)"
+              >
                 <video
                   :src="item.videoSrc"
                   :poster="item.posterSrc"
@@ -162,7 +167,11 @@
                   preload="metadata"
                   class="product-moment__video"
                 ></video>
-              </div>
+                <span class="product-moment__expand">
+                  <v-icon icon="mdi-arrow-expand" size="18"></v-icon>
+                  {{ $t('landingPage.productMoments.expandVideo') }}
+                </span>
+              </button>
               <div class="product-moment__copy">
                 <span>{{ item.label }}</span>
                 <strong>{{ $t(item.titleKey) }}</strong>
@@ -525,6 +534,55 @@
       </div>
     </footer>
 
+    <v-dialog
+      v-model="isProductVideoOpen"
+      class="product-video-dialog"
+      max-width="1120"
+      @after-leave="resetProductVideo"
+    >
+      <div v-if="activeProductMoment" class="product-video-modal">
+        <div class="product-video-modal__header">
+          <div>
+            <span>{{ activeProductMoment.label }}</span>
+            <strong>{{ $t(activeProductMoment.titleKey) }}</strong>
+          </div>
+          <v-btn
+            icon="mdi-close"
+            variant="text"
+            :aria-label="$t('landingPage.productMoments.closeVideo')"
+            @click="closeProductVideo"
+          ></v-btn>
+        </div>
+
+        <video
+          ref="activeProductVideo"
+          class="product-video-modal__video"
+          :src="activeProductMoment.videoSrc"
+          :poster="activeProductMoment.posterSrc"
+          controls
+          playsinline
+          preload="metadata"
+          @loadedmetadata="applyVideoSpeed"
+        ></video>
+
+        <div
+          class="product-video-modal__controls"
+          :aria-label="$t('landingPage.productMoments.speedLabel')"
+        >
+          <span>{{ $t('landingPage.productMoments.speedLabel') }}</span>
+          <button
+            v-for="speed in videoSpeeds"
+            :key="speed"
+            type="button"
+            :class="{ active: videoSpeed === speed }"
+            @click="setVideoSpeed(speed)"
+          >
+            {{ speed }}x
+          </button>
+        </div>
+      </div>
+    </v-dialog>
+
   </v-container>
 </template>
 
@@ -552,6 +610,10 @@ export default {
         message: ''
       },
       isSubmitting: false,
+      isProductVideoOpen: false,
+      activeProductMoment: null,
+      videoSpeed: 1,
+      videoSpeeds: [0.5, 0.75, 1],
       navItems: [
         { id: 'about', labelKey: 'landingPage.nav.about' },
         { id: 'benefits', labelKey: 'landingPage.nav.benefits' },
@@ -712,6 +774,31 @@ export default {
     navigateToPath(path) {
       this.closeMenu()
       this.$router.push(path)
+    },
+    openProductMoment(item) {
+      this.activeProductMoment = item
+      this.videoSpeed = 1
+      this.isProductVideoOpen = true
+      this.$nextTick(() => {
+        this.applyVideoSpeed()
+      })
+    },
+    closeProductVideo() {
+      this.isProductVideoOpen = false
+    },
+    resetProductVideo() {
+      this.activeProductMoment = null
+      this.videoSpeed = 1
+    },
+    setVideoSpeed(speed) {
+      this.videoSpeed = speed
+      this.applyVideoSpeed()
+    },
+    applyVideoSpeed() {
+      const video = this.$refs.activeProductVideo
+      if (video) {
+        video.playbackRate = this.videoSpeed
+      }
     },
     authorInitials(author) {
       return author
@@ -1452,9 +1539,15 @@ p {
 
 .product-moment__media {
   position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
   overflow: hidden;
   aspect-ratio: 16 / 9;
   background: #08101d;
+  border: 0;
+  color: inherit;
+  cursor: zoom-in;
 }
 
 .product-moment__media::after {
@@ -1465,11 +1558,51 @@ p {
   box-shadow: inset 0 -42px 64px rgba(0, 0, 0, 0.18);
 }
 
+.product-moment__media:hover .product-moment__video,
+.product-moment__media:focus-visible .product-moment__video {
+  transform: scale(1.025);
+}
+
+.product-moment__media:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent-strong) 78%, white);
+  outline-offset: 4px;
+}
+
 .product-moment__video {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.22s ease;
+}
+
+.product-moment__expand {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border-radius: 999px;
+  padding: 8px 11px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #172033;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.2);
+  opacity: 0.92;
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+
+.product-moment__media:hover .product-moment__expand,
+.product-moment__media:focus-visible .product-moment__expand {
+  opacity: 1;
+  transform: translateY(-2px);
 }
 
 .product-moment__copy {
@@ -1496,6 +1629,88 @@ p {
 .product-moment__copy p {
   font-size: 0.98rem;
   line-height: 1.5;
+}
+
+.product-video-dialog :deep(.v-overlay__content) {
+  width: min(1120px, calc(100vw - 32px));
+  margin: 16px;
+}
+
+.product-video-modal {
+  display: grid;
+  gap: 16px;
+  border-radius: 24px;
+  padding: 18px;
+  background: #0b1220;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.42);
+}
+
+.product-video-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  color: #f8fafc;
+}
+
+.product-video-modal__header > div {
+  display: grid;
+  gap: 4px;
+}
+
+.product-video-modal__header span {
+  color: #f97345;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.product-video-modal__header strong {
+  font-family: 'Manrope', sans-serif;
+  font-size: clamp(1.05rem, 2vw, 1.45rem);
+}
+
+.product-video-modal__video {
+  display: block;
+  width: 100%;
+  max-height: min(72vh, 720px);
+  aspect-ratio: 16 / 9;
+  border-radius: 16px;
+  background: #020617;
+  object-fit: contain;
+}
+
+.product-video-modal__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: rgba(248, 250, 252, 0.78);
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.product-video-modal__controls button {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  padding: 7px 12px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #f8fafc;
+  font: inherit;
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.product-video-modal__controls button:hover,
+.product-video-modal__controls button.active {
+  background: rgba(249, 115, 69, 0.22);
+  border-color: rgba(249, 115, 69, 0.58);
 }
 
 .card-grid {
