@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useTheme } from 'vuetify'
 import { useI18n } from 'vue-i18n'
@@ -15,6 +15,8 @@ const userStore = useUserStore()
 const showLogoutDialog = ref(false)
 const expandOnHover = ref(true)
 const isMobile = ref(false)
+const drawerOpen = ref(true)
+const sidebarWidth = computed(() => (isMobile.value ? 280 : 248))
 
 type NavItem = {
   key: string
@@ -33,7 +35,11 @@ type NavSection = {
 
 const checkMobile = () => {
   const width = window.innerWidth
-  isMobile.value = width < 780
+  const nextIsMobile = width < 780
+  if (nextIsMobile !== isMobile.value) {
+    drawerOpen.value = !nextIsMobile
+  }
+  isMobile.value = nextIsMobile
   expandOnHover.value = !isMobile.value
 }
 
@@ -79,6 +85,13 @@ function toggleTheme() {
 
 function navigateToAccountAdmin() {
   router.push({ name: 'settings' })
+  closeMobileDrawer()
+}
+
+function closeMobileDrawer() {
+  if (isMobile.value) {
+    drawerOpen.value = false
+  }
 }
 
 const mainNavSections = computed<NavSection[]>(() => [
@@ -247,121 +260,172 @@ function isItemActive(item: NavItem): boolean {
   const target = router.resolve(item.to)
   return target.name === route.name
 }
+
+watch(
+  () => route.fullPath,
+  () => {
+    closeMobileDrawer()
+  }
+)
 </script>
 
 <template>
-  <v-navigation-drawer app :expand-on-hover="expandOnHover" :rail="true" permanent ref="drawer">
-    <v-list v-if="user">
-      <v-list-item
-        :prepend-avatar="userAvatar"
-        :subtitle="user.email"
-        :title="user.username"
-        @click="navigateToAccountAdmin"
-      ></v-list-item>
-    </v-list>
-    <v-list v-else>
-      <v-btn @click="redirectToOAuth2LoginPage">{{ $t('sidebar.login_oauth2') }}</v-btn>
-    </v-list>
+  <v-btn
+    v-if="isMobile && !drawerOpen"
+    class="mobile-nav-trigger"
+    color="primary"
+    icon="mdi-menu"
+    size="large"
+    :aria-label="$t('sidebar.open_navigation')"
+    @click="drawerOpen = true"
+  />
 
-    <v-divider></v-divider>
+  <v-navigation-drawer
+    v-model="drawerOpen"
+    app
+    :class="['app-sidebar', { 'app-sidebar--mobile': isMobile }]"
+    :expand-on-hover="expandOnHover"
+    :permanent="!isMobile"
+    :rail="!isMobile"
+    :rail-width="64"
+    :temporary="isMobile"
+    :width="sidebarWidth"
+    ref="drawer"
+  >
+    <div class="sidebar-scroll-shell">
+      <v-list v-if="user">
+        <v-list-item
+          :prepend-avatar="userAvatar"
+          :subtitle="user.email"
+          :title="user.username"
+          @click="navigateToAccountAdmin"
+        ></v-list-item>
+      </v-list>
+      <v-list v-else>
+        <v-btn @click="redirectToOAuth2LoginPage">{{ $t('sidebar.login_oauth2') }}</v-btn>
+      </v-list>
 
-    <div class="workspace-switcher-wrapper">
-      <WorkspaceSwitcher />
-    </div>
+      <v-divider></v-divider>
 
-    <v-list class="sidebar-main-list" density="compact" nav>
-      <template v-for="section in mainNavSections" :key="section.key">
-        <v-list-subheader class="sidebar-section">{{ section.title }}</v-list-subheader>
-        <v-tooltip v-for="item in section.items" :key="item.key" :text="item.title" location="end">
-          <template v-slot:activator="{ props }">
-            <v-list-item
-              v-bind="props"
-              :prepend-icon="item.icon"
-              :title="item.title"
-              :to="item.to"
-              :disabled="item.disabled"
-              :active="isItemActive(item)"
-              :class="{
-                'primary-nav-item': item.primary,
-                'active-nav-item': isItemActive(item)
-              }"
-            ></v-list-item>
-          </template>
-        </v-tooltip>
-        <v-divider class="section-divider"></v-divider>
-      </template>
-    </v-list>
+      <div class="workspace-switcher-wrapper">
+        <WorkspaceSwitcher />
+      </div>
 
-    <v-spacer></v-spacer>
-
-    <div class="sidebar-settings">
-      <v-list density="compact" nav>
-        <v-list-subheader class="sidebar-section">{{
-          $t('sidebar.sections.settings')
-        }}</v-list-subheader>
-        <v-tooltip v-for="item in settingsItems" :key="item.key" :text="item.title" location="end">
-          <template v-slot:activator="{ props }">
-            <v-list-item
-              v-bind="props"
-              :prepend-icon="item.icon"
-              :title="item.title"
-              :to="item.to"
-              :disabled="item.disabled"
-              :active="isItemActive(item)"
-              :class="{ 'active-nav-item': isItemActive(item) }"
-            ></v-list-item>
-          </template>
-        </v-tooltip>
-        <v-list-group value="legal" prepend-icon="mdi-scale-balance">
-          <template v-slot:activator="{ props }">
-            <v-list-item v-bind="props" :title="$t('sidebar.legal.title')"></v-list-item>
-          </template>
-          <v-tooltip v-for="item in legalItems" :key="item.key" :text="item.title" location="end">
+      <v-list class="sidebar-main-list" density="compact" nav>
+        <template v-for="section in mainNavSections" :key="section.key">
+          <v-list-subheader class="sidebar-section">{{ section.title }}</v-list-subheader>
+          <v-tooltip
+            v-for="item in section.items"
+            :key="item.key"
+            :disabled="isMobile"
+            :text="item.title"
+            location="end"
+          >
             <template v-slot:activator="{ props }">
               <v-list-item
                 v-bind="props"
                 :prepend-icon="item.icon"
                 :title="item.title"
                 :to="item.to"
+                :disabled="item.disabled"
                 :active="isItemActive(item)"
+                @click="closeMobileDrawer"
+                :class="{
+                  'primary-nav-item': item.primary,
+                  'active-nav-item': isItemActive(item)
+                }"
+              ></v-list-item>
+            </template>
+          </v-tooltip>
+          <v-divider class="section-divider"></v-divider>
+        </template>
+      </v-list>
+
+      <v-spacer></v-spacer>
+
+      <div class="sidebar-settings">
+        <v-list density="compact" nav>
+          <v-list-subheader class="sidebar-section">{{
+            $t('sidebar.sections.settings')
+          }}</v-list-subheader>
+          <v-tooltip
+            v-for="item in settingsItems"
+            :key="item.key"
+            :disabled="isMobile"
+            :text="item.title"
+            location="end"
+          >
+            <template v-slot:activator="{ props }">
+              <v-list-item
+                v-bind="props"
+                :prepend-icon="item.icon"
+                :title="item.title"
+                :to="item.to"
+                :disabled="item.disabled"
+                :active="isItemActive(item)"
+                @click="closeMobileDrawer"
                 :class="{ 'active-nav-item': isItemActive(item) }"
               ></v-list-item>
             </template>
           </v-tooltip>
-        </v-list-group>
-      </v-list>
-
-      <v-divider></v-divider>
-
-      <v-tooltip :text="$t('sidebar.toggle_theme')" location="end">
-        <template v-slot:activator="{ props }">
-          <v-switch
-            v-bind="props"
-            @click="toggleTheme"
-            hide-details
-            class="ml-4 mt-2 sidebar-theme-toggle"
-          >
-            <template v-slot:prepend>
-              <v-icon>{{
-                theme.global.current.value.dark ? 'mdi-weather-night' : 'mdi-weather-sunny'
-              }}</v-icon>
+          <v-list-group value="legal" prepend-icon="mdi-scale-balance">
+            <template v-slot:activator="{ props }">
+              <v-list-item v-bind="props" :title="$t('sidebar.legal.title')"></v-list-item>
             </template>
-          </v-switch>
-        </template>
-      </v-tooltip>
+            <v-tooltip
+              v-for="item in legalItems"
+              :key="item.key"
+              :disabled="isMobile"
+              :text="item.title"
+              location="end"
+            >
+              <template v-slot:activator="{ props }">
+                <v-list-item
+                  v-bind="props"
+                  :prepend-icon="item.icon"
+                  :title="item.title"
+                  :to="item.to"
+                  :active="isItemActive(item)"
+                  @click="closeMobileDrawer"
+                  :class="{ 'active-nav-item': isItemActive(item) }"
+                ></v-list-item>
+              </template>
+            </v-tooltip>
+          </v-list-group>
+        </v-list>
 
-      <v-tooltip :text="$t('sidebar.logout')" location="end">
-        <template v-slot:activator="{ props }">
-          <v-list density="compact" nav>
-            <v-list-item
+        <v-divider></v-divider>
+
+        <v-tooltip :text="$t('sidebar.toggle_theme')" location="end">
+          <template v-slot:activator="{ props }">
+            <v-switch
               v-bind="props"
-              @click="confirmLogout"
-              :title="$t('sidebar.logout')"
-              prepend-icon="mdi-logout"
-            ></v-list-item>
-          </v-list>
-        </template>
-      </v-tooltip>
+              @click="toggleTheme"
+              hide-details
+              class="ml-4 mt-2 sidebar-theme-toggle"
+            >
+              <template v-slot:prepend>
+                <v-icon>{{
+                  theme.global.current.value.dark ? 'mdi-weather-night' : 'mdi-weather-sunny'
+                }}</v-icon>
+              </template>
+            </v-switch>
+          </template>
+        </v-tooltip>
+
+        <v-tooltip :text="$t('sidebar.logout')" location="end">
+          <template v-slot:activator="{ props }">
+            <v-list density="compact" nav>
+              <v-list-item
+                v-bind="props"
+                @click="confirmLogout"
+                :title="$t('sidebar.logout')"
+                prepend-icon="mdi-logout"
+              ></v-list-item>
+            </v-list>
+          </template>
+        </v-tooltip>
+      </div>
     </div>
   </v-navigation-drawer>
 
@@ -387,6 +451,39 @@ function isItemActive(item: NavItem): boolean {
 </template>
 
 <style scoped>
+.mobile-nav-trigger {
+  position: fixed;
+  z-index: 1100;
+  top: calc(env(safe-area-inset-top, 0px) + 14px);
+  left: calc(env(safe-area-inset-left, 0px) + 14px);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.24);
+}
+
+.app-sidebar--mobile :deep(.v-navigation-drawer__content) {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.sidebar-scroll-shell {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-sidebar--mobile .sidebar-scroll-shell {
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+}
+
+.app-sidebar--mobile :deep(.v-spacer) {
+  display: none;
+}
+
 .sidebar-main-list {
   padding-bottom: 4px;
 }
@@ -455,6 +552,23 @@ function isItemActive(item: NavItem): boolean {
 .workspace-switcher-wrapper :deep(.workspace-switcher-btn) {
   width: 100%;
   justify-content: flex-start;
+}
+
+.app-sidebar--mobile .workspace-switcher-wrapper {
+  padding: 10px;
+}
+
+.app-sidebar--mobile .sidebar-main-list,
+.app-sidebar--mobile .sidebar-settings :deep(.v-list) {
+  padding-inline: 6px;
+}
+
+.app-sidebar--mobile .sidebar-section {
+  color: rgba(0, 0, 0, 0.64);
+}
+
+.v-theme--dark .app-sidebar--mobile .sidebar-section {
+  color: rgba(255, 255, 255, 0.68);
 }
 
 .language-select {
