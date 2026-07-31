@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useTheme } from 'vuetify'
 import { useI18n } from 'vue-i18n'
@@ -85,13 +85,6 @@ function toggleTheme() {
 
 function navigateToAccountAdmin() {
   router.push({ name: 'settings' })
-  closeMobileDrawer()
-}
-
-function closeMobileDrawer() {
-  if (isMobile.value) {
-    drawerOpen.value = false
-  }
 }
 
 const mainNavSections = computed<NavSection[]>(() => [
@@ -261,31 +254,28 @@ function isItemActive(item: NavItem): boolean {
   return target.name === route.name
 }
 
-watch(
-  () => route.fullPath,
-  () => {
-    closeMobileDrawer()
-  }
-)
 </script>
 
 <template>
   <v-btn
-    v-if="isMobile && !drawerOpen"
-    class="mobile-nav-trigger"
+    v-if="isMobile"
+    :class="['mobile-nav-trigger', { 'mobile-nav-trigger--open': drawerOpen }]"
     color="primary"
-    icon="mdi-menu"
+    :icon="drawerOpen ? 'mdi-close' : 'mdi-menu'"
     size="large"
     :aria-label="$t('sidebar.open_navigation')"
-    @click="drawerOpen = true"
+    @click.stop="drawerOpen = !drawerOpen"
   />
 
   <v-navigation-drawer
+    v-if="!isMobile || drawerOpen"
     v-model="drawerOpen"
     app
     :class="['app-sidebar', { 'app-sidebar--mobile': isMobile }]"
+    :disable-route-watcher="isMobile"
     :expand-on-hover="expandOnHover"
     :permanent="!isMobile"
+    :persistent="isMobile"
     :rail="!isMobile"
     :rail-width="64"
     :temporary="isMobile"
@@ -329,7 +319,6 @@ watch(
                 :to="item.to"
                 :disabled="item.disabled"
                 :active="isItemActive(item)"
-                @click="closeMobileDrawer"
                 :class="{
                   'primary-nav-item': item.primary,
                   'active-nav-item': isItemActive(item)
@@ -363,7 +352,6 @@ watch(
                 :to="item.to"
                 :disabled="item.disabled"
                 :active="isItemActive(item)"
-                @click="closeMobileDrawer"
                 :class="{ 'active-nav-item': isItemActive(item) }"
               ></v-list-item>
             </template>
@@ -386,7 +374,6 @@ watch(
                   :title="item.title"
                   :to="item.to"
                   :active="isItemActive(item)"
-                  @click="closeMobileDrawer"
                   :class="{ 'active-nav-item': isItemActive(item) }"
                 ></v-list-item>
               </template>
@@ -453,15 +440,20 @@ watch(
 <style scoped>
 .mobile-nav-trigger {
   position: fixed;
-  z-index: 1100;
+  z-index: 2600;
   top: calc(env(safe-area-inset-top, 0px) + 14px);
   left: calc(env(safe-area-inset-left, 0px) + 14px);
   box-shadow: 0 12px 28px rgba(15, 23, 42, 0.24);
+  transition:
+    left 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
-.app-sidebar--mobile :deep(.v-navigation-drawer__content) {
-  min-height: 0;
-  overflow: hidden;
+.mobile-nav-trigger--open {
+  left: min(
+    calc(env(safe-area-inset-left, 0px) + 220px),
+    calc(100vw - env(safe-area-inset-right, 0px) - 66px)
+  );
 }
 
 .sidebar-scroll-shell {
@@ -470,18 +462,36 @@ watch(
   flex-direction: column;
 }
 
-.app-sidebar--mobile .sidebar-scroll-shell {
-  height: 100dvh;
-  max-height: 100dvh;
-  overflow-x: hidden;
+.app-sidebar--mobile {
+  max-width: calc(100vw - 48px);
+}
+
+.app-sidebar--mobile :deep(.v-navigation-drawer__content) {
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+}
+
+.app-sidebar--mobile .sidebar-scroll-shell {
+  min-height: auto;
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
 }
 
 .app-sidebar--mobile :deep(.v-spacer) {
   display: none;
+}
+
+.app-sidebar--mobile .workspace-switcher-wrapper {
+  padding: 10px 12px;
+}
+
+.app-sidebar--mobile .section-divider {
+  margin-inline: 10px;
+}
+
+.app-sidebar--mobile .sidebar-main-list,
+.app-sidebar--mobile .sidebar-settings :deep(.v-list) {
+  padding-inline: 6px;
 }
 
 .sidebar-main-list {
@@ -552,23 +562,6 @@ watch(
 .workspace-switcher-wrapper :deep(.workspace-switcher-btn) {
   width: 100%;
   justify-content: flex-start;
-}
-
-.app-sidebar--mobile .workspace-switcher-wrapper {
-  padding: 10px;
-}
-
-.app-sidebar--mobile .sidebar-main-list,
-.app-sidebar--mobile .sidebar-settings :deep(.v-list) {
-  padding-inline: 6px;
-}
-
-.app-sidebar--mobile .sidebar-section {
-  color: rgba(0, 0, 0, 0.64);
-}
-
-.v-theme--dark .app-sidebar--mobile .sidebar-section {
-  color: rgba(255, 255, 255, 0.68);
 }
 
 .language-select {
