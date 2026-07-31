@@ -951,6 +951,14 @@ onMounted(loadAnalytics)
     flex-direction: column;
   }
 
+  /* In a column flex layout, the desktop flex-basis becomes a height. */
+  .report-analytics__toolbar > :first-child,
+  .report-analytics__period,
+  .report-analytics__scope {
+    flex: 0 0 auto;
+    width: 100%;
+  }
+
   .report-analytics__period {
     max-width: none;
   }
