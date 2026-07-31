@@ -137,6 +137,42 @@
         </div>
       </section>
 
+      <section class="section-offset section-block product-moments-section">
+        <div class="shell">
+          <div class="section-heading centered-heading">
+            <span class="section-kicker">{{ $t('landingPage.productMoments.kicker') }}</span>
+            <h2>{{ $t('landingPage.productMoments.title') }}</h2>
+            <p class="section-intro narrow">{{ $t('landingPage.productMoments.subtitle') }}</p>
+          </div>
+
+          <div class="product-moments-grid">
+            <article
+              v-for="item in productMoments"
+              :key="item.titleKey"
+              class="product-moment"
+            >
+              <div class="product-moment__media">
+                <video
+                  :src="item.videoSrc"
+                  :poster="item.posterSrc"
+                  muted
+                  autoplay
+                  playsinline
+                  loop
+                  preload="metadata"
+                  class="product-moment__video"
+                ></video>
+              </div>
+              <div class="product-moment__copy">
+                <span>{{ item.label }}</span>
+                <strong>{{ $t(item.titleKey) }}</strong>
+                <p>{{ $t(item.descKey) }}</p>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
       <section id="about" class="section-offset section-block section-light">
         <div class="shell section-media-grid">
           <div class="section-media-copy">
@@ -535,6 +571,29 @@ export default {
         { icon: 'mdi-chart-areaspline', titleKey: 'landingPage.solution.card2' },
         { icon: 'mdi-finance', titleKey: 'landingPage.solution.card3' },
         { icon: 'mdi-handshake-outline', titleKey: 'landingPage.solution.card4' }
+      ],
+      productMoments: [
+        {
+          label: '01',
+          videoSrc: '/landing-assets/marketing/create-scenario.mp4',
+          posterSrc: '/landing-assets/marketing/create-scenario-poster.png',
+          titleKey: 'landingPage.productMoments.card1Title',
+          descKey: 'landingPage.productMoments.card1Desc'
+        },
+        {
+          label: '02',
+          videoSrc: '/landing-assets/marketing/collaborative-decision.mp4',
+          posterSrc: '/landing-assets/marketing/collaborative-decision-poster.png',
+          titleKey: 'landingPage.productMoments.card2Title',
+          descKey: 'landingPage.productMoments.card2Desc'
+        },
+        {
+          label: '03',
+          videoSrc: '/landing-assets/marketing/future-impact.mp4',
+          posterSrc: '/landing-assets/marketing/future-impact-poster.png',
+          titleKey: 'landingPage.productMoments.card3Title',
+          descKey: 'landingPage.productMoments.card3Desc'
+        }
       ],
       howSteps: [
         {
@@ -1372,6 +1431,73 @@ p {
   min-height: 360px;
 }
 
+.product-moments-section {
+  padding-top: 88px;
+  background: linear-gradient(180deg, rgba(23, 32, 51, 0.02), rgba(255, 255, 255, 0.34));
+}
+
+.product-moments-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.product-moment {
+  overflow: hidden;
+  border-radius: 26px;
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(23, 32, 51, 0.1);
+  box-shadow: var(--shadow-soft);
+}
+
+.product-moment__media {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  background: #08101d;
+}
+
+.product-moment__media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 -42px 64px rgba(0, 0, 0, 0.18);
+}
+
+.product-moment__video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product-moment__copy {
+  display: grid;
+  gap: 10px;
+  padding: 22px;
+}
+
+.product-moment__copy span {
+  color: var(--accent-strong);
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+.product-moment__copy strong {
+  color: var(--ink);
+  font-family: 'Manrope', sans-serif;
+  font-size: 1.22rem;
+  line-height: 1.15;
+}
+
+.product-moment__copy p {
+  font-size: 0.98rem;
+  line-height: 1.5;
+}
+
 .card-grid {
   display: grid;
   gap: 18px;
@@ -1790,6 +1916,10 @@ p {
 }
 
 @media (max-width: 1180px) {
+  .product-moments-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .card-grid-four,
   .timeline-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1892,6 +2022,7 @@ p {
   .card-grid-tight,
   .card-grid-compact,
   .card-grid-four,
+  .product-moments-grid,
   .timeline-grid {
     grid-template-columns: 1fr;
   }
@@ -1918,6 +2049,14 @@ p {
   .section-media-image,
   .hero-image-test {
     min-height: 300px;
+  }
+
+  .product-moment {
+    border-radius: 22px;
+  }
+
+  .product-moment__copy {
+    padding: 18px;
   }
 
   .footer-grid {

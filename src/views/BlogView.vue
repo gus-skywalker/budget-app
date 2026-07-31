@@ -977,10 +977,25 @@ h3 {
 
 .quote-card__label,
 .mini-card span {
+  display: inline-flex;
+  width: fit-content;
+  border-radius: 999px;
+  padding: 5px 10px;
+  background: var(--accent-soft);
   color: var(--brand-strong);
   font-size: 0.78rem;
   font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1;
   text-transform: uppercase;
+}
+
+.mini-card strong {
+  display: block;
+  margin-top: 10px;
+  color: var(--ink);
+  font-size: 1.02rem;
+  line-height: 1.35;
 }
 
 .post-card__link {

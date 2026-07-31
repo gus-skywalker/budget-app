@@ -37,6 +37,18 @@ const landingPageMessages = {
         card3: 'Previsão financeira',
         card4: 'Decisões financeiras colaborativas'
       },
+      productMoments: {
+        kicker: 'Produto em ação',
+        title: 'Do orçamento à decisão, sem perder o contexto.',
+        subtitle:
+          'CoBudget transforma planejamento em clareza visual: simule cenários, alinhe escolhas e veja o impacto futuro antes de agir.',
+        card1Title: 'Crie um cenário em segundos',
+        card1Desc: 'Teste uma mudança no orçamento antes de comprometer o caixa.',
+        card2Title: 'Decida junto com o time',
+        card2Desc: 'Leve a simulação para uma decisão compartilhada, com contexto para todos.',
+        card3Title: 'Veja impacto antes de agir',
+        card3Desc: 'Entenda como uma escolha afeta saldo, metas e risco nos próximos meses.'
+      },
       how: {
         title: 'Como funciona',
         step1Title: 'Centralize',
@@ -202,6 +214,18 @@ const landingPageMessages = {
         card3: 'Financial forecasting',
         card4: 'Collaborative financial decisions'
       },
+      productMoments: {
+        kicker: 'Product in action',
+        title: 'From budget to decision, without losing context.',
+        subtitle:
+          'CoBudget turns planning into visual clarity: simulate scenarios, align choices, and see future impact before acting.',
+        card1Title: 'Create a scenario in seconds',
+        card1Desc: 'Test a budget change before committing your cashflow.',
+        card2Title: 'Decide with the team',
+        card2Desc: 'Turn a simulation into a shared decision, with context for everyone.',
+        card3Title: 'See impact before acting',
+        card3Desc: 'Understand how one choice affects balance, goals, and risk over the next months.'
+      },
       how: {
         title: 'How it works',
         step1Title: 'Centralize',
@@ -365,6 +389,18 @@ const landingPageMessages = {
         card3: 'Projeção financeira',
         card4: 'Decisiones financieras colaborativas'
       },
+      productMoments: {
+        kicker: 'Producto en acción',
+        title: 'Del presupuesto a la decisión, sin perder contexto.',
+        subtitle:
+          'CoBudget convierte la planificación en claridad visual: simula escenarios, alinea decisiones y ve el impacto futuro antes de actuar.',
+        card1Title: 'Crea un escenario en segundos',
+        card1Desc: 'Prueba un cambio de presupuesto antes de comprometer el flujo de caja.',
+        card2Title: 'Decide con el equipo',
+        card2Desc: 'Convierte una simulación en una decisión compartida, con contexto para todos.',
+        card3Title: 'Ve el impacto antes de actuar',
+        card3Desc: 'Entiende cómo una elección afecta saldo, metas y riesgo en los próximos meses.'
+      },
       how: {
         title: 'Cómo funciona',
         step1Title: 'Centraliza',
@@ -527,6 +563,18 @@ const landingPageMessages = {
         card2: 'Simulation de scénarios',
         card3: 'Prévision financière',
         card4: 'Décisions financières collaboratives'
+      },
+      productMoments: {
+        kicker: 'Produit en action',
+        title: 'Du budget à la décision, sans perdre le contexte.',
+        subtitle:
+          'CoBudget transforme la planification en clarté visuelle : simulez des scénarios, alignez les choix et voyez l’impact futur avant d’agir.',
+        card1Title: 'Créez un scénario en secondes',
+        card1Desc: 'Testez une modification du budget avant d’engager votre trésorerie.',
+        card2Title: 'Décidez avec l’équipe',
+        card2Desc: 'Transformez une simulation en décision partagée, avec du contexte pour chacun.',
+        card3Title: 'Voyez l’impact avant d’agir',
+        card3Desc: 'Comprenez comment un choix affecte solde, objectifs et risque sur les prochains mois.'
       },
       how: {
         title: 'Comment ça marche',

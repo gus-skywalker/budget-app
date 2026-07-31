@@ -5,7 +5,7 @@ export default {
         blog: 'Blog',
         start: 'Começar',
         contentCenter: 'Content Center',
-        contentTemplate: 'Abrir template',
+        contentTemplate: 'Ler artigo',
         playbook: 'Abrir playbook'
       },
       landing: {
@@ -28,7 +28,7 @@ export default {
             'Não é um blog tradicional. Aqui o conteúdo existe para ajudar você a sair da leitura e entrar numa simulação ou numa decisão real.'
         },
         hero: {
-          eyebrowPublic: 'Inbound em construção',
+          eyebrowPublic: 'Guias CoBudget',
           eyebrowApp: 'Biblioteca CoBudget',
           titlePublic:
             'Conteúdo para quem precisa tomar decisões financeiras melhores, com menos ruído.',
@@ -43,7 +43,7 @@ export default {
           ctaSecondaryApp: 'Abrir decisões'
         },
         panel: {
-          labelPublic: 'Série editorial',
+          labelPublic: 'Guias práticos',
           labelApp: 'Agora no produto',
           titlePublic: 'Decisões melhores em 10 minutos',
           titleApp: 'Conteúdo conectado ao uso do app',
@@ -58,27 +58,27 @@ export default {
         },
         metrics: {
           themes: 'Temas centrais',
-          articles: 'Artigos iniciais',
+          articles: 'Artigos',
           goal: 'Objetivo',
-          goalPublic: 'Descoberta + confiança',
+          goalPublic: 'Clareza para decidir',
           goalApp: 'Ativação + educação'
         },
         featured: {
           kickerPublic: 'Destaque',
           kickerApp: 'Guia recomendado',
-          titlePublic: 'O primeiro grande bloco editorial do CoBudget',
+          titlePublic: 'Comece pelo guia mais prático',
           titleApp: 'Um ponto de partida para usar cenários e decisões com mais confiança',
-          quoteLabel: 'Ângulo editorial',
+          quoteLabel: 'Por que isso importa',
           quote:
-            '“Em vez de falar apenas sobre controle financeiro, vamos mostrar como decidir com mais contexto, mais colaboração e menos impulso.”'
+            'O melhor conteúdo do CoBudget não explica finanças em abstrato: ele ajuda você a conectar dados reais, simular impacto e decidir com mais clareza.'
         },
         posts: {
-          kickerPublic: 'Biblioteca inicial',
+          kickerPublic: 'Artigos',
           kickerApp: 'Leituras práticas',
-          titlePublic: 'Uma grade de conteúdo pronta para crescer',
+          titlePublic: 'Guias para transformar dúvida financeira em próximo passo',
           titleApp: 'Artigos para aprofundar o uso do produto',
           descriptionPublic:
-            'Pensada para SEO, educação de produto e captação de pessoas que ainda estão entendendo o problema.',
+            'Conteúdo prático sobre Open Finance, cenários, decisões compartilhadas e planejamento de caixa.',
           descriptionApp:
             'Conteúdo pensado para onboarding contínuo, educação de funcionalidades e melhor tomada de decisão.'
         },
@@ -89,12 +89,12 @@ export default {
           titleApp: 'Os temas que mais ajudam a transformar uso em clareza'
         },
         newsletter: {
-          kickerPublic: 'Captura de demanda',
+          kickerPublic: 'Novos guias',
           kickerApp: 'Aprendizado contínuo',
           titlePublic: 'Receba os próximos artigos e playbooks do CoBudget',
           titleApp: 'Salve seu interesse para os próximos guias e novidades do produto',
           descriptionPublic:
-            'A ideia aqui é transformar a página de blog numa máquina simples de descoberta, recorrência e confiança.',
+            'Receba conteúdos práticos sobre planejamento, cenários e decisões financeiras com mais clareza.',
           descriptionApp:
             'No app, essa área pode evoluir para recomendações, novidades e conteúdo orientado ao que a pessoa ainda não explorou.',
           emailLabel: 'Seu melhor e-mail',
@@ -111,19 +111,19 @@ export default {
         article: {
           backPublic: 'Voltar ao blog',
           backApp: 'Voltar ao Content Center',
-          emptyTitle: 'Template não encontrado',
-          emptyDescription: 'Esse slug ainda não foi configurado no catálogo editorial.'
+          emptyTitle: 'Artigo não encontrado',
+          emptyDescription: 'Esse conteúdo ainda não está disponível.'
         },
         template: {
-          heroPrompt: 'Prompt do hero',
-          editorialSummary: 'Resumo editorial',
-          openingBlock: 'Bloco de abertura',
-          takeaways: 'Takeaways',
-          takeawaysTitle: 'Mensagens que o texto precisa entregar',
-          structure: 'Estrutura',
-          articleTemplate: 'Template do artigo',
-          articleCta: 'CTA do artigo',
-          articleCtaTitle: 'Conectar conteúdo com ação dentro do produto'
+          heroPrompt: 'Contexto',
+          editorialSummary: 'Resumo',
+          openingBlock: 'Antes de decidir',
+          takeaways: 'Principais pontos',
+          takeawaysTitle: 'O que você leva deste artigo',
+          structure: 'Guia',
+          articleTemplate: 'Como aplicar',
+          articleCta: 'Próximo passo',
+          articleCtaTitle: 'Use o CoBudget para colocar isso em prática'
         },
         topics: {
           planning: 'Planejamento',
@@ -163,9 +163,9 @@ export default {
             'Compare custo, liquidez e previsibilidade antes de escolher como quitar.'
         },
         fallback: {
-          category: 'Template',
-          title: 'Template de destaque',
-          excerpt: 'Defina aqui o template editorial que deve aparecer em destaque.',
+          category: 'Blog',
+          title: 'Artigo em preparação',
+          excerpt: 'Este conteúdo ainda está sendo preparado.',
           readTime: '0 min',
           stage: 'Planejamento',
           audience: 'Equipe de conteúdo'
@@ -450,7 +450,7 @@ export default {
         blog: 'Blog',
         start: 'Get started',
         contentCenter: 'Content Center',
-        contentTemplate: 'Open template',
+        contentTemplate: 'Read article',
         playbook: 'Open playbook'
       },
       landing: {
@@ -473,7 +473,7 @@ export default {
             'This is not a traditional blog. The content exists to help you move from reading into a real simulation or decision.'
         },
         hero: {
-          eyebrowPublic: 'Inbound in progress',
+          eyebrowPublic: 'CoBudget guides',
           eyebrowApp: 'CoBudget Library',
           titlePublic:
             'Content for people who need to make better financial decisions with less noise.',
@@ -489,7 +489,7 @@ export default {
           ctaSecondaryApp: 'Open decisions'
         },
         panel: {
-          labelPublic: 'Editorial series',
+          labelPublic: 'Practical guides',
           labelApp: 'Now in product',
           titlePublic: 'Better decisions in 10 minutes',
           titleApp: 'Content connected to product usage',
@@ -505,28 +505,28 @@ export default {
         },
         metrics: {
           themes: 'Core themes',
-          articles: 'Initial articles',
+          articles: 'Articles',
           goal: 'Goal',
-          goalPublic: 'Discovery + trust',
+          goalPublic: 'Decision clarity',
           goalApp: 'Activation + education'
         },
         featured: {
           kickerPublic: 'Featured',
           kickerApp: 'Recommended guide',
-          titlePublic: 'The first major editorial block for CoBudget',
+          titlePublic: 'Start with the most practical guide',
           titleApp:
             'A starting point for using scenarios and decisions with more confidence',
-          quoteLabel: 'Editorial angle',
+          quoteLabel: 'Why it matters',
           quote:
-            '“Instead of talking only about financial control, we want to show how to decide with more context, more collaboration, and less impulse.”'
+            'The best CoBudget content does not explain finance in the abstract: it helps you connect real data, simulate impact, and decide with more clarity.'
         },
         posts: {
-          kickerPublic: 'Starter library',
+          kickerPublic: 'Articles',
           kickerApp: 'Practical reads',
-          titlePublic: 'A content grid ready to grow',
+          titlePublic: 'Guides that turn financial doubt into a next step',
           titleApp: 'Articles to deepen product usage',
           descriptionPublic:
-            'Designed for SEO, product education, and attracting people who are still understanding the problem.',
+            'Practical content about Open Finance, scenarios, shared decisions, and cashflow planning.',
           descriptionApp:
             'Content designed for ongoing onboarding, feature education, and better decision-making.'
         },
@@ -537,12 +537,12 @@ export default {
           titleApp: 'The themes that most help turn usage into clarity'
         },
         newsletter: {
-          kickerPublic: 'Demand capture',
+          kickerPublic: 'New guides',
           kickerApp: 'Continuous learning',
           titlePublic: 'Receive CoBudget’s next articles and playbooks',
           titleApp: 'Save your interest for the next guides and product updates',
           descriptionPublic:
-            'The goal is to turn the blog into a simple engine for discovery, recurrence, and trust.',
+            'Receive practical content about planning, scenarios, and financial decisions with more clarity.',
           descriptionApp:
             'Inside the app, this area can evolve into recommendations, updates, and content based on what the person has not explored yet.',
           emailLabel: 'Your best email',
@@ -560,20 +560,20 @@ export default {
         article: {
           backPublic: 'Back to blog',
           backApp: 'Back to Content Center',
-          emptyTitle: 'Template not found',
+          emptyTitle: 'Article not found',
           emptyDescription:
-            'This slug has not been configured in the editorial catalog yet.'
+            'This content is not available yet.'
         },
         template: {
-          heroPrompt: 'Hero prompt',
-          editorialSummary: 'Editorial summary',
-          openingBlock: 'Opening block',
-          takeaways: 'Takeaways',
-          takeawaysTitle: 'Messages the article needs to deliver',
-          structure: 'Structure',
-          articleTemplate: 'Article template',
-          articleCta: 'Article CTA',
-          articleCtaTitle: 'Connect content with an in-product action'
+          heroPrompt: 'Context',
+          editorialSummary: 'Summary',
+          openingBlock: 'Before deciding',
+          takeaways: 'Key points',
+          takeawaysTitle: 'What you take from this article',
+          structure: 'Guide',
+          articleTemplate: 'How to apply it',
+          articleCta: 'Next step',
+          articleCtaTitle: 'Use CoBudget to put this into practice'
         },
         topics: {
           planning: 'Planning',
@@ -616,10 +616,10 @@ export default {
             'Compare cost, liquidity, and predictability before choosing how to settle the payment.'
         },
         fallback: {
-          category: 'Template',
-          title: 'Featured template',
+          category: 'Blog',
+          title: 'Article in progress',
           excerpt:
-            'Define here the editorial template that should appear as the featured article.',
+            'This content is still being prepared.',
           readTime: '0 min',
           stage: 'Planning',
           audience: 'Content team'
