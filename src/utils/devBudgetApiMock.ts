@@ -594,6 +594,67 @@ const createOpenFinanceConnection = (payload: Record<string, any> = {}) => {
 
 const createAccount = () => openFinanceAccount()
 
+const createFinancialClosing = () => ({
+  id: 'dev-closing-july-2026',
+  workspaceId: listDevQuickAccessWorkspaces()[0]?.workspaceId || 'workspace-1',
+  closingKey: 'DEFAULT',
+  periodMonth: 7,
+  periodYear: 2026,
+  currency: 'BRL',
+  workflowStatus: 'DRAFT',
+  settlementStatus: 'NOT_ISSUED',
+  currentVersion: {
+    id: 'dev-closing-version-1',
+    versionNumber: 1,
+    versionStatus: 'EDITABLE',
+    inputRevision: 3,
+    calculatedRevision: 3,
+    calculationCurrent: true
+  }
+})
+
+const createFinancialClosingSummary = () => ({
+  calculationRunId: 'dev-run-1',
+  versionNumber: 1,
+  inputRevision: 3,
+  calculationPolicyVersion: 'DIRECT_ATTRIBUTION_V1',
+  roundingMode: 'HALF_UP',
+  intermediateScale: 12,
+  grossAmount: 92000,
+  reversalAmount: 0,
+  deductionAmount: 1758.35,
+  closingAdjustmentAmount: 0,
+  productivityAmount: 81581.90,
+  undistributedPoolAmount: 8659.75,
+  netRevenueAmount: 90241.65,
+  residualAmount: 0,
+  calculatedAt: '2026-08-03T12:00:00Z',
+  reconciliation: {
+    expectedInflowAmount: 90241.65,
+    reconciledInflowAmount: 90241.65,
+    coveragePercentage: 100,
+    divergenceAmount: 0,
+    unreconciledItemCount: 0
+  }
+})
+
+const createFinancialClosingMatrix = () => ({
+  sources: [
+    { id: 'dev-source-bp', sourceKey: 'BP_PAULISTA', displayName: 'Convênio BP Paulista' },
+    { id: 'dev-source-consulting', sourceKey: 'CONSULTORIA', displayName: 'Consultoria' },
+    { id: 'dev-source-other', sourceKey: 'OTHER_SOURCES', displayName: 'Outras origens' }
+  ],
+  rows: [
+    { participant: { id: 'dev-elimar', participantKey: 'ELIMAR', displayName: 'Elimar Elias Gomes', active: true }, values: { 'dev-source-bp': 4731.71, 'dev-source-consulting': 5913.80, 'dev-source-other': 0 }, total: 10645.51 },
+    { participant: { id: 'dev-joao', participantKey: 'JOAO', displayName: 'João', active: true }, values: { 'dev-source-bp': 15481.09, 'dev-source-consulting': 0, 'dev-source-other': 0 }, total: 15481.09 },
+    { participant: { id: 'dev-marcelo', participantKey: 'MARCELO', displayName: 'Marcelo', active: true }, values: { 'dev-source-bp': 20851.11, 'dev-source-consulting': 0, 'dev-source-other': 0 }, total: 20851.11 },
+    { participant: { id: 'dev-maria', participantKey: 'MARIA', displayName: 'Maria', active: true }, values: { 'dev-source-bp': 21984.92, 'dev-source-consulting': 0, 'dev-source-other': 0 }, total: 21984.92 },
+    { participant: { id: 'dev-lorenza', participantKey: 'LORENZA', displayName: 'Lorenza', active: true }, values: { 'dev-source-bp': 6930.35, 'dev-source-consulting': 0, 'dev-source-other': 5688.92 }, total: 12619.27 }
+  ],
+  sourceTotals: { 'dev-source-bp': 69979.18, 'dev-source-consulting': 5913.80, 'dev-source-other': 5688.92 },
+  productivityTotal: 81581.90
+})
+
 const buildDataForRequest = (config: AxiosRequestConfig) => {
   const url = buildUrl(config.url, config.baseURL)
   const path = budgetApiBasePath && url.pathname.startsWith(`${budgetApiBasePath}/`)
@@ -638,6 +699,37 @@ const buildDataForRequest = (config: AxiosRequestConfig) => {
 
   if (path === '/activity') {
     return []
+  }
+
+  if (path === '/financial-closings') {
+    return method === 'get' ? [createFinancialClosing()] : createFinancialClosing()
+  }
+
+  if (path.includes('/financial-closings/') && path.endsWith('/summary')) {
+    return createFinancialClosingSummary()
+  }
+
+  if (path.includes('/financial-closings/') && path.endsWith('/matrix')) {
+    return createFinancialClosingMatrix()
+  }
+
+  if (path.includes('/financial-closings/') && path.endsWith('/calculate')) {
+    return createFinancialClosingSummary()
+  }
+
+  if (path.includes('/financial-closings/') && path.endsWith('/calculation-memory')) {
+    return {
+      calculationRunId: 'dev-run-1', calculationPolicyVersion: 'DIRECT_ATTRIBUTION_V1', roundingMode: 'HALF_UP', intermediateScale: 12,
+      items: [], participantAdjustments: [], residualAmount: 0
+    }
+  }
+
+  if (path.includes('/financial-closings/') && path.endsWith('/drill-down')) {
+    return {
+      participantId: String(config.params?.participantId || ''), sourceId: String(config.params?.sourceId || ''),
+      grossAmount: 7068, deductionAmount: 1154.20, adjustmentAmount: 0, netAmount: 5913.80,
+      items: [{ itemId: 'dev-item-1', clientItemKey: 'consultoria-elimar', financialLabel: 'Consultoria', occurredOn: '2026-07-15', signedGrossAmount: 7068, deductionAmount: 1154.20, adjustmentAmount: 0, netAmount: 5913.80 }]
+    }
   }
 
   if (path === '/accounts') {

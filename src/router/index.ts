@@ -14,6 +14,7 @@ import AccountsView from '@/views/AccountsView.vue'
 import CategoriesView from '@/views/CategoriesView.vue'
 import CashflowView from '@/views/CashflowView.vue'
 import PlanningBudgetView from '@/views/PlanningBudgetView.vue'
+import FinancialClosingView from '@/views/FinancialClosingView.vue'
 import ScenariosHubView from '@/views/ScenariosHubView.vue'
 import ScenarioBuilderView from '@/views/ScenarioBuilderView.vue'
 import ScenarioResultView from '@/views/ScenarioResultView.vue'
@@ -90,6 +91,12 @@ const router = createRouter({
       path: '/planning/budget',
       name: 'planning-budget',
       component: PlanningBudgetView,
+      meta: { requiresAuth: true, requiresWorkspace: true }
+    },
+    {
+      path: '/planning/financial-closings',
+      name: 'planning-financial-closings',
+      component: FinancialClosingView,
       meta: { requiresAuth: true, requiresWorkspace: true }
     },
     {
