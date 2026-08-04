@@ -24,6 +24,7 @@ export interface FinancialClosing {
   currentVersion: ClosingVersion
 }
 export interface OperationalObligation { id: string; domain: 'PRODUCTIVITY' | 'MARGIN'; originType: string; principalAmount: number; cashPaidAmount: number; creditedAmount: number; openAmount: number; cashSettlementStatus: string; resolutionStatus: string }
+export interface PaymentExecution { id: string; status: string; amount: number; unallocatedAmount: number }
 
 export interface ClosingSource { id: string; sourceKey: string; displayName: string }
 export interface ClosingParticipant { id: string; participantKey: string; displayName: string; linkedUserId?: string; active: boolean }
@@ -84,4 +85,7 @@ export default {
   },
   calculate(closing: FinancialClosing) { return axiosInterceptor.post<ClosingSummary>(`${versionPath(closing)}/calculate`) },
   obligations() { return axiosInterceptor.get<OperationalObligation[]>('/financial-closings/obligations') },
+  recordPayment(payload: { direction: string; currency: string; amount: number; externalReference?: string; idempotencyKey: string }) { return axiosInterceptor.post<PaymentExecution>('/financial-closings/payment-executions', payload) },
+  confirmPayment(id: string, payload: { justification: string; evidenceReference: string; idempotencyKey: string }) { return axiosInterceptor.post<PaymentExecution>(`/financial-closings/payment-executions/${id}/confirm`, payload) },
+  voidPayment(id: string, reason: string) { return axiosInterceptor.post<PaymentExecution>(`/financial-closings/payment-executions/${id}/void`, { reason }) },
 }
