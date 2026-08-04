@@ -25,6 +25,7 @@ export interface FinancialClosing {
 }
 export interface OperationalObligation { id: string; domain: 'PRODUCTIVITY' | 'MARGIN'; originType: string; principalAmount: number; cashPaidAmount: number; creditedAmount: number; openAmount: number; cashSettlementStatus: string; resolutionStatus: string }
 export interface PaymentExecution { id: string; status: string; amount: number; unallocatedAmount: number }
+export interface FinancialCorrection { id: string; status: string; revision: number; type: string; amount: number }
 
 export interface ClosingSource { id: string; sourceKey: string; displayName: string }
 export interface ClosingParticipant { id: string; participantKey: string; displayName: string; linkedUserId?: string; active: boolean }
@@ -88,4 +89,7 @@ export default {
   recordPayment(payload: { direction: string; currency: string; amount: number; externalReference?: string; idempotencyKey: string }) { return axiosInterceptor.post<PaymentExecution>('/financial-closings/payment-executions', payload) },
   confirmPayment(id: string, payload: { justification: string; evidenceReference: string; idempotencyKey: string }) { return axiosInterceptor.post<PaymentExecution>(`/financial-closings/payment-executions/${id}/confirm`, payload) },
   voidPayment(id: string, reason: string) { return axiosInterceptor.post<PaymentExecution>(`/financial-closings/payment-executions/${id}/void`, { reason }) },
+  createCorrection(payload: { type: string; originalObligationId: string; amount: number }) { return axiosInterceptor.post<FinancialCorrection>('/financial-closings/financial-corrections', payload) },
+  submitCorrection(id: string, expectedRevision: number) { return axiosInterceptor.post<FinancialCorrection>(`/financial-closings/financial-corrections/${id}/submit`, { expectedRevision }) },
+  approveCorrection(id: string, expectedRevision: number) { return axiosInterceptor.post<FinancialCorrection>(`/financial-closings/financial-corrections/${id}/approve`, { expectedRevision, idempotencyKey: crypto.randomUUID() }) },
 }
