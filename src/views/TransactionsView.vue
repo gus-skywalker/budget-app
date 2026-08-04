@@ -3309,7 +3309,7 @@ export default {
       if (!transaction?.id || !kind) return
       this.deleteTransactionDialog.deleting = true
       const request = kind === 'income' ? IncomeService.delete(transaction.id) : ExpenseService.delete(transaction.id)
-      request
+      return request
         .then(() => {
           if (kind === 'income') {
             this.monthlyIncomes = this.monthlyIncomes.filter((item) => item.id !== transaction.id)
@@ -3321,6 +3321,7 @@ export default {
           }
           this.fetchMonthlyTransactionSummary()
           this.showToast(this.$t('transactions.delete_dialog.success'), 'success')
+          this.deleteTransactionDialog.deleting = false
           this.closeDeleteTransactionDialog()
         })
         .catch((error) => {
