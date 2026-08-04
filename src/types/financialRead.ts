@@ -98,6 +98,8 @@ export interface DashboardView {
   totalBalance: number
   monthlyIncome: number
   monthlyExpenses: number
+  monthlyForecastIncome?: number
+  monthlyForecastExpenses?: number
   recentTransactions: TransactionView[]
   topCategories: string[]
 }

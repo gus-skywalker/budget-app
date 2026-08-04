@@ -77,6 +77,15 @@
               </div>
             </div>
           </v-col>
+          <v-col cols="12" md="3">
+            <div class="stat-card cashflow-card">
+              <div class="stat-icon"><v-icon size="40" color="white">mdi-calendar-clock</v-icon></div>
+              <div class="stat-content">
+                <div class="stat-label">{{ $t('overview.monthly_forecast_net') }}</div>
+                <div class="stat-value">{{ formatCurrency(monthlyForecastCashflow) }}</div>
+              </div>
+            </div>
+          </v-col>
         </v-row>
       </section>
 
@@ -621,6 +630,8 @@ const createEmptyDashboardSummary = () => ({
   totalBalance: 0,
   monthlyIncome: 0,
   monthlyExpenses: 0,
+  monthlyForecastIncome: 0,
+  monthlyForecastExpenses: 0,
   topCategories: [],
 })
 
@@ -657,6 +668,9 @@ export default {
   computed: {
     netMonthlyCashflow() {
       return Number(this.dashboardSummary.monthlyIncome || 0) - Number(this.dashboardSummary.monthlyExpenses || 0)
+    },
+    monthlyForecastCashflow() {
+      return Number(this.dashboardSummary.monthlyForecastIncome || 0) - Number(this.dashboardSummary.monthlyForecastExpenses || 0)
     },
     comparisonInsightText() {
       const netDelta = Number(this.budgetComparison?.summary?.netDelta || 0)
@@ -1153,6 +1167,8 @@ export default {
         { label: this.$t('overview.snapshot_expenses'), value: fmt(this.dashboardSummary.monthlyExpenses), valueClass: 'cb-summary-item__value--negative' },
         { divider: true },
         { label: this.$t('overview.snapshot_net'), value: fmt(net), valueClass: net >= 0 ? 'cb-summary-item__value--positive' : 'cb-summary-item__value--negative' },
+        { divider: true },
+        { label: this.$t('overview.monthly_forecast_net'), value: fmt(this.monthlyForecastCashflow), valueClass: this.monthlyForecastCashflow >= 0 ? 'cb-summary-item__value--positive' : 'cb-summary-item__value--negative' },
       ]
     },
   },
@@ -1575,6 +1591,8 @@ export default {
         totalBalance: readNumber(base.totalBalance, base.total_balance),
         monthlyIncome: readNumber(base.monthlyIncome, base.monthly_income),
         monthlyExpenses: readNumber(base.monthlyExpenses, base.monthly_expenses),
+        monthlyForecastIncome: readNumber(base.monthlyForecastIncome, base.monthly_forecast_income),
+        monthlyForecastExpenses: readNumber(base.monthlyForecastExpenses, base.monthly_forecast_expenses),
         topCategories: Array.isArray(base.topCategories) ? base.topCategories : [],
       }
     },

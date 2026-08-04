@@ -578,6 +578,7 @@
     "snapshot_income": "Monthly Income",
     "snapshot_expenses": "Monthly Expenses",
     "snapshot_net": "Net Result",
+    "monthly_forecast_net": "Forecast Net for the Month",
     "momentum_title": "Spending Momentum",
     "momentum_current": "This month",
     "momentum_previous": "Last month",

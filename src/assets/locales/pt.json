@@ -572,6 +572,7 @@
     "snapshot_income": "Receitas do Mês",
     "snapshot_expenses": "Despesas do Mês",
     "snapshot_net": "Resultado Líquido",
+    "monthly_forecast_net": "Resultado Previsto no Mês",
     "momentum_title": "Ritmo de Gastos",
     "momentum_current": "Mês atual",
     "momentum_previous": "Mês anterior",

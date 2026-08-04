@@ -882,6 +882,11 @@ export default {
         expenseAmount: 0,
         netAmount: 0,
       },
+      monthlyForecastSummary: {
+        incomeAmount: 0,
+        expenseAmount: 0,
+        netAmount: 0,
+      },
       isLoadingTransactionSummary: false,
       transactionSummaryRequestId: 0,
       incomePagination: {
@@ -1187,6 +1192,9 @@ export default {
     monthlyNetTotal() {
       return Number(this.monthlyTransactionSummary?.netAmount || 0)
     },
+    monthlyForecastNetTotal() {
+      return Number(this.monthlyForecastSummary?.netAmount || 0)
+    },
     dailyConsumptionRows() {
       const summaryByDate = new Map(
         this.dailyExpenseSummary.map((day) => [day.date, {
@@ -1224,6 +1232,8 @@ export default {
         { label: this.$t('expense.title'), value: fmt(this.monthlyExpenseTotal), valueClass: 'cb-summary-item__value--negative' },
         { divider: true },
         { label: this.$t('overview.snapshot_net'), value: fmt(net), valueClass: net >= 0 ? 'cb-summary-item__value--positive' : 'cb-summary-item__value--negative' },
+        { divider: true },
+        { label: this.$t('overview.monthly_forecast_net'), value: fmt(this.monthlyForecastNetTotal), valueClass: this.monthlyForecastNetTotal >= 0 ? 'cb-summary-item__value--positive' : 'cb-summary-item__value--negative' },
       ]
     },
     activeMonthLabel() {
@@ -2955,7 +2965,7 @@ export default {
       const isExpenseTab = this.activeTab === 'expense'
       const requestId = ++this.transactionSummaryRequestId
       this.isLoadingTransactionSummary = true
-      return FinancialReadService.fetchTransactionPeriodSummary({
+      const actualSummary = FinancialReadService.fetchTransactionPeriodSummary({
         fromDate: isExpenseTab && this.routeExpenseDay ? this.routeExpenseDay : fromDate,
         toDate: isExpenseTab && this.routeExpenseDay ? this.routeExpenseDay : toDate,
         periodMonth: isExpenseTab && this.routeExpenseDay ? undefined : month,
@@ -2965,19 +2975,35 @@ export default {
         uncategorized: isExpenseTab ? this.routeExpenseUncategorized || undefined : undefined,
         reportScope: isExpenseTab ? this.routeExpenseReportScope || undefined : undefined,
       })
-        .then((response) => {
+      const forecastSummary = FinancialReadService.fetchTransactionPeriodSummary({
+        fromDate: isExpenseTab && this.routeExpenseDay ? this.routeExpenseDay : fromDate,
+        toDate: isExpenseTab && this.routeExpenseDay ? this.routeExpenseDay : toDate,
+        accountId: isExpenseTab ? this.routeExpenseAccountId || undefined : undefined,
+        categoryId: isExpenseTab ? this.routeExpenseCategoryId || undefined : undefined,
+        uncategorized: isExpenseTab ? this.routeExpenseUncategorized || undefined : undefined,
+        reportScope: isExpenseTab ? this.routeExpenseReportScope || undefined : undefined,
+      })
+      return Promise.all([actualSummary, forecastSummary])
+        .then(([actualResponse, forecastResponse]) => {
           if (requestId !== this.transactionSummaryRequestId) return
-          const summary = response?.data || {}
+          const summary = actualResponse?.data || {}
+          const forecast = forecastResponse?.data || {}
           this.monthlyTransactionSummary = {
             incomeAmount: Number(summary.incomeAmount || 0),
             expenseAmount: Number(summary.expenseAmount || 0),
             netAmount: Number(summary.netAmount || 0),
+          }
+          this.monthlyForecastSummary = {
+            incomeAmount: Number(forecast.incomeAmount || 0),
+            expenseAmount: Number(forecast.expenseAmount || 0),
+            netAmount: Number(forecast.netAmount || 0),
           }
         })
         .catch((error) => {
           if (requestId !== this.transactionSummaryRequestId) return
           console.error('Error fetching transaction period summary:', error)
           this.monthlyTransactionSummary = { incomeAmount: 0, expenseAmount: 0, netAmount: 0 }
+          this.monthlyForecastSummary = { incomeAmount: 0, expenseAmount: 0, netAmount: 0 }
         })
         .finally(() => {
           if (requestId === this.transactionSummaryRequestId) {
