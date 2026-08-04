@@ -70,6 +70,13 @@
             <div class="residual"><span>Residual explícito</span><strong>{{ money(summary.residualAmount) }}</strong></div>
           </article>
         </section>
+        <section class="cb-card obligations-card">
+          <div class="section-heading"><div><p class="eyebrow">Settlement operacional</p><h2>Obrigações emitidas</h2></div><v-select v-model="obligationDomain" :items="[{ title: 'Todos os domínios', value: 'ALL' }, { title: 'Produtividade', value: 'PRODUCTIVITY' }, { title: 'Margem', value: 'MARGIN' }]" density="compact" hide-details /></div>
+          <div v-if="loadingObligations" class="cb-empty-state"><v-progress-circular indeterminate size="24" /></div>
+          <p v-else-if="!filteredObligations.length" class="matrix-hint">Nenhuma obrigação emitida para os filtros selecionados.</p>
+          <div v-else class="matrix-scroll"><table class="closing-matrix"><thead><tr><th>Domínio</th><th>Principal</th><th>Pago em dinheiro</th><th>Crédito</th><th>Saldo aberto</th><th>Dinheiro</th><th>Resolução</th></tr></thead><tbody><tr v-for="item in filteredObligations" :key="item.id"><th>{{ item.domain === 'PRODUCTIVITY' ? 'Produtividade' : 'Margem' }}</th><td>{{ money(item.principalAmount) }}</td><td>{{ money(item.cashPaidAmount) }}</td><td>{{ money(item.creditedAmount) }}</td><td>{{ money(item.openAmount) }}</td><td><v-chip size="x-small" variant="tonal">{{ statusLabel(item.cashSettlementStatus) }}</v-chip></td><td><v-chip size="x-small" :color="item.resolutionStatus === 'SETTLED' ? 'success' : undefined" variant="tonal">{{ statusLabel(item.resolutionStatus) }}</v-chip></td></tr></tbody></table></div>
+          <p class="matrix-hint">Consulta somente. Registrar fatos internos não executa transferência bancária.</p>
+        </section>
       </template>
     </div>
 
@@ -83,7 +90,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import FinancialClosingService, { type CalculationMemory, type ClosingMatrix, type ClosingSource, type ClosingSummary, type DrillDown, type FinancialClosing, type MatrixRow } from '@/services/FinancialClosingService'
+import FinancialClosingService, { type CalculationMemory, type ClosingMatrix, type ClosingSource, type ClosingSummary, type DrillDown, type FinancialClosing, type MatrixRow, type OperationalObligation } from '@/services/FinancialClosingService'
 import { useUserStore } from '@/plugins/userStore'
 import PageHeader from '@/components/PageHeader.vue'
 import AlertStrip from '@/components/AlertStrip.vue'
@@ -91,22 +98,26 @@ import AlertStrip from '@/components/AlertStrip.vue'
 const userStore = useUserStore()
 const closings = ref<FinancialClosing[]>([]); const selectedId = ref(''); const summary = ref<ClosingSummary | null>(null); const matrix = ref<ClosingMatrix | null>(null)
 const memory = ref<CalculationMemory | null>(null); const drill = ref<DrillDown | null>(null); const drillOpen = ref(false)
+const obligations = ref<OperationalObligation[]>([]); const loadingObligations = ref(false); const obligationDomain = ref('ALL')
 const loading = ref(true); const calculating = ref(false); const loadingMemory = ref(false); const loadingDrill = ref(false); const errorMessage = ref(''); const drillTitle = ref('Detalhamento')
 const selectedClosing = computed(() => closings.value.find(item => item.id === selectedId.value) || null)
 const closingOptions = computed(() => closings.value.map(item => ({ value: item.id, title: `${String(item.periodMonth).padStart(2, '0')}/${item.periodYear} · ${item.closingKey}` })))
 const workflowLabel = computed(() => ({ DRAFT: 'Rascunho', REVIEW: 'Em revisão', APPROVED: 'Aprovado', CANCELLED: 'Cancelado' }[selectedClosing.value?.workflowStatus || 'DRAFT']))
 const canCalculate = computed(() => userStore.canWrite && selectedClosing.value?.workflowStatus === 'DRAFT' && selectedClosing.value.currentVersion.versionStatus === 'EDITABLE')
 const headerSummary = computed(() => summary.value ? [{ label: 'Produtividade Líquida', value: money(summary.value.productivityAmount) }, { label: 'Margem separada', value: money(summary.value.undistributedPoolAmount) }, { label: 'Receita líquida', value: money(summary.value.netRevenueAmount) }] : [])
+const filteredObligations = computed(() => obligations.value.filter(item => obligationDomain.value === 'ALL' || item.domain === obligationDomain.value))
 const money = (value: number | undefined) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: selectedClosing.value?.currency || 'BRL' }).format(Number(value || 0))
 const signedMoney = (value: number) => `${value > 0 ? '+' : ''}${money(value)}`
 
 async function loadClosings() { loading.value = true; errorMessage.value = ''; try { const { data } = await FinancialClosingService.list(); closings.value = data; if (!selectedId.value && data.length) selectedId.value = data[0].id; if (!data.length) loading.value = false } catch { errorMessage.value = 'Não foi possível carregar as apurações.'; loading.value = false } }
 async function loadResult() { const closing = selectedClosing.value; if (!closing) return; loading.value = true; memory.value = null; errorMessage.value = ''; try { const [summaryResponse, matrixResponse] = await Promise.all([FinancialClosingService.summary(closing), FinancialClosingService.matrix(closing)]); summary.value = summaryResponse.data; matrix.value = matrixResponse.data } catch (error: any) { summary.value = null; matrix.value = null; errorMessage.value = error?.response?.status === 409 ? 'Os dados mudaram e o cálculo precisa ser refeito.' : 'Não foi possível carregar o resultado da apuração.' } finally { loading.value = false } }
+async function loadObligations() { loadingObligations.value = true; try { obligations.value = (await FinancialClosingService.obligations()).data } catch { obligations.value = [] } finally { loadingObligations.value = false } }
 async function calculate() { const closing = selectedClosing.value; if (!closing) return; calculating.value = true; try { await FinancialClosingService.calculate(closing); await loadClosings(); selectedId.value = closing.id; await loadResult() } catch { errorMessage.value = 'Não foi possível recalcular a apuração.' } finally { calculating.value = false } }
 async function toggleMemory() { if (memory.value) { memory.value = null; return } const closing = selectedClosing.value; if (!closing) return; loadingMemory.value = true; try { memory.value = (await FinancialClosingService.memory(closing)).data } finally { loadingMemory.value = false } }
 async function openDrillDown(row: MatrixRow, source: ClosingSource) { const closing = selectedClosing.value; if (!closing) return; drillTitle.value = `${row.participant.displayName} · ${source.displayName}`; drillOpen.value = true; loadingDrill.value = true; drill.value = null; try { drill.value = (await FinancialClosingService.drillDown(closing, row.participant.id, source.id)).data } finally { loadingDrill.value = false } }
 function prettyMemory(raw: string) { try { return JSON.stringify(JSON.parse(raw), null, 2) } catch { return raw } }
-watch(selectedId, () => loadResult()); onMounted(loadClosings)
+function statusLabel(status: string) { return ({ OPEN: 'Aberto', PARTIAL: 'Parcial', PAID: 'Pago em dinheiro', SETTLED: 'Resolvido por crédito', NOT_APPLICABLE: 'Não aplicável' } as Record<string,string>)[status] || status }
+watch(selectedId, () => loadResult()); onMounted(async () => { await loadClosings(); await loadObligations() })
 </script>
 
 <style scoped>

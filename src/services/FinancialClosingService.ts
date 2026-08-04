@@ -23,6 +23,7 @@ export interface FinancialClosing {
   settlementStatus: ClosingSettlementStatus
   currentVersion: ClosingVersion
 }
+export interface OperationalObligation { id: string; domain: 'PRODUCTIVITY' | 'MARGIN'; originType: string; principalAmount: number; cashPaidAmount: number; creditedAmount: number; openAmount: number; cashSettlementStatus: string; resolutionStatus: string }
 
 export interface ClosingSource { id: string; sourceKey: string; displayName: string }
 export interface ClosingParticipant { id: string; participantKey: string; displayName: string; linkedUserId?: string; active: boolean }
@@ -82,4 +83,5 @@ export default {
     return axiosInterceptor.get<DrillDown>(`${versionPath(closing)}/drill-down`, { params: { participantId, sourceId } })
   },
   calculate(closing: FinancialClosing) { return axiosInterceptor.post<ClosingSummary>(`${versionPath(closing)}/calculate`) },
+  obligations() { return axiosInterceptor.get<OperationalObligation[]>('/financial-closings/obligations') },
 }
