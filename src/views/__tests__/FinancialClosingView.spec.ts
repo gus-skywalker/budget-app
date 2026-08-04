@@ -10,7 +10,7 @@ import { useUserStore } from '@/plugins/userStore'
 const { serviceMock } = vi.hoisted(() => ({
   serviceMock: {
     list: vi.fn(), summary: vi.fn(), matrix: vi.fn(), memory: vi.fn(), drillDown: vi.fn(), calculate: vi.fn(),
-    obligations: vi.fn(), bankReconciliationSuggestions: vi.fn(),
+    obligations: vi.fn(), bankReconciliationSuggestions: vi.fn(), bankReconciliationHistory: vi.fn(), confirmBankReconciliation: vi.fn(), rejectBankReconciliation: vi.fn(),
   },
 }))
 
@@ -48,8 +48,9 @@ describe('FinancialClosingView', () => {
     serviceMock.obligations.mockResolvedValue({ data: [] })
     serviceMock.bankReconciliationSuggestions.mockResolvedValue({ data: {
       paymentExecutionId: 'payment-1', classification: 'EXACT', totalCount: 1, offset: 0, limit: 20,
-      candidates: [{ candidateId: 'safe-candidate-1', amount: 100, transactionDate: '2026-08-10', direction: 'OUTFLOW', classification: 'EXACT', score: 100, reasons: ['AMOUNT_EXACT', 'REFERENCE_HMAC_MATCH'], maskedAccount: null }],
+      candidates: [{ candidateId: 'safe-candidate-1', amount: 100, transactionDate: '2026-08-10', direction: 'OUTFLOW', classification: 'EXACT', score: 100, reasons: ['AMOUNT_EXACT', 'REFERENCE_HMAC_MATCH'], maskedAccount: null, ruleVersion: 'BANK_RECONCILIATION_V19A_1', candidateFingerprint: 'opaque-fingerprint' }],
     } })
+    serviceMock.bankReconciliationHistory.mockResolvedValue({ data: [] })
     serviceMock.drillDown.mockResolvedValue({ data: { participantId: 'elimar', sourceId: 'consult', grossAmount: 7068, deductionAmount: 1154.20, adjustmentAmount: 0, netAmount: 5913.80, items: [{ itemId: 'i1', clientItemKey: 'consultoria-elimar', financialLabel: 'Consultoria', signedGrossAmount: 7068, deductionAmount: 1154.20, adjustmentAmount: 0, netAmount: 5913.80 }] } })
   })
 
@@ -122,7 +123,42 @@ describe('FinancialClosingView', () => {
     expect(wrapper.text()).toContain('Conciliação bancária assistida')
     expect(wrapper.text()).toContain('Correspondência exata')
     expect(wrapper.text()).toContain('valor exato')
-    expect(wrapper.text()).toContain('Sugestão somente leitura')
+    expect(wrapper.text()).toContain('Não executa operação bancária nem altera saldos')
     expect(wrapper.text()).not.toContain('Confirmar conciliação')
+  })
+
+  it('keeps reconciliation actions hidden from members', async () => {
+    const wrapper = mount(FinancialClosingView, {
+      global: {
+        plugins: [vuetify],
+        stubs: { PageHeader: { props: ['title'], template: '<header>{{ title }}</header>' }, AlertStrip: true },
+      },
+    })
+    await flush(); await flush()
+    ;(wrapper.vm as any).suggestionPaymentId = 'payment-1'
+    await (wrapper.vm as any).loadBankSuggestions()
+    await flush()
+    expect(wrapper.text()).not.toContain('Confirmar rejeição')
+    expect(wrapper.text()).not.toContain('Confirmar')
+  })
+
+  it('shows confirmation and typed rejection only to administrators', async () => {
+    useUserStore().tenantRole = 'ROLE_ADMIN'
+    const wrapper = mount(FinancialClosingView, {
+      global: {
+        plugins: [vuetify],
+        stubs: { PageHeader: { props: ['title'], template: '<header>{{ title }}</header>' }, AlertStrip: true },
+      },
+    })
+    await flush(); await flush()
+    ;(wrapper.vm as any).suggestionPaymentId = 'payment-1'
+    await (wrapper.vm as any).loadBankSuggestions()
+    await flush()
+    expect(wrapper.text()).toContain('Confirmar')
+    expect(wrapper.text()).toContain('Rejeitar')
+    await (wrapper.vm as any).confirmBankSuggestion((wrapper.vm as any).bankSuggestions.candidates[0])
+    expect(serviceMock.confirmBankReconciliation).toHaveBeenCalledWith('payment-1', {
+      financialTransactionId: 'safe-candidate-1', expectedCandidateFingerprint: 'opaque-fingerprint',
+    }, expect.any(String))
   })
 })

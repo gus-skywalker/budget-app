@@ -25,8 +25,9 @@ export interface FinancialClosing {
 }
 export interface OperationalObligation { id: string; domain: 'PRODUCTIVITY' | 'MARGIN'; originType: string; principalAmount: number; cashPaidAmount: number; creditedAmount: number; openAmount: number; cashSettlementStatus: string; resolutionStatus: string }
 export interface PaymentExecution { id: string; status: string; amount: number; unallocatedAmount: number }
-export interface BankReconciliationCandidate { candidateId: string; amount: number; transactionDate: string; direction: string; classification: 'EXACT' | 'LIKELY' | 'AMBIGUOUS'; score: number; reasons: string[]; maskedAccount?: string | null }
+export interface BankReconciliationCandidate { candidateId: string; amount: number; transactionDate: string; direction: string; classification: 'EXACT' | 'LIKELY' | 'AMBIGUOUS'; score: number; reasons: string[]; maskedAccount?: string | null; ruleVersion: string; candidateFingerprint: string }
 export interface BankReconciliationSuggestionPage { paymentExecutionId: string; classification: 'EXACT' | 'LIKELY' | 'AMBIGUOUS' | 'NO_MATCH'; totalCount: number; offset: number; limit: number; candidates: BankReconciliationCandidate[] }
+export interface BankReconciliation { id: string; status: 'CONFIRMED' | 'REJECTED'; paymentExecutionId: string; financialTransactionId: string; classification: string; score: number; reasons: string[]; rejectionReasonCode?: string | null; decidedAt: string }
 export interface FinancialCorrection { id: string; status: string; revision: number; type: string; amount: number }
 
 export interface ClosingSource { id: string; sourceKey: string; displayName: string }
@@ -92,6 +93,9 @@ export default {
   confirmPayment(id: string, payload: { justification: string; evidenceReference: string; idempotencyKey: string }) { return axiosInterceptor.post<PaymentExecution>(`/financial-closings/payment-executions/${id}/confirm`, payload) },
   voidPayment(id: string, reason: string) { return axiosInterceptor.post<PaymentExecution>(`/financial-closings/payment-executions/${id}/void`, { reason }) },
   bankReconciliationSuggestions(id: string, limit = 20, offset = 0) { return axiosInterceptor.get<BankReconciliationSuggestionPage>(`/financial-closings/payment-executions/${id}/bank-reconciliation-suggestions`, { params: { limit, offset } }) },
+  confirmBankReconciliation(paymentExecutionId: string, payload: { financialTransactionId: string; expectedCandidateFingerprint: string }, idempotencyKey: string) { return axiosInterceptor.post<BankReconciliation>(`/financial-closings/payment-executions/${paymentExecutionId}/bank-reconciliations/confirm`, payload, { headers: { 'Idempotency-Key': idempotencyKey } }) },
+  rejectBankReconciliation(paymentExecutionId: string, payload: { financialTransactionId: string; expectedCandidateFingerprint: string; reasonCode: string }, idempotencyKey: string) { return axiosInterceptor.post<BankReconciliation>(`/financial-closings/payment-executions/${paymentExecutionId}/bank-reconciliations/reject`, payload, { headers: { 'Idempotency-Key': idempotencyKey } }) },
+  bankReconciliationHistory(paymentExecutionId: string) { return axiosInterceptor.get<BankReconciliation[]>(`/financial-closings/payment-executions/${paymentExecutionId}/bank-reconciliations`) },
   createCorrection(payload: { type: string; originalObligationId: string; amount: number }) { return axiosInterceptor.post<FinancialCorrection>('/financial-closings/financial-corrections', payload) },
   submitCorrection(id: string, expectedRevision: number) { return axiosInterceptor.post<FinancialCorrection>(`/financial-closings/financial-corrections/${id}/submit`, { expectedRevision }) },
   approveCorrection(id: string, expectedRevision: number) { return axiosInterceptor.post<FinancialCorrection>(`/financial-closings/financial-corrections/${id}/approve`, { expectedRevision, idempotencyKey: crypto.randomUUID() }) },
