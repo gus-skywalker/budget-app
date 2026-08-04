@@ -800,6 +800,15 @@
   "transactions": {
     "subtitle": "Gerencie entradas e despesas manuais, acompanhe lançamentos Open Finance e controle o que entra no planejamento.",
     "add_expense": "Salvar despesa",
+    "delete_dialog": {
+      "title": "Excluir transação?",
+      "description": "Você está prestes a excluir \"{description}\".",
+      "warning": "Esta ação não pode ser desfeita.",
+      "confirm": "Excluir transação",
+      "unnamed": "esta transação",
+      "success": "Transação excluída.",
+      "error": "Não foi possível excluir a transação. Tente novamente."
+    },
     "payment_method_not_informed_open_finance": "Não informado pelo Open Finance",
     "applied_filter": "Filtro aplicado",
     "filters": {

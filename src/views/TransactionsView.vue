@@ -594,6 +594,33 @@
       </div>
     </v-navigation-drawer>
 
+    <v-dialog
+      v-model="deleteTransactionDialog.show"
+      max-width="480"
+      :fullscreen="$vuetify.display.xs"
+      :persistent="deleteTransactionDialog.deleting"
+    >
+      <v-card class="transaction-delete-dialog">
+        <v-card-title class="transaction-delete-dialog__title">
+          <v-icon color="error" size="24">mdi-alert-circle-outline</v-icon>
+          {{ $t('transactions.delete_dialog.title') }}
+        </v-card-title>
+        <v-card-text class="transaction-delete-dialog__content">
+          <p>{{ $t('transactions.delete_dialog.description', { description: deleteTransactionDescription }) }}</p>
+          <p class="transaction-delete-dialog__warning">{{ $t('transactions.delete_dialog.warning') }}</p>
+        </v-card-text>
+        <v-card-actions class="transaction-delete-dialog__actions">
+          <v-btn variant="text" :disabled="deleteTransactionDialog.deleting" @click="closeDeleteTransactionDialog">
+            {{ $t('common.cancel') }}
+          </v-btn>
+          <v-btn color="error" variant="flat" :loading="deleteTransactionDialog.deleting" @click="confirmDeleteTransaction">
+            <v-icon start>mdi-delete-outline</v-icon>
+            {{ $t('transactions.delete_dialog.confirm') }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <!-- Snackbar -->
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="3000" top class="modern-snackbar">
       {{ snackbar.text }}
@@ -886,6 +913,12 @@ export default {
         incomeAmount: 0,
         expenseAmount: 0,
         netAmount: 0,
+      },
+      deleteTransactionDialog: {
+        show: false,
+        transaction: null,
+        kind: null,
+        deleting: false,
       },
       isLoadingTransactionSummary: false,
       transactionSummaryRequestId: 0,
@@ -1194,6 +1227,9 @@ export default {
     },
     monthlyForecastNetTotal() {
       return Number(this.monthlyForecastSummary?.netAmount || 0)
+    },
+    deleteTransactionDescription() {
+      return this.deleteTransactionDialog.transaction?.description || this.$t('transactions.delete_dialog.unnamed')
     },
     dailyConsumptionRows() {
       const summaryByDate = new Map(
@@ -3252,40 +3288,46 @@ export default {
         })
     },
     deleteIncome(income) {
-      if (confirm('Are you sure you want to delete this income?')) {
-        IncomeService.delete(income.id)
-          .then(() => {
-            const incomeIndex = this.monthlyIncomes.findIndex((item) => item.id === income.id)
-            if (incomeIndex !== -1) {
-              this.monthlyIncomes.splice(incomeIndex, 1)
-            }
-            this.fetchMonthlyTransactionSummary()
-          })
-          .catch((error) => {
-            console.error('Failed to delete income:', error)
-          })
-      }
+      this.openDeleteTransactionDialog(income, 'income')
     },
     toggleIncomePlanningExclusion(income) {
       this.togglePlanningExclusionForTransaction(income, 'income')
     },
     deleteExpense(expense) {
-      if (confirm('Are you sure you want to delete this expense?')) {
-        ExpenseService.delete(expense.id)
-          .then(() => {
+      this.openDeleteTransactionDialog(expense, 'expense')
+    },
+    openDeleteTransactionDialog(transaction, kind) {
+      if (!transaction?.id) return
+      this.deleteTransactionDialog = { show: true, transaction, kind, deleting: false }
+    },
+    closeDeleteTransactionDialog() {
+      if (this.deleteTransactionDialog.deleting) return
+      this.deleteTransactionDialog = { show: false, transaction: null, kind: null, deleting: false }
+    },
+    confirmDeleteTransaction() {
+      const { transaction, kind } = this.deleteTransactionDialog
+      if (!transaction?.id || !kind) return
+      this.deleteTransactionDialog.deleting = true
+      const request = kind === 'income' ? IncomeService.delete(transaction.id) : ExpenseService.delete(transaction.id)
+      request
+        .then(() => {
+          if (kind === 'income') {
+            this.monthlyIncomes = this.monthlyIncomes.filter((item) => item.id !== transaction.id)
+          } else {
             const nextSuggestions = { ...this.batchExpenseCategorySuggestions }
-            delete nextSuggestions[expense.id]
+            delete nextSuggestions[transaction.id]
             this.batchExpenseCategorySuggestions = nextSuggestions
-            const expenseIndex = this.monthlyExpenses.findIndex((item) => item.id === expense.id)
-            if (expenseIndex !== -1) {
-              this.monthlyExpenses.splice(expenseIndex, 1)
-            }
-            this.fetchMonthlyTransactionSummary()
-          })
-          .catch((error) => {
-            console.error('Failed to delete expense:', error)
-          })
-      }
+            this.monthlyExpenses = this.monthlyExpenses.filter((item) => item.id !== transaction.id)
+          }
+          this.fetchMonthlyTransactionSummary()
+          this.showToast(this.$t('transactions.delete_dialog.success'), 'success')
+          this.closeDeleteTransactionDialog()
+        })
+        .catch((error) => {
+          console.error('Failed to delete transaction:', error)
+          this.showToast(this.$t('transactions.delete_dialog.error'), 'error')
+          this.deleteTransactionDialog.deleting = false
+        })
     },
     toggleExpensePlanningExclusion(expense) {
       this.togglePlanningExclusionForTransaction(expense, 'expense')
@@ -4078,6 +4120,54 @@ export default {
 /* ── Snackbar ───────────────────────────── */
 .modern-snackbar {
   border-radius: 8px;
+}
+
+.transaction-delete-dialog__title {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  white-space: normal;
+}
+
+.transaction-delete-dialog__content {
+  color: var(--cb-ink-secondary);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.transaction-delete-dialog__content p {
+  margin: 0;
+}
+
+.transaction-delete-dialog__warning {
+  color: var(--cb-danger, #b42318);
+  font-weight: 600;
+  margin-top: 12px !important;
+}
+
+.transaction-delete-dialog__actions {
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 16px 24px 20px;
+}
+
+@media (max-width: 560px) {
+  .transaction-delete-dialog {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .transaction-delete-dialog__actions {
+    flex-direction: column-reverse;
+    padding: 16px 0 0;
+  }
+
+  .transaction-delete-dialog__actions :deep(.v-btn) {
+    width: 100%;
+  }
 }
 
 .open-finance-ai-summary {

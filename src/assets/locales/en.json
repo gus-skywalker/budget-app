@@ -806,6 +806,15 @@
   "transactions": {
     "subtitle": "Manage manual income and expenses, follow Open Finance entries, and control what enters planning.",
     "add_expense": "Save expense",
+    "delete_dialog": {
+      "title": "Delete transaction?",
+      "description": "You are about to delete \"{description}\".",
+      "warning": "This action cannot be undone.",
+      "confirm": "Delete transaction",
+      "unnamed": "this transaction",
+      "success": "Transaction deleted.",
+      "error": "We could not delete the transaction. Please try again."
+    },
     "payment_method_not_informed_open_finance": "Not provided by Open Finance",
     "applied_filter": "Applied filter",
     "filters": {
