@@ -10,6 +10,7 @@ import { useUserStore } from '@/plugins/userStore'
 const { serviceMock } = vi.hoisted(() => ({
   serviceMock: {
     list: vi.fn(), summary: vi.fn(), matrix: vi.fn(), memory: vi.fn(), drillDown: vi.fn(), calculate: vi.fn(),
+    obligations: vi.fn(), bankReconciliationSuggestions: vi.fn(),
   },
 }))
 
@@ -43,6 +44,11 @@ describe('FinancialClosingView', () => {
       sources: [{ id: 'bp', sourceKey: 'BP_PAULISTA', displayName: 'Convênio BP Paulista' }, { id: 'consult', sourceKey: 'CONSULTORIA', displayName: 'Consultoria' }],
       rows: [{ participant: { id: 'elimar', participantKey: 'ELIMAR', displayName: 'Elimar Elias Gomes', active: true }, values: { bp: 4731.71, consult: 5913.80 }, total: 10645.51 }],
       sourceTotals: { bp: 69979.18, consult: 5913.80 }, productivityTotal: 81581.90,
+    } })
+    serviceMock.obligations.mockResolvedValue({ data: [] })
+    serviceMock.bankReconciliationSuggestions.mockResolvedValue({ data: {
+      paymentExecutionId: 'payment-1', classification: 'EXACT', totalCount: 1, offset: 0, limit: 20,
+      candidates: [{ candidateId: 'safe-candidate-1', amount: 100, transactionDate: '2026-08-10', direction: 'OUTFLOW', classification: 'EXACT', score: 100, reasons: ['AMOUNT_EXACT', 'REFERENCE_HMAC_MATCH'], maskedAccount: null }],
     } })
     serviceMock.drillDown.mockResolvedValue({ data: { participantId: 'elimar', sourceId: 'consult', grossAmount: 7068, deductionAmount: 1154.20, adjustmentAmount: 0, netAmount: 5913.80, items: [{ itemId: 'i1', clientItemKey: 'consultoria-elimar', financialLabel: 'Consultoria', signedGrossAmount: 7068, deductionAmount: 1154.20, adjustmentAmount: 0, netAmount: 5913.80 }] } })
   })
@@ -94,5 +100,29 @@ describe('FinancialClosingView', () => {
 
     const recalculate = wrapper.get('button')
     expect(recalculate.attributes('disabled') === undefined).toBe(expectedEnabled)
+  })
+
+  it('renders safe, read-only bank suggestions without sensitive fields', async () => {
+    const wrapper = mount(FinancialClosingView, {
+      global: {
+        plugins: [vuetify],
+        stubs: {
+          PageHeader: { props: ['title', 'summaryItems'], template: '<header><h1>{{ title }}</h1><slot name="actions" /></header>' },
+          AlertStrip: { props: ['description'], template: '<div>{{ description }}</div>' },
+        },
+      },
+    })
+    await flush(); await flush()
+
+    ;(wrapper.vm as any).suggestionPaymentId = 'payment-1'
+    await (wrapper.vm as any).loadBankSuggestions()
+    await flush()
+
+    expect(serviceMock.bankReconciliationSuggestions).toHaveBeenCalledWith('payment-1')
+    expect(wrapper.text()).toContain('Conciliação bancária assistida')
+    expect(wrapper.text()).toContain('Correspondência exata')
+    expect(wrapper.text()).toContain('valor exato')
+    expect(wrapper.text()).toContain('Sugestão somente leitura')
+    expect(wrapper.text()).not.toContain('Confirmar conciliação')
   })
 })
