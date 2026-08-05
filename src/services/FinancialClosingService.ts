@@ -30,6 +30,9 @@ export interface BankReconciliationSuggestionPage { paymentExecutionId: string; 
 export interface BankReconciliation { id: string; status: 'CONFIRMED' | 'REJECTED'; paymentExecutionId: string; financialTransactionId: string; classification: string; score: number; reasons: string[]; rejectionReasonCode?: string | null; decidedAt: string }
 export interface FinancialCorrection { id: string; status: string; revision: number; type: string; amount: number; originalAllocationId?: string | null; reversalFinancialTransactionId?: string | null; rejectionReasonCode?: string | null }
 export interface SettlementReversal { id: string; correctionCaseId: string; amount: number; currency: string; reasonCode: string; approvedAt: string }
+export interface CalculationRevision { calculationRunId: string; inputRevision: number; runStatus: string; grossAmount: number; deductionAmount: number; productivityAmount: number; undistributedPoolAmount: number; netRevenueAmount: number; residualAmount: number; reconciliationDivergence: number; calculatedAt: string }
+export interface PayoutDecision { id: string; status: string; revision: number; closingVersionId: string; calculationRunId: string; inputRevision: number; productivityAmount: number; lines: Array<{ id: string; participantId: string; amount: number; dueDate?: string }>; issuedObligationCount: number; ownerSelfApprovalException: boolean }
+export interface MarginDecision { id: string; status: string; settlementStatus: string; revision: number; poolKey: string; marginSnapshot: number; allocatedAmount: number; unallocatedMargin: number; allocations: Array<{ id: string; type: string; amount: number; purpose: string; dueDate?: string; categoryKey?: string; beneficiaryDisplayName?: string; issuedObligationCount: number }>; issuedObligationCount: number; ownerSelfApprovalException: boolean }
 export interface TabularImportMapping {
   itemKeyColumn: string; sourceIdColumn: string; amountColumn: string; occurredOnColumn: string
   attributionMethodColumn?: string; participantIdColumn?: string; participantLabelColumn?: string
@@ -98,6 +101,15 @@ export default {
     return axiosInterceptor.get<DrillDown>(`${versionPath(closing)}/drill-down`, { params: { participantId, sourceId } })
   },
   calculate(closing: FinancialClosing) { return axiosInterceptor.post<ClosingSummary>(`${versionPath(closing)}/calculate`) },
+  calculationRevisions(closing: FinancialClosing) { return axiosInterceptor.get<CalculationRevision[]>(`${versionPath(closing)}/calculation-revisions`) },
+  payoutDecisions(closing: FinancialClosing) { return axiosInterceptor.get<PayoutDecision[]>(`/financial-closings/${closing.id}/payout-decisions`) },
+  createPayoutDecision(closing: FinancialClosing, defaultDueDate?: string) { return axiosInterceptor.post<PayoutDecision>(`/financial-closings/${closing.id}/payout-decisions`, { versionNumber: closing.currentVersion.versionNumber, defaultDueDate }) },
+  submitPayoutDecision(closing: FinancialClosing, id: string, expectedRevision: number) { return axiosInterceptor.post<PayoutDecision>(`/financial-closings/${closing.id}/payout-decisions/${id}/submit`, { expectedRevision }) },
+  approvePayoutDecision(closing: FinancialClosing, id: string, expectedRevision: number, justification: string) { return axiosInterceptor.post<PayoutDecision>(`/financial-closings/${closing.id}/payout-decisions/${id}/approve`, { expectedRevision, justification, idempotencyKey: crypto.randomUUID() }) },
+  marginDecisions(closing: FinancialClosing) { return axiosInterceptor.get<MarginDecision[]>(`/financial-closings/${closing.id}/margin-decisions`) },
+  createMarginDecision(closing: FinancialClosing, payload: { poolKey: string; allocations: unknown[] }) { return axiosInterceptor.post<MarginDecision>(`/financial-closings/${closing.id}/margin-decisions`, { versionNumber: closing.currentVersion.versionNumber, ...payload }) },
+  submitMarginDecision(closing: FinancialClosing, id: string, expectedRevision: number) { return axiosInterceptor.post<MarginDecision>(`/financial-closings/${closing.id}/margin-decisions/${id}/submit`, { expectedRevision }) },
+  approveMarginDecision(closing: FinancialClosing, id: string, expectedRevision: number, justification: string) { return axiosInterceptor.post<MarginDecision>(`/financial-closings/${closing.id}/margin-decisions/${id}/approve`, { expectedRevision, justification, idempotencyKey: crypto.randomUUID() }) },
   validateTabularImport(closing: FinancialClosing, file: File, mapping: TabularImportMapping) {
     const body = new FormData(); body.append('file', file); body.append('mapping', JSON.stringify(mapping))
     return axiosInterceptor.post<TabularImportValidation>(`${versionPath(closing)}/tabular-imports/validate`, body)

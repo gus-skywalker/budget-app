@@ -11,6 +11,7 @@ const { serviceMock } = vi.hoisted(() => ({
   serviceMock: {
     list: vi.fn(), summary: vi.fn(), matrix: vi.fn(), memory: vi.fn(), drillDown: vi.fn(), calculate: vi.fn(),
     obligations: vi.fn(), bankReconciliationSuggestions: vi.fn(), bankReconciliationHistory: vi.fn(), confirmBankReconciliation: vi.fn(), rejectBankReconciliation: vi.fn(),
+    calculationRevisions: vi.fn(), payoutDecisions: vi.fn(), marginDecisions: vi.fn(),
   },
 }))
 
@@ -46,6 +47,8 @@ describe('FinancialClosingView', () => {
       sourceTotals: { bp: 69979.18, consult: 5913.80 }, productivityTotal: 81581.90,
     } })
     serviceMock.obligations.mockResolvedValue({ data: [] })
+    serviceMock.calculationRevisions.mockResolvedValue({ data: [{ calculationRunId: 'run-3', inputRevision: 3, runStatus: 'CURRENT', grossAmount: 92000, deductionAmount: 1758.35, productivityAmount: 81581.90, undistributedPoolAmount: 8659.75, netRevenueAmount: 90241.65, residualAmount: 0, reconciliationDivergence: 0, calculatedAt: '2026-08-03T12:00:00Z' }] })
+    serviceMock.payoutDecisions.mockResolvedValue({ data: [] }); serviceMock.marginDecisions.mockResolvedValue({ data: [] })
     serviceMock.bankReconciliationSuggestions.mockResolvedValue({ data: {
       paymentExecutionId: 'payment-1', classification: 'EXACT', totalCount: 1, offset: 0, limit: 20,
       candidates: [{ candidateId: 'safe-candidate-1', amount: 100, transactionDate: '2026-08-10', direction: 'OUTFLOW', classification: 'EXACT', score: 100, reasons: ['AMOUNT_EXACT', 'REFERENCE_HMAC_MATCH'], maskedAccount: null, ruleVersion: 'BANK_RECONCILIATION_V19A_1', candidateFingerprint: 'opaque-fingerprint' }],
@@ -151,6 +154,18 @@ describe('FinancialClosingView', () => {
     expect(wrapper.text()).toContain('Mapeamento explícito de colunas')
     expect(wrapper.text()).toContain('confirmação é restrita a ADMIN/OWNER')
     expect(wrapper.text()).not.toContain('Confirmar lote normalizado')
+  })
+
+  it('loads decision workflow and safe calculation revision comparison on demand', async () => {
+    const wrapper = mount(FinancialClosingView, {
+      global: { plugins: [vuetify], stubs: { PageHeader: { props: ['title'], template: '<header>{{ title }}</header>' }, AlertStrip: true } },
+    })
+    await flush(); await flush()
+    await (wrapper.vm as any).loadDecisionData(); await flush()
+    expect(serviceMock.calculationRevisions).toHaveBeenCalledWith(expect.objectContaining({ id: 'closing-1' }))
+    expect(wrapper.text()).toContain('Decisão colaborativa')
+    expect(wrapper.text()).toContain('Comparar revisões de cálculo')
+    expect(wrapper.text()).toContain('81.581,90')
   })
 
   it('shows confirmation and typed rejection only to administrators', async () => {
