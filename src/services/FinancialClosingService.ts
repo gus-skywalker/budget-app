@@ -42,6 +42,11 @@ export interface TabularImportMapping {
 export interface TabularImportIssue { rowNumber: number; column?: string | null; code: string; message: string }
 export interface TabularImportValidation { valid: boolean; rowCount: number; additionTotal: number; reversalTotal: number; issues: TabularImportIssue[]; previewRows: Array<{ rowNumber: number; clientItemKey: string; amount: number; occurredOn?: string; sourceId?: string; attributionMethod?: string }>; detailedPreview: boolean }
 export interface TabularImport { id: string; batchId: string; batchKey: string; rowCount: number; additionTotal: number; reversalTotal: number; replayed: boolean }
+export interface TabularImportExecution { id: string; versionNumber: number; format: string; status: 'CONFIRMED' | 'REJECTED'; acceptedRows: number; rejectedRows: number; additionTotal: number; reversalTotal: number; actorUserId: string; occurredAt: string; issueCounts: Record<string, number> }
+export interface TabularImportExecutionPage { items: TabularImportExecution[]; total: number; limit: number; offset: number }
+export interface TabularImportIssuePage { total: number; issueCounts: Record<string, number>; items: TabularImportIssue[]; detailed: boolean }
+export interface ClosingTimelineEvent { type: string; title: string; description: string; status: string; occurredAt: string; actorUserId: string }
+export interface ClosingOperations { timeline: ClosingTimelineEvent[]; pendingActions: Array<{ code: string; label: string; requiredRole: string; status: string }> }
 
 export interface ClosingSource { id: string; sourceKey: string; displayName: string }
 export interface ClosingParticipant { id: string; participantKey: string; displayName: string; linkedUserId?: string; active: boolean }
@@ -118,6 +123,9 @@ export default {
     const body = new FormData(); body.append('file', file); body.append('batchKey', batchKey); body.append('mapping', JSON.stringify(mapping))
     return axiosInterceptor.post<TabularImport>(`${versionPath(closing)}/tabular-imports`, body)
   },
+  tabularImportExecutions(closing: FinancialClosing, limit = 25, offset = 0) { return axiosInterceptor.get<TabularImportExecutionPage>(`/financial-closings/${closing.id}/tabular-imports`, { params: { limit, offset } }) },
+  tabularImportIssues(closing: FinancialClosing, executionId: string) { return axiosInterceptor.get<TabularImportIssuePage>(`/financial-closings/${closing.id}/tabular-imports/${executionId}/issues`) },
+  operations(closing: FinancialClosing) { return axiosInterceptor.get<ClosingOperations>(`/financial-closings/${closing.id}/operations`) },
   obligations() { return axiosInterceptor.get<OperationalObligation[]>('/financial-closings/obligations') },
   recordPayment(payload: { direction: string; currency: string; amount: number; externalReference?: string; idempotencyKey: string; executedAt?: string }) { return axiosInterceptor.post<PaymentExecution>('/financial-closings/payment-executions', payload) },
   confirmPayment(id: string, payload: { justification: string; evidenceReference: string; idempotencyKey: string }) { return axiosInterceptor.post<PaymentExecution>(`/financial-closings/payment-executions/${id}/confirm`, payload) },
