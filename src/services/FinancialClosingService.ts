@@ -30,6 +30,15 @@ export interface BankReconciliationSuggestionPage { paymentExecutionId: string; 
 export interface BankReconciliation { id: string; status: 'CONFIRMED' | 'REJECTED'; paymentExecutionId: string; financialTransactionId: string; classification: string; score: number; reasons: string[]; rejectionReasonCode?: string | null; decidedAt: string }
 export interface FinancialCorrection { id: string; status: string; revision: number; type: string; amount: number; originalAllocationId?: string | null; reversalFinancialTransactionId?: string | null; rejectionReasonCode?: string | null }
 export interface SettlementReversal { id: string; correctionCaseId: string; amount: number; currency: string; reasonCode: string; approvedAt: string }
+export interface TabularImportMapping {
+  itemKeyColumn: string; sourceIdColumn: string; amountColumn: string; occurredOnColumn: string
+  attributionMethodColumn?: string; participantIdColumn?: string; participantLabelColumn?: string
+  poolKeyColumn?: string; directionColumn?: string; financialLabelColumn?: string; externalReferenceColumn?: string
+  defaultAttributionMethod?: string; defaultPoolKey?: string; decimalSeparator: 'DOT' | 'COMMA'
+}
+export interface TabularImportIssue { rowNumber: number; column?: string | null; code: string; message: string }
+export interface TabularImportValidation { valid: boolean; rowCount: number; additionTotal: number; reversalTotal: number; issues: TabularImportIssue[]; previewRows: Array<{ rowNumber: number; clientItemKey: string; amount: number; occurredOn?: string; sourceId?: string; attributionMethod?: string }>; detailedPreview: boolean }
+export interface TabularImport { id: string; batchId: string; batchKey: string; rowCount: number; additionTotal: number; reversalTotal: number; replayed: boolean }
 
 export interface ClosingSource { id: string; sourceKey: string; displayName: string }
 export interface ClosingParticipant { id: string; participantKey: string; displayName: string; linkedUserId?: string; active: boolean }
@@ -89,6 +98,14 @@ export default {
     return axiosInterceptor.get<DrillDown>(`${versionPath(closing)}/drill-down`, { params: { participantId, sourceId } })
   },
   calculate(closing: FinancialClosing) { return axiosInterceptor.post<ClosingSummary>(`${versionPath(closing)}/calculate`) },
+  validateTabularImport(closing: FinancialClosing, file: File, mapping: TabularImportMapping) {
+    const body = new FormData(); body.append('file', file); body.append('mapping', JSON.stringify(mapping))
+    return axiosInterceptor.post<TabularImportValidation>(`${versionPath(closing)}/tabular-imports/validate`, body)
+  },
+  confirmTabularImport(closing: FinancialClosing, file: File, batchKey: string, mapping: TabularImportMapping) {
+    const body = new FormData(); body.append('file', file); body.append('batchKey', batchKey); body.append('mapping', JSON.stringify(mapping))
+    return axiosInterceptor.post<TabularImport>(`${versionPath(closing)}/tabular-imports`, body)
+  },
   obligations() { return axiosInterceptor.get<OperationalObligation[]>('/financial-closings/obligations') },
   recordPayment(payload: { direction: string; currency: string; amount: number; externalReference?: string; idempotencyKey: string; executedAt?: string }) { return axiosInterceptor.post<PaymentExecution>('/financial-closings/payment-executions', payload) },
   confirmPayment(id: string, payload: { justification: string; evidenceReference: string; idempotencyKey: string }) { return axiosInterceptor.post<PaymentExecution>(`/financial-closings/payment-executions/${id}/confirm`, payload) },

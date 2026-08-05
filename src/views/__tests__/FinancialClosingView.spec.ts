@@ -142,6 +142,17 @@ describe('FinancialClosingView', () => {
     expect(wrapper.text()).not.toContain('Confirmar')
   })
 
+  it('shows the generic import entry point to members but keeps confirmation restricted', async () => {
+    const wrapper = mount(FinancialClosingView, {
+      global: { plugins: [vuetify], stubs: { PageHeader: { props: ['title'], template: '<header>{{ title }}</header>' }, AlertStrip: true } },
+    })
+    await flush(); await flush()
+    expect(wrapper.text()).toContain('Importar planilha')
+    expect(wrapper.text()).toContain('Mapeamento explícito de colunas')
+    expect(wrapper.text()).toContain('confirmação é restrita a ADMIN/OWNER')
+    expect(wrapper.text()).not.toContain('Confirmar lote normalizado')
+  })
+
   it('shows confirmation and typed rejection only to administrators', async () => {
     useUserStore().tenantRole = 'ROLE_ADMIN'
     const wrapper = mount(FinancialClosingView, {
