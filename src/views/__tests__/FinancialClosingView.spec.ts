@@ -11,7 +11,7 @@ const { serviceMock } = vi.hoisted(() => ({
   serviceMock: {
     list: vi.fn(), summary: vi.fn(), matrix: vi.fn(), memory: vi.fn(), drillDown: vi.fn(), calculate: vi.fn(),
     obligations: vi.fn(), bankReconciliationSuggestions: vi.fn(), bankReconciliationHistory: vi.fn(), confirmBankReconciliation: vi.fn(), rejectBankReconciliation: vi.fn(),
-    calculationRevisions: vi.fn(), payoutDecisions: vi.fn(), marginDecisions: vi.fn(),
+    calculationRevisions: vi.fn(), payoutDecisions: vi.fn(), marginDecisions: vi.fn(), sources: vi.fn(), participants: vi.fn(), createOrGet: vi.fn(), upsertSource: vi.fn(), upsertParticipant: vi.fn(), operations: vi.fn(), tabularImportExecutions: vi.fn(), importProfiles: vi.fn(), importProfile: vi.fn(), createImportProfile: vi.fn(), validateProfileImport: vi.fn(), confirmProfileImport: vi.fn(),
   },
 }))
 
@@ -49,6 +49,9 @@ describe('FinancialClosingView', () => {
     serviceMock.obligations.mockResolvedValue({ data: [] })
     serviceMock.calculationRevisions.mockResolvedValue({ data: [{ calculationRunId: 'run-3', inputRevision: 3, runStatus: 'CURRENT', grossAmount: 92000, deductionAmount: 1758.35, productivityAmount: 81581.90, undistributedPoolAmount: 8659.75, netRevenueAmount: 90241.65, residualAmount: 0, reconciliationDivergence: 0, calculatedAt: '2026-08-03T12:00:00Z' }] })
     serviceMock.payoutDecisions.mockResolvedValue({ data: [] }); serviceMock.marginDecisions.mockResolvedValue({ data: [] })
+    serviceMock.sources.mockResolvedValue({ data: [] }); serviceMock.participants.mockResolvedValue({ data: [] }); serviceMock.operations.mockResolvedValue({ data: { timeline: [], pendingActions: [] } }); serviceMock.tabularImportExecutions.mockResolvedValue({ data: { items: [], total: 0, limit: 25, offset: 0 } })
+    serviceMock.importProfiles.mockResolvedValue({ data: [] }); serviceMock.createImportProfile.mockResolvedValue({ data: { id: 'profile-1', profileKey: 'REPASSE_BP_PAULISTA', displayName: 'Repasse BP Paulista', sourceKey: 'BP_PAULISTA', version: 1, format: 'CSV' } })
+    serviceMock.importProfile.mockResolvedValue({ data: { id: 'profile-1', profileKey: 'REPASSE_BP_PAULISTA', displayName: 'Repasse BP Paulista', sourceKey: 'BP_PAULISTA', version: 1, config: { format: 'CSV', itemKeyColumn: 'referencia', amountColumn: 'valor', occurredOnColumn: 'data', externalReferenceColumn: 'referencia', participantColumn: 'executor', participantMappings: { 'EXECUTOR A': 'participant-1' }, decimalSeparator: 'COMMA' } } })
     serviceMock.bankReconciliationSuggestions.mockResolvedValue({ data: {
       paymentExecutionId: 'payment-1', classification: 'EXACT', totalCount: 1, offset: 0, limit: 20,
       candidates: [{ candidateId: 'safe-candidate-1', amount: 100, transactionDate: '2026-08-10', direction: 'OUTFLOW', classification: 'EXACT', score: 100, reasons: ['AMOUNT_EXACT', 'REFERENCE_HMAC_MATCH'], maskedAccount: null, ruleVersion: 'BANK_RECONCILIATION_V19A_1', candidateFingerprint: 'opaque-fingerprint' }],
@@ -154,6 +157,41 @@ describe('FinancialClosingView', () => {
     expect(wrapper.text()).toContain('Mapeamento explícito de colunas')
     expect(wrapper.text()).toContain('confirmação é restrita a ADMIN/OWNER')
     expect(wrapper.text()).not.toContain('Confirmar lote normalizado')
+  })
+
+  it('lets an administrator start the first closing and configure canonical inputs without API manual work', async () => {
+    useUserStore().tenantRole = 'ROLE_ADMIN'
+    serviceMock.list.mockResolvedValueOnce({ data: [] }).mockResolvedValueOnce({ data: [closing] })
+    serviceMock.createOrGet.mockResolvedValue({ data: closing })
+    serviceMock.upsertSource.mockResolvedValue({ data: { id: 'source-1', sourceKey: 'CONSULTING', displayName: 'Consultoria' } })
+    serviceMock.upsertParticipant.mockResolvedValue({ data: { id: 'participant-1', participantKey: 'ANA', displayName: 'Ana', active: true } })
+    const wrapper = mount(FinancialClosingView, { global: { plugins: [vuetify], stubs: { PageHeader: { props: ['title'], template: '<header>{{ title }}</header>' }, AlertStrip: true } } })
+    await flush(); await flush()
+    expect(wrapper.text()).toContain('Iniciar apuração')
+    expect(wrapper.text()).toContain('Escopo DEFAULT')
+    await (wrapper.vm as any).createClosing(); await flush()
+    expect(serviceMock.createOrGet).toHaveBeenCalledWith(expect.any(Number), expect.any(Number), 'DEFAULT', 'BRL')
+    ;(wrapper.vm as any).newSourceKey='CONSULTING'; (wrapper.vm as any).newSourceName='Consultoria'; await (wrapper.vm as any).addSource()
+    expect(serviceMock.upsertSource).toHaveBeenCalledWith(expect.objectContaining({ id: 'closing-1' }), 'CONSULTING', 'Consultoria')
+    expect(wrapper.text()).toContain('Abas de consolidação')
+  })
+
+  it('saves an assisted profile using the stable source key and explicit participant mapping', async () => {
+    useUserStore().tenantRole = 'ROLE_ADMIN'
+    serviceMock.sources.mockResolvedValue({ data: [{ id: 'source-1', sourceKey: 'BP_PAULISTA', displayName: 'Repasse BP Paulista' }] })
+    serviceMock.participants.mockResolvedValue({ data: [{ id: 'participant-1', participantKey: 'ANA', displayName: 'Ana', active: true }] })
+    const wrapper = mount(FinancialClosingView, { global: { plugins: [vuetify], stubs: { PageHeader: { props: ['title'], template: '<header>{{ title }}</header>' }, AlertStrip: true } } })
+    await flush(); await flush(); await (wrapper.vm as any).loadSetup()
+    ;(wrapper.vm as any).profileKey = 'REPASSE_BP_PAULISTA'; (wrapper.vm as any).profileName = 'Repasse BP Paulista'; (wrapper.vm as any).profileSourceKey = 'BP_PAULISTA'
+    ;(wrapper.vm as any).profileParticipantExternal = 'Executor A'; (wrapper.vm as any).profileParticipantId = 'participant-1'; (wrapper.vm as any).addProfileParticipantMapping()
+    await (wrapper.vm as any).createImportProfile()
+    expect(serviceMock.createImportProfile).toHaveBeenCalledWith(expect.objectContaining({ id: 'closing-1' }), expect.objectContaining({
+      sourceKey: 'BP_PAULISTA', config: expect.objectContaining({ participantMappings: { 'EXECUTOR A': 'participant-1' } }),
+    }))
+    expect(wrapper.text()).toContain('chave da fonte')
+    ;(wrapper.vm as any).selectedProfileId = 'profile-1'; await (wrapper.vm as any).loadSelectedProfile()
+    expect(serviceMock.importProfile).toHaveBeenCalledWith(expect.objectContaining({ id: 'closing-1' }), 'profile-1')
+    expect((wrapper.vm as any).profileParticipantMappings).toEqual({ 'EXECUTOR A': 'participant-1' })
   })
 
   it('loads decision workflow and safe calculation revision comparison on demand', async () => {
