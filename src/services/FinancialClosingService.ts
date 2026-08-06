@@ -53,6 +53,9 @@ export interface ClosingOperations { timeline: ClosingTimelineEvent[]; pendingAc
 
 export interface ClosingSource { id: string; sourceKey: string; displayName: string }
 export interface ClosingParticipant { id: string; participantKey: string; displayName: string; linkedUserId?: string; active: boolean }
+export interface SourceRetention { id: string; sourceKey: string; displayName: string; percentage: number; active: boolean; justification: string; createdAt: string }
+export interface ParticipantScore { id: string; participantId: string; score: number; active: boolean; justification: string; createdAt: string }
+export interface SourceProductivity { sourceId: string; sourceKey: string; displayName: string; grossAmount: number; reversalAmount: number; retentionAmount: number; eligibleAmount: number }
 export interface ReconciliationSummary {
   expectedInflowAmount: number
   reconciledInflowAmount: number
@@ -77,6 +80,7 @@ export interface ClosingSummary {
   residualAmount: number
   reconciliation: ReconciliationSummary
   calculatedAt: string
+  sourceProductivity: SourceProductivity[]
 }
 export interface MatrixRow { participant: ClosingParticipant; values: Record<string, number>; total: number }
 export interface ClosingMatrix { sources: ClosingSource[]; rows: MatrixRow[]; sourceTotals: Record<string, number>; productivityTotal: number }
@@ -92,6 +96,7 @@ export interface CalculationMemory {
   calculationRunId: string; calculationPolicyVersion: string; roundingMode: string; intermediateScale: number
   items: Array<{ itemId: string; clientItemKey: string; memory: string }>
   participantAdjustments: Array<{ participantId: string; sourceId: string; direction: string; amount: number; justification: string }>
+  participantScores: ParticipantScore[]
   residualAmount: number
 }
 
@@ -106,6 +111,11 @@ export default {
   upsertSource(closing: FinancialClosing, sourceKey: string, displayName: string) { return axiosInterceptor.post<ClosingSource>(`${versionPath(closing)}/sources`, { sourceKey, displayName }) },
   participants(closing: FinancialClosing) { return axiosInterceptor.get<ClosingParticipant[]>(`${versionPath(closing)}/participants`) },
   upsertParticipant(closing: FinancialClosing, participantKey: string, displayName: string) { return axiosInterceptor.post<ClosingParticipant>(`${versionPath(closing)}/participants`, { participantKey, displayName, active: true }) },
+  sourceRetentions(closing: FinancialClosing) { return axiosInterceptor.get<SourceRetention[]>(`${versionPath(closing)}/source-retentions`) },
+  upsertSourceRetention(closing: FinancialClosing, payload: { sourceKey: string; displayName: string; percentage: number; justification: string }) { return axiosInterceptor.post<SourceRetention>(`${versionPath(closing)}/source-retentions`, payload) },
+  deactivateSourceRetention(closing: FinancialClosing, id: string, justification: string) { return axiosInterceptor.post(`${versionPath(closing)}/source-retentions/${id}/deactivate`, { justification }) },
+  participantScores(closing: FinancialClosing) { return axiosInterceptor.get<ParticipantScore[]>(`${versionPath(closing)}/participant-scores`) },
+  upsertParticipantScore(closing: FinancialClosing, payload: { participantId: string; score: number; justification: string }) { return axiosInterceptor.post<ParticipantScore>(`${versionPath(closing)}/participant-scores`, payload) },
   summary(closing: FinancialClosing) { return axiosInterceptor.get<ClosingSummary>(`${versionPath(closing)}/summary`) },
   matrix(closing: FinancialClosing) { return axiosInterceptor.get<ClosingMatrix>(`${versionPath(closing)}/matrix`) },
   memory(closing: FinancialClosing) { return axiosInterceptor.get<CalculationMemory>(`${versionPath(closing)}/calculation-memory`) },
@@ -151,4 +161,5 @@ export default {
   approveCorrection(id: string, expectedRevision: number) { return axiosInterceptor.post<FinancialCorrection>(`/financial-closings/financial-corrections/${id}/approve`, { expectedRevision, idempotencyKey: crypto.randomUUID() }) },
   rejectCorrection(id: string, expectedRevision: number, reasonCode: string) { return axiosInterceptor.post<FinancialCorrection>(`/financial-closings/financial-corrections/${id}/reject`, { expectedRevision, reasonCode }) },
   settlementReversal(id: string) { return axiosInterceptor.get<SettlementReversal>(`/financial-closings/financial-corrections/${id}/settlement-reversal`) },
+  grantSensitiveAccess(closing: FinancialClosing, userId: string, confirmed: boolean) { return axiosInterceptor.put(`/financial-closings/${closing.id}/sensitive-access-grants`, { userId, confirmed }) },
 }

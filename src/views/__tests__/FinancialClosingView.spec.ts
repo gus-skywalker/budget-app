@@ -11,7 +11,7 @@ const { serviceMock } = vi.hoisted(() => ({
   serviceMock: {
     list: vi.fn(), summary: vi.fn(), matrix: vi.fn(), memory: vi.fn(), drillDown: vi.fn(), calculate: vi.fn(),
     obligations: vi.fn(), bankReconciliationSuggestions: vi.fn(), bankReconciliationHistory: vi.fn(), confirmBankReconciliation: vi.fn(), rejectBankReconciliation: vi.fn(),
-    calculationRevisions: vi.fn(), payoutDecisions: vi.fn(), marginDecisions: vi.fn(), sources: vi.fn(), participants: vi.fn(), createOrGet: vi.fn(), upsertSource: vi.fn(), upsertParticipant: vi.fn(), operations: vi.fn(), tabularImportExecutions: vi.fn(), importProfiles: vi.fn(), importProfile: vi.fn(), createImportProfile: vi.fn(), validateProfileImport: vi.fn(), confirmProfileImport: vi.fn(),
+    calculationRevisions: vi.fn(), payoutDecisions: vi.fn(), marginDecisions: vi.fn(), sources: vi.fn(), participants: vi.fn(), sourceRetentions: vi.fn(), participantScores: vi.fn(), upsertSourceRetention: vi.fn(), deactivateSourceRetention: vi.fn(), upsertParticipantScore: vi.fn(), createOrGet: vi.fn(), upsertSource: vi.fn(), upsertParticipant: vi.fn(), operations: vi.fn(), tabularImportExecutions: vi.fn(), importProfiles: vi.fn(), importProfile: vi.fn(), createImportProfile: vi.fn(), validateProfileImport: vi.fn(), confirmProfileImport: vi.fn(), grantSensitiveAccess: vi.fn(),
   },
 }))
 
@@ -40,6 +40,7 @@ describe('FinancialClosingView', () => {
       closingAdjustmentAmount: 0, productivityAmount: 81581.90, undistributedPoolAmount: 8659.75,
       netRevenueAmount: 90241.65, residualAmount: 0, calculatedAt: '2026-08-03T12:00:00Z',
       reconciliation: { expectedInflowAmount: 90241.65, reconciledInflowAmount: 0, coveragePercentage: 0, divergenceAmount: 90241.65, unreconciledItemCount: 10 },
+      sourceProductivity: [{ sourceId: 'bp', sourceKey: 'BP_PAULISTA', displayName: 'Convênio BP Paulista', grossAmount: 70000, reversalAmount: 20, retentionAmount: 7000, eligibleAmount: 62980 }],
     } })
     serviceMock.matrix.mockResolvedValue({ data: {
       sources: [{ id: 'bp', sourceKey: 'BP_PAULISTA', displayName: 'Convênio BP Paulista' }, { id: 'consult', sourceKey: 'CONSULTORIA', displayName: 'Consultoria' }],
@@ -49,7 +50,7 @@ describe('FinancialClosingView', () => {
     serviceMock.obligations.mockResolvedValue({ data: [] })
     serviceMock.calculationRevisions.mockResolvedValue({ data: [{ calculationRunId: 'run-3', inputRevision: 3, runStatus: 'CURRENT', grossAmount: 92000, deductionAmount: 1758.35, productivityAmount: 81581.90, undistributedPoolAmount: 8659.75, netRevenueAmount: 90241.65, residualAmount: 0, reconciliationDivergence: 0, calculatedAt: '2026-08-03T12:00:00Z' }] })
     serviceMock.payoutDecisions.mockResolvedValue({ data: [] }); serviceMock.marginDecisions.mockResolvedValue({ data: [] })
-    serviceMock.sources.mockResolvedValue({ data: [] }); serviceMock.participants.mockResolvedValue({ data: [] }); serviceMock.operations.mockResolvedValue({ data: { timeline: [], pendingActions: [] } }); serviceMock.tabularImportExecutions.mockResolvedValue({ data: { items: [], total: 0, limit: 25, offset: 0 } })
+    serviceMock.sources.mockResolvedValue({ data: [] }); serviceMock.participants.mockResolvedValue({ data: [] }); serviceMock.sourceRetentions.mockResolvedValue({ data: [] }); serviceMock.participantScores.mockResolvedValue({ data: [] }); serviceMock.operations.mockResolvedValue({ data: { timeline: [], pendingActions: [] } }); serviceMock.tabularImportExecutions.mockResolvedValue({ data: { items: [], total: 0, limit: 25, offset: 0 } })
     serviceMock.importProfiles.mockResolvedValue({ data: [] }); serviceMock.createImportProfile.mockResolvedValue({ data: { id: 'profile-1', profileKey: 'REPASSE_BP_PAULISTA', displayName: 'Repasse BP Paulista', sourceKey: 'BP_PAULISTA', version: 1, format: 'CSV' } })
     serviceMock.importProfile.mockResolvedValue({ data: { id: 'profile-1', profileKey: 'REPASSE_BP_PAULISTA', displayName: 'Repasse BP Paulista', sourceKey: 'BP_PAULISTA', version: 1, config: { format: 'CSV', itemKeyColumn: 'referencia', amountColumn: 'valor', occurredOnColumn: 'data', externalReferenceColumn: 'referencia', participantColumn: 'executor', participantMappings: { 'EXECUTOR A': 'participant-1' }, decimalSeparator: 'COMMA' } } })
     serviceMock.bankReconciliationSuggestions.mockResolvedValue({ data: {
@@ -60,7 +61,7 @@ describe('FinancialClosingView', () => {
     serviceMock.drillDown.mockResolvedValue({ data: { participantId: 'elimar', sourceId: 'consult', grossAmount: 7068, deductionAmount: 1154.20, adjustmentAmount: 0, netAmount: 5913.80, items: [{ itemId: 'i1', clientItemKey: 'consultoria-elimar', financialLabel: 'Consultoria', signedGrossAmount: 7068, deductionAmount: 1154.20, adjustmentAmount: 0, netAmount: 5913.80 }] } })
   })
 
-  it('renders the July totals, keeps margin separate, and exposes cell drill-down', async () => {
+  it('renders the July totals, shows source eligibility, and exposes cell drill-down', async () => {
     const wrapper = mount(FinancialClosingView, {
       global: {
         plugins: [vuetify],
@@ -75,9 +76,10 @@ describe('FinancialClosingView', () => {
 
     expect(wrapper.text()).toContain('Produtividade Líquida')
     expect(wrapper.text()).toContain('R$ 81.581,90')
-    expect(wrapper.text()).toContain('Margem de Contribuição')
+    expect(wrapper.text()).toContain('Pool não distribuído')
     expect(wrapper.text()).toContain('R$ 8.659,75')
     expect(wrapper.text()).toContain('R$ 90.241,65')
+    expect(wrapper.text()).toContain('Produtividade Líquida elegível')
     expect(wrapper.find('table').text()).not.toContain('8.659,75')
 
     const consultCell = wrapper.findAll('.cell-button').find(button => button.text().includes('5.913,80'))
@@ -86,6 +88,22 @@ describe('FinancialClosingView', () => {
     expect(serviceMock.drillDown).toHaveBeenCalledWith(expect.objectContaining({ id: 'closing-1' }), 'elimar', 'consult')
     expect(wrapper.text()).toContain('Elimar Elias Gomes · Consultoria')
     expect(wrapper.text()).toContain('Bruto R$ 7.068,00')
+  })
+
+  it('lets a member configure a source retention and an auditable score while the closing is editable', async () => {
+    serviceMock.sources.mockResolvedValue({ data: [{ id: 'bp', sourceKey: 'BP_PAULISTA', displayName: 'Convênio BP Paulista' }] })
+    serviceMock.participants.mockResolvedValue({ data: [{ id: 'ana', participantKey: 'ANA', displayName: 'Ana Demo', active: true }] })
+    serviceMock.upsertSourceRetention.mockResolvedValue({ data: { id: 'retention-1' } })
+    serviceMock.upsertParticipantScore.mockResolvedValue({ data: { id: 'score-1' } })
+    const wrapper = mount(FinancialClosingView, { global: { plugins: [vuetify], stubs: { PageHeader: { props: ['title'], template: '<header>{{ title }}</header>' }, AlertStrip: true } } })
+    await flush(); await flush(); await (wrapper.vm as any).loadSetup()
+    ;(wrapper.vm as any).retentionSourceKey='BP_PAULISTA'; (wrapper.vm as any).retentionName='Fundo'; (wrapper.vm as any).retentionPercentage=10; (wrapper.vm as any).retentionJustification='Política vigente'
+    await (wrapper.vm as any).saveRetention()
+    expect(serviceMock.upsertSourceRetention).toHaveBeenCalledWith(expect.objectContaining({ id: 'closing-1' }), expect.objectContaining({ sourceKey: 'BP_PAULISTA', percentage: 10 }))
+    ;(wrapper.vm as any).scoreParticipantId='ana'; (wrapper.vm as any).scoreValue=85; (wrapper.vm as any).scoreJustification='Pontuação validada'
+    await (wrapper.vm as any).saveScore()
+    expect(serviceMock.upsertParticipantScore).toHaveBeenCalledWith(expect.objectContaining({ id: 'closing-1' }), expect.objectContaining({ participantId: 'ana', score: 85 }))
+    expect(wrapper.text()).toContain('Retenções por fonte e pontuação')
   })
 
   it.each([
