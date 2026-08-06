@@ -9,6 +9,8 @@
     "preview": "vite preview",
     "start": "node server.cjs",
     "test:unit": "vitest",
+    "test:e2e:closing-demo": "playwright test e2e/financial-closing-demo.spec.ts",
+    "demo:closing-video": "playwright test e2e/financial-closing-demo.spec.ts --project=chromium-demo",
     "build-only": "vite build",
     "type-check": "vue-tsc --build --force",
     "i18n:audit": "node scripts/i18n-audit.mjs",
@@ -33,6 +35,7 @@
     "webfontloader": "^1.6.28"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@rushstack/eslint-patch": "^1.8.0",
     "@tsconfig/node20": "^20.1.4",
     "@types/express": "^5.0.0",
