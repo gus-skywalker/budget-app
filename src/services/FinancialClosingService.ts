@@ -31,7 +31,7 @@ export interface BankReconciliation { id: string; status: 'CONFIRMED' | 'REJECTE
 export interface FinancialCorrection { id: string; status: string; revision: number; type: string; amount: number; originalAllocationId?: string | null; reversalFinancialTransactionId?: string | null; rejectionReasonCode?: string | null }
 export interface SettlementReversal { id: string; correctionCaseId: string; amount: number; currency: string; reasonCode: string; approvedAt: string }
 export interface CalculationRevision { calculationRunId: string; inputRevision: number; runStatus: string; grossAmount: number; deductionAmount: number; productivityAmount: number; undistributedPoolAmount: number; netRevenueAmount: number; residualAmount: number; reconciliationDivergence: number; calculatedAt: string }
-export interface PayoutDecision { id: string; status: string; revision: number; closingVersionId: string; calculationRunId: string; inputRevision: number; productivityAmount: number; lines: Array<{ id: string; participantId: string; amount: number; dueDate?: string }>; issuedObligationCount: number; ownerSelfApprovalException: boolean }
+export interface PayoutDecision { id: string; status: string; revision: number; closingVersionId: string; calculationRunId: string; inputRevision: number; productivityAmount: number; valueReceivableAmount?: number; lines: Array<{ id: string; participantId: string; amount: number; dueDate?: string }>; issuedObligationCount: number; ownerSelfApprovalException: boolean }
 export interface MarginDecision { id: string; status: string; settlementStatus: string; revision: number; poolKey: string; marginSnapshot: number; allocatedAmount: number; unallocatedMargin: number; allocations: Array<{ id: string; type: string; amount: number; purpose: string; dueDate?: string; categoryKey?: string; beneficiaryDisplayName?: string; issuedObligationCount: number }>; issuedObligationCount: number; ownerSelfApprovalException: boolean }
 export interface TabularImportMapping {
   itemKeyColumn: string; sourceIdColumn: string; amountColumn: string; occurredOnColumn: string
@@ -40,7 +40,7 @@ export interface TabularImportMapping {
   defaultAttributionMethod?: string; defaultPoolKey?: string; decimalSeparator: 'DOT' | 'COMMA'
 }
 export interface TabularImportIssue { rowNumber: number; column?: string | null; code: string; message: string }
-export interface TabularImportValidation { valid: boolean; rowCount: number; ignoredRowCount: number; additionTotal: number; reversalTotal: number; issues: TabularImportIssue[]; previewRows: Array<{ rowNumber: number; clientItemKey: string; amount: number; occurredOn?: string; sourceId?: string; attributionMethod?: string }>; detailedPreview: boolean }
+export interface TabularImportValidation { valid: boolean; rowCount: number; ignoredRowCount: number; additionTotal: number; reversalTotal: number; issues: TabularImportIssue[]; ignoredRows?: Array<{ rowNumber: number; code: string; message: string }>; previewRows: Array<{ rowNumber: number; clientItemKey: string; amount: number; occurredOn?: string; sourceId?: string; attributionMethod?: string }>; detailedPreview: boolean }
 export interface TabularImport { id: string; batchId: string; batchKey: string; rowCount: number; additionTotal: number; reversalTotal: number; replayed: boolean }
 export interface AssistedImportProfile { id: string; profileKey: string; displayName: string; sourceKey: string; version: number; format: 'CSV' | 'XLSX'; expectedSheet?: string | null }
 export interface AssistedImportProfileConfig { format: 'CSV' | 'XLSX'; expectedSheet?: string | null; itemKeyColumn: string; amountColumn: string; occurredOnColumn: string; externalReferenceColumn: string; participantColumn?: string | null; participantMappings: Record<string, string>; positiveDirection?: string | null; negativeAsReversal?: boolean | null; ignoreTotalsAndFormulas?: boolean | null; defaultAttributionMethod?: string | null; defaultPoolKey?: string | null; decimalSeparator: 'DOT' | 'COMMA' }
@@ -56,6 +56,7 @@ export interface ClosingParticipant { id: string; participantKey: string; displa
 export interface SourceRetention { id: string; sourceKey: string; displayName: string; percentage: number; active: boolean; justification: string; createdAt: string }
 export interface ParticipantScore { id: string; participantId: string; score: number; active: boolean; justification: string; createdAt: string }
 export interface SourceProductivity { sourceId: string; sourceKey: string; displayName: string; grossAmount: number; reversalAmount: number; retentionAmount: number; eligibleAmount: number }
+export interface ParticipantPayout { participantId: string; productivityAmount: number; reserveAmount: number; monthlyCeilingAmount: number; score?: number | null; appliedScore: number; valueReceivableAmount: number; annualBonusEligibleScore: number; undistributedAmount: number }
 export interface ReconciliationSummary {
   expectedInflowAmount: number
   reconciledInflowAmount: number
@@ -81,6 +82,7 @@ export interface ClosingSummary {
   reconciliation: ReconciliationSummary
   calculatedAt: string
   sourceProductivity: SourceProductivity[]
+  participantPayouts?: ParticipantPayout[]
 }
 export interface MatrixRow { participant: ClosingParticipant; values: Record<string, number>; total: number }
 export interface ClosingMatrix { sources: ClosingSource[]; rows: MatrixRow[]; sourceTotals: Record<string, number>; productivityTotal: number }
@@ -98,6 +100,7 @@ export interface CalculationMemory {
   participantAdjustments: Array<{ participantId: string; sourceId: string; direction: string; amount: number; justification: string }>
   participantScores: ParticipantScore[]
   residualAmount: number
+  participantPayouts?: ParticipantPayout[]
 }
 
 const versionPath = (closing: FinancialClosing) => `/financial-closings/${closing.id}/versions/${closing.currentVersion.versionNumber}`
