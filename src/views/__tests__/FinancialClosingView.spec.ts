@@ -41,7 +41,7 @@ describe('FinancialClosingView', () => {
       netRevenueAmount: 90241.65, residualAmount: 0, calculatedAt: '2026-08-03T12:00:00Z',
       reconciliation: { expectedInflowAmount: 90241.65, reconciledInflowAmount: 0, coveragePercentage: 0, divergenceAmount: 90241.65, unreconciledItemCount: 10 },
       sourceProductivity: [{ sourceId: 'bp', sourceKey: 'BP_PAULISTA', displayName: 'Convênio BP Paulista', grossAmount: 70000, reversalAmount: 20, retentionAmount: 7000, eligibleAmount: 62980 }],
-      participantPayouts: [{ participantId: 'elimar', productivityAmount: 100, reserveAmount: 15, monthlyCeilingAmount: 85, score: 100, appliedScore: 85, valueReceivableAmount: 85, annualBonusEligibleScore: 15, undistributedAmount: 15 }],
+      participantPayouts: [{ participantId: 'elimar', productivityAmount: 100, reserveAmount: 15, monthlyCeilingAmount: 85, score: 85, appliedScore: 85, valueReceivableAmount: 85, annualBonusEligibleScore: 0, undistributedAmount: 0, tmReserveAmount: 10, tiReserveAmount: 5, totalExplainedAmount: 100 }],
     } })
     serviceMock.matrix.mockResolvedValue({ data: {
       sources: [{ id: 'bp', sourceKey: 'BP_PAULISTA', displayName: 'Convênio BP Paulista' }, { id: 'consult', sourceKey: 'CONSULTORIA', displayName: 'Consultoria' }],
@@ -82,7 +82,7 @@ describe('FinancialClosingView', () => {
     expect(wrapper.text()).toContain('R$ 90.241,65')
     expect(wrapper.text()).toContain('Produtividade Líquida elegível')
     expect(wrapper.text()).toContain('Valor a Receber por participante')
-    expect(wrapper.text()).toContain('85/85')
+    expect(wrapper.text()).toContain('85%')
     expect(wrapper.find('table').text()).not.toContain('8.659,75')
 
     const consultCell = wrapper.findAll('.cell-button').find(button => button.text().includes('5.913,80'))

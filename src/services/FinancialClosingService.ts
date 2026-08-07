@@ -56,7 +56,7 @@ export interface ClosingParticipant { id: string; participantKey: string; displa
 export interface SourceRetention { id: string; sourceKey: string; displayName: string; percentage: number; active: boolean; justification: string; createdAt: string }
 export interface ParticipantScore { id: string; participantId: string; score: number; active: boolean; justification: string; createdAt: string }
 export interface SourceProductivity { sourceId: string; sourceKey: string; displayName: string; grossAmount: number; reversalAmount: number; retentionAmount: number; eligibleAmount: number }
-export interface ParticipantPayout { participantId: string; productivityAmount: number; reserveAmount: number; monthlyCeilingAmount: number; score?: number | null; appliedScore: number; valueReceivableAmount: number; annualBonusEligibleScore: number; undistributedAmount: number }
+export interface ParticipantPayout { participantId: string; productivityAmount: number; reserveAmount: number; monthlyCeilingAmount: number; score?: number | null; appliedScore: number; valueReceivableAmount: number; annualBonusEligibleScore: number; undistributedAmount: number; tmReserveAmount: number; tiReserveAmount: number; totalExplainedAmount: number }
 export interface ReconciliationSummary {
   expectedInflowAmount: number
   reconciledInflowAmount: number
