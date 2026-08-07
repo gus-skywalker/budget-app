@@ -11,7 +11,7 @@ const { serviceMock } = vi.hoisted(() => ({
   serviceMock: {
     list: vi.fn(), summary: vi.fn(), matrix: vi.fn(), memory: vi.fn(), drillDown: vi.fn(), calculate: vi.fn(),
     obligations: vi.fn(), bankReconciliationSuggestions: vi.fn(), bankReconciliationHistory: vi.fn(), confirmBankReconciliation: vi.fn(), rejectBankReconciliation: vi.fn(),
-    calculationRevisions: vi.fn(), payoutDecisions: vi.fn(), marginDecisions: vi.fn(), sources: vi.fn(), participants: vi.fn(), sourceRetentions: vi.fn(), participantScores: vi.fn(), upsertSourceRetention: vi.fn(), deactivateSourceRetention: vi.fn(), upsertParticipantScore: vi.fn(), createOrGet: vi.fn(), upsertSource: vi.fn(), upsertParticipant: vi.fn(), operations: vi.fn(), tabularImportExecutions: vi.fn(), importProfiles: vi.fn(), importProfile: vi.fn(), createImportProfile: vi.fn(), validateProfileImport: vi.fn(), confirmProfileImport: vi.fn(), grantSensitiveAccess: vi.fn(),
+    calculationRevisions: vi.fn(), payoutDecisions: vi.fn(), marginDecisions: vi.fn(), sources: vi.fn(), participants: vi.fn(), sourceRetentions: vi.fn(), participantScores: vi.fn(), upsertSourceRetention: vi.fn(), deactivateSourceRetention: vi.fn(), upsertParticipantScore: vi.fn(), createOrGet: vi.fn(), upsertSource: vi.fn(), upsertParticipant: vi.fn(), operations: vi.fn(), tabularImportExecutions: vi.fn(), importProfiles: vi.fn(), importReadiness: vi.fn(), importProfile: vi.fn(), createImportProfile: vi.fn(), validateProfileImport: vi.fn(), confirmProfileImport: vi.fn(), grantSensitiveAccess: vi.fn(),
   },
 }))
 
@@ -53,6 +53,7 @@ describe('FinancialClosingView', () => {
     serviceMock.payoutDecisions.mockResolvedValue({ data: [] }); serviceMock.marginDecisions.mockResolvedValue({ data: [] })
     serviceMock.sources.mockResolvedValue({ data: [] }); serviceMock.participants.mockResolvedValue({ data: [] }); serviceMock.sourceRetentions.mockResolvedValue({ data: [] }); serviceMock.participantScores.mockResolvedValue({ data: [] }); serviceMock.operations.mockResolvedValue({ data: { timeline: [], pendingActions: [] } }); serviceMock.tabularImportExecutions.mockResolvedValue({ data: { items: [], total: 0, limit: 25, offset: 0 } })
     serviceMock.importProfiles.mockResolvedValue({ data: [] }); serviceMock.createImportProfile.mockResolvedValue({ data: { id: 'profile-1', profileKey: 'REPASSE_BP_PAULISTA', displayName: 'Repasse BP Paulista', sourceKey: 'BP_PAULISTA', version: 1, format: 'CSV' } })
+    serviceMock.importReadiness.mockResolvedValue({ data: { sources: [], readyToCalculate: true, blockingSourceKeys: [] } })
     serviceMock.importProfile.mockResolvedValue({ data: { id: 'profile-1', profileKey: 'REPASSE_BP_PAULISTA', displayName: 'Repasse BP Paulista', sourceKey: 'BP_PAULISTA', version: 1, config: { format: 'CSV', itemKeyColumn: 'referencia', amountColumn: 'valor', occurredOnColumn: 'data', externalReferenceColumn: 'referencia', participantColumn: 'executor', participantMappings: { 'EXECUTOR A': 'participant-1' }, decimalSeparator: 'COMMA' } } })
     serviceMock.bankReconciliationSuggestions.mockResolvedValue({ data: {
       paymentExecutionId: 'payment-1', classification: 'EXACT', totalCount: 1, offset: 0, limit: 20,
@@ -178,6 +179,20 @@ describe('FinancialClosingView', () => {
     expect(wrapper.text()).toContain('Mapeamento explícito de colunas')
     expect(wrapper.text()).toContain('confirmação é restrita a ADMIN/OWNER')
     expect(wrapper.text()).not.toContain('Confirmar lote normalizado')
+  })
+
+  it('shows source readiness, preselects its profile, and keeps calculation blocked while the import is pending', async () => {
+    useUserStore().tenantRole = 'ROLE_ADMIN'
+    serviceMock.importReadiness.mockResolvedValue({ data: { sources: [{ sourceId: 'bp', sourceKey: 'BP_PAULISTA', displayName: 'Repasse BP Paulista', status: 'READY_TO_IMPORT', recommendedProfileId: 'profile-1', recommendedProfileName: 'Repasse BP Paulista', action: 'Importar', detail: 'Aguarda lote confirmado.' }], readyToCalculate: false, blockingSourceKeys: ['BP_PAULISTA'] } })
+    const wrapper = mount(FinancialClosingView, { global: { plugins: [vuetify], stubs: { PageHeader: { props: ['title'], template: '<header>{{ title }}<slot name="actions" /></header>' }, AlertStrip: true } } })
+    await flush(); await flush()
+    expect(wrapper.text()).toContain('Fontes para importar')
+    expect(wrapper.text()).toContain('Pronta para importar')
+    expect(wrapper.text()).toContain('GERAL')
+    expect((wrapper.vm as any).readinessBlocksCalculation).toBe(true)
+    ;(wrapper.vm as any).selectSourceProfile('profile-1')
+    await flush()
+    expect((wrapper.vm as any).selectedProfileId).toBe('profile-1')
   })
 
   it('lets an administrator start the first closing and configure canonical inputs without API manual work', async () => {

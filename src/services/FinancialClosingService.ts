@@ -40,11 +40,15 @@ export interface TabularImportMapping {
   defaultAttributionMethod?: string; defaultPoolKey?: string; decimalSeparator: 'DOT' | 'COMMA'
 }
 export interface TabularImportIssue { rowNumber: number; column?: string | null; code: string; message: string }
-export interface TabularImportValidation { valid: boolean; rowCount: number; ignoredRowCount: number; additionTotal: number; reversalTotal: number; issues: TabularImportIssue[]; ignoredRows?: Array<{ rowNumber: number; code: string; message: string }>; previewRows: Array<{ rowNumber: number; clientItemKey: string; amount: number; occurredOn?: string; sourceId?: string; attributionMethod?: string }>; detailedPreview: boolean }
+export interface TabularImportValidation { valid: boolean; rowCount: number; ignoredRowCount: number; reversalRowCount: number; additionTotal: number; reversalTotal: number; issues: TabularImportIssue[]; ignoredRows?: Array<{ rowNumber: number; code: string; message: string }>; unmappedParticipantLabels?: string[]; previewRows: Array<{ rowNumber: number; clientItemKey: string; amount: number; occurredOn?: string; sourceId?: string; attributionMethod?: string }>; detailedPreview: boolean }
 export interface TabularImport { id: string; batchId: string; batchKey: string; rowCount: number; additionTotal: number; reversalTotal: number; replayed: boolean }
 export interface AssistedImportProfile { id: string; profileKey: string; displayName: string; sourceKey: string; version: number; format: 'CSV' | 'XLSX'; expectedSheet?: string | null }
 export interface AssistedImportProfileConfig { format: 'CSV' | 'XLSX'; expectedSheet?: string | null; itemKeyColumn: string; itemKeyColumns?: string[] | null; amountColumn: string; occurredOnColumn: string; externalReferenceColumn: string; participantColumn?: string | null; participantMappings: Record<string, string>; positiveDirection?: string | null; negativeAsReversal?: boolean | null; ignoreTotalsAndFormulas?: boolean | null; defaultAttributionMethod?: string | null; defaultPoolKey?: string | null; decimalSeparator: 'DOT' | 'COMMA' }
 export interface AssistedImportProfileDetail extends Omit<AssistedImportProfile, 'format' | 'expectedSheet'> { config: AssistedImportProfileConfig }
+export interface ImportReadinessSource { sourceId: string; sourceKey: string; displayName: string; status: 'NOT_CONFIGURED' | 'READY_TO_IMPORT' | 'IMPORTED' | 'CRITICAL_PENDING'; recommendedProfileId?: string | null; recommendedProfileName?: string | null; action: string; detail: string }
+export interface ImportReadiness { sources: ImportReadinessSource[]; readyToCalculate: boolean; blockingSourceKeys: string[] }
+export interface ImportReadinessSource { sourceId: string; sourceKey: string; displayName: string; status: 'NOT_CONFIGURED' | 'READY_TO_IMPORT' | 'IMPORTED' | 'CRITICAL_PENDING'; recommendedProfileId?: string | null; recommendedProfileName?: string | null; action: string; detail: string }
+export interface ImportReadiness { sources: ImportReadinessSource[]; readyToCalculate: boolean; blockingSourceKeys: string[] }
 export interface TabularImportExecution { id: string; versionNumber: number; format: string; status: 'CONFIRMED' | 'REJECTED'; acceptedRows: number; rejectedRows: number; additionTotal: number; reversalTotal: number; actorUserId: string; occurredAt: string; issueCounts: Record<string, number> }
 export interface TabularImportExecutionPage { items: TabularImportExecution[]; total: number; limit: number; offset: number }
 export interface TabularImportIssuePage { total: number; issueCounts: Record<string, number>; items: TabularImportIssue[]; detailed: boolean }
@@ -144,6 +148,7 @@ export default {
     return axiosInterceptor.post<TabularImport>(`${versionPath(closing)}/tabular-imports`, body)
   },
   importProfiles(closing: FinancialClosing) { return axiosInterceptor.get<AssistedImportProfile[]>(`${versionPath(closing)}/import-profiles`) },
+  importReadiness(closing: FinancialClosing) { return axiosInterceptor.get<ImportReadiness>(`${versionPath(closing)}/import-readiness`) },
   importProfile(closing: FinancialClosing, profileId: string) { return axiosInterceptor.get<AssistedImportProfileDetail>(`${versionPath(closing)}/import-profiles/${profileId}`) },
   createImportProfile(closing: FinancialClosing, payload: { profileKey: string; displayName: string; sourceKey: string; config: unknown }) { return axiosInterceptor.post<AssistedImportProfile>(`${versionPath(closing)}/import-profiles`, payload) },
   confirmProfileImport(closing: FinancialClosing, file: File, batchKey: string, profileId: string) { const body=new FormData(); body.append('file',file);body.append('batchKey',batchKey);body.append('profileId',profileId);return axiosInterceptor.post<TabularImport>(`${versionPath(closing)}/tabular-imports/profile`,body) },
