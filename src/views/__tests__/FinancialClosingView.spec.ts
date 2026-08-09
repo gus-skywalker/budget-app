@@ -10,7 +10,7 @@ import { useUserStore } from '@/plugins/userStore'
 const { serviceMock } = vi.hoisted(() => ({
   serviceMock: {
     list: vi.fn(), summary: vi.fn(), matrix: vi.fn(), memory: vi.fn(), drillDown: vi.fn(), calculate: vi.fn(),
-    obligations: vi.fn(), bankReconciliationSuggestions: vi.fn(), bankReconciliationHistory: vi.fn(), confirmBankReconciliation: vi.fn(), rejectBankReconciliation: vi.fn(),
+    obligations: vi.fn(), bankReconciliationSuggestions: vi.fn(), bankReconciliationHistory: vi.fn(), confirmBankReconciliation: vi.fn(), rejectBankReconciliation: vi.fn(), workbookInventory: vi.fn(),
     calculationRevisions: vi.fn(), payoutDecisions: vi.fn(), marginDecisions: vi.fn(), sources: vi.fn(), participants: vi.fn(), sourceRetentions: vi.fn(), participantScores: vi.fn(), upsertSourceRetention: vi.fn(), deactivateSourceRetention: vi.fn(), upsertParticipantScore: vi.fn(), createOrGet: vi.fn(), upsertSource: vi.fn(), upsertParticipant: vi.fn(), operations: vi.fn(), tabularImportExecutions: vi.fn(), importProfiles: vi.fn(), importReadiness: vi.fn(), importProfile: vi.fn(), createImportProfile: vi.fn(), validateProfileImport: vi.fn(), confirmProfileImport: vi.fn(), grantSensitiveAccess: vi.fn(),
   },
 }))
@@ -54,6 +54,11 @@ describe('FinancialClosingView', () => {
     serviceMock.sources.mockResolvedValue({ data: [] }); serviceMock.participants.mockResolvedValue({ data: [] }); serviceMock.sourceRetentions.mockResolvedValue({ data: [] }); serviceMock.participantScores.mockResolvedValue({ data: [] }); serviceMock.operations.mockResolvedValue({ data: { timeline: [], pendingActions: [] } }); serviceMock.tabularImportExecutions.mockResolvedValue({ data: { items: [], total: 0, limit: 25, offset: 0 } })
     serviceMock.importProfiles.mockResolvedValue({ data: [] }); serviceMock.createImportProfile.mockResolvedValue({ data: { id: 'profile-1', profileKey: 'REPASSE_BP_PAULISTA', displayName: 'Repasse BP Paulista', sourceKey: 'BP_PAULISTA', version: 1, format: 'CSV' } })
     serviceMock.importReadiness.mockResolvedValue({ data: { sources: [], readyToCalculate: true, blockingSourceKeys: [] } })
+    serviceMock.workbookInventory.mockResolvedValue({ data: { sheets: [
+      { sheetName: 'BP Paulista', classification: 'FINANCIAL_SOURCE_PROBABLE', suggestedSourceKey: 'BP_PAULISTA', nonEmptyDataRows: 2, detail: 'Estrutura tabular potencialmente importável.', recommendedProfileId: 'profile-1', recommendedProfileName: 'Repasse BP Paulista' },
+      { sheetName: 'GERAL', classification: 'CONSOLIDATION', suggestedSourceKey: 'GERAL', nonEmptyDataRows: 2, detail: 'Consolidação externa.' },
+      { sheetName: 'FECHAMENTO', classification: 'CONSOLIDATION', suggestedSourceKey: 'FECHAMENTO', nonEmptyDataRows: 2, detail: 'Consolidação externa.' },
+    ] } })
     serviceMock.importProfile.mockResolvedValue({ data: { id: 'profile-1', profileKey: 'REPASSE_BP_PAULISTA', displayName: 'Repasse BP Paulista', sourceKey: 'BP_PAULISTA', version: 1, config: { format: 'CSV', itemKeyColumn: 'referencia', amountColumn: 'valor', occurredOnColumn: 'data', externalReferenceColumn: 'referencia', participantColumn: 'executor', participantMappings: { 'EXECUTOR A': 'participant-1' }, decimalSeparator: 'COMMA' } } })
     serviceMock.bankReconciliationSuggestions.mockResolvedValue({ data: {
       paymentExecutionId: 'payment-1', classification: 'EXACT', totalCount: 1, offset: 0, limit: 20,
@@ -192,6 +197,24 @@ describe('FinancialClosingView', () => {
     expect((wrapper.vm as any).readinessBlocksCalculation).toBe(true)
     ;(wrapper.vm as any).selectSourceProfile('profile-1')
     await flush()
+    expect((wrapper.vm as any).selectedProfileId).toBe('profile-1')
+  })
+
+  it('guides a workbook inventory without treating GERAL or FECHAMENTO as importable sources', async () => {
+    useUserStore().tenantRole = 'ROLE_ADMIN'
+    const wrapper = mount(FinancialClosingView, { global: { plugins: [vuetify], stubs: { PageHeader: { props: ['title'], template: '<header>{{ title }}<slot name="actions" /></header>' }, AlertStrip: true } } })
+    await flush(); await flush()
+    ;(wrapper.vm as any).workbookFile = new File(['synthetic'], 'monthly.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    await (wrapper.vm as any).inventoryWorkbook(); await flush()
+    expect(serviceMock.workbookInventory).toHaveBeenCalledWith(expect.objectContaining({ id: 'closing-1' }), expect.any(File))
+    expect(wrapper.text()).toContain('Importar minha planilha mensal')
+    expect(wrapper.text()).toContain('Perfil recomendado: Repasse BP Paulista')
+    expect(wrapper.text()).toContain('GERAL')
+    expect(wrapper.text()).toContain('FECHAMENTO')
+    expect((wrapper.vm as any).isPermanentConsolidation((wrapper.vm as any).workbookInventory.sheets[1])).toBe(true)
+    expect((wrapper.vm as any).workbookClassification((wrapper.vm as any).workbookInventory.sheets[2])).toBe('CONSOLIDATION')
+    ;(wrapper.vm as any).prepareWorkbookSource((wrapper.vm as any).workbookInventory.sheets[0])
+    expect((wrapper.vm as any).newSourceKey).toBe('BP_PAULISTA')
     expect((wrapper.vm as any).selectedProfileId).toBe('profile-1')
   })
 

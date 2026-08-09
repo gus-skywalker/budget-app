@@ -47,8 +47,8 @@ export interface AssistedImportProfileConfig { format: 'CSV' | 'XLSX'; expectedS
 export interface AssistedImportProfileDetail extends Omit<AssistedImportProfile, 'format' | 'expectedSheet'> { config: AssistedImportProfileConfig }
 export interface ImportReadinessSource { sourceId: string; sourceKey: string; displayName: string; status: 'NOT_CONFIGURED' | 'READY_TO_IMPORT' | 'IMPORTED' | 'CRITICAL_PENDING'; recommendedProfileId?: string | null; recommendedProfileName?: string | null; action: string; detail: string }
 export interface ImportReadiness { sources: ImportReadinessSource[]; readyToCalculate: boolean; blockingSourceKeys: string[] }
-export interface ImportReadinessSource { sourceId: string; sourceKey: string; displayName: string; status: 'NOT_CONFIGURED' | 'READY_TO_IMPORT' | 'IMPORTED' | 'CRITICAL_PENDING'; recommendedProfileId?: string | null; recommendedProfileName?: string | null; action: string; detail: string }
-export interface ImportReadiness { sources: ImportReadinessSource[]; readyToCalculate: boolean; blockingSourceKeys: string[] }
+export interface WorkbookSheetInventory { sheetName: string; classification: 'FINANCIAL_SOURCE_PROBABLE' | 'CONSOLIDATION' | 'SUPPORT_REVIEW'; suggestedSourceKey: string; nonEmptyDataRows: number; detail: string; recommendedProfileId?: string | null; recommendedProfileName?: string | null }
+export interface WorkbookInventory { sheets: WorkbookSheetInventory[] }
 export interface TabularImportExecution { id: string; versionNumber: number; format: string; status: 'CONFIRMED' | 'REJECTED'; acceptedRows: number; rejectedRows: number; additionTotal: number; reversalTotal: number; actorUserId: string; occurredAt: string; issueCounts: Record<string, number> }
 export interface TabularImportExecutionPage { items: TabularImportExecution[]; total: number; limit: number; offset: number }
 export interface TabularImportIssuePage { total: number; issueCounts: Record<string, number>; items: TabularImportIssue[]; detailed: boolean }
@@ -149,6 +149,7 @@ export default {
   },
   importProfiles(closing: FinancialClosing) { return axiosInterceptor.get<AssistedImportProfile[]>(`${versionPath(closing)}/import-profiles`) },
   importReadiness(closing: FinancialClosing) { return axiosInterceptor.get<ImportReadiness>(`${versionPath(closing)}/import-readiness`) },
+  workbookInventory(closing: FinancialClosing, file: File) { const body=new FormData(); body.append('file',file); return axiosInterceptor.post<WorkbookInventory>(`${versionPath(closing)}/workbook-inventory`,body) },
   importProfile(closing: FinancialClosing, profileId: string) { return axiosInterceptor.get<AssistedImportProfileDetail>(`${versionPath(closing)}/import-profiles/${profileId}`) },
   createImportProfile(closing: FinancialClosing, payload: { profileKey: string; displayName: string; sourceKey: string; config: unknown }) { return axiosInterceptor.post<AssistedImportProfile>(`${versionPath(closing)}/import-profiles`, payload) },
   confirmProfileImport(closing: FinancialClosing, file: File, batchKey: string, profileId: string) { const body=new FormData(); body.append('file',file);body.append('batchKey',batchKey);body.append('profileId',profileId);return axiosInterceptor.post<TabularImport>(`${versionPath(closing)}/tabular-imports/profile`,body) },
