@@ -55,9 +55,9 @@ describe('FinancialClosingView', () => {
     serviceMock.payoutDecisions.mockResolvedValue({ data: [] }); serviceMock.marginDecisions.mockResolvedValue({ data: [] })
     serviceMock.sources.mockResolvedValue({ data: [] }); serviceMock.participants.mockResolvedValue({ data: [] }); serviceMock.sourceRetentions.mockResolvedValue({ data: [] }); serviceMock.participantScores.mockResolvedValue({ data: [] }); serviceMock.operations.mockResolvedValue({ data: { timeline: [], pendingActions: [] } }); serviceMock.tabularImportExecutions.mockResolvedValue({ data: { items: [], total: 0, limit: 25, offset: 0 } })
     serviceMock.importProfiles.mockResolvedValue({ data: [] }); serviceMock.createImportProfile.mockResolvedValue({ data: { id: 'profile-1', profileKey: 'REPASSE_BP_PAULISTA', displayName: 'Repasse BP Paulista', sourceKey: 'BP_PAULISTA', version: 1, format: 'CSV' } })
-    serviceMock.importReadiness.mockResolvedValue({ data: { sources: [], readyToCalculate: true, blockingSourceKeys: [] } })
+    serviceMock.importReadiness.mockResolvedValue({ data: { sources: [], readyToCalculate: false, blockingSourceKeys: [] } })
     serviceMock.workbookInventory.mockResolvedValue({ data: { sheets: [
-      { sheetName: 'BP Paulista', classification: 'FINANCIAL_SOURCE_PROBABLE', suggestedSourceKey: 'BP_PAULISTA', nonEmptyDataRows: 2, detail: 'Estrutura tabular potencialmente importável.', recommendedProfileId: 'profile-1', recommendedProfileName: 'Repasse BP Paulista', selectionStatus: 'AUTO_SELECTED' },
+      { sheetName: 'BP Paulista', classification: 'FINANCIAL_SOURCE_PROBABLE', suggestedSourceKey: 'BP_PAULISTA', nonEmptyDataRows: 2, detail: 'Estrutura tabular potencialmente importável.', recommendedProfileId: 'profile-1', recommendedProfileName: 'Repasse BP Paulista', selectionStatus: 'AUTO_SELECTED', headers: ['referencia', 'valor', 'data', 'executor'], mappingSuggestion: { itemKeyColumn: 'referencia', externalReferenceColumn: 'referencia', amountColumn: 'valor', occurredOnColumn: 'data', participantColumn: 'executor', identityCandidateColumns: ['referencia'], ambiguousFields: [] } },
       { sheetName: 'GERAL', classification: 'CONSOLIDATION', suggestedSourceKey: 'GERAL', nonEmptyDataRows: 2, detail: 'Consolidação externa.', selectionStatus: 'CONSOLIDATION' },
       { sheetName: 'FECHAMENTO', classification: 'CONSOLIDATION', suggestedSourceKey: 'FECHAMENTO', nonEmptyDataRows: 2, detail: 'Consolidação externa.', selectionStatus: 'CONSOLIDATION' },
     ] } })
@@ -228,6 +228,21 @@ describe('FinancialClosingView', () => {
     ;(wrapper.vm as any).prepareWorkbookSource((wrapper.vm as any).workbookInventory.sheets[0])
     expect((wrapper.vm as any).newSourceKey).toBe('BP_PAULISTA')
     expect((wrapper.vm as any).selectedProfileId).toBe('profile-1')
+  })
+
+  it('homologates a candidate structurally before saving a reusable source profile', async () => {
+    useUserStore().tenantRole = 'ROLE_ADMIN'
+    serviceMock.upsertSource.mockResolvedValue({ data: { id: 'source-1', sourceKey: 'SOURCE_ALPHA', displayName: 'Fonte Alpha' } })
+    const wrapper = mount(FinancialClosingView, { global: { plugins: [vuetify], stubs: { PageHeader: { props: ['title'], template: '<header>{{ title }}</header>' }, AlertStrip: true } } })
+    await flush(); await flush()
+    const sheet = { sheetName: 'Fonte Alpha', classification: 'FINANCIAL_SOURCE_PROBABLE', suggestedSourceKey: 'SOURCE_ALPHA', nonEmptyDataRows: 2, detail: 'Dados encontrados.', selectionStatus: 'REVIEW_REQUIRED', headers: ['item reference', 'amount', 'event date', 'responsible'], mappingSuggestion: { itemKeyColumn: 'item reference', externalReferenceColumn: 'item reference', amountColumn: 'amount', occurredOnColumn: 'event date', participantColumn: 'responsible', identityCandidateColumns: ['item reference'], ambiguousFields: [] } }
+    ;(wrapper.vm as any).prepareWorkbookSource(sheet)
+    expect((wrapper.vm as any).guidedSheet).toEqual(sheet)
+    expect((wrapper.vm as any).guidedMapping.itemKeyColumn).toBe('item reference')
+    await (wrapper.vm as any).saveGuidedSourceProfile(); await flush(); await flush()
+    expect(serviceMock.upsertSource).toHaveBeenCalledWith(expect.objectContaining({ id: 'closing-1' }), 'SOURCE_ALPHA', 'Fonte Alpha')
+    expect(serviceMock.createImportProfile).toHaveBeenCalledWith(expect.objectContaining({ id: 'closing-1' }), expect.objectContaining({ sourceKey: 'SOURCE_ALPHA', config: expect.objectContaining({ headerSignature: ['item reference', 'amount', 'event date', 'responsible'], itemKeyColumn: 'item reference', amountColumn: 'amount' }) }))
+    expect((wrapper.vm as any).workbookSelected['Fonte Alpha']).toBe(true)
   })
 
   it('keeps owner-only sensitive access in the first guided step and reveals import only after preparation', async () => {
