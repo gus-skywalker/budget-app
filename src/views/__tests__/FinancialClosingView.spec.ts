@@ -11,11 +11,13 @@ const { serviceMock } = vi.hoisted(() => ({
   serviceMock: {
     list: vi.fn(), summary: vi.fn(), matrix: vi.fn(), memory: vi.fn(), drillDown: vi.fn(), calculate: vi.fn(),
     obligations: vi.fn(), bankReconciliationSuggestions: vi.fn(), bankReconciliationHistory: vi.fn(), confirmBankReconciliation: vi.fn(), rejectBankReconciliation: vi.fn(), workbookInventory: vi.fn(),
-    calculationRevisions: vi.fn(), payoutDecisions: vi.fn(), marginDecisions: vi.fn(), sources: vi.fn(), participants: vi.fn(), sourceRetentions: vi.fn(), participantScores: vi.fn(), upsertSourceRetention: vi.fn(), deactivateSourceRetention: vi.fn(), upsertParticipantScore: vi.fn(), createOrGet: vi.fn(), upsertSource: vi.fn(), upsertParticipant: vi.fn(), operations: vi.fn(), tabularImportExecutions: vi.fn(), importProfiles: vi.fn(), importReadiness: vi.fn(), importProfile: vi.fn(), createImportProfile: vi.fn(), validateProfileImport: vi.fn(), confirmProfileImport: vi.fn(), grantSensitiveAccess: vi.fn(),
+    calculationRevisions: vi.fn(), payoutDecisions: vi.fn(), marginDecisions: vi.fn(), sources: vi.fn(), participants: vi.fn(), sourceRetentions: vi.fn(), participantScores: vi.fn(), upsertSourceRetention: vi.fn(), deactivateSourceRetention: vi.fn(), upsertParticipantScore: vi.fn(), createOrGet: vi.fn(), upsertSource: vi.fn(), upsertParticipant: vi.fn(), operations: vi.fn(), tabularImportExecutions: vi.fn(), importProfiles: vi.fn(), importReadiness: vi.fn(), importProfile: vi.fn(), createImportProfile: vi.fn(), validateProfileImport: vi.fn(), confirmProfileImport: vi.fn(), grantSensitiveAccess: vi.fn(), workspaceSensitiveAccessGrants: vi.fn(), grantWorkspaceSensitiveAccess: vi.fn(), revokeWorkspaceSensitiveAccess: vi.fn(),
   },
 }))
+const { workspaceServiceMock } = vi.hoisted(() => ({ workspaceServiceMock: { listMembers: vi.fn() } }))
 
 vi.mock('@/services/FinancialClosingService', () => ({ default: serviceMock }))
+vi.mock('@/services/WorkspaceService', () => ({ default: workspaceServiceMock }))
 
 class ResizeObserverMock { observe() {} unobserve() {} disconnect() {} }
 globalThis.ResizeObserver = ResizeObserverMock as any
@@ -64,7 +66,8 @@ describe('FinancialClosingView', () => {
       paymentExecutionId: 'payment-1', classification: 'EXACT', totalCount: 1, offset: 0, limit: 20,
       candidates: [{ candidateId: 'safe-candidate-1', amount: 100, transactionDate: '2026-08-10', direction: 'OUTFLOW', classification: 'EXACT', score: 100, reasons: ['AMOUNT_EXACT', 'REFERENCE_HMAC_MATCH'], maskedAccount: null, ruleVersion: 'BANK_RECONCILIATION_V19A_1', candidateFingerprint: 'opaque-fingerprint' }],
     } })
-    serviceMock.bankReconciliationHistory.mockResolvedValue({ data: [] })
+    serviceMock.bankReconciliationHistory.mockResolvedValue({ data: [] }); serviceMock.workspaceSensitiveAccessGrants.mockResolvedValue({ data: [] })
+    workspaceServiceMock.listMembers.mockResolvedValue({ data: [] })
     serviceMock.drillDown.mockResolvedValue({ data: { participantId: 'elimar', sourceId: 'consult', grossAmount: 7068, deductionAmount: 1154.20, adjustmentAmount: 0, netAmount: 5913.80, items: [{ itemId: 'i1', clientItemKey: 'consultoria-elimar', financialLabel: 'Consultoria', signedGrossAmount: 7068, deductionAmount: 1154.20, adjustmentAmount: 0, netAmount: 5913.80 }] } })
   })
 
@@ -106,6 +109,8 @@ describe('FinancialClosingView', () => {
     serviceMock.upsertParticipantScore.mockResolvedValue({ data: { id: 'score-1' } })
     const wrapper = mount(FinancialClosingView, { global: { plugins: [vuetify], stubs: { PageHeader: { props: ['title'], template: '<header>{{ title }}</header>' }, AlertStrip: true } } })
     await flush(); await flush(); await (wrapper.vm as any).loadSetup()
+    ;(wrapper.vm as any).manualSetupOpen = true; (wrapper.vm as any).importStepOpen = true
+    await flush()
     ;(wrapper.vm as any).retentionSourceKey='BP_PAULISTA'; (wrapper.vm as any).retentionName='Fundo'; (wrapper.vm as any).retentionPercentage=10; (wrapper.vm as any).retentionJustification='Política vigente'
     await (wrapper.vm as any).saveRetention()
     expect(serviceMock.upsertSourceRetention).toHaveBeenCalledWith(expect.objectContaining({ id: 'closing-1' }), expect.objectContaining({ sourceKey: 'BP_PAULISTA', percentage: 10 }))
@@ -121,6 +126,8 @@ describe('FinancialClosingView', () => {
     ['ROLE_ADMIN', true],
   ])('reflects calculation permission for %s', async (role, expectedEnabled) => {
     useUserStore().tenantRole = role
+    serviceMock.sources.mockResolvedValue({ data: [{ id: 'bp', sourceKey: 'BP_PAULISTA', displayName: 'Repasse BP Paulista' }] })
+    serviceMock.importReadiness.mockResolvedValue({ data: { sources: [{ sourceId: 'bp', sourceKey: 'BP_PAULISTA', displayName: 'Repasse BP Paulista', status: 'IMPORTED', recommendedProfileId: 'profile-1', recommendedProfileName: 'Repasse BP Paulista', action: 'Importação confirmada', detail: 'Fonte pronta.' }], readyToCalculate: true, blockingSourceKeys: [] } })
     const wrapper = mount(FinancialClosingView, {
       global: {
         plugins: [vuetify],
@@ -132,8 +139,8 @@ describe('FinancialClosingView', () => {
     })
     await flush(); await flush()
 
-    const recalculate = wrapper.get('button')
-    expect(recalculate.attributes('disabled') === undefined).toBe(expectedEnabled)
+    const recalculate = wrapper.findAll('button').find(button => button.text().includes('Recalcular'))
+    expect(Boolean(recalculate)).toBe(expectedEnabled)
   })
 
   it('renders safe, read-only bank suggestions without sensitive fields', async () => {
@@ -175,14 +182,14 @@ describe('FinancialClosingView', () => {
     expect(wrapper.text()).not.toContain('Confirmar')
   })
 
-  it('shows the generic import entry point to members but keeps confirmation restricted', async () => {
+  it('keeps the detailed import hidden for members until a source is prepared', async () => {
     const wrapper = mount(FinancialClosingView, {
       global: { plugins: [vuetify], stubs: { PageHeader: { props: ['title'], template: '<header>{{ title }}</header>' }, AlertStrip: true } },
     })
     await flush(); await flush()
-    expect(wrapper.text()).toContain('Importar planilha')
-    expect(wrapper.text()).toContain('Mapeamento explícito de colunas')
-    expect(wrapper.text()).toContain('confirmação é restrita a ADMIN/OWNER')
+    expect(wrapper.text()).toContain('Importar minha planilha mensal')
+    expect(wrapper.text()).toContain('Ler abas da planilha')
+    expect(wrapper.text()).not.toContain('Mapeamento explícito de colunas')
     expect(wrapper.text()).not.toContain('Confirmar lote normalizado')
   })
 
@@ -191,13 +198,13 @@ describe('FinancialClosingView', () => {
     serviceMock.importReadiness.mockResolvedValue({ data: { sources: [{ sourceId: 'bp', sourceKey: 'BP_PAULISTA', displayName: 'Repasse BP Paulista', status: 'READY_TO_IMPORT', recommendedProfileId: 'profile-1', recommendedProfileName: 'Repasse BP Paulista', action: 'Importar', detail: 'Aguarda lote confirmado.' }], readyToCalculate: false, blockingSourceKeys: ['BP_PAULISTA'] } })
     const wrapper = mount(FinancialClosingView, { global: { plugins: [vuetify], stubs: { PageHeader: { props: ['title'], template: '<header>{{ title }}<slot name="actions" /></header>' }, AlertStrip: true } } })
     await flush(); await flush()
-    expect(wrapper.text()).toContain('Fontes para importar')
-    expect(wrapper.text()).toContain('Pronta para importar')
-    expect(wrapper.text()).toContain('GERAL')
     expect((wrapper.vm as any).readinessBlocksCalculation).toBe(true)
     ;(wrapper.vm as any).selectSourceProfile('profile-1')
     await flush()
     expect((wrapper.vm as any).selectedProfileId).toBe('profile-1')
+    expect(wrapper.text()).toContain('Fontes para importar')
+    expect(wrapper.text()).toContain('Pronta para importar')
+    expect(wrapper.text()).toContain('GERAL')
   })
 
   it('guides a workbook inventory without treating GERAL or FECHAMENTO as importable sources', async () => {
@@ -221,6 +228,22 @@ describe('FinancialClosingView', () => {
     ;(wrapper.vm as any).prepareWorkbookSource((wrapper.vm as any).workbookInventory.sheets[0])
     expect((wrapper.vm as any).newSourceKey).toBe('BP_PAULISTA')
     expect((wrapper.vm as any).selectedProfileId).toBe('profile-1')
+  })
+
+  it('keeps owner-only sensitive access in the first guided step and reveals import only after preparation', async () => {
+    useUserStore().tenantRole = 'ROLE_OWNER'
+    useUserStore().user = { id: 'owner-1' }
+    serviceMock.grantSensitiveAccess.mockResolvedValue({ data: { granted: true } })
+    const wrapper = mount(FinancialClosingView, { global: { plugins: [vuetify], stubs: { PageHeader: { props: ['title'], template: '<header>{{ title }}</header>' }, AlertStrip: true } } })
+    await flush(); await flush()
+    expect(wrapper.text()).toContain('Habilitar leitura protegida')
+    expect(wrapper.text()).not.toContain('Fonte tabular')
+    expect(wrapper.text()).not.toContain('Configurar as fontes e participantes')
+    ;(wrapper.vm as any).sensitiveAccessConfirmed = true
+    await (wrapper.vm as any).enableOwnSensitiveAccess(); await flush()
+    expect(serviceMock.grantSensitiveAccess).toHaveBeenCalledWith(expect.objectContaining({ id: 'closing-1' }), expect.anything(), true)
+    expect((wrapper.vm as any).ownerSensitiveAccessEnabled).toBe(true)
+    expect(wrapper.text()).toContain('Planilha mensal XLSX')
   })
 
   it('turns unresolved participants and ambiguous identity into actionable blocks without an override', async () => {
@@ -258,9 +281,11 @@ describe('FinancialClosingView', () => {
     expect(wrapper.text()).toContain('Escopo DEFAULT')
     await (wrapper.vm as any).createClosing(); await flush()
     expect(serviceMock.createOrGet).toHaveBeenCalledWith(expect.any(Number), expect.any(Number), 'DEFAULT', 'BRL')
+    expect(wrapper.text()).not.toContain('Configure as fontes e participantes')
+    ;(wrapper.vm as any).manualSetupOpen=true; await flush()
     ;(wrapper.vm as any).newSourceKey='CONSULTING'; (wrapper.vm as any).newSourceName='Consultoria'; await (wrapper.vm as any).addSource()
     expect(serviceMock.upsertSource).toHaveBeenCalledWith(expect.objectContaining({ id: 'closing-1' }), 'CONSULTING', 'Consultoria')
-    expect(wrapper.text()).toContain('Abas de consolidação')
+    expect(wrapper.text()).toContain('1. Configure as fontes e participantes')
   })
 
   it('saves an assisted profile using the stable source key and explicit participant mapping', async () => {
