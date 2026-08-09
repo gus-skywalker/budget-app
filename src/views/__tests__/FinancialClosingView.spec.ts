@@ -55,9 +55,9 @@ describe('FinancialClosingView', () => {
     serviceMock.importProfiles.mockResolvedValue({ data: [] }); serviceMock.createImportProfile.mockResolvedValue({ data: { id: 'profile-1', profileKey: 'REPASSE_BP_PAULISTA', displayName: 'Repasse BP Paulista', sourceKey: 'BP_PAULISTA', version: 1, format: 'CSV' } })
     serviceMock.importReadiness.mockResolvedValue({ data: { sources: [], readyToCalculate: true, blockingSourceKeys: [] } })
     serviceMock.workbookInventory.mockResolvedValue({ data: { sheets: [
-      { sheetName: 'BP Paulista', classification: 'FINANCIAL_SOURCE_PROBABLE', suggestedSourceKey: 'BP_PAULISTA', nonEmptyDataRows: 2, detail: 'Estrutura tabular potencialmente importável.', recommendedProfileId: 'profile-1', recommendedProfileName: 'Repasse BP Paulista' },
-      { sheetName: 'GERAL', classification: 'CONSOLIDATION', suggestedSourceKey: 'GERAL', nonEmptyDataRows: 2, detail: 'Consolidação externa.' },
-      { sheetName: 'FECHAMENTO', classification: 'CONSOLIDATION', suggestedSourceKey: 'FECHAMENTO', nonEmptyDataRows: 2, detail: 'Consolidação externa.' },
+      { sheetName: 'BP Paulista', classification: 'FINANCIAL_SOURCE_PROBABLE', suggestedSourceKey: 'BP_PAULISTA', nonEmptyDataRows: 2, detail: 'Estrutura tabular potencialmente importável.', recommendedProfileId: 'profile-1', recommendedProfileName: 'Repasse BP Paulista', selectionStatus: 'AUTO_SELECTED' },
+      { sheetName: 'GERAL', classification: 'CONSOLIDATION', suggestedSourceKey: 'GERAL', nonEmptyDataRows: 2, detail: 'Consolidação externa.', selectionStatus: 'CONSOLIDATION' },
+      { sheetName: 'FECHAMENTO', classification: 'CONSOLIDATION', suggestedSourceKey: 'FECHAMENTO', nonEmptyDataRows: 2, detail: 'Consolidação externa.', selectionStatus: 'CONSOLIDATION' },
     ] } })
     serviceMock.importProfile.mockResolvedValue({ data: { id: 'profile-1', profileKey: 'REPASSE_BP_PAULISTA', displayName: 'Repasse BP Paulista', sourceKey: 'BP_PAULISTA', version: 1, config: { format: 'CSV', itemKeyColumn: 'referencia', amountColumn: 'valor', occurredOnColumn: 'data', externalReferenceColumn: 'referencia', participantColumn: 'executor', participantMappings: { 'EXECUTOR A': 'participant-1' }, decimalSeparator: 'COMMA' } } })
     serviceMock.bankReconciliationSuggestions.mockResolvedValue({ data: {
@@ -209,11 +209,15 @@ describe('FinancialClosingView', () => {
     await (wrapper.vm as any).inventoryWorkbook(); await flush()
     expect(serviceMock.workbookInventory).toHaveBeenCalledWith(expect.objectContaining({ id: 'closing-1' }), expect.any(File), true)
     expect(wrapper.text()).toContain('Importar minha planilha mensal')
-    expect(wrapper.text()).toContain('Perfil recomendado: Repasse BP Paulista')
+    expect(wrapper.text()).toContain('Perfil compatível encontrado')
     expect(wrapper.text()).toContain('GERAL')
     expect(wrapper.text()).toContain('FECHAMENTO')
     expect((wrapper.vm as any).isPermanentConsolidation((wrapper.vm as any).workbookInventory.sheets[1])).toBe(true)
     expect((wrapper.vm as any).workbookClassification((wrapper.vm as any).workbookInventory.sheets[2])).toBe('CONSOLIDATION')
+    expect((wrapper.vm as any).selectedWorkbookSheets).toHaveLength(1)
+    ;(wrapper.vm as any).removeWorkbookSelection((wrapper.vm as any).workbookInventory.sheets[0])
+    expect((wrapper.vm as any).selectedWorkbookSheets).toHaveLength(0)
+    expect(serviceMock.confirmProfileImport).not.toHaveBeenCalled()
     ;(wrapper.vm as any).prepareWorkbookSource((wrapper.vm as any).workbookInventory.sheets[0])
     expect((wrapper.vm as any).newSourceKey).toBe('BP_PAULISTA')
     expect((wrapper.vm as any).selectedProfileId).toBe('profile-1')
