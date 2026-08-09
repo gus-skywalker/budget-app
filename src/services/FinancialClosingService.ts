@@ -49,6 +49,7 @@ export interface ImportReadinessSource { sourceId: string; sourceKey: string; di
 export interface ImportReadiness { sources: ImportReadinessSource[]; readyToCalculate: boolean; blockingSourceKeys: string[] }
 export interface WorkbookSheetInventory { sheetName: string; classification: 'FINANCIAL_SOURCE_PROBABLE' | 'CONSOLIDATION' | 'SUPPORT_REVIEW'; suggestedSourceKey: string; nonEmptyDataRows: number; detail: string; recommendedProfileId?: string | null; recommendedProfileName?: string | null }
 export interface WorkbookInventory { sheets: WorkbookSheetInventory[] }
+export interface SensitiveWorkspaceGrant { id: string; userId: string; grantedByUserId: string; grantedAt: string }
 export interface TabularImportExecution { id: string; versionNumber: number; format: string; status: 'CONFIRMED' | 'REJECTED'; acceptedRows: number; rejectedRows: number; additionTotal: number; reversalTotal: number; actorUserId: string; occurredAt: string; issueCounts: Record<string, number> }
 export interface TabularImportExecutionPage { items: TabularImportExecution[]; total: number; limit: number; offset: number }
 export interface TabularImportIssuePage { total: number; issueCounts: Record<string, number>; items: TabularImportIssue[]; detailed: boolean }
@@ -139,21 +140,21 @@ export default {
   createMarginDecision(closing: FinancialClosing, payload: { poolKey: string; allocations: unknown[] }) { return axiosInterceptor.post<MarginDecision>(`/financial-closings/${closing.id}/margin-decisions`, { versionNumber: closing.currentVersion.versionNumber, ...payload }) },
   submitMarginDecision(closing: FinancialClosing, id: string, expectedRevision: number) { return axiosInterceptor.post<MarginDecision>(`/financial-closings/${closing.id}/margin-decisions/${id}/submit`, { expectedRevision }) },
   approveMarginDecision(closing: FinancialClosing, id: string, expectedRevision: number, justification: string) { return axiosInterceptor.post<MarginDecision>(`/financial-closings/${closing.id}/margin-decisions/${id}/approve`, { expectedRevision, justification, idempotencyKey: crypto.randomUUID() }) },
-  validateTabularImport(closing: FinancialClosing, file: File, mapping: TabularImportMapping) {
-    const body = new FormData(); body.append('file', file); body.append('mapping', JSON.stringify(mapping))
+  validateTabularImport(closing: FinancialClosing, file: File, mapping: TabularImportMapping, sensitiveAccessConfirmed = false) {
+    const body = new FormData(); body.append('file', file); body.append('mapping', JSON.stringify(mapping)); body.append('sensitiveAccessConfirmed', String(sensitiveAccessConfirmed))
     return axiosInterceptor.post<TabularImportValidation>(`${versionPath(closing)}/tabular-imports/validate`, body)
   },
-  confirmTabularImport(closing: FinancialClosing, file: File, batchKey: string, mapping: TabularImportMapping) {
-    const body = new FormData(); body.append('file', file); body.append('batchKey', batchKey); body.append('mapping', JSON.stringify(mapping))
+  confirmTabularImport(closing: FinancialClosing, file: File, batchKey: string, mapping: TabularImportMapping, sensitiveAccessConfirmed = false) {
+    const body = new FormData(); body.append('file', file); body.append('batchKey', batchKey); body.append('mapping', JSON.stringify(mapping)); body.append('sensitiveAccessConfirmed', String(sensitiveAccessConfirmed))
     return axiosInterceptor.post<TabularImport>(`${versionPath(closing)}/tabular-imports`, body)
   },
   importProfiles(closing: FinancialClosing) { return axiosInterceptor.get<AssistedImportProfile[]>(`${versionPath(closing)}/import-profiles`) },
   importReadiness(closing: FinancialClosing) { return axiosInterceptor.get<ImportReadiness>(`${versionPath(closing)}/import-readiness`) },
-  workbookInventory(closing: FinancialClosing, file: File) { const body=new FormData(); body.append('file',file); return axiosInterceptor.post<WorkbookInventory>(`${versionPath(closing)}/workbook-inventory`,body) },
+  workbookInventory(closing: FinancialClosing, file: File, sensitiveAccessConfirmed = false) { const body=new FormData(); body.append('file',file); body.append('sensitiveAccessConfirmed',String(sensitiveAccessConfirmed)); return axiosInterceptor.post<WorkbookInventory>(`${versionPath(closing)}/workbook-inventory`,body) },
   importProfile(closing: FinancialClosing, profileId: string) { return axiosInterceptor.get<AssistedImportProfileDetail>(`${versionPath(closing)}/import-profiles/${profileId}`) },
   createImportProfile(closing: FinancialClosing, payload: { profileKey: string; displayName: string; sourceKey: string; config: unknown }) { return axiosInterceptor.post<AssistedImportProfile>(`${versionPath(closing)}/import-profiles`, payload) },
-  confirmProfileImport(closing: FinancialClosing, file: File, batchKey: string, profileId: string) { const body=new FormData(); body.append('file',file);body.append('batchKey',batchKey);body.append('profileId',profileId);return axiosInterceptor.post<TabularImport>(`${versionPath(closing)}/tabular-imports/profile`,body) },
-  validateProfileImport(closing: FinancialClosing, file: File, profileId: string) { const body=new FormData(); body.append('file',file);body.append('profileId',profileId);return axiosInterceptor.post<TabularImportValidation>(`${versionPath(closing)}/tabular-imports/profile/validate`,body) },
+  confirmProfileImport(closing: FinancialClosing, file: File, batchKey: string, profileId: string, sensitiveAccessConfirmed = false) { const body=new FormData(); body.append('file',file);body.append('batchKey',batchKey);body.append('profileId',profileId);body.append('sensitiveAccessConfirmed',String(sensitiveAccessConfirmed));return axiosInterceptor.post<TabularImport>(`${versionPath(closing)}/tabular-imports/profile`,body) },
+  validateProfileImport(closing: FinancialClosing, file: File, profileId: string, sensitiveAccessConfirmed = false) { const body=new FormData(); body.append('file',file);body.append('profileId',profileId);body.append('sensitiveAccessConfirmed',String(sensitiveAccessConfirmed));return axiosInterceptor.post<TabularImportValidation>(`${versionPath(closing)}/tabular-imports/profile/validate`,body) },
   tabularImportExecutions(closing: FinancialClosing, limit = 25, offset = 0) { return axiosInterceptor.get<TabularImportExecutionPage>(`/financial-closings/${closing.id}/tabular-imports`, { params: { limit, offset } }) },
   tabularImportIssues(closing: FinancialClosing, executionId: string) { return axiosInterceptor.get<TabularImportIssuePage>(`/financial-closings/${closing.id}/tabular-imports/${executionId}/issues`) },
   operations(closing: FinancialClosing) { return axiosInterceptor.get<ClosingOperations>(`/financial-closings/${closing.id}/operations`) },
@@ -170,5 +171,8 @@ export default {
   approveCorrection(id: string, expectedRevision: number) { return axiosInterceptor.post<FinancialCorrection>(`/financial-closings/financial-corrections/${id}/approve`, { expectedRevision, idempotencyKey: crypto.randomUUID() }) },
   rejectCorrection(id: string, expectedRevision: number, reasonCode: string) { return axiosInterceptor.post<FinancialCorrection>(`/financial-closings/financial-corrections/${id}/reject`, { expectedRevision, reasonCode }) },
   settlementReversal(id: string) { return axiosInterceptor.get<SettlementReversal>(`/financial-closings/financial-corrections/${id}/settlement-reversal`) },
+  workspaceSensitiveAccessGrants() { return axiosInterceptor.get<SensitiveWorkspaceGrant[]>('/financial-closings/sensitive-workspace-access-grants') },
+  grantWorkspaceSensitiveAccess(userId: string) { return axiosInterceptor.put<SensitiveWorkspaceGrant>('/financial-closings/sensitive-workspace-access-grants', { userId }) },
+  revokeWorkspaceSensitiveAccess(userId: string) { return axiosInterceptor.delete(`/financial-closings/sensitive-workspace-access-grants/${userId}`) },
   grantSensitiveAccess(closing: FinancialClosing, userId: string, confirmed: boolean) { return axiosInterceptor.put(`/financial-closings/${closing.id}/sensitive-access-grants`, { userId, confirmed }) },
 }

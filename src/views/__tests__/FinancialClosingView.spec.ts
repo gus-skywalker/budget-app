@@ -205,8 +205,9 @@ describe('FinancialClosingView', () => {
     const wrapper = mount(FinancialClosingView, { global: { plugins: [vuetify], stubs: { PageHeader: { props: ['title'], template: '<header>{{ title }}<slot name="actions" /></header>' }, AlertStrip: true } } })
     await flush(); await flush()
     ;(wrapper.vm as any).workbookFile = new File(['synthetic'], 'monthly.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    ;(wrapper.vm as any).sensitiveAccessConfirmed = true
     await (wrapper.vm as any).inventoryWorkbook(); await flush()
-    expect(serviceMock.workbookInventory).toHaveBeenCalledWith(expect.objectContaining({ id: 'closing-1' }), expect.any(File))
+    expect(serviceMock.workbookInventory).toHaveBeenCalledWith(expect.objectContaining({ id: 'closing-1' }), expect.any(File), true)
     expect(wrapper.text()).toContain('Importar minha planilha mensal')
     expect(wrapper.text()).toContain('Perfil recomendado: Repasse BP Paulista')
     expect(wrapper.text()).toContain('GERAL')
