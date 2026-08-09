@@ -218,6 +218,29 @@ describe('FinancialClosingView', () => {
     expect((wrapper.vm as any).selectedProfileId).toBe('profile-1')
   })
 
+  it('turns unresolved participants and ambiguous identity into actionable blocks without an override', async () => {
+    useUserStore().tenantRole = 'ROLE_ADMIN'
+    serviceMock.participants.mockResolvedValue({ data: [{ id: 'participant-1', participantKey: 'ANA', displayName: 'Ana Demo', active: true }] })
+    const wrapper = mount(FinancialClosingView, { global: { plugins: [vuetify], stubs: { PageHeader: { props: ['title'], template: '<header>{{ title }}</header>' }, AlertStrip: true } } })
+    await flush(); await flush(); await (wrapper.vm as any).loadSetup()
+    ;(wrapper.vm as any).tabularValidation = {
+      valid: false, rowCount: 1, ignoredRowCount: 0, reversalRowCount: 0, additionTotal: 100, reversalTotal: 0,
+      detailedPreview: true, previewRows: [], ignoredRows: [], unmappedParticipantLabels: ['DANIEL_DEMO'],
+      issues: [
+        { rowNumber: 2, code: 'INVALID_CLIENT_ITEM_KEY', message: 'Identidade ambígua' },
+        { rowNumber: 2, code: 'UNMAPPED_PARTICIPANT', message: 'Participante sem mapa' },
+      ],
+    }
+    await flush()
+    expect(wrapper.text()).toContain('A fonte não fornece identidade única para estes itens')
+    expect(wrapper.text()).toContain('Solicite o identificador externo ou uma regra de deduplicação formal aprovada')
+    expect(wrapper.text()).toContain('Resolver participantes desconhecidos')
+    expect(wrapper.text()).toContain('DANIEL_DEMO')
+    expect(wrapper.text()).not.toContain('Forçar importação')
+    const confirmProfile = wrapper.findAll('button').find(button => button.text().includes('Confirmar com perfil'))
+    expect(confirmProfile?.attributes('disabled')).toBeDefined()
+  })
+
   it('lets an administrator start the first closing and configure canonical inputs without API manual work', async () => {
     useUserStore().tenantRole = 'ROLE_ADMIN'
     serviceMock.list.mockResolvedValueOnce({ data: [] }).mockResolvedValueOnce({ data: [closing] })
