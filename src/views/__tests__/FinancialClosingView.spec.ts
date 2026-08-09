@@ -241,9 +241,11 @@ describe('FinancialClosingView', () => {
     expect((wrapper.vm as any).guidedMapping.itemKeyColumn).toBe('item reference')
     ;(wrapper.vm as any).guidedItemKeyColumns = ['item reference', 'event date']
     ;(wrapper.vm as any).guidedMapping.externalReferenceColumn = ''
+    ;(wrapper.vm as any).guidedMultiplicityPolicy = 'PRESERVE_LEGITIMATE_MULTIPLICITY'
+    ;(wrapper.vm as any).guidedMultiplicityJustification = 'Ocorrências repetidas foram homologadas pela fonte.'
     await (wrapper.vm as any).saveGuidedSourceProfile(); await flush(); await flush()
     expect(serviceMock.upsertSource).toHaveBeenCalledWith(expect.objectContaining({ id: 'closing-1' }), 'SOURCE_ALPHA', 'Fonte Alpha')
-    expect(serviceMock.createImportProfile).toHaveBeenCalledWith(expect.objectContaining({ id: 'closing-1' }), expect.objectContaining({ sourceKey: 'SOURCE_ALPHA', config: expect.objectContaining({ headerSignature: ['item reference', 'amount', 'event date', 'responsible'], itemKeyColumn: 'item reference', itemKeyColumns: ['item reference', 'event date'], externalReferenceColumn: '', amountColumn: 'amount' }) }))
+    expect(serviceMock.createImportProfile).toHaveBeenCalledWith(expect.objectContaining({ id: 'closing-1' }), expect.objectContaining({ sourceKey: 'SOURCE_ALPHA', config: expect.objectContaining({ headerSignature: ['item reference', 'amount', 'event date', 'responsible'], itemKeyColumn: 'item reference', itemKeyColumns: ['item reference', 'event date'], externalReferenceColumn: '', amountColumn: 'amount', multiplicityPolicy: 'PRESERVE_LEGITIMATE_MULTIPLICITY', multiplicityJustification: 'Ocorrências repetidas foram homologadas pela fonte.' }) }))
     expect((wrapper.vm as any).workbookSelected['Fonte Alpha']).toBe(true)
   })
 
