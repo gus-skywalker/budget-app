@@ -239,9 +239,10 @@ describe('FinancialClosingView', () => {
     ;(wrapper.vm as any).prepareWorkbookSource(sheet)
     expect((wrapper.vm as any).guidedSheet).toEqual(sheet)
     expect((wrapper.vm as any).guidedMapping.itemKeyColumn).toBe('item reference')
+    ;(wrapper.vm as any).guidedItemKeyColumns = ['item reference', 'event date']
     await (wrapper.vm as any).saveGuidedSourceProfile(); await flush(); await flush()
     expect(serviceMock.upsertSource).toHaveBeenCalledWith(expect.objectContaining({ id: 'closing-1' }), 'SOURCE_ALPHA', 'Fonte Alpha')
-    expect(serviceMock.createImportProfile).toHaveBeenCalledWith(expect.objectContaining({ id: 'closing-1' }), expect.objectContaining({ sourceKey: 'SOURCE_ALPHA', config: expect.objectContaining({ headerSignature: ['item reference', 'amount', 'event date', 'responsible'], itemKeyColumn: 'item reference', amountColumn: 'amount' }) }))
+    expect(serviceMock.createImportProfile).toHaveBeenCalledWith(expect.objectContaining({ id: 'closing-1' }), expect.objectContaining({ sourceKey: 'SOURCE_ALPHA', config: expect.objectContaining({ headerSignature: ['item reference', 'amount', 'event date', 'responsible'], itemKeyColumn: 'item reference', itemKeyColumns: ['item reference', 'event date'], amountColumn: 'amount' }) }))
     expect((wrapper.vm as any).workbookSelected['Fonte Alpha']).toBe(true)
   })
 
