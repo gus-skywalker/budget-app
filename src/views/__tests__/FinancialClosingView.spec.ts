@@ -245,7 +245,7 @@ describe('FinancialClosingView', () => {
     ;(wrapper.vm as any).guidedMultiplicityJustification = 'Ocorrências repetidas foram homologadas pela fonte.'
     await (wrapper.vm as any).saveGuidedSourceProfile(); await flush(); await flush()
     expect(serviceMock.upsertSource).toHaveBeenCalledWith(expect.objectContaining({ id: 'closing-1' }), 'SOURCE_ALPHA', 'Fonte Alpha')
-    expect(serviceMock.createImportProfile).toHaveBeenCalledWith(expect.objectContaining({ id: 'closing-1' }), expect.objectContaining({ sourceKey: 'SOURCE_ALPHA', config: expect.objectContaining({ headerSignature: ['item reference', 'amount', 'event date', 'responsible'], itemKeyColumn: 'item reference', itemKeyColumns: ['item reference', 'event date'], externalReferenceColumn: '', amountColumn: 'amount', multiplicityPolicy: 'PRESERVE_LEGITIMATE_MULTIPLICITY', multiplicityJustification: 'Ocorrências repetidas foram homologadas pela fonte.' }) }))
+    expect(serviceMock.createImportProfile).toHaveBeenCalledWith(expect.objectContaining({ id: 'closing-1' }), expect.objectContaining({ sourceKey: 'SOURCE_ALPHA', config: expect.objectContaining({ headerSignature: ['item reference', 'amount', 'event date', 'responsible'], itemKeyColumn: 'item reference', itemKeyColumns: ['item reference', 'event date'], externalReferenceColumn: '', amountColumn: 'amount', monetaryFormat: expect.objectContaining({ groupingSeparator: 'NONE', normalizeCommonSpaces: true }), multiplicityPolicy: 'PRESERVE_LEGITIMATE_MULTIPLICITY', multiplicityJustification: 'Ocorrências repetidas foram homologadas pela fonte.' }) }))
     expect((wrapper.vm as any).workbookSelected['Fonte Alpha']).toBe(true)
   })
 
@@ -276,12 +276,17 @@ describe('FinancialClosingView', () => {
       issues: [
         { rowNumber: 2, code: 'INVALID_CLIENT_ITEM_KEY', message: 'Identidade ambígua' },
         { rowNumber: 2, code: 'UNMAPPED_PARTICIPANT', message: 'Participante sem mapa' },
+        { rowNumber: 3, code: 'AMOUNT_INCOMPATIBLE_FORMAT', message: 'Formato incompatível' },
+        { rowNumber: 4, code: 'MISSING_DATE', message: 'Data obrigatória' },
       ],
     }
     await flush()
     expect(wrapper.text()).toContain('A fonte não fornece identidade única para estes itens')
     expect(wrapper.text()).toContain('Solicite o identificador externo ou uma regra de deduplicação formal aprovada')
     expect(wrapper.text()).toContain('Resolver participantes desconhecidos')
+    expect(wrapper.text()).toContain('Valor incompatível com o formato homologado')
+    expect(wrapper.text()).toContain('Data de competência ausente')
+    expect(wrapper.text()).toContain('Nenhuma data será preenchida automaticamente')
     expect(wrapper.text()).toContain('DANIEL_DEMO')
     expect(wrapper.text()).not.toContain('Forçar importação')
     const confirmProfile = wrapper.findAll('button').find(button => button.text().includes('Confirmar com perfil'))
