@@ -272,7 +272,7 @@ describe('FinancialClosingView', () => {
     await flush(); await flush(); await (wrapper.vm as any).loadSetup()
     ;(wrapper.vm as any).tabularValidation = {
       valid: false, rowCount: 1, ignoredRowCount: 0, reversalRowCount: 0, additionTotal: 100, reversalTotal: 0,
-      detailedPreview: true, previewRows: [], ignoredRows: [], unmappedParticipantLabels: ['DANIEL_DEMO'],
+      detailedPreview: true, previewRows: [], ignoredRows: [], unmappedParticipantLabels: ['DANIEL_DEMO'], excludableInvalidRowCount: 1, exclusionCanResolveAllIssues: false,
       issues: [
         { rowNumber: 2, code: 'INVALID_CLIENT_ITEM_KEY', message: 'Identidade ambígua' },
         { rowNumber: 2, code: 'UNMAPPED_PARTICIPANT', message: 'Participante sem mapa' },
@@ -287,6 +287,7 @@ describe('FinancialClosingView', () => {
     expect(wrapper.text()).toContain('Valor incompatível com o formato homologado')
     expect(wrapper.text()).toContain('Data de competência ausente')
     expect(wrapper.text()).toContain('Nenhuma data será preenchida automaticamente')
+    expect(wrapper.text()).toContain('Há 1 linha(s) inválida(s) que impedem a confirmação')
     expect(wrapper.text()).toContain('DANIEL_DEMO')
     expect(wrapper.text()).not.toContain('Forçar importação')
     const confirmProfile = wrapper.findAll('button').find(button => button.text().includes('Confirmar com perfil'))
