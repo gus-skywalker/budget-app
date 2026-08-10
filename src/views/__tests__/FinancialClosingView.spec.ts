@@ -230,6 +230,18 @@ describe('FinancialClosingView', () => {
     expect((wrapper.vm as any).selectedProfileId).toBe('profile-1')
   })
 
+  it('explains a rejected workbook inventory without claiming that only its size is the problem', async () => {
+    useUserStore().tenantRole = 'ROLE_ADMIN'
+    serviceMock.workbookInventory.mockRejectedValueOnce({ response: { status: 400 } })
+    const wrapper = mount(FinancialClosingView, { global: { plugins: [vuetify], stubs: { PageHeader: { props: ['title'], template: '<header>{{ title }}</header>' }, AlertStrip: true } } })
+    await flush(); await flush()
+    ;(wrapper.vm as any).workbookFile = new File(['synthetic'], 'monthly.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    ;(wrapper.vm as any).sensitiveAccessConfirmed = true
+    await (wrapper.vm as any).inventoryWorkbook(); await flush()
+    expect((wrapper.vm as any).workbookMessage).toContain('estrutura não pôde ser lida')
+    expect((wrapper.vm as any).workbookMessage).toContain('Nenhuma linha foi importada')
+  })
+
   it('homologates a candidate structurally before saving a reusable source profile', async () => {
     useUserStore().tenantRole = 'ROLE_ADMIN'
     serviceMock.upsertSource.mockResolvedValue({ data: { id: 'source-1', sourceKey: 'SOURCE_ALPHA', displayName: 'Fonte Alpha' } })
