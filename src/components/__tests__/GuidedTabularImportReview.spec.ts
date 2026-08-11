@@ -37,7 +37,7 @@ describe('GuidedTabularImportReview',()=>{
     expect(wrapper.text()).toContain('Revisar referências repetidas')
     expect(wrapper.text()).not.toContain('multiplicidade')
     expect(wrapper.text()).not.toContain('idempotência')
-    expect(wrapper.text()).toContain('Confirmo que estes valores entrarão nesta apuração')
+    expect(wrapper.text()).toContain('Confirmo o efeito financeiro')
     ;(wrapper.vm as any).financialConfirmation=true
     await (wrapper.vm as any).confirmReview()
     expect(serviceMock.confirmGuidedImportReview).toHaveBeenCalledTimes(1)
@@ -70,5 +70,26 @@ describe('GuidedTabularImportReview',()=>{
     await (wrapper.vm as any).useMonetaryFormat(true);await flush()
     expect(serviceMock.saveGuidedReviewDecision).toHaveBeenCalledWith(closing,'review-1',expect.objectContaining({action:'USE_MONETARY_FORMAT',saveAsProfile:true}))
     expect(wrapper.emitted('profileUpdated')).toHaveLength(1)
+  })
+
+  it('revalidates an exclusion immediately and shows its audited success state',async()=>{
+    const pending={...structuredClone(review),participants:[],repetitions:[],summary:{...review.summary,participantGroups:0,participantOccurrences:0,repetitionGroups:0,repetitionOccurrences:0,importableRows:3},blockingReasons:['Há uma data ausente que precisa ser resolvida']}
+    const excluded={...structuredClone(pending),pendingRows:[{...pending.pendingRows[1],resolution:'EXCLUDE_ROW'}],summary:{...pending.summary,excludedRows:1},readyForConfirmation:true,status:'READY',blockingReasons:[]}
+    serviceMock.startGuidedImportReview.mockResolvedValueOnce({data:pending}).mockResolvedValueOnce({data:excluded})
+    const wrapper=mount(GuidedTabularImportReview,{props:{closing,file:new File(['synthetic'],'synthetic.xlsx'),profileId:'profile-1',sensitiveAccessConfirmed:true,participants:[]},global:{plugins:[vuetify]}})
+    await (wrapper.vm as any).openReview();await flush()
+    ;(wrapper.vm as any).rowJustifications['R-2']='Linha incompleta revisada pelo operador'
+    await (wrapper.vm as any).excludeRow(pending.pendingRows[1]);await flush()
+
+    expect(serviceMock.saveGuidedReviewDecision).toHaveBeenCalledWith(closing,'review-1',expect.objectContaining({action:'EXCLUDE_ROW',justification:'Linha incompleta revisada pelo operador'}))
+    expect(serviceMock.startGuidedImportReview).toHaveBeenCalledTimes(2)
+    expect(wrapper.text()).toContain('Exclusão confirmada e auditada para este lote')
+    expect(wrapper.text()).toContain('Linha 5 excluída deste lote com auditoria')
+  })
+
+  it('starts the review automatically when a selected file and profile are ready',async()=>{
+    mount(GuidedTabularImportReview,{props:{closing,file:new File(['synthetic'],'synthetic.xlsx'),profileId:'profile-1',sensitiveAccessConfirmed:true,participants:[],autoStart:true},global:{plugins:[vuetify]}})
+    await flush()
+    expect(serviceMock.startGuidedImportReview).toHaveBeenCalledTimes(1)
   })
 })
