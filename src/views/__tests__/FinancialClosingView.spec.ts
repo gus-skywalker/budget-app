@@ -302,8 +302,8 @@ describe('FinancialClosingView', () => {
     expect(wrapper.text()).toContain('Há 1 linha(s) inválida(s) que impedem a confirmação')
     expect(wrapper.text()).toContain('DANIEL_DEMO')
     expect(wrapper.text()).not.toContain('Forçar importação')
-    const confirmProfile = wrapper.findAll('button').find(button => button.text().includes('Confirmar com perfil'))
-    expect(confirmProfile?.attributes('disabled')).toBeDefined()
+    expect(wrapper.text()).toContain('Preparar esta importação')
+    expect(wrapper.findAll('button').some(button => button.text().includes('Confirmar importação'))).toBe(false)
   })
 
   it('lets an administrator start the first closing and configure canonical inputs without API manual work', async () => {

@@ -1,0 +1,89 @@
+<template>
+  <section class="guided-review" aria-labelledby="guided-review-title">
+    <div class="guided-review__heading">
+      <div><p class="eyebrow">Revisão assistida</p><h3 id="guided-review-title">Preparar esta importação</h3></div>
+      <v-chip v-if="review" size="small" :color="review.readyForConfirmation ? 'success' : 'warning'" variant="tonal">{{ review.readyForConfirmation ? 'Pronta para confirmar' : 'Há decisões pendentes' }}</v-chip>
+    </div>
+    <p>O CoBudget organiza as exceções. Nada entra no fechamento antes da sua confirmação final.</p>
+    <v-btn color="primary" variant="tonal" :loading="loading" :disabled="!file || !profileId || !sensitiveAccessConfirmed" @click="openReview">{{ review ? 'Atualizar revisão final' : 'Analisar e iniciar revisão' }}</v-btn>
+    <p v-if="message" class="guided-review__message" role="status">{{ message }}</p>
+
+    <template v-if="review">
+      <div v-if="review.alreadyConfirmed" class="guided-review__notice" role="status"><strong>Este arquivo já foi confirmado.</strong><p>O resultado anterior será reutilizado; nenhum item será criado novamente.</p></div>
+
+      <article v-if="review.participants.length" class="guided-review__step">
+        <h4>1. Quem recebe estes valores?</h4>
+        <p>O CoBudget encontrou uma coluna de responsável ou beneficiário. Confirme se ela representa quem participa desta apuração.</p>
+        <v-checkbox v-model="participantColumnConfirmed" label="Sim, esta coluna identifica o participante ou beneficiário da apuração" hide-details />
+        <p v-if="participantColumnConfirmed">Ela contém <strong>{{ review.participants.length }} grupo(s)</strong> em <strong>{{ review.summary.participantOccurrences }} ocorrência(s)</strong>. Revise um grupo por vez; nenhuma sugestão é aplicada automaticamente.</p>
+        <div v-for="group in participantColumnConfirmed ? review.participants : []" :key="group.decisionKey" class="guided-review__item">
+          <div><strong>{{ group.sourceLabel }}</strong><small>{{ group.occurrenceCount }} ocorrência(s)</small></div>
+          <v-chip size="x-small" :color="group.blocking ? 'warning' : 'success'" variant="tonal">{{ participantResolutionLabel(group.resolution) }}</v-chip>
+          <div v-if="group.suggestions.length" class="guided-review__suggestions"><span>Sugestões para sua revisão:</span><v-btn v-for="suggestion in group.suggestions" :key="suggestion.participantId" size="x-small" variant="tonal" :disabled="saving" @click="linkParticipant(group.decisionKey, suggestion.participantId)">{{ suggestion.displayName }} · {{ suggestion.confidence }}%</v-btn></div>
+          <div class="guided-review__actions"><v-select v-model="participantSelections[group.decisionKey]" :items="participantOptions" label="Escolher participante existente" hide-details /><v-btn size="small" variant="tonal" :disabled="!participantSelections[group.decisionKey] || saving" @click="linkParticipant(group.decisionKey, participantSelections[group.decisionKey])">Associar</v-btn><v-btn size="small" variant="text" :disabled="saving" @click="createParticipant(group)">Criar participante com este nome</v-btn><v-btn size="small" variant="text" :disabled="saving" @click="markExternalCreditor(group.decisionKey)">É um credor externo</v-btn><v-btn size="small" variant="text" :disabled="saving" @click="leavePending(group.decisionKey)">Retomar depois</v-btn></div>
+          <p v-if="group.resolution === 'EXTERNAL_CREDITOR'" class="guided-review__warning">Credores externos não recebem Produtividade. Este grupo fica identificado, mas ainda bloqueia esta importação.</p>
+        </div>
+      </article>
+
+      <article v-if="review.repetitions.length" class="guided-review__step">
+        <h4>2. Revisar referências repetidas</h4>
+        <p>Uma mesma referência aparece mais de uma vez. Confirme apenas se essas ocorrências são itens econômicos distintos.</p>
+        <ul><li v-for="(group,index) in review.repetitions" :key="`${group.decisionKey}-${index}`"><strong>Grupo {{ index + 1 }}</strong> · {{ group.occurrenceCount }} ocorrências · impacto {{ money(group.aggregateAmount) }}</li></ul>
+        <div class="guided-review__actions"><v-select v-model="repetitionReason" :items="repetitionReasons" label="Motivo revisado" hide-details /><v-text-field v-model="repetitionNote" label="Complemento opcional" hide-details /><v-btn size="small" color="primary" variant="tonal" :disabled="!repetitionReason || saving" @click="acceptRepetitions(review.repetitions[0].decisionKey)">Estas repetições são itens distintos e devem ser mantidas</v-btn></div>
+      </article>
+
+      <article v-if="review.pendingRows.length" class="guided-review__step">
+        <h4>3. Pendências deste lote</h4>
+        <p>Linhas abaixo continuam fora da confirmação até serem corrigidas ou excluídas. A planilha original não será alterada.</p>
+        <div v-if="review.dateAlternatives?.length" class="guided-review__notice"><strong>Outra coluna de data pode resolver pendências</strong><p>O resultado abaixo foi testado somente nesta prévia. Escolher uma opção não altera a planilha nem o perfil salvo.</p><div class="guided-review__actions"><v-btn v-for="option in review.dateAlternatives" :key="option.decisionKey" size="small" variant="tonal" :disabled="saving" @click="useDateColumn(option)">Usar “{{ option.columnLabel }}” · resolve {{ option.resolvedRows }} linha(s)</v-btn></div></div>
+        <div v-for="row in review.pendingRows" :key="row.decisionKey" class="guided-review__item">
+          <div><strong>Linha {{ row.rowNumber }}</strong><small>{{ issueLabel(row.issueType) }} · {{ rowResolutionLabel(row.resolution) }}</small></div>
+          <div class="guided-review__actions"><v-text-field v-if="row.issueType.includes('AMOUNT')" v-model.number="rowAmounts[row.decisionKey]" type="number" min="0.01" step="0.01" label="Valor correto para este lote" hide-details /><v-text-field v-if="row.issueType.includes('DATE')" v-model="rowDates[row.decisionKey]" type="date" label="Data correta para este lote" hide-details /><v-btn v-if="row.issueType.includes('AMOUNT')" size="small" variant="tonal" :disabled="!rowAmounts[row.decisionKey] || saving" @click="correctAmount(row)">Usar este valor</v-btn><v-btn v-if="row.issueType.includes('DATE')" size="small" variant="tonal" :disabled="!rowDates[row.decisionKey] || saving" @click="correctDate(row)">Usar esta data</v-btn></div>
+          <div class="guided-review__actions"><v-text-field v-model="rowJustifications[row.decisionKey]" label="Justificativa para excluir" hide-details /><v-btn size="small" color="error" variant="text" :disabled="!rowJustifications[row.decisionKey]?.trim() || saving" @click="excludeRow(row)">Excluir deste fechamento</v-btn></div>
+        </div>
+      </article>
+
+      <article class="guided-review__step guided-review__summary">
+        <h4>4. Revisão final</h4>
+        <p><strong>Incluída:</strong> {{ sourceName }}<span v-if="sheetName"> · aba “{{ sheetName }}”</span>.</p><p v-if="ignoredSheets.length"><strong>Ignoradas:</strong> {{ ignoredSheets.join(', ') }} — permanecem fora do cálculo.</p>
+        <dl><div><dt>Linhas lidas</dt><dd>{{ review.summary.rowsRead }}</dd></div><div><dt>Ignoradas com segurança</dt><dd>{{ review.summary.structurallyIgnored }}</dd></div><div><dt>Corrigidas nesta revisão</dt><dd>{{ review.summary.correctedRows }}</dd></div><div><dt>Excluídas por decisão</dt><dd>{{ review.summary.excludedRows }}</dd></div><div><dt>Prontas para importar</dt><dd>{{ review.summary.importableRows }}</dd></div><div><dt>Total importável</dt><dd>{{ money(review.summary.importableTotal) }}</dd></div></dl>
+        <ul v-if="review.blockingReasons.length" class="guided-review__blocks" role="alert"><li v-for="reason in review.blockingReasons" :key="reason">{{ reason }}</li></ul>
+        <template v-if="review.readyForConfirmation"><v-checkbox v-model="financialConfirmation" label="Confirmo que estes valores entrarão nesta apuração" hide-details /><v-btn color="primary" :loading="confirming" :disabled="!financialConfirmation" @click="confirmReview">Confirmar importação</v-btn></template>
+        <p v-else class="guided-review__message">Salve as decisões acima e clique em “Atualizar revisão final”.</p>
+      </article>
+    </template>
+  </section>
+</template>
+
+<script setup lang="ts">
+import { computed, reactive, ref } from 'vue'
+import FinancialClosingService, { type ClosingParticipant, type FinancialClosing, type GuidedImportReview, type GuidedParticipantGroup, type GuidedPendingRow } from '@/services/FinancialClosingService'
+
+const props=withDefaults(defineProps<{closing:FinancialClosing;file:File|null;profileId:string;sensitiveAccessConfirmed:boolean;participants:ClosingParticipant[];sourceName?:string;sheetName?:string;ignoredSheets?:string[]}>(),{sourceName:'Fonte selecionada',sheetName:'',ignoredSheets:()=>[]})
+const emit=defineEmits<{confirmed:[];participantCreated:[]}>()
+const review=ref<GuidedImportReview|null>(null);const loading=ref(false);const saving=ref(false);const confirming=ref(false);const message=ref('');const financialConfirmation=ref(false);const participantColumnConfirmed=ref(false);const participantSelections=reactive<Record<string,string>>({});const rowAmounts=reactive<Record<string,number|null>>({});const rowDates=reactive<Record<string,string>>({});const rowJustifications=reactive<Record<string,string>>({});const repetitionReason=ref('');const repetitionNote=ref('')
+const repetitionReasons=[{title:'A fonte registra itens distintos com a mesma referência',value:'SOURCE_CONFIRMED_DISTINCT'},{title:'O documento operacional comprova ocorrências separadas',value:'OPERATIONAL_EVIDENCE'},{title:'Outro motivo revisado',value:'OTHER_REVIEWED_REASON'}]
+const participantOptions=computed(()=>props.participants.filter(item=>item.active).map(item=>({title:item.displayName,value:item.id})))
+function eventKey(){return crypto.randomUUID()}
+async function openReview(){if(!props.file||!props.profileId)return;loading.value=true;message.value='';try{review.value=(await FinancialClosingService.startGuidedImportReview(props.closing,props.file,props.profileId,props.sensitiveAccessConfirmed)).data;financialConfirmation.value=false;message.value=review.value.readyForConfirmation?'Revisão concluída. Confira o resumo antes de confirmar.':'As decisões pendentes foram organizadas abaixo.'}catch(error:any){message.value=error?.response?.status===403?'Seu acesso a dados protegidos não está autorizado neste espaço.':'Não foi possível preparar a revisão. Confirme o perfil e o arquivo selecionados.'}finally{loading.value=false}}
+async function save(decision:Record<string,unknown>){if(!review.value)return false;saving.value=true;message.value='';try{const response=await FinancialClosingService.saveGuidedReviewDecision(props.closing,review.value.reviewId,{eventKey:eventKey(),expectedRevision:review.value.revision,...decision} as any);review.value.revision=response.data.revision;message.value='Decisão salva. Ela será revalidada no resumo final.';return true}catch(error:any){message.value=error?.response?.status===409?'A revisão mudou em outra sessão. Atualize a revisão final antes de continuar.':'Não foi possível salvar esta decisão.';return false}finally{saving.value=false}}
+async function linkParticipant(decisionKey:string,participantId:string){if(await save({decisionKey,action:'LINK_PARTICIPANT',participantId,reasonCode:'EXPLICIT_ASSOCIATION',justification:'Associação explícita feita na revisão protegida'})){const group=review.value?.participants.find(item=>item.decisionKey===decisionKey);if(group){group.resolution='LINK_PARTICIPANT';group.participantId=participantId;group.blocking=false}}}
+function safeKey(label:string){return label.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Za-z0-9]+/g,'_').replace(/^_|_$/g,'').toUpperCase().slice(0,80)||`PARTICIPANT_${Date.now()}`}
+async function createParticipant(group:GuidedParticipantGroup){if(await save({decisionKey:group.decisionKey,action:'CREATE_PARTICIPANT',participantKey:safeKey(group.sourceLabel),displayName:group.sourceLabel,reasonCode:'EXPLICIT_CREATION',justification:'Criação confirmada a partir da prévia protegida'})){group.resolution='LINK_PARTICIPANT';group.blocking=false;emit('participantCreated')}}
+async function markExternalCreditor(decisionKey:string){if(await save({decisionKey,action:'EXTERNAL_CREDITOR',reasonCode:'EXTERNAL_PARTY',justification:'Classificado explicitamente como credor externo'})){const group=review.value?.participants.find(item=>item.decisionKey===decisionKey);if(group){group.resolution='EXTERNAL_CREDITOR';group.blocking=true}}}
+async function leavePending(decisionKey:string){if(await save({decisionKey,action:'PENDING',reasonCode:'REVIEW_LATER',justification:'Operador decidiu retomar este grupo depois'})){const group=review.value?.participants.find(item=>item.decisionKey===decisionKey);if(group){group.resolution='PENDING';group.blocking=true}}}
+async function acceptRepetitions(decisionKey:string){if(await save({decisionKey,action:'ACCEPT_DISTINCT_ITEMS',reasonCode:repetitionReason.value,justification:repetitionNote.value.trim()||'Ocorrências revisadas em lote pelo operador'})&&review.value){review.value.repetitionsAccepted=true;review.value.repetitionReasonCode=repetitionReason.value}}
+async function correctAmount(row:GuidedPendingRow){if(await save({decisionKey:row.decisionKey,action:'CORRECT_AMOUNT',correctedAmount:rowAmounts[row.decisionKey],reasonCode:'MANUAL_BATCH_CORRECTION',justification:'Valor corrigido somente neste lote'}))row.resolution='CORRECTED'}
+async function correctDate(row:GuidedPendingRow){if(await save({decisionKey:row.decisionKey,action:'CORRECT_DATE',correctedDate:rowDates[row.decisionKey],reasonCode:'MANUAL_BATCH_CORRECTION',justification:'Data corrigida somente neste lote'}))row.resolution='CORRECTED'}
+async function excludeRow(row:GuidedPendingRow){if(await save({decisionKey:row.decisionKey,action:'EXCLUDE_ROW',reasonCode:'EXCLUDED_BY_OPERATOR',justification:rowJustifications[row.decisionKey]}))row.resolution='EXCLUDE_ROW'}
+async function useDateColumn(option:{decisionKey:string;columnLabel:string}){await save({decisionKey:option.decisionKey,action:'USE_DATE_COLUMN',reasonCode:'ALTERNATIVE_DATE_COLUMN_REVIEWED',justification:`Coluna alternativa ${option.columnLabel} revisada somente para este lote`})}
+async function confirmReview(){if(!review.value||!props.file||!financialConfirmation.value)return;confirming.value=true;message.value='';try{const response=await FinancialClosingService.confirmGuidedImportReview(props.closing,review.value.reviewId,props.file,props.sensitiveAccessConfirmed);message.value=response.data.replayed?'Este arquivo já estava confirmado; nenhum item foi duplicado.':'Importação confirmada. Agora você pode recalcular a apuração.';review.value.alreadyConfirmed=true;review.value.readyForConfirmation=false;emit('confirmed')}catch(error:any){message.value=error?.response?.status===409?'O arquivo ou a revisão mudou. Atualize a revisão final.':'A confirmação foi bloqueada. Atualize a revisão e resolva as pendências indicadas.'}finally{confirming.value=false}}
+function money(value:number){return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(value||0)}
+function participantResolutionLabel(value:string){return({LINK_PARTICIPANT:'Associado',EXTERNAL_CREDITOR:'Credor externo',PENDING:'Pendente'} as Record<string,string>)[value]||value}
+function rowResolutionLabel(value:string){return({PENDING:'aguardando decisão',CORRECTED:'correção salva',EXCLUDE_ROW:'exclusão salva'} as Record<string,string>)[value]||value}
+function issueLabel(value:string){const types=value.split(',');return types.map(type=>type.includes('AMOUNT')?'valor inválido':type.includes('DATE')?'data ausente ou inválida':'dado inválido').join(' e ')}
+</script>
+
+<style scoped>
+.guided-review{margin-top:16px;padding:18px;border:1px solid #dfe3eb;border-radius:12px;background:#fbfcfe}.guided-review__heading{display:flex;justify-content:space-between;gap:12px;align-items:start}.guided-review h3,.guided-review h4{margin:2px 0 8px}.guided-review>p,.guided-review__step>p,.guided-review__message,.guided-review__warning{color:var(--cb-text-muted,#667085)}.eyebrow{margin:0;text-transform:uppercase;letter-spacing:.08em;font-size:.72rem;color:var(--cb-text-muted,#667085)}.guided-review__step{margin-top:18px;padding-top:16px;border-top:1px solid #e5e7eb}.guided-review__item{display:grid;gap:10px;margin:10px 0;padding:14px;background:white;border-radius:10px}.guided-review__item small{display:block;color:var(--cb-text-muted,#667085)}.guided-review__actions,.guided-review__suggestions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.guided-review__actions :deep(.v-input){min-width:210px;flex:1}.guided-review__suggestions span{font-size:.84rem;color:var(--cb-text-muted,#667085)}.guided-review__warning{font-size:.84rem;margin:0}.guided-review__notice{margin-top:12px;padding:12px;border-left:4px solid #2563eb;background:#eff6ff}.guided-review__notice p{margin:4px 0 0}.guided-review__summary dl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.guided-review__summary dl div{padding:10px;background:white;border-radius:8px}.guided-review__summary dt{font-size:.8rem;color:var(--cb-text-muted,#667085)}.guided-review__summary dd{margin:3px 0 0;font-weight:700}.guided-review__blocks{color:var(--cb-negative,#b42318)}@media(max-width:700px){.guided-review__heading{flex-direction:column}.guided-review__summary dl{grid-template-columns:1fr 1fr}.guided-review__actions{align-items:stretch;flex-direction:column}.guided-review__actions :deep(.v-input){width:100%}}
+</style>
