@@ -92,4 +92,15 @@ describe('GuidedTabularImportReview',()=>{
     await flush()
     expect(serviceMock.startGuidedImportReview).toHaveBeenCalledTimes(1)
   })
+
+  it('turns a missing participant column blocker into a direct profile-edit action',async()=>{
+    const missingColumn={...structuredClone(review),participants:[],repetitions:[],pendingRows:[],blockingReasons:['O perfil usa atribuição direta, mas não informa a coluna que identifica o participante. Publique uma nova versão do perfil com essa coluna antes de continuar']}
+    serviceMock.startGuidedImportReview.mockResolvedValue({data:missingColumn})
+    const wrapper=mount(GuidedTabularImportReview,{props:{closing,file:new File(['synthetic'],'synthetic.xlsx'),profileId:'profile-1',sensitiveAccessConfirmed:true,participants:[]},global:{plugins:[vuetify]}})
+    await (wrapper.vm as any).openReview();await flush()
+    const action=wrapper.findAll('button').find(button=>button.text().includes('Corrigir coluna do participante'))
+    expect(action).toBeTruthy()
+    await action!.trigger('click')
+    expect(wrapper.emitted('editProfileRequested')).toHaveLength(1)
+  })
 })
