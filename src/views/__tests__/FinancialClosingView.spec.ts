@@ -333,15 +333,18 @@ describe('FinancialClosingView', () => {
     await flush(); await flush(); await (wrapper.vm as any).loadSetup()
     ;(wrapper.vm as any).profileKey = 'REPASSE_BP_PAULISTA'; (wrapper.vm as any).profileName = 'Repasse BP Paulista'; (wrapper.vm as any).profileSourceKey = 'BP_PAULISTA'
     ;(wrapper.vm as any).profileItemKeyColumns = 'atendimento | codigo | subject'
+    ;(wrapper.vm as any).tabularMapping.participantLabelColumn = 'executor'
     ;(wrapper.vm as any).profileParticipantExternal = 'Executor A'; (wrapper.vm as any).profileParticipantId = 'participant-1'; (wrapper.vm as any).addProfileParticipantMapping()
     await (wrapper.vm as any).createImportProfile()
     expect(serviceMock.createImportProfile).toHaveBeenCalledWith(expect.objectContaining({ id: 'closing-1' }), expect.objectContaining({
-      sourceKey: 'BP_PAULISTA', config: expect.objectContaining({ itemKeyColumns: ['atendimento', 'codigo', 'subject'], participantMappings: { 'EXECUTOR A': 'participant-1' } }),
+      sourceKey: 'BP_PAULISTA', config: expect.objectContaining({ itemKeyColumns: ['atendimento', 'codigo', 'subject'], participantColumn: 'executor', participantMappings: { 'EXECUTOR A': 'participant-1' } }),
     }))
     expect(wrapper.text()).toContain('chave da fonte')
     ;(wrapper.vm as any).selectedProfileId = 'profile-1'; await (wrapper.vm as any).loadSelectedProfile()
     expect(serviceMock.importProfile).toHaveBeenCalledWith(expect.objectContaining({ id: 'closing-1' }), 'profile-1')
     expect((wrapper.vm as any).profileParticipantMappings).toEqual({ 'EXECUTOR A': 'participant-1' })
+    expect((wrapper.vm as any).tabularMapping.participantLabelColumn).toBe('executor')
+    expect(wrapper.text()).toContain('Coluna que identifica o participante')
   })
 
   it('loads decision workflow and safe calculation revision comparison on demand', async () => {
