@@ -103,4 +103,17 @@ describe('GuidedTabularImportReview',()=>{
     await action!.trigger('click')
     expect(wrapper.emitted('editProfileRequested')).toHaveLength(1)
   })
+
+  it('navigates from an aggregate blocker to the participant decision section',async()=>{
+    const scrollIntoView=vi.fn()
+    Element.prototype.scrollIntoView=scrollIntoView
+    const participantBlocker={...structuredClone(review),blockingReasons:['Há beneficiários ainda sem associação explícita']}
+    serviceMock.startGuidedImportReview.mockResolvedValue({data:participantBlocker})
+    const wrapper=mount(GuidedTabularImportReview,{props:{closing,file:new File(['synthetic'],'synthetic.xlsx'),profileId:'profile-1',sensitiveAccessConfirmed:true,participants:[]},global:{plugins:[vuetify]}})
+    await (wrapper.vm as any).openReview();await flush()
+    const action=wrapper.findAll('button').find(button=>button.text().includes('Revisar participantes'))
+    expect(action).toBeTruthy()
+    await action!.trigger('click')
+    expect(scrollIntoView).toHaveBeenCalledWith({behavior:'smooth',block:'center'})
+  })
 })

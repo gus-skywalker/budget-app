@@ -12,11 +12,11 @@
       <div class="guided-review__sticky" role="region" aria-label="Próxima ação da importação">
         <div><strong>{{ review.readyForConfirmation ? 'Pronta para confirmar' : 'Revisão em andamento' }}</strong><small v-if="!review.readyForConfirmation">{{ review.blockingReasons[0] || 'Aguardando as decisões indicadas abaixo.' }}</small><small v-else>{{ review.summary.importableRows }} linha(s) · {{ money(review.summary.importableTotal) }}</small></div>
         <template v-if="review.readyForConfirmation"><v-checkbox v-model="financialConfirmation" label="Confirmo o efeito financeiro" hide-details /><v-btn color="primary" :loading="confirming" :disabled="!financialConfirmation" @click="confirmReview">Confirmar importação</v-btn></template>
-        <v-btn v-else variant="tonal" :loading="loading" @click="openReview">Revalidar agora</v-btn>
+        <template v-else><v-btn v-if="blockerAction(review.blockingReasons[0])" color="primary" variant="tonal" @click="resolveBlocker(review.blockingReasons[0])">{{ blockerAction(review.blockingReasons[0])?.label }}</v-btn><v-btn variant="text" :loading="loading" @click="openReview">Revalidar</v-btn></template>
       </div>
       <div v-if="review.alreadyConfirmed" class="guided-review__notice" role="status"><strong>Este arquivo já foi confirmado.</strong><p>O resultado anterior será reutilizado; nenhum item será criado novamente.</p></div>
 
-      <article v-if="review.monetaryFormat" class="guided-review__step">
+      <article v-if="review.monetaryFormat" ref="monetarySection" class="guided-review__step">
         <h4>1. Conferir o formato dos valores</h4>
         <div class="guided-review__item">
           <div><strong>{{ monetaryFormatLabel(review.monetaryFormat) }}</strong><small>{{ review.monetaryFormat.acceptedValues }} de {{ review.monetaryFormat.observedValues }} valor(es) reconhecido(s) · {{ review.monetaryFormat.rejectedValues }} exceção(ões)</small></div>
@@ -31,7 +31,7 @@
         </div>
       </article>
 
-      <article v-if="review.participants.length" class="guided-review__step">
+      <article v-if="review.participants.length" ref="participantsSection" class="guided-review__step">
         <h4>2. Quem recebe estes valores?</h4>
         <p>O CoBudget encontrou uma coluna de responsável ou beneficiário. Confirme se ela representa quem participa desta apuração.</p>
         <v-checkbox v-model="participantColumnConfirmed" label="Sim, esta coluna identifica o participante ou beneficiário da apuração" hide-details />
@@ -45,7 +45,7 @@
         </div>
       </article>
 
-      <article v-if="review.repetitions.length" class="guided-review__step">
+      <article v-if="review.repetitions.length" ref="repetitionsSection" class="guided-review__step">
         <h4>3. Revisar referências repetidas</h4>
         <p>Foram encontrados <strong>{{ review.repetitions.length }} grupo(s)</strong>, com <strong>{{ review.summary.repetitionOccurrences }} ocorrência(s)</strong> e impacto agregado de <strong>{{ money(repetitionTotal) }}</strong>.</p>
         <details class="guided-review__details"><summary>Ver grupos repetidos</summary><ul><li v-for="(group,index) in review.repetitions" :key="`${group.decisionKey}-${index}`"><strong>Grupo {{ index + 1 }}</strong> · {{ group.occurrenceCount }} ocorrências · impacto {{ money(group.aggregateAmount) }}</li></ul></details>
@@ -53,7 +53,7 @@
         <div v-else class="guided-review__actions"><v-select v-model="repetitionReason" :items="repetitionReasons" label="Motivo revisado" hide-details /><v-text-field v-model="repetitionNote" label="Complemento opcional" hide-details /><v-btn size="small" color="primary" variant="tonal" :disabled="!repetitionReason || saving" @click="acceptRepetitions(review.repetitions[0].decisionKey)">Estas repetições são itens distintos e devem ser mantidas</v-btn></div>
       </article>
 
-      <article v-if="review.pendingRows.length" class="guided-review__step">
+      <article v-if="review.pendingRows.length" ref="pendingRowsSection" class="guided-review__step">
         <h4>4. Pendências deste lote</h4>
         <p>Linhas abaixo continuam fora da confirmação até serem corrigidas ou excluídas. A planilha original não será alterada.</p>
         <div v-if="review.dateAlternatives?.length" class="guided-review__notice"><strong>Outra coluna de data pode resolver pendências</strong><p>O resultado abaixo foi testado somente nesta prévia. Escolher uma opção não altera a planilha nem o perfil salvo.</p><div class="guided-review__actions"><v-btn v-for="option in review.dateAlternatives" :key="option.decisionKey" size="small" variant="tonal" :disabled="saving" @click="useDateColumn(option)">Usar “{{ option.columnLabel }}” · resolve {{ option.resolvedRows }} linha(s)</v-btn></div></div>
@@ -69,7 +69,7 @@
         <h4>5. Revisão final</h4>
         <p><strong>Incluída:</strong> {{ sourceName }}<span v-if="sheetName"> · aba “{{ sheetName }}”</span>.</p><p v-if="ignoredSheets.length"><strong>Ignoradas:</strong> {{ ignoredSheets.join(', ') }} — permanecem fora do cálculo.</p>
         <dl><div><dt>Linhas lidas</dt><dd>{{ review.summary.rowsRead }}</dd></div><div><dt>Ignoradas com segurança</dt><dd>{{ review.summary.structurallyIgnored }}</dd></div><div><dt>Corrigidas nesta revisão</dt><dd>{{ review.summary.correctedRows }}</dd></div><div><dt>Excluídas por decisão</dt><dd>{{ review.summary.excludedRows }}</dd></div><div><dt>Prontas para importar</dt><dd>{{ review.summary.importableRows }}</dd></div><div><dt>Total importável</dt><dd>{{ money(review.summary.importableTotal) }}</dd></div></dl>
-        <ul v-if="review.blockingReasons.length" class="guided-review__blocks" role="alert"><li v-for="reason in review.blockingReasons" :key="reason"><span>{{ reason }}</span><v-btn v-if="isMissingParticipantColumn(reason)" size="small" variant="tonal" @click="emit('editProfileRequested')">Corrigir coluna do participante</v-btn></li></ul>
+        <ul v-if="review.blockingReasons.length" class="guided-review__blocks" role="alert"><li v-for="reason in review.blockingReasons" :key="reason"><span>{{ reason }}</span><v-btn v-if="blockerAction(reason)" size="small" variant="tonal" @click="resolveBlocker(reason)">{{ blockerAction(reason)?.label }}</v-btn></li></ul>
         <p v-if="!review.readyForConfirmation" class="guided-review__message">As decisões são revalidadas automaticamente. Resolva somente as pendências indicadas acima.</p>
       </article>
 
@@ -84,6 +84,7 @@ import FinancialClosingService, { type ClosingParticipant, type FinancialClosing
 const props=withDefaults(defineProps<{closing:FinancialClosing;file:File|null;profileId:string;sensitiveAccessConfirmed:boolean;participants:ClosingParticipant[];sourceName?:string;sheetName?:string;ignoredSheets?:string[];autoStart?:boolean}>(),{sourceName:'Fonte selecionada',sheetName:'',ignoredSheets:()=>[],autoStart:false})
 const emit=defineEmits<{confirmed:[];participantCreated:[];profileUpdated:[];editProfileRequested:[]}>()
 const review=ref<GuidedImportReview|null>(null);const loading=ref(false);const saving=ref(false);const confirming=ref(false);const message=ref('');const financialConfirmation=ref(false);const participantColumnConfirmed=ref(false);const participantSelections=reactive<Record<string,string>>({});const rowAmounts=reactive<Record<string,number|null>>({});const rowDates=reactive<Record<string,string>>({});const rowJustifications=reactive<Record<string,string>>({});const repetitionReason=ref('');const repetitionNote=ref('')
+const monetarySection=ref<HTMLElement|null>(null);const participantsSection=ref<HTMLElement|null>(null);const repetitionsSection=ref<HTMLElement|null>(null);const pendingRowsSection=ref<HTMLElement|null>(null)
 const repetitionReasons=[{title:'A fonte registra itens distintos com a mesma referência',value:'SOURCE_CONFIRMED_DISTINCT'},{title:'O documento operacional comprova ocorrências separadas',value:'OPERATIONAL_EVIDENCE'},{title:'Outro motivo revisado',value:'OTHER_REVIEWED_REASON'}]
 const participantOptions=computed(()=>props.participants.filter(item=>item.active).map(item=>({title:item.displayName,value:item.id})))
 const repetitionTotal=computed(()=>review.value?.repetitions.reduce((total,item)=>total+Number(item.aggregateAmount||0),0)||0)
@@ -107,7 +108,8 @@ function money(value:number){return new Intl.NumberFormat('pt-BR',{style:'curren
 function participantResolutionLabel(value:string){return({LINK_PARTICIPANT:'Associado',EXTERNAL_CREDITOR:'Credor externo',PENDING:'Pendente'} as Record<string,string>)[value]||value}
 function rowResolutionLabel(value:string){return({PENDING:'aguardando decisão',CORRECTED:'correção salva',EXCLUDE_ROW:'exclusão salva'} as Record<string,string>)[value]||value}
 function issueLabel(value:string){const types=value.split(',');return types.map(type=>type.includes('AMOUNT')?'valor inválido':type.includes('DATE')?'data ausente ou inválida':'dado inválido').join(' e ')}
-function isMissingParticipantColumn(reason:string){return reason.toLocaleLowerCase('pt-BR').includes('coluna que identifica o participante')}
+function blockerAction(reason?:string){if(!reason)return null;const normalized=reason.toLocaleLowerCase('pt-BR');if(normalized.includes('coluna que identifica o participante'))return{label:'Corrigir coluna do participante',target:'PROFILE'};if(normalized.includes('beneficiár')||normalized.includes('associe todos os beneficiários')||normalized.includes('participantes da apuração'))return{label:'Revisar participantes',target:'PARTICIPANTS'};if(normalized.includes('repeti')||normalized.includes('referências repetidas'))return{label:'Revisar repetições',target:'REPETITIONS'};if(normalized.includes('valor, data ou identidade')||normalized.includes('data')||normalized.includes('valor'))return{label:'Revisar linhas',target:'PENDING_ROWS'};if(normalized.includes('formato monetário'))return{label:'Revisar formato',target:'MONETARY'};return null}
+function resolveBlocker(reason?:string){const action=blockerAction(reason);if(!action)return;if(action.target==='PROFILE'){emit('editProfileRequested');return}const target=action.target==='PARTICIPANTS'?participantsSection.value:action.target==='REPETITIONS'?repetitionsSection.value:action.target==='PENDING_ROWS'?pendingRowsSection.value:monetarySection.value;if(typeof target?.scrollIntoView==='function')target.scrollIntoView({behavior:'smooth',block:'center'})}
 function monetaryFormatLabel(value:NonNullable<GuidedImportReview['monetaryFormat']>){const prefix=value.format.currencyPrefix?.trim();const grouping=({DOT:'.',COMMA:',',SPACE:'espaço',NBSP:'espaço',NONE:'sem separador'} as Record<string,string>)[value.format.groupingSeparator||'NONE'];const decimal=value.decimalSeparator==='COMMA'?',':'.';return `Padrão detectado: ${prefix?`${prefix} `:''}milhar ${grouping} · decimal ${decimal}`}
 watch(()=>[props.autoStart,props.profileId,props.file,props.sensitiveAccessConfirmed] as const,()=>{if(props.autoStart&&props.file&&props.profileId&&props.sensitiveAccessConfirmed)void openReview()},{immediate:true})
 </script>

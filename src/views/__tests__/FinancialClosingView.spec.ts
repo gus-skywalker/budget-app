@@ -215,6 +215,8 @@ describe('FinancialClosingView', () => {
     ;(wrapper.vm as any).sensitiveAccessConfirmed = true
     await (wrapper.vm as any).inventoryWorkbook(); await flush()
     expect(serviceMock.workbookInventory).toHaveBeenCalledWith(expect.objectContaining({ id: 'closing-1' }), expect.any(File), true)
+    expect((wrapper.vm as any).selectedTabularFile).toBe((wrapper.vm as any).selectedWorkbookFile)
+    expect((wrapper.vm as any).workbookMessage).toContain('mesmo arquivo será reutilizado')
     expect(wrapper.text()).toContain('Importar minha planilha mensal')
     expect(wrapper.text()).toContain('Perfil compatível encontrado')
     expect(wrapper.text()).toContain('GERAL')
