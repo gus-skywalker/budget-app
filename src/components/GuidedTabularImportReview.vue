@@ -11,8 +11,23 @@
     <template v-if="review">
       <div v-if="review.alreadyConfirmed" class="guided-review__notice" role="status"><strong>Este arquivo já foi confirmado.</strong><p>O resultado anterior será reutilizado; nenhum item será criado novamente.</p></div>
 
+      <article v-if="review.monetaryFormat" class="guided-review__step">
+        <h4>1. Conferir o formato dos valores</h4>
+        <div class="guided-review__item">
+          <div><strong>{{ monetaryFormatLabel(review.monetaryFormat) }}</strong><small>{{ review.monetaryFormat.acceptedValues }} de {{ review.monetaryFormat.observedValues }} valor(es) reconhecido(s) · {{ review.monetaryFormat.rejectedValues }} exceção(ões)</small></div>
+          <v-chip size="x-small" :color="review.monetaryFormat.confidence === 'HIGH' ? 'success' : 'warning'" variant="tonal">{{ review.monetaryFormat.confidence === 'HIGH' ? 'Confiança alta' : 'Precisa de revisão' }}</v-chip>
+          <p v-if="review.monetaryFormat.nativeNumericCanonical">Os valores numéricos do Excel são usados diretamente. Símbolo e separadores são apenas a apresentação encontrada na planilha.</p>
+          <p v-if="review.monetaryFormat.textualValues > 0">Para as {{ review.monetaryFormat.textualValues }} célula(s) textual(is), esta é uma sugestão desta revisão. O perfil reutilizável não será alterado sem uma ação separada.</p>
+          <p v-if="review.monetaryFormat.selected" class="guided-review__message">Formato escolhido para este lote<span v-if="review.monetaryFormat.savedAsProfile"> e salvo como novo padrão da fonte</span>.</p>
+          <div v-if="review.monetaryFormat.decisionKey" class="guided-review__actions">
+            <v-btn v-if="review.monetaryFormat.requiresDecision" size="small" color="primary" variant="tonal" :disabled="saving" @click="useMonetaryFormat(false)">Usar somente neste lote</v-btn>
+            <v-btn size="small" variant="text" :disabled="saving || review.monetaryFormat.savedAsProfile" @click="useMonetaryFormat(true)">Salvar como padrão desta fonte</v-btn>
+          </div>
+        </div>
+      </article>
+
       <article v-if="review.participants.length" class="guided-review__step">
-        <h4>1. Quem recebe estes valores?</h4>
+        <h4>2. Quem recebe estes valores?</h4>
         <p>O CoBudget encontrou uma coluna de responsável ou beneficiário. Confirme se ela representa quem participa desta apuração.</p>
         <v-checkbox v-model="participantColumnConfirmed" label="Sim, esta coluna identifica o participante ou beneficiário da apuração" hide-details />
         <p v-if="participantColumnConfirmed">Ela contém <strong>{{ review.participants.length }} grupo(s)</strong> em <strong>{{ review.summary.participantOccurrences }} ocorrência(s)</strong>. Revise um grupo por vez; nenhuma sugestão é aplicada automaticamente.</p>
@@ -26,14 +41,14 @@
       </article>
 
       <article v-if="review.repetitions.length" class="guided-review__step">
-        <h4>2. Revisar referências repetidas</h4>
+        <h4>3. Revisar referências repetidas</h4>
         <p>Uma mesma referência aparece mais de uma vez. Confirme apenas se essas ocorrências são itens econômicos distintos.</p>
         <ul><li v-for="(group,index) in review.repetitions" :key="`${group.decisionKey}-${index}`"><strong>Grupo {{ index + 1 }}</strong> · {{ group.occurrenceCount }} ocorrências · impacto {{ money(group.aggregateAmount) }}</li></ul>
         <div class="guided-review__actions"><v-select v-model="repetitionReason" :items="repetitionReasons" label="Motivo revisado" hide-details /><v-text-field v-model="repetitionNote" label="Complemento opcional" hide-details /><v-btn size="small" color="primary" variant="tonal" :disabled="!repetitionReason || saving" @click="acceptRepetitions(review.repetitions[0].decisionKey)">Estas repetições são itens distintos e devem ser mantidas</v-btn></div>
       </article>
 
       <article v-if="review.pendingRows.length" class="guided-review__step">
-        <h4>3. Pendências deste lote</h4>
+        <h4>4. Pendências deste lote</h4>
         <p>Linhas abaixo continuam fora da confirmação até serem corrigidas ou excluídas. A planilha original não será alterada.</p>
         <div v-if="review.dateAlternatives?.length" class="guided-review__notice"><strong>Outra coluna de data pode resolver pendências</strong><p>O resultado abaixo foi testado somente nesta prévia. Escolher uma opção não altera a planilha nem o perfil salvo.</p><div class="guided-review__actions"><v-btn v-for="option in review.dateAlternatives" :key="option.decisionKey" size="small" variant="tonal" :disabled="saving" @click="useDateColumn(option)">Usar “{{ option.columnLabel }}” · resolve {{ option.resolvedRows }} linha(s)</v-btn></div></div>
         <div v-for="row in review.pendingRows" :key="row.decisionKey" class="guided-review__item">
@@ -44,7 +59,7 @@
       </article>
 
       <article class="guided-review__step guided-review__summary">
-        <h4>4. Revisão final</h4>
+        <h4>5. Revisão final</h4>
         <p><strong>Incluída:</strong> {{ sourceName }}<span v-if="sheetName"> · aba “{{ sheetName }}”</span>.</p><p v-if="ignoredSheets.length"><strong>Ignoradas:</strong> {{ ignoredSheets.join(', ') }} — permanecem fora do cálculo.</p>
         <dl><div><dt>Linhas lidas</dt><dd>{{ review.summary.rowsRead }}</dd></div><div><dt>Ignoradas com segurança</dt><dd>{{ review.summary.structurallyIgnored }}</dd></div><div><dt>Corrigidas nesta revisão</dt><dd>{{ review.summary.correctedRows }}</dd></div><div><dt>Excluídas por decisão</dt><dd>{{ review.summary.excludedRows }}</dd></div><div><dt>Prontas para importar</dt><dd>{{ review.summary.importableRows }}</dd></div><div><dt>Total importável</dt><dd>{{ money(review.summary.importableTotal) }}</dd></div></dl>
         <ul v-if="review.blockingReasons.length" class="guided-review__blocks" role="alert"><li v-for="reason in review.blockingReasons" :key="reason">{{ reason }}</li></ul>
@@ -60,7 +75,7 @@ import { computed, reactive, ref } from 'vue'
 import FinancialClosingService, { type ClosingParticipant, type FinancialClosing, type GuidedImportReview, type GuidedParticipantGroup, type GuidedPendingRow } from '@/services/FinancialClosingService'
 
 const props=withDefaults(defineProps<{closing:FinancialClosing;file:File|null;profileId:string;sensitiveAccessConfirmed:boolean;participants:ClosingParticipant[];sourceName?:string;sheetName?:string;ignoredSheets?:string[]}>(),{sourceName:'Fonte selecionada',sheetName:'',ignoredSheets:()=>[]})
-const emit=defineEmits<{confirmed:[];participantCreated:[]}>()
+const emit=defineEmits<{confirmed:[];participantCreated:[];profileUpdated:[]}>()
 const review=ref<GuidedImportReview|null>(null);const loading=ref(false);const saving=ref(false);const confirming=ref(false);const message=ref('');const financialConfirmation=ref(false);const participantColumnConfirmed=ref(false);const participantSelections=reactive<Record<string,string>>({});const rowAmounts=reactive<Record<string,number|null>>({});const rowDates=reactive<Record<string,string>>({});const rowJustifications=reactive<Record<string,string>>({});const repetitionReason=ref('');const repetitionNote=ref('')
 const repetitionReasons=[{title:'A fonte registra itens distintos com a mesma referência',value:'SOURCE_CONFIRMED_DISTINCT'},{title:'O documento operacional comprova ocorrências separadas',value:'OPERATIONAL_EVIDENCE'},{title:'Outro motivo revisado',value:'OTHER_REVIEWED_REASON'}]
 const participantOptions=computed(()=>props.participants.filter(item=>item.active).map(item=>({title:item.displayName,value:item.id})))
@@ -77,11 +92,13 @@ async function correctAmount(row:GuidedPendingRow){if(await save({decisionKey:ro
 async function correctDate(row:GuidedPendingRow){if(await save({decisionKey:row.decisionKey,action:'CORRECT_DATE',correctedDate:rowDates[row.decisionKey],reasonCode:'MANUAL_BATCH_CORRECTION',justification:'Data corrigida somente neste lote'}))row.resolution='CORRECTED'}
 async function excludeRow(row:GuidedPendingRow){if(await save({decisionKey:row.decisionKey,action:'EXCLUDE_ROW',reasonCode:'EXCLUDED_BY_OPERATOR',justification:rowJustifications[row.decisionKey]}))row.resolution='EXCLUDE_ROW'}
 async function useDateColumn(option:{decisionKey:string;columnLabel:string}){await save({decisionKey:option.decisionKey,action:'USE_DATE_COLUMN',reasonCode:'ALTERNATIVE_DATE_COLUMN_REVIEWED',justification:`Coluna alternativa ${option.columnLabel} revisada somente para este lote`})}
+async function useMonetaryFormat(saveAsProfile:boolean){const monetary=review.value?.monetaryFormat;if(!monetary?.decisionKey)return;if(await save({decisionKey:monetary.decisionKey,action:'USE_MONETARY_FORMAT',reasonCode:'DETECTED_FORMAT_REVIEWED',justification:saveAsProfile?'Formato revisado e salvo para recorrência':'Formato revisado somente para este lote',saveAsProfile})){if(saveAsProfile)emit('profileUpdated');await openReview();message.value=saveAsProfile?'Formato salvo como nova versão do padrão da fonte.':'Formato aplicado somente a este lote.'}}
 async function confirmReview(){if(!review.value||!props.file||!financialConfirmation.value)return;confirming.value=true;message.value='';try{const response=await FinancialClosingService.confirmGuidedImportReview(props.closing,review.value.reviewId,props.file,props.sensitiveAccessConfirmed);message.value=response.data.replayed?'Este arquivo já estava confirmado; nenhum item foi duplicado.':'Importação confirmada. Agora você pode recalcular a apuração.';review.value.alreadyConfirmed=true;review.value.readyForConfirmation=false;emit('confirmed')}catch(error:any){message.value=error?.response?.status===409?'O arquivo ou a revisão mudou. Atualize a revisão final.':'A confirmação foi bloqueada. Atualize a revisão e resolva as pendências indicadas.'}finally{confirming.value=false}}
 function money(value:number){return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(value||0)}
 function participantResolutionLabel(value:string){return({LINK_PARTICIPANT:'Associado',EXTERNAL_CREDITOR:'Credor externo',PENDING:'Pendente'} as Record<string,string>)[value]||value}
 function rowResolutionLabel(value:string){return({PENDING:'aguardando decisão',CORRECTED:'correção salva',EXCLUDE_ROW:'exclusão salva'} as Record<string,string>)[value]||value}
 function issueLabel(value:string){const types=value.split(',');return types.map(type=>type.includes('AMOUNT')?'valor inválido':type.includes('DATE')?'data ausente ou inválida':'dado inválido').join(' e ')}
+function monetaryFormatLabel(value:NonNullable<GuidedImportReview['monetaryFormat']>){const prefix=value.format.currencyPrefix?.trim();const grouping=({DOT:'.',COMMA:',',SPACE:'espaço',NBSP:'espaço',NONE:'sem separador'} as Record<string,string>)[value.format.groupingSeparator||'NONE'];const decimal=value.decimalSeparator==='COMMA'?',':'.';return `Padrão detectado: ${prefix?`${prefix} `:''}milhar ${grouping} · decimal ${decimal}`}
 </script>
 
 <style scoped>

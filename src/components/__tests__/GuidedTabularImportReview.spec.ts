@@ -43,4 +43,32 @@ describe('GuidedTabularImportReview',()=>{
     expect(serviceMock.confirmGuidedImportReview).toHaveBeenCalledTimes(1)
     expect(wrapper.emitted('confirmed')).toHaveLength(1)
   })
+
+  it('treats the detected monetary format as a transient choice until the user explicitly saves it',async()=>{
+    const monetaryReview={...structuredClone(review),participants:[],repetitions:[],pendingRows:[],dateAlternatives:[],monetaryFormat:{decisionKey:'F-1',decimalSeparator:'COMMA',format:{groupingSeparator:'DOT',currencyPrefix:'R$',currencySuffix:null,normalizeCommonSpaces:true},confidence:'HIGH',observedValues:10,nativeNumericValues:0,textualValues:10,acceptedValues:10,rejectedValues:0,reasonCodes:['TEXT_FORMAT_HIGH_COVERAGE'],nativeNumericCanonical:false,requiresDecision:true,selected:false,savedAsProfile:false},blockingReasons:['Confirme o formato monetário sugerido antes de revisar as demais pendências']}
+    serviceMock.startGuidedImportReview.mockResolvedValue({data:monetaryReview})
+    const wrapper=mount(GuidedTabularImportReview,{props:{closing,file:new File(['synthetic'],'synthetic.xlsx'),profileId:'profile-1',sensitiveAccessConfirmed:true,participants:[]},global:{plugins:[vuetify]}})
+    await (wrapper.vm as any).openReview();await flush()
+    expect(wrapper.text()).toContain('Conferir o formato dos valores')
+    expect(wrapper.text()).toContain('Confiança alta')
+    expect(wrapper.text()).toContain('10 de 10 valor(es) reconhecido(s)')
+    expect(wrapper.text()).toContain('Usar somente neste lote')
+    expect(wrapper.text()).toContain('Salvar como padrão desta fonte')
+
+    await (wrapper.vm as any).useMonetaryFormat(false);await flush()
+    expect(serviceMock.saveGuidedReviewDecision).toHaveBeenCalledWith(closing,'review-1',expect.objectContaining({action:'USE_MONETARY_FORMAT',saveAsProfile:false}))
+    expect(wrapper.emitted('profileUpdated')).toBeUndefined()
+  })
+
+  it('explains that native XLSX numbers are canonical and saves a profile only by explicit action',async()=>{
+    const monetaryReview={...structuredClone(review),participants:[],repetitions:[],pendingRows:[],dateAlternatives:[],monetaryFormat:{decisionKey:'F-2',decimalSeparator:'COMMA',format:{groupingSeparator:'DOT',currencyPrefix:'R$',currencySuffix:null,normalizeCommonSpaces:true},confidence:'HIGH',observedValues:10,nativeNumericValues:10,textualValues:0,acceptedValues:10,rejectedValues:0,reasonCodes:['XLSX_NUMERIC_VALUE_IS_CANONICAL'],nativeNumericCanonical:true,requiresDecision:false,selected:false,savedAsProfile:false},blockingReasons:[]}
+    serviceMock.startGuidedImportReview.mockResolvedValue({data:monetaryReview})
+    const wrapper=mount(GuidedTabularImportReview,{props:{closing,file:new File(['synthetic'],'synthetic.xlsx'),profileId:'profile-1',sensitiveAccessConfirmed:true,participants:[]},global:{plugins:[vuetify]}})
+    await (wrapper.vm as any).openReview();await flush()
+    expect(wrapper.text()).toContain('Os valores numéricos do Excel são usados diretamente')
+
+    await (wrapper.vm as any).useMonetaryFormat(true);await flush()
+    expect(serviceMock.saveGuidedReviewDecision).toHaveBeenCalledWith(closing,'review-1',expect.objectContaining({action:'USE_MONETARY_FORMAT',saveAsProfile:true}))
+    expect(wrapper.emitted('profileUpdated')).toHaveLength(1)
+  })
 })
