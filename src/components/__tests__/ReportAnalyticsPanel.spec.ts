@@ -1,5 +1,5 @@
 import { mount } from '@vue/test-utils'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
 import ReportAnalyticsPanel from '@/components/ReportAnalyticsPanel.vue'
 
@@ -118,10 +118,16 @@ const mountPanel = () => mount(ReportAnalyticsPanel, { global: { stubs } })
 
 describe('ReportAnalyticsPanel', () => {
   beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-07-15T12:00:00Z'))
     vi.clearAllMocks()
     analyticsMock.mockResolvedValue({ data: analytics })
     fetchTransactionsMock.mockResolvedValue({ data: { items: [], total: 2, limit: 12, offset: 0 } })
     listCategoriesMock.mockResolvedValue({ data: [] })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it('opens a paginated drill-down with the exact category and report filters', async () => {
