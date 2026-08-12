@@ -17,6 +17,8 @@ import PlanningBudgetView from '@/views/PlanningBudgetView.vue'
 import FinancialClosingView from '@/views/FinancialClosingView.vue'
 import FinancialClosingPanelView from '@/views/FinancialClosingPanelView.vue'
 import FinancialClosingImportWizardView from '@/views/FinancialClosingImportWizardView.vue'
+import FinancialClosingRulesView from '@/views/FinancialClosingRulesView.vue'
+import FinancialClosingResultView from '@/views/FinancialClosingResultView.vue'
 import ScenariosHubView from '@/views/ScenariosHubView.vue'
 import ScenarioBuilderView from '@/views/ScenarioBuilderView.vue'
 import ScenarioResultView from '@/views/ScenarioResultView.vue'
@@ -111,6 +113,18 @@ const router = createRouter({
       path: '/apuracoes/:closingId/importacoes/:reviewId',
       name: 'closing-import-wizard',
       component: FinancialClosingImportWizardView,
+      meta: { requiresAuth: true, requiresWorkspace: true }
+    },
+    {
+      path: '/apuracoes/:closingId/regras',
+      name: 'closing-rules',
+      component: FinancialClosingRulesView,
+      meta: { requiresAuth: true, requiresWorkspace: true }
+    },
+    {
+      path: '/apuracoes/:closingId/resultado',
+      name: 'closing-result',
+      component: FinancialClosingResultView,
       meta: { requiresAuth: true, requiresWorkspace: true }
     },
     {

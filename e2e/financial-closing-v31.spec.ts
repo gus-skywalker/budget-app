@@ -93,6 +93,23 @@ async function completeJourney(page: Page, closing: Closing, participantReview =
   await expect(page.getByRole('heading', { name: 'Lote publicado' })).toBeVisible()
 }
 
+async function completeRulesAndResult(page: Page, closing: Closing) {
+  await page.getByRole('button', { name: 'Revisar regras' }).click()
+  await expect(page).toHaveURL(new RegExp(`/apuracoes/${closing.id}/regras$`))
+  await expect(page.getByRole('heading', { name: 'Revise cada fonte antes de calcular' })).toBeVisible()
+  await page.getByRole('button', { name: 'Confirmar regras desta fonte' }).click()
+  await page.getByLabel('Por que esta incidência está correta?').fill('Regra sintética conferida para a demonstração automatizada')
+  await page.getByRole('button', { name: 'Confirmar', exact: true }).click()
+  await expect(page.getByText('Regras confirmadas', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Continuar para o resultado' }).click()
+  await expect(page).toHaveURL(new RegExp(`/apuracoes/${closing.id}/resultado$`))
+  await expect(page.getByRole('heading', { name: 'Prévia pronta para calcular' })).toBeVisible()
+  await page.getByRole('button', { name: 'Calcular resultado' }).click()
+  await expect(page.getByRole('heading', { name: 'Cálculo atual' })).toBeVisible()
+  await expect(page.getByText('Produtividade Bruta', { exact: true })).toBeVisible()
+  await expect(page.getByText('Produtividade Líquida', { exact: true })).toBeVisible()
+}
+
 test.describe.configure({ mode: 'serial' })
 
 test('V31 publishes the happy path from the panel on desktop', async ({ page, request }) => {
@@ -100,6 +117,7 @@ test('V31 publishes the happy path from the panel on desktop', async ({ page, re
   const closing = await prepareCompetence(request, state, 9)
   await authenticate(page, state)
   await completeJourney(page, closing)
+  await completeRulesAndResult(page, closing)
 })
 
 test('V31 follows the same path at 360 px without horizontal tables', async ({ page, request }) => {
@@ -108,6 +126,7 @@ test('V31 follows the same path at 360 px without horizontal tables', async ({ p
   await page.setViewportSize({ width: 360, height: 800 })
   await authenticate(page, state)
   await completeJourney(page, closing)
+  await completeRulesAndResult(page, closing)
   await expect(page.locator('table')).toHaveCount(0)
   await expect(page.locator('body')).toHaveJSProperty('scrollWidth', 360)
 })

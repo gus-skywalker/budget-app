@@ -1,0 +1,76 @@
+<template>
+  <div class="cb-page rules-page"><div class="cb-container narrow">
+    <v-btn variant="text" prepend-icon="mdi-arrow-left" @click="back">Voltar para a competência</v-btn>
+    <page-header title="Regras do cálculo" :summary-items="headerSummary" />
+    <alert-strip v-if="errorMessage" variant="info" :description="errorMessage" />
+    <div v-if="loading" class="cb-empty-state" role="status"><v-progress-circular indeterminate/><p>Carregando regras…</p></div>
+    <template v-else-if="closing">
+      <section class="cb-card intro"><p class="eyebrow">Produtividade</p><h2>Revise cada fonte antes de calcular</h2><p>Uma fonte pode ter regras percentuais ou uma declaração explícita de que nenhuma dedução se aplica. Alterações criam nova revisão e tornam o cálculo anterior obsoleto.</p></section>
+
+      <section aria-labelledby="sources-title"><div class="section-heading"><div><p class="eyebrow">Gate por fonte</p><h2 id="sources-title">{{ readyCount }} de {{ readiness?.sources.length || 0 }} fontes prontas</h2></div></div>
+        <div class="source-list">
+          <article v-for="source in readiness?.sources" :key="source.sourceId" class="cb-card source-card" :class="{ selected: selectedSourceId===source.sourceId }">
+            <button type="button" class="source-select" @click="selectSource(source.sourceId)"><span><strong>{{ source.displayName }}</strong><small>{{ source.detail }}</small></span><v-chip size="small" :color="statusColor(source.status)" variant="tonal">{{ statusLabel(source.status) }}</v-chip></button>
+            <div v-if="selectedSourceId===source.sourceId" class="source-actions">
+              <v-btn v-if="rulesFor(source.sourceId).length" color="primary" :disabled="!canEdit" @click="resolveSource('RULE_VALID')">Confirmar regras desta fonte</v-btn>
+              <v-btn v-else color="primary" variant="tonal" :disabled="!canEdit" @click="resolveSource('NO_DEDUCTION_APPLIES')">Confirmar sem dedução</v-btn>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section v-if="selectedSource" class="cb-card editor" aria-labelledby="rule-editor-title">
+        <div class="section-heading"><div><p class="eyebrow">{{ selectedSource.displayName }}</p><h2 id="rule-editor-title">{{ editingRule ? 'Revisar regra' : 'Adicionar dedução' }}</h2></div><v-btn v-if="editingRule" variant="text" @click="resetForm">Nova regra</v-btn></div>
+        <div v-if="rulesFor(selectedSource.sourceId).length" class="rule-list">
+          <article v-for="rule in rulesFor(selectedSource.sourceId)" :key="rule.id" class="rule-row"><div><strong>{{ rule.name }}</strong><small>{{ rule.percentage }}% · {{ incidenceLabel(rule) }} · {{ baseLabel(rule.baseReference) }} · revisão {{ rule.revision }}</small></div><v-btn size="small" variant="text" @click="editRule(rule)">Revisar</v-btn></article>
+        </div>
+        <div v-if="canEdit" class="form-grid">
+          <v-text-field v-model="form.name" label="Nome da dedução" />
+          <v-text-field v-model.number="form.percentage" label="Percentual" type="number" min="0" max="100" step="0.000001" />
+          <v-select v-model="form.incidenceScope" :items="incidences" label="Onde incide" />
+          <v-select v-if="form.incidenceScope==='PARTICIPANT_SOURCE'" v-model="form.participantId" :items="participantOptions" label="Participante" />
+          <v-select v-model="form.baseReference" :items="bases" label="Base de cálculo" />
+          <v-textarea v-model="form.justification" label="Justificativa da revisão" rows="2" />
+          <v-switch v-if="editingRule" v-model="form.active" label="Regra ativa" color="primary" />
+          <v-btn color="primary" :loading="saving" :disabled="!formValid" @click="saveRule">{{ editingRule ? 'Salvar nova revisão' : 'Adicionar regra' }}</v-btn>
+        </div>
+      </section>
+
+      <section v-if="preview" class="preview" aria-labelledby="preview-title"><div class="section-heading"><div><p class="eyebrow">Prévia canônica</p><h2 id="preview-title">Impacto antes do cálculo</h2></div><small>Não cria execução nem congela valores.</small></div>
+        <div class="metrics"><article class="cb-card"><span>Produtividade Bruta</span><strong>{{ money(preview.grossProductivityAmount) }}</strong></article><article class="cb-card"><span>Deduções</span><strong>{{ money(preview.deductionAmount) }}</strong></article><article class="cb-card primary"><span>Produtividade Líquida estimada</span><strong>{{ money(preview.netProductivityAmount) }}</strong></article></div>
+        <div class="preview-sources"><article v-for="source in preview.sources" :key="source.sourceId" class="cb-card"><strong>{{ source.displayName }}</strong><p>Bruta {{ money(source.grossProductivityAmount) }} · deduções {{ money(source.deductionAmount) }}</p><span>Líquida estimada {{ money(source.netProductivityAmount) }}</span></article></div>
+      </section>
+
+      <div class="sticky-action"><p v-if="!readiness?.readyToCalculate">Revise {{ readiness?.blockingSourceKeys.length || 0 }} fonte(s) para liberar o cálculo.</p><v-btn color="primary" size="large" :disabled="!readiness?.readyToCalculate" @click="openResult">Continuar para o resultado</v-btn></div>
+      <v-dialog v-model="resolutionDialog" max-width="520"><v-card><v-card-title>Confirmar revisão da fonte</v-card-title><v-card-text><p>Esta confirmação vale para as revisões atuais. Se uma regra mudar, a fonte voltará para revisão.</p><v-textarea v-model="resolutionJustification" label="Por que esta incidência está correta?" rows="3" /></v-card-text><v-card-actions><v-spacer/><v-btn variant="text" @click="resolutionDialog=false">Cancelar</v-btn><v-btn color="primary" :disabled="!resolutionJustification.trim()" :loading="resolving" @click="confirmResolution">Confirmar</v-btn></v-card-actions></v-card></v-dialog>
+    </template>
+  </div></div>
+</template>
+
+<script setup lang="ts">
+import { computed, onMounted, reactive, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import PageHeader from '@/components/PageHeader.vue'
+import AlertStrip from '@/components/AlertStrip.vue'
+import { useUserStore } from '@/plugins/userStore'
+import FinancialClosingService, { type DeductionPreview, type DeductionReadiness, type FinancialClosing, type ProductivityDeductionRule, type ClosingParticipant } from '@/services/FinancialClosingService'
+
+const route=useRoute(),router=useRouter(),userStore=useUserStore();const closing=ref<FinancialClosing|null>(null),readiness=ref<DeductionReadiness|null>(null),preview=ref<DeductionPreview|null>(null),rules=ref<ProductivityDeductionRule[]>([]),participants=ref<ClosingParticipant[]>([]),loading=ref(true),saving=ref(false),resolving=ref(false),errorMessage=ref(''),selectedSourceId=ref(''),editingRule=ref<ProductivityDeductionRule|null>(null),resolutionDialog=ref(false),resolutionJustification=ref(''),pendingResolution=ref<'RULE_VALID'|'NO_DEDUCTION_APPLIES'>('RULE_VALID');
+const blankForm=()=>({name:'',percentage:null as number|null,incidenceScope:'SOURCE' as 'SOURCE'|'PARTICIPANT_SOURCE',participantId:'',baseReference:'OPENING_GROSS_PRODUCTIVITY' as 'OPENING_GROSS_PRODUCTIVITY'|'CURRENT_BALANCE',justification:'',active:true});const form=reactive(blankForm());
+const canEdit=computed(()=>userStore.canWrite&&closing.value?.workflowStatus==='DRAFT'&&closing.value.currentVersion.versionStatus==='EDITABLE');const selectedSource=computed(()=>readiness.value?.sources.find(source=>source.sourceId===selectedSourceId.value)||null);const readyCount=computed(()=>readiness.value?.sources.filter(source=>source.dependencyCurrent).length||0);const headerSummary=computed(()=>closing.value?[{label:'Competência',value:`${String(closing.value.periodMonth).padStart(2,'0')}/${closing.value.periodYear}`},{label:'Versão',value:String(closing.value.currentVersion.versionNumber)}]:[]);const participantOptions=computed(()=>participants.value.filter(item=>item.active).map(item=>({title:item.displayName,value:item.id})));const incidences=[{title:'Toda a fonte',value:'SOURCE'},{title:'Um participante nesta fonte',value:'PARTICIPANT_SOURCE'}],bases=[{title:'Produtividade Bruta inicial',value:'OPENING_GROSS_PRODUCTIVITY'},{title:'Saldo após regras anteriores',value:'CURRENT_BALANCE'}];const formValid=computed(()=>Boolean(selectedSource.value&&form.name.trim()&&form.percentage!==null&&form.percentage>=0&&form.percentage<=100&&form.justification.trim()&&(form.incidenceScope==='SOURCE'||form.participantId)));
+const money=(value:number)=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:closing.value?.currency||'BRL'}).format(value||0);const rulesFor=(sourceId:string)=>rules.value.filter(rule=>rule.sourceId===sourceId&&rule.active);const statusLabel=(status:string)=>status==='RULE_VALID'?'Regras confirmadas':status==='NO_DEDUCTION_APPLIES'?'Sem dedução':'Revisão necessária';const statusColor=(status:string)=>status==='REVIEW_REQUIRED'?'warning':'success';const baseLabel=(base:string)=>base==='CURRENT_BALANCE'?'saldo corrente':'PB inicial';const incidenceLabel=(rule:ProductivityDeductionRule)=>rule.incidenceScope==='SOURCE'?'toda a fonte':participants.value.find(item=>item.id===rule.participantId)?.displayName||'participante';
+async function load(){loading.value=true;errorMessage.value='';try{const list=(await FinancialClosingService.list()).data;closing.value=list.find(item=>item.id===String(route.params.closingId))||null;if(!closing.value)throw new Error('missing');await refresh()}catch{errorMessage.value='Não foi possível carregar as regras desta competência.'}finally{loading.value=false}}
+async function refresh(){if(!closing.value)return;const [rulesResponse,participantsResponse,readinessResponse]=await Promise.all([FinancialClosingService.productivityDeductions(closing.value),FinancialClosingService.participants(closing.value),FinancialClosingService.deductionReadiness(closing.value)]);rules.value=rulesResponse.data;participants.value=participantsResponse.data;readiness.value=readinessResponse.data;if(!selectedSourceId.value)selectedSourceId.value=readiness.value.sources[0]?.sourceId||'';try{preview.value=(await FinancialClosingService.previewProductivityDeductions(closing.value)).data}catch{preview.value=null}}
+function selectSource(id:string){selectedSourceId.value=id;resetForm()}
+function editRule(rule:ProductivityDeductionRule){editingRule.value=rule;Object.assign(form,{name:rule.name,percentage:rule.percentage,incidenceScope:rule.incidenceScope,participantId:rule.participantId||'',baseReference:rule.baseReference,justification:'',active:rule.active})}
+function resetForm(){editingRule.value=null;Object.assign(form,blankForm())}
+function generatedRuleKey(){const slug=form.name.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/[^A-Z0-9]+/g,'_').replace(/^_|_$/g,'').slice(0,32)||'DEDUCTION';return `${form.incidenceScope}_${selectedSource.value?.sourceKey}_${form.incidenceScope==='PARTICIPANT_SOURCE'?form.participantId+'_':''}${slug}`.slice(0,80)}
+async function saveRule(){if(!closing.value||!selectedSource.value||!formValid.value)return;saving.value=true;errorMessage.value='';try{const current=editingRule.value;await FinancialClosingService.upsertProductivityDeduction(closing.value,{ruleKey:current?.ruleKey||generatedRuleKey(),name:form.name.trim(),sequence:current?.sequence||Math.max(0,...rules.value.map(rule=>rule.sequence))+1,incidenceScope:form.incidenceScope,sourceId:selectedSource.value.sourceId,participantId:form.incidenceScope==='PARTICIPANT_SOURCE'?form.participantId:undefined,baseReference:form.baseReference,percentage:Number(form.percentage),active:form.active,justification:form.justification.trim()});resetForm();await refresh()}catch{errorMessage.value='Não foi possível salvar a regra. Confira a incidência, a ordem e os campos informados.'}finally{saving.value=false}}
+function resolveSource(status:'RULE_VALID'|'NO_DEDUCTION_APPLIES'){pendingResolution.value=status;resolutionJustification.value='';resolutionDialog.value=true}
+async function confirmResolution(){if(!closing.value||!selectedSource.value||!resolutionJustification.value.trim())return;resolving.value=true;try{await FinancialClosingService.resolveDeductionSource(closing.value,{sourceId:selectedSource.value.sourceId,status:pendingResolution.value,expectedRevision:selectedSource.value.resolutionRevision,justification:resolutionJustification.value.trim()});resolutionDialog.value=false;await refresh()}catch{errorMessage.value='A fonte mudou ou a declaração não corresponde às regras atuais. Atualize e revise novamente.'}finally{resolving.value=false}}
+function back(){router.push({name:'planning-financial-closings',query:{closingId:closing.value?.id}})}function openResult(){if(closing.value)router.push({name:'closing-result',params:{closingId:closing.value.id}})}onMounted(load)
+</script>
+
+<style scoped>
+.rules-page{min-height:100vh;background:var(--cb-surface-soft,#f6f7fb);padding-bottom:110px}.narrow{max-width:1040px}.intro,.editor{padding:20px;margin-bottom:20px}.intro p{color:var(--cb-text-muted,#667085)}.eyebrow{text-transform:uppercase;letter-spacing:.08em;font-size:.72rem}.section-heading{display:flex;justify-content:space-between;align-items:end;gap:12px;margin:20px 0 12px}.section-heading h2{margin:2px 0}.source-list,.preview-sources{display:grid;gap:10px}.source-card{padding:0;overflow:hidden}.source-card.selected{outline:2px solid var(--cb-primary,#3451b2)}.source-select{display:flex;width:100%;align-items:center;justify-content:space-between;gap:12px;padding:16px;text-align:left}.source-select span{display:grid;gap:4px}.source-select small,.rule-row small{color:var(--cb-text-muted,#667085)}.source-actions{padding:0 16px 16px}.rule-list{display:grid;gap:8px;margin-bottom:18px}.rule-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px;background:var(--cb-surface-soft,#f6f7fb);border-radius:12px}.rule-row div{display:grid}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.form-grid .v-textarea,.form-grid .v-switch,.form-grid>.v-btn{grid-column:1/-1}.preview{margin-top:22px}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.metrics article{padding:16px;display:grid;gap:6px}.metrics strong{font-size:1.35rem}.metrics .primary{border:1px solid var(--cb-primary,#3451b2)}.preview-sources{grid-template-columns:repeat(2,1fr);margin-top:12px}.preview-sources article{padding:14px}.preview-sources p{margin:6px 0;color:var(--cb-text-muted,#667085)}.sticky-action{position:fixed;z-index:5;left:0;right:0;bottom:0;display:flex;justify-content:center;align-items:center;gap:18px;padding:12px max(20px,env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--cb-surface,#fff) 94%,transparent);border-top:1px solid #ddd}.sticky-action p{margin:0;color:var(--cb-text-muted,#667085)}@media(max-width:700px){.form-grid,.metrics,.preview-sources{grid-template-columns:1fr}.source-select{align-items:flex-start}.section-heading{align-items:flex-start;flex-direction:column}.sticky-action{align-items:stretch;flex-direction:column;gap:6px}.sticky-action .v-btn{width:100%;min-height:48px}.rule-row{align-items:flex-start}.rules-page{padding-bottom:150px}}
+</style>
