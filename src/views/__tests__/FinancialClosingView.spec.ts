@@ -11,7 +11,7 @@ const { serviceMock } = vi.hoisted(() => ({
   serviceMock: {
     list: vi.fn(), summary: vi.fn(), matrix: vi.fn(), memory: vi.fn(), drillDown: vi.fn(), calculate: vi.fn(),
     obligations: vi.fn(), bankReconciliationSuggestions: vi.fn(), bankReconciliationHistory: vi.fn(), confirmBankReconciliation: vi.fn(), rejectBankReconciliation: vi.fn(), workbookInventory: vi.fn(),
-    calculationRevisions: vi.fn(), payoutDecisions: vi.fn(), marginDecisions: vi.fn(), sources: vi.fn(), participants: vi.fn(), sourceRetentions: vi.fn(), participantScores: vi.fn(), upsertSourceRetention: vi.fn(), deactivateSourceRetention: vi.fn(), upsertParticipantScore: vi.fn(), createOrGet: vi.fn(), upsertSource: vi.fn(), upsertParticipant: vi.fn(), operations: vi.fn(), tabularImportExecutions: vi.fn(), importProfiles: vi.fn(), importReadiness: vi.fn(), importProfile: vi.fn(), createImportProfile: vi.fn(), validateProfileImport: vi.fn(), confirmProfileImport: vi.fn(), grantSensitiveAccess: vi.fn(), workspaceSensitiveAccessGrants: vi.fn(), grantWorkspaceSensitiveAccess: vi.fn(), revokeWorkspaceSensitiveAccess: vi.fn(),
+    calculationRevisions: vi.fn(), payoutDecisions: vi.fn(), marginDecisions: vi.fn(), sources: vi.fn(), participants: vi.fn(), sourceRetentions: vi.fn(), productivityDeductions: vi.fn(), participantScores: vi.fn(), upsertSourceRetention: vi.fn(), upsertProductivityDeduction: vi.fn(), deactivateSourceRetention: vi.fn(), upsertParticipantScore: vi.fn(), createOrGet: vi.fn(), upsertSource: vi.fn(), upsertParticipant: vi.fn(), operations: vi.fn(), tabularImportExecutions: vi.fn(), importProfiles: vi.fn(), importReadiness: vi.fn(), importProfile: vi.fn(), createImportProfile: vi.fn(), validateProfileImport: vi.fn(), confirmProfileImport: vi.fn(), grantSensitiveAccess: vi.fn(), workspaceSensitiveAccessGrants: vi.fn(), grantWorkspaceSensitiveAccess: vi.fn(), revokeWorkspaceSensitiveAccess: vi.fn(),
   },
 }))
 const { workspaceServiceMock } = vi.hoisted(() => ({ workspaceServiceMock: { listMembers: vi.fn() } }))
@@ -41,8 +41,9 @@ describe('FinancialClosingView', () => {
       roundingMode: 'HALF_UP', intermediateScale: 12, grossAmount: 92000, reversalAmount: 0, deductionAmount: 1758.35,
       closingAdjustmentAmount: 0, productivityAmount: 81581.90, undistributedPoolAmount: 8659.75,
       netRevenueAmount: 90241.65, residualAmount: 0, calculatedAt: '2026-08-03T12:00:00Z',
+      grossProductivityAmount: 83340.25, netProductivityAmount: 81581.90, calculationSemanticsVersion: 'GROSS_TO_NET_V2',
       reconciliation: { expectedInflowAmount: 90241.65, reconciledInflowAmount: 0, coveragePercentage: 0, divergenceAmount: 90241.65, unreconciledItemCount: 10 },
-      sourceProductivity: [{ sourceId: 'bp', sourceKey: 'BP_PAULISTA', displayName: 'Convênio BP Paulista', grossAmount: 70000, reversalAmount: 20, retentionAmount: 7000, eligibleAmount: 62980 }],
+      sourceProductivity: [{ sourceId: 'bp', sourceKey: 'BP_PAULISTA', displayName: 'Convênio BP Paulista', grossAmount: 70000, reversalAmount: 20, retentionAmount: 7000, eligibleAmount: 62980, grossProductivityAmount: 69980, participantAdjustmentAmount: 0, netProductivityAmount: 62980 }],
       participantPayouts: [{ participantId: 'elimar', productivityAmount: 100, reserveAmount: 15, monthlyCeilingAmount: 85, score: 85, appliedScore: 85, valueReceivableAmount: 85, annualBonusEligibleScore: 0, undistributedAmount: 0, tmReserveAmount: 10, tiReserveAmount: 5, totalExplainedAmount: 100 }],
     } })
     serviceMock.matrix.mockResolvedValue({ data: {
@@ -53,7 +54,7 @@ describe('FinancialClosingView', () => {
     serviceMock.obligations.mockResolvedValue({ data: [] })
     serviceMock.calculationRevisions.mockResolvedValue({ data: [{ calculationRunId: 'run-3', inputRevision: 3, runStatus: 'CURRENT', grossAmount: 92000, deductionAmount: 1758.35, productivityAmount: 81581.90, undistributedPoolAmount: 8659.75, netRevenueAmount: 90241.65, residualAmount: 0, reconciliationDivergence: 0, calculatedAt: '2026-08-03T12:00:00Z' }] })
     serviceMock.payoutDecisions.mockResolvedValue({ data: [] }); serviceMock.marginDecisions.mockResolvedValue({ data: [] })
-    serviceMock.sources.mockResolvedValue({ data: [] }); serviceMock.participants.mockResolvedValue({ data: [] }); serviceMock.sourceRetentions.mockResolvedValue({ data: [] }); serviceMock.participantScores.mockResolvedValue({ data: [] }); serviceMock.operations.mockResolvedValue({ data: { timeline: [], pendingActions: [] } }); serviceMock.tabularImportExecutions.mockResolvedValue({ data: { items: [], total: 0, limit: 25, offset: 0 } })
+    serviceMock.sources.mockResolvedValue({ data: [] }); serviceMock.participants.mockResolvedValue({ data: [] }); serviceMock.sourceRetentions.mockResolvedValue({ data: [] }); serviceMock.productivityDeductions.mockResolvedValue({ data: [] }); serviceMock.participantScores.mockResolvedValue({ data: [] }); serviceMock.operations.mockResolvedValue({ data: { timeline: [], pendingActions: [] } }); serviceMock.tabularImportExecutions.mockResolvedValue({ data: { items: [], total: 0, limit: 25, offset: 0 } })
     serviceMock.importProfiles.mockResolvedValue({ data: [] }); serviceMock.createImportProfile.mockResolvedValue({ data: { id: 'profile-1', profileKey: 'REPASSE_BP_PAULISTA', displayName: 'Repasse BP Paulista', sourceKey: 'BP_PAULISTA', version: 1, format: 'CSV' } })
     serviceMock.importReadiness.mockResolvedValue({ data: { sources: [], readyToCalculate: false, blockingSourceKeys: [] } })
     serviceMock.workbookInventory.mockResolvedValue({ data: { sheets: [
@@ -89,7 +90,7 @@ describe('FinancialClosingView', () => {
     expect(wrapper.text()).toContain('Pool não distribuído')
     expect(wrapper.text()).toContain('R$ 8.659,75')
     expect(wrapper.text()).toContain('R$ 90.241,65')
-    expect(wrapper.text()).toContain('Produtividade Líquida elegível')
+    expect(wrapper.text()).toContain('Da Produtividade Bruta à Líquida')
     expect(wrapper.text()).toContain('Valor a Receber por participante')
     expect(wrapper.text()).toContain('85%')
     expect(wrapper.find('table').text()).not.toContain('8.659,75')
@@ -105,7 +106,7 @@ describe('FinancialClosingView', () => {
   it('lets a member configure a source retention and an auditable score while the closing is editable', async () => {
     serviceMock.sources.mockResolvedValue({ data: [{ id: 'bp', sourceKey: 'BP_PAULISTA', displayName: 'Convênio BP Paulista' }] })
     serviceMock.participants.mockResolvedValue({ data: [{ id: 'ana', participantKey: 'ANA', displayName: 'Ana Demo', active: true }] })
-    serviceMock.upsertSourceRetention.mockResolvedValue({ data: { id: 'retention-1' } })
+    serviceMock.upsertProductivityDeduction.mockResolvedValue({ data: { id: 'retention-1' } })
     serviceMock.upsertParticipantScore.mockResolvedValue({ data: { id: 'score-1' } })
     const wrapper = mount(FinancialClosingView, { global: { plugins: [vuetify], stubs: { PageHeader: { props: ['title'], template: '<header>{{ title }}</header>' }, AlertStrip: true } } })
     await flush(); await flush(); await (wrapper.vm as any).loadSetup()
@@ -113,11 +114,11 @@ describe('FinancialClosingView', () => {
     await flush()
     ;(wrapper.vm as any).retentionSourceKey='BP_PAULISTA'; (wrapper.vm as any).retentionName='Fundo'; (wrapper.vm as any).retentionPercentage=10; (wrapper.vm as any).retentionJustification='Política vigente'
     await (wrapper.vm as any).saveRetention()
-    expect(serviceMock.upsertSourceRetention).toHaveBeenCalledWith(expect.objectContaining({ id: 'closing-1' }), expect.objectContaining({ sourceKey: 'BP_PAULISTA', percentage: 10 }))
+    expect(serviceMock.upsertProductivityDeduction).toHaveBeenCalledWith(expect.objectContaining({ id: 'closing-1' }), expect.objectContaining({ sourceId: 'bp', incidenceScope: 'SOURCE', percentage: 10 }))
     ;(wrapper.vm as any).scoreParticipantId='ana'; (wrapper.vm as any).scoreValue=85; (wrapper.vm as any).scoreJustification='Pontuação validada'
     await (wrapper.vm as any).saveScore()
     expect(serviceMock.upsertParticipantScore).toHaveBeenCalledWith(expect.objectContaining({ id: 'closing-1' }), expect.objectContaining({ participantId: 'ana', score: 85 }))
-    expect(wrapper.text()).toContain('Deduções por fonte e pontuação')
+    expect(wrapper.text()).toContain('Produtividade Bruta → deduções → Produtividade Líquida')
   })
 
   it.each([

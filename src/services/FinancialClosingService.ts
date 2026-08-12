@@ -30,7 +30,7 @@ export interface BankReconciliationSuggestionPage { paymentExecutionId: string; 
 export interface BankReconciliation { id: string; status: 'CONFIRMED' | 'REJECTED'; paymentExecutionId: string; financialTransactionId: string; classification: string; score: number; reasons: string[]; rejectionReasonCode?: string | null; decidedAt: string }
 export interface FinancialCorrection { id: string; status: string; revision: number; type: string; amount: number; originalAllocationId?: string | null; reversalFinancialTransactionId?: string | null; rejectionReasonCode?: string | null }
 export interface SettlementReversal { id: string; correctionCaseId: string; amount: number; currency: string; reasonCode: string; approvedAt: string }
-export interface CalculationRevision { calculationRunId: string; inputRevision: number; runStatus: string; grossAmount: number; deductionAmount: number; productivityAmount: number; undistributedPoolAmount: number; netRevenueAmount: number; residualAmount: number; reconciliationDivergence: number; calculatedAt: string }
+export interface CalculationRevision { calculationRunId: string; inputRevision: number; runStatus: string; grossAmount: number; deductionAmount: number; productivityAmount: number; undistributedPoolAmount: number; netRevenueAmount: number; residualAmount: number; reconciliationDivergence: number; calculatedAt: string; grossProductivityAmount: number; netProductivityAmount: number; calculationSemanticsVersion: string }
 export interface PayoutDecision { id: string; status: string; revision: number; closingVersionId: string; calculationRunId: string; inputRevision: number; productivityAmount: number; valueReceivableAmount?: number; lines: Array<{ id: string; participantId: string; amount: number; dueDate?: string }>; issuedObligationCount: number; ownerSelfApprovalException: boolean }
 export interface MarginDecision { id: string; status: string; settlementStatus: string; revision: number; poolKey: string; marginSnapshot: number; allocatedAmount: number; unallocatedMargin: number; allocations: Array<{ id: string; type: string; amount: number; purpose: string; dueDate?: string; categoryKey?: string; beneficiaryDisplayName?: string; issuedObligationCount: number }>; issuedObligationCount: number; ownerSelfApprovalException: boolean }
 export interface TabularImportMapping {
@@ -68,8 +68,9 @@ export interface ClosingOperations { timeline: ClosingTimelineEvent[]; pendingAc
 export interface ClosingSource { id: string; sourceKey: string; displayName: string }
 export interface ClosingParticipant { id: string; participantKey: string; displayName: string; linkedUserId?: string; active: boolean }
 export interface SourceRetention { id: string; sourceKey: string; displayName: string; percentage: number; active: boolean; justification: string; createdAt: string }
+export interface ProductivityDeductionRule { id: string; ruleKey: string; revision: number; name: string; sequence: number; incidenceScope: 'SOURCE' | 'PARTICIPANT_SOURCE'; sourceId: string; sourceKey: string; participantId?: string | null; participantKey?: string | null; baseReference: 'OPENING_GROSS_PRODUCTIVITY' | 'CURRENT_BALANCE'; percentage: number; active: boolean; justification: string; createdByUserId: string; createdAt: string }
 export interface ParticipantScore { id: string; participantId: string; score: number; active: boolean; justification: string; createdAt: string }
-export interface SourceProductivity { sourceId: string; sourceKey: string; displayName: string; grossAmount: number; reversalAmount: number; retentionAmount: number; eligibleAmount: number }
+export interface SourceProductivity { sourceId: string; sourceKey: string; displayName: string; grossAmount: number; reversalAmount: number; retentionAmount: number; eligibleAmount: number; grossProductivityAmount: number; participantAdjustmentAmount: number; netProductivityAmount: number }
 export interface ParticipantPayout { participantId: string; productivityAmount: number; reserveAmount: number; monthlyCeilingAmount: number; score?: number | null; appliedScore: number; valueReceivableAmount: number; annualBonusEligibleScore: number; undistributedAmount: number; tmReserveAmount: number; tiReserveAmount: number; totalExplainedAmount: number }
 export interface ReconciliationSummary {
   expectedInflowAmount: number
@@ -96,6 +97,9 @@ export interface ClosingSummary {
   reconciliation: ReconciliationSummary
   calculatedAt: string
   sourceProductivity: SourceProductivity[]
+  grossProductivityAmount: number
+  netProductivityAmount: number
+  calculationSemanticsVersion: string
   participantPayouts?: ParticipantPayout[]
 }
 export interface MatrixRow { participant: ClosingParticipant; values: Record<string, number>; total: number }
@@ -111,9 +115,10 @@ export interface DrillDown {
 export interface CalculationMemory {
   calculationRunId: string; calculationPolicyVersion: string; roundingMode: string; intermediateScale: number
   items: Array<{ itemId: string; clientItemKey: string; memory: string }>
-  participantAdjustments: Array<{ participantId: string; sourceId: string; direction: string; amount: number; justification: string }>
+  participantAdjustments: Array<{ participantId: string; sourceId: string; direction: string; amount: number; justification: string; incidenceStage: 'BEFORE_DEDUCTIONS' | 'AFTER_DEDUCTIONS' }>
   participantScores: ParticipantScore[]
   residualAmount: number
+  deductionApplications: Array<{ id: string; ruleKey: string; ruleRevision: number; ruleName: string; ruleJustification: string; incidenceScope: string; sourceId: string; participantId?: string | null; baseReference: string; sequence: number; percentage: number; exactBaseAmount: number; baseAmount: number; exactDeductionAmount: number; deductionAmount: number; balanceBefore: number; balanceAfter: number; status: string; skipReason?: string | null; allocations: Array<{ participantId: string; sourceId: string; baseAmount: number; deductionAmount: number; residualAdjustment: number; balanceBefore: number; balanceAfter: number }> }>
   participantPayouts?: ParticipantPayout[]
 }
 
@@ -131,6 +136,8 @@ export default {
   sourceRetentions(closing: FinancialClosing) { return axiosInterceptor.get<SourceRetention[]>(`${versionPath(closing)}/source-retentions`) },
   upsertSourceRetention(closing: FinancialClosing, payload: { sourceKey: string; displayName: string; percentage: number; justification: string }) { return axiosInterceptor.post<SourceRetention>(`${versionPath(closing)}/source-retentions`, payload) },
   deactivateSourceRetention(closing: FinancialClosing, id: string, justification: string) { return axiosInterceptor.post(`${versionPath(closing)}/source-retentions/${id}/deactivate`, { justification }) },
+  productivityDeductions(closing: FinancialClosing) { return axiosInterceptor.get<ProductivityDeductionRule[]>(`${versionPath(closing)}/productivity-deductions`) },
+  upsertProductivityDeduction(closing: FinancialClosing, payload: { ruleKey: string; name: string; sequence: number; incidenceScope: 'SOURCE' | 'PARTICIPANT_SOURCE'; sourceId: string; participantId?: string; baseReference: 'OPENING_GROSS_PRODUCTIVITY' | 'CURRENT_BALANCE'; percentage: number; active: boolean; justification: string }) { return axiosInterceptor.post<ProductivityDeductionRule>(`${versionPath(closing)}/productivity-deductions`, payload) },
   participantScores(closing: FinancialClosing) { return axiosInterceptor.get<ParticipantScore[]>(`${versionPath(closing)}/participant-scores`) },
   upsertParticipantScore(closing: FinancialClosing, payload: { participantId: string; score: number; justification: string }) { return axiosInterceptor.post<ParticipantScore>(`${versionPath(closing)}/participant-scores`, payload) },
   summary(closing: FinancialClosing) { return axiosInterceptor.get<ClosingSummary>(`${versionPath(closing)}/summary`) },
