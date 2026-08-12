@@ -44,6 +44,18 @@ describe('GuidedTabularImportReview',()=>{
     expect(wrapper.emitted('confirmed')).toHaveLength(1)
   })
 
+  it('prepares a source for workbook staging without exposing the legacy per-source financial confirmation',async()=>{
+    const ready={...structuredClone(review),status:'READY',readyForConfirmation:true,blockingReasons:[],participants:[],pendingRows:[],repetitions:[],repetitionsAccepted:true}
+    serviceMock.startGuidedImportReview.mockResolvedValue({data:ready})
+    const wrapper=mount(GuidedTabularImportReview,{props:{closing,file:new File(['synthetic'],'synthetic.xlsx'),profileId:'profile-1',sensitiveAccessConfirmed:true,participants:[],autoStart:true,preparationOnly:true},global:{plugins:[vuetify]}})
+    await flush()
+    expect(wrapper.text()).toContain('Fonte pronta para o lote')
+    expect(wrapper.text()).toContain('confirmação financeira será única')
+    expect(wrapper.text()).not.toContain('Confirmo o efeito financeiro')
+    expect(wrapper.emitted('prepared')).toHaveLength(1)
+    expect(serviceMock.confirmGuidedImportReview).not.toHaveBeenCalled()
+  })
+
   it('treats the detected monetary format as a transient choice until the user explicitly saves it',async()=>{
     const monetaryReview={...structuredClone(review),participants:[],repetitions:[],pendingRows:[],dateAlternatives:[],monetaryFormat:{decisionKey:'F-1',decimalSeparator:'COMMA',format:{groupingSeparator:'DOT',currencyPrefix:'R$',currencySuffix:null,normalizeCommonSpaces:true},confidence:'HIGH',observedValues:10,nativeNumericValues:0,textualValues:10,acceptedValues:10,rejectedValues:0,reasonCodes:['TEXT_FORMAT_HIGH_COVERAGE'],nativeNumericCanonical:false,requiresDecision:true,selected:false,savedAsProfile:false},blockingReasons:['Confirme o formato monetário sugerido antes de revisar as demais pendências']}
     serviceMock.startGuidedImportReview.mockResolvedValue({data:monetaryReview})

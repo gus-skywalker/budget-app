@@ -18,7 +18,7 @@ async function apiJson<T>(request: APIRequestContext, state: Runtime, method: 'g
   return response.status() === 204 ? undefined as T : await response.json() as T
 }
 
-async function prepareCompetence(request: APIRequestContext, state: Runtime, month: number) {
+async function prepareCompetence(request: APIRequestContext, state: Runtime, month: number, participantReview = false) {
   const closing = await apiJson<Closing>(request, state, 'post', '/financial-closings', {
     periodMonth: month, periodYear: 2026, closingKey: 'DEFAULT', currency: 'BRL',
   })
@@ -27,7 +27,7 @@ async function prepareCompetence(request: APIRequestContext, state: Runtime, mon
     sourceKey: 'V31_SOURCE', displayName: 'Fonte sintética V31',
   })
   const participant = await apiJson<{ id: string }>(request, state, 'post', `/financial-closings/${closing.id}/versions/${version}/participants`, {
-    participantKey: `PARTICIPANT_${month}`, displayName: `Participante sintético ${month}`, active: true,
+    participantKey: `PARTICIPANT_${month}`, displayName: participantReview ? 'PARTICIPANT' : `Participante sintético ${month}`, active: true,
   })
   await apiJson<void>(request, state, 'put', `/financial-closings/${closing.id}/sensitive-access-grants`, { userId: 'demo-owner', confirmed: true })
   await apiJson(request, state, 'post', `/financial-closings/${closing.id}/versions/${version}/source-retentions`, {
@@ -38,7 +38,7 @@ async function prepareCompetence(request: APIRequestContext, state: Runtime, mon
     config: {
       format: 'XLSX', expectedSheet: 'V31_SOURCE', itemKeyColumn: 'reference', itemKeyColumns: ['reference'],
       amountColumn: 'amount', occurredOnColumn: 'date', externalReferenceColumn: 'reference', participantColumn: 'responsible',
-      participantMappings: { PARTICIPANT: participant.id }, positiveDirection: 'ADDITION', negativeAsReversal: true,
+      participantMappings: participantReview ? {} : { PARTICIPANT: participant.id }, positiveDirection: 'ADDITION', negativeAsReversal: true,
       ignoreTotalsAndFormulas: true, defaultAttributionMethod: 'DIRECT_ATTRIBUTION', decimalSeparator: 'DOT',
       headerSignature: ['reference', 'amount', 'date', 'responsible'], multiplicityPolicy: 'REQUIRES_UNIQUE_EXTERNAL_IDENTITY',
       monetaryFormat: { groupingSeparator: 'NONE', prefix: null, suffix: null, normalizeSpaces: true },
@@ -62,7 +62,7 @@ async function closeCookieNotice(page: Page) {
   if (await dialog.isVisible()) await dialog.getByRole('button', { name: 'Recusar' }).click()
 }
 
-async function completeJourney(page: Page, closing: Closing) {
+async function completeJourney(page: Page, closing: Closing, participantReview = false) {
   await page.goto(`/planning/financial-closings?closingId=${closing.id}`)
   await closeCookieNotice(page)
   await expect(page.getByRole('main', { name: 'Etapas do fechamento' })).toBeVisible()
@@ -72,9 +72,15 @@ async function completeJourney(page: Page, closing: Closing) {
   await page.getByLabel('Entendo que acessarei dados protegidos nesta leitura').check()
   await page.locator('input[type="file"]').setInputFiles(fixture)
   await page.getByRole('button', { name: 'Identificar fontes' }).click()
-  await expect(page.getByRole('heading', { name: 'Confira o que será preparado' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Confira o que entra neste lote' })).toBeVisible()
   await expect(page.getByText('V31_SOURCE', { exact: true })).toBeVisible()
-  await page.getByRole('button', { name: 'Preparar fontes reconhecidas' }).click()
+  await page.getByRole('button', { name: 'Resolver fontes selecionadas' }).click()
+  if (participantReview) {
+    await page.getByLabel('Sim, esta coluna identifica o participante ou beneficiário da apuração').check()
+    await page.getByRole('button', { name: /PARTICIPANT · 100%/ }).click()
+  }
+  await expect(page.getByText('Fonte pronta para o lote', { exact: true }).first()).toBeVisible()
+  await page.getByRole('button', { name: 'Preparar lote completo' }).click()
   await expect(page).toHaveURL(new RegExp(`/apuracoes/${closing.id}/importacoes/[0-9a-f-]+$`))
   await expect(page.getByRole('heading', { name: 'Fontes preparadas' })).toBeVisible()
   await expect(page.getByText('2', { exact: true }).first()).toBeVisible()
@@ -104,4 +110,11 @@ test('V31 follows the same path at 360 px without horizontal tables', async ({ p
   await completeJourney(page, closing)
   await expect(page.locator('table')).toHaveCount(0)
   await expect(page.locator('body')).toHaveJSProperty('scrollWidth', 360)
+})
+
+test('V32 resolves an unknown participant explicitly before the atomic workbook publication', async ({ page, request }) => {
+  const state = runtime()
+  const closing = await prepareCompetence(request, state, 11, true)
+  await authenticate(page, state)
+  await completeJourney(page, closing, true)
 })
