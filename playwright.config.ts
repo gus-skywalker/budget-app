@@ -2,6 +2,7 @@ import { defineConfig } from '@playwright/test'
 
 export default defineConfig({
   testDir: './e2e',
+  workers: 1,
   timeout: 120_000,
   globalSetup: './e2e/financial-closing-demo.setup.ts',
   outputDir: 'test-results/financial-closing-demo',

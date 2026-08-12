@@ -54,7 +54,7 @@
           <div class="payment-form"><v-btn color="primary" :disabled="!sources.length" @click="goToImport">Continuar para importar fonte</v-btn></div>
           <p class="matrix-hint">Cada upload recebe uma única aba-fonte. Abas de consolidação servem somente para conferência e não devem ser importadas como fonte.</p>
         </section>
-        <section v-if="userStore.canWrite && selectedClosing.workflowStatus === 'DRAFT' && selectedClosing.currentVersion.versionStatus === 'EDITABLE' && showRuleSetup" class="cb-card obligations-card" aria-labelledby="retention-rules-title">
+        <section id="closing-rules" v-if="userStore.canWrite && selectedClosing.workflowStatus === 'DRAFT' && selectedClosing.currentVersion.versionStatus === 'EDITABLE' && showRuleSetup" class="cb-card obligations-card" aria-labelledby="retention-rules-title">
           <div class="section-heading"><div><p class="eyebrow">Regras da competência</p><h2 id="retention-rules-title">Produtividade Bruta → deduções → Produtividade Líquida</h2></div></div>
           <p class="matrix-hint">A dedução reduz a Produtividade Bruta da fonte ou somente a célula de um participante. A base corrente considera exclusivamente os saldos positivos deixados pelas regras anteriores. TM, TI e pontuação são aplicadas depois, sobre a PL individual.</p>
           <div class="payment-form"><v-select v-model="retentionSourceKey" :items="sources.map(source => ({ title: source.displayName, value: source.sourceKey }))" label="Fonte" /><v-select v-model="deductionIncidence" :items="[{ title: 'Toda a fonte', value: 'SOURCE' }, { title: 'Participante nesta fonte', value: 'PARTICIPANT_SOURCE' }]" label="Incidência" /><v-select v-if="deductionIncidence === 'PARTICIPANT_SOURCE'" v-model="deductionParticipantId" :items="participants.map(participant => ({ title: participant.displayName, value: participant.id }))" label="Participante" /><v-select v-model="deductionBase" :items="[{ title: 'Produtividade Bruta inicial', value: 'OPENING_GROSS_PRODUCTIVITY' }, { title: 'Saldo corrente após regras anteriores', value: 'CURRENT_BALANCE' }]" label="Base de cálculo" /><v-text-field v-model="retentionName" label="Nome da dedução" /><v-text-field v-model.number="retentionPercentage" label="Percentual" type="number" min="0" max="100" step="0.000001" /><v-text-field v-model="retentionJustification" label="Justificativa" /><v-btn color="primary" :disabled="!canSaveRetention" @click="saveRetention">Salvar nova revisão</v-btn></div>
@@ -63,7 +63,7 @@
           <p v-if="scores.length" class="matrix-hint">Pontuações registradas: {{ scores.filter(item => item.active).map(item => `${participantName(item.participantId)}: ${item.score}`).join(' · ') }}</p>
         </section>
 
-        <section v-if="summary && matrix" class="closing-kpis">
+        <section id="closing-result" v-if="summary && matrix" class="closing-kpis">
           <article class="cb-card metric"><span>Produtividade Bruta</span><strong>{{ money(summary.grossProductivityAmount) }}</strong></article>
           <article class="cb-card metric"><span>Deduções da produtividade</span><strong class="negative">{{ money(summary.deductionAmount) }}</strong></article>
           <article class="cb-card metric"><span>Ajustes do fechamento</span><strong>{{ signedMoney(summary.closingAdjustmentAmount) }}</strong></article>
@@ -129,7 +129,7 @@
           </template>
         </section>
 
-        <section v-if="summary && matrix" class="cb-card obligations-card decision-workflow" aria-labelledby="decision-workflow-title">
+        <section id="closing-decision" v-if="summary && matrix" class="cb-card obligations-card decision-workflow" aria-labelledby="decision-workflow-title">
           <div class="section-heading"><div><p class="eyebrow">Decisão colaborativa</p><h2 id="decision-workflow-title">Produtividade Líquida</h2></div><v-btn variant="tonal" :loading="loadingDecisionData" @click="loadDecisionData">Atualizar decisões</v-btn></div>
           <p class="matrix-hint">A proposta usa exclusivamente a execução de cálculo atual. Submeter bloqueia a revisão; aprovar emite uma obrigação de <strong>Valor a Receber</strong> por participante, de forma atômica.</p>
           <div v-if="selectedClosing.workflowStatus === 'DRAFT'" class="payment-form"><v-text-field v-model="payoutDueDate" label="Vencimento padrão (opcional)" type="date" /><v-btn color="primary" :disabled="!selectedClosing.currentVersion.calculationCurrent" :loading="creatingPayout" @click="createPayoutDecision">Criar proposta de Valor a Receber</v-btn></div>

@@ -1,0 +1,59 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { mount } from '@vue/test-utils'
+import { createVuetify } from 'vuetify'
+import * as components from 'vuetify/components'
+import * as directives from 'vuetify/directives'
+import FinancialClosingPanelView from '@/views/FinancialClosingPanelView.vue'
+import FinancialClosingImportWizardView from '@/views/FinancialClosingImportWizardView.vue'
+
+const { serviceMock, routerPush, routerReplace, routeState } = vi.hoisted(() => ({
+  routerPush: vi.fn(), routerReplace: vi.fn(), routeState: { params: {} as Record<string,string>, query: {} as Record<string,string> },
+  serviceMock: {
+    list: vi.fn(), createOrGet: vi.fn(), latestWorkbookReview: vi.fn(), workbookReviewProgress: vi.fn(),
+    workbookReview: vi.fn(), confirmWorkbookSensitiveIntent: vi.fn(), workbookInventory: vi.fn(),
+    prepareWorkbookReview: vi.fn(), preflightWorkbookReview: vi.fn(), publishWorkbookReview: vi.fn(),
+  },
+}))
+vi.mock('@/services/FinancialClosingService',()=>({default:serviceMock}))
+vi.mock('vue-router',()=>({useRoute:()=>routeState,useRouter:()=>({push:routerPush,replace:routerReplace})}))
+class ResizeObserverMock { observe() {} unobserve() {} disconnect() {} }
+globalThis.ResizeObserver=ResizeObserverMock as any
+const vuetify=createVuetify({components,directives});const flush=async()=>{await Promise.resolve();await new Promise(resolve=>setTimeout(resolve,0));await Promise.resolve()}
+const closing={id:'closing-1',workspaceId:'workspace-1',closingKey:'DEFAULT',periodMonth:8,periodYear:2026,currency:'BRL',workflowStatus:'DRAFT',settlementStatus:'NOT_ISSUED',currentVersion:{id:'version-1',versionNumber:1,versionStatus:'EDITABLE',inputRevision:1,calculatedRevision:null,calculationCurrent:false}}
+const materialized={id:'review-1',status:'DRAFT',revision:1,selectedSourceCount:1,preflightHmac:null,stagingExpiresAt:'2026-08-19T12:00:00Z',reviewExpiresAt:'2026-09-11T12:00:00Z',publicationId:null,sources:[{id:'source-review-1',guidedReviewSessionId:'guided-1',sourceKey:'KNOWN_SOURCE',status:'MATERIALIZED',revision:2,candidateCount:2,additionTotal:120,reversalTotal:20}]}
+const preflightReview={...materialized,status:'PREFLIGHT_READY',revision:2,preflightHmac:'opaque-preflight'}
+const publishedReview={...preflightReview,status:'PUBLISHED',revision:3,publicationId:'publication-1',sources:preflightReview.sources.map(source=>({...source,status:'PUBLISHED'}))}
+
+describe('Financial closing V31 journey',()=>{
+  beforeEach(()=>{
+    vi.clearAllMocks();sessionStorage.clear();routeState.params={};routeState.query={};serviceMock.list.mockResolvedValue({data:[closing]});serviceMock.latestWorkbookReview.mockResolvedValue({status:204,data:undefined});
+    serviceMock.workbookInventory.mockResolvedValue({data:{sheets:[{sheetName:'Known source',classification:'FINANCIAL_SOURCE_PROBABLE',suggestedSourceKey:'KNOWN_SOURCE',nonEmptyDataRows:2,detail:'Compatible structure',recommendedProfileId:'profile-1',recommendedProfileName:'Known profile',selectionStatus:'AUTO_SELECTED'},{sheetName:'Needs review',classification:'SUPPORT_REVIEW',suggestedSourceKey:'NEW_SOURCE',nonEmptyDataRows:1,detail:'Needs review',selectionStatus:'REVIEW_REQUIRED'}]}});
+    serviceMock.prepareWorkbookReview.mockResolvedValue({data:materialized});serviceMock.preflightWorkbookReview.mockResolvedValue({data:{reviewId:'review-1',revision:2,status:'PREFLIGHT_READY',preflightHmac:'opaque-preflight',sourceCount:1,itemCount:2,additionTotal:120,reversalTotal:20,deductionGateProjection:[]}});serviceMock.workbookReview.mockResolvedValueOnce({data:preflightReview}).mockResolvedValueOnce({data:publishedReview});serviceMock.publishWorkbookReview.mockResolvedValue({data:{publicationId:'publication-1',reviewId:'review-1',status:'PUBLISHED',idempotencyKey:'key',sourceCount:1,itemCount:2,additionTotal:120,reversalTotal:20,durationMs:10,replayed:false}})
+  })
+
+  it('renders the four-block panel and routes the contextual source action',async()=>{
+    const wrapper=mount(FinancialClosingPanelView,{global:{plugins:[vuetify],stubs:{PageHeader:{props:['title'],template:'<header>{{title}}</header>'},AlertStrip:true}}});await flush();await flush();
+    expect(wrapper.text()).toContain('Dados de origem');expect(wrapper.text()).toContain('Regras do cálculo');expect(wrapper.text()).toContain('Resultado');expect(wrapper.text()).toContain('Decisão');
+    ;(wrapper.vm as any).openImport();expect(routerPush).toHaveBeenCalledWith({name:'closing-import-wizard',params:{closingId:'closing-1',reviewId:'nova'}})
+  })
+
+  it('crosses upload, recognized preparation, preflight and idempotent publication',async()=>{
+    routeState.params={closingId:'closing-1',reviewId:'nova'}
+    const wrapper=mount(FinancialClosingImportWizardView,{global:{plugins:[vuetify],stubs:{AlertStrip:{props:['description'],template:'<div>{{description}}</div>'}}}});await flush();await flush();
+    const file=new File(['synthetic'],'synthetic.xlsx',{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});(wrapper.vm as any).workbookInput=file;(wrapper.vm as any).sensitiveConfirmed=true;await (wrapper.vm as any).inventoryWorkbook();await flush();expect(wrapper.text()).toContain('Known source');expect(wrapper.text()).toContain('1 aba(s) precisam de revisão');
+    await (wrapper.vm as any).prepareSources();await flush();expect(serviceMock.prepareWorkbookReview).toHaveBeenCalledWith(closing,file,['profile-1'],undefined);expect(routerReplace).toHaveBeenCalledWith({name:'closing-import-wizard',params:{closingId:'closing-1',reviewId:'review-1'}});expect(wrapper.text()).toContain('staging ainda está invisível ao cálculo');
+    await (wrapper.vm as any).runPreflight();await flush();expect(wrapper.text()).toContain('Publicar lote');(wrapper.vm as any).financialConfirmed=true;await (wrapper.vm as any).publish();await flush();expect(wrapper.text()).toContain('Lote publicado');
+    const firstKey=serviceMock.publishWorkbookReview.mock.calls[0][2].idempotencyKey;serviceMock.workbookReview.mockResolvedValue({data:publishedReview});(wrapper.vm as any).review=preflightReview;await (wrapper.vm as any).publish();expect(serviceMock.publishWorkbookReview.mock.calls[1][2].idempotencyKey).toBe(firstKey)
+  })
+
+  it('resumes the same review without bytes and reports stale or divergent state clearly',async()=>{
+    routeState.params={closingId:'closing-1',reviewId:'review-1'};serviceMock.workbookReviewProgress.mockResolvedValue({data:{id:'review-1',status:'DRAFT',revision:1,selectedSourceCount:1,materializedSourceCount:1,publishedSourceCount:0,stagingExpiresAt:'2026-08-19T12:00:00Z',reviewExpiresAt:'2026-09-11T12:00:00Z',stagingExpired:false,reviewExpired:false,publicationId:null,pendingCodes:[],nextAction:'RUN_PREFLIGHT'}});serviceMock.confirmWorkbookSensitiveIntent.mockResolvedValue({data:{expiresAt:'2026-08-12T12:15:00Z'}});serviceMock.workbookReview.mockReset().mockResolvedValue({data:materialized});
+    const wrapper=mount(FinancialClosingImportWizardView,{global:{plugins:[vuetify],stubs:{AlertStrip:{props:['description'],template:'<div>{{description}}</div>'}}}});await flush();await flush();expect(wrapper.text()).toContain('A revisão foi preservada');expect((wrapper.vm as any).selectedFile).toBeNull();(wrapper.vm as any).sensitiveConfirmed=true;await (wrapper.vm as any).resumeReview();await flush();expect(wrapper.text()).toContain('Fontes preparadas');
+    serviceMock.preflightWorkbookReview.mockRejectedValue({response:{status:409}});await (wrapper.vm as any).runPreflight();await flush();expect(wrapper.text()).toContain('preparação mudou ou expirou');
+    ;(wrapper.vm as any).inventory={sheets:[{sheetName:'Known source',selectionStatus:'AUTO_SELECTED',recommendedProfileId:'profile-1'}]};(wrapper.vm as any).workbookInput=new File(['other'],'other.xlsx');serviceMock.prepareWorkbookReview.mockRejectedValue({response:{status:409}});await (wrapper.vm as any).prepareSources();expect((wrapper.vm as any).errorMessage).toContain('não corresponde à revisão retomada')
+  })
+
+  it('keeps one task per screen and no mandatory table at 360px',async()=>{
+    routeState.params={closingId:'closing-1',reviewId:'nova'};Object.defineProperty(window,'innerWidth',{value:360,configurable:true});const wrapper=mount(FinancialClosingImportWizardView,{global:{plugins:[vuetify],stubs:{AlertStrip:true}}});await flush();await flush();expect(wrapper.find('table').exists()).toBe(false);expect(wrapper.find('.sticky-action').exists()).toBe(true);expect(wrapper.text()).toContain('Selecione o workbook')
+  })
+})
