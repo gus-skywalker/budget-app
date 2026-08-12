@@ -58,8 +58,8 @@ describe('FinancialClosingView', () => {
     serviceMock.importReadiness.mockResolvedValue({ data: { sources: [], readyToCalculate: false, blockingSourceKeys: [] } })
     serviceMock.workbookInventory.mockResolvedValue({ data: { sheets: [
       { sheetName: 'BP Paulista', classification: 'FINANCIAL_SOURCE_PROBABLE', suggestedSourceKey: 'BP_PAULISTA', nonEmptyDataRows: 2, detail: 'Estrutura tabular potencialmente importável.', recommendedProfileId: 'profile-1', recommendedProfileName: 'Repasse BP Paulista', selectionStatus: 'AUTO_SELECTED', headers: ['referencia', 'valor', 'data', 'executor'], mappingSuggestion: { itemKeyColumn: 'referencia', externalReferenceColumn: 'referencia', amountColumn: 'valor', occurredOnColumn: 'data', participantColumn: 'executor', identityCandidateColumns: ['referencia'], ambiguousFields: [] } },
-      { sheetName: 'GERAL', classification: 'CONSOLIDATION', suggestedSourceKey: 'GERAL', nonEmptyDataRows: 2, detail: 'Consolidação externa.', selectionStatus: 'CONSOLIDATION' },
-      { sheetName: 'FECHAMENTO', classification: 'CONSOLIDATION', suggestedSourceKey: 'FECHAMENTO', nonEmptyDataRows: 2, detail: 'Consolidação externa.', selectionStatus: 'CONSOLIDATION' },
+      { sheetName: 'GERAL', classification: 'SUPPORT_REVIEW', suggestedSourceKey: 'GERAL', nonEmptyDataRows: 2, detail: 'Estrutura requer revisão.', selectionStatus: 'REVIEW_REQUIRED' },
+      { sheetName: 'FECHAMENTO', classification: 'SUPPORT_REVIEW', suggestedSourceKey: 'FECHAMENTO', nonEmptyDataRows: 2, detail: 'Estrutura requer revisão.', selectionStatus: 'REVIEW_REQUIRED' },
     ] } })
     serviceMock.importProfile.mockResolvedValue({ data: { id: 'profile-1', profileKey: 'REPASSE_BP_PAULISTA', displayName: 'Repasse BP Paulista', sourceKey: 'BP_PAULISTA', version: 1, config: { format: 'CSV', itemKeyColumn: 'referencia', amountColumn: 'valor', occurredOnColumn: 'data', externalReferenceColumn: 'referencia', participantColumn: 'executor', participantMappings: { 'EXECUTOR A': 'participant-1' }, decimalSeparator: 'COMMA' } } })
     serviceMock.bankReconciliationSuggestions.mockResolvedValue({ data: {
@@ -204,10 +204,10 @@ describe('FinancialClosingView', () => {
     expect((wrapper.vm as any).selectedProfileId).toBe('profile-1')
     expect(wrapper.text()).toContain('Fontes para importar')
     expect(wrapper.text()).toContain('Pronta para importar')
-    expect(wrapper.text()).toContain('GERAL')
+    expect(wrapper.text()).toContain('independentemente do nome')
   })
 
-  it('guides a workbook inventory without treating GERAL or FECHAMENTO as importable sources', async () => {
+  it('allows any worksheet to be excluded and restored without persisting an import', async () => {
     useUserStore().tenantRole = 'ROLE_ADMIN'
     const wrapper = mount(FinancialClosingView, { global: { plugins: [vuetify], stubs: { PageHeader: { props: ['title'], template: '<header>{{ title }}<slot name="actions" /></header>' }, AlertStrip: true } } })
     await flush(); await flush()
@@ -221,12 +221,19 @@ describe('FinancialClosingView', () => {
     expect(wrapper.text()).toContain('Perfil compatível encontrado')
     expect(wrapper.text()).toContain('GERAL')
     expect(wrapper.text()).toContain('FECHAMENTO')
-    expect((wrapper.vm as any).isPermanentConsolidation((wrapper.vm as any).workbookInventory.sheets[1])).toBe(true)
-    expect((wrapper.vm as any).workbookClassification((wrapper.vm as any).workbookInventory.sheets[2])).toBe('CONSOLIDATION')
+    expect((wrapper.vm as any).workbookClassification((wrapper.vm as any).workbookInventory.sheets[2])).toBe('SUPPORT_REVIEW')
     expect((wrapper.vm as any).selectedWorkbookSheets).toHaveLength(1)
-    ;(wrapper.vm as any).removeWorkbookSelection((wrapper.vm as any).workbookInventory.sheets[0])
+    ;(wrapper.vm as any).excludeWorkbookSheet((wrapper.vm as any).workbookInventory.sheets[0])
     expect((wrapper.vm as any).selectedWorkbookSheets).toHaveLength(0)
+    expect((wrapper.vm as any).excludedWorkbookSheets.map((sheet:any)=>sheet.sheetName)).toContain('BP Paulista')
+    ;(wrapper.vm as any).restoreWorkbookSheet((wrapper.vm as any).workbookInventory.sheets[0])
+    expect((wrapper.vm as any).reviewWorkbookSheets.map((sheet:any)=>sheet.sheetName)).toContain('BP Paulista')
+    ;(wrapper.vm as any).excludeWorkbookSheet((wrapper.vm as any).workbookInventory.sheets[1])
+    expect((wrapper.vm as any).excludedWorkbookSheets).toHaveLength(1)
     expect(serviceMock.confirmProfileImport).not.toHaveBeenCalled()
+    ;(wrapper.vm as any).restoreWorkbookSheet((wrapper.vm as any).workbookInventory.sheets[1])
+    expect((wrapper.vm as any).excludedWorkbookSheets).toHaveLength(0)
+    expect((wrapper.vm as any).reviewWorkbookSheets.map((sheet:any)=>sheet.sheetName)).toContain('GERAL')
     ;(wrapper.vm as any).prepareWorkbookSource((wrapper.vm as any).workbookInventory.sheets[0])
     expect((wrapper.vm as any).newSourceKey).toBe('BP_PAULISTA')
     expect((wrapper.vm as any).selectedProfileId).toBe('profile-1')
