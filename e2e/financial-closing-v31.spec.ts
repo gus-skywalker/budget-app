@@ -33,6 +33,9 @@ async function prepareCompetence(request: APIRequestContext, state: Runtime, mon
   await apiJson(request, state, 'post', `/financial-closings/${closing.id}/versions/${version}/source-retentions`, {
     sourceKey: source.sourceKey, displayName: 'Sem dedução nesta fonte', percentage: 0, justification: 'Regra sintética explícita para o E2E V31',
   })
+  await apiJson(request, state, 'post', `/financial-closings/${closing.id}/versions/${version}/participant-scores`, {
+    participantId: participant.id, score: 85, justification: 'Pontuação sintética explícita para o E2E V34',
+  })
   await apiJson(request, state, 'post', `/financial-closings/${closing.id}/versions/${version}/import-profiles`, {
     profileKey: 'V31_HAPPY_PATH', displayName: 'Perfil sintético V31', sourceKey: source.sourceKey,
     config: {
@@ -108,6 +111,14 @@ async function completeRulesAndResult(page: Page, closing: Closing) {
   await expect(page.getByRole('heading', { name: 'Cálculo atual' })).toBeVisible()
   await expect(page.getByText('Produtividade Bruta', { exact: true })).toBeVisible()
   await expect(page.getByText('Produtividade Líquida', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Continuar para decisão' }).click()
+  await expect(page).toHaveURL(new RegExp(`/apuracoes/${closing.id}/decisao$`))
+  await expect(page.getByRole('heading', { name: 'Revise antes de criar a proposta' })).toBeVisible()
+  await page.getByRole('button', { name: 'Criar proposta' }).click()
+  await expect(page.getByRole('heading', { name: 'Proposta preparada' })).toBeVisible()
+  await page.getByRole('button', { name: 'Enviar para autorização' }).click()
+  await expect(page.getByRole('heading', { name: 'Proposta em autorização' })).toBeVisible()
+  await expect(page.getByText('A cobertura das entradas ainda não está integralmente conciliada.')).toBeVisible()
 }
 
 test.describe.configure({ mode: 'serial' })

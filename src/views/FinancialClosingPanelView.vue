@@ -30,8 +30,8 @@
             <v-btn class="card-action" variant="tonal" :disabled="!rulesAvailable" @click="openResult">{{ resultAvailable ? 'Ver resultado' : 'Calcular resultado' }}</v-btn>
           </article>
           <article class="journey-card cb-card" :class="{ active: decisionAvailable }">
-            <div class="step-number">4</div><div><p class="eyebrow">Decisão</p><h2>{{ decisionAvailable ? 'Pronta para decisão' : 'Aguardando resultado atual' }}</h2><p>A aprovação e seus efeitos financeiros permanecem no fluxo já contratado.</p></div>
-            <v-btn class="card-action" variant="tonal" :disabled="!decisionAvailable" @click="openLegacy('closing-decision')">Abrir decisão</v-btn>
+            <div class="step-number">4</div><div><p class="eyebrow">Decisão</p><h2>{{ decisionTitle }}</h2><p>{{ decisionDescription }}</p></div>
+            <v-btn class="card-action" variant="tonal" :disabled="!decisionAvailable" @click="openDecision">{{ decisionAction }}</v-btn>
           </article>
         </main>
         <div class="legacy-link"><v-btn variant="text" prepend-icon="mdi-view-dashboard-outline" @click="openLegacy()">Abrir operação completa anterior</v-btn></div>
@@ -45,25 +45,29 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PageHeader from '@/components/PageHeader.vue'
 import AlertStrip from '@/components/AlertStrip.vue'
-import FinancialClosingService, { type DeductionReadiness, type FinancialClosing, type WorkbookReviewProgress } from '@/services/FinancialClosingService'
+import FinancialClosingService, { type DeductionReadiness, type FinancialClosing, type PayoutDecision, type WorkbookReviewProgress } from '@/services/FinancialClosingService'
 
-const route=useRoute(),router=useRouter();const closings=ref<FinancialClosing[]>([]),selectedId=ref(''),progress=ref<WorkbookReviewProgress|null>(null),deductionReadiness=ref<DeductionReadiness|null>(null),loading=ref(true),creating=ref(false),errorMessage=ref('');const month=ref(new Date().getMonth()+1),year=ref(new Date().getFullYear());
+const route=useRoute(),router=useRouter();const closings=ref<FinancialClosing[]>([]),selectedId=ref(''),progress=ref<WorkbookReviewProgress|null>(null),deductionReadiness=ref<DeductionReadiness|null>(null),payoutDecision=ref<PayoutDecision|null>(null),loading=ref(true),creating=ref(false),errorMessage=ref('');const month=ref(new Date().getMonth()+1),year=ref(new Date().getFullYear());
 const months=Array.from({length:12},(_,index)=>({title:String(index+1).padStart(2,'0'),value:index+1}));
 const selectedClosing=computed(()=>closings.value.find(item=>item.id===selectedId.value)||null);const closingOptions=computed(()=>closings.value.map(item=>({title:`${String(item.periodMonth).padStart(2,'0')}/${item.periodYear} · ${item.closingKey}`,value:item.id})));
 const headerSummary=computed(()=>selectedClosing.value?[{label:'Competência',value:`${String(selectedClosing.value.periodMonth).padStart(2,'0')}/${selectedClosing.value.periodYear}`},{label:'Escopo',value:selectedClosing.value.closingKey}]:[]);
-const sourceActive=computed(()=>!progress.value||progress.value.status!=='PUBLISHED'),rulesAvailable=computed(()=>progress.value?.status==='PUBLISHED'),resultAvailable=computed(()=>Boolean(selectedClosing.value?.currentVersion.calculationCurrent)),decisionAvailable=computed(()=>resultAvailable.value&&selectedClosing.value?.workflowStatus==='DRAFT');
+const sourceActive=computed(()=>!progress.value||progress.value.status!=='PUBLISHED'),rulesAvailable=computed(()=>progress.value?.status==='PUBLISHED'),resultAvailable=computed(()=>Boolean(selectedClosing.value?.currentVersion.calculationCurrent)),decisionAvailable=computed(()=>resultAvailable.value||Boolean(payoutDecision.value));
 const sourceTitle=computed(()=>progress.value?.status==='PUBLISHED'?'Lote publicado':progress.value?'Importação em andamento':'Importar workbook');
 const sourceDescription=computed(()=>progress.value?.status==='PUBLISHED'?'Os itens publicados já alimentam o fechamento.':'Selecione uma vez o arquivo e prepare as fontes reconhecidas.');
 const sourceAction=computed(()=>progress.value?.status==='PUBLISHED'?'Ver publicação':progress.value?'Retomar importação':'Importar workbook');
 const rulesTitle=computed(()=>!rulesAvailable.value?'Aguardando dados':deductionReadiness.value?.readyToCalculate?'Regras revisadas':'Revisão necessária');
 const rulesDescription=computed(()=>!rulesAvailable.value?'Publique os dados de origem para revisar as incidências.':deductionReadiness.value?.readyToCalculate?'Todas as fontes possuem uma declaração atual.':`${deductionReadiness.value?.blockingSourceKeys.length||0} fonte(s) aguardam revisão.`);
 const rulesAction=computed(()=>deductionReadiness.value?.readyToCalculate?'Ver regras':'Revisar regras');
+const decisionTitle=computed(()=>payoutDecision.value?.status==='APPROVED'?'Decisão aprovada':payoutDecision.value?.status==='REVIEW'?'Aguardando autorização final':payoutDecision.value?.status==='DRAFT'?'Proposta em preparação':decisionAvailable.value?'Pronta para decisão':'Aguardando resultado atual');
+const decisionDescription=computed(()=>payoutDecision.value?.status==='APPROVED'?`${payoutDecision.value.issuedObligationCount} obrigação(ões) emitida(s), sem executar transferência bancária.`:payoutDecision.value?.status==='REVIEW'?'A proposta está bloqueada para edição e aguarda um aprovador elegível.':payoutDecision.value?.status==='DRAFT'?'Revise os Valores a Receber antes de enviar para autorização.':'A aprovação usa somente o Valor a Receber e preserva TM, TI e reservas.');
+const decisionAction=computed(()=>payoutDecision.value?.status==='APPROVED'?'Ver decisão':payoutDecision.value?.status==='REVIEW'?'Revisar autorização':payoutDecision.value?.status==='DRAFT'?'Continuar proposta':'Preparar decisão');
 async function load(){loading.value=true;errorMessage.value='';try{closings.value=(await FinancialClosingService.list()).data;const requested=String(route.query.closingId||route.params.closingId||'');selectedId.value=closings.value.some(item=>item.id===requested)?requested:(closings.value[0]?.id||'');await loadProgress()}catch{errorMessage.value='Não foi possível carregar o painel da competência.'}finally{loading.value=false}}
-async function loadProgress(){const closing=selectedClosing.value;if(!closing){progress.value=null;deductionReadiness.value=null;return}try{const response=await FinancialClosingService.latestWorkbookReview(closing);progress.value=response.status===204?null:(response.data||null)}catch{progress.value=null}if(progress.value?.status==='PUBLISHED'){try{deductionReadiness.value=(await FinancialClosingService.deductionReadiness(closing)).data}catch{deductionReadiness.value=null}}else deductionReadiness.value=null}
+async function loadProgress(){const closing=selectedClosing.value;if(!closing){progress.value=null;deductionReadiness.value=null;payoutDecision.value=null;return}try{const response=await FinancialClosingService.latestWorkbookReview(closing);progress.value=response.status===204?null:(response.data||null)}catch{progress.value=null}if(progress.value?.status==='PUBLISHED'){try{deductionReadiness.value=(await FinancialClosingService.deductionReadiness(closing)).data}catch{deductionReadiness.value=null}}else deductionReadiness.value=null;try{const decisions=(await FinancialClosingService.payoutDecisions(closing)).data;payoutDecision.value=decisions.find(item=>item.status==='REVIEW')||decisions.find(item=>item.status==='DRAFT')||decisions.find(item=>item.status==='APPROVED')||null}catch{payoutDecision.value=null}}
 async function createClosing(){creating.value=true;try{const created=(await FinancialClosingService.createOrGet(month.value,year.value,'DEFAULT','BRL')).data;await load();selectedId.value=created.id}catch{errorMessage.value='Não foi possível criar a competência.'}finally{creating.value=false}}
 function openImport(){const closing=selectedClosing.value;if(!closing)return;router.push({name:'closing-import-wizard',params:{closingId:closing.id,reviewId:progress.value?.id||'nova'}})}
 function openRules(){const closing=selectedClosing.value;if(closing)router.push({name:'closing-rules',params:{closingId:closing.id}})}
 function openResult(){const closing=selectedClosing.value;if(closing)router.push({name:'closing-result',params:{closingId:closing.id}})}
+function openDecision(){const closing=selectedClosing.value;if(closing)router.push({name:'closing-decision',params:{closingId:closing.id}})}
 function openLegacy(anchor=''){const closing=selectedClosing.value;if(!closing)return;router.push({name:'planning-financial-closings-legacy',query:{closingId:closing.id},hash:anchor?`#${anchor}`:''})}
 watch(selectedId,loadProgress);onMounted(load)
 </script>
