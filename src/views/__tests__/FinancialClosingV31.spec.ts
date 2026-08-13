@@ -5,6 +5,7 @@ import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
 import FinancialClosingPanelView from '@/views/FinancialClosingPanelView.vue'
 import FinancialClosingImportWizardView from '@/views/FinancialClosingImportWizardView.vue'
+import { clearClosingImportSession } from '@/utils/closingImportSession'
 
 const { serviceMock, routerPush, routerReplace, routeState, userStore } = vi.hoisted(() => ({
   routerPush: vi.fn(), routerReplace: vi.fn(), routeState: { params: {} as Record<string,string>, query: {} as Record<string,string> },
@@ -29,7 +30,7 @@ const publishedReview={...preflightReview,status:'PUBLISHED',revision:3,publicat
 
 describe('Financial closing V31 journey',()=>{
   beforeEach(()=>{
-    vi.clearAllMocks();sessionStorage.clear();routeState.params={};routeState.query={};serviceMock.list.mockResolvedValue({data:[closing]});serviceMock.participants.mockResolvedValue({data:[]});serviceMock.latestWorkbookReview.mockResolvedValue({status:204,data:undefined});serviceMock.importReadiness.mockResolvedValue({data:{sources:[],readyToCalculate:false,blockingSourceKeys:[]}});serviceMock.deductionReadiness.mockResolvedValue({data:{readyToCalculate:false,blockingSourceKeys:[]}});serviceMock.payoutDecisions.mockResolvedValue({data:[]});serviceMock.grantSensitiveAccess.mockResolvedValue({data:{granted:true}});
+    vi.clearAllMocks();sessionStorage.clear();clearClosingImportSession({workspaceId:'workspace-1',userId:'owner-1',closingId:'closing-1'});routeState.params={};routeState.query={};serviceMock.list.mockResolvedValue({data:[closing]});serviceMock.participants.mockResolvedValue({data:[]});serviceMock.latestWorkbookReview.mockResolvedValue({status:204,data:undefined});serviceMock.importReadiness.mockResolvedValue({data:{sources:[],readyToCalculate:false,blockingSourceKeys:[]}});serviceMock.deductionReadiness.mockResolvedValue({data:{readyToCalculate:false,blockingSourceKeys:[]}});serviceMock.payoutDecisions.mockResolvedValue({data:[]});serviceMock.grantSensitiveAccess.mockResolvedValue({data:{granted:true}});
     serviceMock.workbookInventory.mockResolvedValue({data:{sheets:[{sheetName:'Known source',classification:'FINANCIAL_SOURCE_PROBABLE',suggestedSourceKey:'KNOWN_SOURCE',nonEmptyDataRows:2,detail:'Compatible structure',recommendedProfileId:'profile-1',recommendedProfileName:'Known profile',selectionStatus:'AUTO_SELECTED'},{sheetName:'Needs review',classification:'SUPPORT_REVIEW',suggestedSourceKey:'NEW_SOURCE',nonEmptyDataRows:1,detail:'Needs review',selectionStatus:'REVIEW_REQUIRED'}]}});
     serviceMock.prepareWorkbookReview.mockResolvedValue({data:materialized});serviceMock.preflightWorkbookReview.mockResolvedValue({data:{reviewId:'review-1',revision:2,status:'PREFLIGHT_READY',preflightHmac:'opaque-preflight',sourceCount:1,itemCount:2,additionTotal:120,reversalTotal:20,deductionGateProjection:[]}});serviceMock.workbookReview.mockResolvedValueOnce({data:preflightReview}).mockResolvedValueOnce({data:publishedReview});serviceMock.publishWorkbookReview.mockResolvedValue({data:{publicationId:'publication-1',reviewId:'review-1',status:'PUBLISHED',idempotencyKey:'key',sourceCount:1,itemCount:2,additionTotal:120,reversalTotal:20,durationMs:10,replayed:false}});serviceMock.abandonWorkbookReview.mockResolvedValue({data:{...materialized,status:'ABANDONED'}})
   })
@@ -68,6 +69,14 @@ describe('Financial closing V31 journey',()=>{
     const file=new File(['synthetic'],'synthetic.xlsx');(wrapper.vm as any).workbookInput=file;(wrapper.vm as any).sensitiveConfirmed=true;await (wrapper.vm as any).inventoryWorkbook();await flush()
     const sheet=(wrapper.vm as any).reviewSheets[0];(wrapper.vm as any).configureSheet(sheet);await flush()
     expect(wrapper.text()).toContain('Configurar fonte');expect((wrapper.vm as any).selectedFile).toBe(file);expect(routerPush).not.toHaveBeenCalledWith(expect.objectContaining({name:'planning-financial-closings-legacy'}))
+  })
+
+  it('keeps an inventoried workbook in memory when returning from the panel during the same protected session',async()=>{
+    routeState.params={closingId:'closing-1',reviewId:'nova'}
+    const first=mount(FinancialClosingImportWizardView,{global:{plugins:[vuetify],stubs:{AlertStrip:true}}});await flush();await flush()
+    const file=new File(['synthetic'],'synthetic.xlsx');(first.vm as any).workbookInput=file;(first.vm as any).sensitiveConfirmed=true;await (first.vm as any).inventoryWorkbook();await flush()
+    const resumed=mount(FinancialClosingImportWizardView,{global:{plugins:[vuetify],stubs:{AlertStrip:true}}});await flush();await flush()
+    expect((resumed.vm as any).selectedFile).toBe(file);expect((resumed.vm as any).sensitiveConfirmed).toBe(true);expect(resumed.text()).toContain('Confira o que entra neste lote')
   })
 
   it('does not select a compatible source that was already confirmed in this competence',async()=>{

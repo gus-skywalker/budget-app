@@ -173,6 +173,24 @@ test('V31 keeps source configuration inside the guided wizard', async ({ page, r
   await expect(page.locator('input[type="file"]')).toHaveCount(0)
 })
 
+test('V31 resumes an inventoried workbook after returning to the panel in the same browser session', async ({ page, request }) => {
+  const state = runtime()
+  const closing = await prepareCompetence(request, state, 2)
+  await authenticate(page, state)
+  await page.goto(`/planning/financial-closings?closingId=${closing.id}`)
+  await closeCookieNotice(page)
+  await page.getByRole('button', { name: 'Importar workbook' }).click()
+  await page.getByLabel('Entendo que acessarei dados protegidos nesta leitura').check()
+  await page.locator('input[type="file"]').setInputFiles(fixture)
+  await page.getByRole('button', { name: 'Identificar fontes' }).click()
+  await expect(page.getByRole('heading', { name: 'Confira o que entra neste lote' })).toBeVisible()
+  await page.getByRole('button', { name: 'Salvar e sair' }).click()
+  await expect(page.getByText('Arquivo pronto para continuar', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Continuar importação' }).click()
+  await expect(page.getByRole('heading', { name: 'Confira o que entra neste lote' })).toBeVisible()
+  await expect(page.locator('input[type="file"]')).toHaveCount(0)
+})
+
 test('redirects the retired Portuguese import URL to the canonical English route', async ({ page, request }) => {
   const state = runtime()
   const closing = await prepareCompetence(request, state, 1)
