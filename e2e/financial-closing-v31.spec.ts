@@ -118,7 +118,14 @@ async function completeRulesAndResult(page: Page, closing: Closing) {
   await expect(page.getByRole('heading', { name: 'Proposta preparada' })).toBeVisible()
   await page.getByRole('button', { name: 'Enviar para autorização' }).click()
   await expect(page.getByRole('heading', { name: 'Proposta em autorização' })).toBeVisible()
-  await expect(page.getByText('A cobertura das entradas ainda não está integralmente conciliada.')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Cobertura pendente' })).toBeVisible()
+  await page.getByRole('button', { name: 'Confirmar cobertura' }).click()
+  const coverageDialog = page.getByRole('dialog')
+  await coverageDialog.getByRole('textbox', { name: /Justificativa/ }).fill('Entradas sintéticas conferidas na demonstração E2E')
+  await coverageDialog.getByLabel('Referência da evidência protegida').fill('e2e:synthetic-coverage')
+  await coverageDialog.getByLabel('Confirmo que revisei integralmente as entradas deste cálculo.').check()
+  await coverageDialog.getByRole('button', { name: 'Confirmar cobertura', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Cobertura confirmada' })).toBeVisible()
 }
 
 test.describe.configure({ mode: 'serial' })

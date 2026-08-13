@@ -12,6 +12,7 @@ const { serviceMock, routerPush, routeState, userState } = vi.hoisted(() => ({
   serviceMock: {
     list: vi.fn(), summary: vi.fn(), participants: vi.fn(), payoutDecisions: vi.fn(),
     createPayoutDecision: vi.fn(), submitPayoutDecision: vi.fn(), approvePayoutDecision: vi.fn(),
+    inflowCoverage: vi.fn(), attestInflowCoverage: vi.fn(), revokeInflowCoverage: vi.fn(),
   },
 }))
 vi.mock('@/services/FinancialClosingService', () => ({ default: serviceMock }))
@@ -19,6 +20,7 @@ vi.mock('@/plugins/userStore', () => ({ useUserStore: () => userState }))
 vi.mock('vue-router', () => ({ useRoute: () => routeState, useRouter: () => ({ push: routerPush }) }))
 class ResizeObserverMock { observe() {} unobserve() {} disconnect() {} }
 globalThis.ResizeObserver = ResizeObserverMock as any
+Object.defineProperty(window, 'visualViewport', { value: { addEventListener: () => {}, removeEventListener: () => {}, width: 1024, height: 768, offsetTop: 0, offsetLeft: 0, scale: 1 }, configurable: true })
 const vuetify = createVuetify({ components, directives })
 const flush = async () => { await Promise.resolve(); await new Promise(resolve => setTimeout(resolve, 0)); await Promise.resolve() }
 const stubs = { PageHeader: { props: ['title'], template: '<header><h1>{{title}}</h1></header>' }, AlertStrip: { props: ['description'], template: '<div role="alert">{{description}}</div>' } }
@@ -28,6 +30,7 @@ const summary = { calculationRunId: 'run-1', versionNumber: 1, inputRevision: 4,
 const draft = { id: 'decision-1', status: 'DRAFT', revision: 1, closingVersionId: 'version-1', calculationRunId: 'run-1', inputRevision: 4, productivityAmount: 100, valueReceivableAmount: 85, lines: [{ id: 'line-1', participantId: 'participant-1', amount: 85 }], issuedObligationCount: 0, ownerSelfApprovalException: false }
 const review = { ...draft, status: 'REVIEW', revision: 2 }
 const approved = { ...review, status: 'APPROVED', revision: 3, issuedObligationCount: 1 }
+const coverage = { calculationRunId: 'run-1', coveragePolicyVersion: 'INFLOW_COVERAGE_V36', status: 'ATTESTED', expectedAmount: 100, attestedAmount: 100, divergenceAmount: 0, itemCount: 1, pendingItemCount: 0, attestationId: 'attestation-1', applicationId: 'application-1', replayed: false }
 
 describe('Financial closing V34 decision journey', () => {
   beforeEach(() => {
@@ -41,6 +44,9 @@ describe('Financial closing V34 decision journey', () => {
     serviceMock.createPayoutDecision.mockResolvedValue({ data: draft })
     serviceMock.submitPayoutDecision.mockResolvedValue({ data: review })
     serviceMock.approvePayoutDecision.mockResolvedValue({ data: approved })
+    serviceMock.inflowCoverage.mockResolvedValue({ data: coverage })
+    serviceMock.attestInflowCoverage.mockResolvedValue({ data: coverage })
+    serviceMock.revokeInflowCoverage.mockResolvedValue({ data: { ...coverage, status: 'REQUIRED', attestedAmount: 0, divergenceAmount: 100, pendingItemCount: 1, attestationId: null, applicationId: null } })
   })
 
   it('prepares and submits only the canonical Value Receivable without issuing obligations', async () => {
@@ -82,15 +88,31 @@ describe('Financial closing V34 decision journey', () => {
     expect(wrapper.text()).toContain('1 obrigação(ões) emitida(s)')
   })
 
-  it('blocks approval when inflow coverage is incomplete and remains usable at 360 px', async () => {
+  it('blocks approval when the canonical inflow coverage is incomplete and remains usable at 360 px', async () => {
     Object.defineProperty(window, 'innerWidth', { value: 360, configurable: true })
     serviceMock.summary.mockResolvedValue({ data: { ...summary, reconciliation: { ...summary.reconciliation, reconciledInflowAmount: 80, divergenceAmount: 20, coveragePercentage: 80 } } })
+    serviceMock.inflowCoverage.mockResolvedValue({ data: { ...coverage, status: 'REQUIRED', attestedAmount: 0, divergenceAmount: 100, pendingItemCount: 1, attestationId: null, applicationId: null } })
     serviceMock.payoutDecisions.mockResolvedValue({ data: [review] })
     const wrapper = mount(FinancialClosingDecisionView, { global: { plugins: [vuetify], stubs } })
     await flush(); await flush()
-    expect(wrapper.text()).toContain('cobertura das entradas ainda não está integralmente conciliada')
+    expect(wrapper.text()).toContain('cobertura operacional das entradas ainda precisa de confirmação')
     expect(wrapper.find('table').exists()).toBe(false)
     expect(wrapper.find('.sticky-action').exists()).toBe(true)
     expect(wrapper.findAll('button').find(button => button.text().includes('Aprovar e emitir'))?.attributes('disabled')).toBeDefined()
+  })
+
+  it('records a protected coverage attestation without exposing its evidence in the decision surface', async () => {
+    serviceMock.payoutDecisions.mockResolvedValue({ data: [review] })
+    serviceMock.inflowCoverage.mockResolvedValue({ data: { ...coverage, status: 'REQUIRED', attestedAmount: 0, divergenceAmount: 100, pendingItemCount: 1, attestationId: null, applicationId: null } })
+    const wrapper = mount(FinancialClosingDecisionView, { global: { plugins: [vuetify], stubs } })
+    await flush(); await flush()
+    ;(wrapper.vm as any).coverageOpen = true
+    ;(wrapper.vm as any).coverageJustification = 'Entradas conferidas na fonte autorizada'
+    ;(wrapper.vm as any).coverageEvidence = 'private-reference-not-rendered-after-submit'
+    ;(wrapper.vm as any).coverageIntent = true
+    await (wrapper.vm as any).attestCoverage(); await flush()
+    expect(serviceMock.attestInflowCoverage).toHaveBeenCalledWith(closing, 'run-1', expect.objectContaining({ sensitiveAccessConfirmed: true, explicitFullCoverageConfirmation: true }))
+    expect(wrapper.text()).toContain('Cobertura registrada')
+    expect(wrapper.text()).not.toContain('private-reference-not-rendered-after-submit')
   })
 })

@@ -84,6 +84,19 @@ export interface ReconciliationSummary {
   divergenceAmount: number
   unreconciledItemCount: number
 }
+export interface InflowCoverage {
+  calculationRunId: string
+  coveragePolicyVersion: string
+  status: 'REQUIRED' | 'ATTESTED' | 'REUSED' | 'NOT_REQUIRED'
+  expectedAmount: number
+  attestedAmount: number
+  divergenceAmount: number
+  itemCount: number
+  pendingItemCount: number
+  attestationId?: string | null
+  applicationId?: string | null
+  replayed: boolean
+}
 export interface ClosingSummary {
   calculationRunId: string
   versionNumber: number
@@ -152,6 +165,9 @@ export default {
   participantScores(closing: FinancialClosing) { return axiosInterceptor.get<ParticipantScore[]>(`${versionPath(closing)}/participant-scores`) },
   upsertParticipantScore(closing: FinancialClosing, payload: { participantId: string; score: number; justification: string }) { return axiosInterceptor.post<ParticipantScore>(`${versionPath(closing)}/participant-scores`, payload) },
   summary(closing: FinancialClosing) { return axiosInterceptor.get<ClosingSummary>(`${versionPath(closing)}/summary`) },
+  inflowCoverage(closing: FinancialClosing, runId: string) { return axiosInterceptor.get<InflowCoverage>(`${versionPath(closing)}/calculation-runs/${runId}/inflow-coverage`) },
+  attestInflowCoverage(closing: FinancialClosing, runId: string, payload: { expectedInputRevision: number; justification: string; evidenceReference: string; idempotencyKey: string; explicitFullCoverageConfirmation: boolean; sensitiveAccessConfirmed: boolean }) { return axiosInterceptor.post<InflowCoverage>(`${versionPath(closing)}/calculation-runs/${runId}/inflow-coverage-attestations`, payload) },
+  revokeInflowCoverage(closing: FinancialClosing, runId: string, attestationId: string, payload: { expectedInputRevision: number; justification: string; idempotencyKey: string; sensitiveAccessConfirmed: boolean }) { return axiosInterceptor.post<InflowCoverage>(`${versionPath(closing)}/calculation-runs/${runId}/inflow-coverage-attestations/${attestationId}/revoke`, payload) },
   matrix(closing: FinancialClosing) { return axiosInterceptor.get<ClosingMatrix>(`${versionPath(closing)}/matrix`) },
   memory(closing: FinancialClosing) { return axiosInterceptor.get<CalculationMemory>(`${versionPath(closing)}/calculation-memory`) },
   drillDown(closing: FinancialClosing, participantId: string, sourceId: string) {
