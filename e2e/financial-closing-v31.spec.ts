@@ -169,7 +169,7 @@ test('V31 keeps source configuration inside the guided wizard', async ({ page, r
   await page.locator('input[type="file"]').setInputFiles(fixture)
   await page.getByRole('button', { name: 'Identificar fontes' }).click()
   await page.getByRole('button', { name: 'Configurar fonte e perfil' }).click()
-  await expect(page).toHaveURL(new RegExp(`/financial-closings/${closing.id}/imports/new$`))
+  await expect(page).toHaveURL(new RegExp(`/financial-closings/${closing.id}/imports/[0-9a-f-]+$`))
   await expect(page.getByText('Configurar fonte', { exact: true })).toBeVisible()
   await expect(page.locator('input[type="file"]')).toHaveCount(0)
 })
@@ -187,11 +187,10 @@ test('V31 resumes a persisted inventoried review after returning to the panel', 
   await expect(page.getByRole('heading', { name: 'Confira o que entra neste lote' })).toBeVisible()
   await page.getByRole('button', { name: 'Salvar e sair' }).click()
   await expect(page.getByText('Importação em andamento', { exact: true })).toBeVisible()
-  await page.getByRole('button', { name: 'Continuar importação' }).click()
-  await page.getByLabel('Entendo que acessarei dados protegidos desta importação').check()
-  await page.getByRole('button', { name: 'Retomar revisão' }).click()
+  await page.getByRole('button', { name: 'Retomar importação' }).click()
+  await expect(page.getByRole('heading', { name: 'Selecione novamente o mesmo workbook' })).toBeVisible()
+  await page.locator('input[type="file"]').setInputFiles(fixture)
   await expect(page.getByRole('heading', { name: 'Confira o que entra neste lote' })).toBeVisible()
-  await expect(page.locator('input[type="file"]')).toHaveCount(0)
 })
 
 test('redirects the retired Portuguese import URL to the canonical English route', async ({ page, request }) => {
