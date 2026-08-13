@@ -14,7 +14,6 @@ import AccountsView from '@/views/AccountsView.vue'
 import CategoriesView from '@/views/CategoriesView.vue'
 import CashflowView from '@/views/CashflowView.vue'
 import PlanningBudgetView from '@/views/PlanningBudgetView.vue'
-import FinancialClosingView from '@/views/FinancialClosingView.vue'
 import FinancialClosingPanelView from '@/views/FinancialClosingPanelView.vue'
 import FinancialClosingImportWizardView from '@/views/FinancialClosingImportWizardView.vue'
 import FinancialClosingRulesView from '@/views/FinancialClosingRulesView.vue'
@@ -107,8 +106,7 @@ const router = createRouter({
     {
       path: '/planning/financial-closings/legacy',
       name: 'planning-financial-closings-legacy',
-      component: FinancialClosingView,
-      meta: { requiresAuth: true, requiresWorkspace: true }
+      redirect: to => ({ name: 'planning-financial-closings', query: to.query })
     },
     {
       path: '/financial-closings/:closingId/imports/:reviewId',
@@ -137,7 +135,7 @@ const router = createRouter({
     // Compatibility redirects only. New navigation must use the English routes above.
     {
       path: '/apuracoes/:closingId/importacoes/:reviewId',
-      redirect: to => ({ name: 'closing-import-wizard', params: to.params, query: to.query, hash: to.hash })
+      redirect: to => ({ name: 'closing-import-wizard', params: { ...to.params, reviewId: to.params.reviewId === 'nova' ? 'new' : to.params.reviewId }, query: to.query, hash: to.hash })
     },
     {
       path: '/apuracoes/:closingId/regras',
