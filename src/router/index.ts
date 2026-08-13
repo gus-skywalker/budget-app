@@ -111,28 +111,45 @@ const router = createRouter({
       meta: { requiresAuth: true, requiresWorkspace: true }
     },
     {
-      path: '/apuracoes/:closingId/importacoes/:reviewId',
+      path: '/financial-closings/:closingId/imports/:reviewId',
       name: 'closing-import-wizard',
       component: FinancialClosingImportWizardView,
       meta: { requiresAuth: true, requiresWorkspace: true }
     },
     {
-      path: '/apuracoes/:closingId/regras',
+      path: '/financial-closings/:closingId/rules',
       name: 'closing-rules',
       component: FinancialClosingRulesView,
       meta: { requiresAuth: true, requiresWorkspace: true }
     },
     {
-      path: '/apuracoes/:closingId/resultado',
+      path: '/financial-closings/:closingId/results',
       name: 'closing-result',
       component: FinancialClosingResultView,
       meta: { requiresAuth: true, requiresWorkspace: true }
     },
     {
-      path: '/apuracoes/:closingId/decisao',
+      path: '/financial-closings/:closingId/decisions',
       name: 'closing-decision',
       component: FinancialClosingDecisionView,
       meta: { requiresAuth: true, requiresWorkspace: true }
+    },
+    // Compatibility redirects only. New navigation must use the English routes above.
+    {
+      path: '/apuracoes/:closingId/importacoes/:reviewId',
+      redirect: to => ({ name: 'closing-import-wizard', params: to.params, query: to.query, hash: to.hash })
+    },
+    {
+      path: '/apuracoes/:closingId/regras',
+      redirect: to => ({ name: 'closing-rules', params: to.params, query: to.query, hash: to.hash })
+    },
+    {
+      path: '/apuracoes/:closingId/resultado',
+      redirect: to => ({ name: 'closing-result', params: to.params, query: to.query, hash: to.hash })
+    },
+    {
+      path: '/apuracoes/:closingId/decisao',
+      redirect: to => ({ name: 'closing-decision', params: to.params, query: to.query, hash: to.hash })
     },
     {
       path: '/planning/scenarios',
