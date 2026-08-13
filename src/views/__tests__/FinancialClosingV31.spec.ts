@@ -13,7 +13,7 @@ const { serviceMock, routerPush, routerReplace, routeState, userStore } = vi.hoi
     list: vi.fn(), createOrGet: vi.fn(), latestWorkbookReview: vi.fn(), workbookReviewProgress: vi.fn(),
     workbookReview: vi.fn(), confirmWorkbookSensitiveIntent: vi.fn(), workbookInventory: vi.fn(),
     participants: vi.fn(), prepareWorkbookReview: vi.fn(), preflightWorkbookReview: vi.fn(), publishWorkbookReview: vi.fn(), abandonWorkbookReview: vi.fn(),
-    importReadiness: vi.fn(), deductionReadiness: vi.fn(), payoutDecisions: vi.fn(), grantSensitiveAccess: vi.fn(),
+    importReadiness: vi.fn(), deductionReadiness: vi.fn(), payoutDecisions: vi.fn(), grantSensitiveAccess: vi.fn(), importProfile: vi.fn(), upsertSource: vi.fn(), createImportProfile: vi.fn(),
   },
 }))
 vi.mock('@/services/FinancialClosingService',()=>({default:serviceMock}))
@@ -60,6 +60,20 @@ describe('Financial closing V31 journey',()=>{
     await (wrapper.vm as any).prepareSources();await flush();expect(serviceMock.prepareWorkbookReview).toHaveBeenCalledWith(closing,file,['profile-1'],undefined);expect(routerReplace).toHaveBeenCalledWith({name:'closing-import-wizard',params:{closingId:'closing-1',reviewId:'review-1'}});expect(wrapper.text()).toContain('staging ainda está invisível ao cálculo');
     await (wrapper.vm as any).runPreflight();await flush();expect(wrapper.text()).toContain('Publicar lote');(wrapper.vm as any).financialConfirmed=true;await (wrapper.vm as any).publish();await flush();expect(wrapper.text()).toContain('Lote publicado');
     const firstKey=serviceMock.publishWorkbookReview.mock.calls[0][2].idempotencyKey;serviceMock.workbookReview.mockResolvedValue({data:publishedReview});(wrapper.vm as any).review=preflightReview;await (wrapper.vm as any).publish();expect(serviceMock.publishWorkbookReview.mock.calls[1][2].idempotencyKey).toBe(firstKey)
+  })
+
+  it('configures a source inside the wizard without losing the selected workbook or navigating to legacy',async()=>{
+    routeState.params={closingId:'closing-1',reviewId:'nova'}
+    const wrapper=mount(FinancialClosingImportWizardView,{global:{plugins:[vuetify],stubs:{AlertStrip:{props:['description'],template:'<div>{{description}}</div>'}}}});await flush();await flush()
+    const file=new File(['synthetic'],'synthetic.xlsx');(wrapper.vm as any).workbookInput=file;(wrapper.vm as any).sensitiveConfirmed=true;await (wrapper.vm as any).inventoryWorkbook();await flush()
+    const sheet=(wrapper.vm as any).reviewSheets[0];(wrapper.vm as any).configureSheet(sheet);await flush()
+    expect(wrapper.text()).toContain('Configurar fonte');expect((wrapper.vm as any).selectedFile).toBe(file);expect(routerPush).not.toHaveBeenCalledWith(expect.objectContaining({name:'planning-financial-closings-legacy'}))
+  })
+
+  it('does not select a compatible source that was already confirmed in this competence',async()=>{
+    routeState.params={closingId:'closing-1',reviewId:'nova'};serviceMock.importReadiness.mockResolvedValue({data:{sources:[{sourceId:'source-1',sourceKey:'KNOWN_SOURCE',displayName:'Known source',status:'IMPORTED',action:'Imported',detail:'confirmed'}],readyToCalculate:false,blockingSourceKeys:[]}})
+    const wrapper=mount(FinancialClosingImportWizardView,{global:{plugins:[vuetify],stubs:{AlertStrip:true}}});await flush();await flush();(wrapper.vm as any).workbookInput=new File(['synthetic'],'synthetic.xlsx');(wrapper.vm as any).sensitiveConfirmed=true;await (wrapper.vm as any).inventoryWorkbook();await flush()
+    expect(wrapper.text()).toContain('Já importadas nesta competência');expect((wrapper.vm as any).selectedSheets).toHaveLength(0)
   })
 
   it('resumes the same review without bytes and reports stale or divergent state clearly',async()=>{

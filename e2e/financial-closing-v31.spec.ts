@@ -18,25 +18,26 @@ async function apiJson<T>(request: APIRequestContext, state: Runtime, method: 'g
   return response.status() === 204 ? undefined as T : await response.json() as T
 }
 
-async function prepareCompetence(request: APIRequestContext, state: Runtime, month: number, participantReview = false) {
+async function prepareCompetence(request: APIRequestContext, state: Runtime, month: number, participantReview = false, includeProfile = true, includeSource = true) {
+  const closingKey = includeProfile ? 'DEFAULT' : `CONFIG_${Date.now()}`
   const closing = await apiJson<Closing>(request, state, 'post', '/financial-closings', {
-    periodMonth: month, periodYear: 2026, closingKey: 'DEFAULT', currency: 'BRL',
+    periodMonth: month, periodYear: 2026, closingKey, currency: 'BRL',
   })
   const version = closing.currentVersion.versionNumber
-  const source = await apiJson<{ id: string; sourceKey: string }>(request, state, 'post', `/financial-closings/${closing.id}/versions/${version}/sources`, {
+  const source = includeSource ? await apiJson<{ id: string; sourceKey: string }>(request, state, 'post', `/financial-closings/${closing.id}/versions/${version}/sources`, {
     sourceKey: 'V31_SOURCE', displayName: 'Fonte sintética V31',
-  })
+  }) : undefined
   const participant = await apiJson<{ id: string }>(request, state, 'post', `/financial-closings/${closing.id}/versions/${version}/participants`, {
     participantKey: `PARTICIPANT_${month}`, displayName: participantReview ? 'PARTICIPANT' : `Participante sintético ${month}`, active: true,
   })
   await apiJson<void>(request, state, 'put', `/financial-closings/${closing.id}/sensitive-access-grants`, { userId: 'demo-owner', confirmed: true })
-  await apiJson(request, state, 'post', `/financial-closings/${closing.id}/versions/${version}/source-retentions`, {
+  if (source) await apiJson(request, state, 'post', `/financial-closings/${closing.id}/versions/${version}/source-retentions`, {
     sourceKey: source.sourceKey, displayName: 'Sem dedução nesta fonte', percentage: 0, justification: 'Regra sintética explícita para o E2E V31',
   })
   await apiJson(request, state, 'post', `/financial-closings/${closing.id}/versions/${version}/participant-scores`, {
     participantId: participant.id, score: 85, justification: 'Pontuação sintética explícita para o E2E V34',
   })
-  await apiJson(request, state, 'post', `/financial-closings/${closing.id}/versions/${version}/import-profiles`, {
+  if (includeProfile && source) await apiJson(request, state, 'post', `/financial-closings/${closing.id}/versions/${version}/import-profiles`, {
     profileKey: 'V31_HAPPY_PATH', displayName: 'Perfil sintético V31', sourceKey: source.sourceKey,
     config: {
       format: 'XLSX', expectedSheet: 'V31_SOURCE', itemKeyColumn: 'reference', itemKeyColumns: ['reference'],
@@ -71,7 +72,7 @@ async function completeJourney(page: Page, closing: Closing, participantReview =
   await expect(page.getByRole('main', { name: 'Etapas do fechamento' })).toBeVisible()
   for (const label of ['Dados de origem', 'Regras do cálculo', 'Resultado', 'Decisão']) await expect(page.getByText(label, { exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Importar workbook' }).click()
-  await expect(page).toHaveURL(new RegExp(`/apuracoes/${closing.id}/importacoes/nova$`))
+  await expect(page).toHaveURL(new RegExp(`/financial-closings/${closing.id}/imports/nova$`))
   await page.getByLabel('Entendo que acessarei dados protegidos nesta leitura').check()
   await page.locator('input[type="file"]').setInputFiles(fixture)
   await page.getByRole('button', { name: 'Identificar fontes' }).click()
@@ -84,7 +85,7 @@ async function completeJourney(page: Page, closing: Closing, participantReview =
   }
   await expect(page.getByText('Fonte pronta para o lote', { exact: true }).first()).toBeVisible()
   await page.getByRole('button', { name: 'Preparar lote completo' }).click()
-  await expect(page).toHaveURL(new RegExp(`/apuracoes/${closing.id}/importacoes/[0-9a-f-]+$`))
+  await expect(page).toHaveURL(new RegExp(`/financial-closings/${closing.id}/imports/[0-9a-f-]+$`))
   await expect(page.getByRole('heading', { name: 'Fontes preparadas' })).toBeVisible()
   await expect(page.getByText('2', { exact: true }).first()).toBeVisible()
   await page.getByRole('button', { name: 'Conferir importação' }).click()
@@ -98,21 +99,21 @@ async function completeJourney(page: Page, closing: Closing, participantReview =
 
 async function completeRulesAndResult(page: Page, closing: Closing) {
   await page.getByRole('button', { name: 'Revisar regras' }).click()
-  await expect(page).toHaveURL(new RegExp(`/apuracoes/${closing.id}/regras$`))
+  await expect(page).toHaveURL(new RegExp(`/financial-closings/${closing.id}/rules$`))
   await expect(page.getByRole('heading', { name: 'Revise cada fonte antes de calcular' })).toBeVisible()
   await page.getByRole('button', { name: 'Confirmar regras desta fonte' }).click()
   await page.getByLabel('Por que esta incidência está correta?').fill('Regra sintética conferida para a demonstração automatizada')
   await page.getByRole('button', { name: 'Confirmar', exact: true }).click()
   await expect(page.getByText('Regras confirmadas', { exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Continuar para o resultado' }).click()
-  await expect(page).toHaveURL(new RegExp(`/apuracoes/${closing.id}/resultado$`))
+  await expect(page).toHaveURL(new RegExp(`/financial-closings/${closing.id}/results$`))
   await expect(page.getByRole('heading', { name: 'Prévia pronta para calcular' })).toBeVisible()
   await page.getByRole('button', { name: 'Calcular resultado' }).click()
   await expect(page.getByRole('heading', { name: 'Cálculo atual' })).toBeVisible()
   await expect(page.getByText('Produtividade Bruta', { exact: true })).toBeVisible()
   await expect(page.getByText('Produtividade Líquida', { exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Continuar para decisão' }).click()
-  await expect(page).toHaveURL(new RegExp(`/apuracoes/${closing.id}/decisao$`))
+  await expect(page).toHaveURL(new RegExp(`/financial-closings/${closing.id}/decisions$`))
   await expect(page.getByRole('heading', { name: 'Revise antes de criar a proposta' })).toBeVisible()
   await page.getByRole('button', { name: 'Criar proposta' }).click()
   await expect(page.getByRole('heading', { name: 'Proposta preparada' })).toBeVisible()
@@ -154,4 +155,29 @@ test('V32 resolves an unknown participant explicitly before the atomic workbook 
   const closing = await prepareCompetence(request, state, 11, true)
   await authenticate(page, state)
   await completeJourney(page, closing, true)
+})
+
+test('V31 keeps source configuration inside the guided wizard', async ({ page, request }) => {
+  const state = runtime()
+  const closing = await prepareCompetence(request, state, 12, false, false, false)
+  await authenticate(page, state)
+  await page.goto(`/planning/financial-closings?closingId=${closing.id}`)
+  await closeCookieNotice(page)
+  await page.getByRole('button', { name: 'Importar workbook' }).click()
+  await page.getByLabel('Entendo que acessarei dados protegidos nesta leitura').check()
+  await page.locator('input[type="file"]').setInputFiles(fixture)
+  await page.getByRole('button', { name: 'Identificar fontes' }).click()
+  await page.getByRole('button', { name: 'Configurar fonte e perfil' }).click()
+  await expect(page).toHaveURL(new RegExp(`/financial-closings/${closing.id}/imports/nova$`))
+  await expect(page.getByText('Configurar fonte', { exact: true })).toBeVisible()
+  await expect(page.locator('input[type="file"]')).toHaveCount(0)
+})
+
+test('redirects the retired Portuguese import URL to the canonical English route', async ({ page, request }) => {
+  const state = runtime()
+  const closing = await prepareCompetence(request, state, 1)
+  await authenticate(page, state)
+  await page.goto(`/apuracoes/${closing.id}/importacoes/nova`)
+  await expect(page).toHaveURL(new RegExp(`/financial-closings/${closing.id}/imports/nova$`))
+  await expect(page.getByRole('heading', { name: 'Selecione o workbook' })).toBeVisible()
 })
