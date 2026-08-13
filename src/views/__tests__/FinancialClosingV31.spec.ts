@@ -43,14 +43,14 @@ describe('Financial closing V31 journey',()=>{
   it('recognizes a previously confirmed legacy import and continues through rules',async()=>{
     serviceMock.importReadiness.mockResolvedValue({data:{sources:[{sourceId:'source-1',sourceKey:'KNOWN_SOURCE',displayName:'Known source',status:'IMPORTED',action:'Imported',detail:'confirmed'}],readyToCalculate:true,blockingSourceKeys:[]}})
     const wrapper=mount(FinancialClosingPanelView,{global:{plugins:[vuetify],stubs:{PageHeader:{props:['title'],template:'<header>{{title}}</header>'},AlertStrip:true}}});await flush();await flush();
-    expect(wrapper.text()).toContain('Dados já importados');expect(wrapper.text()).toContain('Lotes confirmados anteriormente');
+    expect(wrapper.text()).toContain('Dados de origem publicados');expect(wrapper.text()).toContain('Todas as fontes configuradas possuem itens publicados');
     await (wrapper.vm as any).openImport();expect(routerPush).toHaveBeenCalledWith({name:'closing-rules',params:{closingId:'closing-1'}})
   })
 
   it('shows confirmed legacy sources even when remaining sources still need import',async()=>{
     serviceMock.importReadiness.mockResolvedValue({data:{sources:[{sourceId:'source-1',sourceKey:'KNOWN_SOURCE',displayName:'Known source',status:'IMPORTED',action:'Imported',detail:'confirmed'},{sourceId:'source-2',sourceKey:'OTHER_SOURCE',displayName:'Other source',status:'READY_TO_IMPORT',action:'Import',detail:'pending'}],readyToCalculate:false,blockingSourceKeys:['OTHER_SOURCE']}})
     const wrapper=mount(FinancialClosingPanelView,{global:{plugins:[vuetify],stubs:{PageHeader:{props:['title'],template:'<header>{{title}}</header>'},AlertStrip:true}}});await flush();await flush();
-    expect(wrapper.text()).toContain('Dados parcialmente importados');expect(wrapper.text()).toContain('Há fontes já confirmadas nesta competência.')
+    expect(wrapper.text()).toContain('Fontes restantes pendentes');expect(wrapper.text()).toContain('Há fontes publicadas e fontes ainda pendentes.')
   })
 
   it('crosses upload, recognized preparation, preflight and idempotent publication',async()=>{
@@ -84,10 +84,11 @@ describe('Financial closing V31 journey',()=>{
     expect(wrapper.text()).toContain('Já importadas nesta competência');expect((wrapper.vm as any).selectedSheets).toHaveLength(0)
   })
 
-  it('lets the operator explicitly declare that a configured source has no deduction instead of mislabeling its profile as changed',async()=>{
-    routeState.params={closingId:'closing-1',reviewId:'new'};serviceMock.sources.mockResolvedValue({data:[{id:'source-1',sourceKey:'KNOWN_SOURCE',displayName:'Known source'}]});serviceMock.deductionReadiness.mockResolvedValue({data:{sources:[{sourceId:'source-1',resolutionRevision:0}],readyToCalculate:false,blockingSourceKeys:['KNOWN_SOURCE']}});serviceMock.resolveDeductionSource.mockResolvedValue({data:{}})
-    const wrapper=mount(FinancialClosingImportWizardView,{global:{plugins:[vuetify],stubs:{AlertStrip:true}}});await flush();await flush();const sheet:any={sheetName:'Known source',suggestedSourceKey:'KNOWN_SOURCE',selectionStatus:'REVIEW_REQUIRED',reviewReason:'MISSING_FINANCIAL_RULE'};(wrapper.vm as any).configureDeduction(sheet);(wrapper.vm as any).deductionPercentage=0;(wrapper.vm as any).deductionJustification='Declaração explícita da fonte';await (wrapper.vm as any).saveDeduction()
-    expect(serviceMock.resolveDeductionSource).toHaveBeenCalledWith(closing,{sourceId:'source-1',status:'NO_DEDUCTION_APPLIES',expectedRevision:0,justification:'Declaração explícita da fonte'})
+  it('treats a historical empty publication as non-contributing and starts a fresh review for pending sources',async()=>{
+    serviceMock.latestWorkbookReview.mockResolvedValue({status:200,data:{id:'empty-review',status:'PUBLISHED',revision:1,selectedSourceCount:1,materializedSourceCount:1,publishedSourceCount:1,publishableItemCount:0,contributingPublication:false,stagingExpiresAt:'2026-08-19T12:00:00Z',reviewExpiresAt:'2026-09-11T12:00:00Z',stagingExpired:false,reviewExpired:false,publicationId:'empty-publication',pendingCodes:[],nextAction:'VIEW_RESULT'}})
+    serviceMock.importReadiness.mockResolvedValue({data:{sources:[{sourceId:'source-1',sourceKey:'KNOWN_SOURCE',displayName:'Known source',status:'READY_TO_IMPORT',action:'Import',detail:'pending'}],readyToCalculate:false,blockingSourceKeys:['KNOWN_SOURCE']}})
+    const wrapper=mount(FinancialClosingPanelView,{global:{plugins:[vuetify],stubs:{PageHeader:{props:['title'],template:'<header>{{title}}</header>'},AlertStrip:true}}});await flush();await flush()
+    expect(wrapper.text()).toContain('publicação anterior não trouxe itens');expect(wrapper.text()).toContain('Importar workbook');await (wrapper.vm as any).openImport();expect(routerPush).toHaveBeenCalledWith({name:'closing-import-wizard',params:{closingId:'closing-1',reviewId:'new'}});(wrapper.vm as any).openPublicationHistory();expect(routerPush).toHaveBeenCalledWith({name:'closing-publication-history',params:{closingId:'closing-1',reviewId:'empty-review'}})
   })
 
   it('resumes the same review without bytes or a second client-side consent when the server intent is valid',async()=>{

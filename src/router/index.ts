@@ -115,6 +115,12 @@ const router = createRouter({
       meta: { requiresAuth: true, requiresWorkspace: true }
     },
     {
+      path: '/financial-closings/:closingId/imports/:reviewId/history',
+      name: 'closing-publication-history',
+      component: () => import('@/views/FinancialClosingPublicationHistoryView.vue'),
+      meta: { requiresAuth: true, requiresWorkspace: true }
+    },
+    {
       path: '/financial-closings/:closingId/rules',
       name: 'closing-rules',
       component: FinancialClosingRulesView,
