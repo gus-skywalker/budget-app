@@ -29,6 +29,17 @@ describe('GuidedTabularImportReview',()=>{
     expect(serviceMock.saveGuidedReviewDecision).toHaveBeenCalledWith(closing,'review-1',expect.objectContaining({action:'LINK_PARTICIPANT',participantId:'participant-1'}))
   })
 
+  it('shows the current association and makes a later change explicit',async()=>{
+    const associated=structuredClone(review)
+    associated.participants[0]={...associated.participants[0],resolution:'LINK_PARTICIPANT',participantId:'participant-1',blocking:false} as any
+    serviceMock.startGuidedImportReview.mockResolvedValue({data:associated})
+    const wrapper=mount(GuidedTabularImportReview,{props:{closing,file:new File(['synthetic'],'synthetic.xlsx'),profileId:'profile-1',sensitiveAccessConfirmed:true,participants:[{id:'participant-1',participantKey:'ANA',displayName:'Ana Demo',active:true}]},global:{plugins:[vuetify]}})
+    await (wrapper.vm as any).openReview();(wrapper.vm as any).participantColumnConfirmed=true;await flush()
+    expect(wrapper.text()).toContain('Associado a Ana Demo')
+    expect(wrapper.text()).toContain('Alterar associação')
+    expect((wrapper.vm as any).participantSelections['P-1']).toBe('participant-1')
+  })
+
   it('uses business language for repetitions and keeps one explicit final confirmation',async()=>{
     const ready={...structuredClone(review),status:'READY',readyForConfirmation:true,blockingReasons:[],participants:[],pendingRows:[],repetitionsAccepted:true,summary:{...review.summary,correctedRows:1,excludedRows:1}}
     serviceMock.startGuidedImportReview.mockResolvedValue({data:ready})
