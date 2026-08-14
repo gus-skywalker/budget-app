@@ -335,6 +335,21 @@ describe('FinancialClosingView', () => {
     expect(wrapper.text()).toContain('1. Configure as fontes e participantes')
   })
 
+  it('lets an administrator create or open another DEFAULT competency without leaving the current closing', async () => {
+    useUserStore().tenantRole = 'ROLE_ADMIN'
+    const nextClosing = { ...closing, id: 'closing-2', periodMonth: 9, periodYear: 2026 }
+    serviceMock.list.mockResolvedValueOnce({ data: [closing] }).mockResolvedValueOnce({ data: [closing, nextClosing] })
+    serviceMock.createOrGet.mockResolvedValue({ data: nextClosing })
+    const wrapper = mount(FinancialClosingView, { global: { plugins: [vuetify], stubs: { PageHeader: { props: ['title'], template: '<header><slot name="actions" /></header>' }, AlertStrip: true } } })
+    await flush(); await flush()
+    expect(wrapper.text()).toContain('Criar outra competência')
+    ;(wrapper.vm as any).showNewClosingForm = true; (wrapper.vm as any).newClosingMonth = 9; (wrapper.vm as any).newClosingYear = 2026
+    await (wrapper.vm as any).createClosing(); await flush()
+    expect(serviceMock.createOrGet).toHaveBeenCalledWith(9, 2026, 'DEFAULT', 'BRL')
+    expect((wrapper.vm as any).selectedId).toBe('closing-2')
+    expect((wrapper.vm as any).showNewClosingForm).toBe(false)
+  })
+
   it('saves an assisted profile using the stable source key and explicit participant mapping', async () => {
     useUserStore().tenantRole = 'ROLE_ADMIN'
     serviceMock.sources.mockResolvedValue({ data: [{ id: 'source-1', sourceKey: 'BP_PAULISTA', displayName: 'Repasse BP Paulista' }] })
