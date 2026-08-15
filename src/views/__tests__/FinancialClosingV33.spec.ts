@@ -8,7 +8,7 @@ import FinancialClosingResultView from '@/views/FinancialClosingResultView.vue'
 
 const { serviceMock, routerPush, routeState }=vi.hoisted(()=>({
   routerPush:vi.fn(),routeState:{params:{closingId:'closing-1'} as Record<string,string>},
-  serviceMock:{list:vi.fn(),productivityDeductions:vi.fn(),participants:vi.fn(),deductionReadiness:vi.fn(),previewProductivityDeductions:vi.fn(),resolveDeductionSource:vi.fn(),upsertProductivityDeduction:vi.fn(),summary:vi.fn(),memory:vi.fn(),calculate:vi.fn()},
+  serviceMock:{list:vi.fn(),productivityDeductions:vi.fn(),participants:vi.fn(),deductionReadiness:vi.fn(),previewProductivityDeductions:vi.fn(),resolveDeductionSource:vi.fn(),upsertProductivityDeduction:vi.fn(),upsertParticipantScore:vi.fn(),summary:vi.fn(),memory:vi.fn(),calculate:vi.fn()},
 }))
 vi.mock('@/services/FinancialClosingService',()=>({default:serviceMock}))
 vi.mock('@/plugins/userStore',()=>({useUserStore:()=>({canWrite:true})}))
@@ -21,7 +21,7 @@ const preview={inputRevision:4,calculationSemanticsVersion:'GROSS_TO_NET_V2',gro
 const stubs={PageHeader:{props:['title'],template:'<header>{{title}}</header>'},AlertStrip:{props:['description'],template:'<div>{{description}}</div>'},VDialog:{props:['modelValue'],template:'<div v-if="modelValue"><slot /></div>'}}
 
 describe('Financial closing V33 rules and result journey',()=>{
-  beforeEach(()=>{vi.clearAllMocks();serviceMock.list.mockResolvedValue({data:[closing]});serviceMock.productivityDeductions.mockResolvedValue({data:[]});serviceMock.participants.mockResolvedValue({data:[{id:'participant-1',participantKey:'P1',displayName:'Participante 1',active:true}]});serviceMock.deductionReadiness.mockResolvedValue({data:{sources:[source],readyToCalculate:false,blockingSourceKeys:['SOURCE_A']}});serviceMock.previewProductivityDeductions.mockResolvedValue({data:preview});serviceMock.resolveDeductionSource.mockResolvedValue({data:{...source,status:'NO_DEDUCTION_APPLIES',resolutionRevision:1,dependencyCurrent:true}});serviceMock.upsertProductivityDeduction.mockResolvedValue({data:{}});serviceMock.memory.mockResolvedValue({data:{calculationRunId:'run-1',calculationPolicyVersion:'GROSS_TO_NET_V2',roundingMode:'HALF_UP',intermediateScale:12,items:[],participantAdjustments:[],participantScores:[],residualAmount:0,deductionApplications:[],participantPayouts:[]}})})
+  beforeEach(()=>{vi.clearAllMocks();serviceMock.list.mockResolvedValue({data:[closing]});serviceMock.productivityDeductions.mockResolvedValue({data:[]});serviceMock.participants.mockResolvedValue({data:[{id:'participant-1',participantKey:'P1',displayName:'Participante 1',active:true}]});serviceMock.deductionReadiness.mockResolvedValue({data:{sources:[source],readyToCalculate:false,blockingSourceKeys:['SOURCE_A']}});serviceMock.previewProductivityDeductions.mockResolvedValue({data:preview});serviceMock.resolveDeductionSource.mockResolvedValue({data:{...source,status:'NO_DEDUCTION_APPLIES',resolutionRevision:1,dependencyCurrent:true}});serviceMock.upsertProductivityDeduction.mockResolvedValue({data:{}});serviceMock.upsertParticipantScore.mockResolvedValue({data:{id:'score-1'}});serviceMock.memory.mockResolvedValue({data:{calculationRunId:'run-1',calculationPolicyVersion:'GROSS_TO_NET_V2',roundingMode:'HALF_UP',intermediateScale:12,items:[],participantAdjustments:[],participantScores:[],residualAmount:0,deductionApplications:[],participantPayouts:[]}})})
 
   it('requires an explicit per-source resolution and shows only the canonical API preview',async()=>{
     const wrapper=mount(FinancialClosingRulesView,{global:{plugins:[vuetify],stubs}});await flush();await flush();
@@ -54,6 +54,16 @@ describe('Financial closing V33 rules and result journey',()=>{
     serviceMock.deductionReadiness.mockResolvedValue({data:{sources:[{...source,status:'RULE_VALID',resolutionRevision:1,ruleRevisionIds:['rule-revision-1'],dependencyCurrent:true}],readyToCalculate:true,blockingSourceKeys:[]}})
     const calculated={calculationRunId:'run-1',versionNumber:1,inputRevision:4,calculationPolicyVersion:'GROSS_TO_NET_V2',roundingMode:'HALF_UP',intermediateScale:12,grossAmount:100,reversalAmount:0,deductionAmount:10,closingAdjustmentAmount:0,productivityAmount:90,undistributedPoolAmount:0,netRevenueAmount:90,residualAmount:0,reconciliation:{expectedInflowAmount:90,reconciledInflowAmount:0,coveragePercentage:0,divergenceAmount:90,unreconciledItemCount:1},calculatedAt:'2026-08-12T12:00:00Z',sourceProductivity:[{sourceId:'source-1',sourceKey:'SOURCE_A',displayName:'Fonte A',grossAmount:100,reversalAmount:0,retentionAmount:10,eligibleAmount:90,grossProductivityAmount:100,participantAdjustmentAmount:0,netProductivityAmount:90}],grossProductivityAmount:100,netProductivityAmount:90,calculationSemanticsVersion:'GROSS_TO_NET_V2',participantPayouts:[{participantId:'participant-1',productivityAmount:90,reserveAmount:13.5,monthlyCeilingAmount:76.5,appliedScore:85,valueReceivableAmount:76.5,annualBonusEligibleScore:0,undistributedAmount:0,tmReserveAmount:9,tiReserveAmount:4.5,totalExplainedAmount:90}]}
     serviceMock.calculate.mockResolvedValue({data:calculated});const wrapper=mount(FinancialClosingResultView,{global:{plugins:[vuetify],stubs}});await flush();await flush();expect(wrapper.text()).toContain('Prévia pronta para calcular');await (wrapper.vm as any).calculate();await flush();expect(serviceMock.calculate).toHaveBeenCalledWith(closing);expect(wrapper.text()).toContain('Cálculo atual');expect(wrapper.text()).toContain('Valor a Receber');expect(wrapper.text()).toContain('R$ 76,50')
+  })
+
+  it('keeps the decision blocked until missing scores are saved explicitly',async()=>{
+    serviceMock.deductionReadiness.mockResolvedValue({data:{sources:[{...source,status:'RULE_VALID',dependencyCurrent:true}],readyToCalculate:true,blockingSourceKeys:[]}})
+    serviceMock.list.mockResolvedValue({data:[{...closing,currentVersion:{...closing.currentVersion,calculationCurrent:true,calculatedRevision:4}}]})
+    const withoutScore={...preview,sourceProductivity:[],participantPayouts:[{participantId:'participant-1',productivityAmount:100,tmReserveAmount:10,tiReserveAmount:5,undistributedAmount:0,valueReceivableAmount:0,score:null}]}
+    serviceMock.summary.mockResolvedValue({data:withoutScore});const wrapper=mount(FinancialClosingResultView,{global:{plugins:[vuetify],stubs}});await flush();await flush()
+    expect(wrapper.text()).toContain('Defina a pontuação mensal');expect(wrapper.text()).not.toContain('Continuar para decisão')
+    const vm=wrapper.vm as any;vm.scoreValues['participant-1']=85;vm.scoreJustifications['participant-1']='Avaliação mensal concluída';await vm.saveScore('participant-1')
+    expect(serviceMock.upsertParticipantScore).toHaveBeenCalledWith(expect.objectContaining({id:'closing-1'}),{participantId:'participant-1',score:85,justification:'Avaliação mensal concluída'})
   })
 
   it('keeps the main result path usable at 360px without a mandatory table',async()=>{
