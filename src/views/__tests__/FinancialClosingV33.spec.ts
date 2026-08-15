@@ -31,6 +31,19 @@ describe('Financial closing V33 rules and result journey',()=>{
     await (wrapper.vm as any).confirmResolution();expect(serviceMock.resolveDeductionSource).toHaveBeenCalledWith(closing,{sourceId:'source-1',status:'NO_DEDUCTION_APPLIES',expectedRevision:0,justification:'Fonte conferida sem incidência'})
   })
 
+  it('moves directly to the next unresolved source and does not offer to reconfirm a resolved one',async()=>{
+    const resolved={...source,status:'NO_DEDUCTION_APPLIES',resolutionRevision:1,dependencyCurrent:true,detail:'A fonte foi revisada sem dedução.'}
+    const pending={...source,sourceId:'source-2',sourceKey:'SOURCE_B',displayName:'Fonte B'}
+    serviceMock.deductionReadiness.mockResolvedValue({data:{sources:[resolved,pending],readyToCalculate:false,blockingSourceKeys:['SOURCE_B']}})
+    const wrapper=mount(FinancialClosingRulesView,{global:{plugins:[vuetify],stubs}});await flush();await flush()
+    expect((wrapper.vm as any).selectedSourceId).toBe('source-2')
+    expect(wrapper.text()).toContain('Fonte B')
+    expect(wrapper.text()).toContain('Confirmar sem dedução')
+    ;(wrapper.vm as any).selectSource('source-1');await flush()
+    expect(wrapper.text()).toContain('Esta fonte já foi revisada nesta versão')
+    expect(wrapper.findAll('button').map(button=>button.text()).filter(text=>text==='Confirmar sem dedução')).toHaveLength(0)
+  })
+
   it('saves a versioned rule without calculating in the frontend',async()=>{
     const wrapper=mount(FinancialClosingRulesView,{global:{plugins:[vuetify],stubs}});await flush();await flush();const vm=wrapper.vm as any
     vm.form.name='Dedução contratual';vm.form.percentage=10;vm.form.justification='Contrato revisado';await vm.saveRule();
