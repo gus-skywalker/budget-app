@@ -167,12 +167,10 @@ const additionalReserve = computed(() => summary.value?.participantPayouts?.redu
 const calculatedLines = computed(() => (summary.value?.participantPayouts || []).filter(item => Number(item.valueReceivableAmount) > 0).map(item => ({ participantId: item.participantId, amount: item.valueReceivableAmount, dueDate: defaultDueDate.value || undefined })))
 const displayLines = computed(() => decision.value?.lines || calculatedLines.value)
 const lineCount = computed(() => displayLines.value.length)
-const missingScores = computed(() => (summary.value?.participantPayouts || []).filter(item => Number(item.productivityAmount) > 0 && item.score == null))
 const blockers = computed(() => {
   const values: string[] = []
   if (!closing.value?.currentVersion.calculationCurrent) values.push('O cálculo atual precisa ser refeito antes da proposta.')
   if (Math.abs(Number(summary.value?.residualAmount || 0)) >= 0.005) values.push('A memória de cálculo possui residual e precisa ser revisada.')
-  if (missingScores.value.length) values.push(`${missingScores.value.length} participante(s) com produtividade positiva ainda não possuem pontuação mensal explícita.`)
   if (!lineCount.value) values.push('Não há Valor a Receber positivo para compor a proposta.')
   return values
 })
