@@ -33,10 +33,9 @@ export interface SettlementReversal { id: string; correctionCaseId: string; amou
 export interface CalculationRevision { calculationRunId: string; inputRevision: number; runStatus: string; grossAmount: number; deductionAmount: number; productivityAmount: number; undistributedPoolAmount: number; netRevenueAmount: number; residualAmount: number; reconciliationDivergence: number; calculatedAt: string; grossProductivityAmount: number; netProductivityAmount: number; calculationSemanticsVersion: string }
 export interface PayoutDecision { id: string; status: string; revision: number; closingVersionId: string; calculationRunId: string; inputRevision: number; productivityAmount: number; valueReceivableAmount?: number; lines: Array<{ id: string; participantId: string; amount: number; dueDate?: string }>; issuedObligationCount: number; ownerSelfApprovalException: boolean }
 export interface MarginDecision { id: string; status: string; settlementStatus: string; revision: number; poolKey: string; marginSnapshot: number; allocatedAmount: number; unallocatedMargin: number; allocations: Array<{ id: string; type: string; amount: number; purpose: string; dueDate?: string; categoryKey?: string; beneficiaryDisplayName?: string; issuedObligationCount: number }>; issuedObligationCount: number; ownerSelfApprovalException: boolean }
-export interface TabularImportMapping {
-  itemKeyColumn: string; sourceIdColumn: string; amountColumn: string; occurredOnColumn: string
-  attributionMethodColumn?: string; participantIdColumn?: string; participantLabelColumn?: string
-  poolKeyColumn?: string; directionColumn?: string; financialLabelColumn?: string; externalReferenceColumn?: string
+export interface AssistedImportProfileMapping {
+  itemKeyColumn: string; amountColumn: string; occurredOnColumn: string
+  participantLabelColumn?: string; externalReferenceColumn?: string
   defaultAttributionMethod?: string; defaultPoolKey?: string; decimalSeparator: 'DOT' | 'COMMA'
 }
 export interface TabularImportIssue { rowNumber: number; column?: string | null; code: string; message: string }
@@ -187,14 +186,6 @@ export default {
   createMarginDecision(closing: FinancialClosing, payload: { poolKey: string; allocations: unknown[] }) { return axiosInterceptor.post<MarginDecision>(`/financial-closings/${closing.id}/margin-decisions`, { versionNumber: closing.currentVersion.versionNumber, ...payload }) },
   submitMarginDecision(closing: FinancialClosing, id: string, expectedRevision: number) { return axiosInterceptor.post<MarginDecision>(`/financial-closings/${closing.id}/margin-decisions/${id}/submit`, { expectedRevision }) },
   approveMarginDecision(closing: FinancialClosing, id: string, expectedRevision: number, justification: string) { return axiosInterceptor.post<MarginDecision>(`/financial-closings/${closing.id}/margin-decisions/${id}/approve`, { expectedRevision, justification, idempotencyKey: crypto.randomUUID() }) },
-  validateTabularImport(closing: FinancialClosing, file: File, mapping: TabularImportMapping, sensitiveAccessConfirmed = false) {
-    const body = new FormData(); body.append('file', file); body.append('mapping', JSON.stringify(mapping)); body.append('sensitiveAccessConfirmed', String(sensitiveAccessConfirmed))
-    return axiosInterceptor.post<TabularImportValidation>(`${versionPath(closing)}/tabular-imports/validate`, body)
-  },
-  confirmTabularImport(closing: FinancialClosing, file: File, batchKey: string, mapping: TabularImportMapping, sensitiveAccessConfirmed = false) {
-    const body = new FormData(); body.append('file', file); body.append('batchKey', batchKey); body.append('mapping', JSON.stringify(mapping)); body.append('sensitiveAccessConfirmed', String(sensitiveAccessConfirmed))
-    return axiosInterceptor.post<TabularImport>(`${versionPath(closing)}/tabular-imports`, body)
-  },
   importProfiles(closing: FinancialClosing) { return axiosInterceptor.get<AssistedImportProfile[]>(`${versionPath(closing)}/import-profiles`) },
   importReadiness(closing: FinancialClosing) { return axiosInterceptor.get<ImportReadiness>(`${versionPath(closing)}/import-readiness`) },
   workbookInventory(closing: FinancialClosing, file: File, sensitiveAccessConfirmed = false) { const body=new FormData(); body.append('file',file); body.append('sensitiveAccessConfirmed',String(sensitiveAccessConfirmed)); return axiosInterceptor.post<WorkbookInventory>(`${versionPath(closing)}/workbook-inventory`,body) },
