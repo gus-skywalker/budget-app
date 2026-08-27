@@ -53,7 +53,17 @@ describe('Financial closing V33 rules and result journey',()=>{
   it('calculates only through the canonical endpoint and renders PB, deductions, PL and payout',async()=>{
     serviceMock.deductionReadiness.mockResolvedValue({data:{sources:[{...source,status:'RULE_VALID',resolutionRevision:1,ruleRevisionIds:['rule-revision-1'],dependencyCurrent:true}],readyToCalculate:true,blockingSourceKeys:[]}})
     const calculated={calculationRunId:'run-1',versionNumber:1,inputRevision:4,calculationPolicyVersion:'GROSS_TO_NET_V2',roundingMode:'HALF_UP',intermediateScale:12,grossAmount:100,reversalAmount:0,deductionAmount:10,closingAdjustmentAmount:0,productivityAmount:90,undistributedPoolAmount:0,netRevenueAmount:90,residualAmount:0,reconciliation:{expectedInflowAmount:90,reconciledInflowAmount:0,coveragePercentage:0,divergenceAmount:90,unreconciledItemCount:1},calculatedAt:'2026-08-12T12:00:00Z',sourceProductivity:[{sourceId:'source-1',sourceKey:'SOURCE_A',displayName:'Fonte A',grossAmount:100,reversalAmount:0,retentionAmount:10,eligibleAmount:90,grossProductivityAmount:100,participantAdjustmentAmount:0,netProductivityAmount:90}],grossProductivityAmount:100,netProductivityAmount:90,calculationSemanticsVersion:'GROSS_TO_NET_V2',participantPayouts:[{participantId:'participant-1',productivityAmount:90,reserveAmount:13.5,monthlyCeilingAmount:76.5,appliedScore:85,valueReceivableAmount:76.5,annualBonusEligibleScore:0,undistributedAmount:0,tmReserveAmount:9,tiReserveAmount:4.5,totalExplainedAmount:90}]}
-    serviceMock.calculate.mockResolvedValue({data:calculated});const wrapper=mount(FinancialClosingResultView,{global:{plugins:[vuetify],stubs}});await flush();await flush();expect(wrapper.text()).toContain('Prévia pronta para calcular');await (wrapper.vm as any).calculate();await flush();expect(serviceMock.calculate).toHaveBeenCalledWith(closing);expect(wrapper.text()).toContain('Cálculo atual');expect(wrapper.text()).toContain('Valor a Receber');expect(wrapper.text()).toContain('R$ 76,50')
+    serviceMock.calculate.mockResolvedValue({data:calculated});const wrapper=mount(FinancialClosingResultView,{global:{plugins:[vuetify],stubs}});await flush();await flush();expect(wrapper.text()).toContain('Prévia pronta para calcular');await (wrapper.vm as any).calculate();await flush();expect(serviceMock.calculate).toHaveBeenCalledWith(closing);expect(wrapper.text()).toContain('Cálculo atual');expect(wrapper.text()).toContain('Valor a Receber');expect(wrapper.text()).toContain('R$ 76,50');expect(wrapper.text()).toContain('Reserva TM · automática (10%)');expect(wrapper.text()).toContain('Valor bruto − reversões − deduções da fonte')
+  })
+
+  it('keeps aggregate results available when protected calculation memory is denied',async()=>{
+    serviceMock.deductionReadiness.mockResolvedValue({data:{sources:[{...source,status:'RULE_VALID',dependencyCurrent:true}],readyToCalculate:true,blockingSourceKeys:[]}})
+    serviceMock.list.mockResolvedValue({data:[{...closing,currentVersion:{...closing.currentVersion,calculationCurrent:true,calculatedRevision:4}}]})
+    serviceMock.summary.mockResolvedValue({data:{...preview,participantPayouts:[]}})
+    serviceMock.memory.mockRejectedValue(new Error('forbidden'))
+    const wrapper=mount(FinancialClosingResultView,{global:{plugins:[vuetify],stubs}});await flush();await flush()
+    expect(wrapper.text()).toContain('O resumo agregado continua disponível')
+    expect(wrapper.text()).toContain('Produtividade Líquida')
   })
 
   it('keeps monthly scoring optional while preserving the score mutation flow',async()=>{
