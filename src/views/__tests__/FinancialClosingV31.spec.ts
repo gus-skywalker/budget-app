@@ -70,14 +70,13 @@ describe('Financial closing V31 journey',()=>{
     expect(wrapper.text()).toContain('Configurar fonte');expect((wrapper.vm as any).selectedFile).toBe(file);expect(routerPush).not.toHaveBeenCalledWith(expect.objectContaining({name:'planning-financial-closings-legacy'}))
   })
 
-  it('abandons an empty review before re-inventorying a newly configured source',async()=>{
+  it('re-inventories the active review after a source profile is configured',async()=>{
     routeState.params={closingId:'closing-1',reviewId:'new'}
     const wrapper=mount(FinancialClosingImportWizardView,{global:{plugins:[vuetify],stubs:{AlertStrip:true}}});await flush();await flush()
     const file=new File(['synthetic'],'synthetic.xlsx');(wrapper.vm as any).workbookInput=file;(wrapper.vm as any).sensitiveConfirmed=true;await (wrapper.vm as any).inventoryWorkbook();await flush()
     serviceMock.initiateWorkbookReview.mockClear()
     await (wrapper.vm as any).handleSourceProfileSaved('profile-1');await flush()
-    expect(serviceMock.abandonWorkbookReview).toHaveBeenCalledWith('closing-1','review-1',1)
-    expect(routerReplace).toHaveBeenCalledWith({name:'closing-import-wizard',params:{closingId:'closing-1',reviewId:'new'}})
+    expect(serviceMock.abandonWorkbookReview).not.toHaveBeenCalled()
     expect(serviceMock.initiateWorkbookReview).toHaveBeenCalledWith(closing,file,true)
   })
 
