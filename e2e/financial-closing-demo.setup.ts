@@ -86,7 +86,7 @@ export default async function setup() {
     CLOSING_INTEGRATION_URL: `http://127.0.0.1:${closingPort}`,
     CLOSING_INTEGRATION_SERVICE_TOKEN: internalServiceToken,
     CLOSING_INTEGRATION_AUTHORIZATION_HMAC_KEY: authorizationHmacKey,
-    FINANCIAL_CLOSING_SERVICE_TOKEN: provisioningServiceToken,
+    CLOSING_PROVISIONING_SERVICE_TOKEN: provisioningServiceToken,
     CLOSING_EXTERNAL_REFERENCE_HMAC_KEY: externalReferenceHmacKey,
     CLOSING_SENSITIVE_DATA_KEY: sensitiveDataKey,
   }
