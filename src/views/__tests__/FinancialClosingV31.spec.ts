@@ -49,7 +49,7 @@ describe('Financial closing V31 journey',()=>{
   it('keeps published inputs ready and allows another non-overlapping lot',async()=>{
     serviceMock.importReadiness.mockResolvedValue({data:{sources:[{sourceId:'source-1',sourceKey:'KNOWN_SOURCE',displayName:'Known source',status:'IMPORTED',action:'Imported',detail:'confirmed'}],readyToCalculate:true,blockingSourceKeys:[]}})
     const wrapper=mount(FinancialClosingPanelView,{global:{plugins:[vuetify],stubs:{PageHeader:{props:['title'],template:'<header>{{title}}</header>'},AlertStrip:true}}});await flush();await flush();
-    expect(wrapper.text()).toContain('Dados de origem publicados');expect(wrapper.text()).toContain('Os dados atuais estão prontos');expect(wrapper.text()).toContain('Adicionar fonte ou lote');expect(wrapper.text()).toContain('Os itens publicados estão disponíveis para a apuração.')
+    expect(wrapper.text()).toContain('Dados de origem publicados');expect(wrapper.text()).toContain('Os dados atuais estão prontos');expect(wrapper.text()).toContain('Preparar novo lote');expect(wrapper.text()).toContain('Os itens publicados estão disponíveis para a apuração.')
     await (wrapper.vm as any).openImport();expect(routerPush).toHaveBeenCalledWith({name:'closing-import-wizard',params:{closingId:'closing-1',reviewId:'new'}})
   })
 
@@ -64,7 +64,7 @@ describe('Financial closing V31 journey',()=>{
     const wrapper=mount(FinancialClosingImportWizardView,{global:{plugins:[vuetify],stubs:{AlertStrip:{props:['description'],template:'<div>{{description}}</div>'}}}});await flush();await flush();
     const file=new File(['synthetic'],'synthetic.xlsx',{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});(wrapper.vm as any).workbookInput=file;(wrapper.vm as any).sensitiveConfirmed=true;await (wrapper.vm as any).inventoryWorkbook();await flush();expect(wrapper.text()).toContain('Known source');expect(wrapper.text()).toContain('Needs review precisa de revisão');(wrapper.vm as any).readyProfileIds=['profile-1'];
     await (wrapper.vm as any).prepareSources();await flush();expect(serviceMock.prepareWorkbookReview).toHaveBeenCalledWith(closing,file,['profile-1'],'review-1');expect(routerReplace).toHaveBeenCalledWith({name:'closing-import-wizard',params:{closingId:'closing-1',reviewId:'review-1'}});expect(wrapper.text()).toContain('staging ainda está invisível ao cálculo');
-    await (wrapper.vm as any).runPreflight();await flush();expect(wrapper.text()).toContain('Publicar lote');expect(wrapper.text()).toContain('Ver resumo da revisão');(wrapper.vm as any).financialConfirmed=true;await (wrapper.vm as any).publish();await flush();expect(wrapper.text()).toContain('Lote publicado');expect(wrapper.text()).toContain('Adicionar outra fonte ou lote');
+    await (wrapper.vm as any).runPreflight();await flush();expect(wrapper.text()).toContain('Publicar lote');expect(wrapper.text()).toContain('Ver resumo da revisão');(wrapper.vm as any).financialConfirmed=true;await (wrapper.vm as any).publish();await flush();expect(wrapper.text()).toContain('Lote publicado');expect(wrapper.text()).toContain('Preparar outro lote');
     const firstKey=serviceMock.publishWorkbookReview.mock.calls[0][2].idempotencyKey;serviceMock.workbookReview.mockResolvedValue({data:publishedReview});(wrapper.vm as any).review=preflightReview;await (wrapper.vm as any).publish();expect(serviceMock.publishWorkbookReview.mock.calls[1][2].idempotencyKey).toBe(firstKey)
   })
 
@@ -99,7 +99,14 @@ describe('Financial closing V31 journey',()=>{
     const wrapper=mount(FinancialClosingImportWizardView,{global:{plugins:[vuetify],stubs:{AlertStrip:true}}});await flush();await flush();(wrapper.vm as any).workbookInput=new File(['synthetic'],'synthetic.xlsx');(wrapper.vm as any).sensitiveConfirmed=true;await (wrapper.vm as any).inventoryWorkbook();await flush()
     expect(wrapper.text()).toContain('Já publicadas nesta competência');expect((wrapper.vm as any).selectedSheets).toHaveLength(0);expect(wrapper.text()).toContain('Publicação anterior preservada')
     ;(wrapper.vm as any).toggleAdditionalSheet('Known source');await flush()
-    expect((wrapper.vm as any).selectedSheets).toHaveLength(1);expect(wrapper.text()).toContain('Novo lote selecionado para validação')
+    expect((wrapper.vm as any).selectedSheets).toHaveLength(1);expect(wrapper.text()).toContain('Novos itens selecionados para outro lote')
+  })
+
+  it('keeps contracted consolidation sheets visible for reference and impossible to configure',async()=>{
+    routeState.params={closingId:'closing-1',reviewId:'new'}
+    serviceMock.initiateWorkbookReview.mockResolvedValue({data:{review:{...materialized,selectedSourceCount:0,sources:[]},inventory:{sheets:[{sheetName:'GERAL',classification:'CONSOLIDATION',suggestedSourceKey:'GERAL',nonEmptyDataRows:2,detail:'Somente conferência.',selectionStatus:'CONSOLIDATION',reviewReason:'CONSOLIDATION'},{sheetName:'FECHAMENTO',classification:'CONSOLIDATION',suggestedSourceKey:'FECHAMENTO',nonEmptyDataRows:2,detail:'Somente conferência.',selectionStatus:'CONSOLIDATION',reviewReason:'CONSOLIDATION'}]},sensitiveIntentExpiresAt:'2026-08-12T12:15:00Z',replayed:false}})
+    const wrapper=mount(FinancialClosingImportWizardView,{global:{plugins:[vuetify],stubs:{AlertStrip:true}}});await flush();await flush();(wrapper.vm as any).workbookInput=new File(['synthetic'],'synthetic.xlsx');(wrapper.vm as any).sensitiveConfirmed=true;await (wrapper.vm as any).inventoryWorkbook();await flush()
+    expect(wrapper.text()).toContain('Consolidações para conferência');expect(wrapper.text()).toContain('Estas abas nunca entram no cálculo');expect(wrapper.text()).toContain('GERAL');expect(wrapper.text()).toContain('FECHAMENTO');expect((wrapper.vm as any).reviewSheets).toHaveLength(0);expect(wrapper.text()).not.toContain('Configurar fonte e perfil')
   })
 
   it('treats a historical empty publication as non-contributing and starts a fresh review for pending sources',async()=>{
