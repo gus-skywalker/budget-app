@@ -40,11 +40,17 @@ describe('Financial closing V31 journey',()=>{
     ;(wrapper.vm as any).openImport();expect(routerPush).toHaveBeenCalledWith({name:'closing-import-wizard',params:{closingId:'closing-1',reviewId:'new'}})
   })
 
-  it('recognizes a previously confirmed legacy import and continues through rules',async()=>{
+  it('explains that a competence is opened or created without duplicating the monthly closing',async()=>{
+    const wrapper=mount(FinancialClosingPanelView,{global:{plugins:[vuetify],stubs:{PageHeader:{props:['title'],template:'<header><slot name="actions" />{{title}}</header>'},AlertStrip:true}}});await flush();await flush()
+    ;(wrapper.vm as any).showCreate=true;await flush()
+    expect(wrapper.text()).toContain('Abrir ou criar uma competência');expect(wrapper.text()).toContain('Cada mês possui uma única apuração no escopo DEFAULT')
+  })
+
+  it('keeps published inputs ready and allows another non-overlapping lot',async()=>{
     serviceMock.importReadiness.mockResolvedValue({data:{sources:[{sourceId:'source-1',sourceKey:'KNOWN_SOURCE',displayName:'Known source',status:'IMPORTED',action:'Imported',detail:'confirmed'}],readyToCalculate:true,blockingSourceKeys:[]}})
     const wrapper=mount(FinancialClosingPanelView,{global:{plugins:[vuetify],stubs:{PageHeader:{props:['title'],template:'<header>{{title}}</header>'},AlertStrip:true}}});await flush();await flush();
-    expect(wrapper.text()).toContain('Dados de origem publicados');expect(wrapper.text()).toContain('Todas as fontes configuradas possuem itens publicados');
-    await (wrapper.vm as any).openImport();expect(routerPush).toHaveBeenCalledWith({name:'closing-rules',params:{closingId:'closing-1'}})
+    expect(wrapper.text()).toContain('Dados de origem publicados');expect(wrapper.text()).toContain('Os dados atuais estão prontos');expect(wrapper.text()).toContain('Adicionar fonte ou lote');expect(wrapper.text()).toContain('Os itens publicados estão disponíveis para a apuração.')
+    await (wrapper.vm as any).openImport();expect(routerPush).toHaveBeenCalledWith({name:'closing-import-wizard',params:{closingId:'closing-1',reviewId:'new'}})
   })
 
   it('shows confirmed legacy sources even when remaining sources still need import',async()=>{
@@ -58,7 +64,7 @@ describe('Financial closing V31 journey',()=>{
     const wrapper=mount(FinancialClosingImportWizardView,{global:{plugins:[vuetify],stubs:{AlertStrip:{props:['description'],template:'<div>{{description}}</div>'}}}});await flush();await flush();
     const file=new File(['synthetic'],'synthetic.xlsx',{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});(wrapper.vm as any).workbookInput=file;(wrapper.vm as any).sensitiveConfirmed=true;await (wrapper.vm as any).inventoryWorkbook();await flush();expect(wrapper.text()).toContain('Known source');expect(wrapper.text()).toContain('Needs review precisa de revisão');(wrapper.vm as any).readyProfileIds=['profile-1'];
     await (wrapper.vm as any).prepareSources();await flush();expect(serviceMock.prepareWorkbookReview).toHaveBeenCalledWith(closing,file,['profile-1'],'review-1');expect(routerReplace).toHaveBeenCalledWith({name:'closing-import-wizard',params:{closingId:'closing-1',reviewId:'review-1'}});expect(wrapper.text()).toContain('staging ainda está invisível ao cálculo');
-    await (wrapper.vm as any).runPreflight();await flush();expect(wrapper.text()).toContain('Publicar lote');(wrapper.vm as any).financialConfirmed=true;await (wrapper.vm as any).publish();await flush();expect(wrapper.text()).toContain('Lote publicado');
+    await (wrapper.vm as any).runPreflight();await flush();expect(wrapper.text()).toContain('Publicar lote');expect(wrapper.text()).toContain('Ver resumo da revisão');(wrapper.vm as any).financialConfirmed=true;await (wrapper.vm as any).publish();await flush();expect(wrapper.text()).toContain('Lote publicado');expect(wrapper.text()).toContain('Adicionar outra fonte ou lote');
     const firstKey=serviceMock.publishWorkbookReview.mock.calls[0][2].idempotencyKey;serviceMock.workbookReview.mockResolvedValue({data:publishedReview});(wrapper.vm as any).review=preflightReview;await (wrapper.vm as any).publish();expect(serviceMock.publishWorkbookReview.mock.calls[1][2].idempotencyKey).toBe(firstKey)
   })
 
@@ -88,10 +94,12 @@ describe('Financial closing V31 journey',()=>{
     expect((resumed.vm as any).selectedFile).toBeNull();expect((resumed.vm as any).sensitiveConfirmed).toBe(false);expect(resumed.text()).toContain('Selecione o workbook')
   })
 
-  it('does not select a compatible source that was already confirmed in this competence',async()=>{
-    routeState.params={closingId:'closing-1',reviewId:'new'};serviceMock.importReadiness.mockResolvedValue({data:{sources:[{sourceId:'source-1',sourceKey:'KNOWN_SOURCE',displayName:'Known source',status:'IMPORTED',action:'Imported',detail:'confirmed'}],readyToCalculate:false,blockingSourceKeys:[]}})
+  it('preserves a published source and requires explicit opt-in for an additional lot',async()=>{
+    routeState.params={closingId:'closing-1',reviewId:'new'};serviceMock.importReadiness.mockResolvedValue({data:{sources:[{sourceId:'source-1',sourceKey:'KNOWN_SOURCE',displayName:'Known source',sourceStatus:'REQUIRED_PUBLISHED',detail:'confirmed'}],readyToCalculate:true,blockingSourceKeys:[]}})
     const wrapper=mount(FinancialClosingImportWizardView,{global:{plugins:[vuetify],stubs:{AlertStrip:true}}});await flush();await flush();(wrapper.vm as any).workbookInput=new File(['synthetic'],'synthetic.xlsx');(wrapper.vm as any).sensitiveConfirmed=true;await (wrapper.vm as any).inventoryWorkbook();await flush()
-    expect(wrapper.text()).toContain('Já importadas nesta competência');expect((wrapper.vm as any).selectedSheets).toHaveLength(0)
+    expect(wrapper.text()).toContain('Já publicadas nesta competência');expect((wrapper.vm as any).selectedSheets).toHaveLength(0);expect(wrapper.text()).toContain('Publicação anterior preservada')
+    ;(wrapper.vm as any).toggleAdditionalSheet('Known source');await flush()
+    expect((wrapper.vm as any).selectedSheets).toHaveLength(1);expect(wrapper.text()).toContain('Novo lote selecionado para validação')
   })
 
   it('treats a historical empty publication as non-contributing and starts a fresh review for pending sources',async()=>{
@@ -123,6 +131,18 @@ describe('Financial closing V31 journey',()=>{
     await (wrapper.vm as any).resumeReview();await flush()
     expect(serviceMock.confirmWorkbookSensitiveIntent).toHaveBeenCalledWith('closing-1','review-1')
     expect(serviceMock.workbookReview).toHaveBeenCalledWith('closing-1','review-1')
+  })
+
+  it('shows the frozen preflight summary and can discard it explicitly before publication',async()=>{
+    routeState.params={closingId:'closing-1',reviewId:'review-1'}
+    serviceMock.workbookReviewProgress.mockResolvedValue({data:{id:'review-1',status:'PREFLIGHT_READY',revision:2,selectedSourceCount:1,materializedSourceCount:1,publishedSourceCount:0,stagingExpiresAt:'2026-08-19T12:00:00Z',reviewExpiresAt:'2026-09-11T12:00:00Z',stagingExpired:false,reviewExpired:false,publicationId:null,pendingCodes:[],nextAction:'PUBLISH'}})
+    serviceMock.confirmWorkbookSensitiveIntent.mockResolvedValue({data:{expiresAt:'2026-08-12T12:15:00Z'}});serviceMock.workbookReview.mockReset().mockResolvedValue({data:preflightReview});serviceMock.workbookReviewInventory.mockResolvedValue({data:{sheets:[]}})
+    const confirm=vi.spyOn(window,'confirm').mockReturnValue(true)
+    const wrapper=mount(FinancialClosingImportWizardView,{global:{plugins:[vuetify],stubs:{AlertStrip:true}}});await flush();await flush();(wrapper.vm as any).sensitiveConfirmed=true;await (wrapper.vm as any).resumeReview();await flush()
+    expect(wrapper.text()).toContain('A revisão operacional já foi concluída');expect(wrapper.text()).toContain('Ver resumo da revisão');expect(wrapper.text()).toContain('Descartar revisão e recomeçar')
+    await (wrapper.vm as any).restartReviewedImport();await flush()
+    expect(serviceMock.abandonWorkbookReview).toHaveBeenCalledWith('closing-1','review-1',2);expect(routerReplace).toHaveBeenCalledWith({name:'closing-import-wizard',params:{closingId:'closing-1',reviewId:'new'}})
+    confirm.mockRestore()
   })
 
   it('keeps one task per screen and no mandatory table at 360px',async()=>{
