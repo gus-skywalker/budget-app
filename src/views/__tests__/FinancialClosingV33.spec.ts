@@ -66,12 +66,12 @@ describe('Financial closing V33 rules and result journey',()=>{
     expect(wrapper.text()).toContain('Produtividade Líquida')
   })
 
-  it('keeps monthly scoring optional while preserving the score mutation flow',async()=>{
+  it('uses the neutral ceiling when scoring is absent while preserving the optional mutation flow',async()=>{
     serviceMock.deductionReadiness.mockResolvedValue({data:{sources:[{...source,status:'RULE_VALID',dependencyCurrent:true}],readyToCalculate:true,blockingSourceKeys:[]}})
     serviceMock.list.mockResolvedValue({data:[{...closing,currentVersion:{...closing.currentVersion,calculationCurrent:true,calculatedRevision:4}}]})
-    const withoutScore={...preview,sourceProductivity:[],participantPayouts:[{participantId:'participant-1',productivityAmount:100,tmReserveAmount:10,tiReserveAmount:5,undistributedAmount:0,valueReceivableAmount:0,score:null}]}
+    const withoutScore={...preview,sourceProductivity:[],participantPayouts:[{participantId:'participant-1',productivityAmount:100,tmReserveAmount:10,tiReserveAmount:5,undistributedAmount:0,valueReceivableAmount:85,score:null,appliedScore:85,totalExplainedAmount:100}]}
     serviceMock.summary.mockResolvedValue({data:withoutScore});const wrapper=mount(FinancialClosingResultView,{global:{plugins:[vuetify],stubs}});await flush();await flush()
-    expect(wrapper.text()).toContain('Registrar pontuações mensais');expect(wrapper.text()).toContain('Continuar para decisão')
+    expect(wrapper.text()).toContain('Ajustar pontuações mensais');expect(wrapper.text()).toContain('teto neutro de 85%');expect(wrapper.text()).toContain('R$ 85,00');expect(wrapper.text()).toContain('Continuar para decisão')
     const vm=wrapper.vm as any;vm.scoreValues['participant-1']=85;vm.scoreJustifications['participant-1']='Avaliação mensal concluída';await vm.saveScore('participant-1')
     expect(serviceMock.upsertParticipantScore).toHaveBeenCalledWith(expect.objectContaining({id:'closing-1'}),{participantId:'participant-1',score:85,justification:'Avaliação mensal concluída'})
   })
