@@ -102,11 +102,12 @@ describe('Financial closing V31 journey',()=>{
     expect((wrapper.vm as any).selectedSheets).toHaveLength(1);expect(wrapper.text()).toContain('Novos itens selecionados para outro lote')
   })
 
-  it('keeps contracted consolidation sheets visible for reference and impossible to configure',async()=>{
+  it('keeps suggested consolidation sheets visible and lets the operator revise their role',async()=>{
     routeState.params={closingId:'closing-1',reviewId:'new'}
     serviceMock.initiateWorkbookReview.mockResolvedValue({data:{review:{...materialized,selectedSourceCount:0,sources:[]},inventory:{sheets:[{sheetName:'GERAL',classification:'CONSOLIDATION',suggestedSourceKey:'GERAL',nonEmptyDataRows:2,detail:'Somente conferência.',selectionStatus:'CONSOLIDATION',reviewReason:'CONSOLIDATION'},{sheetName:'FECHAMENTO',classification:'CONSOLIDATION',suggestedSourceKey:'FECHAMENTO',nonEmptyDataRows:2,detail:'Somente conferência.',selectionStatus:'CONSOLIDATION',reviewReason:'CONSOLIDATION'}]},sensitiveIntentExpiresAt:'2026-08-12T12:15:00Z',replayed:false}})
     const wrapper=mount(FinancialClosingImportWizardView,{global:{plugins:[vuetify],stubs:{AlertStrip:true}}});await flush();await flush();(wrapper.vm as any).workbookInput=new File(['synthetic'],'synthetic.xlsx');(wrapper.vm as any).sensitiveConfirmed=true;await (wrapper.vm as any).inventoryWorkbook();await flush()
-    expect(wrapper.text()).toContain('Consolidações para conferência');expect(wrapper.text()).toContain('Estas abas nunca entram no cálculo');expect(wrapper.text()).toContain('GERAL');expect(wrapper.text()).toContain('FECHAMENTO');expect((wrapper.vm as any).reviewSheets).toHaveLength(0);expect(wrapper.text()).not.toContain('Configurar fonte e perfil')
+    expect(wrapper.text()).toContain('Sugestões de consolidação ou apoio');expect(wrapper.text()).toContain('nunca apenas no nome da aba');expect(wrapper.text()).toContain('GERAL');expect(wrapper.text()).toContain('FECHAMENTO');expect((wrapper.vm as any).reviewSheets).toHaveLength(0);expect(wrapper.text()).toContain('Revisar classificação')
+    ;(wrapper.vm as any).configureSheet((wrapper.vm as any).consolidationSheets[0]);await flush();expect((wrapper.vm as any).configuringSheet.sheetName).toBe('GERAL')
   })
 
   it('treats a historical empty publication as non-contributing and starts a fresh review for pending sources',async()=>{
