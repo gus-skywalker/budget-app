@@ -4,6 +4,9 @@ import { join } from 'node:path'
 
 type Runtime = { apiPort: number; workspaceId: string; workspaceName: string; accessToken: string }
 type Closing = { id: string; currentVersion: { versionNumber: number } }
+type PayoutDecision = { id: string; status: string; revision: number; issuedObligationCount: number }
+type MarginDecision = { id: string; status: string; revision: number; issuedObligationCount: number; marginSnapshot: number }
+type OperationalObligation = { id: string; domain: string; originType: string; principalAmount: number }
 
 const runtime = () => JSON.parse(readFileSync(join(process.cwd(), 'test-results/financial-closing-demo/runtime/state.json'), 'utf8')) as Runtime
 const fixture = join(process.cwd(), 'e2e/fixtures/closing-v31-happy.xlsx')
@@ -18,7 +21,9 @@ async function apiJson<T>(request: APIRequestContext, state: Runtime, method: 'g
   return response.status() === 204 ? undefined as T : await response.json() as T
 }
 
-async function prepareCompetence(request: APIRequestContext, state: Runtime, month: number, participantReview = false, includeProfile = true, includeSource = true) {
+async function prepareCompetence(request: APIRequestContext, state: Runtime, month: number, participantReview = false,
+                                 includeProfile = true, includeSource = true,
+                                 attributionMethod = 'DIRECT_ATTRIBUTION', defaultPoolKey?: string) {
   const closingKey = includeProfile ? 'DEFAULT' : `CONFIG_${Date.now()}`
   const closing = await apiJson<Closing>(request, state, 'post', '/financial-closings', {
     periodMonth: month, periodYear: 2026, closingKey, currency: 'BRL',
@@ -41,9 +46,11 @@ async function prepareCompetence(request: APIRequestContext, state: Runtime, mon
     profileKey: 'V31_HAPPY_PATH', displayName: 'Perfil sintético V31', sourceKey: source.sourceKey,
     config: {
       format: 'XLSX', expectedSheet: 'V31_SOURCE', itemKeyColumn: 'reference', itemKeyColumns: ['reference'],
-      amountColumn: 'amount', occurredOnColumn: 'date', externalReferenceColumn: 'reference', participantColumn: 'responsible',
-      participantMappings: participantReview ? {} : { PARTICIPANT: participant.id }, positiveDirection: 'ADDITION', negativeAsReversal: true,
-      ignoreTotalsAndFormulas: true, defaultAttributionMethod: 'DIRECT_ATTRIBUTION', decimalSeparator: 'DOT',
+      amountColumn: 'amount', occurredOnColumn: 'date', externalReferenceColumn: 'reference',
+      participantColumn: attributionMethod === 'UNDISTRIBUTED_POOL' ? null : 'responsible',
+      participantMappings: attributionMethod === 'UNDISTRIBUTED_POOL' || participantReview ? {} : { PARTICIPANT: participant.id },
+      positiveDirection: 'ADDITION', negativeAsReversal: true,
+      ignoreTotalsAndFormulas: true, defaultAttributionMethod: attributionMethod, defaultPoolKey, decimalSeparator: 'DOT',
       headerSignature: ['reference', 'amount', 'date', 'responsible'], multiplicityPolicy: 'REQUIRES_UNIQUE_EXTERNAL_IDENTITY',
       monetaryFormat: { groupingSeparator: 'NONE', prefix: null, suffix: null, normalizeSpaces: true },
     },
@@ -82,7 +89,8 @@ async function completeJourney(page: Page, closing: Closing, participantReview =
   await page.getByRole('button', { name: 'Resolver fontes selecionadas' }).click()
   if (participantReview) {
     await page.getByLabel('Sim, esta coluna identifica o participante ou beneficiário da apuração').check()
-    await page.getByRole('button', { name: /PARTICIPANT · 100%/ }).click()
+    await page.getByRole('button', { name: 'Criar participante com este nome' }).click()
+    await expect(page.getByText('Associado a PARTICIPANT', { exact: true })).toBeVisible()
   }
   await expect(page.getByText('Fonte pronta para o lote', { exact: true }).first()).toBeVisible()
   await page.getByRole('button', { name: 'Preparar lote completo' }).click()
@@ -98,21 +106,32 @@ async function completeJourney(page: Page, closing: Closing, participantReview =
   await expect(page.getByRole('heading', { name: 'Lote publicado' })).toBeVisible()
 }
 
-async function completeRulesAndResult(page: Page, closing: Closing) {
-  await page.getByRole('button', { name: 'Revisar regras' }).click()
+async function completeRulesAndCalculation(page: Page, closing: Closing) {
+  await page.getByRole('button', { name: /Revisar deduções|Ver regras/ }).first().click()
   await expect(page).toHaveURL(new RegExp(`/financial-closings/${closing.id}/rules$`))
   await expect(page.getByRole('heading', { name: 'Revise cada fonte antes de calcular' })).toBeVisible()
-  await page.getByRole('button', { name: 'Confirmar regras desta fonte' }).click()
-  await page.getByLabel('Por que esta incidência está correta?').fill('Regra sintética conferida para a demonstração automatizada')
-  await page.getByRole('button', { name: 'Confirmar', exact: true }).click()
-  await expect(page.getByText('Regras confirmadas', { exact: true })).toBeVisible()
+  const confirmRules = page.getByRole('button', { name: 'Confirmar regras desta fonte' })
+  if (await confirmRules.isVisible()) {
+    await confirmRules.click()
+    await page.getByLabel('Por que esta incidência está correta?').fill('Regra sintética conferida para a demonstração automatizada')
+    await page.getByRole('button', { name: 'Confirmar', exact: true }).click()
+    await expect(page.getByText('Regras confirmadas', { exact: true })).toBeVisible()
+  } else {
+    await expect(page.getByText('1 de 1 fontes prontas', { exact: true })).toBeVisible()
+  }
   await page.getByRole('button', { name: 'Continuar para o resultado' }).click()
   await expect(page).toHaveURL(new RegExp(`/financial-closings/${closing.id}/results$`))
   await expect(page.getByRole('heading', { name: 'Prévia pronta para calcular' })).toBeVisible()
   await page.getByRole('button', { name: 'Calcular resultado' }).click()
   await expect(page.getByRole('heading', { name: 'Cálculo atual' })).toBeVisible()
-  await expect(page.getByText('Produtividade Bruta', { exact: true })).toBeVisible()
+  await expect(page.getByText('Valor bruto das fontes', { exact: true })).toBeVisible()
   await expect(page.getByText('Produtividade Líquida', { exact: true })).toBeVisible()
+}
+
+async function completeRulesAndResult(page: Page, request: APIRequestContext, state: Runtime, closing: Closing) {
+  await completeRulesAndCalculation(page, closing)
+  const obligationsBefore = await apiJson<OperationalObligation[]>(request, state, 'get', '/financial-closings/obligations')
+  const productivityBefore = obligationsBefore.filter(value => value.domain === 'PRODUCTIVITY').length
   await page.getByRole('button', { name: 'Continuar para decisão' }).click()
   await expect(page).toHaveURL(new RegExp(`/financial-closings/${closing.id}/decisions$`))
   await expect(page.getByRole('heading', { name: 'Revise antes de criar a proposta' })).toBeVisible()
@@ -128,6 +147,28 @@ async function completeRulesAndResult(page: Page, closing: Closing) {
   await coverageDialog.getByLabel('Confirmo que revisei integralmente as entradas deste cálculo.').check()
   await coverageDialog.getByRole('button', { name: 'Confirmar cobertura', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Cobertura confirmada' })).toBeVisible()
+  await page.getByLabel('Justificativa da aprovação').fill('Aprovação sintética final da jornada E2E')
+  const approvalRequest = page.waitForRequest(value => value.method() === 'POST' && /\/payout-decisions\/[^/]+\/approve$/.test(new URL(value.url()).pathname))
+  await page.getByRole('button', { name: 'Aprovar e emitir obrigações' }).click()
+  const capturedApproval = await approvalRequest
+  const approvalPayload = capturedApproval.postDataJSON() as { expectedRevision: number; justification: string; idempotencyKey: string }
+  await expect(page.getByRole('heading', { name: 'Decisão aprovada' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Histórico preservado' })).toBeVisible()
+
+  let approved: PayoutDecision | undefined
+  await expect.poll(async () => {
+    const decisions = await apiJson<PayoutDecision[]>(request, state, 'get', `/financial-closings/${closing.id}/payout-decisions`)
+    approved = decisions.find(value => value.status === 'APPROVED')
+    return approved?.issuedObligationCount ?? 0
+  }, { message: 'the approved payout line must be provisioned exactly once' }).toBe(1)
+  if (!approved) throw new Error('approved payout decision was not found')
+
+  const replay = await apiJson<PayoutDecision>(request, state, 'post', `/financial-closings/${closing.id}/payout-decisions/${approved.id}/approve`, approvalPayload)
+  expect(replay.id).toBe(approved.id)
+  const obligations = await apiJson<OperationalObligation[]>(request, state, 'get', '/financial-closings/obligations')
+  const productivity = obligations.filter(value => value.domain === 'PRODUCTIVITY')
+  expect(productivity).toHaveLength(productivityBefore + 1)
+  expect(productivity.filter(value => value.principalAmount === 170)).toHaveLength(productivityBefore + 1)
 }
 
 test.describe.configure({ mode: 'serial' })
@@ -137,7 +178,46 @@ test('V31 publishes the happy path from the panel on desktop', async ({ page, re
   const closing = await prepareCompetence(request, state, 9)
   await authenticate(page, state)
   await completeJourney(page, closing)
-  await completeRulesAndResult(page, closing)
+  await completeRulesAndResult(page, request, state, closing)
+})
+
+test('provisions a Margin expense separately from Productivity through the public BFF', async ({ page, request }) => {
+  const state = runtime()
+  const closing = await prepareCompetence(request, state, 8, false, true, true, 'UNDISTRIBUTED_POOL', 'MARGIN_DEMO')
+  await authenticate(page, state)
+  await completeJourney(page, closing)
+  await completeRulesAndCalculation(page, closing)
+  const obligationsBefore = await apiJson<OperationalObligation[]>(request, state, 'get', '/financial-closings/obligations')
+  const marginBefore = obligationsBefore.filter(value => value.domain === 'MARGIN').length
+
+  const created = await apiJson<MarginDecision>(request, state, 'post', `/financial-closings/${closing.id}/margin-decisions`, {
+    versionNumber: 1,
+    poolKey: 'MARGIN_DEMO',
+    allocations: [{
+      type: 'EXPENSE_COMMITMENT', amount: 60, purpose: 'Despesa sintética da Margem', dueDate: '2026-09-30',
+      categoryKey: 'OPERATIONS',
+      beneficiary: { type: 'EXTERNAL_CREDITOR', displayName: 'Fornecedor sintético', externalReference: 'DEMO_VENDOR' },
+      beneficiaries: null, evidenceReference: null,
+    }],
+  })
+  expect(created.marginSnapshot).toBe(200)
+  const submitted = await apiJson<MarginDecision>(request, state, 'post', `/financial-closings/${closing.id}/margin-decisions/${created.id}/submit`, {
+    expectedRevision: created.revision,
+  })
+  const approval = { expectedRevision: submitted.revision, justification: 'Margem sintética aprovada no E2E', idempotencyKey: `margin-e2e:${closing.id}` }
+  const approved = await apiJson<MarginDecision>(request, state, 'post', `/financial-closings/${closing.id}/margin-decisions/${created.id}/approve`, approval)
+  expect(approved.status).toBe('APPROVED')
+
+  await expect.poll(async () => {
+    const decisions = await apiJson<MarginDecision[]>(request, state, 'get', `/financial-closings/${closing.id}/margin-decisions`)
+    return decisions.find(value => value.id === created.id)?.issuedObligationCount ?? 0
+  }, { message: 'the approved Margin expense must be provisioned exactly once' }).toBe(1)
+  const replay = await apiJson<MarginDecision>(request, state, 'post', `/financial-closings/${closing.id}/margin-decisions/${created.id}/approve`, approval)
+  expect(replay.id).toBe(created.id)
+  const obligations = await apiJson<OperationalObligation[]>(request, state, 'get', '/financial-closings/obligations')
+  const margin = obligations.filter(value => value.domain === 'MARGIN')
+  expect(margin).toHaveLength(marginBefore + 1)
+  expect(margin.filter(value => value.principalAmount === 60)).toHaveLength(1)
 })
 
 test('V31 follows the same path at 360 px without horizontal tables', async ({ page, request }) => {
@@ -146,7 +226,7 @@ test('V31 follows the same path at 360 px without horizontal tables', async ({ p
   await page.setViewportSize({ width: 360, height: 800 })
   await authenticate(page, state)
   await completeJourney(page, closing)
-  await completeRulesAndResult(page, closing)
+  await completeRulesAndResult(page, request, state, closing)
   await expect(page.locator('table')).toHaveCount(0)
   await expect(page.locator('body')).toHaveJSProperty('scrollWidth', 360)
 })
@@ -187,7 +267,9 @@ test('V31 resumes a persisted inventoried review after returning to the panel', 
   await expect(page.getByRole('heading', { name: 'Confira o que entra neste lote' })).toBeVisible()
   await page.getByRole('button', { name: 'Salvar e sair' }).click()
   await expect(page.getByText('Importação em andamento', { exact: true })).toBeVisible()
-  await page.getByRole('button', { name: 'Retomar importação' }).click()
+  await page.getByRole('button', { name: 'Continuar importação' }).click()
+  await page.getByLabel('Entendo que acessarei dados protegidos desta importação').check()
+  await page.getByRole('button', { name: 'Retomar revisão' }).click()
   await expect(page.getByRole('heading', { name: 'Selecione novamente o mesmo workbook' })).toBeVisible()
   await page.locator('input[type="file"]').setInputFiles(fixture)
   await expect(page.getByRole('heading', { name: 'Confira o que entra neste lote' })).toBeVisible()

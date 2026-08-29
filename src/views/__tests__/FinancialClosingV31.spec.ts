@@ -70,6 +70,17 @@ describe('Financial closing V31 journey',()=>{
     expect(wrapper.text()).toContain('Configurar fonte');expect((wrapper.vm as any).selectedFile).toBe(file);expect(routerPush).not.toHaveBeenCalledWith(expect.objectContaining({name:'planning-financial-closings-legacy'}))
   })
 
+  it('abandons an empty review before re-inventorying a newly configured source',async()=>{
+    routeState.params={closingId:'closing-1',reviewId:'new'}
+    const wrapper=mount(FinancialClosingImportWizardView,{global:{plugins:[vuetify],stubs:{AlertStrip:true}}});await flush();await flush()
+    const file=new File(['synthetic'],'synthetic.xlsx');(wrapper.vm as any).workbookInput=file;(wrapper.vm as any).sensitiveConfirmed=true;await (wrapper.vm as any).inventoryWorkbook();await flush()
+    serviceMock.initiateWorkbookReview.mockClear()
+    await (wrapper.vm as any).handleSourceProfileSaved('profile-1');await flush()
+    expect(serviceMock.abandonWorkbookReview).toHaveBeenCalledWith('closing-1','review-1',1)
+    expect(routerReplace).toHaveBeenCalledWith({name:'closing-import-wizard',params:{closingId:'closing-1',reviewId:'new'}})
+    expect(serviceMock.initiateWorkbookReview).toHaveBeenCalledWith(closing,file,true)
+  })
+
   it('does not retain workbook bytes when the wizard is mounted again',async()=>{
     routeState.params={closingId:'closing-1',reviewId:'new'}
     const first=mount(FinancialClosingImportWizardView,{global:{plugins:[vuetify],stubs:{AlertStrip:true}}});await flush();await flush()
@@ -96,6 +107,23 @@ describe('Financial closing V31 journey',()=>{
     const wrapper=mount(FinancialClosingImportWizardView,{global:{plugins:[vuetify],stubs:{AlertStrip:{props:['description'],template:'<div>{{description}}</div>'}}}});await flush();await flush();expect((wrapper.vm as any).selectedFile).toBeNull();expect(wrapper.text()).toContain('A revisão foi preservada');expect(wrapper.text()).not.toContain('Analisar e iniciar revisão');expect(serviceMock.confirmWorkbookSensitiveIntent).not.toHaveBeenCalled();(wrapper.vm as any).sensitiveConfirmed=true;await (wrapper.vm as any).resumeReview();await flush();expect(wrapper.text()).toContain('Selecione novamente o mesmo workbook');
     serviceMock.preflightWorkbookReview.mockRejectedValue({response:{status:409}});await (wrapper.vm as any).runPreflight();await flush();expect(wrapper.text()).toContain('preparação mudou ou expirou');
     ;(wrapper.vm as any).inventory={sheets:[{sheetName:'Known source',selectionStatus:'AUTO_SELECTED',recommendedProfileId:'profile-1'}]};(wrapper.vm as any).readyProfileIds=['profile-1'];(wrapper.vm as any).workbookInput=new File(['other'],'other.xlsx');serviceMock.prepareWorkbookReview.mockRejectedValue({response:{status:409}});await (wrapper.vm as any).prepareSources();expect((wrapper.vm as any).errorMessage).toContain('não corresponde à revisão retomada')
+  })
+
+  it('requires a fresh sensitive intent before loading a protected resumed review',async()=>{
+    routeState.params={closingId:'closing-1',reviewId:'review-1'}
+    serviceMock.workbookReviewProgress.mockResolvedValue({data:{id:'review-1',status:'DRAFT',revision:1,selectedSourceCount:1,materializedSourceCount:0,publishedSourceCount:0,stagingExpiresAt:'2026-08-19T12:00:00Z',reviewExpiresAt:'2026-09-11T12:00:00Z',stagingExpired:false,reviewExpired:false,publicationId:null,pendingCodes:[],nextAction:'PREPARE_SOURCES'}})
+    serviceMock.workbookReviewInventory.mockRejectedValue({response:{status:403}})
+    serviceMock.confirmWorkbookSensitiveIntent.mockResolvedValue({data:{expiresAt:'2026-08-12T12:15:00Z'}})
+    serviceMock.workbookReview.mockReset().mockResolvedValue({data:materialized})
+    const wrapper=mount(FinancialClosingImportWizardView,{global:{plugins:[vuetify],stubs:{AlertStrip:{props:['description'],template:'<div>{{description}}</div>'}}}})
+    await flush();await flush()
+    expect(wrapper.text()).toContain('A revisão foi preservada')
+    expect(serviceMock.workbookReviewInventory).not.toHaveBeenCalled()
+    expect(serviceMock.workbookReview).not.toHaveBeenCalled()
+    ;(wrapper.vm as any).sensitiveConfirmed=true
+    await (wrapper.vm as any).resumeReview();await flush()
+    expect(serviceMock.confirmWorkbookSensitiveIntent).toHaveBeenCalledWith('closing-1','review-1')
+    expect(serviceMock.workbookReview).toHaveBeenCalledWith('closing-1','review-1')
   })
 
   it('keeps one task per screen and no mandatory table at 360px',async()=>{

@@ -1,12 +1,13 @@
 import { execFileSync, spawn, type ChildProcess } from 'node:child_process'
 import { createPublicKey, createSign, randomBytes, randomUUID } from 'node:crypto'
-import { appendFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { appendFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { createServer } from 'node:net'
 import { join } from 'node:path'
 
 const runtimeDir = join(process.cwd(), 'test-results/financial-closing-demo/runtime')
 const appPort = 5176
 let api: ChildProcess | undefined
+let closing: ChildProcess | undefined
 let app: ChildProcess | undefined
 
 const base64url = (value: Buffer | string) => Buffer.from(value).toString('base64url')
@@ -59,6 +60,7 @@ export default async function setup() {
   rmSync(runtimeDir, { recursive: true, force: true })
   mkdirSync(runtimeDir, { recursive: true })
   const apiPort = await availablePort()
+  const closingPort = await availablePort()
   const privateKey = join(runtimeDir, 'demo-private.pem')
   const publicKey = join(runtimeDir, 'demo-public.pem')
   execFileSync('openssl', ['genrsa', '-out', privateKey, '2048'])
@@ -67,15 +69,50 @@ export default async function setup() {
   const jwks = join(runtimeDir, 'demo-jwks.json')
   writeFileSync(jwks, JSON.stringify({ keys: [{ ...jwk, kid: 'financial-closing-demo', use: 'sig', alg: 'RS256' }] }))
   const demoPublicKey = jwks
+  const internalServiceToken = randomBytes(32).toString('base64url')
+  const authorizationHmacKey = randomBytes(32).toString('base64url')
+  const provisioningServiceToken = randomBytes(32).toString('base64url')
+  const externalReferenceHmacKey = randomBytes(32).toString('base64')
+  const sensitiveDataKey = randomBytes(32).toString('base64')
   const commonEnv = {
     ...process.env,
     DEMO_API_PORT: String(apiPort),
     DEMO_JWT_PUBLIC_KEY: demoPublicKey,
     AUTH_ISSUER_URI: 'cobudget-demo',
     AUTH_JWK_SET_URI: demoPublicKey,
-    CLOSING_EXTERNAL_REFERENCE_HMAC_KEY: randomBytes(32).toString('base64'),
-    CLOSING_SENSITIVE_DATA_KEY: randomBytes(32).toString('base64'),
+    FINANCIAL_CLOSING_SERVICE_URL: `http://127.0.0.1:${closingPort}`,
+    CLOSING_INTERNAL_SERVICE_TOKEN: internalServiceToken,
+    CLOSING_AUTHORIZATION_HMAC_KEY: authorizationHmacKey,
+    CLOSING_INTEGRATION_URL: `http://127.0.0.1:${closingPort}`,
+    CLOSING_INTEGRATION_SERVICE_TOKEN: internalServiceToken,
+    CLOSING_INTEGRATION_AUTHORIZATION_HMAC_KEY: authorizationHmacKey,
+    FINANCIAL_CLOSING_SERVICE_TOKEN: provisioningServiceToken,
+    CLOSING_EXTERNAL_REFERENCE_HMAC_KEY: externalReferenceHmacKey,
+    CLOSING_SENSITIVE_DATA_KEY: sensitiveDataKey,
   }
+  const localJava21 = process.env.CLOSING_E2E_JAVA_HOME
+    ?? ['/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home', '/usr/local/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home'].find(existsSync)
+  closing = spawn('./gradlew', ['quarkusDev'], {
+    cwd: '../financial-closing-service',
+    env: {
+      ...process.env,
+      ...(localJava21 ? { JAVA_HOME: localJava21 } : {}),
+      PORT: String(closingPort),
+      CLOSING_INTERNAL_SERVICE_TOKEN: internalServiceToken,
+      CLOSING_AUTHORIZATION_HMAC_KEY: authorizationHmacKey,
+      CLOSING_EXTERNAL_REFERENCE_HMAC_KEY: externalReferenceHmacKey,
+      CLOSING_SENSITIVE_DATA_KEY: sensitiveDataKey,
+      CLOSING_BUDGET_API_URL: `http://127.0.0.1:${apiPort}/api`,
+      CLOSING_PROVISIONING_SERVICE_TOKEN: provisioningServiceToken,
+      CLOSING_PROVISIONING_DISPATCH_ENABLED: 'true',
+      CLOSING_PROVISIONING_DISPATCH_DELAY: '1s',
+      CLOSING_PROVISIONING_DISPATCH_EVERY: '1s',
+    },
+    stdio: 'pipe',
+  })
+  closing.stdout?.on('data', value => appendFileSync(join(runtimeDir, 'closing.log'), value))
+  closing.stderr?.on('data', value => appendFileSync(join(runtimeDir, 'closing.log'), value))
+  await waitFor(`http://127.0.0.1:${closingPort}/q/health`, 'financial closing service')
   api = spawn('./gradlew', ['quarkusDev', '-Dquarkus.profile=demo'], { cwd: '../budget-api', env: commonEnv, stdio: 'pipe' })
   api.stdout?.on('data', value => appendFileSync(join(runtimeDir, 'api.log'), value))
   api.stderr?.on('data', value => appendFileSync(join(runtimeDir, 'api.log'), value))
@@ -103,12 +140,11 @@ export default async function setup() {
     workspaceId: workspace.workspaceId,
     workspaces: [{ workspaceId: workspace.workspaceId, workspaceName: workspace.name, role: 'ROLE_OWNER' }],
   })
-  writeFileSync(join(runtimeDir, 'state.json'), JSON.stringify({ apiPort, appPort, workspaceId: workspace.workspaceId, workspaceName: workspace.name, accessToken }))
+  writeFileSync(join(runtimeDir, 'state.json'), JSON.stringify({ apiPort, closingPort, appPort, workspaceId: workspace.workspaceId, workspaceName: workspace.name, accessToken }))
   app = spawn('npm', ['run', 'dev', '--', '--host', '127.0.0.1', '--port', String(appPort)], { cwd: process.cwd(), env: { ...process.env, VITE_API_BASE_URL: `http://127.0.0.1:${apiPort}/api`, VITE_AUTH_URL: 'http://127.0.0.1:9999' }, stdio: 'pipe' })
   app.stderr?.on('data', () => undefined)
   await waitFor(`http://127.0.0.1:${appPort}`, 'demo app')
   return async () => {
-    await Promise.all([stop(app), stop(api)])
-    rmSync(runtimeDir, { recursive: true, force: true })
+    await Promise.all([stop(app), stop(api), stop(closing)])
   }
 }
