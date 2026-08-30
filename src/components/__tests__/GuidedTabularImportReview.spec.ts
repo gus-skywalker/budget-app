@@ -116,6 +116,23 @@ describe('GuidedTabularImportReview',()=>{
     expect(serviceMock.startGuidedImportReview).toHaveBeenCalledTimes(1)
   })
 
+  it('refreshes a stale workbook revision without replaying the human decision automatically',async()=>{
+    const initial={...structuredClone(review),revision:3}
+    const refreshed={...structuredClone(review),revision:7}
+    serviceMock.startGuidedImportReview.mockResolvedValueOnce({data:initial}).mockResolvedValueOnce({data:refreshed})
+    serviceMock.saveGuidedReviewDecision.mockRejectedValueOnce({response:{status:409}}).mockResolvedValueOnce({data:{reviewId:'review-1',revision:8,replayed:false}})
+    const wrapper=mount(GuidedTabularImportReview,{props:{closing,file:new File(['synthetic'],'synthetic.xlsx'),profileId:'profile-1',sensitiveAccessConfirmed:true,participants:[{id:'participant-1',participantKey:'ANA',displayName:'Ana Demo',active:true}]},global:{plugins:[vuetify]}})
+    await (wrapper.vm as any).openReview();await flush()
+
+    await (wrapper.vm as any).linkParticipant('P-1','participant-1');await flush()
+    expect(serviceMock.saveGuidedReviewDecision).toHaveBeenCalledTimes(1)
+    expect(serviceMock.startGuidedImportReview).toHaveBeenCalledTimes(2)
+    expect(wrapper.text()).toContain('A revisão foi atualizada. Repita somente a decisão')
+
+    await (wrapper.vm as any).linkParticipant('P-1','participant-1');await flush()
+    expect(serviceMock.saveGuidedReviewDecision).toHaveBeenLastCalledWith(closing,'review-1',expect.objectContaining({expectedRevision:7,action:'LINK_PARTICIPANT'}))
+  })
+
   it('turns a missing participant column blocker into a direct profile-edit action',async()=>{
     const missingColumn={...structuredClone(review),participants:[],repetitions:[],pendingRows:[],blockingReasons:['O perfil usa atribuição direta, mas não informa a coluna que identifica o participante. Publique uma nova versão do perfil com essa coluna antes de continuar']}
     serviceMock.startGuidedImportReview.mockResolvedValue({data:missingColumn})
