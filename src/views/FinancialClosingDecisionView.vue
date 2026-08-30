@@ -113,9 +113,10 @@
         <div class="sticky-action">
           <p>{{ actionHint }}</p>
           <v-btn v-if="!decision" color="primary" size="large" :loading="working" :disabled="blockers.length > 0 || !canWrite" @click="createDecision">Criar proposta</v-btn>
-          <v-btn v-else-if="decision.status === 'DRAFT'" color="primary" size="large" :loading="working" :disabled="!canWrite" @click="submitDecision">Enviar para autorização</v-btn>
-          <v-btn v-else-if="decision.status === 'REVIEW' && canApprove" color="success" size="large" :loading="working" :disabled="approvalBlockers.length > 0 || !approvalJustification.trim()" @click="approveDecision">Aprovar e emitir obrigações</v-btn>
-          <v-btn v-else variant="tonal" size="large" @click="back">Voltar ao painel</v-btn>
+          <v-btn v-else-if="decision.status === 'DRAFT'" variant="tonal" color="warning" size="large" :loading="working" :disabled="!canWrite" @click="discardDecision">Descartar rascunho e revisar regras</v-btn>
+          <v-btn v-if="decision?.status === 'DRAFT'" color="primary" size="large" :loading="working" :disabled="!canWrite" @click="submitDecision">Enviar para autorização</v-btn>
+          <v-btn v-else-if="decision?.status === 'REVIEW' && canApprove" color="success" size="large" :loading="working" :disabled="approvalBlockers.length > 0 || !approvalJustification.trim()" @click="approveDecision">Aprovar e emitir obrigações</v-btn>
+          <v-btn v-if="decision && decision.status !== 'DRAFT' && !(decision.status === 'REVIEW' && canApprove)" variant="tonal" size="large" @click="back">Voltar ao painel</v-btn>
         </div>
       </template>
     </div>
@@ -266,6 +267,15 @@ async function submitDecision() {
   } finally {
     working.value = false
   }
+}
+async function discardDecision() {
+  if (!closing.value || !decision.value || !canWrite.value) return
+  if (!window.confirm('Descartar este rascunho? Nenhuma obrigação foi emitida; você poderá revisar regras e recalcular.')) return
+  working.value = true; errorMessage.value = ''
+  try {
+    await FinancialClosingService.discardPayoutDecision(closing.value, decision.value.id, decision.value.revision)
+    router.push({ name: 'closing-rules', params: { closingId: closing.value.id } })
+  } catch { errorMessage.value = 'Não foi possível descartar o rascunho. Atualize a tela e tente novamente.' } finally { working.value = false }
 }
 async function approveDecision() {
   if (!closing.value || !decision.value || !canApprove.value || approvalBlockers.value.length || !approvalJustification.value.trim()) return
