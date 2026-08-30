@@ -84,6 +84,22 @@ describe('Financial closing V31 journey',()=>{
     expect(wrapper.text()).toContain('Publicar lote')
   })
 
+  it('returns a partially attached review to assisted source decisions after a 422',async()=>{
+    routeState.params={closingId:'closing-1',reviewId:'new'}
+    const wrapper=mount(FinancialClosingImportWizardView,{global:{plugins:[vuetify],stubs:{AlertStrip:{props:['description'],template:'<div>{{description}}</div>'},GuidedTabularImportReview:{template:'<div>Revisão assistida da fonte</div>'}}}});await flush();await flush()
+    const file=new File(['synthetic'],'synthetic.xlsx');(wrapper.vm as any).workbookInput=file;(wrapper.vm as any).sensitiveConfirmed=true;await (wrapper.vm as any).inventoryWorkbook();await flush()
+    const ready={...materialized,revision:5,sources:materialized.sources.map(source=>({...source,status:'READY',candidateCount:0,additionTotal:0,reversalTotal:0}))}
+    ;(wrapper.vm as any).review=ready
+    serviceMock.prepareWorkbookReview.mockRejectedValueOnce({response:{status:422}})
+
+    await (wrapper.vm as any).runPreflight();await flush()
+
+    expect((wrapper.vm as any).currentSourceIndex).toBe(0)
+    expect((wrapper.vm as any).step).toBe(2)
+    expect(wrapper.text()).toContain('decisões pendentes')
+    expect(wrapper.text()).toContain('Revisão assistida da fonte')
+  })
+
   it('configures a source inside the wizard without losing the selected workbook or navigating to legacy',async()=>{
     routeState.params={closingId:'closing-1',reviewId:'new'}
     const wrapper=mount(FinancialClosingImportWizardView,{global:{plugins:[vuetify],stubs:{AlertStrip:{props:['description'],template:'<div>{{description}}</div>'}}}});await flush();await flush()
