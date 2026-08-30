@@ -98,14 +98,14 @@ describe('GuidedTabularImportReview',()=>{
   it('revalidates an exclusion immediately and shows its audited success state',async()=>{
     const pending={...structuredClone(review),participants:[],repetitions:[],summary:{...review.summary,participantGroups:0,participantOccurrences:0,repetitionGroups:0,repetitionOccurrences:0,importableRows:3},blockingReasons:['Há uma data ausente que precisa ser resolvida']}
     const excluded={...structuredClone(pending),pendingRows:[{...pending.pendingRows[1],resolution:'EXCLUDE_ROW'}],summary:{...pending.summary,excludedRows:1},readyForConfirmation:true,status:'READY',blockingReasons:[]}
-    serviceMock.startGuidedImportReview.mockResolvedValueOnce({data:pending}).mockResolvedValueOnce({data:excluded})
+    serviceMock.startGuidedImportReview.mockResolvedValueOnce({data:pending}).mockResolvedValueOnce({data:pending}).mockResolvedValueOnce({data:excluded})
     const wrapper=mount(GuidedTabularImportReview,{props:{closing,file:new File(['synthetic'],'synthetic.xlsx'),profileId:'profile-1',sensitiveAccessConfirmed:true,participants:[]},global:{plugins:[vuetify]}})
     await (wrapper.vm as any).openReview();await flush()
     ;(wrapper.vm as any).rowJustifications['R-2']='Linha incompleta revisada pelo operador'
     await (wrapper.vm as any).excludeRow(pending.pendingRows[1]);await flush()
 
     expect(serviceMock.saveGuidedReviewDecision).toHaveBeenCalledWith(closing,'review-1',expect.objectContaining({action:'EXCLUDE_ROW',justification:'Linha incompleta revisada pelo operador'}))
-    expect(serviceMock.startGuidedImportReview).toHaveBeenCalledTimes(2)
+    expect(serviceMock.startGuidedImportReview).toHaveBeenCalledTimes(3)
     expect(wrapper.text()).toContain('Exclusão confirmada e auditada para este lote')
     expect(wrapper.text()).toContain('Linha 5 excluída deste lote com auditoria')
   })
@@ -119,14 +119,14 @@ describe('GuidedTabularImportReview',()=>{
   it('refreshes a stale workbook revision without replaying the human decision automatically',async()=>{
     const initial={...structuredClone(review),revision:3}
     const refreshed={...structuredClone(review),revision:7}
-    serviceMock.startGuidedImportReview.mockResolvedValueOnce({data:initial}).mockResolvedValueOnce({data:refreshed})
+    serviceMock.startGuidedImportReview.mockResolvedValueOnce({data:initial}).mockResolvedValueOnce({data:initial}).mockResolvedValueOnce({data:refreshed}).mockResolvedValueOnce({data:refreshed})
     serviceMock.saveGuidedReviewDecision.mockRejectedValueOnce({response:{status:409}}).mockResolvedValueOnce({data:{reviewId:'review-1',revision:8,replayed:false}})
     const wrapper=mount(GuidedTabularImportReview,{props:{closing,file:new File(['synthetic'],'synthetic.xlsx'),profileId:'profile-1',sensitiveAccessConfirmed:true,participants:[{id:'participant-1',participantKey:'ANA',displayName:'Ana Demo',active:true}]},global:{plugins:[vuetify]}})
     await (wrapper.vm as any).openReview();await flush()
 
     await (wrapper.vm as any).linkParticipant('P-1','participant-1');await flush()
     expect(serviceMock.saveGuidedReviewDecision).toHaveBeenCalledTimes(1)
-    expect(serviceMock.startGuidedImportReview).toHaveBeenCalledTimes(2)
+    expect(serviceMock.startGuidedImportReview).toHaveBeenCalledTimes(3)
     expect(wrapper.text()).toContain('A revisão foi atualizada. Repita somente a decisão')
 
     await (wrapper.vm as any).linkParticipant('P-1','participant-1');await flush()
