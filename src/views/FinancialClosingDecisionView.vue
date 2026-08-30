@@ -27,8 +27,8 @@
         <section class="metrics" aria-label="Valores da decisão">
           <article class="cb-card"><span>Produtividade Líquida</span><strong>{{ money(summary.netProductivityAmount) }}</strong></article>
           <article class="cb-card primary"><span>Valor a Receber</span><strong>{{ money(valueReceivable) }}</strong></article>
-          <article class="cb-card"><span>Reservas TM e TI</span><strong>{{ money(fixedReserves) }}</strong></article>
-          <article class="cb-card"><span>Reserva adicional</span><strong>{{ money(additionalReserve) }}</strong></article>
+          <article v-if="fixedReserves > 0" class="cb-card"><span>Reservas TM e TI</span><strong>{{ money(fixedReserves) }}</strong></article>
+          <article v-if="additionalReserve !== 0" class="cb-card"><span>Reserva adicional</span><strong>{{ money(additionalReserve) }}</strong></article>
         </section>
 
         <section v-if="visibleBlockers.length" class="cb-card blockers" aria-labelledby="decision-blockers-title">
