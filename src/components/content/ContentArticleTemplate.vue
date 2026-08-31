@@ -18,6 +18,16 @@
             <span>{{ entry.stage }}</span>
             <span>{{ entry.audience }}</span>
           </div>
+
+          <a
+            v-if="entry.downloadUrl"
+            class="content-template__download"
+            :href="entry.downloadUrl"
+            download
+          >
+            <v-icon size="18">mdi-download</v-icon>
+            {{ entry.downloadLabel || t('contentExperience.common.download') }}
+          </a>
         </div>
 
         <v-card class="content-template__prompt-card" rounded="xl" elevation="0">
@@ -260,6 +270,25 @@ function goToCta() {
   border-radius: 999px;
   background: #ffffff;
   border: 1px solid rgba(15, 23, 42, 0.12);
+}
+
+.content-template__download {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  margin-top: 18px;
+  padding: 11px 15px;
+  border-radius: 12px;
+  color: #9f4918;
+  font-weight: 700;
+  text-decoration: none;
+  background: #fff;
+  border: 1px solid rgba(182, 85, 31, 0.28);
+}
+
+.content-template__download:hover {
+  background: rgba(182, 85, 31, 0.08);
 }
 
 .content-template__prompt-card,

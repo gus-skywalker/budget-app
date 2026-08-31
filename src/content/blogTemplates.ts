@@ -22,6 +22,8 @@ export type BlogTemplateEntry = {
   audience: string
   ctaLabel: string
   ctaPath: string
+  downloadUrl?: string
+  downloadLabel?: string
   videoSrc?: string
   videoPoster?: string
   heroPrompt: string
@@ -305,6 +307,114 @@ const blogTemplateEntriesByLocale: Record<SupportedLocale, BlogTemplateEntry[]> 
           title: '3. Como sair da conversa com uma decisão concreta',
           prompt:
             'Uma decisão boa termina com três coisas registradas: o caminho escolhido, o motivo e quando ele será revisado. Isso transforma a conversa em alinhamento, não em memória seletiva.'
+        }
+      ]
+    },
+    {
+      slug: 'guia-completo-apuracao-de-resultados',
+      kind: 'guide',
+      category: 'Apuração de resultados',
+      title: 'Guia completo: da planilha à decisão de apuração',
+      excerpt:
+        'Um passo a passo ilustrado para transformar fontes em uma apuração auditável, calcular com regras flexíveis e preparar decisões.',
+      readTime: '10 min',
+      stage: 'Operação',
+      audience: 'Gestores e administradores que organizam repasses, receitas e resultados periódicos',
+      ctaLabel: 'Abrir apuração de resultados',
+      ctaPath: '/planning/financial-closings',
+      downloadUrl: '/guides/guia-apuracao-resultados-cobudget.pdf',
+      downloadLabel: 'Baixar manual em PDF',
+      heroPrompt:
+        'A apuração organiza os dados de origem, as regras e as decisões em uma jornada única. Você revisa o que entra, calcula somente com regras explícitas e mantém rastreabilidade antes de autorizar valores.',
+      summaryPrompt:
+        'Comece pela competência, envie as planilhas que representam fontes reais e trate cada exceção com uma decisão explícita. A publicação não cria pagamento: ela apenas torna dados revisados disponíveis para o cálculo.',
+      takeaways: [
+        'Uma competência representa o período que você quer apurar',
+        'Uma fonte é uma origem de valores, normalmente uma aba ou arquivo configurado',
+        'Regras, cobertura e decisões podem ser revisadas antes da autorização'
+      ],
+      sections: [
+        {
+          title: '1. Crie ou abra a competência do mês',
+          prompt:
+            'Abra Planejamento > Apuração de resultados, escolha o mês e crie ou abra a competência. Quando a competência DEFAULT daquele mês já existe, o CoBudget a reabre em vez de duplicar dados.',
+          bullets: [
+            'Use uma nova competência para outro período',
+            'Use a mesma competência para corrigir ou complementar dados antes da decisão final',
+            'A versão registra revisões sem misturar períodos diferentes'
+          ],
+          media: [
+            { src: '/blog-assets/financial-closing/competencia.svg', alt: 'Ilustração da escolha de competência na Apuração de resultados', caption: 'A competência identifica o mês e o escopo da apuração.' }
+          ]
+        },
+        {
+          title: '2. Envie o workbook e configure as fontes',
+          prompt:
+            'Envie o Excel e escolha, aba por aba, o que representa uma fonte financeira. Uma aba de resumo, consolidação ou apoio não entra automaticamente: você pode ignorá-la ou configurá-la como fonte quando ela representar valores reais.',
+          bullets: [
+            'Dê nome e chave estáveis a cada fonte',
+            'Escolha ou crie o perfil que interpreta suas colunas',
+            'Prepare lote adicional quando houver novos dados, sem duplicar itens sobrepostos'
+          ],
+          media: [
+            { src: '/blog-assets/financial-closing/revisao-fontes.svg', alt: 'Ilustração da revisão assistida de fontes e exceções', caption: 'O sistema só pede intervenção nas exceções que precisam de decisão humana.' }
+          ]
+        },
+        {
+          title: '3. Revise participantes, repetições e linhas inválidas',
+          prompt:
+            'Antes da publicação, associe participantes, confirme multiplicidades legítimas e trate linhas inválidas. O CoBudget não adivinha pessoas nem descarta valores silenciosamente. Uma exclusão exige justificativa e fica auditada.',
+          bullets: [
+            'Repetições legítimas podem ser preservadas',
+            'Linhas incorretas podem ser corrigidas ou excluídas com justificativa',
+            'Nenhum dado entra no cálculo antes da confirmação do lote'
+          ]
+        },
+        {
+          title: '4. Prepare e publique os dados de origem',
+          prompt:
+            'Confira fontes, itens, adições, reversões e exclusões; depois, confirme a publicação. A publicação é atômica e cria a base canônica da apuração. Ela não calcula, não autoriza e não transfere dinheiro.',
+          bullets: [
+            'Use Ver publicação para conferir o que entrou',
+            'A fonte publicada permanece rastreável',
+            'Se precisar complementar antes da decisão, prepare um novo lote compatível'
+          ]
+        },
+        {
+          title: '5. Configure apenas as regras que se aplicam ao negócio',
+          prompt:
+            'Deduções, impostos, reservas, pontuação e equivalências monetárias são opcionais e explícitos. Sem regra criada, não há taxa implícita. Regras por fonte incidem na receita da fonte; regras posteriores destinam a Produtividade Líquida.',
+          bullets: [
+            'Deduções de fonte são aplicadas depois das reversões',
+            'TM, TI e outras reservas só aparecem quando configuradas',
+            'Alterar uma regra cria nova revisão e torna o cálculo anterior obsoleto'
+          ],
+          media: [
+            { src: '/blog-assets/financial-closing/regras-calculo.svg', alt: 'Ilustração de regras opcionais e prévia de cálculo', caption: 'O cálculo usa somente as regras configuradas e revisadas por você.' }
+          ]
+        },
+        {
+          title: '6. Calcule, confira a memória e confirme a cobertura',
+          prompt:
+            'Calcule o resultado e confira a memória agregada por fonte e participante. A cobertura confirma que as entradas publicadas foram conferidas. Se algo estiver errado, volte às fontes ou regras antes de enviar uma proposta.',
+          bullets: [
+            'Confira valor bruto, reversões, deduções e Produtividade Líquida',
+            'A memória detalhada segue as permissões de acesso sensível',
+            'O cálculo pode ser refeito quando uma revisão válida o exigir'
+          ]
+        },
+        {
+          title: '7. Prepare a decisão de Produtividade e trate a Margem separadamente',
+          prompt:
+            'Crie uma proposta apenas quando os valores estiverem corretos. Enquanto estiver em rascunho, a proposta pode ser descartada para revisar dados e regras. A decisão de Margem continua independente da Produtividade.',
+          bullets: [
+            'Rascunho não emite obrigação nem transfere dinheiro',
+            'Revise participantes, valores e vencimentos antes de enviar',
+            'Envie para autorização somente quando a proposta estiver pronta'
+          ],
+          media: [
+            { src: '/blog-assets/financial-closing/decisao.svg', alt: 'Ilustração de uma proposta de produtividade em rascunho', caption: 'A proposta permanece em rascunho até você enviá-la para autorização.' }
+          ]
         }
       ]
     },

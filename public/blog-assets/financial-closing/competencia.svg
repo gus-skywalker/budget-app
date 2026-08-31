@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675" role="img" aria-labelledby="title desc">
+  <title id="title">Escolha da competência na Apuração de resultados</title><desc id="desc">Ilustração da interface do CoBudget mostrando uma competência mensal.</desc>
+  <rect width="1200" height="675" fill="#f8f3eb"/><rect x="54" y="42" width="1092" height="591" rx="28" fill="#fff" stroke="#e9d6c4" stroke-width="3"/>
+  <text x="104" y="120" font-family="Arial, sans-serif" font-size="25" font-weight="700" fill="#667085">APURAÇÃO DE RESULTADOS</text><text x="104" y="178" font-family="Arial, sans-serif" font-size="46" font-weight="700" fill="#132238">Crie ou abra uma competência</text>
+  <text x="104" y="225" font-family="Arial, sans-serif" font-size="24" fill="#667085">A competência organiza a apuração de um mês e evita duplicar dados.</text>
+  <rect x="104" y="280" width="425" height="190" rx="18" fill="#f5f7fa"/><text x="136" y="330" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#667085">COMPETÊNCIA</text><text x="136" y="398" font-family="Arial, sans-serif" font-size="54" font-weight="700" fill="#132238">08/2026</text>
+  <rect x="570" y="280" width="220" height="190" rx="18" fill="#f5f7fa"/><text x="602" y="330" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#667085">ESCOPO</text><text x="602" y="398" font-family="Arial, sans-serif" font-size="35" font-weight="700" fill="#132238">DEFAULT</text>
+  <rect x="833" y="326" width="235" height="82" rx="14" fill="#bd5b20"/><text x="871" y="377" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#fff">CRIAR OU ABRIR</text>
+  <circle cx="105" cy="546" r="18" fill="#1f8279"/><text x="139" y="555" font-family="Arial, sans-serif" font-size="23" fill="#334155">Se o mês já existe, você abre a competência existente.</text>
+</svg>
