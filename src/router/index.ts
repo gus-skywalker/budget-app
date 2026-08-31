@@ -14,6 +14,11 @@ import AccountsView from '@/views/AccountsView.vue'
 import CategoriesView from '@/views/CategoriesView.vue'
 import CashflowView from '@/views/CashflowView.vue'
 import PlanningBudgetView from '@/views/PlanningBudgetView.vue'
+import FinancialClosingPanelView from '@/views/FinancialClosingPanelView.vue'
+import FinancialClosingImportWizardView from '@/views/FinancialClosingImportWizardView.vue'
+import FinancialClosingRulesView from '@/views/FinancialClosingRulesView.vue'
+import FinancialClosingResultView from '@/views/FinancialClosingResultView.vue'
+import FinancialClosingDecisionView from '@/views/FinancialClosingDecisionView.vue'
 import ScenariosHubView from '@/views/ScenariosHubView.vue'
 import ScenarioBuilderView from '@/views/ScenarioBuilderView.vue'
 import ScenarioResultView from '@/views/ScenarioResultView.vue'
@@ -91,6 +96,64 @@ const router = createRouter({
       name: 'planning-budget',
       component: PlanningBudgetView,
       meta: { requiresAuth: true, requiresWorkspace: true }
+    },
+    {
+      path: '/planning/financial-closings',
+      name: 'planning-financial-closings',
+      component: FinancialClosingPanelView,
+      meta: { requiresAuth: true, requiresWorkspace: true }
+    },
+    {
+      path: '/planning/financial-closings/legacy',
+      name: 'planning-financial-closings-legacy',
+      redirect: to => ({ name: 'planning-financial-closings', query: to.query })
+    },
+    {
+      path: '/financial-closings/:closingId/imports/:reviewId',
+      name: 'closing-import-wizard',
+      component: FinancialClosingImportWizardView,
+      meta: { requiresAuth: true, requiresWorkspace: true }
+    },
+    {
+      path: '/financial-closings/:closingId/imports/:reviewId/history',
+      name: 'closing-publication-history',
+      component: () => import('@/views/FinancialClosingPublicationHistoryView.vue'),
+      meta: { requiresAuth: true, requiresWorkspace: true }
+    },
+    {
+      path: '/financial-closings/:closingId/rules',
+      name: 'closing-rules',
+      component: FinancialClosingRulesView,
+      meta: { requiresAuth: true, requiresWorkspace: true }
+    },
+    {
+      path: '/financial-closings/:closingId/results',
+      name: 'closing-result',
+      component: FinancialClosingResultView,
+      meta: { requiresAuth: true, requiresWorkspace: true }
+    },
+    {
+      path: '/financial-closings/:closingId/decisions',
+      name: 'closing-decision',
+      component: FinancialClosingDecisionView,
+      meta: { requiresAuth: true, requiresWorkspace: true }
+    },
+    // Compatibility redirects only. New navigation must use the English routes above.
+    {
+      path: '/apuracoes/:closingId/importacoes/:reviewId',
+      redirect: to => ({ name: 'closing-import-wizard', params: { ...to.params, reviewId: to.params.reviewId === 'nova' ? 'new' : to.params.reviewId }, query: to.query, hash: to.hash })
+    },
+    {
+      path: '/apuracoes/:closingId/regras',
+      redirect: to => ({ name: 'closing-rules', params: to.params, query: to.query, hash: to.hash })
+    },
+    {
+      path: '/apuracoes/:closingId/resultado',
+      redirect: to => ({ name: 'closing-result', params: to.params, query: to.query, hash: to.hash })
+    },
+    {
+      path: '/apuracoes/:closingId/decisao',
+      redirect: to => ({ name: 'closing-decision', params: to.params, query: to.query, hash: to.hash })
     },
     {
       path: '/planning/scenarios',

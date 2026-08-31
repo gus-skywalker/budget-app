@@ -190,6 +190,13 @@ const mainNavSections = computed<NavSection[]>(() => [
         disabled: false
       },
       {
+        key: 'planning-financial-closings',
+        title: t('sidebar.planning_financial_closings'),
+        icon: 'mdi-table-account',
+        to: { name: 'planning-financial-closings' },
+        disabled: false
+      },
+      {
         key: 'planning-scenarios',
         title: t('sidebar.planning_scenarios'),
         icon: 'mdi-layers-triple-outline',

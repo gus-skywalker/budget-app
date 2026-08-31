@@ -35,6 +35,90 @@ type SupportedLocale = 'pt' | 'en'
 const blogTemplateEntriesByLocale: Record<SupportedLocale, BlogTemplateEntry[]> = {
   pt: [
     {
+      slug: 'como-importar-planilha-na-apuracao-de-resultados',
+      kind: 'guide',
+      category: 'Apuração de resultados',
+      title: 'Como importar uma planilha na Apuração de resultados',
+      excerpt:
+        'Um roteiro seguro para transformar uma aba-fonte em itens normalizados, revisar exceções e recalcular a competência.',
+      readTime: '7 min',
+      stage: 'Operação',
+      audience: 'Administradores que preparam o fechamento mensal a partir de fontes tabulares',
+      ctaLabel: 'Abrir apuração de resultados',
+      ctaPath: '/planning/financial-closings',
+      heroPrompt:
+        'A importação assistida reduz trabalho manual sem adivinhar identidade, origem ou regra financeira. Você configura a fonte e os participantes uma vez, reutiliza o perfil e confirma apenas o que foi validado.',
+      summaryPrompt:
+        'Use um arquivo CSV ou XLSX com uma única aba-fonte por upload. Antes de começar, separe abas de consolidação: elas servem para conferência externa e não devem ser enviadas como fonte. O arquivo bruto é usado na solicitação; a confirmação grava itens normalizados e proveniência protegida.',
+      takeaways: [
+        'Cada competência usa fontes e participantes canônicos próprios',
+        'O perfil reutiliza a sourceKey estável, nunca o ID interno da versão',
+        'Linhas desconhecidas bloqueiam a confirmação até receberem um mapa explícito'
+      ],
+      sections: [
+        {
+          title: '1. Inicie a competência e configure a base',
+          prompt:
+            'Abra Planejamento > Apuração de resultados e inicie a competência desejada. O fluxo cria o escopo DEFAULT em BRL. Depois, adicione cada fonte que será importada e os participantes que podem receber itens dessa competência.',
+          bullets: [
+            'Use uma chave de fonte estável, por exemplo BP_PAULISTA',
+            'Use uma chave de participante estável, por exemplo ANA_SILVA',
+            'Cadastre apenas fontes e participantes que pertencem à competência atual'
+          ]
+        },
+        {
+          title: '2. Crie ou escolha um perfil de importação',
+          prompt:
+            'No bloco Importar planilha, abra o mapeamento e informe os nomes das colunas do arquivo: chave do item, valor, data, referência externa e, quando existir, o participante como aparece na planilha. Salve o perfil com a sourceKey da fonte. Na próxima competência, ele só poderá ser usado quando essa mesma chave estiver configurada.',
+          bullets: [
+            'Um perfil guarda a estrutura da fonte e os mapas explícitos de participante',
+            'A sourceKey BP_PAULISTA é resolvida para a fonte da versão corrente',
+            'Não copie IDs internos do CoBudget para a planilha'
+          ]
+        },
+        {
+          title: '3. Envie uma aba-fonte e valide a prévia',
+          prompt:
+            'Envie um CSV ou XLSX de uma única aba-fonte e valide antes de confirmar. A prévia informa quantas linhas foram aceitas, ignoradas e marcadas como exceção, além dos totais de adições e reversões. Linhas vazias, totais, subtotais e fórmulas configuradas para ignorar não viram itens financeiros.',
+          bullets: [
+            'Valor negativo configurado pelo perfil vira REVERSAL com valor absoluto',
+            'Confira os totais antes de confirmar o lote',
+            'Uma aba de consolidação não substitui a validação da aba-fonte'
+          ]
+        },
+        {
+          title: '4. Resolva participantes desconhecidos sem dedução automática',
+          prompt:
+            'Quando um executor aparece no arquivo sem mapa explícito, a prévia mostra a exceção e a confirmação fica bloqueada. Escolha o participante canônico correto, adicione o mapeamento ao perfil, salve a nova versão e valide novamente. O sistema não tenta adivinhar pessoas por nome parecido.',
+          bullets: [
+            'Mapeie cada nome externo ao participante canônico correspondente',
+            'Revise a nova versão do perfil antes de confirmar',
+            'Se a pessoa ainda não existe, cadastre-a primeiro na competência'
+          ]
+        },
+        {
+          title: '5. Confirme, recalcule e confira a linha do tempo',
+          prompt:
+            'Com a validação válida, confirme o lote normalizado e recalcule a apuração. A confirmação invalida qualquer cálculo anterior, e o recálculo atualiza a matriz, a memória de cálculo e a central operacional. Reenviar o mesmo arquivo com a mesma chave idempotente reutiliza o resultado original, sem duplicar itens.',
+          bullets: [
+            'Confira a Produtividade Líquida e os totais por fonte',
+            'Use a linha do tempo para ver importação confirmada e cálculo',
+            'A cobertura de conciliação continua explícita: importar não é conciliar entrada bancária'
+          ]
+        },
+        {
+          title: '6. O que este fluxo não faz',
+          prompt:
+            'A importação assistida não interpreta automaticamente um Excel com várias abas, não cria participantes por aproximação e não reconcilia uma consolidação externa. Use cada aba-fonte como um upload próprio e mantenha a consolidação externa como material de conferência até que as diferenças sejam tratadas no processo apropriado.',
+          bullets: [
+            'Sem interpretação automática de regras específicas da planilha',
+            'Sem transferência bancária ou pagamento durante a importação',
+            'Sem ocultar diferenças de reconciliação'
+          ]
+        }
+      ]
+    },
+    {
       slug: 'como-conectar-open-finance-e-verificar-transacoes',
       kind: 'guide',
       category: 'Open Finance',
@@ -271,6 +355,90 @@ const blogTemplateEntriesByLocale: Record<SupportedLocale, BlogTemplateEntry[]> 
     }
   ],
   en: [
+    {
+      slug: 'como-importar-planilha-na-apuracao-de-resultados',
+      kind: 'guide',
+      category: 'Financial closing',
+      title: 'How to import a spreadsheet into Financial Closing',
+      excerpt:
+        'A safe workflow for turning one source worksheet into normalized items, reviewing exceptions, and recalculating the period.',
+      readTime: '7 min',
+      stage: 'Operations',
+      audience: 'Administrators who prepare monthly closing from tabular sources',
+      ctaLabel: 'Open financial closing',
+      ctaPath: '/planning/financial-closings',
+      heroPrompt:
+        'Assisted import reduces manual work without guessing identity, source, or financial rules. Configure sources and participants once, reuse the profile, and confirm only what has been validated.',
+      summaryPrompt:
+        'Use a CSV or XLSX file with one source worksheet per upload. Keep consolidation worksheets separate: they are external review material and must not be uploaded as a source. The raw file is used for the request; confirmation stores normalized items and protected provenance.',
+      takeaways: [
+        'Each period has its own canonical sources and participants',
+        'A profile reuses a stable sourceKey, never a version internal ID',
+        'Unknown rows block confirmation until they receive an explicit mapping'
+      ],
+      sections: [
+        {
+          title: '1. Start the period and configure its foundation',
+          prompt:
+            'Open Planning > Financial Closing and start the period you need. The flow creates the DEFAULT scope in BRL. Then add each source you will import and the participants that can receive items in that period.',
+          bullets: [
+            'Use a stable source key, such as BP_PAULISTA',
+            'Use a stable participant key, such as ANA_SILVA',
+            'Register only sources and participants that belong to the current period'
+          ]
+        },
+        {
+          title: '2. Create or select an import profile',
+          prompt:
+            'In Import spreadsheet, open the mapping and enter the file column names: item key, amount, date, external reference, and, when present, the participant label from the spreadsheet. Save the profile using the source sourceKey. In another period, it can be used only if that same key is configured there.',
+          bullets: [
+            'A profile stores source structure and explicit participant mappings',
+            'BP_PAULISTA is resolved to the source in the current closing version',
+            'Do not copy CoBudget internal IDs into the spreadsheet'
+          ]
+        },
+        {
+          title: '3. Upload one source worksheet and validate the preview',
+          prompt:
+            'Upload a CSV or one-sheet XLSX source and validate before confirmation. The preview reports accepted, ignored, and exception rows, as well as addition and reversal totals. Blank rows, totals, subtotals, and configured formula rows do not become financial items.',
+          bullets: [
+            'A negative amount configured by the profile becomes a REVERSAL with absolute value',
+            'Review totals before confirming the batch',
+            'A consolidation worksheet does not replace source validation'
+          ]
+        },
+        {
+          title: '4. Resolve unknown participants without automatic inference',
+          prompt:
+            'When an executor in the file has no explicit mapping, the preview displays an exception and confirmation remains blocked. Select the right canonical participant, add the mapping to the profile, save the new version, and validate again. The system never guesses people from similar names.',
+          bullets: [
+            'Map every external label to its canonical participant',
+            'Review the new profile version before confirmation',
+            'If the person does not exist yet, add them to the period first'
+          ]
+        },
+        {
+          title: '5. Confirm, recalculate, and review the timeline',
+          prompt:
+            'Once validation is valid, confirm the normalized batch and recalculate. Confirmation invalidates the previous calculation, while recalculation updates the matrix, calculation memory, and operations center. Re-uploading the same file with the same idempotency key reuses the original result without duplicating items.',
+          bullets: [
+            'Review Net Productivity and source totals',
+            'Use the timeline to see confirmed import and calculation',
+            'Reconciliation coverage stays explicit: importing is not bank reconciliation'
+          ]
+        },
+        {
+          title: '6. What this workflow does not do',
+          prompt:
+            'Assisted import does not automatically interpret a multi-sheet workbook, create participants from approximate names, or reconcile an external consolidation. Upload each source worksheet separately and keep external consolidation as review material until differences are handled in the proper process.',
+          bullets: [
+            'No automatic interpretation of spreadsheet-specific rules',
+            'No bank transfer or payment during import',
+            'No hidden reconciliation differences'
+          ]
+        }
+      ]
+    },
     {
       slug: 'como-conectar-open-finance-e-verificar-transacoes',
       kind: 'guide',

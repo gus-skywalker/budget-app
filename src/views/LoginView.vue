@@ -446,18 +446,23 @@ const mockLogin = (scenario) => {
       workspaces = [
         {
           workspaceId: 'workspace-1',
-          workspaceName: 'Tech Solutions LTDA',
-          role: 'ROLE_ADMIN'
+          workspaceName: 'Apuração · VIEWER',
+          role: 'ROLE_VIEWER'
         },
         {
           workspaceId: 'workspace-2',
-          workspaceName: 'Startup Inovadora',
-          role: 'ROLE_CLIENT'
+          workspaceName: 'Apuração · MEMBER',
+          role: 'ROLE_MEMBER'
         },
         {
           workspaceId: 'workspace-3',
-          workspaceName: 'Consultoria Estratégica',
-          role: 'ROLE_USER'
+          workspaceName: 'Apuração · ADMIN sem acesso sensível',
+          role: 'ROLE_ADMIN'
+        },
+        {
+          workspaceId: 'workspace-4',
+          workspaceName: 'Apuração · ADMIN com acesso sensível',
+          role: 'ROLE_ADMIN'
         }
       ]
       break
