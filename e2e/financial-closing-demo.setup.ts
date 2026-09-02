@@ -8,9 +8,9 @@ import { pathToFileURL } from 'node:url'
 const runtimeDir = join(process.cwd(), 'test-results/financial-closing/runtime')
 // The E2E topology deliberately matches the documented local endpoints.
 // The browser receives only the BFF URL; port 8081 is server-to-server.
-const appPort = 5173
-const apiPort = 8080
-const closingPort = 8081
+const appPort = Number(process.env.CLOSING_E2E_APP_PORT ?? 5173)
+const apiPort = Number(process.env.CLOSING_E2E_API_PORT ?? 8080)
+const closingPort = Number(process.env.CLOSING_E2E_SERVICE_PORT ?? 8081)
 let api: ChildProcess | undefined
 let closing: ChildProcess | undefined
 let app: ChildProcess | undefined

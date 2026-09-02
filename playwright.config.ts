@@ -7,7 +7,7 @@ export default defineConfig({
   globalSetup: './e2e/financial-closing-demo.setup.ts',
   outputDir: 'test-results/financial-closing',
   use: {
-    baseURL: 'http://127.0.0.1:5173',
+    baseURL: `http://127.0.0.1:${process.env.CLOSING_E2E_APP_PORT ?? 5173}`,
     viewport: { width: 1440, height: 960 },
     video: 'on',
     trace: 'retain-on-failure',

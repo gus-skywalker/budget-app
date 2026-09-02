@@ -87,7 +87,7 @@ async function completeJourney(page: Page, closing: Closing, participantReview =
   await page.locator('input[type="file"]').setInputFiles(fixture)
   await page.getByRole('button', { name: 'Identificar fontes' }).click()
   await expect(page).toHaveURL(new RegExp(`/financial-closings/${closing.id}/imports/[0-9a-f-]+$`))
-  await expect(page.getByRole('heading', { name: 'Escolha as fontes que entram neste lote' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /Escolha as fontes que entram neste lote|Confirmar substituição de/ })).toBeVisible()
   await expect(page.getByText('V31_SOURCE', { exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Revisar fontes deste lote' }).click()
   if (participantReview) {
@@ -107,7 +107,8 @@ async function completeJourney(page: Page, closing: Closing, participantReview =
   await expect(page.getByRole('heading', { name: 'Lote adicionado à base editável' })).toBeVisible()
   await page.getByRole('button', { name: 'Voltar ao painel' }).click()
   await expect(page.getByText('Base editável', { exact: true })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Visualizar conteúdo' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Ver itens' })).toBeVisible()
+  await expect(page.getByText('Ações sobre todas as fontes deste arquivo')).toBeVisible()
   await expect(page.getByText('Impacto líquido R$ 200,00', { exact: true })).toBeVisible()
 }
 
@@ -116,7 +117,7 @@ async function materializeAdditionalLot(page: Page, fixturePath: string, startFr
   await page.getByLabel('Entendo que acessarei dados protegidos nesta leitura').check()
   await page.locator('input[type="file"]').setInputFiles(fixturePath)
   await page.getByRole('button', { name: 'Identificar fontes' }).click()
-  await expect(page.getByRole('heading', { name: 'Escolha as fontes que entram neste lote' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /Escolha as fontes que entram neste lote|Confirmar substituição de/ })).toBeVisible()
   const includeExisting = page.getByRole('button', { name: 'Incluir novos itens neste lote' })
   if (await includeExisting.isVisible()) await includeExisting.click()
   await page.getByRole('button', { name: 'Revisar fontes deste lote' }).click()
@@ -237,7 +238,7 @@ test('manages multiple editable lots, invalidates stale calculation and separate
   await page.getByRole('button', { name: 'Voltar para a competência' }).click()
   const secondLotCard = page.locator('.lot').filter({ hasText: 'Impacto líquido R$ 50,00' })
   page.once('dialog', dialog => dialog.accept())
-  await secondLotCard.getByRole('button', { name: 'Retirar da base' }).click()
+  await secondLotCard.getByRole('button', { name: 'Retirar esta fonte' }).click()
   await expect(page.getByText(/A base foi alterada após o cálculo da revisão/)).toBeVisible()
   lots = await apiJson<MaterializedLot[]>(request, state, 'get', `/financial-closings/${closing.id}/versions/${version}/lots`)
   expect(lots.filter(lot => lot.active)).toHaveLength(1)
@@ -245,7 +246,7 @@ test('manages multiple editable lots, invalidates stale calculation and separate
 
   const firstLotCard = page.locator('.lot').filter({ hasText: 'Impacto líquido R$ 200,00' })
   page.once('dialog', dialog => dialog.accept())
-  await firstLotCard.getByRole('button', { name: 'Substituir fonte' }).click()
+  await firstLotCard.getByRole('button', { name: 'Substituir esta fonte' }).click()
   await expect(page).toHaveURL(new RegExp(`/financial-closings/${closing.id}/imports/new`))
   await materializeAdditionalLot(page, secondLotFixture, false)
   lots = await apiJson<MaterializedLot[]>(request, state, 'get', `/financial-closings/${closing.id}/versions/${version}/lots`)
