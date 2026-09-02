@@ -5,9 +5,9 @@ export default defineConfig({
   workers: 1,
   timeout: 120_000,
   globalSetup: './e2e/financial-closing-demo.setup.ts',
-  outputDir: 'test-results/financial-closing-demo',
+  outputDir: 'test-results/financial-closing',
   use: {
-    baseURL: 'http://127.0.0.1:5176',
+    baseURL: 'http://127.0.0.1:5173',
     viewport: { width: 1440, height: 960 },
     video: 'on',
     trace: 'retain-on-failure',
@@ -15,5 +15,9 @@ export default defineConfig({
     actionTimeout: 10_000,
   },
   projects: [{ name: 'chromium-demo', use: { browserName: 'chromium' } }],
-  reporter: [['list']],
+  reporter: [
+    ['list'],
+    ['html', { outputFolder: 'playwright-report/financial-closing', open: 'never' }],
+    ['junit', { outputFile: 'test-results/financial-closing/junit.xml' }],
+  ],
 })

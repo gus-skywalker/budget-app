@@ -1,0 +1,23 @@
+{
+  "rounding": {
+    "mode": "HALF_UP",
+    "scale": 2,
+    "comparison": "exact integer cents after rounding each canonical monetary item"
+  },
+  "scenarios": {
+    "closing-v31-happy.xlsx": {
+      "sheet": "V31_SOURCE",
+      "itemCount": 2,
+      "additionTotalCents": 20000,
+      "reversalTotalCents": 0,
+      "netImpactCents": 20000
+    },
+    "closing-v31-second-lot.xlsx": {
+      "sheet": "V31_SOURCE",
+      "itemCount": 2,
+      "additionTotalCents": 7500,
+      "reversalTotalCents": 2500,
+      "netImpactCents": 5000
+    }
+  }
+}

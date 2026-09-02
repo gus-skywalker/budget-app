@@ -1,0 +1,22 @@
+// Local E2E fallback only. It lets a machine with JDK 24 run a project that
+// targets Java 21, without changing the project's committed toolchain.
+allprojects {
+    afterEvaluate {
+        tasks.withType(JavaCompile).configureEach {
+            javaCompiler = javaToolchains.compilerFor {
+                languageVersion = JavaLanguageVersion.of(24)
+            }
+            options.release = 21
+        }
+        tasks.withType(Test).configureEach {
+            javaLauncher = javaToolchains.launcherFor {
+                languageVersion = JavaLanguageVersion.of(24)
+            }
+        }
+        tasks.withType(JavaExec).configureEach {
+            javaLauncher = javaToolchains.launcherFor {
+                languageVersion = JavaLanguageVersion.of(24)
+            }
+        }
+    }
+}

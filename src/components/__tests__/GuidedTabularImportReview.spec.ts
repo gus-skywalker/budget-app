@@ -110,6 +110,19 @@ describe('GuidedTabularImportReview',()=>{
     expect(wrapper.text()).toContain('Linha 5 excluída deste lote com auditoria')
   })
 
+  it('records one audited decision for every zero-value row in the source',async()=>{
+    const zeroPending={...structuredClone(review),participants:[],repetitions:[],pendingRows:[],zeroAmountGroup:{decisionKey:'ZERO-1',occurrenceCount:37,excluded:false},blockingReasons:['37 linha(s) com valor zero precisam ser confirmadas como fora deste lote.']}
+    const zeroExcluded={...structuredClone(zeroPending),zeroAmountGroup:{...zeroPending.zeroAmountGroup,excluded:true},readyForConfirmation:true,blockingReasons:[]}
+    serviceMock.startGuidedImportReview.mockResolvedValueOnce({data:zeroPending}).mockResolvedValueOnce({data:zeroPending}).mockResolvedValueOnce({data:zeroExcluded})
+    const wrapper=mount(GuidedTabularImportReview,{props:{closing,file:new File(['synthetic'],'synthetic.xlsx'),profileId:'profile-1',sensitiveAccessConfirmed:true,participants:[]},global:{plugins:[vuetify]}})
+    await (wrapper.vm as any).openReview();await flush()
+    expect(wrapper.text()).toContain('37 linha(s)')
+    ;(wrapper.vm as any).zeroAmountJustification='Linhas sem efeito financeiro revisadas'
+    await (wrapper.vm as any).excludeZeroAmountRows('ZERO-1');await flush()
+    expect(serviceMock.saveGuidedReviewDecision).toHaveBeenCalledWith(closing,'review-1',expect.objectContaining({decisionKey:'ZERO-1',action:'EXCLUDE_ZERO_AMOUNT_ROWS',reasonCode:'ZERO_AMOUNT_NO_FINANCIAL_EFFECT',justification:'Linhas sem efeito financeiro revisadas'}))
+    expect(wrapper.text()).toContain('Linhas de valor zero ignoradas neste lote')
+  })
+
   it('starts the review automatically when a selected file and profile are ready',async()=>{
     mount(GuidedTabularImportReview,{props:{closing,file:new File(['synthetic'],'synthetic.xlsx'),profileId:'profile-1',sensitiveAccessConfirmed:true,participants:[],autoStart:true},global:{plugins:[vuetify]}})
     await flush()

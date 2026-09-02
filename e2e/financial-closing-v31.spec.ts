@@ -7,9 +7,12 @@ type Closing = { id: string; currentVersion: { versionNumber: number } }
 type PayoutDecision = { id: string; status: string; revision: number; issuedObligationCount: number }
 type MarginDecision = { id: string; status: string; revision: number; issuedObligationCount: number; marginSnapshot: number }
 type OperationalObligation = { id: string; domain: string; originType: string; principalAmount: number }
+type MaterializedLot = { publicationId: string; reviewId: string; status: string; active: boolean; mutable: boolean; itemCount: number; additionTotal: number; reversalTotal: number; netImpact: number }
 
-const runtime = () => JSON.parse(readFileSync(join(process.cwd(), 'test-results/financial-closing-demo/runtime/state.json'), 'utf8')) as Runtime
+const runtime = () => JSON.parse(readFileSync(join(process.cwd(), 'test-results/financial-closing/runtime/state.json'), 'utf8')) as Runtime
 const fixture = join(process.cwd(), 'e2e/fixtures/closing-v31-happy.xlsx')
+const secondLotFixture = join(process.cwd(), 'e2e/fixtures/closing-v31-second-lot.xlsx')
+const expectedResults = JSON.parse(readFileSync(join(process.cwd(), 'e2e/fixtures/expected-results.json'), 'utf8')) as { scenarios: Record<string, { itemCount: number; additionTotalCents: number; reversalTotalCents: number; netImpactCents: number }> }
 
 function headers(state: Runtime) {
   return { Authorization: `Bearer ${state.accessToken}`, 'X-Workspace-Id': state.workspaceId }
@@ -77,16 +80,16 @@ async function completeJourney(page: Page, closing: Closing, participantReview =
   await page.goto(`/planning/financial-closings?closingId=${closing.id}`)
   await closeCookieNotice(page)
   await expect(page.getByRole('main', { name: 'Etapas do fechamento' })).toBeVisible()
-  for (const label of ['Dados de origem', 'Regras do cálculo', 'Resultado', 'Decisão']) await expect(page.getByText(label, { exact: true })).toBeVisible()
+  for (const label of ['Base editável', 'Regras do cálculo', 'Resultado calculado e revisão', 'Decisão']) await expect(page.getByText(label, { exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Importar workbook' }).click()
   await expect(page).toHaveURL(new RegExp(`/financial-closings/${closing.id}/imports/new$`))
   await page.getByLabel('Entendo que acessarei dados protegidos nesta leitura').check()
   await page.locator('input[type="file"]').setInputFiles(fixture)
   await page.getByRole('button', { name: 'Identificar fontes' }).click()
   await expect(page).toHaveURL(new RegExp(`/financial-closings/${closing.id}/imports/[0-9a-f-]+$`))
-  await expect(page.getByRole('heading', { name: 'Confira o que entra neste lote' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Escolha as fontes que entram neste lote' })).toBeVisible()
   await expect(page.getByText('V31_SOURCE', { exact: true })).toBeVisible()
-  await page.getByRole('button', { name: 'Resolver fontes selecionadas' }).click()
+  await page.getByRole('button', { name: 'Revisar fontes deste lote' }).click()
   if (participantReview) {
     await page.getByLabel('Sim, esta coluna identifica o participante ou beneficiário da apuração').check()
     await page.getByRole('button', { name: 'Criar participante com este nome' }).click()
@@ -98,12 +101,49 @@ async function completeJourney(page: Page, closing: Closing, participantReview =
   await expect(page.getByRole('heading', { name: 'Fontes preparadas' })).toBeVisible()
   await expect(page.getByText('2', { exact: true }).first()).toBeVisible()
   await page.getByRole('button', { name: 'Conferir importação' }).click()
-  await expect(page.getByRole('heading', { name: 'Publicar lote' })).toBeVisible()
-  await page.getByLabel('Confirmo a publicação financeira deste lote').check()
-  await page.getByRole('button', { name: 'Confirmar lote' }).click()
-  await expect(page.getByRole('heading', { name: 'Lote publicado' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Materializar fontes' })).toBeVisible()
+  await page.getByLabel('Confirmo que estas fontes entram na revisão do cálculo').check()
+  await page.getByRole('button', { name: 'Materializar fontes' }).click()
+  await expect(page.getByRole('heading', { name: 'Lote adicionado à base editável' })).toBeVisible()
   await page.getByRole('button', { name: 'Voltar ao painel' }).click()
-  await expect(page.getByRole('heading', { name: 'Lote publicado' })).toBeVisible()
+  await expect(page.getByText('Base editável', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Visualizar conteúdo' })).toBeVisible()
+  await expect(page.getByText('Impacto líquido R$ 200,00', { exact: true })).toBeVisible()
+}
+
+async function materializeAdditionalLot(page: Page, fixturePath: string, startFromPanel = true) {
+  if (startFromPanel) await page.getByRole('button', { name: 'Preparar novo lote' }).click()
+  await page.getByLabel('Entendo que acessarei dados protegidos nesta leitura').check()
+  await page.locator('input[type="file"]').setInputFiles(fixturePath)
+  await page.getByRole('button', { name: 'Identificar fontes' }).click()
+  await expect(page.getByRole('heading', { name: 'Escolha as fontes que entram neste lote' })).toBeVisible()
+  const includeExisting = page.getByRole('button', { name: 'Incluir novos itens neste lote' })
+  if (await includeExisting.isVisible()) await includeExisting.click()
+  await page.getByRole('button', { name: 'Revisar fontes deste lote' }).click()
+  await expect(page.getByText('Fonte pronta para o lote', { exact: true }).first()).toBeVisible()
+  await page.getByRole('button', { name: 'Preparar lote completo' }).click()
+  await expect(page.getByRole('heading', { name: 'Fontes preparadas' })).toBeVisible()
+  await page.getByRole('button', { name: 'Conferir importação' }).click()
+  await expect(page.getByRole('heading', { name: 'Materializar fontes' })).toBeVisible()
+  await page.getByLabel('Confirmo que estas fontes entram na revisão do cálculo').check()
+  await page.getByRole('button', { name: 'Materializar fontes' }).click()
+  await expect(page.getByRole('heading', { name: 'Lote adicionado à base editável' })).toBeVisible()
+  await page.getByRole('button', { name: 'Voltar ao painel' }).click()
+}
+
+async function calculateWithoutPublishing(page: Page, closing: Closing) {
+  await page.getByRole('button', { name: /Revisar regras|Ver regras/ }).first().click()
+  await expect(page).toHaveURL(new RegExp(`/financial-closings/${closing.id}/rules$`))
+  const confirmRules = page.getByRole('button', { name: 'Confirmar regras desta fonte' })
+  if (await confirmRules.isVisible()) {
+    await confirmRules.click()
+    await page.getByLabel('Por que esta incidência está correta?').fill('Base sintética revisada antes do cálculo automatizado')
+    await page.getByRole('button', { name: 'Confirmar', exact: true }).click()
+  }
+  await page.getByRole('button', { name: 'Continuar para o resultado' }).click()
+  await expect(page.getByRole('heading', { name: 'Prévia pronta para calcular' })).toBeVisible()
+  await page.getByRole('button', { name: 'Calcular resultado' }).click()
+  await expect(page.getByRole('heading', { name: 'Cálculo atual' })).toBeVisible()
 }
 
 async function completeRulesAndCalculation(page: Page, closing: Closing) {
@@ -126,6 +166,10 @@ async function completeRulesAndCalculation(page: Page, closing: Closing) {
   await expect(page.getByRole('heading', { name: 'Cálculo atual' })).toBeVisible()
   await expect(page.getByText('Valor bruto das fontes', { exact: true })).toBeVisible()
   await expect(page.getByText('Produtividade Líquida', { exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Publicar cálculo revisado' })).toBeVisible()
+  await page.getByLabel('Confirmo a publicação financeira deste cálculo').check()
+  await page.getByRole('button', { name: 'Publicar financeiramente' }).click()
+  await expect(page.getByRole('button', { name: 'Continuar para decisão' })).toBeVisible()
 }
 
 async function completeRulesAndResult(page: Page, request: APIRequestContext, state: Runtime, closing: Closing) {
@@ -172,6 +216,57 @@ async function completeRulesAndResult(page: Page, request: APIRequestContext, st
 }
 
 test.describe.configure({ mode: 'serial' })
+
+test('manages multiple editable lots, invalidates stale calculation and separates final publication history', async ({ page, request }) => {
+  const state = runtime()
+  const closing = await prepareCompetence(request, state, 3)
+  await authenticate(page, state)
+  await completeJourney(page, closing)
+  await materializeAdditionalLot(page, secondLotFixture)
+
+  const version = closing.currentVersion.versionNumber
+  let lots = await apiJson<MaterializedLot[]>(request, state, 'get', `/financial-closings/${closing.id}/versions/${version}/lots`)
+  expect(lots.filter(lot => lot.active)).toHaveLength(2)
+  const first = expectedResults.scenarios['closing-v31-happy.xlsx']
+  const second = expectedResults.scenarios['closing-v31-second-lot.xlsx']
+  expect(lots.map(lot => Math.round(lot.additionTotal * 100)).sort((a,b)=>a-b)).toEqual([second.additionTotalCents, first.additionTotalCents].sort((a,b)=>a-b))
+  expect(lots.map(lot => Math.round(lot.reversalTotal * 100)).sort((a,b)=>a-b)).toEqual([second.reversalTotalCents, first.reversalTotalCents].sort((a,b)=>a-b))
+  await expect(page.locator('.lot')).toHaveCount(2)
+
+  await calculateWithoutPublishing(page, closing)
+  await page.getByRole('button', { name: 'Voltar para a competência' }).click()
+  const secondLotCard = page.locator('.lot').filter({ hasText: 'Impacto líquido R$ 50,00' })
+  page.once('dialog', dialog => dialog.accept())
+  await secondLotCard.getByRole('button', { name: 'Retirar da base' }).click()
+  await expect(page.getByText(/A base foi alterada após o cálculo da revisão/)).toBeVisible()
+  lots = await apiJson<MaterializedLot[]>(request, state, 'get', `/financial-closings/${closing.id}/versions/${version}/lots`)
+  expect(lots.filter(lot => lot.active)).toHaveLength(1)
+  expect(lots.filter(lot => lot.status === 'CANCELLED')).toHaveLength(1)
+
+  const firstLotCard = page.locator('.lot').filter({ hasText: 'Impacto líquido R$ 200,00' })
+  page.once('dialog', dialog => dialog.accept())
+  await firstLotCard.getByRole('button', { name: 'Substituir fonte' }).click()
+  await expect(page).toHaveURL(new RegExp(`/financial-closings/${closing.id}/imports/new`))
+  await materializeAdditionalLot(page, secondLotFixture, false)
+  lots = await apiJson<MaterializedLot[]>(request, state, 'get', `/financial-closings/${closing.id}/versions/${version}/lots`)
+  expect(lots.filter(lot => lot.active)).toHaveLength(1)
+  expect(lots.filter(lot => lot.status === 'CANCELLED')).toHaveLength(2)
+
+  await calculateWithoutPublishing(page, closing)
+  await expect(page.getByText('Reversões', { exact: true })).toBeVisible()
+  await expect(page.getByText('R$ 25,00', { exact: true }).first()).toBeVisible()
+  await page.getByLabel('Confirmo a publicação financeira deste cálculo').check()
+  await page.getByRole('button', { name: 'Publicar financeiramente' }).click()
+  await expect(page.getByRole('button', { name: 'Continuar para decisão' })).toBeVisible()
+  await page.getByRole('button', { name: 'Voltar para a competência' }).click()
+  await expect(page.getByText('Resultado publicado financeiramente', { exact: true })).toBeVisible()
+  await expect(page.getByText('Incluído em publicação financeira', { exact: false })).toBeVisible()
+  await expect(page.getByText('Retirado ou substituído', { exact: false }).first()).toBeVisible()
+
+  const operations = await apiJson<{ timeline: Array<{ type: string; status: string }> }>(request, state, 'get', `/financial-closings/${closing.id}/operations`)
+  expect(operations.timeline.some(event => event.type === 'SOURCE_LOT' && event.status === 'CANCELLED')).toBeTruthy()
+  expect(operations.timeline.some(event => event.type === 'FINANCIAL_PUBLICATION')).toBeTruthy()
+})
 
 test('V31 publishes the happy path from the panel on desktop', async ({ page, request }) => {
   const state = runtime()
@@ -264,15 +359,15 @@ test('V31 resumes a persisted inventoried review after returning to the panel', 
   await page.getByLabel('Entendo que acessarei dados protegidos nesta leitura').check()
   await page.locator('input[type="file"]').setInputFiles(fixture)
   await page.getByRole('button', { name: 'Identificar fontes' }).click()
-  await expect(page.getByRole('heading', { name: 'Confira o que entra neste lote' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Escolha as fontes que entram neste lote' })).toBeVisible()
   await page.getByRole('button', { name: 'Salvar e sair' }).click()
   await expect(page.getByText('Importação em andamento', { exact: true })).toBeVisible()
-  await page.getByRole('button', { name: 'Continuar importação' }).click()
+  await page.getByRole('button', { name: 'Continuar revisão do lote' }).click()
   await page.getByLabel('Entendo que acessarei dados protegidos desta importação').check()
   await page.getByRole('button', { name: 'Retomar revisão' }).click()
   await expect(page.getByRole('heading', { name: 'Selecione novamente o mesmo workbook' })).toBeVisible()
   await page.locator('input[type="file"]').setInputFiles(fixture)
-  await expect(page.getByRole('heading', { name: 'Confira o que entra neste lote' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Escolha as fontes que entram neste lote' })).toBeVisible()
 })
 
 test('redirects the retired Portuguese import URL to the canonical English route', async ({ page, request }) => {

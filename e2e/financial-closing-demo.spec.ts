@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
-const runtime = () => JSON.parse(readFileSync(join(process.cwd(), 'test-results/financial-closing-demo/runtime/state.json'), 'utf8')) as { workspaceId: string; workspaceName: string; accessToken: string }
+const runtime = () => JSON.parse(readFileSync(join(process.cwd(), 'test-results/financial-closing/runtime/state.json'), 'utf8')) as { workspaceId: string; workspaceName: string; accessToken: string }
 
 test('keeps the legacy operation isolated from the canonical guided journey', async ({ page }) => {
   const state = runtime()

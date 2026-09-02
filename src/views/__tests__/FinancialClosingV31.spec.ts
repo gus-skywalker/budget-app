@@ -10,9 +10,9 @@ const { serviceMock, routerPush, routerReplace, routeState, userStore } = vi.hoi
   routerPush: vi.fn(), routerReplace: vi.fn(), routeState: { params: {} as Record<string,string>, query: {} as Record<string,string> },
   userStore: { getTenantRole: 'ROLE_OWNER', getUser: { id: 'owner-1' } },
   serviceMock: {
-    list: vi.fn(), createOrGet: vi.fn(), latestWorkbookReview: vi.fn(), workbookReviewProgress: vi.fn(),
+    list: vi.fn(), createOrGet: vi.fn(), latestWorkbookReview: vi.fn(), materializedLots: vi.fn(), workbookReviewProgress: vi.fn(),
     workbookReview: vi.fn(), workbookReviewInventory: vi.fn(), initiateWorkbookReview: vi.fn(), confirmWorkbookSensitiveIntent: vi.fn(), workbookInventory: vi.fn(),
-    participants: vi.fn(), prepareWorkbookReview: vi.fn(), preflightWorkbookReview: vi.fn(), publishWorkbookReview: vi.fn(), abandonWorkbookReview: vi.fn(),
+    participants: vi.fn(), prepareWorkbookReview: vi.fn(), previewWorkbookSourceUpdate: vi.fn(), applyWorkbookSourceUpdate: vi.fn(), preflightWorkbookReview: vi.fn(), publishWorkbookReview: vi.fn(), cancelWorkbookMaterialization: vi.fn(), abandonWorkbookReview: vi.fn(),
     importReadiness: vi.fn(), deductionReadiness: vi.fn(), payoutDecisions: vi.fn(), grantSensitiveAccess: vi.fn(), importProfile: vi.fn(), upsertSource: vi.fn(), createImportProfile: vi.fn(), sources: vi.fn(), productivityDeductions: vi.fn(), upsertProductivityDeduction: vi.fn(), resolveDeductionSource: vi.fn(),
   },
 }))
@@ -26,17 +26,18 @@ const closing={id:'closing-1',workspaceId:'workspace-1',closingKey:'DEFAULT',per
 const materialized={id:'review-1',status:'DRAFT',revision:1,selectedSourceCount:1,preflightHmac:null,stagingExpiresAt:'2026-08-19T12:00:00Z',reviewExpiresAt:'2026-09-11T12:00:00Z',publicationId:null,sources:[{id:'source-review-1',guidedReviewSessionId:'guided-1',sourceKey:'KNOWN_SOURCE',status:'MATERIALIZED',revision:2,candidateCount:2,additionTotal:120,reversalTotal:20}]}
 const preflightReview={...materialized,status:'PREFLIGHT_READY',revision:2,preflightHmac:'opaque-preflight'}
 const publishedReview={...preflightReview,status:'PUBLISHED',revision:3,publicationId:'publication-1',sources:preflightReview.sources.map(source=>({...source,status:'PUBLISHED'}))}
+const activeLot={publicationId:'publication-1',reviewId:'review-1',status:'MATERIALIZED',active:true,mutable:true,itemCount:2,additionTotal:120,reversalTotal:20,netImpact:100,materializedAt:'2026-08-12T12:00:00Z',sources:[{sourceId:'source-1',sourceKey:'KNOWN_SOURCE',itemCount:2,additionTotal:120,reversalTotal:20}]}
 
 describe('Financial closing V31 journey',()=>{
   beforeEach(()=>{
-    vi.clearAllMocks();sessionStorage.clear();routeState.params={};routeState.query={};serviceMock.list.mockResolvedValue({data:[closing]});serviceMock.participants.mockResolvedValue({data:[]});serviceMock.sources.mockResolvedValue({data:[]});serviceMock.latestWorkbookReview.mockResolvedValue({status:204,data:undefined});serviceMock.importReadiness.mockResolvedValue({data:{sources:[],readyToCalculate:false,blockingSourceKeys:[]}});serviceMock.deductionReadiness.mockResolvedValue({data:{sources:[],readyToCalculate:false,blockingSourceKeys:[]}});serviceMock.productivityDeductions.mockResolvedValue({data:[]});serviceMock.payoutDecisions.mockResolvedValue({data:[]});serviceMock.grantSensitiveAccess.mockResolvedValue({data:{granted:true}});
+    vi.clearAllMocks();sessionStorage.clear();routeState.params={};routeState.query={};serviceMock.list.mockResolvedValue({data:[{...closing,currentVersion:{...closing.currentVersion}}]});serviceMock.participants.mockResolvedValue({data:[]});serviceMock.sources.mockResolvedValue({data:[]});serviceMock.latestWorkbookReview.mockResolvedValue({status:204,data:undefined});serviceMock.materializedLots.mockResolvedValue({data:[]});serviceMock.cancelWorkbookMaterialization.mockResolvedValue({data:{...activeLot,status:'CANCELLED'}});serviceMock.importReadiness.mockResolvedValue({data:{sources:[],readyToCalculate:false,blockingSourceKeys:[]}});serviceMock.deductionReadiness.mockResolvedValue({data:{sources:[],readyToCalculate:false,blockingSourceKeys:[]}});serviceMock.productivityDeductions.mockResolvedValue({data:[]});serviceMock.payoutDecisions.mockResolvedValue({data:[]});serviceMock.grantSensitiveAccess.mockResolvedValue({data:{granted:true}});
     serviceMock.workbookInventory.mockResolvedValue({data:{sheets:[{sheetName:'Known source',classification:'FINANCIAL_SOURCE_PROBABLE',suggestedSourceKey:'KNOWN_SOURCE',nonEmptyDataRows:2,detail:'Compatible structure',recommendedProfileId:'profile-1',recommendedProfileName:'Known profile',selectionStatus:'AUTO_SELECTED'},{sheetName:'Needs review',classification:'SUPPORT_REVIEW',suggestedSourceKey:'NEW_SOURCE',nonEmptyDataRows:1,detail:'Needs review',selectionStatus:'REVIEW_REQUIRED'}]}});
     serviceMock.initiateWorkbookReview.mockResolvedValue({data:{review:{...materialized,selectedSourceCount:0,sources:[]},inventory:{sheets:[{sheetName:'Known source',classification:'FINANCIAL_SOURCE_PROBABLE',suggestedSourceKey:'KNOWN_SOURCE',nonEmptyDataRows:2,detail:'Compatible structure',recommendedProfileId:'profile-1',recommendedProfileName:'Known profile',selectionStatus:'AUTO_SELECTED'},{sheetName:'Needs review',classification:'SUPPORT_REVIEW',suggestedSourceKey:'NEW_SOURCE',nonEmptyDataRows:1,detail:'Needs review',selectionStatus:'REVIEW_REQUIRED'}]},sensitiveIntentExpiresAt:'2026-08-12T12:15:00Z',replayed:false}});serviceMock.prepareWorkbookReview.mockResolvedValue({data:materialized});serviceMock.preflightWorkbookReview.mockResolvedValue({data:{reviewId:'review-1',revision:2,status:'PREFLIGHT_READY',preflightHmac:'opaque-preflight',sourceCount:1,itemCount:2,additionTotal:120,reversalTotal:20,deductionGateProjection:[]}});serviceMock.workbookReview.mockResolvedValueOnce({data:preflightReview}).mockResolvedValueOnce({data:publishedReview});serviceMock.workbookReviewInventory.mockResolvedValue({data:{sheets:[]}});serviceMock.publishWorkbookReview.mockResolvedValue({data:{publicationId:'publication-1',reviewId:'review-1',status:'PUBLISHED',idempotencyKey:'key',sourceCount:1,itemCount:2,additionTotal:120,reversalTotal:20,durationMs:10,replayed:false}});serviceMock.abandonWorkbookReview.mockResolvedValue({data:{...materialized,status:'ABANDONED'}})
   })
 
   it('renders the four-block panel and routes the contextual source action',async()=>{
     const wrapper=mount(FinancialClosingPanelView,{global:{plugins:[vuetify],stubs:{PageHeader:{props:['title'],template:'<header>{{title}}</header>'},AlertStrip:true}}});await flush();await flush();
-    expect(wrapper.text()).toContain('Dados de origem');expect(wrapper.text()).toContain('Regras do cálculo');expect(wrapper.text()).toContain('Resultado');expect(wrapper.text()).toContain('Decisão');
+    expect(wrapper.text()).toContain('Base editável');expect(wrapper.text()).toContain('Regras do cálculo');expect(wrapper.text()).toContain('Resultado calculado e revisão');expect(wrapper.text()).toContain('Decisão');
     ;(wrapper.vm as any).openImport();expect(routerPush).toHaveBeenCalledWith({name:'closing-import-wizard',params:{closingId:'closing-1',reviewId:'new'}})
   })
 
@@ -47,16 +48,42 @@ describe('Financial closing V31 journey',()=>{
   })
 
   it('keeps published inputs ready and allows another non-overlapping lot',async()=>{
+    serviceMock.materializedLots.mockResolvedValue({data:[activeLot]})
     serviceMock.importReadiness.mockResolvedValue({data:{sources:[{sourceId:'source-1',sourceKey:'KNOWN_SOURCE',displayName:'Known source',status:'IMPORTED',action:'Imported',detail:'confirmed'}],readyToCalculate:true,blockingSourceKeys:[]}})
     const wrapper=mount(FinancialClosingPanelView,{global:{plugins:[vuetify],stubs:{PageHeader:{props:['title'],template:'<header>{{title}}</header>'},AlertStrip:true}}});await flush();await flush();
-    expect(wrapper.text()).toContain('Dados de origem publicados');expect(wrapper.text()).toContain('Os dados atuais estão prontos');expect(wrapper.text()).toContain('Preparar novo lote');expect(wrapper.text()).toContain('Os itens publicados estão disponíveis para a apuração.')
+    expect(wrapper.text()).toContain('Base de cálculo pronta para revisão');expect(wrapper.text()).toContain('base editável');expect(wrapper.text()).toContain('Preparar novo lote');expect(wrapper.text()).toContain('Os itens materializados integram a base editável.')
     await (wrapper.vm as any).openImport();expect(routerPush).toHaveBeenCalledWith({name:'closing-import-wizard',params:{closingId:'closing-1',reviewId:'new'}})
   })
 
+  it('lists every lot, exposes its impact and removes one while invalidating the calculation',async()=>{
+    const historical={...activeLot,publicationId:'publication-old',reviewId:'review-old',status:'CANCELLED',active:false,mutable:false,netImpact:0}
+    serviceMock.list.mockResolvedValue({data:[{...closing,currentVersion:{...closing.currentVersion,inputRevision:2,calculatedRevision:2,calculationCurrent:true}}]})
+    serviceMock.materializedLots.mockResolvedValue({data:[activeLot,historical]})
+    const confirm=vi.spyOn(window,'confirm').mockReturnValue(true)
+    const wrapper=mount(FinancialClosingPanelView,{global:{plugins:[vuetify],stubs:{PageHeader:{props:['title'],template:'<header>{{title}}</header>'},AlertStrip:true}}});await flush();await flush()
+    expect(wrapper.text()).toContain('KNOWN_SOURCE');expect(wrapper.text()).toContain('Impacto líquido R$ 100,00');expect(wrapper.text()).toContain('Retirado ou substituído')
+    ;(wrapper.vm as any).openLot(activeLot);expect(routerPush).toHaveBeenCalledWith({name:'closing-publication-history',params:{closingId:'closing-1',reviewId:'review-1'}})
+    serviceMock.materializedLots.mockResolvedValue({data:[{...activeLot,status:'CANCELLED',active:false,mutable:false,netImpact:0},historical]})
+    await (wrapper.vm as any).removeLot(activeLot);await flush()
+    expect(serviceMock.cancelWorkbookMaterialization).toHaveBeenCalledWith('closing-1','review-1');expect(wrapper.text()).toContain('A base foi alterada após o cálculo da revisão 2')
+    confirm.mockRestore()
+  })
+
+  it('starts source replacement from a preserved historical lot',async()=>{
+    serviceMock.materializedLots.mockResolvedValue({data:[activeLot]})
+    const confirm=vi.spyOn(window,'confirm').mockReturnValue(true)
+    const wrapper=mount(FinancialClosingPanelView,{global:{plugins:[vuetify],stubs:{PageHeader:{props:['title'],template:'<header>{{title}}</header>'},AlertStrip:true}}});await flush();await flush()
+    await (wrapper.vm as any).replaceLot(activeLot)
+    expect(serviceMock.cancelWorkbookMaterialization).toHaveBeenCalledWith('closing-1','review-1')
+    expect(routerPush).toHaveBeenCalledWith({name:'closing-import-wizard',params:{closingId:'closing-1',reviewId:'new'},query:{replaces:'review-1'}})
+    confirm.mockRestore()
+  })
+
   it('shows confirmed legacy sources even when remaining sources still need import',async()=>{
+    serviceMock.materializedLots.mockResolvedValue({data:[activeLot]})
     serviceMock.importReadiness.mockResolvedValue({data:{sources:[{sourceId:'source-1',sourceKey:'KNOWN_SOURCE',displayName:'Known source',status:'IMPORTED',action:'Imported',detail:'confirmed'},{sourceId:'source-2',sourceKey:'OTHER_SOURCE',displayName:'Other source',status:'READY_TO_IMPORT',action:'Import',detail:'pending'}],readyToCalculate:false,blockingSourceKeys:['OTHER_SOURCE']}})
     const wrapper=mount(FinancialClosingPanelView,{global:{plugins:[vuetify],stubs:{PageHeader:{props:['title'],template:'<header>{{title}}</header>'},AlertStrip:true}}});await flush();await flush();
-    expect(wrapper.text()).toContain('Fontes restantes pendentes');expect(wrapper.text()).toContain('Há fontes publicadas e fontes ainda pendentes.')
+    expect(wrapper.text()).toContain('Fontes restantes pendentes');expect(wrapper.text()).toContain('Há fontes na base e fontes ainda pendentes.')
   })
 
   it('crosses upload, recognized preparation, preflight and idempotent publication',async()=>{
@@ -64,7 +91,7 @@ describe('Financial closing V31 journey',()=>{
     const wrapper=mount(FinancialClosingImportWizardView,{global:{plugins:[vuetify],stubs:{AlertStrip:{props:['description'],template:'<div>{{description}}</div>'}}}});await flush();await flush();
     const file=new File(['synthetic'],'synthetic.xlsx',{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});(wrapper.vm as any).workbookInput=file;(wrapper.vm as any).sensitiveConfirmed=true;await (wrapper.vm as any).inventoryWorkbook();await flush();expect(wrapper.text()).toContain('Known source');expect(wrapper.text()).toContain('Needs review precisa de revisão');(wrapper.vm as any).readyProfileIds=['profile-1'];(wrapper.vm as any).currentSourceIndex=0;
     await (wrapper.vm as any).prepareSources();await flush();expect(serviceMock.prepareWorkbookReview).toHaveBeenCalledWith(closing,file,['profile-1'],'review-1');expect((wrapper.vm as any).currentSourceIndex).toBe(-1);expect(routerReplace).toHaveBeenCalledWith({name:'closing-import-wizard',params:{closingId:'closing-1',reviewId:'review-1'}});expect(wrapper.text()).toContain('staging ainda está invisível ao cálculo');
-    await (wrapper.vm as any).runPreflight();await flush();expect(wrapper.text()).toContain('Publicar lote');expect(wrapper.text()).toContain('Ver resumo da revisão');(wrapper.vm as any).financialConfirmed=true;await (wrapper.vm as any).publish();await flush();expect(wrapper.text()).toContain('Lote publicado');expect(wrapper.text()).toContain('Preparar outro lote');
+    await (wrapper.vm as any).runPreflight();await flush();expect(wrapper.text()).toContain('Materializar fontes');expect(wrapper.text()).toContain('Ver resumo da revisão');(wrapper.vm as any).financialConfirmed=true;await (wrapper.vm as any).publish();await flush();expect(wrapper.text()).toContain('Lote adicionado à base editável');expect(wrapper.text()).toContain('Preparar outro lote');
     const firstKey=serviceMock.publishWorkbookReview.mock.calls[0][2].idempotencyKey;serviceMock.workbookReview.mockResolvedValue({data:publishedReview});(wrapper.vm as any).review=preflightReview;await (wrapper.vm as any).publish();expect(serviceMock.publishWorkbookReview.mock.calls[1][2].idempotencyKey).toBe(firstKey)
   })
 
@@ -81,7 +108,21 @@ describe('Financial closing V31 journey',()=>{
 
     expect(serviceMock.prepareWorkbookReview).toHaveBeenCalledWith(closing,file,['profile-1'],'review-1')
     expect(serviceMock.preflightWorkbookReview).toHaveBeenCalledWith('closing-1','review-1',6)
-    expect(wrapper.text()).toContain('Publicar lote')
+    expect(wrapper.text()).toContain('Materializar fontes')
+  })
+
+  it('previews and applies a replacement to only the selected source',async()=>{
+    routeState.params={closingId:'closing-1',reviewId:'new'}
+    const preview={reviewId:'review-1',reviewSourceId:'source-review-1',sourceKey:'KNOWN_SOURCE',reviewRevision:1,previewFingerprint:'preview-1',structureFingerprint:'structure',identityFingerprint:'identity',financialFingerprint:'financial',baselineAvailable:true,unchangedItems:1,changedItems:1,addedItems:1,removedItems:0,currentItemCount:2,proposedItemCount:3,currentAdditionTotal:120,currentReversalTotal:20,proposedAdditionTotal:150,proposedReversalTotal:20,reusedDecisionCount:2,invalidatedDecisionCount:1,readyToApply:true,blockingReasons:[]}
+    serviceMock.previewWorkbookSourceUpdate.mockResolvedValue({data:preview})
+    serviceMock.applyWorkbookSourceUpdate.mockResolvedValue({data:{preview,review:{...materialized,revision:2,sources:materialized.sources.map(source=>({...source,candidateCount:3,additionTotal:150}))},guidedReview:{readyForConfirmation:true}}})
+    const wrapper=mount(FinancialClosingImportWizardView,{global:{plugins:[vuetify],stubs:{AlertStrip:{props:['description'],template:'<div>{{description}}</div>'}}}});await flush();await flush()
+    ;(wrapper.vm as any).workbookInput=new File(['original'],'original.xlsx');(wrapper.vm as any).sensitiveConfirmed=true;await (wrapper.vm as any).inventoryWorkbook();await flush();(wrapper.vm as any).review=materialized;await flush()
+    expect(wrapper.text()).toContain('Atualizar esta fonte')
+    ;(wrapper.vm as any).beginSourceUpdate(0);const updated=new File(['updated'],'updated.xlsx');(wrapper.vm as any).sourceUpdateInput=updated;await (wrapper.vm as any).previewSourceUpdate();await flush()
+    expect(serviceMock.previewWorkbookSourceUpdate).toHaveBeenCalledWith('closing-1','review-1','source-review-1',updated,1);expect(wrapper.text()).toContain('Prévia sem alteração do lote');expect(wrapper.text()).toContain('Decisões reaproveitadas')
+    await (wrapper.vm as any).applySourceUpdate();await flush()
+    expect(serviceMock.applyWorkbookSourceUpdate).toHaveBeenCalledWith('closing-1','review-1','source-review-1',updated,1,'preview-1');expect((wrapper.vm as any).review.sources[0].candidateCount).toBe(3);expect(wrapper.text()).toContain('As demais fontes permaneceram intactas')
   })
 
   it('returns a partially attached review to assisted source decisions after a 422',async()=>{
@@ -129,9 +170,9 @@ describe('Financial closing V31 journey',()=>{
   it('preserves a published source and requires explicit opt-in for an additional lot',async()=>{
     routeState.params={closingId:'closing-1',reviewId:'new'};serviceMock.importReadiness.mockResolvedValue({data:{sources:[{sourceId:'source-1',sourceKey:'KNOWN_SOURCE',displayName:'Known source',sourceStatus:'REQUIRED_PUBLISHED',detail:'confirmed'}],readyToCalculate:true,blockingSourceKeys:[]}})
     const wrapper=mount(FinancialClosingImportWizardView,{global:{plugins:[vuetify],stubs:{AlertStrip:true}}});await flush();await flush();(wrapper.vm as any).workbookInput=new File(['synthetic'],'synthetic.xlsx');(wrapper.vm as any).sensitiveConfirmed=true;await (wrapper.vm as any).inventoryWorkbook();await flush()
-    expect(wrapper.text()).toContain('Já publicadas nesta competência');expect((wrapper.vm as any).selectedSheets).toHaveLength(0);expect(wrapper.text()).toContain('Publicação anterior preservada')
+    expect(wrapper.text()).toContain('Já presentes na base desta competência');expect((wrapper.vm as any).selectedSheets).toHaveLength(0);expect(wrapper.text()).toContain('base atual preservada')
     ;(wrapper.vm as any).toggleAdditionalSheet('Known source');await flush()
-    expect((wrapper.vm as any).selectedSheets).toHaveLength(1);expect(wrapper.text()).toContain('Novos itens selecionados para outro lote')
+    expect((wrapper.vm as any).selectedSheets).toHaveLength(1);expect(wrapper.text()).toContain('Novos itens selecionados; entrarão neste lote')
   })
 
   it('keeps suggested consolidation sheets visible and lets the operator revise their role',async()=>{
@@ -146,7 +187,7 @@ describe('Financial closing V31 journey',()=>{
     serviceMock.latestWorkbookReview.mockResolvedValue({status:200,data:{id:'empty-review',status:'PUBLISHED',revision:1,selectedSourceCount:1,materializedSourceCount:1,publishedSourceCount:1,publishableItemCount:0,contributingPublication:false,stagingExpiresAt:'2026-08-19T12:00:00Z',reviewExpiresAt:'2026-09-11T12:00:00Z',stagingExpired:false,reviewExpired:false,publicationId:'empty-publication',pendingCodes:[],nextAction:'VIEW_RESULT'}})
     serviceMock.importReadiness.mockResolvedValue({data:{sources:[{sourceId:'source-1',sourceKey:'KNOWN_SOURCE',displayName:'Known source',status:'READY_TO_IMPORT',action:'Import',detail:'pending'}],readyToCalculate:false,blockingSourceKeys:['KNOWN_SOURCE']}})
     const wrapper=mount(FinancialClosingPanelView,{global:{plugins:[vuetify],stubs:{PageHeader:{props:['title'],template:'<header>{{title}}</header>'},AlertStrip:true}}});await flush();await flush()
-    expect(wrapper.text()).toContain('publicação anterior não trouxe itens');expect(wrapper.text()).toContain('Importar workbook');await (wrapper.vm as any).openImport();expect(routerPush).toHaveBeenCalledWith({name:'closing-import-wizard',params:{closingId:'closing-1',reviewId:'new'}});(wrapper.vm as any).openPublicationHistory();expect(routerPush).toHaveBeenCalledWith({name:'closing-publication-history',params:{closingId:'closing-1',reviewId:'empty-review'}})
+    expect(wrapper.text()).toContain('lote anterior não trouxe itens');expect(wrapper.text()).toContain('Importar workbook');await (wrapper.vm as any).openImport();expect(routerPush).toHaveBeenCalledWith({name:'closing-import-wizard',params:{closingId:'closing-1',reviewId:'new'}});(wrapper.vm as any).openPublicationHistory();expect(routerPush).toHaveBeenCalledWith({name:'closing-publication-history',params:{closingId:'closing-1',reviewId:'empty-review'}})
   })
 
   it('requires the same workbook before returning to a source that still needs review',async()=>{

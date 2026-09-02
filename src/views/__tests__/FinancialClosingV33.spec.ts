@@ -8,7 +8,7 @@ import FinancialClosingResultView from '@/views/FinancialClosingResultView.vue'
 
 const { serviceMock, routerPush, routeState }=vi.hoisted(()=>({
   routerPush:vi.fn(),routeState:{params:{closingId:'closing-1'} as Record<string,string>},
-  serviceMock:{list:vi.fn(),productivityDeductions:vi.fn(),closingReserveRules:vi.fn(),upsertClosingReserveRule:vi.fn(),participants:vi.fn(),deductionReadiness:vi.fn(),previewProductivityDeductions:vi.fn(),resolveDeductionSource:vi.fn(),upsertProductivityDeduction:vi.fn(),upsertParticipantScore:vi.fn(),summary:vi.fn(),memory:vi.fn(),calculate:vi.fn()},
+  serviceMock:{list:vi.fn(),productivityDeductions:vi.fn(),closingReserveRules:vi.fn(),upsertClosingReserveRule:vi.fn(),participants:vi.fn(),deductionReadiness:vi.fn(),previewProductivityDeductions:vi.fn(),resolveDeductionSource:vi.fn(),upsertProductivityDeduction:vi.fn(),upsertParticipantScore:vi.fn(),summary:vi.fn(),memory:vi.fn(),calculate:vi.fn(),publishFinancial:vi.fn()},
 }))
 vi.mock('@/services/FinancialClosingService',()=>({default:serviceMock}))
 vi.mock('@/plugins/userStore',()=>({useUserStore:()=>({canWrite:true})}))
@@ -71,7 +71,7 @@ describe('Financial closing V33 rules and result journey',()=>{
     serviceMock.list.mockResolvedValue({data:[{...closing,currentVersion:{...closing.currentVersion,calculationCurrent:true,calculatedRevision:4}}]})
     const withoutScore={...preview,sourceProductivity:[],participantPayouts:[{participantId:'participant-1',productivityAmount:100,tmReserveAmount:10,tiReserveAmount:5,undistributedAmount:0,valueReceivableAmount:85,score:null,appliedScore:85,totalExplainedAmount:100}]}
     serviceMock.summary.mockResolvedValue({data:withoutScore});const wrapper=mount(FinancialClosingResultView,{global:{plugins:[vuetify],stubs}});await flush();await flush()
-    expect(wrapper.text()).toContain('Ajustar percentual por participante');expect(wrapper.text()).toContain('100% da PL');expect(wrapper.text()).toContain('R$ 85,00');expect(wrapper.text()).toContain('Continuar para decisão')
+    expect(wrapper.text()).toContain('Ajustar percentual por participante');expect(wrapper.text()).toContain('100% da PL');expect(wrapper.text()).toContain('R$ 85,00');expect(wrapper.text()).toContain('Publicar cálculo revisado')
     const vm=wrapper.vm as any;vm.scoreValues['participant-1']=85;vm.scoreJustifications['participant-1']='Avaliação mensal concluída';await vm.saveScore('participant-1')
     expect(serviceMock.upsertParticipantScore).toHaveBeenCalledWith(expect.objectContaining({id:'closing-1'}),{participantId:'participant-1',score:85,justification:'Avaliação mensal concluída'})
   })

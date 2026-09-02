@@ -9,6 +9,8 @@
     "preview": "vite preview",
     "start": "node server.cjs",
     "test:unit": "vitest",
+    "test:e2e:closing": "playwright test e2e/financial-closing-v31.spec.ts",
+    "test:e2e:closing:ui": "playwright test e2e/financial-closing-ui.spec.ts",
     "test:e2e:closing-demo": "playwright test e2e/financial-closing-demo.spec.ts",
     "demo:closing-video": "playwright test e2e/financial-closing-demo.spec.ts --project=chromium-demo",
     "build-only": "vite build",
