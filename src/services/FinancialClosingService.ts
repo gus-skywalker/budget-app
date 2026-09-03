@@ -157,6 +157,7 @@ export default {
   createOrGet(periodMonth: number, periodYear: number, closingKey = 'DEFAULT', currency = 'BRL') {
     return axiosInterceptor.post<FinancialClosing>('/financial-closings', { periodMonth, periodYear, closingKey, currency })
   },
+  restartCompetence(closingId: string, justification: string) { return axiosInterceptor.post<FinancialClosing>(`/financial-closings/${closingId}/versions/restart`, { justification }) },
   sources(closing: FinancialClosing) { return axiosInterceptor.get<ClosingSource[]>(`${versionPath(closing)}/sources`) },
   upsertSource(closing: FinancialClosing, sourceKey: string, displayName: string, expectation: 'REQUIRED' | 'OPTIONAL' = 'REQUIRED') { return axiosInterceptor.post<ClosingSource>(`${versionPath(closing)}/sources`, { sourceKey, displayName, expectation }) },
   changeSourceExpectation(closing: FinancialClosing, sourceId: string, expectation: 'REQUIRED' | 'OPTIONAL', expectedSourceRevision: number, justification: string) { return axiosInterceptor.post(`${versionPath(closing)}/sources/${sourceId}/expectation`, { expectation, expectedSourceRevision, justification }) },

@@ -147,6 +147,9 @@ export default async function setup() {
     CLOSING_PROVISIONING_SERVICE_TOKEN: provisioningServiceToken,
     CLOSING_EXTERNAL_REFERENCE_HMAC_KEY: externalReferenceHmacKey,
     CLOSING_SENSITIVE_DATA_KEY: sensitiveDataKey,
+    // Keep an isolated Playwright topology usable when the developer's normal
+    // 5173/8080 stack is already running. This is test-only configuration.
+    APP_CORS_ALLOWED_ORIGINS: `http://127.0.0.1:${appPort},http://localhost:${appPort}`,
   }
   const localJava21 = process.env.CLOSING_E2E_JAVA_HOME
     ?? ['/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home', '/usr/local/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home'].find(existsSync)
