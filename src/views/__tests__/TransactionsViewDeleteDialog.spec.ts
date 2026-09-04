@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/services/ExpenseService', () => ({
-  default: { delete: vi.fn() },
+  default: { delete: vi.fn(), create: vi.fn(), update: vi.fn() },
 }))
 
 import ExpenseService from '@/services/ExpenseService'
@@ -43,5 +43,41 @@ describe('TransactionsView delete dialog', () => {
       deleting: false,
     })
     expect(context.showToast).toHaveBeenCalledWith('transactions.delete_dialog.success', 'success')
+  })
+
+  it('allows category-only edits to an Open Finance expense without a payment method', async () => {
+    vi.mocked(ExpenseService.update).mockResolvedValue({})
+    const payload = { category: 7, paymentMethod: null }
+    const context: any = {
+      expense: {
+        date: '2026-09-04',
+        amount: '121.76',
+        category: 7,
+        paymentMethod: null,
+        paymentMethodName: null,
+        openFinance: true,
+      },
+      isEditingExpense: true,
+      editingExpenseId: 'open-finance-expense-1',
+      normalizeDate: vi.fn().mockReturnValue('2026-09-04'),
+      resolveCategoryId: vi.fn().mockReturnValue(7),
+      resolvePaymentMethodId: vi.fn().mockReturnValue(null),
+      ensureAccountSelected: vi.fn().mockReturnValue(true),
+      buildExpensePayload: vi.fn().mockReturnValue(payload),
+      handleExpenseSuggestionFeedback: vi.fn().mockReturnValue(null),
+      resetExpenseForm: vi.fn(),
+      fetchMonthlyExpenses: vi.fn(),
+      fetchMonthlyTransactionSummary: vi.fn(),
+      showToast: vi.fn(),
+      $t: (key: string) => key,
+    }
+
+    methods.saveExpense.call(context)
+    await Promise.resolve()
+    await Promise.resolve()
+
+    expect(ExpenseService.update).toHaveBeenCalledWith('open-finance-expense-1', payload)
+    expect(context.showToast).toHaveBeenCalledWith('expense.updated_successfully', 'success')
+    expect(context.showToast).not.toHaveBeenCalledWith('validation.required', 'warning')
   })
 })

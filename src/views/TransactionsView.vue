@@ -501,10 +501,8 @@
               <v-text-field :label="$t('common.description')" v-model="income.description" variant="outlined" density="comfortable" color="var(--cb-accent)" class="modern-input" />
             </v-col>
             <v-col cols="12">
-              <v-select :label="$t('common.payment_method')" v-model="income.paymentMethod" :items="paymentMethods" item-title="name" item-value="id" variant="outlined" density="comfortable" color="var(--cb-accent)" class="modern-input" />
-              <div v-if="shouldShowOpenFinancePaymentFallback(income)" class="open-finance-field-note">
-                {{ openFinancePaymentMethodLabel(income) }}
-              </div>
+              <v-text-field v-if="income.openFinance" :label="$t('common.payment_method')" :model-value="openFinancePaymentMethodLabel(income)" readonly variant="outlined" density="comfortable" color="var(--cb-accent)" class="modern-input" />
+              <v-select v-else :label="$t('common.payment_method')" v-model="income.paymentMethod" :items="paymentMethods" item-title="name" item-value="id" variant="outlined" density="comfortable" color="var(--cb-accent)" class="modern-input" />
             </v-col>
             <v-col cols="12">
               <v-select :label="$t('transactionVisibility.label')" v-model="income.visibilityScope" :items="localizedTransactionVisibilityOptions" item-title="title" item-value="value" variant="outlined" density="comfortable" color="var(--cb-accent)" class="modern-input" :hint="transactionVisibilityHint(income.visibilityScope)" persistent-hint />
@@ -550,10 +548,8 @@
               </v-select>
             </v-col>
             <v-col cols="12" sm="6">
-              <v-select :label="$t('common.payment_method')" v-model="expense.paymentMethod" :items="paymentMethods" item-title="name" item-value="id" :disabled="expense.openFinance" variant="outlined" density="comfortable" color="var(--cb-primary)" class="modern-input" />
-              <div v-if="shouldShowOpenFinancePaymentFallback(expense)" class="open-finance-field-note">
-                {{ openFinancePaymentMethodLabel(expense) }}
-              </div>
+              <v-text-field v-if="expense.openFinance" :label="$t('common.payment_method')" :model-value="openFinancePaymentMethodLabel(expense)" readonly variant="outlined" density="comfortable" color="var(--cb-primary)" class="modern-input" />
+              <v-select v-else :label="$t('common.payment_method')" v-model="expense.paymentMethod" :items="paymentMethods" item-title="name" item-value="id" variant="outlined" density="comfortable" color="var(--cb-primary)" class="modern-input" />
             </v-col>
             <v-col cols="12">
               <div class="ai-category-row">
@@ -3115,7 +3111,7 @@ export default {
       }
 
       const paymentMethodId = this.resolvePaymentMethodId(this.income.paymentMethod)
-      if (!paymentMethodId) {
+      if (!paymentMethodId && !this.income.openFinance) {
         this.showToast(this.$t('validation.required', { field: this.$t('common.payment_method') }), 'warning')
         return
       }
@@ -3174,7 +3170,7 @@ export default {
       }
 
       const paymentMethodId = this.resolvePaymentMethodId(this.expense.paymentMethod)
-      if (!paymentMethodId) {
+      if (!paymentMethodId && !this.expense.openFinance) {
         this.showToast(this.$t('validation.required', { field: this.$t('common.payment_method') }), 'warning')
         return
       }
