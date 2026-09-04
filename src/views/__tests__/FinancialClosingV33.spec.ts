@@ -8,7 +8,7 @@ import FinancialClosingResultView from '@/views/FinancialClosingResultView.vue'
 
 const { serviceMock, routerPush, routeState }=vi.hoisted(()=>({
   routerPush:vi.fn(),routeState:{params:{closingId:'closing-1'} as Record<string,string>},
-  serviceMock:{list:vi.fn(),productivityDeductions:vi.fn(),closingReserveRules:vi.fn(),upsertClosingReserveRule:vi.fn(),participants:vi.fn(),deductionReadiness:vi.fn(),previewProductivityDeductions:vi.fn(),resolveDeductionSource:vi.fn(),upsertProductivityDeduction:vi.fn(),upsertParticipantScore:vi.fn(),summary:vi.fn(),memory:vi.fn(),calculate:vi.fn(),publishFinancial:vi.fn()},
+  serviceMock:{list:vi.fn(),productivityDeductions:vi.fn(),closingReserveRules:vi.fn(),upsertClosingReserveRule:vi.fn(),participants:vi.fn(),deductionReadiness:vi.fn(),previewProductivityDeductions:vi.fn(),resolveDeductionSource:vi.fn(),upsertProductivityDeduction:vi.fn(),upsertParticipantScore:vi.fn(),addParticipantAdjustment:vi.fn(),summary:vi.fn(),memory:vi.fn(),calculate:vi.fn(),publishFinancial:vi.fn()},
 }))
 vi.mock('@/services/FinancialClosingService',()=>({default:serviceMock}))
 vi.mock('@/plugins/userStore',()=>({useUserStore:()=>({canWrite:true})}))
@@ -21,7 +21,7 @@ const preview={inputRevision:4,calculationSemanticsVersion:'GROSS_TO_NET_V2',gro
 const stubs={PageHeader:{props:['title'],template:'<header>{{title}}</header>'},AlertStrip:{props:['description'],template:'<div>{{description}}</div>'},VDialog:{props:['modelValue'],template:'<div v-if="modelValue"><slot /></div>'}}
 
 describe('Financial closing V33 rules and result journey',()=>{
-  beforeEach(()=>{vi.clearAllMocks();serviceMock.list.mockResolvedValue({data:[closing]});serviceMock.productivityDeductions.mockResolvedValue({data:[]});serviceMock.closingReserveRules.mockResolvedValue({data:[]});serviceMock.participants.mockResolvedValue({data:[{id:'participant-1',participantKey:'P1',displayName:'Participante 1',active:true}]});serviceMock.deductionReadiness.mockResolvedValue({data:{sources:[source],readyToCalculate:false,blockingSourceKeys:['SOURCE_A']}});serviceMock.previewProductivityDeductions.mockResolvedValue({data:preview});serviceMock.resolveDeductionSource.mockResolvedValue({data:{...source,status:'NO_DEDUCTION_APPLIES',resolutionRevision:1,dependencyCurrent:true}});serviceMock.upsertProductivityDeduction.mockResolvedValue({data:{}});serviceMock.upsertParticipantScore.mockResolvedValue({data:{id:'score-1'}});serviceMock.memory.mockResolvedValue({data:{calculationRunId:'run-1',calculationPolicyVersion:'GROSS_TO_NET_V2',roundingMode:'HALF_UP',intermediateScale:12,items:[],participantAdjustments:[],participantScores:[],residualAmount:0,deductionApplications:[],participantPayouts:[]}})})
+  beforeEach(()=>{vi.clearAllMocks();serviceMock.list.mockResolvedValue({data:[closing]});serviceMock.productivityDeductions.mockResolvedValue({data:[]});serviceMock.closingReserveRules.mockResolvedValue({data:[]});serviceMock.participants.mockResolvedValue({data:[{id:'participant-1',participantKey:'P1',displayName:'Participante 1',active:true}]});serviceMock.deductionReadiness.mockResolvedValue({data:{sources:[source],readyToCalculate:false,blockingSourceKeys:['SOURCE_A']}});serviceMock.previewProductivityDeductions.mockResolvedValue({data:preview});serviceMock.resolveDeductionSource.mockResolvedValue({data:{...source,status:'NO_DEDUCTION_APPLIES',resolutionRevision:1,dependencyCurrent:true}});serviceMock.upsertProductivityDeduction.mockResolvedValue({data:{}});serviceMock.upsertParticipantScore.mockResolvedValue({data:{id:'score-1'}});serviceMock.addParticipantAdjustment.mockResolvedValue({status:201});serviceMock.memory.mockResolvedValue({data:{calculationRunId:'run-1',calculationPolicyVersion:'GROSS_TO_NET_V2',roundingMode:'HALF_UP',intermediateScale:12,items:[],participantAdjustments:[],participantScores:[],residualAmount:0,deductionApplications:[],participantPayouts:[]}})})
 
   it('requires an explicit per-source resolution and shows only the canonical API preview',async()=>{
     const wrapper=mount(FinancialClosingRulesView,{global:{plugins:[vuetify],stubs}});await flush();await flush();
@@ -50,6 +50,13 @@ describe('Financial closing V33 rules and result journey',()=>{
     expect(serviceMock.upsertProductivityDeduction).toHaveBeenCalledWith(closing,expect.objectContaining({sourceId:'source-1',percentage:10,baseReference:'OPENING_GROSS_PRODUCTIVITY',active:true}));expect(serviceMock.calculate).not.toHaveBeenCalled()
   })
 
+  it('records a post-rateio participant adjustment separately from source deductions',async()=>{
+    const wrapper=mount(FinancialClosingRulesView,{global:{plugins:[vuetify],stubs}});await flush();await flush();const vm=wrapper.vm as any
+    expect(wrapper.text()).toContain('Ajuste individual por participante')
+    vm.adjustmentForm.participantId='participant-1';vm.adjustmentForm.direction='INCREASE';vm.adjustmentForm.amount=823.37;vm.adjustmentForm.justification='Pontuação mensal aprovada';await vm.saveAdjustment()
+    expect(serviceMock.addParticipantAdjustment).toHaveBeenCalledWith(closing,{participantId:'participant-1',sourceId:'source-1',direction:'INCREASE',amount:823.37,incidenceStage:'AFTER_DEDUCTIONS',justification:'Pontuação mensal aprovada'})
+  })
+
   it('calculates only through the canonical endpoint and renders PB, deductions, PL and payout',async()=>{
     serviceMock.deductionReadiness.mockResolvedValue({data:{sources:[{...source,status:'RULE_VALID',resolutionRevision:1,ruleRevisionIds:['rule-revision-1'],dependencyCurrent:true}],readyToCalculate:true,blockingSourceKeys:[]}})
     const calculated={calculationRunId:'run-1',versionNumber:1,inputRevision:4,calculationPolicyVersion:'GROSS_TO_NET_V2',roundingMode:'HALF_UP',intermediateScale:12,grossAmount:100,reversalAmount:0,deductionAmount:10,closingAdjustmentAmount:0,productivityAmount:90,undistributedPoolAmount:0,netRevenueAmount:90,residualAmount:0,reconciliation:{expectedInflowAmount:90,reconciledInflowAmount:0,coveragePercentage:0,divergenceAmount:90,unreconciledItemCount:1},calculatedAt:'2026-08-12T12:00:00Z',sourceProductivity:[{sourceId:'source-1',sourceKey:'SOURCE_A',displayName:'Fonte A',grossAmount:100,reversalAmount:0,retentionAmount:10,eligibleAmount:90,grossProductivityAmount:100,participantAdjustmentAmount:0,netProductivityAmount:90}],grossProductivityAmount:100,netProductivityAmount:90,calculationSemanticsVersion:'GROSS_TO_NET_V2',participantPayouts:[{participantId:'participant-1',productivityAmount:90,reserveAmount:13.5,monthlyCeilingAmount:76.5,appliedScore:85,valueReceivableAmount:76.5,annualBonusEligibleScore:0,undistributedAmount:0,tmReserveAmount:9,tiReserveAmount:4.5,totalExplainedAmount:90}]}
@@ -64,6 +71,15 @@ describe('Financial closing V33 rules and result journey',()=>{
     const wrapper=mount(FinancialClosingResultView,{global:{plugins:[vuetify],stubs}});await flush();await flush()
     expect(wrapper.text()).toContain('O resumo agregado continua disponível')
     expect(wrapper.text()).toContain('Produtividade Líquida')
+  })
+
+  it('shows persisted individual adjustments in the audit memory',async()=>{
+    serviceMock.deductionReadiness.mockResolvedValue({data:{sources:[{...source,status:'RULE_VALID',dependencyCurrent:true}],readyToCalculate:true,blockingSourceKeys:[]}})
+    serviceMock.list.mockResolvedValue({data:[{...closing,currentVersion:{...closing.currentVersion,calculationCurrent:true,calculatedRevision:4}}]})
+    serviceMock.summary.mockResolvedValue({data:{...preview,participantPayouts:[]}})
+    serviceMock.memory.mockResolvedValue({data:{calculationRunId:'run-1',calculationPolicyVersion:'GROSS_TO_NET_V2',roundingMode:'HALF_UP',intermediateScale:12,items:[],participantScores:[],residualAmount:0,deductionApplications:[],participantPayouts:[],participantAdjustments:[{participantId:'participant-1',sourceId:'source-1',direction:'DECREASE',amount:1.34,justification:'Ajuste sintético auditável',incidenceStage:'AFTER_DEDUCTIONS'}]}})
+    const wrapper=mount(FinancialClosingResultView,{global:{plugins:[vuetify],stubs}});await flush();await flush()
+    expect(wrapper.text()).toContain('Regras e ajustes aplicados');expect(wrapper.text()).toContain('Ajuste sintético auditável');expect(wrapper.text()).toContain('−R$ 1,34')
   })
 
   it('uses the remaining PL when rules are absent while preserving the optional mutation flow',async()=>{

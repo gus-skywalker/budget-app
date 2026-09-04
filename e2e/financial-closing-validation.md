@@ -30,7 +30,7 @@ com screenshot, vídeo ou trace anexado.
 | 4. Participantes e perfil | Configurar participantes, pontuação e perfil de importação | mapeamento e regras visíveis antes do upload | campo ou fluxo inexistente/confuso |
 | 5. Importar workbook | Enviar fixture sanitizada | inventário mostra apenas abas-fonte; `GERAL` e `FECHAMENTO` não são publicáveis | aba indevida selecionável ou falha sem orientação |
 | 6. Revisão guiada | Resolver fonte, participante desconhecido e exceções | usuário entende o que entra, o que foi excluído e por quê | ação sem feedback ou sem caminho de correção |
-| 7. Preflight/publicação | Preparar, conferir e confirmar lote | estado publicado, fonte pronta e histórico preservado | publicação parcial, repetível ou ambígua |
+| 7. Preflight/materialização | Preparar, conferir e incluir lote na base editável | lote ativo, fonte pronta e histórico preservado | materialização parcial, repetível ou ambígua |
 | 8. Readiness | Voltar ao painel | quatro etapas refletem a prontidão real | estado exibido diverge do bloqueio real |
 | 9. Deduções | Revisar fonte; criar dedução de origem; criar TM e TI | percentuais, base e reservas são legíveis antes do cálculo | TM/TI ausentes, misturadas com bruta ou sem justificativa |
 | 10. Cálculo | `Continuar para o resultado` → `Calcular resultado` | total de origem, dedução, produtividade líquida, TM, TI e Valor a Receber exibidos | centavos divergentes ou memória ausente |
@@ -74,7 +74,7 @@ o backlog necessário para a futura suíte funcional 100% visual.
 
 | ID | Severidade | Gap | Estado atual | Critério de aceite |
 | --- | --- | --- | --- | --- |
-| FC-P0-001 | Bloqueante | O preflight deixava item de atribuição direta sem participante chegar à publicação e gerar `500`. | **Resolvido localmente**: preflight bloqueia candidatos sem participante, sem pool ou sem valor positivo; as linhas sem destinatário seguem a regra explícita de exclusão. | A publicação nunca responde `500` por restrição de item; a tela oferece caminho de revisão ou resumo da exclusão. |
+| FC-P0-001 | Bloqueante | O preflight deixava item de atribuição direta sem participante chegar à materialização e gerar `500`. | **Resolvido localmente**: preflight bloqueia candidatos sem participante, sem pool ou sem valor positivo; as linhas sem destinatário seguem a regra explícita de exclusão. | A materialização nunca responde `500` por restrição de item; a tela oferece caminho de revisão ou resumo da exclusão. |
 | FC-P1-002 | Alta | A retomada era sequencial e exigia reconsiderar fontes já resolvidas, em vez de permitir seleção por fonte. | **Resolvido localmente**: a conferência lista o estado de cada fonte e permite retomar somente a pendente, preservando as materializadas. | A tela lista cada fonte com estado, pendências e ação `Retomar esta fonte`, sem reabrir fontes prontas. |
 | FC-P1-003 | Alta | Não havia atualização incremental de arquivo por fonte com reaproveitamento seguro das decisões. | **Resolvido localmente**: `Atualizar esta fonte` compara o novo snapshot sem mutação, mostra itens inalterados/alterados/novos/removidos e decisões reutilizadas/invalidadas; a confirmação substitui apenas o staging da fonte e invalida o preflight. Decisões ligadas ao número da linha nunca atravessam snapshots; participante, zero e repetição só reaparecem por chaves compatíveis. | O operador atualiza uma fonte, vê fingerprint/diferenças e reaproveita somente decisões compatíveis, sem alterar as demais fontes. |
 

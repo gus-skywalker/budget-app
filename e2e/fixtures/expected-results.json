@@ -18,6 +18,16 @@
       "additionTotalCents": 7500,
       "reversalTotalCents": 2500,
       "netImpactCents": 5000
+    },
+    "rules-homologation": {
+      "sourceGrossCents": 20000,
+      "sourceDeductionCents": 2666,
+      "closingAdjustmentCents": 0,
+      "participantAdjustmentCents": -134,
+      "productivityCents": 17200,
+      "tmReserveCents": 1720,
+      "tiReserveCents": 860,
+      "valueReceivableCents": 14620
     }
   }
 }

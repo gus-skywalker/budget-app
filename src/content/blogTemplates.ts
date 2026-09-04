@@ -327,7 +327,7 @@ const blogTemplateEntriesByLocale: Record<SupportedLocale, BlogTemplateEntry[]> 
       heroPrompt:
         'A apuração organiza os dados de origem, as regras e as decisões em uma jornada única. Você revisa o que entra, calcula somente com regras explícitas e mantém rastreabilidade antes de autorizar valores.',
       summaryPrompt:
-        'Comece pela competência, envie as planilhas que representam fontes reais e trate cada exceção com uma decisão explícita. A publicação não cria pagamento: ela apenas torna dados revisados disponíveis para o cálculo.',
+        'Comece pela competência, envie as planilhas que representam fontes reais e trate cada exceção com uma decisão explícita. A materialização cria uma base editável para o cálculo; a publicação financeira ocorre somente após a revisão do resultado.',
       takeaways: [
         'Uma competência representa o período que você quer apurar',
         'Uma fonte é uma origem de valores, normalmente uma aba ou arquivo configurado',
@@ -363,7 +363,7 @@ const blogTemplateEntriesByLocale: Record<SupportedLocale, BlogTemplateEntry[]> 
         {
           title: '3. Revise participantes, repetições e linhas inválidas',
           prompt:
-            'Antes da publicação, associe participantes, confirme multiplicidades legítimas e trate linhas inválidas. O CoBudget não adivinha pessoas nem descarta valores silenciosamente. Uma exclusão exige justificativa e fica auditada.',
+            'Antes de materializar a fonte, associe participantes, confirme multiplicidades legítimas e trate linhas inválidas. O CoBudget não adivinha pessoas nem descarta valores silenciosamente. Uma exclusão exige justificativa e fica auditada.',
           bullets: [
             'Repetições legítimas podem ser preservadas',
             'Linhas incorretas podem ser corrigidas ou excluídas com justificativa',
@@ -371,12 +371,12 @@ const blogTemplateEntriesByLocale: Record<SupportedLocale, BlogTemplateEntry[]> 
           ]
         },
         {
-          title: '4. Prepare e publique os dados de origem',
+          title: '4. Prepare e materialize os dados de origem',
           prompt:
-            'Confira fontes, itens, adições, reversões e exclusões; depois, confirme a publicação. A publicação é atômica e cria a base canônica da apuração. Ela não calcula, não autoriza e não transfere dinheiro.',
+            'Confira fontes, itens, adições, reversões e exclusões; depois, confirme a materialização. Ela é atômica, cria a base editável da apuração e não calcula, não autoriza nem transfere dinheiro. A publicação financeira é uma etapa posterior, após cálculo e revisão.',
           bullets: [
-            'Use Ver publicação para conferir o que entrou',
-            'A fonte publicada permanece rastreável',
+            'Use o painel da competência para conferir o que entrou na base',
+            'A fonte materializada permanece rastreável e pode ser substituída ou retirada antes da publicação financeira',
             'Se precisar complementar antes da decisão, prepare um novo lote compatível'
           ]
         },

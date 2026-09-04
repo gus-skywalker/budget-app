@@ -150,7 +150,7 @@ async function calculateWithoutPublishing(page: Page, closing: Closing) {
 async function completeRulesAndCalculation(page: Page, closing: Closing) {
   await page.getByRole('button', { name: /Revisar deduções|Ver regras/ }).first().click()
   await expect(page).toHaveURL(new RegExp(`/financial-closings/${closing.id}/rules$`))
-  await expect(page.getByRole('heading', { name: 'Revise cada fonte antes de calcular' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Revise as incidências antes de calcular' })).toBeVisible()
   const confirmRules = page.getByRole('button', { name: 'Confirmar regras desta fonte' })
   if (await confirmRules.isVisible()) {
     await confirmRules.click()

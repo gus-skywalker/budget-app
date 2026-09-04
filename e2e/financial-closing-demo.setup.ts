@@ -11,13 +11,19 @@ const runtimeDir = join(process.cwd(), 'test-results/financial-closing/runtime')
 const appPort = Number(process.env.CLOSING_E2E_APP_PORT ?? 5173)
 const apiPort = Number(process.env.CLOSING_E2E_API_PORT ?? 8080)
 const closingPort = Number(process.env.CLOSING_E2E_SERVICE_PORT ?? 8081)
+const databasePort = Number(process.env.CLOSING_E2E_DATABASE_PORT ?? 55433)
 let api: ChildProcess | undefined
 let closing: ChildProcess | undefined
 let app: ChildProcess | undefined
+let postgresContainer: string | undefined
 
 const base64url = (value: Buffer | string) => Buffer.from(value).toString('base64url')
 const waitFor = async (url: string, label: string, isReady = (response: Response) => response.ok) => {
-  const deadline = Date.now() + 90_000
+  // A cold Gradle/Quarkus launch can take longer than the normal local loop,
+  // especially after dependency or generated-source invalidation. The harness
+  // must wait for the documented health checks instead of reporting a false
+  // startup failure while the API is still compiling.
+  const deadline = Date.now() + 180_000
   let latest = ''
   while (Date.now() < deadline) {
     try {
@@ -108,6 +114,29 @@ const stop = async (child: ChildProcess | undefined) => {
   })
 }
 
+const startDisposablePostgres = async () => {
+  await requireAvailablePort(databasePort, 'PostgreSQL sintético do E2E')
+  try { execFileSync('docker', ['info'], { stdio: 'ignore' }) } catch {
+    throw new Error('O Docker Desktop precisa estar ativo para criar o PostgreSQL efêmero do E2E.')
+  }
+  postgresContainer = `financial-closing-e2e-${process.pid}`
+  execFileSync('docker', ['run', '--rm', '--detach', '--name', postgresContainer, '--publish', `127.0.0.1:${databasePort}:5432`, '--env', 'POSTGRES_DB=financial_closing_db', '--env', 'POSTGRES_USER=postgres', '--env', 'POSTGRES_PASSWORD=password', 'postgres:16'], { stdio: 'ignore' })
+  const deadline = Date.now() + 60_000
+  while (Date.now() < deadline) {
+    try {
+      execFileSync('docker', ['exec', postgresContainer, 'pg_isready', '-U', 'postgres', '-d', 'financial_closing_db'], { stdio: 'ignore' })
+      return
+    } catch { await new Promise(resolve => setTimeout(resolve, 250)) }
+  }
+  throw new Error('O PostgreSQL efêmero do E2E não ficou pronto.')
+}
+
+const stopDisposablePostgres = () => {
+  if (!postgresContainer) return
+  try { execFileSync('docker', ['rm', '--force', postgresContainer], { stdio: 'ignore' }) } catch { /* teardown must not mask test output */ }
+  postgresContainer = undefined
+}
+
 export default async function setup() {
   if (await existingHarnessIsHealthy()) return async () => undefined
   await Promise.all([
@@ -115,6 +144,7 @@ export default async function setup() {
     requireAvailablePort(apiPort, 'budget-api'),
     requireAvailablePort(closingPort, 'financial-closing-service'),
   ])
+  await startDisposablePostgres()
   rmSync(runtimeDir, { recursive: true, force: true })
   mkdirSync(runtimeDir, { recursive: true })
   const privateKey = join(runtimeDir, 'demo-private.pem')
@@ -163,6 +193,9 @@ export default async function setup() {
       ...process.env,
       ...((localJava21 ?? localJava24) ? { JAVA_HOME: localJava21 ?? localJava24 } : {}),
       PORT: String(closingPort),
+      // Each E2E run owns this ephemeral database. It never depends on or
+      // alters the developer's local financial_closing_db history.
+      CLOSING_DB_JDBC_URL: `jdbc:postgresql://127.0.0.1:${databasePort}/financial_closing_db`,
       CLOSING_INTERNAL_SERVICE_TOKEN: internalServiceToken,
       CLOSING_AUTHORIZATION_HMAC_KEY: authorizationHmacKey,
       CLOSING_EXTERNAL_REFERENCE_HMAC_KEY: externalReferenceHmacKey,
@@ -208,5 +241,6 @@ export default async function setup() {
   await waitFor(`http://127.0.0.1:${appPort}`, 'demo app')
   return async () => {
     await Promise.all([stop(app), stop(api), stop(closing)])
+    stopDisposablePostgres()
   }
 }

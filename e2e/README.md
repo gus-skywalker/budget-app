@@ -6,6 +6,17 @@ Execute a prova local completa com:
 npm run test:e2e:closing
 ```
 
+Para a ferramenta de homologação das incidências financeiras, use:
+
+```bash
+npm run test:e2e:closing:homologation
+```
+
+Ela usa somente a fixture sanitizada e confere em centavos a sequência
+bruto da fonte → dedução → ajuste individual → PL → TM/TI → Valor a Receber.
+As expectativas ficam em `fixtures/expected-results.json`; a planilha real
+permanece somente na conferência manual local descrita no playbook compartilhado.
+
 Para uma prova isolada da interface pública (sem `APIRequestContext` na spec), use:
 
 ```bash
