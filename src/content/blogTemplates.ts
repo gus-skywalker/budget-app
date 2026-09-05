@@ -41,81 +41,70 @@ const blogTemplateEntriesByLocale: Record<SupportedLocale, BlogTemplateEntry[]> 
       kind: 'guide',
       category: 'Apuração de resultados',
       title: 'Como importar uma planilha na Apuração de resultados',
-      excerpt:
-        'Um roteiro seguro para transformar uma aba-fonte em itens normalizados, revisar exceções e recalcular a competência.',
-      readTime: '7 min',
+      excerpt: 'Do Excel à base editável: quatro passos para importar e conferir suas fontes.',
+      readTime: '3 min',
       stage: 'Operação',
-      audience: 'Administradores que preparam o fechamento mensal a partir de fontes tabulares',
+      audience: 'Quem prepara os dados da apuração mensal',
       ctaLabel: 'Abrir apuração de resultados',
       ctaPath: '/planning/financial-closings',
       heroPrompt:
-        'A importação assistida reduz trabalho manual sem adivinhar identidade, origem ou regra financeira. Você configura a fonte e os participantes uma vez, reutiliza o perfil e confirma apenas o que foi validado.',
+        'Importe a planilha, revise as fontes e confira o que entrou na apuração. Veja como começar.',
       summaryPrompt:
-        'Use um arquivo CSV ou XLSX com uma única aba-fonte por upload. Antes de começar, separe abas de consolidação: elas servem para conferência externa e não devem ser enviadas como fonte. O arquivo bruto é usado na solicitação; a confirmação grava itens normalizados e proveniência protegida.',
+        'Tenha o arquivo Excel (.xlsx) do período. Cada aba pode representar uma fonte, como Vendas Diretas ou Marketplace. Separe os dados de origem dos resumos para evitar duplicidade.',
       takeaways: [
-        'Cada competência usa fontes e participantes canônicos próprios',
-        'O perfil reutiliza a sourceKey estável, nunca o ID interno da versão',
-        'Linhas desconhecidas bloqueiam a confirmação até receberem um mapa explícito'
+        'Confira o mês antes de importar.',
+        'Revise as fontes e resolva as pendências.',
+        'Importar prepara a base; a publicação financeira vem depois.'
       ],
       sections: [
         {
-          title: '1. Inicie a competência e configure a base',
+          title: '1. Abra a competência',
           prompt:
-            'Abra Planejamento > Apuração de resultados e inicie a competência desejada. O fluxo cria o escopo DEFAULT em BRL. Depois, adicione cada fonte que será importada e os participantes que podem receber itens dessa competência.',
-          bullets: [
-            'Use uma chave de fonte estável, por exemplo BP_PAULISTA',
-            'Use uma chave de participante estável, por exemplo ANA_SILVA',
-            'Cadastre apenas fontes e participantes que pertencem à competência atual'
+            'Em Planejamento > Apuração de resultados, clique em Abrir ou criar competência. Escolha o mês e o ano que correspondem à planilha.',
+          media: [
+            {
+              src: '/blog-assets/financial-closing/competencia.png',
+              alt: 'Escolha o período da apuração.',
+              caption: 'Escolha o período da apuração.'
+            }
           ]
         },
         {
-          title: '2. Crie ou escolha um perfil de importação',
+          title: '2. Selecione o arquivo',
           prompt:
-            'No bloco Importar planilha, abra o mapeamento e informe os nomes das colunas do arquivo: chave do item, valor, data, referência externa e, quando existir, o participante como aparece na planilha. Salve o perfil com a sourceKey da fonte. Na próxima competência, ele só poderá ser usado quando essa mesma chave estiver configurada.',
-          bullets: [
-            'Um perfil guarda a estrutura da fonte e os mapas explícitos de participante',
-            'A sourceKey BP_PAULISTA é resolvida para a fonte da versão corrente',
-            'Não copie IDs internos do CoBudget para a planilha'
+            'Clique em Importar workbook ou Preparar novo lote. Selecione o Excel, confirme a leitura protegida e clique em Identificar fontes.',
+          media: [
+            {
+              src: '/blog-assets/financial-closing/importacao.png',
+              alt: 'Workbook é o arquivo Excel que será importado.',
+              caption: 'Workbook é o arquivo Excel que será importado.'
+            }
           ]
         },
         {
-          title: '3. Envie uma aba-fonte e valide a prévia',
+          title: '3. Revise as fontes e as pendências',
           prompt:
-            'Envie um CSV ou XLSX de uma única aba-fonte e valide antes de confirmar. A prévia informa quantas linhas foram aceitas, ignoradas e marcadas como exceção, além dos totais de adições e reversões. Linhas vazias, totais, subtotais e fórmulas configuradas para ignorar não viram itens financeiros.',
+            'Escolha as abas que entram no lote. Quando solicitado, configure quais colunas contêm valor, data e participante; o perfil de importação permite reutilizar essa configuração.',
           bullets: [
-            'Valor negativo configurado pelo perfil vira REVERSAL com valor absoluto',
-            'Confira os totais antes de confirmar o lote',
-            'Uma aba de consolidação não substitui a validação da aba-fonte'
+            'Deixe abas de resumo e apoio fora do cálculo.',
+            'Associe participantes e confira repetições e linhas inválidas.',
+            'Revise os totais antes de confirmar a inclusão na base.'
           ]
         },
         {
-          title: '4. Resolva participantes desconhecidos sem dedução automática',
+          title: '4. Confira a base editável',
           prompt:
-            'Quando um executor aparece no arquivo sem mapa explícito, a prévia mostra a exceção e a confirmação fica bloqueada. Escolha o participante canônico correto, adicione o mapeamento ao perfil, salve a nova versão e valide novamente. O sistema não tenta adivinhar pessoas por nome parecido.',
+            'Volte ao painel e confira o impacto de cada fonte. Use Ver itens para consultar os dados; se precisar corrigir, use Substituir esta fonte ou Retirar esta fonte.',
           bullets: [
-            'Mapeie cada nome externo ao participante canônico correspondente',
-            'Revise a nova versão do perfil antes de confirmar',
-            'Se a pessoa ainda não existe, cadastre-a primeiro na competência'
-          ]
-        },
-        {
-          title: '5. Confirme, recalcule e confira a linha do tempo',
-          prompt:
-            'Com a validação válida, confirme o lote normalizado e recalcule a apuração. A confirmação invalida qualquer cálculo anterior, e o recálculo atualiza a matriz, a memória de cálculo e a central operacional. Reenviar o mesmo arquivo com a mesma chave idempotente reutiliza o resultado original, sem duplicar itens.',
-          bullets: [
-            'Confira a Produtividade Líquida e os totais por fonte',
-            'Use a linha do tempo para ver importação confirmada e cálculo',
-            'A cobertura de conciliação continua explícita: importar não é conciliar entrada bancária'
-          ]
-        },
-        {
-          title: '6. O que este fluxo não faz',
-          prompt:
-            'A importação assistida não interpreta automaticamente um Excel com várias abas, não cria participantes por aproximação e não reconcilia uma consolidação externa. Use cada aba-fonte como um upload próprio e mantenha a consolidação externa como material de conferência até que as diferenças sejam tratadas no processo apropriado.',
-          bullets: [
-            'Sem interpretação automática de regras específicas da planilha',
-            'Sem transferência bancária ou pagamento durante a importação',
-            'Sem ocultar diferenças de reconciliação'
+            'Depois, revise as regras, calcule e confira o resultado.',
+            'Publique financeiramente somente após essa revisão.'
+          ],
+          media: [
+            {
+              src: '/blog-assets/financial-closing/base-editavel.png',
+              alt: 'A fonte incluída pode ser conferida e corrigida. Dados fictícios.',
+              caption: 'A fonte incluída pode ser conferida e corrigida. Dados fictícios.'
+            }
           ]
         }
       ]
@@ -316,104 +305,176 @@ const blogTemplateEntriesByLocale: Record<SupportedLocale, BlogTemplateEntry[]> 
       category: 'Apuração de resultados',
       title: 'Guia completo: da planilha à decisão de apuração',
       excerpt:
-        'Um passo a passo ilustrado para transformar fontes em uma apuração auditável, calcular com regras flexíveis e preparar decisões.',
-      readTime: '10 min',
+        'Um guia rápido e ilustrado para importar fontes, revisar a base e as regras, calcular e publicar o resultado antes de decidir.',
+      readTime: '7 min',
       stage: 'Operação',
-      audience: 'Gestores e administradores que organizam repasses, receitas e resultados periódicos',
+      audience:
+        'Gestores e administradores que organizam repasses, receitas e resultados periódicos',
       ctaLabel: 'Abrir apuração de resultados',
       ctaPath: '/planning/financial-closings',
       downloadUrl: '/guides/guia-apuracao-resultados-cobudget.pdf',
       downloadLabel: 'Baixar manual em PDF',
       heroPrompt:
-        'A apuração organiza os dados de origem, as regras e as decisões em uma jornada única. Você revisa o que entra, calcula somente com regras explícitas e mantém rastreabilidade antes de autorizar valores.',
+        'A apuração organiza os dados de origem, as regras e as decisões em uma jornada única. Você transforma planilhas em um resultado que pode conferir e explicar antes de autorizar valores.',
       summaryPrompt:
-        'Comece pela competência, envie as planilhas que representam fontes reais e trate cada exceção com uma decisão explícita. A materialização cria uma base editável para o cálculo; a publicação financeira ocorre somente após a revisão do resultado.',
+        'Comece pelo período e siga a ordem: importar fontes → montar a base editável → revisar regras → calcular → revisar o resultado → publicar financeiramente → tomar decisões. As imagens usam apenas dados fictícios.',
       takeaways: [
-        'Uma competência representa o período que você quer apurar',
-        'Uma fonte é uma origem de valores, normalmente uma aba ou arquivo configurado',
-        'Regras, cobertura e decisões podem ser revisadas antes da autorização'
+        'A competência identifica o período; as fontes mostram de onde vêm os valores.',
+        'A base pode ser revisada antes da publicação financeira.',
+        'O resultado só segue para decisões depois de calculado, revisado e publicado financeiramente.'
       ],
       sections: [
         {
           title: '1. Crie ou abra a competência do mês',
           prompt:
-            'Abra Planejamento > Apuração de resultados, escolha o mês e crie ou abra a competência. Quando a competência DEFAULT daquele mês já existe, o CoBudget a reabre em vez de duplicar dados.',
+            'Abra Planejamento > Apuração de resultados e clique em Abrir ou criar competência. Escolha o mês e o ano. Competência é o período que será apurado; se já existir, o CoBudget abre a apuração correspondente.',
           bullets: [
-            'Use uma nova competência para outro período',
-            'Use a mesma competência para corrigir ou complementar dados antes da decisão final',
-            'A versão registra revisões sem misturar períodos diferentes'
+            'Use uma competência para cada período, como agosto de 2026.',
+            'Antes de importar, confira o mês exibido no painel.'
           ],
           media: [
-            { src: '/blog-assets/financial-closing/competencia.svg', alt: 'Ilustração da escolha de competência na Apuração de resultados', caption: 'A competência identifica o mês e o escopo da apuração.' }
+            {
+              src: '/blog-assets/financial-closing/competencia.png',
+              alt: 'Escolha o período antes de preparar os dados.',
+              caption:
+                'Escolha o período antes de preparar os dados. Dados fictícios na interface atual.'
+            }
           ]
         },
         {
-          title: '2. Envie o workbook e configure as fontes',
+          title: '2. Confira as fontes e importe a planilha',
           prompt:
-            'Envie o Excel e escolha, aba por aba, o que representa uma fonte financeira. Uma aba de resumo, consolidação ou apoio não entra automaticamente: você pode ignorá-la ou configurá-la como fonte quando ela representar valores reais.',
+            'Fonte é a origem dos valores. Use Importar workbook (arquivo Excel) ou Preparar novo lote para acrescentar dados. Selecione o XLSX, confirme a leitura protegida e clique em Identificar fontes. Revise quais abas entram no lote e configure o perfil de leitura quando solicitado.',
           bullets: [
-            'Dê nome e chave estáveis a cada fonte',
-            'Escolha ou crie o perfil que interpreta suas colunas',
-            'Prepare lote adicional quando houver novos dados, sem duplicar itens sobrepostos'
+            'Exemplos: Vendas Diretas, Marketplace, Serviços Prestados, Comissões e Outras Receitas.',
+            'Confira fontes obrigatórias e opcionais. Declare sem movimento somente quando não houver atividade no período.',
+            'Deixe abas de resumo ou apoio fora do cálculo para não contar valores duas vezes.'
           ],
           media: [
-            { src: '/blog-assets/financial-closing/revisao-fontes.svg', alt: 'Ilustração da revisão assistida de fontes e exceções', caption: 'O sistema só pede intervenção nas exceções que precisam de decisão humana.' }
+            {
+              src: '/blog-assets/financial-closing/importacao.png',
+              alt: 'A leitura do arquivo inicia a preparação das fontes.',
+              caption:
+                'A leitura do arquivo inicia a preparação das fontes. Dados fictícios na interface atual.'
+            }
           ]
         },
         {
           title: '3. Revise participantes, repetições e linhas inválidas',
           prompt:
-            'Antes de materializar a fonte, associe participantes, confirme multiplicidades legítimas e trate linhas inválidas. O CoBudget não adivinha pessoas nem descarta valores silenciosamente. Uma exclusão exige justificativa e fica auditada.',
+            'Associe cada participante da planilha ao cadastro correto. Confira valores, datas e repetições antes de continuar. Se houver uma linha inválida, corrija-a ou exclua-a com justificativa.',
           bullets: [
-            'Repetições legítimas podem ser preservadas',
-            'Linhas incorretas podem ser corrigidas ou excluídas com justificativa',
-            'Nenhum dado entra no cálculo antes da confirmação do lote'
+            'Participante é quem recebe uma parcela do resultado, como Equipe A ou Equipe B.',
+            'Preserve repetições somente quando representarem ocorrências diferentes.',
+            'Resolva as pendências indicadas antes de confirmar a inclusão dos dados.'
           ]
         },
         {
-          title: '4. Prepare e materialize os dados de origem',
+          title: '4. Monte e confira a base editável',
           prompt:
-            'Confira fontes, itens, adições, reversões e exclusões; depois, confirme a materialização. Ela é atômica, cria a base editável da apuração e não calcula, não autoriza nem transfere dinheiro. A publicação financeira é uma etapa posterior, após cálculo e revisão.',
+            'Confirme a inclusão dos dados revisados e volte ao painel. A base editável reúne as fontes que participarão do cálculo. Confira os itens, as adições, as reversões e o impacto de cada fonte.',
           bullets: [
-            'Use o painel da competência para conferir o que entrou na base',
-            'A fonte materializada permanece rastreável e pode ser substituída ou retirada antes da publicação financeira',
-            'Se precisar complementar antes da decisão, prepare um novo lote compatível'
-          ]
-        },
-        {
-          title: '5. Configure apenas as regras que se aplicam ao negócio',
-          prompt:
-            'Deduções, impostos, reservas, pontuação e equivalências monetárias são opcionais e explícitos. Sem regra criada, não há taxa implícita. Regras por fonte incidem na receita da fonte; regras posteriores destinam a Produtividade Líquida.',
-          bullets: [
-            'Deduções de fonte são aplicadas depois das reversões',
-            'TM, TI e outras reservas só aparecem quando configuradas',
-            'Alterar uma regra cria nova revisão e torna o cálculo anterior obsoleto'
+            'Use Ver itens para conferir a composição de uma fonte.',
+            'Use Substituir esta fonte ou Retirar esta fonte se precisar corrigir a base.',
+            'Para trocar o arquivo completo, use Substituir arquivo inteiro. Importar ainda não publica o resultado financeiro.'
           ],
           media: [
-            { src: '/blog-assets/financial-closing/regras-calculo.svg', alt: 'Ilustração de regras opcionais e prévia de cálculo', caption: 'O cálculo usa somente as regras configuradas e revisadas por você.' }
+            {
+              src: '/blog-assets/financial-closing/base-editavel.png',
+              alt: 'Confira o impacto e as ações disponíveis para cada fonte.',
+              caption:
+                'Confira o impacto e as ações disponíveis para cada fonte. Dados fictícios na interface atual.'
+            }
           ]
         },
         {
-          title: '6. Calcule, confira a memória e confirme a cobertura',
+          title: '5. Configure e revise as regras do cálculo',
           prompt:
-            'Calcule o resultado e confira a memória agregada por fonte e participante. A cobertura confirma que as entradas publicadas foram conferidas. Se algo estiver errado, volte às fontes ou regras antes de enviar uma proposta.',
+            'Abra Revisar regras ou Ver regras. Selecione a fonte e confira as deduções, como uma taxa de plataforma do Marketplace. Configure somente as regras do negócio e confirme a revisão de cada fonte; quando não houver dedução, use Confirmar sem dedução.',
           bullets: [
-            'Confira valor bruto, reversões, deduções e Produtividade Líquida',
-            'A memória detalhada segue as permissões de acesso sensível',
-            'O cálculo pode ser refeito quando uma revisão válida o exigir'
-          ]
-        },
-        {
-          title: '7. Prepare a decisão de Produtividade e trate a Margem separadamente',
-          prompt:
-            'Crie uma proposta apenas quando os valores estiverem corretos. Enquanto estiver em rascunho, a proposta pode ser descartada para revisar dados e regras. A decisão de Margem continua independente da Produtividade.',
-          bullets: [
-            'Rascunho não emite obrigação nem transfere dinheiro',
-            'Revise participantes, valores e vencimentos antes de enviar',
-            'Envie para autorização somente quando a proposta estiver pronta'
+            'Confira percentual, base de cálculo e justificativa de cada regra.',
+            'Reservas e ajustes individuais são opcionais e devem ser explícitos.',
+            'Se a base ou uma regra mudar, revise as pendências e refaça o cálculo.'
           ],
           media: [
-            { src: '/blog-assets/financial-closing/decisao.svg', alt: 'Ilustração de uma proposta de produtividade em rascunho', caption: 'A proposta permanece em rascunho até você enviá-la para autorização.' }
+            {
+              src: '/blog-assets/financial-closing/regras-calculo.png',
+              alt: 'Cada fonte precisa ter suas regras revisadas.',
+              caption:
+                'Cada fonte precisa ter suas regras revisadas. Dados fictícios na interface atual.'
+            }
+          ]
+        },
+        {
+          title: '6. Calcule o resultado',
+          prompt:
+            'Com as fontes e regras prontas, continue para o resultado e clique em Calcular resultado. O sistema calcula os valores e registra a memória daquela revisão.',
+          bullets: [
+            'Confira o valor bruto, as reversões, as deduções e a Produtividade Líquida (PL).',
+            'PL é o resultado após a etapa por fonte; Valor a Receber mostra a destinação por participante.',
+            'Calcular permite revisar os números; a publicação financeira vem depois.'
+          ],
+          media: [
+            {
+              src: '/blog-assets/financial-closing/resultado.png',
+              alt: 'O resultado mostra valores agregados e a composição por fonte.',
+              caption:
+                'O resultado mostra valores agregados e a composição por fonte. Dados fictícios na interface atual.'
+            }
+          ]
+        },
+        {
+          title: '7. Revise divergências e composição',
+          prompt:
+            'Compare os totais com os arquivos de origem. Abra Regras e ajustes aplicados para entender as deduções e confira a Destinação da PL por participante. Se encontrar uma diferença, volte à base ou às regras, corrija e recalcule antes de publicar.',
+          bullets: [
+            'No exemplo, R$ 25.000,00 de valor bruto menos R$ 800,00 de taxa resultam em R$ 24.200,00 de PL.',
+            'Confira se todas as fontes esperadas foram tratadas e se os participantes recebem os valores corretos.',
+            'Detalhes protegidos exigem a permissão correspondente.'
+          ],
+          media: [
+            {
+              src: '/blog-assets/financial-closing/composicao.png',
+              alt: 'A memória explica a base e o efeito da dedução aplicada.',
+              caption:
+                'A memória explica a base e o efeito da dedução aplicada. Dados fictícios na interface atual.'
+            }
+          ]
+        },
+        {
+          title: '8. Publique financeiramente após a revisão',
+          prompt:
+            'Na tela de resultado, encontre Publicar cálculo revisado. Depois de conferir os números, marque Confirmo a publicação financeira deste cálculo e clique em Publicar financeiramente. Essa confirmação fixa o cálculo revisado e libera a criação das decisões.',
+          bullets: [
+            'Publique somente depois de resolver as divergências.',
+            'Importar fontes e calcular não substituem esta confirmação.',
+            'Após a confirmação, use Continuar para decisão.'
+          ],
+          media: [
+            {
+              src: '/blog-assets/financial-closing/publicacao-financeira.png',
+              alt: 'A confirmação financeira acontece após o cálculo e a revisão.',
+              caption:
+                'A confirmação financeira acontece após o cálculo e a revisão. Dados fictícios na interface atual.'
+            }
+          ]
+        },
+        {
+          title: '9. Prepare a decisão e acompanhe os próximos passos',
+          prompt:
+            'Revise os Valores a Receber, os participantes e os vencimentos antes de enviar a proposta de Produtividade para autorização. Trate a decisão de Margem separadamente, quando aplicável. Confira também a cobertura operacional das entradas quando o sistema solicitar.',
+          bullets: [
+            'Enquanto estiver em rascunho, a proposta ainda precisa de revisão.',
+            'A aprovação pode emitir obrigações financeiras; não executa transferência bancária.',
+            'Depois, acompanhe obrigações, pagamentos e conciliação no fluxo financeiro.'
+          ],
+          media: [
+            {
+              src: '/blog-assets/financial-closing/decisao.png',
+              alt: 'O resultado publicado segue para uma proposta revisável.',
+              caption:
+                'O resultado publicado segue para uma proposta revisável. Dados fictícios na interface atual.'
+            }
           ]
         }
       ]
@@ -470,81 +531,70 @@ const blogTemplateEntriesByLocale: Record<SupportedLocale, BlogTemplateEntry[]> 
       kind: 'guide',
       category: 'Financial closing',
       title: 'How to import a spreadsheet into Financial Closing',
-      excerpt:
-        'A safe workflow for turning one source worksheet into normalized items, reviewing exceptions, and recalculating the period.',
-      readTime: '7 min',
+      excerpt: 'From Excel to the editable base: four steps to import and check your sources.',
+      readTime: '3 min',
       stage: 'Operations',
-      audience: 'Administrators who prepare monthly closing from tabular sources',
+      audience: 'Anyone preparing monthly closing data',
       ctaLabel: 'Open financial closing',
       ctaPath: '/planning/financial-closings',
       heroPrompt:
-        'Assisted import reduces manual work without guessing identity, source, or financial rules. Configure sources and participants once, reuse the profile, and confirm only what has been validated.',
+        'Import your spreadsheet, review its sources, and check what was added to the closing period.',
       summaryPrompt:
-        'Use a CSV or XLSX file with one source worksheet per upload. Keep consolidation worksheets separate: they are external review material and must not be uploaded as a source. The raw file is used for the request; confirmation stores normalized items and protected provenance.',
+        'Have the Excel (.xlsx) file for the period ready. Each worksheet can represent a source, such as Direct Sales or Marketplace. Keep source data separate from summaries to avoid counting values twice.',
       takeaways: [
-        'Each period has its own canonical sources and participants',
-        'A profile reuses a stable sourceKey, never a version internal ID',
-        'Unknown rows block confirmation until they receive an explicit mapping'
+        'Check the period before importing.',
+        'Review sources and resolve pending issues.',
+        'Import prepares the working base; financial publication comes later.'
       ],
       sections: [
         {
-          title: '1. Start the period and configure its foundation',
+          title: '1. Open the period',
           prompt:
-            'Open Planning > Financial Closing and start the period you need. The flow creates the DEFAULT scope in BRL. Then add each source you will import and the participants that can receive items in that period.',
-          bullets: [
-            'Use a stable source key, such as BP_PAULISTA',
-            'Use a stable participant key, such as ANA_SILVA',
-            'Register only sources and participants that belong to the current period'
+            'Go to Planning > Financial Closing, choose Open or create period, and select the month and year matching your spreadsheet.',
+          media: [
+            {
+              src: '/blog-assets/financial-closing/competencia.png',
+              alt: 'Select the closing period. Screenshots show the Portuguese interface.',
+              caption: 'Select the closing period. Screenshots show the Portuguese interface.'
+            }
           ]
         },
         {
-          title: '2. Create or select an import profile',
+          title: '2. Select the file',
           prompt:
-            'In Import spreadsheet, open the mapping and enter the file column names: item key, amount, date, external reference, and, when present, the participant label from the spreadsheet. Save the profile using the source sourceKey. In another period, it can be used only if that same key is configured there.',
-          bullets: [
-            'A profile stores source structure and explicit participant mappings',
-            'BP_PAULISTA is resolved to the source in the current closing version',
-            'Do not copy CoBudget internal IDs into the spreadsheet'
+            'Choose Import workbook or Prepare new batch. Select the Excel file, confirm protected access, and choose Identify sources.',
+          media: [
+            {
+              src: '/blog-assets/financial-closing/importacao.png',
+              alt: 'A workbook is the Excel file you are importing.',
+              caption: 'A workbook is the Excel file you are importing.'
+            }
           ]
         },
         {
-          title: '3. Upload one source worksheet and validate the preview',
+          title: '3. Review sources and pending issues',
           prompt:
-            'Upload a CSV or one-sheet XLSX source and validate before confirmation. The preview reports accepted, ignored, and exception rows, as well as addition and reversal totals. Blank rows, totals, subtotals, and configured formula rows do not become financial items.',
+            'Choose which worksheets belong in the batch. When prompted, identify the amount, date, and participant columns. An import profile lets you reuse this configuration.',
           bullets: [
-            'A negative amount configured by the profile becomes a REVERSAL with absolute value',
-            'Review totals before confirming the batch',
-            'A consolidation worksheet does not replace source validation'
+            'Keep summary and support worksheets out of the calculation.',
+            'Match participants and check repeated or invalid rows.',
+            'Review totals before confirming their inclusion in the base.'
           ]
         },
         {
-          title: '4. Resolve unknown participants without automatic inference',
+          title: '4. Check the editable base',
           prompt:
-            'When an executor in the file has no explicit mapping, the preview displays an exception and confirmation remains blocked. Select the right canonical participant, add the mapping to the profile, save the new version, and validate again. The system never guesses people from similar names.',
+            'Return to the panel and check each source’s impact. Open its items to inspect the data; replace or remove the source if you need to correct it.',
           bullets: [
-            'Map every external label to its canonical participant',
-            'Review the new profile version before confirmation',
-            'If the person does not exist yet, add them to the period first'
-          ]
-        },
-        {
-          title: '5. Confirm, recalculate, and review the timeline',
-          prompt:
-            'Once validation is valid, confirm the normalized batch and recalculate. Confirmation invalidates the previous calculation, while recalculation updates the matrix, calculation memory, and operations center. Re-uploading the same file with the same idempotency key reuses the original result without duplicating items.',
-          bullets: [
-            'Review Net Productivity and source totals',
-            'Use the timeline to see confirmed import and calculation',
-            'Reconciliation coverage stays explicit: importing is not bank reconciliation'
-          ]
-        },
-        {
-          title: '6. What this workflow does not do',
-          prompt:
-            'Assisted import does not automatically interpret a multi-sheet workbook, create participants from approximate names, or reconcile an external consolidation. Upload each source worksheet separately and keep external consolidation as review material until differences are handled in the proper process.',
-          bullets: [
-            'No automatic interpretation of spreadsheet-specific rules',
-            'No bank transfer or payment during import',
-            'No hidden reconciliation differences'
+            'Next, review rules, calculate, and check the result.',
+            'Publish financially only after this review.'
+          ],
+          media: [
+            {
+              src: '/blog-assets/financial-closing/base-editavel.png',
+              alt: 'An included source can be checked and corrected. Fictitious data.',
+              caption: 'An included source can be checked and corrected. Fictitious data.'
+            }
           ]
         }
       ]

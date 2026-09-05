@@ -108,7 +108,7 @@
               <ul v-if="section.bullets?.length" class="content-template__list">
                 <li v-for="bullet in section.bullets" :key="bullet">{{ bullet }}</li>
               </ul>
-              <div v-if="section.media?.length" class="content-template__media-grid">
+              <div v-if="section.media?.length" class="content-template__media-grid" :class="{ 'content-template__media-grid--single': section.media.length === 1 }">
                 <figure
                   v-for="media in section.media"
                   :key="media.src"
@@ -405,6 +405,16 @@ function goToCta() {
   aspect-ratio: 16 / 10;
   object-fit: cover;
   object-position: left top;
+}
+
+.content-template__media-grid--single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.content-template__media-grid--single img {
+  aspect-ratio: auto;
+  height: auto;
+  object-fit: contain;
 }
 
 .content-template__media figcaption {
