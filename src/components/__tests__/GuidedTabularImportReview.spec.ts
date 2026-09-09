@@ -169,4 +169,13 @@ describe('GuidedTabularImportReview',()=>{
     await action!.trigger('click')
     expect(scrollIntoView).toHaveBeenCalledWith({behavior:'smooth',block:'center'})
   })
+
+  it('propagates a locally confirmed external-value acknowledgement to the workbook journey',async()=>{
+    const wrapper=mount(GuidedTabularImportReview,{props:{closing,file:new File(['synthetic'],'synthetic.xlsx'),profileId:'profile-1',sensitiveAccessConfirmed:true,participants:[]},global:{plugins:[vuetify]}})
+    ;(wrapper.vm as any).externalReferencesAcknowledgedHere=true
+    await (wrapper.vm as any).openReview();await flush()
+
+    expect(serviceMock.startGuidedImportReview).toHaveBeenCalledWith(closing,expect.any(File),'profile-1',true,undefined,true)
+    expect(wrapper.emitted('externalReferencesAcknowledged')).toHaveLength(1)
+  })
 })
