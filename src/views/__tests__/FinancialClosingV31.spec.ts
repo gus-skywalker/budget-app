@@ -79,6 +79,18 @@ describe('Financial closing V31 journey',()=>{
     await (wrapper.vm as any).openImport();expect(routerPush).toHaveBeenCalledWith({name:'closing-import-wizard',params:{closingId:'closing-1',reviewId:'new'}})
   })
 
+  it('keeps a no-activity source registered without presenting an empty base as ready',async()=>{
+    serviceMock.importReadiness.mockResolvedValue({data:{sources:[{sourceId:'source-1',sourceKey:'KNOWN_SOURCE',displayName:'Known source',sourceStatus:'REQUIRED_NO_ACTIVITY',expectation:'REQUIRED',allowedActions:['REOPEN_SOURCE'],detail:'No activity was declared.'}],readyToCalculate:false,blockingSourceKeys:[]}})
+    const wrapper=mount(FinancialClosingPanelView,{global:{plugins:[vuetify],stubs:{PageHeader:{props:['title'],template:'<header>{{title}}</header>'},AlertStrip:true}}});await flush();await flush()
+    expect(wrapper.text()).toContain('Competência sem dados de origem')
+    expect(wrapper.text()).toContain('A fonte continua cadastrada, mas foi declarada sem movimento')
+    expect(wrapper.text()).toContain('Sem movimento declarado')
+    expect(wrapper.text()).toContain('Reabrir para importar')
+    expect(wrapper.text()).toContain('Aguardando dados')
+    expect(wrapper.text()).not.toContain('Regras revisadas')
+    expect(serviceMock.deductionReadiness).not.toHaveBeenCalled()
+  })
+
   it('lists every lot, exposes its impact and removes one while invalidating the calculation',async()=>{
     const historical={...activeLot,publicationId:'publication-old',reviewId:'review-old',status:'CANCELLED',active:false,mutable:false,netImpact:0}
     serviceMock.list.mockResolvedValue({data:[{...closing,currentVersion:{...closing.currentVersion,inputRevision:2,calculatedRevision:2,calculationCurrent:true}}]})

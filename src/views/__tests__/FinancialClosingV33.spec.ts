@@ -31,6 +31,18 @@ describe('Financial closing V33 rules and result journey',()=>{
     await (wrapper.vm as any).confirmResolution();expect(serviceMock.resolveDeductionSource).toHaveBeenCalledWith(closing,{sourceId:'source-1',status:'NO_DEDUCTION_APPLIES',expectedRevision:0,justification:'Fonte conferida sem incidência'})
   })
 
+  it('explains that a no-activity-only competence has no source available for rules',async()=>{
+    serviceMock.deductionReadiness.mockResolvedValue({data:{sources:[],readyToCalculate:false,blockingSourceKeys:[]}})
+    serviceMock.previewProductivityDeductions.mockRejectedValue({response:{status:422}})
+    const wrapper=mount(FinancialClosingRulesView,{global:{plugins:[vuetify],stubs}});await flush();await flush()
+    expect(wrapper.text()).toContain('Nenhuma fonte disponível para regras')
+    expect(wrapper.text()).toContain('Uma declaração sem movimento mantém a fonte cadastrada')
+    expect(wrapper.text()).toContain('Voltar e importar dados')
+    expect(wrapper.text()).not.toContain('Adicionar dedução da fonte')
+    expect(wrapper.text()).not.toContain('Reservas opcionais')
+    expect(wrapper.text()).not.toContain('Continuar para o resultado')
+  })
+
   it('moves directly to the next unresolved source and does not offer to reconfirm a resolved one',async()=>{
     const resolved={...source,status:'NO_DEDUCTION_APPLIES',resolutionRevision:1,dependencyCurrent:true,detail:'A fonte foi revisada sem dedução.'}
     const pending={...source,sourceId:'source-2',sourceKey:'SOURCE_B',displayName:'Fonte B'}
