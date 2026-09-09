@@ -48,6 +48,17 @@ describe('Financial closing V31 journey',()=>{
     expect(wrapper.text()).toContain('Abrir ou criar uma competência');expect(wrapper.text()).toContain('Cada mês possui uma única apuração no escopo DEFAULT')
   })
 
+  it('lets an operator discard an unpublished active workbook review and keep the competence open',async()=>{
+    serviceMock.latestWorkbookReview.mockResolvedValue({status:200,data:{id:'review-1',status:'DRAFT',revision:4,selectedSourceCount:1,materializedSourceCount:0,publishedSourceCount:0,stagingExpiresAt:'2026-09-20T12:00:00Z',reviewExpiresAt:'2026-10-20T12:00:00Z',stagingExpired:false,reviewExpired:false,publicationId:null,pendingCodes:[],nextAction:'PREPARE_SOURCES'}})
+    const confirm=vi.spyOn(window,'confirm').mockReturnValue(true)
+    const wrapper=mount(FinancialClosingPanelView,{global:{plugins:[vuetify],stubs:{PageHeader:{props:['title'],template:'<header>{{title}}</header>'},AlertStrip:true}}});await flush();await flush()
+    expect(wrapper.text()).toContain('Descartar revisão')
+    await (wrapper.vm as any).discardActiveReview();await flush()
+    expect(serviceMock.abandonWorkbookReview).toHaveBeenCalledWith('closing-1','review-1',4)
+    expect((wrapper.vm as any).errorMessage).toContain('Você já pode importar outro workbook nesta mesma competência')
+    confirm.mockRestore()
+  })
+
   it('starts a clean successor version only after final financial publication and records a reason',async()=>{
     serviceMock.list.mockResolvedValue({data:[{...closing,currentVersion:{...closing.currentVersion,financialPublicationCurrent:true}}]})
     const prompt=vi.spyOn(window,'prompt').mockReturnValue('Arquivo de agosto foi incluído por engano')
