@@ -50,6 +50,8 @@ export interface TransactionView {
   reconciliationStatus?: string | null
   reconciliationMatchedBy?: string | null
   reconciliationConflictReason?: string | null
+  originalAmount?: number | null
+  originalCurrencyCode?: string | null
 }
 
 export interface LedgerEntryRequest {

@@ -449,6 +449,20 @@
         </section>
 
         <section
+          v-if="selectedTransactionDetails.originalAmount != null && selectedTransactionDetails.originalCurrencyCode"
+          class="transaction-details-section"
+        >
+          <span class="transaction-details-section__label">{{ $t('transactions.details.international_purchase') }}</span>
+          <div class="transaction-details-list">
+            <div class="transaction-details-list__row">
+              <span>{{ $t('transactions.details.original_amount') }}</span>
+              <strong>{{ formatMoney(selectedTransactionDetails.originalAmount, selectedTransactionDetails.originalCurrencyCode) }}</strong>
+            </div>
+          </div>
+          <p class="transaction-details-note">{{ $t('transactions.details.original_amount_note') }}</p>
+        </section>
+
+        <section
           v-if="selectedTransactionDetails.reconciliationStatus || selectedTransactionDetails.reconciliationConflictReason"
           class="transaction-details-section"
         >
