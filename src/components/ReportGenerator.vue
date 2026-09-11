@@ -216,7 +216,7 @@ export default {
     data() {
         return {
             reportType: this.initialReportType || 'expenses',
-            viewType: 'grouped',
+            viewType: 'normal',
             categoryIcons: {
                 groceries: 'mdi-cart',
                 utilities: 'mdi-lightbulb',
