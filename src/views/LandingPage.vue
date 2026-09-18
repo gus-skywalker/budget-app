@@ -418,11 +418,10 @@
             </article>
 
             <article class="plan-card plan-card-team">
-              <div v-if="!teamPromotion" class="plan-pill">{{ $t('landingPage.plans.teamPopular') }}</div>
               <div class="plan-tag plan-tag-team">{{ $t('landingPage.plans.teamTag') }}</div>
               <h3>{{ $t('landingPage.plans.teamName') }}</h3>
               <p class="plan-subtitle">{{ $t('landingPage.plans.teamSubtitle') }}</p>
-              <section v-if="teamPromotion?.campaignKey" class="landing-team-launch" aria-label="Oferta de lançamento do Team">
+              <section class="landing-team-launch" aria-label="Oferta de lançamento do Team">
                 <div class="landing-team-launch__glow"></div>
                 <div class="landing-team-launch__header">
                   <span>{{ $t('choosePlan.team_promo_eyebrow') }}</span>
@@ -430,7 +429,7 @@
                 </div>
                 <div class="landing-team-launch__offer">
                   <div class="landing-team-launch__discount">
-                    <strong>{{ teamPromotion.discountPercent }}<small>%</small></strong>
+                    <strong>{{ teamLaunchOffer.discountPercent }}<small>%</small></strong>
                     <span>OFF</span>
                   </div>
                   <div>
@@ -440,9 +439,8 @@
                   <p class="landing-team-launch__after">{{ $t('choosePlan.team_promo_after', { amount: formatCampaignAmount(planDetails.BUSINESS_MONTHLY.amount) }) }}</p>
                 </div>
                 <div class="landing-team-launch__footer">
-                  <div class="landing-team-launch__meter" aria-hidden="true"><span :style="teamPromotionProgressStyle"></span></div>
-                  <strong>{{ $t('choosePlan.team_promo_spots', { remaining: teamPromotion.remainingClaims, total: teamPromotion.maxClaims }) }}</strong>
-                  <span>{{ $t('choosePlan.team_promo_eligibility') }}</span>
+                  <strong>{{ $t('choosePlan.team_promo_slots', { total: teamLaunchOffer.maxClaims }) }}</strong>
+                  <span>{{ $t('choosePlan.team_promo_checkout') }}</span>
                 </div>
               </section>
               <div class="price-stack">
@@ -614,7 +612,7 @@ import { PLAN_DETAILS } from '@/constants/plans'
 import { useUserStore } from '@/plugins/userStore'
 import NotificationService from '@/services/NotificationService'
 import OnboardingOrchestrator from '@/services/OnboardingOrchestrator'
-import BillingPromotionService from '@/services/BillingPromotionService'
+import { TEAM_LAUNCH_OFFER } from '@/constants/teamLaunchOffer'
 import { parseApiError } from '@/utils/errorHandler'
 import { formatConvertedPriceFromBRL, resolvePricingCurrency } from '@/utils/pricing'
 
@@ -624,7 +622,7 @@ export default {
     return {
       isMenuOpen: false,
       planDetails: PLAN_DETAILS,
-      promotion: null,
+      teamLaunchOffer: TEAM_LAUNCH_OFFER,
       contactForm: {
         name: '',
         email: '',
@@ -765,37 +763,19 @@ export default {
     }
   },
   computed: {
-    teamPromotion() {
-      return this.promotion?.minimumPlanTier === 'TEAM' ? this.promotion : null
-    },
     teamPromotionPrice() {
-      const discount = Number(this.teamPromotion?.discountPercent || 0)
+      const discount = Number(this.teamLaunchOffer.discountPercent)
       const amount = Math.round(this.planDetails.BUSINESS_MONTHLY.amount * (1 - discount / 100) * 100) / 100
       return this.formatCampaignAmount(amount)
-    },
-    teamPromotionProgressStyle() {
-      const total = Number(this.teamPromotion?.maxClaims || 0)
-      const remaining = Number(this.teamPromotion?.remainingClaims || 0)
-      const reservedPercent = total > 0 ? ((total - remaining) / total) * 100 : 0
-      return { width: `${Math.max(0, Math.min(100, reservedPercent))}%` }
     }
   },
   mounted() {
     window.addEventListener('resize', this.handleResize)
-    this.loadPromotion()
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.handleResize)
   },
   methods: {
-    async loadPromotion() {
-      try {
-        const response = await BillingPromotionService.getCurrent(null, null)
-        this.promotion = response.data || null
-      } catch (error) {
-        console.warn('No active Team promotion data available', error)
-      }
-    },
     toggleMenu() {
       this.isMenuOpen = !this.isMenuOpen
     },
@@ -2177,21 +2157,6 @@ p {
 .landing-team-launch__footer strong {
   color: #fffdf7;
   font-size: 0.8rem;
-}
-
-.landing-team-launch__meter {
-  height: 5px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.landing-team-launch__meter span {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: #f8ca64;
-  transition: width 0.35s ease;
 }
 
 .plan-benefits {
