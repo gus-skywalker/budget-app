@@ -162,7 +162,7 @@
                 </v-card-title>
                 <v-card-text class="promo-dialog__content">
                     <p class="promo-dialog__lead">
-                        {{ t('checkout.promo_dialog_lead', { percent: promotionClaim?.discountPercent || 30 }) }}
+                        {{ t('checkout.promo_dialog_lead', { percent: promotionClaim?.discountPercent || 27 }) }}
                     </p>
                     <div class="promo-dialog__highlight">
                         <p>{{ t('checkout.promo_dialog_body') }}</p>
@@ -265,7 +265,7 @@ export default {
         const formattedPromoPrice = computed(() => {
             if (!planDetails.value || !promotionClaim.value?.discountPercent) return null
             const discount = Number(promotionClaim.value.discountPercent || 0)
-            const discountedAmount = Math.round(planDetails.value.amount * (100 - discount) / 100)
+            const discountedAmount = Math.round(planDetails.value.amount * (1 - discount / 100) * 100) / 100
             const billing = getBillingContext()
             return formatConvertedPriceFromBRL({
                 amountInBRL: discountedAmount,
@@ -414,6 +414,11 @@ export default {
                     billingAccountId: decision.billingAccountId || null,
                     correlationId: String(decision.correlationId || correlationId),
                     workspaceId,
+                }
+
+                if (plan !== 'BUSINESS_MONTHLY') {
+                    await startSubscriptionDispatch()
+                    return
                 }
 
                 try {

@@ -205,8 +205,8 @@
     "cancel_subscription_hint": "Vous perdrez l'accès aux fonctionnalités du plan payant à la fin de la période en cours",
     "change_plan_instructions": "Sélectionnez un nouveau forfait si vous souhaitez modifier votre abonnement. Vous serez redirigé vers le portail pour terminer la modification.",
     "plans": {
-      "monthly": "STARTER mensuel - 29,00 R$/mois",
-      "annual": "STARTER annuel - 297,00 R$/an"
+      "monthly": "STARTER mensuel - 39,90 R$/mois",
+      "annual": "STARTER annuel - 399,00 R$/an"
     },
     "change_to": "Passer à {plan}",
     "manage_subscription": "Gérer l'abonnement dans le portail",
@@ -1714,7 +1714,7 @@
     "save_percent": "Économisez {percent}",
     "equals_month": "Équivaut à {amount}/mois",
     "monthly_short": "Mensuel",
-    "annual_short_discount": "Annuel -20%",
+    "annual_short_discount": "Annuel — 2 mois offerts",
     "best_offer": "Meilleure offre",
     "promo_kicker": "Campagne de lancement",
     "promo_remaining": "places restantes",

@@ -50,22 +50,6 @@
       </div>
     </section>
 
-    <section v-if="promotion?.campaignKey" class="section-block promo-section">
-      <div class="shell">
-        <div class="promo-banner">
-          <div>
-            <span class="section-kicker">{{ $t('choosePlan.promo_kicker') }}</span>
-            <h2>{{ promotion.name }}</h2>
-            <p>{{ promotion.description }}</p>
-          </div>
-          <div class="promo-stats">
-            <strong>{{ promotion.remainingClaims }} / {{ promotion.maxClaims }}</strong>
-            <span>{{ $t('choosePlan.promo_remaining') }}</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
     <section id="plans" class="plans-section section-block">
       <div class="shell">
         <div class="section-heading">
@@ -147,6 +131,17 @@
 
           <article class="plan-card team">
             <div class="plan-ribbon">{{ $t('choosePlan.best_offer') }}</div>
+            <div v-if="teamPromotion?.campaignKey" class="promo-banner team-promo-banner">
+              <div>
+                <span class="section-kicker">{{ $t('choosePlan.promo_kicker') }}</span>
+                <h4>{{ teamPromotion.name }}</h4>
+                <p>{{ teamPromotion.description }}</p>
+              </div>
+              <div class="promo-stats">
+                <strong>{{ teamPromotion.remainingClaims }} / {{ teamPromotion.maxClaims }}</strong>
+                <span>{{ $t('choosePlan.promo_remaining') }}</span>
+              </div>
+            </div>
             <div class="plan-head">
               <span class="plan-tag team-tag">{{ $t('choosePlan.team_tag') }}</span>
               <h3>{{ $t('choosePlan.team_name') }}</h3>
@@ -295,6 +290,9 @@ export default {
     }
   },
   computed: {
+    teamPromotion() {
+      return this.promotion?.minimumPlanTier === 'TEAM' ? this.promotion : null
+    },
     isAuthenticated() {
       try {
         const userStore = useUserStore()
@@ -448,10 +446,6 @@ export default {
   padding: 72px 0 44px;
 }
 
-.promo-section {
-  padding-top: 0;
-}
-
 .promo-banner {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -464,9 +458,11 @@ export default {
   box-shadow: var(--shadow-soft);
 }
 
-.promo-banner h2 {
+.promo-banner h4 {
   margin-top: 8px;
   margin-bottom: 8px;
+  font-family: 'Manrope', sans-serif;
+  font-size: 1.05rem;
 }
 
 .promo-banner p {
@@ -493,6 +489,12 @@ export default {
 .promo-stats span {
   color: var(--ink-soft);
   font-weight: 600;
+}
+
+.team-promo-banner {
+  margin: 10px 10px 0;
+  padding: 18px;
+  border-radius: 20px;
 }
 
 .hero-grid {

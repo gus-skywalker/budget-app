@@ -232,8 +232,8 @@
     "cancel_subscription_hint": "Você perderá acesso aos recursos do plano pago no fim do período atual",
     "change_plan_instructions": "Selecione um novo plano caso deseje alterar sua assinatura. Você será redirecionado ao portal para concluir a mudança.",
     "plans": {
-      "monthly": "STARTER Mensal - R$29,00/mês",
-      "annual": "STARTER Anual - R$297,00/ano"
+      "monthly": "STARTER Mensal - R$39,90/mês",
+      "annual": "STARTER Anual - R$399,00/ano"
     },
     "change_to": "Alterar para {plan}",
     "manage_subscription": "Gerenciar Assinatura no Portal",
@@ -2555,7 +2555,7 @@
     "save_percent": "Economize {percent}",
     "equals_month": "Equivale a {amount}/mês",
     "monthly_short": "Mensal",
-    "annual_short_discount": "Anual -20%",
+    "annual_short_discount": "Anual — 2 meses grátis",
     "best_offer": "Melhor oferta",
     "promo_kicker": "Campanha de lançamento",
     "promo_remaining": "vagas restantes",

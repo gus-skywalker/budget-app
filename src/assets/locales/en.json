@@ -234,8 +234,8 @@
     "cancel_subscription_hint": "You will lose access to paid-plan features at the end of the current period",
     "change_plan_instructions": "Select a new plan if you wish to change your subscription. You will be redirected to the portal to complete the change.",
     "plans": {
-      "monthly": "STARTER Monthly - R$29.00/month",
-      "annual": "STARTER Annual - R$297.00/year"
+      "monthly": "STARTER Monthly - R$39.90/month",
+      "annual": "STARTER Annual - R$399.00/year"
     },
     "change_to": "Change to {plan}",
     "manage_subscription": "Manage Subscription in Portal",
@@ -2574,7 +2574,7 @@
     "save_percent": "Save {percent}",
     "equals_month": "Equivalent to {amount}/month",
     "monthly_short": "Monthly",
-    "annual_short_discount": "Annual -20%",
+    "annual_short_discount": "Annual — 2 months free",
     "best_offer": "Best offer",
     "promo_kicker": "Launch campaign",
     "promo_remaining": "slots remaining",
