@@ -1,4 +1,41 @@
 {
+  "launchOffer": {
+    "perMonth": "mes",
+    "perYear": "año",
+    "availability": "{total} suscripciones mensuales con condiciones de lanzamiento, compartidas entre Casa y Team.",
+    "promotionLabel": "Oferta de lanzamiento mensual",
+    "badge": "Lanzamiento · {percent}% de descuento",
+    "trial": "30 días gratis",
+    "sequence": "En tu primera suscripción, prueba durante {trial}. Después, paga {first} por la primera mensualidad. Las siguientes cuestan {regular}/mes.",
+    "conditions": "Prueba gratis en tu primera suscripción. Descuento sujeto a disponibilidad de la campaña.",
+    "annualOption": "Ver opción anual",
+    "annualBilling": "Cobro anual de {amount}, equivalente a {equivalent}/mes.",
+    "annualExclusion": "El descuento del {percent}% en la primera mensualidad no se aplica al plan anual.",
+    "casa": {
+      "tag": "Casa",
+      "name": "Starter Casa",
+      "headline": "Planifiquen la vida juntos, sin perder autonomía.",
+      "description": "Cuentas, metas y decisiones en un solo lugar para elegir el próximo paso con más claridad.",
+      "benefit1": "Hasta 4 personas y 4 espacios para organizar la vida familiar.",
+      "benefit2": "Cuentas conectadas mediante Open Finance y metas compartidas.",
+      "benefit3": "Simulaciones para evaluar compras, viajes y cambios antes de decidir.",
+      "benefit4": "Cada persona mantiene su contexto y participa en las decisiones conjuntas.",
+      "cta": "Probar Casa gratis durante 30 días",
+      "annualCta": "Elegir Casa anual"
+    },
+    "team": {
+      "tag": "Negocio",
+      "name": "Team",
+      "headline": "Ve el impacto de la próxima decisión en el flujo de caja de la empresa.",
+      "description": "Reúne a socios y equipo para planificar gastos, seguir resultados y evaluar el próximo paso.",
+      "benefit1": "Hasta 16 miembros y 6 espacios, con permisos por responsabilidad.",
+      "benefit2": "Flujo de caja y proyecciones para anticipar compromisos.",
+      "benefit3": "Cálculo y cierre financiero para seguir los resultados.",
+      "benefit4": "Open Finance e IA para apoyar el análisis de riesgos y oportunidades.",
+      "cta": "Probar Team gratis durante 30 días",
+      "annualCta": "Elegir Team anual"
+    }
+  },
   "welcome": "Bienvenido a la aplicación de presupuesto",
   "login": "Iniciar sesión",
   "logout": "Cerrar sesión",
@@ -205,8 +242,8 @@
     "cancel_subscription_hint": "Perderás acceso a funciones del plan pago al final del período actual",
     "change_plan_instructions": "Selecciona un nuevo plan si deseas cambiar tu suscripción. Serás redirigido al portal para completar el cambio.",
     "plans": {
-      "monthly": "STARTER Mensual - R$39.90/mes",
-      "annual": "STARTER Anual - R$399.00/año"
+      "monthly": "STARTER Mensual - R$55.00/mes",
+      "annual": "STARTER Anual - R$550.00/año"
     },
     "change_to": "Cambiar a {plan}",
     "manage_subscription": "Gestionar suscripción en el portal",
@@ -1753,11 +1790,11 @@
     "best_offer": "Mejor oferta",
     "promo_kicker": "Campaña de lanzamiento",
     "promo_remaining": "cupos restantes",
-    "team_promo_eyebrow": "Lanzamiento Team 27",
-    "team_promo_first_cycle": "durante el primer mes",
+    "team_promo_eyebrow": "Lanzamiento 27",
+    "team_promo_first_cycle": "en el primer cobro mensual pagado, después de 30 días gratis",
     "team_promo_after": "Después, {amount}/mes",
-    "team_promo_slots": "Limitado a las primeras {total} suscripciones Team",
-    "team_promo_checkout": "Exclusivo para Team mensual. La disponibilidad se confirma en el checkout.",
+    "team_promo_slots": "{total} plazas en total, compartidas entre Casa mensual y Team mensual",
+    "team_promo_checkout": "En tu primera suscripción: 30 días gratis y luego 27% en el primer cobro mensual pagado.",
     "segment_casa_eyebrow": "Camino Casa",
     "segment_casa_title": "Llegaste para planear la vida en conjunto.",
     "segment_casa_description": "Starter Casa está destacado para ver cuentas, metas y próximos pasos sin perder autonomía.",

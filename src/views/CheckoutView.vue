@@ -56,12 +56,18 @@
                             <v-chip color="var(--cb-accent)" variant="tonal" size="small">
                                 {{ t('checkout.promo_badge', { percent: promotionClaim.discountPercent }) }}
                             </v-chip>
+                            <p v-if="hasFreeTrial">
+                                <strong>{{ t('checkout.trial_title', { days: trialDays }) }}</strong>
+                                {{ t('checkout.trial_summary', { days: trialDays }) }}
+                            </p>
                             <p>
                                 {{ t('checkout.promo_summary', {
                                     amount: formattedPromoPrice,
                                     percent: promotionClaim.discountPercent,
                                 }) }}
                             </p>
+                            <p v-if="hasFreeTrial">{{ t('checkout.promo_after_trial', { amount: formattedPromoPrice }) }}</p>
+                            <p>{{ t('checkout.promo_recurring', { amount: formattedPlanPrice }) }}</p>
                         </div>
 
                         <div class="summary-meta">
@@ -165,7 +171,8 @@
                         {{ t('checkout.promo_dialog_lead', { percent: promotionClaim?.discountPercent || 27 }) }}
                     </p>
                     <div class="promo-dialog__highlight">
-                        <p>{{ t('checkout.promo_dialog_body') }}</p>
+                        <p v-if="hasFreeTrial">{{ t('checkout.promo_dialog_trial_body', { days: trialDays }) }}</p>
+                        <p v-else>{{ t('checkout.promo_dialog_body') }}</p>
                     </div>
                 </v-card-text>
                 <v-card-actions class="promo-dialog__actions">
@@ -218,6 +225,7 @@ export default {
         const promotionClaim = ref(null)
         const pendingCheckoutContext = ref(null)
         const promoFlowStarted = ref(false)
+        const trialDays = ref(0)
         const checkoutContext = computed(() => readBillingCheckoutContext())
 
         const readSelectedPlanFallback = () => {
@@ -273,6 +281,8 @@ export default {
                 uiLocale: billing.uiLocale
             })
         })
+
+        const hasFreeTrial = computed(() => trialDays.value > 0)
 
         const pollOperation = async (messageId) => {
             const startedAt = Date.now()
@@ -347,6 +357,7 @@ export default {
             promotionDialogOpen.value = false
             promotionClaim.value = null
             pendingCheckoutContext.value = null
+            trialDays.value = 0
 
             try {
                 const plan = resolveSelectedPlan()
@@ -394,6 +405,7 @@ export default {
                 )
 
                 const decision = decisionResp.data
+                trialDays.value = Number(decision.trialDays || 0)
                 if (decision.action === 'NOOP_ALREADY_PREMIUM') {
                     clearBillingCheckoutContext()
                     router.push({ name: 'dashboard' })
@@ -416,7 +428,7 @@ export default {
                     workspaceId,
                 }
 
-                if (plan !== 'BUSINESS_MONTHLY') {
+                if (!['MONTHLY', 'BUSINESS_MONTHLY'].includes(String(plan))) {
                     await startSubscriptionDispatch()
                     return
                 }
@@ -450,7 +462,9 @@ export default {
                     loading.value = false
                     return
                 } catch (promoError) {
-                    console.warn('Promotion claim unavailable, continuing checkout without discount', promoError)
+                    console.warn('Promotion claim unavailable; checkout was not started', promoError)
+                    error.value = t('checkout.promo_unavailable')
+                    return
                 }
 
                 await startSubscriptionDispatch()
@@ -487,6 +501,8 @@ export default {
             planDetails,
             formattedPlanPrice,
             formattedPromoPrice,
+            hasFreeTrial,
+            trialDays,
             operationStatus,
             initializeCheckout,
             continueCheckout,

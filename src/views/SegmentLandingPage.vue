@@ -127,6 +127,8 @@
 </template>
 
 <script>
+import { PLAN_DETAILS } from '@/constants/plans'
+
 const SEGMENT_CONTENT = {
   casa: {
     icon: 'mdi-home-heart',
@@ -162,7 +164,7 @@ const SEGMENT_CONTENT = {
       { icon: 'mdi-target-arrow', title: 'Metas deixam de ser desejo', description: 'Enxerguem o que muda no caminho até a casa, a viagem ou a tranquilidade que querem ter.' },
       { icon: 'mdi-weather-sunset-up', title: 'O próximo passo não pega ninguém de surpresa', description: 'Cenários transformam ansiedade sobre dinheiro em uma escolha visível.' }
     ],
-    closeEyebrow: 'Starter Casa · R$ 39,90 por mês',
+    closeEyebrow: `Starter Casa · ${PLAN_DETAILS.MONTHLY.displayPrice}`,
     closeTitle: 'Construam o próximo capítulo com o mesmo contexto.',
     closeDescription: 'Escolham o Starter Casa para trazer contas, metas e decisões para o mesmo lugar.',
     closeCta: 'Ver o Starter Casa',

@@ -41,6 +41,10 @@ export interface BillingPromotionClaimRequest {
 }
 
 export default {
+  getPublicCurrent() {
+    return axiosInterceptor.get<BillingPromotionResponse>('/billing/promotions/current/public')
+  },
+
   getCurrent(workspaceId?: string | null, billingAccountId?: string | null) {
     return axiosInterceptor.get<BillingPromotionResponse>('/billing/promotions/current', {
       params: {

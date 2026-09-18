@@ -1,4 +1,41 @@
 {
+  "launchOffer": {
+    "perMonth": "mois",
+    "perYear": "an",
+    "availability": "{total} abonnements mensuels au tarif de lancement, partagés entre Casa et Team.",
+    "promotionLabel": "Offre de lancement mensuelle",
+    "badge": "Lancement · {percent} % de réduction",
+    "trial": "30 jours gratuits",
+    "sequence": "Pour votre premier abonnement, profitez de {trial}. Payez ensuite {first} pour la première mensualité, puis {regular}/mois.",
+    "conditions": "Essai gratuit pour votre premier abonnement. Réduction sous réserve de disponibilité de l'offre.",
+    "annualOption": "Voir l'option annuelle",
+    "annualBilling": "Facturation annuelle de {amount}, soit l'équivalent de {equivalent}/mois.",
+    "annualExclusion": "La réduction de {percent} % sur la première mensualité ne s'applique pas au forfait annuel.",
+    "casa": {
+      "tag": "Maison",
+      "name": "Starter Casa",
+      "headline": "Planifiez votre vie ensemble, sans perdre votre autonomie.",
+      "description": "Comptes, objectifs et décisions au même endroit pour choisir la prochaine étape plus clairement.",
+      "benefit1": "Jusqu'à 4 personnes et 4 espaces pour organiser la vie de famille.",
+      "benefit2": "Comptes connectés via Open Finance et objectifs partagés.",
+      "benefit3": "Simulations pour évaluer achats, voyages et changements avant de décider.",
+      "benefit4": "Chacun conserve son contexte et participe aux décisions communes.",
+      "cta": "Essayer Casa gratuitement pendant 30 jours",
+      "annualCta": "Choisir Casa annuel"
+    },
+    "team": {
+      "tag": "Entreprise",
+      "name": "Team",
+      "headline": "Voyez l'effet de votre prochaine décision sur la trésorerie de l'entreprise.",
+      "description": "Réunissez associés et équipe pour planifier les dépenses, suivre les résultats et évaluer la prochaine étape.",
+      "benefit1": "Jusqu'à 16 membres et 6 espaces, avec des permissions par responsabilité.",
+      "benefit2": "Trésorerie et projections pour anticiper les engagements.",
+      "benefit3": "Calcul et clôture financière pour suivre les résultats.",
+      "benefit4": "Open Finance et IA pour analyser les risques et les opportunités.",
+      "cta": "Essayer Team gratuitement pendant 30 jours",
+      "annualCta": "Choisir Team annuel"
+    }
+  },
   "welcome": "Bienvenue dans l'application Budget",
   "login": "Connexion",
   "logout": "Déconnexion",
@@ -205,8 +242,8 @@
     "cancel_subscription_hint": "Vous perdrez l'accès aux fonctionnalités du plan payant à la fin de la période en cours",
     "change_plan_instructions": "Sélectionnez un nouveau forfait si vous souhaitez modifier votre abonnement. Vous serez redirigé vers le portail pour terminer la modification.",
     "plans": {
-      "monthly": "STARTER mensuel - 39,90 R$/mois",
-      "annual": "STARTER annuel - 399,00 R$/an"
+      "monthly": "STARTER mensuel - 55,00 R$/mois",
+      "annual": "STARTER annuel - 550,00 R$/an"
     },
     "change_to": "Passer à {plan}",
     "manage_subscription": "Gérer l'abonnement dans le portail",
@@ -1718,11 +1755,11 @@
     "best_offer": "Meilleure offre",
     "promo_kicker": "Campagne de lancement",
     "promo_remaining": "places restantes",
-    "team_promo_eyebrow": "Lancement Team 27",
-    "team_promo_first_cycle": "pour le premier mois",
+    "team_promo_eyebrow": "Lancement 27",
+    "team_promo_first_cycle": "sur la première mensualité payante, après 30 jours gratuits",
     "team_promo_after": "Puis {amount}/mois",
-    "team_promo_slots": "Limité aux {total} premières souscriptions Team",
-    "team_promo_checkout": "Exclusif au Team mensuel. La disponibilité est confirmée au checkout.",
+    "team_promo_slots": "{total} places au total, partagées entre Casa mensuel et Team mensuel",
+    "team_promo_checkout": "Lors de votre première souscription : 30 jours gratuits, puis 27 % sur votre première mensualité payante.",
     "segment_casa_eyebrow": "Parcours Maison",
     "segment_casa_title": "Vous êtes ici pour planifier la vie ensemble.",
     "segment_casa_description": "Starter Maison est mis en avant pour voir factures, objectifs et prochaines étapes sans perdre votre autonomie.",

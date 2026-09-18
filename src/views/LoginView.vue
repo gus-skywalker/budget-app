@@ -97,6 +97,15 @@
 
           <div v-if="!showSignupForm" class="auth-form">
             <form @submit.prevent="userLogin">
+              <button type="button" class="oauth-button" @click="loginWithGoogle">
+                <img src="https://cdn-icons-png.flaticon.com/512/281/281764.png" alt="Google" />
+                {{ $t('authentication.login.google_login') }}
+              </button>
+
+              <div class="divider">
+                <span>{{ $t('authentication.common.or') }}</span>
+              </div>
+
               <div class="form-group">
                 <label for="email">{{ $t('authentication.login.email_label') }}</label>
                 <input
@@ -155,15 +164,6 @@
                 </button>
               </div>
 
-              <div class="divider">
-                <span>{{ $t('authentication.common.or') }}</span>
-              </div>
-
-              <button class="oauth-button" @click.prevent="loginWithGoogle">
-                <img src="https://cdn-icons-png.flaticon.com/512/281/281764.png" alt="Google" />
-                {{ $t('authentication.login.google_login') }}
-              </button>
-
               <p class="switch-form">
                 {{ $t('authentication.login.not_registered') }}
                 <a href="#" @click.prevent="toggleForm(true)">{{ $t('authentication.login.create_account_link') }}</a>
@@ -177,12 +177,6 @@
               </p>
             </form>
 
-            <div v-if="isDev" class="test-buttons">
-              <h4>{{ $t('authentication.common.test_area_title') }}</h4>
-              <button @click="mockLogin('no-workspace')" class="btn-test">{{ $t('authentication.common.test_no_workspace') }}</button>
-              <button @click="mockLogin('single-workspace')" class="btn-test">{{ $t('authentication.common.test_single_workspace') }}</button>
-              <button @click="mockLogin('multiple-workspaces')" class="btn-test">{{ $t('authentication.common.test_multiple_workspaces') }}</button>
-            </div>
           </div>
 
           <div v-else class="auth-form">
@@ -272,7 +266,7 @@ import { updateI18nLocale } from '@/i18n'
 import { readInviteAcceptanceRedirect } from '@/utils/inviteAcceptanceContext'
 import AuthService from '@/services/AuthService'
 import OnboardingOrchestrator from '@/services/OnboardingOrchestrator'
-import { activateDevQuickAccess, clearDevQuickAccess } from '@/utils/devQuickAccess'
+import { clearDevQuickAccess } from '@/utils/devQuickAccess'
 import { parseApiError } from '@/utils/errorHandler'
 
 const router = useRouter()
@@ -291,7 +285,6 @@ const isLoading = ref(false)
 const showPassword = ref(false)
 const showConfirmPassword = ref(false)
 const emailValid = ref(true)
-const isDev = import.meta.env.DEV
 
 onMounted(() => {
   if (route.query && route.query.signup === 'true') {
@@ -412,101 +405,6 @@ const userLogin = async () => {
     }, 4000)
   } finally {
     isLoading.value = false
-  }
-}
-
-const mockLogin = (scenario) => {
-  const store = useUserStore()
-
-  const mockUser = {
-    id: 'dev-user-123',
-    username: 'Usuario Teste',
-    email: 'teste@email.com',
-    language: String(locale.value || 'pt').slice(0, 2).toUpperCase()
-  }
-
-  const mockToken = `dev.quick-access.${scenario}`
-
-  let workspaces = []
-
-  switch (scenario) {
-    case 'no-workspace':
-      workspaces = []
-      break
-    case 'single-workspace':
-      workspaces = [
-        {
-          workspaceId: 'workspace-1',
-          workspaceName: 'Meu Workspace',
-          role: 'ROLE_ADMIN'
-        }
-      ]
-      break
-    case 'multiple-workspaces':
-      workspaces = [
-        {
-          workspaceId: 'workspace-1',
-          workspaceName: 'Apuração · VIEWER',
-          role: 'ROLE_VIEWER'
-        },
-        {
-          workspaceId: 'workspace-2',
-          workspaceName: 'Apuração · MEMBER',
-          role: 'ROLE_MEMBER'
-        },
-        {
-          workspaceId: 'workspace-3',
-          workspaceName: 'Apuração · ADMIN sem acesso sensível',
-          role: 'ROLE_ADMIN'
-        },
-        {
-          workspaceId: 'workspace-4',
-          workspaceName: 'Apuração · ADMIN com acesso sensível',
-          role: 'ROLE_ADMIN'
-        }
-      ]
-      break
-    default:
-      workspaces = []
-  }
-
-  activateDevQuickAccess(scenario, workspaces)
-
-  store.$reset()
-  sessionStorage.removeItem('userStore')
-  localStorage.removeItem('userPreference')
-
-  store.setUser({
-    ...mockUser,
-    workspaces
-  })
-  store.setToken(mockToken)
-  store.setAuth(true)
-  store.setWorkspaces(workspaces)
-  store.clearCurrentWorkspace()
-
-  if (workspaces.length > 1) {
-    store.preferredMode = null
-    store.preferredWorkspaceId = null
-    store.savePreference()
-    router.push({ name: 'select-workspace', query: { redirect: '/dashboard' } })
-  } else if (workspaces.length === 1) {
-    store.setCurrentWorkspace(workspaces[0].workspaceId, workspaces[0].role, workspaces[0].workspaceName)
-    store.setPreferredWorkspace(workspaces[0].workspaceId)
-    loginSuccess.value = t('authentication.messages.login_success')
-    setTimeout(() => {
-      loginSuccess.value = null
-      router.push('/dashboard')
-    }, 800)
-  } else {
-    store.preferredMode = null
-    store.preferredWorkspaceId = null
-    store.savePreference()
-    loginSuccess.value = t('authentication.messages.login_success')
-    setTimeout(() => {
-      loginSuccess.value = null
-      router.push('/create-workspace')
-    }, 800)
   }
 }
 
@@ -798,8 +696,7 @@ body:has(.login-page) .main-content {
 .hero-copy h1,
 .form-title,
 .panel-switch,
-.btn,
-.test-buttons h4 {
+.btn {
   font-family: 'Manrope', sans-serif;
 }
 
@@ -1287,35 +1184,4 @@ input[type="checkbox"] {
   transform: scale(1.1);
 }
 
-.test-buttons {
-  padding: 16px;
-  background-color: rgba(182, 85, 31, 0.08);
-  border: 1px solid rgba(182, 85, 31, 0.18);
-  border-radius: 16px;
-  margin-top: 16px;
-}
-
-.test-buttons h4 {
-  margin: 0 0 12px 0;
-  font-size: 0.9rem;
-  color: #8e4318;
-}
-
-.btn-test {
-  display: block;
-  width: 100%;
-  margin: 6px 0;
-  padding: 8px 12px;
-  background: #fff;
-  border: 1px solid rgba(182, 85, 31, 0.18);
-  border-radius: 10px;
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-test:hover {
-  background: rgba(182, 85, 31, 0.08);
-  color: #172033;
-}
 </style>

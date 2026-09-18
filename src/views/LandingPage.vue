@@ -430,91 +430,14 @@
             </div>
           </div>
 
+          <p class="launch-availability">{{ $t('launchOffer.availability', { total: teamLaunchOffer.maxClaims }) }}</p>
           <div class="plans-grid">
             <article class="plan-card plan-card-starter">
-              <div class="plan-tag">{{ $t('landingPage.plans.starterTag') }}</div>
-              <h3>{{ $t('landingPage.plans.starterName') }}</h3>
-              <p class="plan-subtitle">{{ $t('landingPage.plans.starterSubtitle') }}</p>
-              <div class="price-stack">
-                <strong>{{ formatPlanDisplay(planDetails.MONTHLY) }}</strong>
-                <span>{{ formatPlanDisplay(planDetails.ANNUAL) }}</span>
-              </div>
-              <ul class="plan-benefits">
-                <li v-for="item in starterFeatures" :key="item">
-                  <v-icon size="18">mdi-check-circle</v-icon>
-                  <span>{{ $t(item) }}</span>
-                </li>
-              </ul>
-              <div class="plan-actions">
-                <button
-                  class="btn btn-primary"
-                  type="button"
-                  @click="redirectToCheckout('MONTHLY')"
-                >
-                  {{ $t('landingPage.plans.starterMonthly') }}
-                </button>
-                <button
-                  class="btn btn-secondary"
-                  type="button"
-                  @click="redirectToCheckout('ANNUAL')"
-                >
-                  {{ $t('landingPage.plans.starterAnnual') }}
-                </button>
-              </div>
+              <PlanOfferCard tier="casa" @select="redirectToCheckout" />
             </article>
 
             <article class="plan-card plan-card-team">
-              <div class="plan-tag plan-tag-team">{{ $t('landingPage.plans.teamTag') }}</div>
-              <h3>{{ $t('landingPage.plans.teamName') }}</h3>
-              <p class="plan-subtitle">{{ $t('landingPage.plans.teamSubtitle') }}</p>
-              <section class="landing-team-launch" aria-label="Oferta de lançamento do Team">
-                <div class="landing-team-launch__glow"></div>
-                <div class="landing-team-launch__header">
-                  <span>{{ $t('choosePlan.team_promo_eyebrow') }}</span>
-                  <span><v-icon size="15">mdi-lightning-bolt</v-icon>{{ $t('choosePlan.promo_kicker') }}</span>
-                </div>
-                <div class="landing-team-launch__offer">
-                  <div class="landing-team-launch__discount">
-                    <strong>{{ teamLaunchOffer.discountPercent }}<small>%</small></strong>
-                    <span>OFF</span>
-                  </div>
-                  <div>
-                    <strong>{{ teamPromotionPrice }}</strong>
-                    <p>{{ $t('choosePlan.team_promo_first_cycle') }}</p>
-                  </div>
-                  <p class="landing-team-launch__after">{{ $t('choosePlan.team_promo_after', { amount: formatCampaignAmount(planDetails.BUSINESS_MONTHLY.amount) }) }}</p>
-                </div>
-                <div class="landing-team-launch__footer">
-                  <strong>{{ $t('choosePlan.team_promo_slots', { total: teamLaunchOffer.maxClaims }) }}</strong>
-                  <span>{{ $t('choosePlan.team_promo_checkout') }}</span>
-                </div>
-              </section>
-              <div class="price-stack">
-                <strong>{{ formatPlanDisplay(planDetails.BUSINESS_MONTHLY) }}</strong>
-                <span>{{ formatPlanDisplay(planDetails.BUSINESS_ANNUAL) }}</span>
-              </div>
-              <ul class="plan-benefits">
-                <li v-for="item in teamFeatures" :key="item">
-                  <v-icon size="18">mdi-check-circle</v-icon>
-                  <span>{{ $t(item) }}</span>
-                </li>
-              </ul>
-              <div class="plan-actions">
-                <button
-                  class="btn btn-primary"
-                  type="button"
-                  @click="redirectToCheckout('BUSINESS_MONTHLY')"
-                >
-                  {{ $t('landingPage.plans.teamMonthly') }}
-                </button>
-                <button
-                  class="btn btn-dark-outline"
-                  type="button"
-                  @click="redirectToCheckout('BUSINESS_ANNUAL')"
-                >
-                  {{ $t('landingPage.plans.teamAnnual') }}
-                </button>
-              </div>
+              <PlanOfferCard tier="team" @select="redirectToCheckout" />
             </article>
           </div>
         </div>
@@ -654,20 +577,19 @@
 </template>
 
 <script>
-import { PLAN_DETAILS } from '@/constants/plans'
+import PlanOfferCard from '@/components/PlanOfferCard.vue'
 import { useUserStore } from '@/plugins/userStore'
 import NotificationService from '@/services/NotificationService'
 import OnboardingOrchestrator from '@/services/OnboardingOrchestrator'
 import { TEAM_LAUNCH_OFFER } from '@/constants/teamLaunchOffer'
 import { parseApiError } from '@/utils/errorHandler'
-import { formatConvertedPriceFromBRL, resolvePricingCurrency } from '@/utils/pricing'
 
 export default {
   name: 'LandingPage',
+  components: { PlanOfferCard },
   data() {
     return {
       isMenuOpen: false,
-      planDetails: PLAN_DETAILS,
       teamLaunchOffer: TEAM_LAUNCH_OFFER,
       contactForm: {
         name: '',
@@ -791,28 +713,6 @@ export default {
         { icon: 'mdi-server-security', labelKey: 'landingPage.security.item3' },
         { icon: 'mdi-account-key-outline', labelKey: 'landingPage.security.item4' }
       ],
-      starterFeatures: [
-        'choosePlan.starter_feature_1',
-        'choosePlan.starter_feature_2',
-        'choosePlan.starter_feature_3',
-        'choosePlan.starter_feature_4',
-        'choosePlan.starter_feature_5'
-      ],
-      teamFeatures: [
-        'choosePlan.team_feature_1',
-        'choosePlan.team_feature_2',
-        'choosePlan.team_feature_3',
-        'choosePlan.team_feature_4',
-        'choosePlan.team_feature_5',
-        'choosePlan.team_feature_6'
-      ]
-    }
-  },
-  computed: {
-    teamPromotionPrice() {
-      const discount = Number(this.teamLaunchOffer.discountPercent)
-      const amount = Math.round(this.planDetails.BUSINESS_MONTHLY.amount * (1 - discount / 100) * 100) / 100
-      return this.formatCampaignAmount(amount)
     }
   },
   mounted() {
@@ -914,44 +814,6 @@ export default {
       } finally {
         this.isSubmitting = false
       }
-    },
-    getFormattingLocale() {
-      const uiLocale = this.$i18n?.locale || 'pt'
-      const localeMap = {
-        pt: 'pt-BR',
-        en: 'en-US',
-        es: 'es-ES',
-        fr: 'fr-FR'
-      }
-      return localeMap[uiLocale] || 'pt-BR'
-    },
-    formatPlanDisplay(plan) {
-      const amount = Number(plan?.amount || 0)
-      const browserLocale = typeof navigator !== 'undefined' ? navigator.language : null
-      const currency = resolvePricingCurrency({
-        locale: this.$i18n?.locale,
-        browserLocale
-      })
-      const periodKey =
-        plan?.billingPeriod === 'year' ? 'landingPage.plans.perYear' : 'landingPage.plans.perMonth'
-      const formattedAmount = formatConvertedPriceFromBRL({
-        amountInBRL: amount,
-        targetCurrency: currency,
-        uiLocale: this.getFormattingLocale()
-      })
-      return `${formattedAmount} / ${this.$t(periodKey)}`
-    },
-    formatCampaignAmount(amount) {
-      const browserLocale = typeof navigator !== 'undefined' ? navigator.language : null
-      const currency = resolvePricingCurrency({
-        locale: this.$i18n?.locale,
-        browserLocale
-      })
-      return formatConvertedPriceFromBRL({
-        amountInBRL: Number(amount || 0),
-        targetCurrency: currency,
-        uiLocale: this.getFormattingLocale()
-      })
     },
     async redirectToCheckout(plan) {
       const userStore = useUserStore()
@@ -2104,6 +1966,7 @@ p {
 }
 
 .plan-card {
+  min-width: 0;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -2180,142 +2043,6 @@ p {
 
 .plan-card-team .price-stack span {
   color: var(--ink-soft);
-}
-
-.landing-team-launch {
-  position: relative;
-  overflow: hidden;
-  display: grid;
-  gap: 16px;
-  padding: 20px;
-  border: 1px solid rgba(247, 203, 101, 0.62);
-  border-radius: 22px;
-  background: linear-gradient(135deg, #153f45 0%, #1f646a 58%, #244c54 100%);
-  color: #fffdf7;
-  box-shadow: 0 18px 30px rgba(21, 63, 69, 0.18);
-}
-
-.landing-team-launch__glow {
-  position: absolute;
-  top: -124px;
-  right: -62px;
-  width: 220px;
-  height: 220px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 221, 130, 0.42), transparent 67%);
-}
-
-.landing-team-launch__header,
-.landing-team-launch__offer,
-.landing-team-launch__footer {
-  position: relative;
-  z-index: 1;
-}
-
-.landing-team-launch__header,
-.landing-team-launch__offer {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.landing-team-launch__header {
-  justify-content: space-between;
-}
-
-.landing-team-launch__header span {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  color: #ffe2a0;
-  font-family: 'Manrope', sans-serif;
-  font-size: 0.69rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.landing-team-launch__header span:last-child {
-  padding: 6px 9px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.1);
-  color: #fffdf7;
-  letter-spacing: 0.03em;
-}
-
-.landing-team-launch__discount {
-  display: grid;
-  width: 82px;
-  min-width: 82px;
-  min-height: 82px;
-  place-content: center;
-  border-radius: 19px;
-  background: #f8ca64;
-  color: #173f45;
-  text-align: center;
-}
-
-.landing-team-launch__discount strong {
-  font-family: 'Manrope', sans-serif;
-  font-size: 2rem;
-  line-height: 0.9;
-  letter-spacing: -0.09em;
-}
-
-.landing-team-launch__discount small {
-  font-size: 0.9rem;
-  letter-spacing: -0.04em;
-}
-
-.landing-team-launch__discount span {
-  margin-top: 5px;
-  font-family: 'Manrope', sans-serif;
-  font-size: 0.67rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-}
-
-.landing-team-launch__offer > div:nth-child(2) strong {
-  display: block;
-  color: #fffdf7;
-  font-family: 'Manrope', sans-serif;
-  font-size: 1.7rem;
-  line-height: 1;
-  letter-spacing: -0.06em;
-}
-
-.landing-team-launch__offer p,
-.landing-team-launch__footer span {
-  color: rgba(255, 253, 247, 0.74);
-  font-size: 0.82rem;
-  line-height: 1.35;
-}
-
-.landing-team-launch__offer > div:nth-child(2) p {
-  margin: 6px 0 0;
-}
-
-.landing-team-launch__after {
-  margin: 0 0 0 auto;
-  max-width: 94px;
-  padding-left: 12px;
-  border-left: 1px solid rgba(255, 255, 255, 0.18);
-}
-
-.landing-team-launch__footer {
-  display: grid;
-  gap: 7px;
-}
-
-.landing-team-launch__footer strong,
-.landing-team-launch__footer span {
-  display: block;
-}
-
-.landing-team-launch__footer strong {
-  color: #fffdf7;
-  font-size: 0.8rem;
 }
 
 .plan-benefits {
@@ -2631,5 +2358,16 @@ p {
   .footer-link {
     width: 100%;
   }
+}
+.launch-availability {
+  margin: 0 0 24px;
+  padding: 14px 20px;
+  border-radius: 16px;
+  border: 1px solid rgba(32, 95, 99, 0.2);
+  background: rgba(32, 95, 99, 0.06);
+  color: #173f4b;
+  font-weight: 700;
+  line-height: 1.5;
+  text-align: center;
 }
 </style>
