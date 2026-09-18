@@ -137,6 +137,52 @@
         </div>
       </section>
 
+      <section id="entry-points" class="entry-points-section">
+        <div class="shell">
+          <div class="section-heading centered-heading">
+            <span class="section-kicker">{{ $t('landingPage.entryPoints.kicker') }}</span>
+            <h2>{{ $t('landingPage.entryPoints.title') }}</h2>
+            <p class="section-intro narrow">{{ $t('landingPage.entryPoints.subtitle') }}</p>
+          </div>
+
+          <div class="entry-points-grid">
+            <article class="entry-point-card entry-point-card--casa">
+              <div class="entry-point-card__topline">
+                <span><v-icon size="18">mdi-home-heart</v-icon>{{ $t('landingPage.entryPoints.casaTag') }}</span>
+                <v-icon size="22">mdi-arrow-top-right</v-icon>
+              </div>
+              <h3>{{ $t('landingPage.entryPoints.casaTitle') }}</h3>
+              <p>{{ $t('landingPage.entryPoints.casaDescription') }}</p>
+              <ul>
+                <li>{{ $t('landingPage.entryPoints.casaPoint1') }}</li>
+                <li>{{ $t('landingPage.entryPoints.casaPoint2') }}</li>
+              </ul>
+              <button class="entry-point-card__action" type="button" @click="navigateTo('landing-casa')">
+                {{ $t('landingPage.entryPoints.casaCta') }}
+                <v-icon size="18">mdi-arrow-right</v-icon>
+              </button>
+            </article>
+
+            <article class="entry-point-card entry-point-card--negocio">
+              <div class="entry-point-card__topline">
+                <span><v-icon size="18">mdi-chart-timeline-variant</v-icon>{{ $t('landingPage.entryPoints.negocioTag') }}</span>
+                <v-icon size="22">mdi-arrow-top-right</v-icon>
+              </div>
+              <h3>{{ $t('landingPage.entryPoints.negocioTitle') }}</h3>
+              <p>{{ $t('landingPage.entryPoints.negocioDescription') }}</p>
+              <ul>
+                <li>{{ $t('landingPage.entryPoints.negocioPoint1') }}</li>
+                <li>{{ $t('landingPage.entryPoints.negocioPoint2') }}</li>
+              </ul>
+              <button class="entry-point-card__action" type="button" @click="navigateTo('landing-negocio')">
+                {{ $t('landingPage.entryPoints.negocioCta') }}
+                <v-icon size="18">mdi-arrow-right</v-icon>
+              </button>
+            </article>
+          </div>
+        </div>
+      </section>
+
       <section class="section-offset section-block product-moments-section">
         <div class="shell">
           <div class="section-heading centered-heading">
@@ -1047,6 +1093,119 @@ export default {
 .overlay-detail-status-test {
   color: #1f7a45;
   font-weight: 700;
+}
+
+.entry-points-section {
+  background: #172033;
+  color: #fff;
+  padding: 92px 0;
+}
+
+.entry-points-section .section-kicker { color: #f6c37c; }
+
+.entry-points-section .section-heading h2 { color: #fff; }
+
+.entry-points-section .section-intro { color: #bdc8d6; }
+
+.entry-points-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 40px;
+}
+
+.entry-point-card {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 25px;
+  display: flex;
+  flex-direction: column;
+  min-height: 350px;
+  padding: 30px;
+}
+
+.entry-point-card--casa {
+  background: linear-gradient(145deg, rgba(201, 94, 34, 0.31), rgba(94, 44, 18, 0.34));
+}
+
+.entry-point-card--negocio {
+  background: linear-gradient(145deg, rgba(20, 125, 118, 0.38), rgba(10, 59, 61, 0.42));
+}
+
+.entry-point-card__topline {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.entry-point-card__topline > span {
+  align-items: center;
+  color: #fff4e7;
+  display: inline-flex;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.73rem;
+  font-weight: 800;
+  gap: 7px;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.entry-point-card h3 {
+  color: #fff;
+  font-family: 'Manrope', sans-serif;
+  font-size: clamp(1.75rem, 3vw, 2.45rem);
+  letter-spacing: -0.045em;
+  line-height: 1.05;
+  margin: 45px 0 14px;
+  max-width: 480px;
+}
+
+.entry-point-card p {
+  color: #e1e8ef;
+  font-size: 1rem;
+  line-height: 1.62;
+  margin: 0;
+  max-width: 490px;
+}
+
+.entry-point-card ul {
+  color: #f6f9fb;
+  display: grid;
+  font-size: 0.88rem;
+  gap: 8px;
+  line-height: 1.45;
+  list-style: none;
+  margin: 25px 0;
+  padding: 0;
+}
+
+.entry-point-card li::before {
+  color: #f6c37c;
+  content: '•';
+  font-size: 1.15rem;
+  margin-right: 8px;
+}
+
+.entry-point-card__action {
+  align-items: center;
+  background: #fff;
+  border: 0;
+  border-radius: 999px;
+  color: #182033;
+  cursor: pointer;
+  display: inline-flex;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 800;
+  gap: 8px;
+  margin-top: auto;
+  padding: 13px 17px;
+  transition: transform .2s ease, box-shadow .2s ease;
+  width: fit-content;
+}
+
+.entry-point-card__action:hover {
+  box-shadow: 0 10px 24px rgba(0, 0, 0, .18);
+  transform: translateY(-2px);
 }
 
 @media (max-width: 900px) {
@@ -2384,6 +2543,10 @@ p {
   .testimonial-grid {
     grid-template-columns: 1fr;
   }
+
+  .entry-points-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 760px) {
@@ -2418,6 +2581,15 @@ p {
   .product-moments-grid,
   .timeline-grid {
     grid-template-columns: 1fr;
+  }
+
+  .entry-points-section {
+    padding: 72px 0;
+  }
+
+  .entry-point-card {
+    min-height: 0;
+    padding: 25px;
   }
 
   .hero-point {

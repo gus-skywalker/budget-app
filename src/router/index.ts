@@ -258,6 +258,18 @@ const router = createRouter({
       component: LandingPage
     },
     {
+      path: '/para-casa',
+      name: 'landing-casa',
+      component: () => import('@/views/SegmentLandingPage.vue'),
+      props: { segment: 'casa' }
+    },
+    {
+      path: '/para-negocio',
+      name: 'landing-negocio',
+      component: () => import('@/views/SegmentLandingPage.vue'),
+      props: { segment: 'negocio' }
+    },
+    {
       path: '/blog',
       name: 'blog',
       component: BlogView

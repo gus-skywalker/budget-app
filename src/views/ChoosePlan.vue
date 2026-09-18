@@ -56,6 +56,16 @@
           <span class="section-kicker">{{ $t('choosePlan.best_offer') }}</span>
           <h2>{{ $t('choosePlan.title') }}</h2>
           <p>{{ $t('choosePlan.subtitle') }}</p>
+          <div v-if="activeSegment" class="segment-context" :class="`segment-context--${activeSegment}`">
+            <div class="segment-context__icon">
+              <v-icon size="20">{{ activeSegment === 'casa' ? 'mdi-home-heart' : 'mdi-chart-timeline-variant' }}</v-icon>
+            </div>
+            <div>
+              <span>{{ $t(`choosePlan.segment_${activeSegment}_eyebrow`) }}</span>
+              <strong>{{ $t(`choosePlan.segment_${activeSegment}_title`) }}</strong>
+              <p>{{ $t(`choosePlan.segment_${activeSegment}_description`) }}</p>
+            </div>
+          </div>
         </div>
 
         <div class="plans-grid">
@@ -89,7 +99,7 @@
             </div>
           </article>
 
-          <article class="plan-card starter">
+          <article class="plan-card starter" :class="{ 'plan-card--segment-focus': activeSegment === 'casa' }">
             <div class="plan-head">
               <span class="plan-tag starter-tag">{{ $t('choosePlan.starter_tag') }}</span>
               <h3>{{ $t('choosePlan.starter_name') }}</h3>
@@ -129,7 +139,7 @@
             </div>
           </article>
 
-          <article class="plan-card team">
+          <article class="plan-card team" :class="{ 'plan-card--segment-focus': activeSegment === 'negocio' }">
             <div class="plan-ribbon">{{ $t('choosePlan.best_offer') }}</div>
             <section class="team-launch" aria-label="Oferta de lançamento do Team">
               <div class="team-launch__glow"></div>
@@ -304,6 +314,10 @@ export default {
     }
   },
   computed: {
+    activeSegment() {
+      const segment = this.$route?.query?.segment
+      return segment === 'casa' || segment === 'negocio' ? segment : null
+    },
     teamPromotionPrice() {
       const discount = Number(this.teamLaunchOffer.discountPercent)
       const discountedAmount = Math.round(this.planDetails.BUSINESS_MONTHLY.amount * (1 - discount / 100) * 100) / 100
@@ -759,6 +773,70 @@ p {
   margin-bottom: 34px;
 }
 
+.segment-context {
+  align-items: center;
+  background: rgba(182, 85, 31, 0.08);
+  border: 1px solid rgba(182, 85, 31, 0.18);
+  border-radius: 18px;
+  display: flex;
+  gap: 13px;
+  margin-top: 10px;
+  max-width: 650px;
+  padding: 14px 16px;
+  text-align: left;
+}
+
+.segment-context--negocio {
+  background: rgba(32, 95, 99, 0.08);
+  border-color: rgba(32, 95, 99, 0.18);
+}
+
+.segment-context__icon {
+  align-items: center;
+  background: rgba(182, 85, 31, 0.12);
+  border-radius: 12px;
+  color: var(--brand-strong);
+  display: flex;
+  flex: 0 0 auto;
+  height: 40px;
+  justify-content: center;
+  width: 40px;
+}
+
+.segment-context--negocio .segment-context__icon {
+  background: rgba(32, 95, 99, 0.12);
+  color: var(--accent-strong);
+}
+
+.segment-context span,
+.segment-context strong,
+.segment-context p {
+  display: block;
+}
+
+.segment-context span {
+  color: var(--brand-strong);
+  font-size: 0.69rem;
+  font-weight: 850;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.segment-context--negocio span { color: var(--accent-strong); }
+
+.segment-context strong {
+  color: var(--ink);
+  font-size: 0.9rem;
+  margin-top: 2px;
+}
+
+.segment-context p {
+  color: var(--ink-soft);
+  font-size: 0.79rem;
+  line-height: 1.4;
+  margin-top: 2px;
+}
+
 .plans-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: stretch;
@@ -786,6 +864,17 @@ p {
   color: var(--ink);
   border-color: rgba(32, 95, 99, 0.14);
   box-shadow: var(--shadow);
+}
+
+.plan-card--segment-focus {
+  border-color: var(--brand);
+  box-shadow: 0 24px 48px rgba(182, 85, 31, 0.18);
+  transform: translateY(-8px);
+}
+
+.plan-card.team.plan-card--segment-focus {
+  border-color: var(--accent-strong);
+  box-shadow: 0 24px 48px rgba(32, 95, 99, 0.2);
 }
 
 .plan-card.team p,
@@ -1048,6 +1137,10 @@ p {
   .ai-summary-card {
     border-radius: 22px;
     padding: 20px;
+  }
+
+  .plan-card--segment-focus {
+    transform: none;
   }
 
   .plan-cta {
