@@ -1238,6 +1238,43 @@
     "automation_apply_error": "Não foi possível aplicar a automação.",
     "automation_preview_error": "Não foi possível calcular a prévia da automação."
   },
+  "trustContext": {
+    "eyebrow": "Transparência de acesso",
+    "commitments_label": "Compromissos de acesso",
+    "badges": {
+      "read_only": "Dados de leitura",
+      "no_money_movement": "Sem movimentação financeira",
+      "user_control": "Você controla o acesso"
+    },
+    "details": {
+      "accesses": "O que o CoBudget acessa",
+      "does_not_access": "O que o CoBudget não acessa",
+      "control": "Como você mantém o controle"
+    },
+    "contexts": {
+      "banking": {
+        "title": "Entenda esta conexão antes de continuar",
+        "summary": "O CoBudget usa dados financeiros para leitura e planejamento — nunca para movimentar dinheiro.",
+        "accesses": "Saldos, extratos e identificação da conta que você selecionar durante o consentimento.",
+        "does_not_access": "Senha do banco, token pessoal, transferências, pagamentos ou alterações na sua conta.",
+        "control": "Você autoriza o acesso e pode desconectar a instituição nas configurações a qualquer momento."
+      },
+      "workspace": {
+        "title": "Permissões claras dentro do seu espaço",
+        "summary": "Dados sensíveis seguem as permissões e o nível de compartilhamento definido para o workspace.",
+        "accesses": "Apenas as informações compartilhadas ou necessárias para o planejamento do espaço.",
+        "does_not_access": "Dados privados de outras pessoas que não tenham sido compartilhados com a sua permissão.",
+        "control": "Administradores definem acessos do espaço; cada titular pode ajustar o compartilhamento das suas conexões."
+      },
+      "import": {
+        "title": "Seu arquivo continua sob seu controle",
+        "summary": "A leitura serve para revisar e planejar; ela não cria movimentações financeiras por conta própria.",
+        "accesses": "O workbook que você selecionar, somente para identificar fontes e preparar a revisão.",
+        "does_not_access": "Outros arquivos do dispositivo, nem qualquer conta bancária ou movimentação financeira.",
+        "control": "Você confirma a leitura, escolhe as fontes do lote e pode abandonar a revisão antes da publicação."
+      }
+    }
+  },
   "openFinance": {
     "panel": {
       "connect_banks": "Conectar bancos",

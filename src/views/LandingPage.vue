@@ -409,6 +409,7 @@
               <span>{{ $t(item.labelKey) }}</span>
             </article>
           </div>
+          <TrustContextCard context="banking" class="landing-trust-card" />
         </div>
       </section>
 
@@ -578,6 +579,7 @@
 
 <script>
 import PlanOfferCard from '@/components/PlanOfferCard.vue'
+import TrustContextCard from '@/components/TrustContextCard.vue'
 import { useUserStore } from '@/plugins/userStore'
 import NotificationService from '@/services/NotificationService'
 import OnboardingOrchestrator from '@/services/OnboardingOrchestrator'
@@ -586,7 +588,7 @@ import { parseApiError } from '@/utils/errorHandler'
 
 export default {
   name: 'LandingPage',
-  components: { PlanOfferCard },
+  components: { PlanOfferCard, TrustContextCard },
   data() {
     return {
       isMenuOpen: false,
@@ -832,6 +834,10 @@ export default {
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Source+Sans+3:wght@400;500;600;700&display=swap');
+
+.landing-trust-card {
+  margin-top: 22px;
+}
 
 .hero-section-test {
   padding: 56px 0 88px;

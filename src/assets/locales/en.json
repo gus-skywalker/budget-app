@@ -1248,6 +1248,43 @@
     "automation_preview_error": "Could not calculate the automation preview."
   },
 
+  "trustContext": {
+    "eyebrow": "Access transparency",
+    "commitments_label": "Access commitments",
+    "badges": {
+      "read_only": "Read-only data",
+      "no_money_movement": "No money movement",
+      "user_control": "You control access"
+    },
+    "details": {
+      "accesses": "What CoBudget accesses",
+      "does_not_access": "What CoBudget does not access",
+      "control": "How you stay in control"
+    },
+    "contexts": {
+      "banking": {
+        "title": "Understand this connection before continuing",
+        "summary": "CoBudget uses financial data for reading and planning — never to move money.",
+        "accesses": "Balances, statements, and identification for the account you select during consent.",
+        "does_not_access": "Your bank password, personal tokens, transfers, payments, or changes to your account.",
+        "control": "You authorize access and can disconnect the institution in settings at any time."
+      },
+      "workspace": {
+        "title": "Clear permissions within your workspace",
+        "summary": "Sensitive data follows the permissions and sharing level defined for the workspace.",
+        "accesses": "Only information shared with the workspace or required for its financial planning.",
+        "does_not_access": "Other people's private data unless it has been shared with your permission level.",
+        "control": "Administrators define workspace access, while each account holder can adjust how their connections are shared."
+      },
+      "import": {
+        "title": "Your file remains under your control",
+        "summary": "Reading supports review and planning; it does not create financial movements on its own.",
+        "accesses": "Only the workbook you select, to identify sources and prepare the review.",
+        "does_not_access": "Other files on your device, bank accounts, or the ability to move money.",
+        "control": "You confirm access, choose which sources enter the batch, and can abandon the review before publishing."
+      }
+    }
+  },
   "openFinance": {
     "panel": {
       "connect_banks": "Connect banks",

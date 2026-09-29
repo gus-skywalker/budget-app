@@ -393,6 +393,7 @@
 
         <!-- Tab: Empresa -->
         <v-window-item value="workspace">
+          <TrustContextCard context="workspace" class="mb-6" />
           <WorkspaceSettings />
         </v-window-item>
 
@@ -781,6 +782,7 @@ import { useUserStore } from '@/plugins/userStore';
 import SubscriptionManagement from '@/components/SubscriptionManagement.vue';
 import WorkspaceSettings from '@/components/WorkspaceSettings.vue';
 import OpenFinanceConnectionsPanel from '@/components/open-finance/OpenFinanceConnectionsPanel.vue';
+import TrustContextCard from '@/components/TrustContextCard.vue';
 import DataService from '@/services/DataService';
 import FinancialReadService from '@/services/FinancialReadService';
 import OpenFinanceService from '@/services/OpenFinanceService';

@@ -220,6 +220,7 @@
             <v-chip size="small" variant="tonal">{{ t('openFinance.wizard.permission_statements') }}</v-chip>
             <v-chip size="small" variant="tonal">{{ t('openFinance.wizard.permission_account_identification') }}</v-chip>
           </div>
+          <TrustContextCard context="banking" compact class="mt-4" />
           <v-alert type="info" variant="tonal" class="mt-4">
             {{ t('openFinance.panel.security_note') }}
           </v-alert>
@@ -258,6 +259,7 @@ import { useUserStore } from '@/plugins/userStore'
 import { extractOpenFinanceErrorMessage } from '@/utils/openFinanceErrors'
 import type { OpenFinanceConnection, OpenFinanceCreditCard, OpenFinanceHolder, OpenFinanceHolderRequest, OpenFinanceStartConnectionRequest } from '@/types/openFinance'
 import { bankLogoPath, genericBankLogo, openFinanceInstitutions, type OpenFinanceInstitutionOption } from '@/data/openFinanceInstitutions'
+import TrustContextCard from '@/components/TrustContextCard.vue'
 
 type Step = 'holderType' | 'holderLookup' | 'payer' | 'institution' | 'account' | 'review' | 'authorization' | 'status'
 type HolderMode = 'none' | 'create' | 'update' | 'reuse'

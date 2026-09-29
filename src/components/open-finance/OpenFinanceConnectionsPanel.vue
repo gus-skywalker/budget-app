@@ -18,6 +18,8 @@
       </v-btn>
     </section>
 
+    <TrustContextCard context="banking" class="mt-6" />
+
     <section class="cb-card mt-6">
       <div class="of-section-header">
         <div>
@@ -242,6 +244,7 @@ import { bankLogoPath, genericBankLogo } from '@/data/openFinanceInstitutions'
 import { extractOpenFinanceErrorMessage, sanitizeOpenFinanceMessage } from '@/utils/openFinanceErrors'
 import { useUserStore } from '@/plugins/userStore'
 import OpenFinanceConnectionWizard from './OpenFinanceConnectionWizard.vue'
+import TrustContextCard from '@/components/TrustContextCard.vue'
 
 const props = defineProps<{
   connections: OpenFinanceConnection[]
