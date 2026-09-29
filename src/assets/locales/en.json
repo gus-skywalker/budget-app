@@ -1248,6 +1248,20 @@
     "automation_preview_error": "Could not calculate the automation preview."
   },
 
+  "postLoginSecurity": {
+    "eyebrow": "Security and privacy",
+    "title": "Your financial data remains under your control",
+    "description": "CoBudget protects access with encryption, two-factor authentication, and role-based permissions. With Open Finance, we receive only the data you authorize for reading and planning — we do not ask for your bank password or move money.",
+    "commitments_label": "Security commitments",
+    "badges": {
+      "encryption_2fa": "Encryption and 2FA",
+      "role_permissions": "Role-based permissions",
+      "revocable_consent": "Revocable consent"
+    },
+    "legal_intro": "Read the details in our legal documents:",
+    "legal_links_label": "Security and privacy legal documents",
+    "dismiss": "Dismiss security notice"
+  },
   "trustContext": {
     "eyebrow": "Access transparency",
     "commitments_label": "Access commitments",

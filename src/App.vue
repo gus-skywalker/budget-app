@@ -6,6 +6,7 @@ import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import SideBar from './components/SideBar.vue'
 import ContextBadge from '@/components/ContextBadge.vue'
 import OnboardingStatusBanner from '@/components/OnboardingStatusBanner.vue'
+import PostLoginSecurityNotice from '@/components/PostLoginSecurityNotice.vue'
 import NotificationBellDropdown from '@/components/NotificationBellDropdown.vue'
 import PrivacyControls from '@/components/compliance/PrivacyControls.vue'
 import { useUserStore } from '@/plugins/userStore'
@@ -202,6 +203,9 @@ onUnmounted(() => {
         <ContextBadge />
       </div>
       <OnboardingStatusBanner
+        v-if="isAuthenticated && showFocusedOnboardingChrome && !hideAppChrome"
+      />
+      <PostLoginSecurityNotice
         v-if="isAuthenticated && showFocusedOnboardingChrome && !hideAppChrome"
       />
       <RouterView v-slot="{ Component, route: viewRoute }">

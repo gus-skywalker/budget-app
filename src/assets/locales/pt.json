@@ -1238,6 +1238,20 @@
     "automation_apply_error": "Não foi possível aplicar a automação.",
     "automation_preview_error": "Não foi possível calcular a prévia da automação."
   },
+  "postLoginSecurity": {
+    "eyebrow": "Segurança e privacidade",
+    "title": "Seus dados financeiros continuam sob seu controle",
+    "description": "O CoBudget protege o acesso com criptografia, autenticação em dois fatores e permissões por perfil. No Open Finance, recebemos somente os dados que você autoriza para leitura e planejamento — não pedimos sua senha bancária nem movimentamos dinheiro.",
+    "commitments_label": "Compromissos de segurança",
+    "badges": {
+      "encryption_2fa": "Criptografia e 2FA",
+      "role_permissions": "Permissões por perfil",
+      "revocable_consent": "Consentimento revogável"
+    },
+    "legal_intro": "Veja os detalhes nos documentos legais:",
+    "legal_links_label": "Documentos legais de segurança e privacidade",
+    "dismiss": "Dispensar informativo de segurança"
+  },
   "trustContext": {
     "eyebrow": "Transparência de acesso",
     "commitments_label": "Compromissos de acesso",
