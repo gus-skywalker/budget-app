@@ -3,13 +3,9 @@
     <div class="cb-container">
       <page-header :title="t('planning.scenarios.title')" :meta="t('planning.scenarios.subtitle')">
         <template #actions>
-          <v-btn v-if="canWriteScenarios" color="var(--cb-primary)" @click="createScenario">
+          <v-btn class="decision-entry-cta" color="var(--cb-primary)" @click="createScenario">
             <v-icon start>mdi-plus-circle-outline</v-icon>
-            {{ t('planning.scenarios.new_scenario') }}
-          </v-btn>
-          <v-btn v-if="canWriteScenarios" variant="tonal" color="var(--cb-accent)" @click="createDebtScenario">
-            <v-icon start>{{ canUseAdvancedScenarios ? 'mdi-credit-card-fast-outline' : 'mdi-lock-outline' }}</v-icon>
-            {{ canUseAdvancedScenarios ? t('planning.scenarios.debt_payment_decision') : t('planning.scenarios.advanced_scenarios_locked_cta') }}
+            {{ t('decisionJourney.start') }}
           </v-btn>
         </template>
       </page-header>
@@ -135,9 +131,9 @@
           <div v-else class="cb-empty-state">
             <v-icon size="40" color="var(--cb-ink-muted)">mdi-content-save-outline</v-icon>
             <p>{{ t('planning.scenarios.saved_placeholder') }}</p>
-            <v-btn v-if="canWriteScenarios" color="var(--cb-primary)" variant="tonal" @click="createScenario">
+            <v-btn class="decision-entry-cta" color="var(--cb-primary)" @click="createScenario">
               <v-icon start>mdi-plus</v-icon>
-              {{ t('planning.scenarios.new_scenario') }}
+              {{ t('decisionJourney.start') }}
             </v-btn>
           </div>
 
@@ -154,10 +150,10 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import ScenarioService, { type SavedScenario } from '@/services/ScenarioService'
 import DecisionService from '@/services/DecisionService'
-import BillingOrchestrationService, { type BillingSummaryResponse } from '@/services/BillingOrchestrationService'
 import { useUserStore } from '@/plugins/userStore'
 import PageHeader from '@/components/PageHeader.vue'
 import AlertStrip from '@/components/AlertStrip.vue'
+import '@/assets/decision-entry.css'
 
 const { t, locale } = useI18n()
 const router = useRouter()
@@ -170,17 +166,7 @@ const errorMessage = ref('')
 const savedScenarios = ref<SavedScenario[]>([])
 const scenariosLockedForMutation = ref<Set<string>>(new Set())
 const scenariosWithAnyDecision = ref<Set<string>>(new Set())
-const billingSummary = ref<BillingSummaryResponse | null>(null)
 const canWriteScenarios = computed(() => userStore.canWrite)
-const currentWorkspaceId = computed(() =>
-  userStore.getCurrentWorkspaceId || userStore.getPreferredWorkspaceId || userStore.getWorkspaces[0]?.workspaceId || ''
-)
-const canUseAdvancedScenarios = computed(() => {
-  const capabilities = billingSummary.value?.capabilities
-  if (!capabilities) return false
-  if (typeof capabilities.advancedScenariosEnabled === 'boolean') return capabilities.advancedScenariosEnabled
-  return Boolean(capabilities.advancedToolsEnabled || billingSummary.value?.hasPremiumAccess)
-})
 
 const formatCurrency = (value: number) =>
   Number(value || 0).toLocaleString(
@@ -269,16 +255,7 @@ const loadSavedScenarios = async () => {
 }
 
 const createScenario = async () => {
-  await router.push({ name: 'planning-scenarios-new', query: { from: 'hub' } })
-}
-
-const createDebtScenario = async () => {
-  if (!canUseAdvancedScenarios.value) {
-    errorMessage.value = t('planning.scenarios.advanced_scenarios_locked')
-    await router.push({ name: 'choose-plan', query: { feature: 'advanced-scenarios' } })
-    return
-  }
-  await router.push({ name: 'planning-scenarios-debt-new', query: { from: 'hub' } })
+  await router.push({ name: 'planning-decision-start' })
 }
 
 const openResult = async (scenarioId: string) => {
@@ -345,23 +322,8 @@ const createDecisionFromScenario = async (scenario: SavedScenario) => {
   }
 }
 
-const loadBillingCapabilities = async () => {
-  const workspaceId = currentWorkspaceId.value
-  if (!workspaceId) {
-    billingSummary.value = null
-    return
-  }
-  try {
-    const { data } = await BillingOrchestrationService.getBillingSummary(workspaceId)
-    billingSummary.value = data || null
-  } catch (error) {
-    console.error(error)
-    billingSummary.value = null
-  }
-}
-
 onMounted(async () => {
-  await Promise.allSettled([loadBillingCapabilities(), loadSavedScenarios()])
+  await loadSavedScenarios()
 })
 </script>
 

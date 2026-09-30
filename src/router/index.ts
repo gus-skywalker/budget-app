@@ -156,6 +156,12 @@ const router = createRouter({
       redirect: to => ({ name: 'closing-decision', params: to.params, query: to.query, hash: to.hash })
     },
     {
+      path: '/planning/decide',
+      name: 'planning-decision-start',
+      component: () => import('@/views/DecisionStartView.vue'),
+      meta: { requiresAuth: true, requiresWorkspace: true }
+    },
+    {
       path: '/planning/scenarios',
       name: 'planning-scenarios',
       component: ScenariosHubView,

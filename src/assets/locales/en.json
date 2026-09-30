@@ -1,4 +1,47 @@
 {
+  "decisionJourney": {
+    "start": "Start a decision",
+    "navigation": "Decision navigation",
+    "back": "My decisions",
+    "eyebrow": "One choice at a time",
+    "title": "What would you like to decide?",
+    "subtitle": "Start with what matters to you. Let's explore the possibilities before your next step.",
+    "promise": "Choosing a path does not change your plan or move any money.",
+    "choices": "Choose what you want to understand",
+    "continue": "Let's get started",
+    "readOnly": "You have read-only access to this space. You can view your plan and goals; ask a space administrator for editing permission to start a simulation.",
+    "noPermission": "Editing permission required",
+    "checking": "Checking comparison access…",
+    "accessError": "We couldn't check access to payment comparisons. Try again or explore another change.",
+    "retry": "Try again",
+    "unavailable": "Payment comparisons are not included in this space's current plan. Other simulations are still available.",
+    "planUnavailable": "Not included in the current plan",
+    "accessUnknown": "Access not yet confirmed",
+    "supportTitle": "Want to set things up first?",
+    "footer": "You provide the amounts. The simulation helps explain the impact; the choice is still yours.",
+    "intents": {
+      "monthly-change": {
+        "title": "See how an expense changes my month",
+        "description": "Explore the impact of a new expense on your monthly plan."
+      },
+      "payment-options": {
+        "title": "Compare ways to pay",
+        "description": "Compare debt payment options, including their costs and installments."
+      },
+      "custom": {
+        "title": "Simulate another change",
+        "description": "Start from scratch to explore a change in money coming in or going out."
+      },
+      "organize-month": {
+        "title": "Organize my month",
+        "description": "View or prepare your income and expense plan."
+      },
+      "goal": {
+        "title": "Build a reserve or plan a goal",
+        "description": "View your goals and organize what you want to achieve."
+      }
+    }
+  },
   "launchOffer": {
     "perMonth": "month",
     "perYear": "year",

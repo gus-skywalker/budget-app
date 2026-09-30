@@ -3,7 +3,13 @@
     <div class="cb-container">
 
       <!-- Page Header -->
-      <page-header :title="t('decisions.title')" :summary-items="decisionSummaryItems" />
+      <page-header :title="t('decisions.title')" :summary-items="decisionSummaryItems">
+        <template #actions>
+          <v-btn class="cb-btn-primary decision-entry-cta" :to="{ name: 'planning-decision-start' }">
+            <v-icon start>mdi-plus-circle-outline</v-icon>{{ t('decisionJourney.start') }}
+          </v-btn>
+        </template>
+      </page-header>
 
       <!-- Success alert -->
       <alert-strip
@@ -47,7 +53,7 @@
           </button>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <v-btn size="small" class="cb-btn-primary" @click="openDecisionCreationDialog">
+          <v-btn size="small" variant="tonal" @click="openDecisionCreationDialog">
             <v-icon start size="14">mdi-plus-circle-outline</v-icon>
             {{ t('decisions.new_from_scenario') }}
           </v-btn>
@@ -454,6 +460,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import '@/assets/decision-entry.css'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import PageHeader from '@/components/PageHeader.vue'

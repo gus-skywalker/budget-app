@@ -1,4 +1,47 @@
 {
+  "decisionJourney": {
+    "start": "Commencer une décision",
+    "navigation": "Navigation de la décision",
+    "back": "Mes décisions",
+    "eyebrow": "Un choix à la fois",
+    "title": "Que souhaitez-vous décider ?",
+    "subtitle": "Commencez par ce qui compte pour vous. Explorons les possibilités avant la prochaine étape.",
+    "promise": "Choisir un parcours ne modifie pas votre plan et ne déplace aucun argent.",
+    "choices": "Choisissez ce que vous souhaitez comprendre",
+    "continue": "Commençons",
+    "readOnly": "Vous avez un accès en lecture seule à cet espace. Vous pouvez consulter votre plan et vos objectifs ; pour lancer une simulation, demandez un droit de modification à la personne qui administre cet espace.",
+    "noPermission": "Droit de modification nécessaire",
+    "checking": "Vérification de l’accès à la comparaison…",
+    "accessError": "Nous n’avons pas pu vérifier l’accès à la comparaison des paiements. Réessayez ou explorez un autre changement.",
+    "retry": "Réessayer",
+    "unavailable": "La comparaison des paiements n’est pas incluse dans l’offre actuelle de cet espace. Les autres simulations restent disponibles.",
+    "planUnavailable": "Non inclus dans l’offre actuelle",
+    "accessUnknown": "Accès pas encore confirmé",
+    "supportTitle": "Vous souhaitez d’abord préparer le terrain ?",
+    "footer": "Vous indiquez les montants. La simulation aide à comprendre l’impact ; le choix vous appartient.",
+    "intents": {
+      "monthly-change": {
+        "title": "Voir comment une dépense change mon mois",
+        "description": "Explorez l’impact d’une nouvelle dépense sur votre plan mensuel."
+      },
+      "payment-options": {
+        "title": "Comparer les façons de payer",
+        "description": "Comparez les options de paiement d’une dette, leurs coûts et leurs mensualités."
+      },
+      "custom": {
+        "title": "Simuler un autre changement",
+        "description": "Partez de zéro pour explorer un changement dans vos entrées ou sorties d’argent."
+      },
+      "organize-month": {
+        "title": "Organiser mon mois",
+        "description": "Consultez ou préparez votre plan de revenus et de dépenses."
+      },
+      "goal": {
+        "title": "Constituer une réserve ou planifier un objectif",
+        "description": "Consultez vos objectifs et organisez ce que vous voulez réaliser."
+      }
+    }
+  },
   "launchOffer": {
     "perMonth": "mois",
     "perYear": "an",

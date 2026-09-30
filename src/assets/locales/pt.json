@@ -1,4 +1,47 @@
 {
+  "decisionJourney": {
+    "start": "Começar uma decisão",
+    "navigation": "Navegação da decisão",
+    "back": "Minhas decisões",
+    "eyebrow": "Uma escolha de cada vez",
+    "title": "O que você quer decidir?",
+    "subtitle": "Comece pelo que importa para você. Vamos ajudar a entender as possibilidades antes do próximo passo.",
+    "promise": "Escolher um caminho não altera seu plano nem movimenta dinheiro.",
+    "choices": "Escolha o que quer entender",
+    "continue": "Vamos começar",
+    "readOnly": "Você tem acesso de leitura neste espaço. Pode consultar seu plano e suas metas; para iniciar uma simulação, peça permissão de edição a quem administra o espaço.",
+    "noPermission": "Permissão de edição necessária",
+    "checking": "Verificando acesso à comparação…",
+    "accessError": "Não conseguimos verificar o acesso à comparação de pagamentos. Você pode tentar novamente ou seguir com outra mudança.",
+    "retry": "Tentar novamente",
+    "unavailable": "A comparação de pagamentos não está incluída no plano atual deste espaço. As outras simulações continuam disponíveis.",
+    "planUnavailable": "Não incluído no plano atual",
+    "accessUnknown": "Acesso ainda não confirmado",
+    "supportTitle": "Quer preparar o terreno primeiro?",
+    "footer": "Você informa os valores. A simulação ajuda a entender o impacto; a escolha continua sendo sua.",
+    "intents": {
+      "monthly-change": {
+        "title": "Ver como um gasto muda meu mês",
+        "description": "Explore o impacto de uma nova despesa no seu plano mensal."
+      },
+      "payment-options": {
+        "title": "Comparar formas de pagar",
+        "description": "Compare opções de pagamento de uma dívida, com seus custos e parcelas."
+      },
+      "custom": {
+        "title": "Simular outra mudança",
+        "description": "Comece do zero para explorar uma mudança nas suas entradas ou saídas."
+      },
+      "organize-month": {
+        "title": "Organizar meu mês",
+        "description": "Veja ou prepare seu plano de receitas e despesas."
+      },
+      "goal": {
+        "title": "Criar uma reserva ou planejar uma meta",
+        "description": "Acesse suas metas e organize o que quer alcançar."
+      }
+    }
+  },
   "launchOffer": {
     "perMonth": "mês",
     "perYear": "ano",
