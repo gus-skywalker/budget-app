@@ -209,7 +209,7 @@
           <v-btn variant="text" @click="router.push({ name: 'planning-scenarios' })">
             {{ t('contentExperience.planning.debtBuilder.cancel') }}
           </v-btn>
-          <v-btn color="var(--cb-primary)" size="large" :loading="isSimulating" @click="simulate">
+          <v-btn color="var(--cb-primary)" size="large" :loading="isSimulating" :disabled="isLoading || !journey.isCurrent()" @click="simulate">
             <v-icon start>mdi-scale-balance</v-icon>
             {{ t('contentExperience.planning.debtBuilder.compareOptions') }}
           </v-btn>
@@ -227,9 +227,10 @@ import PageHeader from '@/components/PageHeader.vue'
 import AlertStrip from '@/components/AlertStrip.vue'
 import BudgetService from '@/services/BudgetService'
 import ScenarioService from '@/services/ScenarioService'
+import { useDecisionJourneySession } from '@/composables/useDecisionJourneySession'
+import { writeJourneyResult } from '@/utils/decisionJourneySession'
 import {
   buildDebtScenarioPayload,
-  clearDebtSnapshot,
   createDebtOption,
   createDebtSnapshot,
   debtScenarioTemplates,
@@ -249,6 +250,13 @@ const isSimulating = ref(false)
 const validationErrors = ref<string[]>([])
 const progress = 100
 const snapshot = reactive<DebtScenarioSnapshot>(createDebtSnapshot())
+const isLoading = ref(false)
+const journey = useDecisionJourneySession(() => {
+  Object.assign(snapshot, createDebtSnapshot())
+  isSimulating.value = false
+  isLoading.value = false
+  validationErrors.value = [t('planning.scenarios.error')]
+})
 const requestedTemplate = computed(() =>
   String(route.query.template || '')
     .trim()
@@ -315,38 +323,39 @@ const applyRouteTemplate = () => {
 }
 
 const simulate = async () => {
+  const operation = journey.session.value
+  if (!journey.isCurrent(operation) || isLoading.value || isSimulating.value) return
   validationErrors.value = validateDebtSnapshot(snapshot)
   if (validationErrors.value.length) return
 
   isSimulating.value = true
   try {
     snapshot.debtInput.title = snapshot.scenarioName
-    saveDebtSnapshot(snapshot)
-    const { data } = await ScenarioService.simulate(buildDebtScenarioPayload(snapshot))
-    window.sessionStorage.setItem(
-      'planning-scenario-latest-result',
-      JSON.stringify({
-        scenarioId: snapshot.currentScenarioId || 'preview',
-        result: data
-      })
-    )
+    const submitted = JSON.parse(JSON.stringify(snapshot)) as DebtScenarioSnapshot
+    journey.linkScenario(submitted.currentScenarioId)
+    const { data } = await ScenarioService.simulate(buildDebtScenarioPayload(submitted))
+    if (!journey.isCurrent(operation)) return
+    saveDebtSnapshot(submitted)
+    writeJourneyResult(operation, submitted.currentScenarioId || 'preview', data)
     await router.push({
       name: 'planning-scenarios-result',
-      params: { id: snapshot.currentScenarioId || 'preview' },
+      params: { id: submitted.currentScenarioId || 'preview' },
       query: { scenarioType: snapshot.scenarioType, simulatedAt: Date.now().toString() }
     })
+  } catch {
+    if (journey.isCurrent(operation)) validationErrors.value = [t('planning.scenarios.error')]
   } finally {
-    isSimulating.value = false
+    if (journey.isCurrent(operation)) isSimulating.value = false
   }
 }
 
-const loadCurrentBudget = async () => {
+const loadCurrentBudget = async (operation: NonNullable<typeof journey.session.value>) => {
   try {
     const { data, status } = await BudgetService.getCurrent(
       new Date().getMonth() + 1,
       new Date().getFullYear()
     )
-    if (status !== 204 && data?.id) {
+    if (journey.isCurrent(operation) && status !== 204 && data?.id) {
       snapshot.budgetId = data.id
     }
   } catch {
@@ -354,46 +363,68 @@ const loadCurrentBudget = async () => {
   }
 }
 
-onMounted(async () => {
-  await loadCurrentBudget()
+const loadScenario = async () => {
   const routeId = String(route.params.id || '')
-  if (routeId) {
-    const { data } = await ScenarioService.list()
-    const source = (Array.isArray(data) ? data : []).find((item) => item.id === routeId)
-    if (source?.sourceType === 'MANUAL_TYPED') {
-      Object.assign(snapshot, snapshotFromSavedDebtScenario(source))
-      return
-    }
-  }
-
   const cloneFrom = typeof route.query.cloneFrom === 'string' ? route.query.cloneFrom : ''
-  if (cloneFrom) {
-    const { data } = await ScenarioService.list()
-    const source = (Array.isArray(data) ? data : []).find((item) => item.id === cloneFrom)
-    if (source?.sourceType === 'MANUAL_TYPED') {
-      const cloned = snapshotFromSavedDebtScenario(source)
-      cloned.currentScenarioId = null
-      cloned.scenarioName = t('planning.scenarios.versioned_name', { name: cloned.scenarioName })
-      cloned.debtInput.title = cloned.scenarioName
-      Object.assign(snapshot, normalizeDebtSnapshot(cloned))
+  const resumed = !routeId && !cloneFrom && String(route.query.resume || '') === '1'
+    ? journey.restore('MANUAL_TYPED') : null
+  const operation = resumed || journey.start('MANUAL_TYPED', routeId || null)
+  if (!operation) return
+  const candidate = resumed ? loadDebtSnapshot() : null
+  const restored = candidate?.currentScenarioId === operation.scenarioId ? candidate : null
+  Object.assign(snapshot, restored || createDebtSnapshot())
+  if (!routeId) journey.linkScenario(snapshot.currentScenarioId)
+  isLoading.value = true
+  validationErrors.value = []
+  try {
+    await loadCurrentBudget(operation)
+    if (!journey.isCurrent(operation)) return
+    if (routeId) {
+      const { data } = await ScenarioService.list()
+      if (!journey.isCurrent(operation)) return
+      const source = (Array.isArray(data) ? data : []).find((item) => item.id === routeId)
+      if (source?.sourceType === 'MANUAL_TYPED') {
+        Object.assign(snapshot, snapshotFromSavedDebtScenario(source))
+        return
+      }
+      validationErrors.value = [t('planning.scenarios.error')]
       return
     }
-  }
 
-  const restored = loadDebtSnapshot()
-  if (restored) {
-    Object.assign(snapshot, restored)
-    applyRouteTemplate()
-    return
-  }
+    if (cloneFrom) {
+      const { data } = await ScenarioService.list()
+      if (!journey.isCurrent(operation)) return
+      const source = (Array.isArray(data) ? data : []).find((item) => item.id === cloneFrom)
+      if (source?.sourceType === 'MANUAL_TYPED') {
+        const cloned = snapshotFromSavedDebtScenario(source)
+        cloned.currentScenarioId = null
+        cloned.scenarioName = t('planning.scenarios.versioned_name', { name: cloned.scenarioName })
+        cloned.debtInput.title = cloned.scenarioName
+        Object.assign(snapshot, normalizeDebtSnapshot(cloned))
+        return
+      }
+      validationErrors.value = [t('planning.scenarios.error')]
+      return
+    }
 
-  clearDebtSnapshot()
-  applyRouteTemplate()
-})
+    if (!restored) applyRouteTemplate()
+  } catch {
+    if (journey.isCurrent(operation)) validationErrors.value = [t('planning.scenarios.error')]
+  } finally {
+    if (journey.isCurrent(operation)) {
+      isLoading.value = false
+      saveDebtSnapshot(snapshot)
+    }
+  }
+}
+
+onMounted(() => { void loadScenario() })
+watch(() => [route.params.id, route.query.cloneFrom, route.query.resume, route.query.guided, route.query.intent, route.query.template], () => { void loadScenario() })
 
 watch(
   () => snapshot,
   () => {
+    if (!journey.isCurrent() || isLoading.value) return
     snapshot.debtInput.title = snapshot.scenarioName
     saveDebtSnapshot(snapshot)
   },

@@ -1,10 +1,21 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { mount, enableAutoUnmount } from '@vue/test-utils'
 import { createVuetify } from 'vuetify'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
-import { ref } from 'vue'
+import { ref, reactive } from 'vue'
 import DebtScenarioBuilderView from '@/views/DebtScenarioBuilderView.vue'
+import { beginJourneySession } from '@/utils/decisionJourneySession'
+
+enableAutoUnmount(afterEach)
+const context = { userId: 'user-1', workspaceId: 'workspace-1' }
+const userStoreMock = reactive({ isAuthenticated: true, getUser: { id: context.userId }, getCurrentWorkspaceId: context.workspaceId })
+const routeState = reactive({ params: {} as Record<string, string>, query: {} as Record<string, string> })
+const savedDraft = { scenarioName: 'Existing debt', currentScenarioId: 'saved-debt', sourceType: 'MANUAL_TYPED', debtInput: {
+  title: 'Existing debt', totalAmount: 500, availableCash: 100,
+  options: [{ name: 'A', type: 'MANUAL', liquidityCertainty: 'CERTAIN' }, { name: 'B', type: 'INSTALLMENT', liquidityCertainty: 'UNCERTAIN' }],
+} }
+vi.mock('@/plugins/userStore', () => ({ useUserStore: () => userStoreMock }))
 
 const { routerPush, scenarioServiceMock, budgetServiceMock } = vi.hoisted(() => ({
   routerPush: vi.fn(),
@@ -24,10 +35,7 @@ vi.mock('vue-router', async (importOriginal) => {
     useRouter: () => ({
       push: routerPush,
     }),
-    useRoute: () => ({
-      params: {},
-      query: {},
-    }),
+    useRoute: () => routeState,
   }
 })
 
@@ -87,6 +95,9 @@ describe('DebtScenarioBuilderView', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     sessionStorage.clear()
+    routeState.params = {}
+    routeState.query = {}
+    userStoreMock.getCurrentWorkspaceId = context.workspaceId
     budgetServiceMock.getCurrent.mockResolvedValue({ status: 204, data: null })
     scenarioServiceMock.list.mockResolvedValue({ data: [] })
     scenarioServiceMock.simulate.mockResolvedValue({
@@ -137,5 +148,63 @@ describe('DebtScenarioBuilderView', () => {
     await removeButtons[0].trigger('click')
     await flushPromises()
     expect(wrapper.text()).not.toContain('Option 3')
+  })
+
+  it('starts a new guided debt instead of restoring the previous saved identity', async () => {
+    beginJourneySession(context, 'MANUAL_TYPED', 'saved-debt')
+    sessionStorage.setItem('planning-debt-scenario-wizard-v1', JSON.stringify(savedDraft))
+    routeState.query = { guided: '1', intent: 'payment-options' }
+    const wrapper = mount(DebtScenarioBuilderView, { global: { plugins: [vuetify] } })
+    await flushPromises()
+    expect(wrapper.find('input').element.value).toBe('')
+    expect(JSON.parse(sessionStorage.getItem('planning-debt-scenario-wizard-v1')!).currentScenarioId).toBeNull()
+  })
+
+  it('restores only an explicit same-context resume', async () => {
+    beginJourneySession(context, 'MANUAL_TYPED', 'saved-debt')
+    sessionStorage.setItem('planning-debt-scenario-wizard-v1', JSON.stringify(savedDraft))
+    routeState.query = { resume: '1' }
+    const wrapper = mount(DebtScenarioBuilderView, { global: { plugins: [vuetify] } })
+    await flushPromises()
+    expect(wrapper.find('input').element.value).toBe('Existing debt')
+    await wrapper.findAll('button').find(b => b.text().includes('Compare options'))!.trigger('click')
+    await flushPromises()
+    expect(scenarioServiceMock.simulate.mock.calls[0][0]).toMatchObject({ id: 'saved-debt', sourceType: 'MANUAL_TYPED' })
+  })
+
+  it('does not restore an unowned legacy draft', async () => {
+    sessionStorage.setItem('planning-debt-scenario-wizard-v1', JSON.stringify(savedDraft))
+    routeState.query = { resume: '1' }
+    const wrapper = mount(DebtScenarioBuilderView, { global: { plugins: [vuetify] } })
+    await flushPromises()
+    expect(wrapper.find('input').element.value).toBe('')
+  })
+
+  it.each(['edit', 'clone'])('preserves API data for %s with the appropriate saved identity', async (mode) => {
+    if (mode === 'edit') routeState.params = { id: 'saved-debt' }
+    else routeState.query = { cloneFrom: 'saved-debt', locked: '1' }
+    scenarioServiceMock.list.mockResolvedValue({ data: [{ ...savedDraft, id: 'saved-debt', name: 'Existing debt' }] })
+    mount(DebtScenarioBuilderView, { global: { plugins: [vuetify] } })
+    await flushPromises()
+    const draft = JSON.parse(sessionStorage.getItem('planning-debt-scenario-wizard-v1')!)
+    expect(draft.currentScenarioId).toBe(mode === 'edit' ? 'saved-debt' : null)
+    expect(draft.debtInput.totalAmount).toBe(500)
+  })
+
+  it('ignores a simulation response after changing workspace', async () => {
+    beginJourneySession(context, 'MANUAL_TYPED', 'saved-debt')
+    sessionStorage.setItem('planning-debt-scenario-wizard-v1', JSON.stringify(savedDraft))
+    routeState.query = { resume: '1' }
+    let finish!: (value: unknown) => void
+    scenarioServiceMock.simulate.mockImplementation(() => new Promise(resolve => { finish = resolve }))
+    const wrapper = mount(DebtScenarioBuilderView, { global: { plugins: [vuetify] } })
+    await flushPromises()
+    await wrapper.findAll('button').find(b => b.text().includes('Compare options'))!.trigger('click')
+    userStoreMock.getCurrentWorkspaceId = 'workspace-2'
+    finish({ data: { sourceType: 'MANUAL_TYPED', scenarioName: 'Stale' } })
+    await flushPromises()
+    expect(routerPush).not.toHaveBeenCalled()
+    expect(sessionStorage.getItem('planning-scenario-latest-result')).toBeNull()
+    expect(wrapper.find('input').element.value).toBe('')
   })
 })

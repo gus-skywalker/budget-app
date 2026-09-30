@@ -249,6 +249,8 @@ import {
 } from '@/utils/scenarioWizard'
 
 import ScenarioChangeCard from '@/components/ScenarioChangeCard.vue'
+import { useDecisionJourneySession } from '@/composables/useDecisionJourneySession'
+import { writeJourneyResult } from '@/utils/decisionJourneySession'
 
 const { t, locale } = useI18n()
 const router = useRouter()
@@ -267,6 +269,15 @@ const snapshot = reactive<ScenarioWizardSnapshot>({
   currentScenarioId: null,
   adjustments: [createAdjustment()],
   scenarioLines: []
+})
+const journey = useDecisionJourneySession(() => {
+  activeBudget.value = null
+  selectedTemplate.value = null
+  step.value = 1
+  Object.assign(snapshot, { scenarioName: '', months: 6, currentScenarioId: null, budgetId: undefined,
+    periodMonth: undefined, periodYear: undefined, adjustments: [createAdjustment()], scenarioLines: [] })
+  isBudgetLoading.value = false
+  isSimulating.value = false
 })
 
 const templates = computed(() => [
@@ -369,9 +380,12 @@ const applyRouteTemplate = () => {
   return true
 }
 
-const startNewScenario = (budgetOverride?: Budget | null, persist = true) => {
+const startNewScenario = (budgetOverride?: Budget | null, persist = true, newSession = true) => {
   const budget = budgetOverride || activeBudget.value
   if (!budget) return
+  if (newSession) journey.start('BUDGET_BASED')
+  if (!journey.isCurrent()) return
+  isSimulating.value = false
 
   snapshot.scenarioName = ''
   snapshot.months = 6
@@ -390,10 +404,17 @@ const startNewScenario = (budgetOverride?: Budget | null, persist = true) => {
 }
 
 const loadBudget = async () => {
+  activeBudget.value = null
+  const cloneFromId = typeof route.query.cloneFrom === 'string' ? route.query.cloneFrom : ''
+  const resuming = !cloneFromId && String(route.query.resume || '') === '1'
+    ? journey.restore('BUDGET_BASED') : null
+  const operation = resuming || journey.start('BUDGET_BASED')
+  if (!operation) return
   isBudgetLoading.value = true
   try {
     const now = new Date()
     const { data, status } = await BudgetService.getCurrent(now.getMonth() + 1, now.getFullYear())
+    if (!journey.isCurrent(operation)) return
     if (status === 204 || !data || typeof data !== 'object' || !('id' in data)) {
       activeBudget.value = null
       return
@@ -401,9 +422,9 @@ const loadBudget = async () => {
 
     activeBudget.value = data
 
-    const cloneFromId = typeof route.query.cloneFrom === 'string' ? route.query.cloneFrom : ''
     if (cloneFromId) {
       const { data: scenarios } = await ScenarioService.list()
+      if (!journey.isCurrent(operation)) return
       const source = (Array.isArray(scenarios) ? scenarios : []).find(
         (item) => item.id === cloneFromId
       )
@@ -420,64 +441,65 @@ const loadBudget = async () => {
     }
 
     // "/planning/scenarios/new" must always start a clean scenario unless resume is explicit.
-    const shouldStartFresh =
-      route.name === 'planning-scenarios-new' && String(route.query.resume || '') !== '1'
+    const shouldStartFresh = !resuming
     if (shouldStartFresh) {
       clearWizardSnapshot()
-      startNewScenario(data)
+      startNewScenario(data, true, false)
       applyRouteTemplate()
       return
     }
 
     const restored = loadWizardSnapshot()
-    if (restored?.budgetId && restored.budgetId === data.id) {
+    if (restored?.budgetId && restored.budgetId === data.id && restored.currentScenarioId === operation.scenarioId) {
       Object.assign(snapshot, restored)
       applyRouteTemplate()
       return
     }
 
-    startNewScenario(data, false)
+    journey.linkScenario(null)
+    startNewScenario(data, true, false)
     applyRouteTemplate()
   } catch (e) {
+    if (!journey.isCurrent(operation)) return
     console.error(e)
     activeBudget.value = null
   } finally {
-    isBudgetLoading.value = false
+    if (journey.isCurrent(operation)) isBudgetLoading.value = false
   }
 }
 
 const simulate = async () => {
+  const operation = journey.session.value
+  if (!journey.isCurrent(operation) || isSimulating.value || isBudgetLoading.value) return
   errorMessage.value = ''
   isSimulating.value = true
 
   try {
-    const payload = buildSimulationPayload(snapshot)
+    const submitted = JSON.parse(JSON.stringify(snapshot)) as ScenarioWizardSnapshot
+    journey.linkScenario(submitted.currentScenarioId)
+    const payload = buildSimulationPayload(submitted)
     const { data } = await ScenarioService.simulate(payload)
-    saveWizardSnapshot(snapshot)
-    window.sessionStorage.setItem(
-      'planning-scenario-latest-result',
-      JSON.stringify({
-        scenarioId: snapshot.currentScenarioId || 'preview',
-        result: data
-      })
-    )
+    if (!journey.isCurrent(operation)) return
+    saveWizardSnapshot(submitted)
+    writeJourneyResult(operation, submitted.currentScenarioId || 'preview', data)
     await router.push({
       name: 'planning-scenarios-result',
-      params: { id: snapshot.currentScenarioId || 'preview' },
+      params: { id: submitted.currentScenarioId || 'preview' },
       query: { simulatedAt: String(Date.now()) }
     })
   } catch (e) {
+    if (!journey.isCurrent(operation)) return
     console.error(e)
     errorMessage.value = t('planning.scenarios.error')
   } finally {
-    isSimulating.value = false
+    if (journey.isCurrent(operation)) isSimulating.value = false
   }
 }
 
 watch(
   snapshot,
   () => {
-    if (!activeBudget.value) return
+    if (!activeBudget.value || !journey.isCurrent()) return
     saveWizardSnapshot(snapshot)
   },
   { deep: true }
@@ -488,13 +510,8 @@ onMounted(() => {
 })
 
 watch(
-  () => route.query.cloneFrom,
-  () => {
-    if (activeBudget.value) {
-      clearWizardSnapshot()
-      void loadBudget()
-    }
-  }
+  () => [route.query.cloneFrom, route.query.resume, route.query.guided, route.query.intent, route.query.template],
+  () => { void loadBudget() }
 )
 </script>
 

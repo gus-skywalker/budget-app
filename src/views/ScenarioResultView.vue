@@ -360,7 +360,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import PageHeader from '@/components/PageHeader.vue'
@@ -392,6 +392,8 @@ import {
 } from '@/utils/debtScenario'
 import { useUserStore } from '@/plugins/userStore'
 import { useAppVoice } from '@/utils/appVoice'
+import { useDecisionJourneySession } from '@/composables/useDecisionJourneySession'
+import { readJourneyResult, writeJourneyResult, setJourneyValue, JOURNEY_RESULT_KEY, type JourneySession } from '@/utils/decisionJourneySession'
 
 const route = useRoute()
 const router = useRouter()
@@ -427,6 +429,22 @@ const snapshot = reactive<ScenarioWizardSnapshot>({
   adjustments: [],
   scenarioLines: []
 })
+const resetLocalResult = () => {
+  result.value = null
+  scenarioId.value = null
+  debtSnapshot.value = null
+  Object.assign(snapshot, { scenarioName: '', months: 6, currentScenarioId: null, budgetId: undefined,
+    periodMonth: undefined, periodYear: undefined, adjustments: [], scenarioLines: [] })
+  isScenarioLockedForEdit.value = false
+  isShowingSavedSnapshot.value = false
+  isSaving.value = false
+  isCreatingDecision.value = false
+  isRecalculating.value = false
+  errorMessage.value = ''
+  successMessage.value = ''
+  stopAdvisorSpeech()
+}
+const journey = useDecisionJourneySession(resetLocalResult)
 
 const decisionTone = computed(() => {
   if (result.value?.decisionStatus === 'ACTION_NEEDED') return 'negative-value'
@@ -696,12 +714,14 @@ const editActionLabel = computed(() =>
 )
 
 const refreshScenarioGovernance = async (targetScenarioId: string | null) => {
+  const operation = journey.session.value
   if (!targetScenarioId) {
     isScenarioLockedForEdit.value = false
     return
   }
   try {
     const { data } = await DecisionService.list()
+    if (!journey.isCurrent(operation)) return
     const decisions = Array.isArray(data) ? data : []
     const linkedDecision = decisions.find((decision) => decision.scenarioId === targetScenarioId)
     const totalVotes =
@@ -711,7 +731,7 @@ const refreshScenarioGovernance = async (targetScenarioId: string | null) => {
       totalVotes > 0 || Boolean(decisionStatus && decisionStatus !== 'OPEN')
   } catch {
     // Keep editing available if we cannot determine lock status.
-    isScenarioLockedForEdit.value = false
+    if (journey.isCurrent(operation)) isScenarioLockedForEdit.value = false
   }
 }
 
@@ -755,67 +775,49 @@ const hasPersistedScenarioResult = (saved: SavedScenario): boolean => {
 }
 
 const loadResult = async () => {
+  resetLocalResult()
   const routeId = String(route.params.id || '')
-  isScenarioLockedForEdit.value = false
-  const latestResult = window.sessionStorage.getItem('planning-scenario-latest-result')
+  let operation = journey.restore()
   const hasFreshSimulationHint =
     typeof route.query.simulatedAt === 'string' && route.query.simulatedAt.length > 0
-  const restored = loadWizardSnapshot()
-  const restoredDebt = loadDebtSnapshot()
-
-  if (restored) {
-    Object.assign(snapshot, restored)
-    scenarioId.value = restored.currentScenarioId
-  }
-  if (restoredDebt) {
-    debtSnapshot.value = restoredDebt
-    scenarioId.value = restoredDebt.currentScenarioId
-  }
-
-  if (latestResult) {
-    try {
-      const parsed = JSON.parse(latestResult) as
-        | ScenarioSimulationResponse
-        | { scenarioId?: string; result?: ScenarioSimulationResponse }
-      const parsedScenarioId = 'scenarioId' in parsed ? String(parsed.scenarioId || '') : ''
-      const parsedResult =
-        'result' in parsed ? parsed.result : (parsed as ScenarioSimulationResponse)
-      if (
-        parsedResult &&
-        (routeId === 'preview' || (hasFreshSimulationHint && parsedScenarioId === routeId))
-      ) {
-        result.value = parsedResult
-        isShowingSavedSnapshot.value = false
-        if (parsedScenarioId && parsedScenarioId !== 'preview') {
-          scenarioId.value = parsedScenarioId
-        }
-        return
-      }
-    } catch (error) {
-      console.warn('Could not parse latest simulation payload', error)
+  if (operation && (operation.scenarioId || 'preview') === routeId &&
+      (routeId === 'preview' || hasFreshSimulationHint)) {
+    const cached = readJourneyResult(operation, routeId)
+    const restored = operation.sourceType === 'MANUAL_TYPED' ? loadDebtSnapshot() : loadWizardSnapshot()
+    if (cached && restored && restored.currentScenarioId === operation.scenarioId) {
+      if (operation.sourceType === 'MANUAL_TYPED') debtSnapshot.value = restored as DebtScenarioSnapshot
+      else Object.assign(snapshot, restored)
+      scenarioId.value = operation.scenarioId
+      result.value = cached
+      if (scenarioId.value) await refreshScenarioGovernance(scenarioId.value)
+      return
     }
   }
 
-  if (!routeId) return
+  // A preview has no durable backing. Never fill it from another draft or API scenario.
+  if (!routeId || routeId === 'preview') return
+  operation = journey.start('BUDGET_BASED', routeId)
+  if (!operation) return
 
   try {
-    const [{ data: scenarios }, { data: budget, status }] = await Promise.all([
-      ScenarioService.list(),
-      BudgetService.getCurrent(new Date().getMonth() + 1, new Date().getFullYear())
-    ])
-
+    const { data: scenarios } = await ScenarioService.list()
+    if (!journey.isCurrent(operation)) return
     const saved = (Array.isArray(scenarios) ? scenarios : []).find((item) => item.id === routeId)
     if (!saved) return
-
+    if (saved.sourceType === 'MANUAL_TYPED') {
+      operation = journey.start('MANUAL_TYPED', routeId)
+      if (!operation) return
+    }
     scenarioId.value = saved.id
     await refreshScenarioGovernance(saved.id)
-
-    const currentBudget =
-      status !== 204 && budget && typeof budget === 'object' && 'id' in budget ? budget : null
+    if (!journey.isCurrent(operation)) return
     if (saved.sourceType === 'MANUAL_TYPED') {
       debtSnapshot.value = snapshotFromSavedDebtScenario(saved)
       saveDebtSnapshot(debtSnapshot.value)
     } else {
+      const { data: budget, status } = await BudgetService.getCurrent(new Date().getMonth() + 1, new Date().getFullYear())
+      if (!journey.isCurrent(operation)) return
+      const currentBudget = status !== 204 && budget && typeof budget === 'object' && 'id' in budget ? budget : null
       const rebuilt = snapshotFromSavedScenario(saved as SavedScenario, currentBudget || undefined)
       if (currentBudget && !rebuilt.scenarioLines.length) {
         rebuilt.scenarioLines = buildScenarioLinesFromBudget(currentBudget)
@@ -824,27 +826,25 @@ const loadResult = async () => {
       saveWizardSnapshot(snapshot)
       if (!hasPersistedScenarioResult(saved)) {
         const { data } = await ScenarioService.simulate(buildSimulationPayload(snapshot))
+        if (!journey.isCurrent(operation)) return
         result.value = data
         isShowingSavedSnapshot.value = false
-        window.sessionStorage.setItem(
-          'planning-scenario-latest-result',
-          JSON.stringify({
-            scenarioId: saved.id,
-            result: data
-          })
-        )
+        writeJourneyResult(operation, saved.id, data)
         return
       }
     }
     result.value = buildResultFromSavedScenario(saved)
     isShowingSavedSnapshot.value = true
   } catch (e) {
+    if (!journey.isCurrent(operation)) return
     console.error(e)
     errorMessage.value = t('planning.scenarios.error')
   }
 }
 
 const recalculateResult = async () => {
+  const operation = journey.session.value
+  if (!journey.isCurrent(operation) || isRecalculating.value) return
   if (isManualTypedScenario.value && !debtSnapshot.value) return
   if (!isManualTypedScenario.value && !snapshot.budgetId && !snapshot.currentScenarioId) return
   isRecalculating.value = true
@@ -855,24 +855,21 @@ const recalculateResult = async () => {
         ? buildDebtScenarioPayload(debtSnapshot.value)
         : buildSimulationPayload(snapshot)
     const { data } = await ScenarioService.simulate(payload)
+    if (!journey.isCurrent(operation)) return
     result.value = data
     isShowingSavedSnapshot.value = false
-    window.sessionStorage.setItem(
-      'planning-scenario-latest-result',
-      JSON.stringify({
-        scenarioId: snapshot.currentScenarioId || String(route.params.id || ''),
-        result: data
-      })
-    )
+    writeJourneyResult(operation, scenarioId.value || 'preview', data)
   } catch (e) {
+    if (!journey.isCurrent(operation)) return
     console.error(e)
     errorMessage.value = t('planning.scenarios.error')
   } finally {
-    isRecalculating.value = false
+    if (journey.isCurrent(operation)) isRecalculating.value = false
   }
 }
 
-const ensureScenarioPersisted = async (): Promise<string> => {
+const ensureScenarioPersisted = async (operation: JourneySession): Promise<string> => {
+  if (!journey.isCurrent(operation) || !result.value) throw new Error('Inactive decision journey')
   const payload =
     isManualTypedScenario.value && debtSnapshot.value
       ? buildDebtScenarioPayload(debtSnapshot.value)
@@ -882,6 +879,8 @@ const ensureScenarioPersisted = async (): Promise<string> => {
         }
   try {
     const { data } = await ScenarioService.save(payload)
+    if (!journey.isCurrent(operation)) throw new Error('Inactive decision journey')
+    journey.linkScenario(data.id)
     snapshot.currentScenarioId = data.id
     scenarioId.value = data.id
     snapshot.scenarioName = data.name || snapshot.scenarioName
@@ -894,7 +893,7 @@ const ensureScenarioPersisted = async (): Promise<string> => {
     }
     return data.id
   } catch (error) {
-    if (extractErrorStatus(error) !== 409) {
+    if (!journey.isCurrent(operation) || extractErrorStatus(error) !== 409) {
       throw error
     }
 
@@ -904,6 +903,8 @@ const ensureScenarioPersisted = async (): Promise<string> => {
       id: undefined,
       name: conflictSafeName
     })
+    if (!journey.isCurrent(operation)) throw new Error('Inactive decision journey')
+    journey.linkScenario(data.id)
     snapshot.currentScenarioId = data.id
     scenarioId.value = data.id
     snapshot.scenarioName = data.name || conflictSafeName
@@ -919,14 +920,18 @@ const ensureScenarioPersisted = async (): Promise<string> => {
 }
 
 const saveScenario = async () => {
+  const operation = journey.session.value
+  if (!journey.isCurrent(operation) || isSaving.value || isCreatingDecision.value) return
   errorMessage.value = ''
   successMessage.value = ''
   isSaving.value = true
   try {
-    const persistedId = await ensureScenarioPersisted()
+    const persistedId = await ensureScenarioPersisted(operation)
+    if (!journey.isCurrent(operation)) return
     snapshot.currentScenarioId = persistedId
     scenarioId.value = persistedId
     await refreshScenarioGovernance(persistedId)
+    if (!journey.isCurrent(operation)) return
     if (debtSnapshot.value) {
       debtSnapshot.value.currentScenarioId = persistedId
       saveDebtSnapshot(debtSnapshot.value)
@@ -941,6 +946,7 @@ const saveScenario = async () => {
       await router.replace({ name: 'planning-scenarios-result', params: { id: persistedId } })
     }
   } catch (e) {
+    if (!journey.isCurrent(operation)) return
     console.error(e)
     const status = extractErrorStatus(e)
     errorMessage.value =
@@ -948,17 +954,21 @@ const saveScenario = async () => {
         ? t('planning.scenarios.save_forbidden')
         : t('planning.scenarios.save_error')
   } finally {
-    isSaving.value = false
+    if (journey.isCurrent(operation)) isSaving.value = false
   }
 }
 
 const createDecisionFromScenario = async () => {
+  const operation = journey.session.value
+  if (!journey.isCurrent(operation) || isSaving.value || isCreatingDecision.value) return
   isCreatingDecision.value = true
   errorMessage.value = ''
   try {
-    const persistedScenarioId = await ensureScenarioPersisted()
+    const persistedScenarioId = await ensureScenarioPersisted(operation)
+    if (!journey.isCurrent(operation)) return
     await DecisionService.createFromScenario(persistedScenarioId)
-    window.sessionStorage.setItem(
+    if (!journey.isCurrent(operation)) return
+    setJourneyValue(
       DECISIONS_FLASH_SUCCESS_KEY,
       JSON.stringify({
         scenarioName:
@@ -969,14 +979,16 @@ const createDecisionFromScenario = async () => {
     )
     await router.push({ name: 'decisions', query: { scenarios: persistedScenarioId } })
   } catch (e) {
+    if (!journey.isCurrent(operation)) return
     console.error(e)
     errorMessage.value = t('planning.scenarios.error')
   } finally {
-    isCreatingDecision.value = false
+    if (journey.isCurrent(operation)) isCreatingDecision.value = false
   }
 }
 
 const editScenario = async () => {
+  if (!journey.isCurrent()) return
   if (debtSnapshot.value) {
     saveDebtSnapshot(debtSnapshot.value)
   } else {
@@ -1013,7 +1025,7 @@ const editScenario = async () => {
 const newScenario = async () => {
   clearWizardSnapshot()
   clearDebtSnapshot()
-  window.sessionStorage.removeItem('planning-scenario-latest-result')
+  setJourneyValue(JOURNEY_RESULT_KEY, null)
   await router.push({
     name: isManualTypedScenario.value ? 'planning-scenarios-debt-new' : 'planning-scenarios-new'
   })
@@ -1022,6 +1034,7 @@ const newScenario = async () => {
 onMounted(() => {
   void loadResult()
 })
+watch(() => [route.params.id, route.query.simulatedAt], () => { void loadResult() })
 
 onUnmounted(() => {
   stopAdvisorSpeech()

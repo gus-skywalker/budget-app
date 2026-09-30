@@ -9,6 +9,7 @@ import type {
   ScenarioTemporalType,
 } from '@/services/ScenarioService'
 import i18n from '@/i18n'
+import { getJourneyValue, setJourneyValue } from '@/utils/decisionJourneySession'
 
 export type AdjustmentFlow = 'INCOME' | 'EXPENSE'
 export type AdjustmentValueMode = 'AMOUNT' | 'PERCENTAGE'
@@ -274,11 +275,11 @@ export const snapshotFromSavedScenario = (
 })
 
 export const saveWizardSnapshot = (snapshot: ScenarioWizardSnapshot) => {
-  window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot))
+  setJourneyValue(STORAGE_KEY, JSON.stringify(snapshot))
 }
 
 export const loadWizardSnapshot = (): ScenarioWizardSnapshot | null => {
-  const raw = window.sessionStorage.getItem(STORAGE_KEY) || window.sessionStorage.getItem('planning-scenario-wizard-v2')
+  const raw = getJourneyValue(STORAGE_KEY) || getJourneyValue('planning-scenario-wizard-v2')
   if (!raw) return null
   try {
     const parsed = JSON.parse(raw) as ScenarioWizardSnapshot
@@ -297,8 +298,8 @@ export const loadWizardSnapshot = (): ScenarioWizardSnapshot | null => {
 }
 
 export const clearWizardSnapshot = () => {
-  window.sessionStorage.removeItem(STORAGE_KEY)
-  window.sessionStorage.removeItem('planning-scenario-wizard-v2')
+  setJourneyValue(STORAGE_KEY, null)
+  setJourneyValue('planning-scenario-wizard-v2', null)
 }
 
 export const monthlyImpactEstimate = (snapshot: ScenarioWizardSnapshot): number =>
