@@ -1,10 +1,18 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { config, mount } from '@vue/test-utils'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { config, mount, enableAutoUnmount } from '@vue/test-utils'
 import { createVuetify } from 'vuetify'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
-import { ref } from 'vue'
+import { reactive, ref } from 'vue'
 import PlanningBudgetView from '@/views/PlanningBudgetView.vue'
+import { beginJourneySession } from '@/utils/decisionJourneySession'
+import { prepareBudgetReturn } from '@/utils/decisionBudgetReturn'
+
+enableAutoUnmount(afterEach)
+const context = { userId: 'budget-user', workspaceId: '11111111-1111-1111-1111-111111111111' }
+const route = reactive({ query: {} as Record<string, string> })
+const store = reactive({ isTenantAdmin: true, canWrite: true, isAuthenticated: true, getUser: { id: context.userId },
+  getCurrentWorkspaceId: context.workspaceId, getPreferredWorkspaceId: context.workspaceId, getWorkspaces: [{ workspaceId: context.workspaceId }] })
 
 const { routerPush, budgetServiceMock, openFinanceServiceMock, billingOrchestrationServiceMock } = vi.hoisted(() => ({
   routerPush: vi.fn(),
@@ -28,6 +36,7 @@ const { routerPush, budgetServiceMock, openFinanceServiceMock, billingOrchestrat
 }))
 
 vi.mock('vue-router', () => ({
+  useRoute: () => route,
   createRouter: () => ({
     beforeEach: vi.fn(),
     afterEach: vi.fn(),
@@ -102,12 +111,7 @@ vi.mock('@/services/BillingOrchestrationService', () => ({
 }))
 
 vi.mock('@/plugins/userStore', () => ({
-  useUserStore: () => ({
-    isTenantAdmin: true,
-    getCurrentWorkspaceId: '11111111-1111-1111-1111-111111111111',
-    getPreferredWorkspaceId: '11111111-1111-1111-1111-111111111111',
-    getWorkspaces: [{ workspaceId: '11111111-1111-1111-1111-111111111111' }],
-  }),
+  useUserStore: () => store,
 }))
 
 const vuetify = createVuetify({ components, directives })
@@ -153,7 +157,13 @@ const flushPromises = async () => {
 describe('PlanningBudgetView suggestion flow', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    sessionStorage.clear()
+    route.query = {}
+    store.isTenantAdmin = true
+    store.canWrite = true
+    store.getCurrentWorkspaceId = context.workspaceId
     openFinanceServiceMock.listConnections.mockResolvedValue({ data: [] })
+    budgetServiceMock.getSuggestions.mockResolvedValue({ data: { lines: [] } })
     billingOrchestrationServiceMock.getBillingSummary.mockResolvedValue({
       data: {
         hasPremiumAccess: true,
@@ -164,6 +174,105 @@ describe('PlanningBudgetView suggestion flow', () => {
         },
       },
     })
+  })
+
+  const active = { id: 'ready-budget', status: 'ACTIVE', periodMonth: 9, periodYear: 2026, net: 1200,
+    totalIncome: 1200, totalExpense: 0, lines: [{ id: 'line', category: 'Manual net baseline', type: 'INCOME', plannedAmount: 1200 }] }
+  const mountBudget = () => mount(PlanningBudgetView, { global: { plugins: [vuetify], mocks: { $t: (key: string) => key } } })
+  const seedReturn = () => {
+    const session = beginJourneySession(context, 'BUDGET_BASED')
+    route.query = (prepareBudgetReturn(session, 'monthly-change') as any).query
+  }
+
+  it('keeps a list error distinct from absence and offers retry', async () => {
+    budgetServiceMock.list.mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce({ data: [active] })
+    const wrapper = mountBudget()
+    await flushPromises()
+    expect(wrapper.text()).toContain('decisionJourney.base.loadError')
+    expect(wrapper.text()).not.toContain('planning.budget.empty_start_title')
+    const retry = wrapper.findAll('button').find(button => button.text().includes('decisionJourney.retry'))!
+    await retry.trigger('click')
+    await flushPromises()
+    expect(wrapper.text()).not.toContain('decisionJourney.base.loadError')
+    expect(wrapper.text()).not.toContain('planning.budget.empty_start_title')
+  })
+
+  it('lets a prepared plan continue explicitly, without waiting for billing or Open Finance', async () => {
+    seedReturn()
+    billingOrchestrationServiceMock.getBillingSummary.mockReturnValue(new Promise(() => {}))
+    budgetServiceMock.list.mockResolvedValue({ data: [active] })
+    const wrapper = mountBudget()
+    await flushPromises()
+    expect(wrapper.text()).toContain('decisionJourney.base.continue')
+    expect(budgetServiceMock.activate).not.toHaveBeenCalled()
+    expect(routerPush).not.toHaveBeenCalled()
+    await (wrapper.vm as any).goToScenarioCreation()
+    expect(routerPush).toHaveBeenCalledWith({ name: 'planning-scenarios-new', query: { guided: '1', intent: 'monthly-change', resume: '1' } })
+  })
+
+  it('activates a manual plan only on confirmation, then offers the original journey', async () => {
+    seedReturn()
+    billingOrchestrationServiceMock.getBillingSummary.mockRejectedValue(new Error('unavailable'))
+    budgetServiceMock.list.mockResolvedValueOnce({ data: [] }).mockResolvedValue({ data: [active] })
+    budgetServiceMock.create.mockResolvedValue({ data: { id: active.id } })
+    budgetServiceMock.addLine.mockResolvedValue({ data: {} })
+    budgetServiceMock.activate.mockResolvedValue({ data: active })
+    const wrapper = mountBudget()
+    await flushPromises()
+    expect(budgetServiceMock.create).not.toHaveBeenCalled()
+    await (wrapper.vm as any).startManualBudget()
+    ;(wrapper.vm as any).quickBaselineAmount = 1200
+    await (wrapper.vm as any).createQuickBaselineBudget()
+    await flushPromises()
+    expect(budgetServiceMock.activate).toHaveBeenCalledWith(active.id)
+    expect(routerPush).not.toHaveBeenCalled()
+    await (wrapper.vm as any).goToScenarioCreation()
+    expect(routerPush).toHaveBeenCalledWith({ name: 'planning-scenarios-new', query: { guided: '1', intent: 'monthly-change', resume: '1' } })
+  })
+
+  it('rejects external return URLs and keeps zero-baseline validation', async () => {
+    route.query = { guided: '1', intent: 'monthly-change', returnTo: 'https://example.com' }
+    budgetServiceMock.list.mockResolvedValue({ data: [active] })
+    const wrapper = mountBudget()
+    await flushPromises()
+    await (wrapper.vm as any).goToScenarioCreation()
+    expect(routerPush).toHaveBeenCalledWith({ name: 'planning-decision-start' })
+    ;(wrapper.vm as any).quickBaselineAmount = 0
+    await (wrapper.vm as any).createQuickBaselineBudget()
+    expect(budgetServiceMock.create).not.toHaveBeenCalled()
+  })
+
+  it('blocks manual creation and continuation for read-only users', async () => {
+    store.isTenantAdmin = false
+    store.canWrite = false
+    seedReturn()
+    budgetServiceMock.list.mockResolvedValue({ data: [] })
+    const wrapper = mountBudget()
+    await flushPromises()
+    expect(wrapper.text()).toContain('planning.budget.manage_permission_hint')
+    await (wrapper.vm as any).startManualBudget()
+    ;(wrapper.vm as any).quickBaselineAmount = 1200
+    await (wrapper.vm as any).createQuickBaselineBudget()
+    await (wrapper.vm as any).goToScenarioCreation()
+    expect(budgetServiceMock.create).not.toHaveBeenCalled()
+    expect(routerPush).not.toHaveBeenCalled()
+  })
+
+  it('does not activate a manual draft after switching workspace during creation', async () => {
+    seedReturn()
+    budgetServiceMock.list.mockResolvedValue({ data: [] })
+    let finish!: (value: unknown) => void
+    budgetServiceMock.create.mockImplementationOnce(() => new Promise(resolve => { finish = resolve }))
+    const wrapper = mountBudget()
+    await flushPromises()
+    ;(wrapper.vm as any).quickBaselineAmount = 1200
+    const request = (wrapper.vm as any).createQuickBaselineBudget()
+    store.getCurrentWorkspaceId = 'another-workspace'
+    finish({ data: { id: 'old-draft' } })
+    await request
+    expect(budgetServiceMock.addLine).not.toHaveBeenCalled()
+    expect(budgetServiceMock.activate).not.toHaveBeenCalled()
+    expect((wrapper.vm as any).guidedReturn).toBeNull()
   })
 
   it('supports no active budget -> generate suggestion -> edit -> activate this plan', async () => {

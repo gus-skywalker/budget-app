@@ -5,15 +5,17 @@
       <page-header :title="t('planning.budget.title')" :summary-items="budgetSummaryItems">
         <template #actions>
           <v-btn
-            v-if="activeBudget"
-            class="cb-btn-primary"
+            v-if="activeBudget && !isLoading && !budgetLoadFailed && userStore.canWrite"
+            class="cb-btn-primary decision-entry-cta"
             @click="goToScenarioCreation"
           >
             <v-icon start>mdi-chart-timeline-variant</v-icon>
-            {{ t('planning.budget.create_scenario') }}
+            {{ t(guidedReturn ? 'decisionJourney.base.continue' : 'decisionJourney.start') }}
           </v-btn>
         </template>
       </page-header>
+
+      <alert-strip v-if="guidedReturn" variant="info" :description="t('decisionJourney.base.prepareHelp')" />
 
       <!-- Alerts -->
       <alert-strip v-if="emptyBudgetMessage" variant="info" :description="emptyBudgetMessage" />
@@ -25,6 +27,10 @@
         <p>{{ t('planning.budget.loading_baselines') }}</p>
       </div>
 
+      <div v-else-if="budgetLoadFailed" class="cb-empty-state" role="alert">
+        <p>{{ t('decisionJourney.base.loadError') }}</p>
+        <v-btn @click="loadCurrentBudget">{{ t('decisionJourney.retry') }}</v-btn>
+      </div>
       <template v-else>
         <!-- Active budget card -->
         <div v-if="activeBudget" class="cb-card cb-active-budget-card">
@@ -45,14 +51,19 @@
             </strong>
           </div>
           <alert-strip v-if="activeBaselineNotice" variant="info" :description="activeBaselineNotice" />
+          <p v-if="guidedReturn">{{ t('decisionJourney.base.notBankBalance') }}</p>
         </div>
 
         <!-- Empty state — no active budget, no editors open -->
-        <div v-else-if="!showSuggestionEditor && !showManualEditor" class="cb-empty-state">
+        <div v-if="!activeBudget && !showSuggestionEditor && !showManualEditor" class="cb-empty-state">
           <v-icon size="40">mdi-wallet-plus-outline</v-icon>
-          <p class="cb-empty-state__title">{{ t('planning.budget.empty_start_title') }}</p>
-          <p>{{ t('planning.budget.empty_start_description') }}</p>
+          <p class="cb-empty-state__title">{{ t(guidedReturn ? 'decisionJourney.base.emptyTitle' : 'planning.budget.empty_start_title') }}</p>
+          <p v-if="!guidedReturn">{{ t('planning.budget.empty_start_description') }}</p>
           <p v-if="!canManageBudget">{{ t('planning.budget.manage_permission_hint') }}</p>
+          <template v-if="guidedReturn && canManageBudget">
+            <p>{{ t('decisionJourney.base.manualHelp') }}</p>
+            <v-btn class="cb-btn-primary decision-entry-cta" @click="startManualBudget">{{ t('planning.budget.create_manually') }}</v-btn>
+          </template>
         </div>
 
         <!-- Create baseline options (always shown when admin and no editor open) -->
@@ -93,7 +104,7 @@
             </v-btn>
           </div>
 
-          <div class="cb-baseline-option cb-card">
+          <div v-if="!guidedReturn || activeBudget" class="cb-baseline-option cb-card">
             <v-icon color="var(--cb-primary)" size="26">mdi-pencil-outline</v-icon>
             <div class="cb-baseline-option__body">
               <span class="cb-baseline-option__tag">{{ t('planning.budget.source_tag_manual') }}</span>
@@ -396,8 +407,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, onScopeDispose, ref, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import BudgetService, {
   type Budget,
@@ -411,6 +422,8 @@ import type { OpenFinanceConnection } from '@/types/openFinance'
 import { useUserStore } from '@/plugins/userStore'
 import PageHeader from '@/components/PageHeader.vue'
 import AlertStrip from '@/components/AlertStrip.vue'
+import { readBudgetReturn } from '@/utils/decisionBudgetReturn'
+import '@/assets/decision-entry.css'
 
 type ManualBudgetLine = {
   id: string
@@ -422,10 +435,12 @@ type ManualBudgetLine = {
 type ManualBudgetMode = 'quick' | 'detailed'
 
 const router = useRouter()
+const route = useRoute()
 const { t, locale } = useI18n()
 const userStore = useUserStore()
 
 const isLoading = ref(false)
+const budgetLoadFailed = ref(false)
 const isCreatingManualBudget = ref(false)
 const isGeneratingSuggestion = ref(false)
 const isGeneratingRealBaseline = ref(false)
@@ -453,6 +468,37 @@ const quickBaselineAmount = ref<number | null>(null)
 const currentWorkspaceId = computed(() =>
   userStore.getCurrentWorkspaceId || userStore.getPreferredWorkspaceId || userStore.getWorkspaces[0]?.workspaceId || ''
 )
+const journeyContext = computed(() => userStore.isAuthenticated && userStore.getUser?.id && userStore.getCurrentWorkspaceId
+  ? { userId: userStore.getUser.id, workspaceId: userStore.getCurrentWorkspaceId } : null)
+const guidedReturn = computed(() => readBudgetReturn(route.query, journeyContext.value))
+let contextEpoch = 0
+let alive = true
+const operationGuard = () => {
+  const epoch = contextEpoch
+  return () => alive && contextEpoch === epoch
+}
+onScopeDispose(() => { alive = false })
+watch(() => [userStore.getUser?.id, userStore.getCurrentWorkspaceId, userStore.isAuthenticated], () => {
+  contextEpoch++
+  activeBudget.value = null
+  allBudgets.value = []
+  billingSummary.value = null
+  suggestion.value = null
+  hasSuggestionData.value = false
+  quickBaselineAmount.value = null
+  editableManualLines.value = []
+  editableSuggestionLines.value = []
+  visibleOpenFinanceConnections.value = []
+  showManualEditor.value = false
+  showSuggestionEditor.value = false
+  bannerMessage.value = ''
+  emptyBudgetMessage.value = ''
+  editorErrorMessage.value = ''
+  isLoading.value = false
+  isCreatingManualBudget.value = false
+  activatingBudgetId.value = null
+  budgetLoadFailed.value = false
+}, { flush: 'sync' })
 const capabilityValue = (name: keyof NonNullable<BillingSummaryResponse['capabilities']>) => {
   const capabilities = billingSummary.value?.capabilities
   if (!capabilities) return false
@@ -644,47 +690,59 @@ const findActiveBudget = (budgets: Budget[]): Budget | null =>
   budgets.find((budget) => budget.status === 'ACTIVE' && hasUsableBudgetBaseline(budget)) || null
 
 const loadCurrentBudget = async () => {
+  const current = operationGuard()
   isLoading.value = true
+  budgetLoadFailed.value = false
+  activeBudget.value = null
+  allBudgets.value = []
   emptyBudgetMessage.value = ''
   try {
     const { data } = await BudgetService.list(now.value.getMonth() + 1, now.value.getFullYear())
-    const budgets = Array.isArray(data) ? data : []
+    if (!current()) return
+    if (!Array.isArray(data)) throw new Error('Invalid budgets response')
+    const budgets = data
     allBudgets.value = budgets
     const currentBudget = findActiveBudget(budgets)
     if (!currentBudget && budgets.some((budget) => budget.status === 'ACTIVE')) {
       activeBudget.value = null
       emptyBudgetMessage.value = t('planning.budget.empty_current_plan')
-      await preloadSuggestionAvailability()
+      void preloadSuggestionAvailability()
       return
     }
 
     activeBudget.value = currentBudget
     showSuggestionEditor.value = false
     showManualEditor.value = false
-    await preloadSuggestionAvailability()
+    void preloadSuggestionAvailability()
   } catch (error) {
+    if (!current()) return
     console.error(error)
     activeBudget.value = null
+    budgetLoadFailed.value = true
   } finally {
-    isLoading.value = false
+    if (current()) isLoading.value = false
   }
 }
 
 const loadOpenFinancePlanningContext = async () => {
+  const current = operationGuard()
   if (!canUseConnectedFinance.value) {
     visibleOpenFinanceConnections.value = []
     return
   }
   try {
     const { data } = await OpenFinanceService.listConnections()
+    if (!current()) return
     visibleOpenFinanceConnections.value = Array.isArray(data) ? data : []
   } catch (error) {
+    if (!current()) return
     console.error(error)
     visibleOpenFinanceConnections.value = []
   }
 }
 
 const preloadSuggestionAvailability = async () => {
+  const current = operationGuard()
   if (!canUsePlanningIntelligence.value) {
     suggestion.value = null
     hasSuggestionData.value = false
@@ -692,9 +750,11 @@ const preloadSuggestionAvailability = async () => {
   }
   try {
     const { data } = await BudgetService.getSuggestions(now.value.getMonth() + 1, now.value.getFullYear())
+    if (!current()) return
     suggestion.value = data
     hasSuggestionData.value = editableLinesFromSuggestion(data).length > 0
   } catch (error) {
+    if (!current()) return
     console.error(error)
     suggestion.value = null
     hasSuggestionData.value = false
@@ -795,6 +855,7 @@ const useSuggestedPlan = async () => {
 }
 
 const startManualBudget = () => {
+  if (!canManageBudget.value) return
   showSuggestionEditor.value = false
   showManualEditor.value = true
   manualMode.value = 'quick'
@@ -829,6 +890,8 @@ const cancelManualBudget = () => {
 }
 
 const createQuickBaselineBudget = async () => {
+  if (!canManageBudget.value || isCreatingManualBudget.value) return
+  const current = operationGuard()
   const baselineAmount = Number(quickBaselineAmount.value || 0)
 
   if (baselineAmount === 0) {
@@ -845,6 +908,7 @@ const createQuickBaselineBudget = async () => {
       status: 'DRAFT',
     })
 
+    if (!current() || !canManageBudget.value) return
     if (!createdBudget?.id) {
       editorErrorMessage.value = t('planning.budget.manual_budget_error')
       return
@@ -856,29 +920,36 @@ const createQuickBaselineBudget = async () => {
       plannedAmount: Math.abs(baselineAmount),
     })
 
+    if (!current() || !canManageBudget.value) return
     await BudgetService.activate(createdBudget.id)
+    if (!current()) return
     showManualEditor.value = false
     bannerMessage.value = t('planning.budget.quick_baseline_activated')
     await loadCurrentBudget()
   } catch (error) {
+    if (!current()) return
     console.error(error)
     editorErrorMessage.value = t('planning.budget.manual_budget_error')
   } finally {
-    isCreatingManualBudget.value = false
+    if (current()) isCreatingManualBudget.value = false
   }
 }
 
 const activateExistingBudget = async (budget: Budget) => {
+  if (!canManageBudget.value || activatingBudgetId.value) return
+  const current = operationGuard()
   activatingBudgetId.value = budget.id
   emptyBudgetMessage.value = ''
   try {
     await BudgetService.activate(budget.id)
+    if (!current()) return
     await loadCurrentBudget()
+    if (!current()) return
     bannerMessage.value = t('planning.budget.existing_baseline_activated', { name: baselineTitle(budget) })
   } catch (error) {
     console.error(error)
   } finally {
-    activatingBudgetId.value = null
+    if (current()) activatingBudgetId.value = null
   }
 }
 
@@ -917,6 +988,8 @@ const confirmDeleteBudget = async () => {
 }
 
 const createManualBudget = async () => {
+  if (!canManageBudget.value || isCreatingManualBudget.value) return
+  const current = operationGuard()
   const lines = editableManualLines.value
     .map((line) => ({
       category: manualLineCategory(line),
@@ -939,32 +1012,39 @@ const createManualBudget = async () => {
       status: 'DRAFT',
     })
 
+    if (!current() || !canManageBudget.value) return
     if (!createdBudget?.id) {
       editorErrorMessage.value = t('planning.budget.manual_budget_error')
       return
     }
 
     for (const line of lines) {
+      if (!current() || !canManageBudget.value) return
       await BudgetService.addLine(createdBudget.id, line)
     }
 
+    if (!current() || !canManageBudget.value) return
     await BudgetService.activate(createdBudget.id)
+    if (!current()) return
     showManualEditor.value = false
     bannerMessage.value = t('planning.budget.manual_budget_activated')
     await loadCurrentBudget()
   } catch (error) {
+    if (!current()) return
     console.error(error)
     editorErrorMessage.value = t('planning.budget.manual_budget_error')
   } finally {
-    isCreatingManualBudget.value = false
+    if (current()) isCreatingManualBudget.value = false
   }
 }
 
 const goToScenarioCreation = async () => {
-  await router.push({ name: 'planning-scenarios-new' })
+  if (!activeBudget.value || isLoading.value || budgetLoadFailed.value || !userStore.canWrite) return
+  await router.push(readBudgetReturn(route.query, journeyContext.value) || { name: 'planning-decision-start' })
 }
 
 const loadBillingCapabilities = async () => {
+  const current = operationGuard()
   const workspaceId = currentWorkspaceId.value
   if (!workspaceId) {
     billingSummary.value = null
@@ -972,8 +1052,10 @@ const loadBillingCapabilities = async () => {
   }
   try {
     const { data } = await BillingOrchestrationService.getBillingSummary(workspaceId)
+    if (!current()) return
     billingSummary.value = data || null
   } catch (error) {
+    if (!current()) return
     console.error(error)
     billingSummary.value = null
   }
@@ -1009,8 +1091,12 @@ const baselineTitle = (budget: Budget): string => {
 }
 
 onMounted(async () => {
-  await loadBillingCapabilities()
-  await Promise.all([loadCurrentBudget(), loadOpenFinancePlanningContext()])
+  const current = operationGuard()
+  // A manual plan does not wait for billing or connected-finance availability.
+  await Promise.all([loadCurrentBudget(), (async () => {
+    await loadBillingCapabilities()
+    if (current()) await Promise.all([loadOpenFinancePlanningContext(), preloadSuggestionAvailability()])
+  })()])
 })
 </script>
 

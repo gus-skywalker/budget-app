@@ -41,12 +41,18 @@
           <p>{{ t('planning.scenarios.loading_budget_baseline') }}</p>
         </div>
 
+        <div v-else-if="budgetLoadFailed" class="empty-results" role="alert">
+          <p>{{ t('decisionJourney.base.loadError') }}</p>
+          <v-btn @click="loadBudget(true)">{{ t('decisionJourney.retry') }}</v-btn>
+        </div>
+
         <div v-else-if="!activeBudget" class="empty-results">
           <v-icon color="var(--cb-ink-muted)" size="28">mdi-wallet-plus-outline</v-icon>
           <p>{{ t('planning.scenarios.empty_no_budget_title') }}</p>
-          <v-btn color="var(--cb-primary)" variant="tonal" @click="router.push({ name: 'planning-budget' })">
+          <p>{{ t('decisionJourney.base.manualHelp') }}</p>
+          <v-btn color="var(--cb-primary)" variant="tonal" @click="prepareBudget">
             <v-icon start>mdi-wallet-outline</v-icon>
-            {{ t('planning.scenarios.empty_no_budget_cta') }}
+            {{ t('decisionJourney.base.prepare') }}
           </v-btn>
         </div>
 
@@ -54,6 +60,8 @@
           <section v-show="step === 1" class="wizard-panel">
             <h2>{{ t('contentExperience.planning.scenarioBuilder.currentBudgetTitle') }}</h2>
             <p>{{ t('contentExperience.planning.scenarioBuilder.currentBudgetDescription') }}</p>
+            <p>{{ t('decisionJourney.base.period', { month: activeBudget.periodMonth, year: activeBudget.periodYear }) }}</p>
+            <p>{{ t('decisionJourney.base.notBankBalance') }}</p>
             <div class="metrics-grid">
               <div class="metric-card">
                 <span>{{ t('contentExperience.planning.scenarioBuilder.totalIncome') }}</span>
@@ -251,6 +259,7 @@ import {
 import ScenarioChangeCard from '@/components/ScenarioChangeCard.vue'
 import { useDecisionJourneySession } from '@/composables/useDecisionJourneySession'
 import { writeJourneyResult } from '@/utils/decisionJourneySession'
+import { prepareBudgetReturn } from '@/utils/decisionBudgetReturn'
 
 const { t, locale } = useI18n()
 const router = useRouter()
@@ -258,6 +267,7 @@ const route = useRoute()
 
 const step = ref(1)
 const isBudgetLoading = ref(false)
+const budgetLoadFailed = ref(false)
 const isSimulating = ref(false)
 const errorMessage = ref('')
 const activeBudget = ref<Budget | null>(null)
@@ -271,6 +281,7 @@ const snapshot = reactive<ScenarioWizardSnapshot>({
   scenarioLines: []
 })
 const journey = useDecisionJourneySession(() => {
+  budgetLoadFailed.value = false
   activeBudget.value = null
   selectedTemplate.value = null
   step.value = 1
@@ -403,11 +414,20 @@ const startNewScenario = (budgetOverride?: Budget | null, persist = true, newSes
   }
 }
 
-const loadBudget = async () => {
+const prepareBudget = async () => {
+  const session = journey.session.value
+  if (!journey.isCurrent(session)) return
+  await router.push(route.query.guided === '1'
+    ? prepareBudgetReturn(session, route.query.intent)
+    : { name: 'planning-budget' })
+}
+
+const loadBudget = async (retry = false) => {
   activeBudget.value = null
+  budgetLoadFailed.value = false
   const cloneFromId = typeof route.query.cloneFrom === 'string' ? route.query.cloneFrom : ''
-  const resuming = !cloneFromId && String(route.query.resume || '') === '1'
-    ? journey.restore('BUDGET_BASED') : null
+  const resuming = retry && journey.isCurrent() ? journey.session.value
+    : !cloneFromId && String(route.query.resume || '') === '1' ? journey.restore('BUDGET_BASED') : null
   const operation = resuming || journey.start('BUDGET_BASED')
   if (!operation) return
   isBudgetLoading.value = true
@@ -415,10 +435,11 @@ const loadBudget = async () => {
     const now = new Date()
     const { data, status } = await BudgetService.getCurrent(now.getMonth() + 1, now.getFullYear())
     if (!journey.isCurrent(operation)) return
-    if (status === 204 || !data || typeof data !== 'object' || !('id' in data)) {
+    if (status === 204 || data == null) {
       activeBudget.value = null
       return
     }
+    if (typeof data !== 'object' || !('id' in data)) throw new Error('Invalid budget response')
 
     activeBudget.value = data
 
@@ -463,6 +484,7 @@ const loadBudget = async () => {
     if (!journey.isCurrent(operation)) return
     console.error(e)
     activeBudget.value = null
+    budgetLoadFailed.value = true
   } finally {
     if (journey.isCurrent(operation)) isBudgetLoading.value = false
   }

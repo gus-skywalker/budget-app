@@ -4,6 +4,7 @@ import { reactive, ref } from 'vue'
 import ScenarioBuilderView from '@/views/ScenarioBuilderView.vue'
 import ScenarioEditorView from '@/views/ScenarioEditorView.vue'
 import { beginJourneySession, readJourneySession, readJourneyResult } from '@/utils/decisionJourneySession'
+import { readBudgetReturn } from '@/utils/decisionBudgetReturn'
 
 enableAutoUnmount(afterEach)
 const context = { userId: 'user-1', workspaceId: 'workspace-1' }
@@ -51,6 +52,40 @@ describe('budget journey views', () => {
     expect(sessionStorage.getItem('planning-debt-scenario-wizard-v1')).toBeNull()
     expect(sessionStorage.getItem('planning-scenario-latest-result')).toBeNull()
     expect(JSON.parse(sessionStorage.getItem('planning-scenario-wizard-v3')!).currentScenarioId).toBeNull()
+  })
+
+  it('distinguishes a failed baseline load from no budget and retries without replacing the session', async () => {
+    budgetApi.getCurrent.mockRejectedValueOnce(new Error('offline'))
+    const wrapper = shallowMount(ScenarioBuilderView, mountOptions)
+    await flushPromises()
+    expect(wrapper.text()).toContain('decisionJourney.base.loadError')
+    expect(wrapper.text()).not.toContain('planning.scenarios.empty_no_budget_title')
+    const id = readJourneySession(context)!.sessionId
+    await (wrapper.vm as any).loadBudget(true)
+    await flushPromises()
+    expect((wrapper.vm as any).activeBudget.id).toBe(budget.id)
+    expect(readJourneySession(context)!.sessionId).toBe(id)
+  })
+
+  it('offers manual preparation after 204 and resumes the same journey after a plan is ready', async () => {
+    route.query = { guided: '1', intent: 'monthly-change' }
+    budgetApi.getCurrent.mockResolvedValueOnce({ status: 204, data: null })
+    const wrapper = shallowMount(ScenarioBuilderView, mountOptions)
+    await flushPromises()
+    expect(wrapper.text()).toContain('decisionJourney.base.manualHelp')
+    expect(wrapper.text()).not.toContain('decisionJourney.base.loadError')
+    const id = readJourneySession(context)!.sessionId
+    await (wrapper.vm as any).prepareBudget()
+    const destination = push.mock.calls[0][0]
+    expect(destination.name).toBe('planning-budget')
+    const back = readBudgetReturn(destination.query, context) as any
+    wrapper.unmount()
+    route.query = back.query
+    const returned = shallowMount(ScenarioBuilderView, mountOptions)
+    await flushPromises()
+    expect(readJourneySession(context)!.sessionId).toBe(id)
+    expect((returned.vm as any).snapshot.budgetId).toBe(budget.id)
+    expect(api.simulate).not.toHaveBeenCalled()
   })
 
   it('clones a saved budget scenario without retaining its persisted identity', async () => {

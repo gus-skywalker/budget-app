@@ -101,3 +101,58 @@ test('entry links, read-only paths and absence of financial writes', async ({ pa
   await expect(page).toHaveURL(/planning\/decide$/)
   expect(writes).toEqual([])
 })
+
+test('ED-03: prepare a manual plan and explicitly return to the original simulation', async ({ page }, info) => {
+  await fixture(page, 'light')
+  let active = false
+  const commands: string[] = []
+  const plan = { id: 'fixture-budget', workspaceId: 'fixture-workspace', status: 'ACTIVE',
+    periodMonth: 9, periodYear: 2026, totalIncome: 1200, totalExpense: 0, net: 1200,
+    lines: [{ id: 'fixture-line', category: 'Manual net baseline', type: 'INCOME', plannedAmount: 1200 }] }
+  await page.route('**/fixture-api/budgets**', async route => {
+    const path = new URL(route.request().url()).pathname
+    if (route.request().method() === 'POST') {
+      commands.push(path)
+      if (path.endsWith('/activate')) active = true
+      return route.fulfill({ json: plan })
+    }
+    if (path.endsWith('/current')) return active ? route.fulfill({ json: plan }) : route.fulfill({ status: 204 })
+    if (path.endsWith('/suggestions')) return route.fulfill({ json: { lines: [] } })
+    return route.fulfill({ json: active ? [plan] : [] })
+  })
+  await page.goto('/planning/decide')
+  await page.locator('[data-intent="monthly-change"]').click()
+  await expect(page.getByText('Não é preciso conectar uma conta bancária.', { exact: false })).toBeVisible()
+  const sessionId = await page.evaluate(() => JSON.parse(sessionStorage.getItem('planning-decision-session-v1')!).sessionId)
+  await page.getByRole('button', { name: 'Preparar meu plano' }).click()
+  await expect(page).toHaveURL(/planning\/budget\?guided=1&intent=monthly-change&returnTo=planning-scenarios-new/)
+  await page.locator('.security-notice__close').click()
+  await page.screenshot({ path: info.outputPath('prepare-manual-plan.png'), fullPage: true, animations: 'disabled' })
+  await page.getByRole('button', { name: 'Criar manualmente' }).first().click()
+  await page.locator('input[type="number"]').first().fill('1200')
+  expect(commands).toEqual([])
+  await page.getByRole('button', { name: 'Ativar baseline rápido' }).click()
+  await expect(page.getByRole('button', { name: 'Continuar minha simulação' })).toBeVisible()
+  await expect(page.locator('.v-navigation-drawer--temporary')).toHaveAttribute('inert', '')
+  await expect(page.locator('.v-navigation-drawer__scrim')).toHaveCount(0)
+  await page.screenshot({ path: info.outputPath('continue-simulation.png'), fullPage: true, animations: 'disabled' })
+  expect(commands).toEqual(['/fixture-api/budgets', '/fixture-api/budgets/fixture-budget/lines', '/fixture-api/budgets/fixture-budget/activate'])
+  await expect(page).toHaveURL(/planning\/budget/)
+  await page.getByRole('button', { name: 'Continuar minha simulação' }).click()
+  await expect(page).toHaveURL(/planning\/scenarios\/new\?guided=1&intent=monthly-change&resume=1/)
+  await expect(page.getByText('Ponto de partida: plano de 9/2026.')).toBeVisible()
+  expect(await page.evaluate(() => JSON.parse(sessionStorage.getItem('planning-decision-session-v1')!).sessionId)).toBe(sessionId)
+})
+
+test('ED-03: failed budget request can be retried without claiming there is no plan', async ({ page }) => {
+  await fixture(page, 'dark')
+  let failing = true
+  await page.route('**/fixture-api/budgets/current*', route => failing
+    ? route.fulfill({ status: 500, json: { message: 'fixture failure' } }) : route.fulfill({ status: 204 }))
+  await page.goto('/planning/scenarios/new?guided=1&intent=custom')
+  await expect(page.getByText('Não conseguimos carregar seu plano mensal.', { exact: false })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Preparar meu plano' })).toHaveCount(0)
+  failing = false
+  await page.getByRole('button', { name: 'Tentar novamente' }).click()
+  await expect(page.getByRole('button', { name: 'Preparar meu plano' })).toBeVisible()
+})

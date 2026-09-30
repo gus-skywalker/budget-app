@@ -1,5 +1,15 @@
 {
   "decisionJourney": {
+    "base": {
+      "emptyTitle": "Your plan is the starting point",
+      "prepare": "Prepare my plan",
+      "loadError": "We couldn't load your monthly plan. Try again; this does not mean you have no plan.",
+      "manualHelp": "You can prepare your plan by entering amounts manually. You don't need to connect a bank account.",
+      "period": "Starting point: your plan for {month}/{year}.",
+      "notBankBalance": "The plan's monthly net is the difference between expected income and expenses. It is not your bank account balance.",
+      "continue": "Continue my simulation",
+      "prepareHelp": "Prepare and activate your plan to continue the simulation you chose. Activation only happens when you confirm; then select “Continue my simulation”."
+    },
     "start": "Start a decision",
     "navigation": "Decision navigation",
     "back": "My decisions",

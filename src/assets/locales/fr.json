@@ -1,5 +1,15 @@
 {
   "decisionJourney": {
+    "base": {
+      "emptyTitle": "Votre plan est le point de départ",
+      "prepare": "Préparer mon plan",
+      "loadError": "Nous n’avons pas pu charger votre plan mensuel. Réessayez ; cela ne signifie pas que vous n’avez pas de plan.",
+      "manualHelp": "Vous pouvez préparer votre plan en saisissant les montants manuellement. Il n’est pas nécessaire de connecter un compte bancaire.",
+      "period": "Point de départ : votre plan pour {month}/{year}.",
+      "notBankBalance": "Le résultat mensuel du plan est la différence entre les revenus et les dépenses prévus. Ce n’est pas le solde de votre compte bancaire.",
+      "continue": "Continuer ma simulation",
+      "prepareHelp": "Préparez et activez votre plan pour continuer la simulation choisie. L’activation a lieu uniquement après votre confirmation ; sélectionnez ensuite « Continuer ma simulation »."
+    },
     "start": "Commencer une décision",
     "navigation": "Navigation de la décision",
     "back": "Mes décisions",
