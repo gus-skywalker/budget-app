@@ -41,6 +41,41 @@ describe('budget journey views', () => {
     decisions.list.mockResolvedValue({ data: [] })
   })
 
+  it('uses three guided steps without templates and reviews effective deltas, not legacy values', async () => {
+    route.query = { guided: '1', intent: 'monthly-change' }
+    const wrapper = shallowMount(ScenarioBuilderView, mountOptions)
+    await flushPromises()
+    const vm = wrapper.vm as any
+    expect(vm.steps).toEqual([1, 3, 4])
+    expect(wrapper.find('.template-grid').exists()).toBe(false)
+    await vm.moveStep(1)
+    expect(vm.step).toBe(3)
+    Object.assign(vm.snapshot.adjustments[0], { amount: 10, percentage: 10, valueMode: 'PERCENTAGE', monthlyChange: 0, oneTimeChange: 0 })
+    vm.snapshot.scenarioLines = [{ category: 'Casa', type: 'EXPENSE', originalAmount: 200, adjustedAmount: 150 }]
+    await vm.moveStep(1)
+    expect(vm.step).toBe(4)
+    expect(vm.visibleStep).toBe(3)
+    expect(vm.activeChangesCount).toBe(2)
+    expect(vm.reviewDeltas[0]).toMatchObject({ type: 'PERCENT_EXPENSE_INCREASE', percentage: 10 })
+    await vm.moveStep(-1)
+    expect(vm.step).toBe(3)
+    await vm.moveStep(-1)
+    expect(vm.step).toBe(1)
+    expect(api.simulate).not.toHaveBeenCalled()
+  })
+
+  it('retains explicit legacy templates and their amounts', async () => {
+    route.query = { guided: '1', template: 'investment' }
+    const wrapper = shallowMount(ScenarioBuilderView, mountOptions)
+    await flushPromises()
+    const vm = wrapper.vm as any
+    expect(vm.steps).toEqual([1, 2, 3, 4])
+    expect(vm.step).toBe(3)
+    expect(vm.reviewDeltas.map((delta: any) => [delta.type, delta.amount])).toEqual([['ONE_TIME_EXPENSE', 8000], ['MONTHLY_INCOME', 1800]])
+    await vm.moveStep(-1)
+    expect(vm.step).toBe(2)
+  })
+
   it('starts a fresh budget session after a debt session and removes its preview', async () => {
     beginJourneySession(context, 'MANUAL_TYPED', 'debt-1')
     sessionStorage.setItem('planning-debt-scenario-wizard-v1', JSON.stringify({ currentScenarioId: 'debt-1' }))

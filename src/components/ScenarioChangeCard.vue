@@ -4,7 +4,7 @@
       <v-text-field
         :model-value="adjustment.label ?? ''"
         @update:model-value="$emit('update:label', $event)"
-        :label="t('contentExperience.planning.adjustmentCard.label')"
+        :label="t('decisionJourney.form.label')"
         variant="outlined"
         density="comfortable"
         hide-details="auto"
@@ -22,42 +22,19 @@
       </button>
     </div>
 
-    <div class="segmented-control">
-      <button
-        v-for="option in flowOptions"
-        :key="option"
-        :class="['segment', { active: adjustment.flow === option }]"
-        @click="$emit('update:flow', option)"
-        type="button"
-      >
-        {{
-          option === 'INCOME'
-            ? t('contentExperience.planning.adjustmentCard.income')
-            : t('contentExperience.planning.adjustmentCard.expense')
-        }}
-      </button>
-    </div>
+    <v-select :model-value="kind" @update:model-value="updateKind" :items="kindOptions"
+      :aria-label="t('decisionJourney.form.whatChanges')"
+      item-title="title" item-value="value" :label="t('decisionJourney.form.whatChanges')" variant="outlined" hide-details="auto" />
 
     <div class="change-inputs">
-      <v-select
-        :model-value="adjustment.valueMode"
-        @update:model-value="updateValueMode"
-        :items="valueModeOptions"
-        item-title="title"
-        item-value="value"
-        :label="t('contentExperience.planning.adjustmentCard.valueMode', 'Value mode')"
-        variant="outlined"
-        density="comfortable"
-        hide-details="auto"
-        class="change-input"
-      />
       <v-select
         :model-value="adjustment.temporalType"
         @update:model-value="updateTemporalType"
         :items="temporalOptions"
         item-title="title"
         item-value="value"
-        :label="t('contentExperience.planning.adjustmentCard.timing', 'Timing')"
+        :label="t('decisionJourney.form.frequency')"
+        :aria-label="t('decisionJourney.form.frequency')"
         variant="outlined"
         density="comfortable"
         hide-details="auto"
@@ -67,6 +44,8 @@
         :model-value="displayAmount"
         @update:model-value="updateAmount"
         :label="amountLabel"
+        :prefix="adjustment.valueMode === 'AMOUNT' ? 'R$' : undefined"
+        :suffix="adjustment.valueMode === 'PERCENTAGE' ? '%' : undefined"
         type="number"
         min="0"
         variant="outlined"
@@ -81,7 +60,8 @@
         :items="monthOptions"
         item-title="title"
         item-value="value"
-        :label="t('contentExperience.planning.adjustmentCard.startMonth', 'Starts in')"
+        :label="t('decisionJourney.form.start')"
+        :aria-label="t('decisionJourney.form.start')"
         variant="outlined"
         density="comfortable"
         hide-details="auto"
@@ -94,7 +74,8 @@
         :items="endMonthOptions"
         item-title="title"
         item-value="value"
-        :label="t('contentExperience.planning.adjustmentCard.endMonth', 'Ends in')"
+        :label="t('decisionJourney.form.end')"
+        :aria-label="t('decisionJourney.form.end')"
         variant="outlined"
         density="comfortable"
         hide-details="auto"
@@ -102,6 +83,14 @@
       />
     </div>
 
+    <details class="change-advanced">
+      <summary>{{ t('decisionJourney.form.valueOptions') }}</summary>
+      <v-select :model-value="adjustment.valueMode" @update:model-value="updateValueMode"
+        :aria-label="t('decisionJourney.form.valueMode')"
+        :items="valueModeOptions" item-title="title" item-value="value"
+        :label="t('decisionJourney.form.valueMode')" variant="outlined" hide-details="auto" />
+      <p>{{ t('decisionJourney.form.modeHelp') }}</p>
+    </details>
     <div class="change-summary">
       <v-icon size="18">mdi-calendar-check-outline</v-icon>
       <span>{{ summaryText }}</span>
@@ -112,13 +101,15 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { ScenarioTemporalType } from '@/services/ScenarioService'
+import type { ScenarioDeltaType, ScenarioTemporalType } from '@/services/ScenarioService'
 import type { AdjustmentValueMode } from '@/utils/scenarioWizard'
+import { changeKind, scenarioMonthLabel, type ChangeKind } from '@/utils/scenarioChangePresentation'
 
 const props = defineProps<{
   adjustment: {
     label?: string
     flow: 'INCOME' | 'EXPENSE'
+    originalDeltaType?: ScenarioDeltaType
     valueMode: AdjustmentValueMode
     temporalType: ScenarioTemporalType
     amount: number
@@ -130,10 +121,13 @@ const props = defineProps<{
   }
 }>()
 const { t, locale } = useI18n()
-const flowOptions = ['INCOME', 'EXPENSE'] as const
+const kind = computed(() => changeKind(props.adjustment.originalDeltaType, props.adjustment.flow))
+const kindOptions = computed(() => (['expense', 'income', 'reduceExpense', 'reduceIncome'] as const)
+  .map(value => ({ value, title: t(`decisionJourney.form.${value}`) })))
 const emit = defineEmits([
   'update:label',
   'update:flow',
+  'update:originalDeltaType',
   'update:valueMode',
   'update:temporalType',
   'update:amount',
@@ -151,9 +145,9 @@ const valueModeOptions = computed(() => [
 ])
 
 const temporalOptions = computed(() => [
-  { title: t('contentExperience.planning.adjustmentCard.ongoing', 'Every month') },
-  { title: t('contentExperience.planning.adjustmentCard.fixedPeriod', 'For a period') },
-  { title: t('contentExperience.planning.adjustmentCard.single', 'One time'), value: 'SINGLE' },
+  { title: t('decisionJourney.form.ONGOING') },
+  { title: t('decisionJourney.form.FIXED_PERIOD') },
+  { title: t('decisionJourney.form.SINGLE'), value: 'SINGLE' },
 ].map((item, index) => ({
   ...item,
   value: (['ONGOING', 'FIXED_PERIOD', 'SINGLE'] as const)[index],
@@ -166,16 +160,7 @@ const monthFormatterLocale = computed(() => {
   return 'pt-BR'
 })
 
-const monthLabel = (offset: number) => {
-  const date = new Date()
-  date.setDate(1)
-  date.setMonth(date.getMonth() + 1 + Math.max(0, Math.trunc(Number(offset || 0))))
-  const label = new Intl.DateTimeFormat(monthFormatterLocale.value, {
-    month: 'short',
-    year: 'numeric',
-  }).format(date)
-  return label.replace('.', '')
-}
+const monthLabel = (offset: number) => scenarioMonthLabel(offset, monthFormatterLocale.value)
 
 const monthOptions = computed(() =>
   Array.from({ length: 24 }, (_, offset) => ({
@@ -217,29 +202,21 @@ const displayAmount = computed(() => {
 
 const amountLabel = computed(() => {
   if (props.adjustment.valueMode === 'PERCENTAGE') {
-    return t('contentExperience.planning.adjustmentCard.percentageChange', 'Percentage')
+    return t('decisionJourney.form.percentage')
   }
   if (props.adjustment.temporalType === 'SINGLE') {
-    return t('contentExperience.planning.adjustmentCard.oneTimeChange')
+    return t('decisionJourney.form.amountOnce')
   }
-  return t('contentExperience.planning.adjustmentCard.monthlyChange')
+  return t('decisionJourney.form.amountMonthly')
 })
 
 const valueSummary = computed(() => {
-  const target = props.adjustment.flow === 'INCOME'
-    ? t('contentExperience.planning.adjustmentCard.incomeTarget', 'income')
-    : t('contentExperience.planning.adjustmentCard.expenseTarget', 'expense')
+  const target = t(`decisionJourney.form.${kind.value}`)
   const value = Number(displayAmount.value || 0)
   if (props.adjustment.valueMode === 'PERCENTAGE') {
-    return t('contentExperience.planning.adjustmentCard.summaryPercentage', {
-      target,
-      value: formatNumber(value),
-    })
+    return `${target}: ${formatNumber(value)}%`
   }
-  return t('contentExperience.planning.adjustmentCard.summaryAmount', {
-    target,
-    value: formatCurrency(value),
-  })
+  return `${target}: ${formatCurrency(value)}`
 })
 
 const durationMonths = computed(() => {
@@ -283,15 +260,18 @@ const formatCurrency = (value: number) =>
     currency: 'BRL',
   })
 
+const updateKind = (value: ChangeKind, mode = props.adjustment.valueMode) => {
+  emit('update:flow', value === 'income' || value === 'reduceExpense' ? 'INCOME' : 'EXPENSE')
+  const reduction = value === 'reduceExpense' ? 'EXPENSE_REDUCTION' : value === 'reduceIncome' ? 'INCOME_REDUCTION' : undefined
+  emit('update:originalDeltaType', reduction ? `${mode === 'PERCENTAGE' ? 'PERCENT_' : ''}${reduction}` : undefined)
+}
+
 const updateValueMode = (value: AdjustmentValueMode) => {
+  if (value === props.adjustment.valueMode) return
+  updateKind(kind.value, value)
   emit('update:valueMode', value)
-  if (value === 'PERCENTAGE') {
-    emit('update:amount', 0)
-    emit('update:percentage', props.adjustment.percentage || 0)
-    return
-  }
-  const amount = props.adjustment.amount || props.adjustment.monthlyChange || props.adjustment.oneTimeChange || 0
-  emit('update:amount', amount)
+  // An explicit unit change asks for a new value; never turn 200 reais into 200%.
+  for (const field of ['amount', 'percentage', 'monthlyChange', 'oneTimeChange'] as const) emit(`update:${field}`, 0)
 }
 
 const updateTemporalType = (value: ScenarioTemporalType) => {
@@ -307,7 +287,7 @@ const updateTemporalType = (value: ScenarioTemporalType) => {
 const updateStartMonth = (value: number) => {
   const start = Math.max(0, Math.trunc(Number(value || 0)))
   emit('update:startMonthOffset', start)
-  if (props.adjustment.temporalType === 'FIXED_PERIOD' && normalizedEndOffset.value < start) {
+  if (props.adjustment.temporalType === 'FIXED_PERIOD' && (props.adjustment.endMonthOffset == null || props.adjustment.endMonthOffset < start)) {
     emit('update:endMonthOffset', start)
   }
 }
@@ -335,6 +315,9 @@ const updateAmount = (value: unknown) => {
 </script>
 
 <style scoped>
+.change-advanced summary { cursor: pointer; color: var(--cb-ink); padding: 10px 0; font-weight: 600; }
+.change-advanced summary:focus-visible { outline: 3px solid var(--cb-primary); outline-offset: 3px; }
+.change-advanced p { color: var(--cb-ink-secondary); font-size: .85rem; margin-top: 10px; }
 .scenario-change-card {
   border: 1px solid rgba(15, 23, 42, 0.12);
   border-radius: 12px;
@@ -399,6 +382,8 @@ const updateAmount = (value: unknown) => {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
+
+:deep(.v-select__selection-text) { white-space: normal; }
 
 .change-summary {
   display: flex;

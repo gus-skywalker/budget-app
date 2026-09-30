@@ -1,7 +1,7 @@
 <template>
   <div class="cb-page">
     <div class="cb-container scenario-wizard">
-      <page-header :title="t('planning.scenarios.title')" :meta="t('planning.scenarios.subtitle')">
+      <page-header :title="t(isGuided ? 'decisionJourney.form.title' : 'planning.scenarios.title')" :meta="t(isGuided ? 'decisionJourney.form.subtitle' : 'planning.scenarios.subtitle')">
         <template #actions>
           <v-btn
             v-if="cameFromHub"
@@ -26,10 +26,10 @@
 
         <div class="wizard-steps">
           <span class="wizard-step">{{
-            t('contentExperience.planning.scenarioBuilder.stepCounter', { step })
+            t('decisionJourney.form.step', { step: visibleStep, total: steps.length })
           }}</span>
           <v-progress-linear
-            :model-value="(step / 4) * 100"
+            :model-value="(visibleStep / steps.length) * 100"
             color="var(--cb-primary)"
             height="8"
             rounded
@@ -58,7 +58,7 @@
 
         <template v-else>
           <section v-show="step === 1" class="wizard-panel">
-            <h2>{{ t('contentExperience.planning.scenarioBuilder.currentBudgetTitle') }}</h2>
+            <h2 ref="baseHeading" tabindex="-1">{{ t('contentExperience.planning.scenarioBuilder.currentBudgetTitle') }}</h2>
             <p>{{ t('contentExperience.planning.scenarioBuilder.currentBudgetDescription') }}</p>
             <p>{{ t('decisionJourney.base.period', { month: activeBudget.periodMonth, year: activeBudget.periodYear }) }}</p>
             <p>{{ t('decisionJourney.base.notBankBalance') }}</p>
@@ -80,7 +80,7 @@
             </div>
           </section>
 
-          <section v-show="step === 2" class="wizard-panel">
+          <section v-if="!isGuided" v-show="step === 2" class="wizard-panel">
             <h2>{{ t('contentExperience.planning.scenarioBuilder.chooseIntentTitle') }}</h2>
             <p>{{ t('contentExperience.planning.scenarioBuilder.chooseIntentDescription') }}</p>
             <div class="template-grid">
@@ -102,29 +102,8 @@
           </section>
 
           <section v-show="step === 3" class="wizard-panel">
-            <h2>{{ t('contentExperience.planning.scenarioBuilder.simpleAdjustmentsTitle') }}</h2>
-            <p>{{ t('contentExperience.planning.scenarioBuilder.simpleAdjustmentsDescription') }}</p>
-
-            <v-text-field
-              v-model="snapshot.scenarioName"
-              :label="t('planning.scenarios.name')"
-              variant="outlined"
-              density="comfortable"
-              hide-details="auto"
-              class="wizard-input"
-            />
-
-            <v-text-field
-              v-model.number="snapshot.months"
-              :label="t('planning.scenarios.months')"
-              type="number"
-              min="1"
-              max="24"
-              variant="outlined"
-              density="comfortable"
-              hide-details="auto"
-              class="wizard-input"
-            />
+            <h2 ref="changesHeading" tabindex="-1">{{ t('decisionJourney.form.changesTitle') }}</h2>
+            <p>{{ t('decisionJourney.form.changesHelp') }}</p>
 
             <div class="adjustments-list">
               <ScenarioChangeCard
@@ -133,6 +112,7 @@
                 :adjustment="adjustment"
                 @update:label="(val) => (snapshot.adjustments[idx].label = val)"
                 @update:flow="(val) => (snapshot.adjustments[idx].flow = val)"
+                @update:originalDeltaType="(val) => (snapshot.adjustments[idx].originalDeltaType = val)"
                 @update:valueMode="(val) => (snapshot.adjustments[idx].valueMode = val)"
                 @update:temporalType="(val) => (snapshot.adjustments[idx].temporalType = val)"
                 @update:amount="(val) => (snapshot.adjustments[idx].amount = Number(val || 0))"
@@ -157,27 +137,20 @@
                   {{ t('contentExperience.planning.scenarioBuilder.addChange') }}
                 </v-btn>
               </div>
-              <div class="impact-estimate">
-                <span>{{ t('contentExperience.planning.scenarioBuilder.estimatedMonthlyImpact') }}</span>
-                <strong
-                  :class="{
-                    'positive-value': estimatedImpact > 0,
-                    'negative-value': estimatedImpact < 0
-                  }"
-                >
-                  {{ formatSignedCurrency(estimatedImpact) }}
-                </strong>
-              </div>
+              <p>{{ t('decisionJourney.form.impactHelp') }}</p>
             </div>
+            <ScenarioAdvancedFields :snapshot="snapshot"
+              @update:name="snapshot.scenarioName = $event" @update:months="snapshot.months = $event"
+              @update:line="(index, value) => snapshot.scenarioLines[index].adjustedAmount = value" />
           </section>
 
           <section v-show="step === 4" class="wizard-panel">
-            <h2>{{ t('contentExperience.planning.scenarioBuilder.readyTitle') }}</h2>
-            <p>{{ t('contentExperience.planning.scenarioBuilder.readyDescription') }}</p>
+            <h2 ref="reviewHeading" tabindex="-1">{{ t('decisionJourney.form.reviewTitle') }}</h2>
+            <p>{{ t('decisionJourney.form.reviewHelp') }}</p>
 
             <div class="review-box">
               <div>
-                <span>{{ t('contentExperience.planning.scenarioBuilder.reviewScenario') }}</span>
+                <span>{{ t('decisionJourney.form.name') }}</span>
                 <strong>{{ snapshot.scenarioName || t('planning.scenarios.default_name') }}</strong>
               </div>
               <div>
@@ -189,10 +162,14 @@
                 }}</strong>
               </div>
               <div>
-                <span>{{ t('contentExperience.planning.scenarioBuilder.reviewActiveChanges') }}</span>
+                <span>{{ t('decisionJourney.form.changeCount') }}</span>
                 <strong>{{ activeChangesCount }}</strong>
               </div>
             </div>
+            <ul class="review-changes" :aria-label="t('decisionJourney.form.changesTitle')">
+              <ScenarioDeltaSummary v-for="(delta, index) in reviewDeltas" :key="index" :delta="delta" />
+            </ul>
+            <p v-if="!canSimulate">{{ t('decisionJourney.form.noChanges') }}</p>
 
             <v-btn
               color="var(--cb-primary)"
@@ -202,7 +179,7 @@
               @click="simulate"
             >
               <v-icon start>mdi-chart-line-variant</v-icon>
-              {{ t('contentExperience.planning.scenarioBuilder.simulate') }}
+              {{ t('decisionJourney.form.simulate') }}
             </v-btn>
           </section>
 
@@ -210,16 +187,17 @@
             <v-btn
               variant="text"
               :disabled="step === 1 || isSimulating"
-              @click="step = Math.max(1, step - 1)"
+              @click="moveStep(-1)"
             >
               <v-icon start>mdi-arrow-left</v-icon>
               {{ t('contentExperience.planning.scenarioBuilder.back') }}
             </v-btn>
             <v-btn
+              v-if="step !== 4"
               color="var(--cb-primary)"
               variant="tonal"
               :disabled="step === 4 || isSimulating"
-              @click="step = Math.min(4, step + 1)"
+              @click="moveStep(1)"
             >
               {{ t('contentExperience.planning.scenarioBuilder.next') }}
               <v-icon end>mdi-arrow-right</v-icon>
@@ -234,11 +212,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import PageHeader from '@/components/PageHeader.vue'
-import AlertStrip from '@/components/AlertStrip.vue'
 import BudgetService, { type Budget } from '@/services/BudgetService'
 import ScenarioService from '@/services/ScenarioService'
 import {
@@ -249,7 +226,6 @@ import {
   hasAnyScenarioChange,
   loadWizardSnapshot,
   mapDeltasToSimpleAdjustments,
-  monthlyImpactEstimate,
   saveWizardSnapshot,
   snapshotFromSavedScenario,
   templateDeltas,
@@ -257,6 +233,8 @@ import {
 } from '@/utils/scenarioWizard'
 
 import ScenarioChangeCard from '@/components/ScenarioChangeCard.vue'
+import ScenarioAdvancedFields from '@/components/ScenarioAdvancedFields.vue'
+import ScenarioDeltaSummary from '@/components/ScenarioDeltaSummary.vue'
 import { useDecisionJourneySession } from '@/composables/useDecisionJourneySession'
 import { writeJourneyResult } from '@/utils/decisionJourneySession'
 import { prepareBudgetReturn } from '@/utils/decisionBudgetReturn'
@@ -266,6 +244,18 @@ const router = useRouter()
 const route = useRoute()
 
 const step = ref(1)
+const isGuided = computed(() => route.query.guided === '1' && !route.query.template && !route.query.cloneFrom)
+const steps = computed(() => isGuided.value ? [1, 3, 4] : [1, 2, 3, 4])
+const visibleStep = computed(() => steps.value.indexOf(step.value) + 1)
+const baseHeading = ref<HTMLElement | null>(null)
+const changesHeading = ref<HTMLElement | null>(null)
+const reviewHeading = ref<HTMLElement | null>(null)
+const moveStep = async (direction: number) => {
+  const index = Math.max(0, Math.min(steps.value.length - 1, steps.value.indexOf(step.value) + direction))
+  step.value = steps.value[index]
+  await nextTick()
+  ;({ 1: baseHeading, 3: changesHeading, 4: reviewHeading }[step.value])?.value?.focus()
+}
 const isBudgetLoading = ref(false)
 const budgetLoadFailed = ref(false)
 const isSimulating = ref(false)
@@ -329,14 +319,9 @@ const requestedTemplate = computed(() =>
     .toLowerCase()
 )
 
-const estimatedImpact = computed(() => monthlyImpactEstimate(snapshot))
 const canSimulate = computed(() => hasAnyScenarioChange(snapshot))
-const activeChangesCount = computed(
-  () =>
-    snapshot.adjustments.filter(
-      (item) => Number(item.monthlyChange || 0) > 0 || Number(item.oneTimeChange || 0) > 0
-    ).length
-)
+const reviewDeltas = computed(() => buildSimulationPayload(snapshot).deltas)
+const activeChangesCount = computed(() => reviewDeltas.value.length)
 
 const formatCurrency = (value: number) =>
   Number(value || 0).toLocaleString(
@@ -349,11 +334,6 @@ const formatCurrency = (value: number) =>
           : 'pt-BR',
     { style: 'currency', currency: 'BRL' }
   )
-
-const formatSignedCurrency = (value: number) => {
-  const absolute = formatCurrency(Math.abs(value))
-  return value > 0 ? `+${absolute}` : value < 0 ? `-${absolute}` : absolute
-}
 
 const addAdjustment = () => {
   snapshot.adjustments.push(createAdjustment())
@@ -691,6 +671,11 @@ watch(
 }
 
 @media (max-width: 600px) {
+  :deep(.cb-page-header) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
   .scenario-wizard {
     padding-inline: 0;
   }

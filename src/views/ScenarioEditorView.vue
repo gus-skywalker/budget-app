@@ -2,13 +2,13 @@
   <div class="cb-page">
     <div class="cb-container scenario-editor">
       <page-header
-        :title="t('contentExperience.planning.scenarioEditor.title', 'Edit scenario')"
-        :meta="t('contentExperience.planning.scenarioEditor.subtitle', 'Update assumptions and re-run the simulation for this saved scenario.')"
+        :title="t('decisionJourney.form.editTitle')"
+        :meta="t('decisionJourney.form.editHelp')"
       >
         <template #actions>
           <v-btn variant="text" color="var(--cb-primary)" @click="openScenarioResult">
             <v-icon start>mdi-arrow-left</v-icon>
-            {{ t('contentExperience.planning.scenarioEditor.backToResults', 'Back to results') }}
+            {{ t('decisionJourney.form.backToResults') }}
           </v-btn>
         </template>
       </page-header>
@@ -22,43 +22,22 @@
         <template v-else-if="snapshot.currentScenarioId">
           <div class="summary-strip">
             <div class="summary-item">
-              <span>{{ t('contentExperience.planning.scenarioEditor.scenarioLabel', 'Scenario') }}</span>
+              <span>{{ t('decisionJourney.form.name') }}</span>
               <strong>{{ snapshot.scenarioName || t('planning.scenarios.default_name') }}</strong>
             </div>
             <div class="summary-item">
-              <span>{{ t('contentExperience.planning.scenarioEditor.horizonLabel', 'Horizon') }}</span>
+              <span>{{ t('decisionJourney.form.horizon') }}</span>
               <strong>{{ t('contentExperience.planning.scenarioBuilder.monthsLabel', { count: snapshot.months }) }}</strong>
             </div>
             <div class="summary-item">
-              <span>{{ t('contentExperience.planning.scenarioEditor.estimatedImpact', 'Estimated monthly impact') }}</span>
-              <strong :class="{ 'positive-value': estimatedImpact > 0, 'negative-value': estimatedImpact < 0 }">
-                {{ formatSignedCurrency(estimatedImpact) }}
-              </strong>
+              <span>{{ t('decisionJourney.form.changeCount') }}</span>
+              <strong>{{ reviewDeltas.length }}</strong>
             </div>
           </div>
 
-          <v-text-field
-            v-model="snapshot.scenarioName"
-            :label="t('planning.scenarios.name')"
-            variant="outlined"
-            density="comfortable"
-            hide-details="auto"
-          />
-
-          <v-text-field
-            v-model.number="snapshot.months"
-            :label="t('planning.scenarios.months')"
-            type="number"
-            min="1"
-            max="24"
-            variant="outlined"
-            density="comfortable"
-            hide-details="auto"
-          />
-
           <div class="section-header">
-            <h3>{{ t('contentExperience.planning.scenarioEditor.changesTitle', 'Changes') }}</h3>
-            <p>{{ t('contentExperience.planning.scenarioEditor.changesDescription', 'Keep only the adjustments that matter for this scenario.') }}</p>
+            <h3>{{ t('decisionJourney.form.changesTitle') }}</h3>
+            <p>{{ t('decisionJourney.form.changesHelp') }}</p>
           </div>
 
           <div class="adjustments-list">
@@ -68,6 +47,7 @@
               :adjustment="adjustment"
               @update:label="(val) => (snapshot.adjustments[idx].label = val)"
               @update:flow="(val) => (snapshot.adjustments[idx].flow = val)"
+              @update:originalDeltaType="(val) => (snapshot.adjustments[idx].originalDeltaType = val)"
               @update:valueMode="(val) => (snapshot.adjustments[idx].valueMode = val)"
               @update:temporalType="(val) => (snapshot.adjustments[idx].temporalType = val)"
               @update:amount="(val) => (snapshot.adjustments[idx].amount = Number(val || 0))"
@@ -83,15 +63,23 @@
           <div class="editor-actions-inline">
             <v-btn variant="tonal" color="var(--cb-primary)" @click="addAdjustment">
               <v-icon start>mdi-plus</v-icon>
-              {{ t('contentExperience.planning.scenarioEditor.addChange', 'Add change') }}
+              {{ t('decisionJourney.form.addChange') }}
             </v-btn>
-            <span class="hint-text">{{ t('contentExperience.planning.scenarioEditor.saveHint', 'You can simulate without saving. Save is optional on result page.') }}</span>
+            <span class="hint-text">{{ t('decisionJourney.form.reviewHelp') }}</span>
           </div>
+
+          <ScenarioAdvancedFields :snapshot="snapshot"
+            @update:name="snapshot.scenarioName = $event" @update:months="snapshot.months = $event"
+            @update:line="(index, value) => snapshot.scenarioLines[index].adjustedAmount = value" />
+          <details>
+            <summary>{{ t('decisionJourney.form.reviewTitle') }}</summary>
+            <ul><ScenarioDeltaSummary v-for="(delta, index) in reviewDeltas" :key="index" :delta="delta" /></ul>
+          </details>
 
           <div class="editor-footer">
             <v-btn variant="text" @click="router.push({ name: 'planning-scenarios' })">
               <v-icon start>mdi-layers-triple-outline</v-icon>
-              {{ t('contentExperience.planning.scenarioEditor.scenarioList', 'Scenario list') }}
+              {{ t('decisionJourney.form.list') }}
             </v-btn>
             <v-btn
               color="var(--cb-primary)"
@@ -101,17 +89,17 @@
               @click="simulate"
             >
               <v-icon start>mdi-chart-line-variant</v-icon>
-              {{ t('contentExperience.planning.scenarioEditor.simulateUpdates', 'Simulate updates') }}
+              {{ t('decisionJourney.form.simulate') }}
             </v-btn>
           </div>
         </template>
 
         <div v-else class="empty-results">
           <v-icon color="var(--cb-ink-muted)" size="28">mdi-alert-circle-outline</v-icon>
-          <p>{{ t('contentExperience.planning.scenarioEditor.notFound', 'Scenario not found.') }}</p>
+          <p>{{ t('decisionJourney.form.notFound') }}</p>
           <v-btn color="var(--cb-primary)" variant="tonal" @click="router.push({ name: 'planning-scenarios' })">
             <v-icon start>mdi-arrow-left</v-icon>
-            {{ t('contentExperience.planning.scenarioEditor.backToScenarios', 'Back to scenarios') }}
+            {{ t('decisionJourney.form.list') }}
           </v-btn>
         </div>
 
@@ -127,6 +115,8 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import PageHeader from '@/components/PageHeader.vue'
 import ScenarioChangeCard from '@/components/ScenarioChangeCard.vue'
+import ScenarioAdvancedFields from '@/components/ScenarioAdvancedFields.vue'
+import ScenarioDeltaSummary from '@/components/ScenarioDeltaSummary.vue'
 import BudgetService from '@/services/BudgetService'
 import ScenarioService from '@/services/ScenarioService'
 import DecisionService from '@/services/DecisionService'
@@ -137,7 +127,6 @@ import {
   buildSimulationPayload,
   createAdjustment,
   hasAnyScenarioChange,
-  monthlyImpactEstimate,
   saveWizardSnapshot,
   snapshotFromSavedScenario,
   type ScenarioWizardSnapshot,
@@ -145,7 +134,7 @@ import {
 
 const route = useRoute()
 const router = useRouter()
-const { t, locale } = useI18n()
+const { t } = useI18n()
 
 const isLoading = ref(false)
 const isSimulating = ref(false)
@@ -165,19 +154,8 @@ const journey = useDecisionJourneySession(() => {
   isSimulating.value = false
 })
 
-const estimatedImpact = computed(() => monthlyImpactEstimate(snapshot))
+const reviewDeltas = computed(() => buildSimulationPayload(snapshot).deltas)
 const canSimulate = computed(() => hasAnyScenarioChange(snapshot))
-
-const formatCurrency = (value: number) =>
-  Number(value || 0).toLocaleString(
-    locale.value === 'en' ? 'en-US' : locale.value === 'fr' ? 'fr-FR' : locale.value === 'es' ? 'es-ES' : 'pt-BR',
-    { style: 'currency', currency: 'BRL' },
-  )
-
-const formatSignedCurrency = (value: number) => {
-  const absolute = formatCurrency(Math.abs(value))
-  return value > 0 ? `+${absolute}` : value < 0 ? `-${absolute}` : absolute
-}
 
 const addAdjustment = () => {
   snapshot.adjustments.push(createAdjustment())
@@ -411,5 +389,11 @@ onMounted(() => {
     flex-direction: column;
     align-items: stretch;
   }
+}
+
+@media (max-width: 600px) {
+  :deep(.cb-page-header) { flex-direction: column; align-items: stretch; }
+  .scenario-editor { padding-inline: 0; }
+  .editor-shell { padding: 16px; }
 }
 </style>

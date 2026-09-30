@@ -1,5 +1,100 @@
 import { expect, test, type Page } from '@playwright/test'
 
+for (const theme of ['light', 'dark'] as const) {
+  test(`ED-04: guided expense reduction, review and preview only (${theme})`, async ({ page }, info) => {
+    await fixture(page, theme)
+    await page.setViewportSize({ width: theme === 'light' ? 360 : 1440, height: 1000 })
+    const plan = { id: 'fixture-budget', periodMonth: 9, periodYear: 2026, totalIncome: 3000, totalExpense: 2000, net: 1000, lines: [] }
+    await page.route('**/fixture-api/budgets/current**', route => route.fulfill({ json: plan }))
+    const writes: { path: string; body: any }[] = []
+    await page.route('**/fixture-api/scenarios**', async route => {
+      if (route.request().method() !== 'GET') writes.push({ path: new URL(route.request().url()).pathname, body: route.request().postDataJSON() })
+      return route.fulfill({ json: { sourceType: 'BUDGET_BASED', scenarioName: 'Assinatura', months: 6,
+        currentBalance: 1000, baselineMonthlyNet: 1000, scenarioMonthlyImpact: 100,
+        projectedFinalBalance: 6600, decisionStatus: 'STABLE', availableForGoals: 0, impactedGoalsCount: 0,
+        forecast: [], impactedGoalNames: [] } })
+    })
+    await page.goto('/planning/scenarios/new?guided=1&intent=monthly-change')
+    await expect(page.getByText('Passo 1 de 3')).toBeVisible()
+    await page.locator('.security-notice__close').click()
+    await page.getByRole('button', { name: 'Próximo', exact: true }).click()
+    await expect(page.getByRole('heading', { name: 'O que vai mudar?' })).toBeFocused()
+    await expect(page.getByText('Passo 2 de 3')).toBeVisible()
+    await expect(page.locator('.template-grid')).toHaveCount(0)
+    const card = page.locator('.scenario-change-card')
+    const choose = async (label: string, value: string | number) => {
+      await card.getByRole('combobox', { name: label, exact: true }).press('ArrowDown')
+      const list = page.getByRole('listbox', { name: `${label}-list`, exact: true })
+      await expect(list).toBeVisible()
+      const option = typeof value === 'number' ? list.getByRole('option').nth(value) : list.getByRole('option', { name: value, exact: true })
+      await option.click()
+      await expect(list).toBeHidden()
+    }
+    await card.getByRole('textbox', { name: 'Dê um nome à mudança (opcional)' }).fill('Assinatura')
+    await choose('Que tipo de mudança é essa?', 'Reduzir um gasto')
+    await card.getByRole('spinbutton', { name: 'Qual é o valor por mês?' }).fill('100')
+    await choose('Isso acontece uma vez ou todo mês?', 'Todo mês, por um período')
+    await choose('Em que mês começa?', 2)
+    await choose('Qual é o último mês?', 2)
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
+    await page.screenshot({ path: info.outputPath(`premises-${theme}.png`), fullPage: true, animations: 'disabled' })
+    await page.getByRole('button', { name: 'Próximo', exact: true }).click()
+    await expect(page.getByRole('heading', { name: 'Confira antes de testar' })).toBeFocused()
+    await expect(page.getByText('Passo 3 de 3')).toBeVisible()
+    await expect(page.locator('.review-changes')).toContainText('Reduzir um gasto')
+    await expect(page.locator('.review-changes')).toContainText('100,00')
+    await expect(page.locator('.review-changes')).toContainText('Todo mês, por um período')
+    await expect(page.getByRole('button', { name: 'Próximo', exact: true })).toHaveCount(0)
+    expect(writes).toEqual([])
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
+    await page.screenshot({ path: info.outputPath(`review-${theme}.png`), fullPage: true, animations: 'disabled' })
+    await page.getByRole('button', { name: 'Ver o impacto', exact: true }).click()
+    await expect.poll(() => writes.length).toBe(1)
+    expect(writes[0].path).toBe('/fixture-api/scenarios/simulate')
+    expect(writes[0].body.deltas).toEqual([{ label: 'Assinatura', type: 'EXPENSE_REDUCTION', temporalType: 'FIXED_PERIOD', amount: 100, startMonthOffset: 2, endMonthOffset: 4 }])
+    await expect(page).toHaveURL(/planning\/scenarios\/preview\?simulatedAt=/)
+  })
+}
+
+test('ED-04: editing preserves percentage, duration and hidden plan changes', async ({ page }, info) => {
+  await fixture(page, 'light')
+  await page.setViewportSize({ width: 360, height: 1000 })
+  const saved = { id: 'saved-premises', budgetId: 'fixture-budget', name: 'Economizar', sourceType: 'BUDGET_BASED', months: 9,
+    deltas: [{ label: 'Redução', type: 'PERCENT_EXPENSE_REDUCTION', temporalType: 'FIXED_PERIOD', amount: 10, percentage: 10, startMonthOffset: 1, endMonthOffset: 3 }],
+    lines: [{ id: 'line', category: 'Casa', type: 'EXPENSE', originalAmount: 500, adjustedAmount: 400, delta: -100 }] }
+  await page.route('**/fixture-api/budgets/current**', route => route.fulfill({ json: { id: 'fixture-budget', periodMonth: 9, periodYear: 2026, lines: [], totalIncome: 2000, totalExpense: 500, net: 1500 } }))
+  const writes: any[] = []
+  await page.route('**/fixture-api/scenarios**', async route => {
+    if (route.request().method() === 'GET') return route.fulfill({ json: [saved] })
+    writes.push(route.request().postDataJSON())
+    return route.fulfill({ json: { scenarioName: saved.name, sourceType: 'BUDGET_BASED', months: 9, forecast: [], impactedGoalNames: [], scenarioMonthlyImpact: 150 } })
+  })
+  await page.goto('/planning/scenarios/saved-premises/edit')
+  await expect(page.getByRole('heading', { name: 'Ajustar este teste' })).toBeVisible()
+  await page.locator('.security-notice__close').click()
+  await expect(page.getByRole('spinbutton', { name: 'Qual é a porcentagem?' })).toHaveValue('10')
+  await expect(page.getByRole('combobox', { name: 'Que tipo de mudança é essa?', exact: true })).toHaveValue('Reduzir um gasto')
+  const details = page.locator('.scenario-advanced')
+  await details.locator('summary').first().click()
+  await expect(page.getByRole('textbox', { name: 'Nome deste teste' })).toHaveValue('Economizar')
+  await expect(page.getByRole('spinbutton', { name: 'Quantos meses você quer visualizar?' })).toHaveValue('9')
+  await details.getByText('Testar outros valores do plano', { exact: true }).click()
+  await page.getByRole('spinbutton', { name: 'Valor para Casa' }).fill('350')
+  await details.locator('summary').first().click()
+  await page.getByText('Confira antes de testar', { exact: true }).click()
+  await expect(page.locator('.delta-summary').first()).toContainText('10%')
+  await expect(page.locator('.delta-summary').last()).toContainText('Aumenta a sobra mensal do plano')
+  expect(writes).toEqual([])
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
+  await page.screenshot({ path: info.outputPath('editor-percentage-light.png'), fullPage: true, animations: 'disabled' })
+  await page.getByRole('button', { name: 'Ver o impacto', exact: true }).click()
+  await expect.poll(() => writes.length).toBe(1)
+  expect(writes[0]).toMatchObject({ id: saved.id, months: 9, deltas: [saved.deltas[0], { label: 'Baseline adjustment: Casa', type: 'MONTHLY_INCOME', amount: 150, startMonthOffset: 0 }], lineAdjustments: [{ category: 'Casa', type: 'EXPENSE', adjustedAmount: 350 }] })
+})
+
 function contrast(a: string, b: string) {
   const luminance = (color: string) => {
     const rgb = color.match(/[\d.]+/g)!.slice(0, 3).map(Number).map(value => {
