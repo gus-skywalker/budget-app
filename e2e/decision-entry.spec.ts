@@ -1,5 +1,139 @@
 import { expect, test, type Page } from '@playwright/test'
 
+const resultFixture = {
+  scenarioName: 'Compra pontual', sourceType: 'BUDGET_BASED', months: 6, currentBalance: 0,
+  baselineMonthlyNet: 50, scenarioMonthlyImpact: -100, projectedFinalBalance: -300,
+  decisionStatus: 'ACTION_NEEDED', firstRiskMonth: '2026-11', availableForGoals: 0,
+  impactedGoalsCount: 0, impactedGoalNames: [], forecast: [],
+  projection: Array.from({ length: 6 }, (_, index) => ({ period: ['2026-11', '2026-12', '2027-01', '2027-02', '2027-03', '2027-04'][index],
+    baselineIncome: 1000, baselineExpense: 950, baselineBalance: 50 * (index + 1),
+    scenarioIncome: 1000, scenarioExpense: index === 0 ? 1550 : 950,
+    scenarioBalance: 50 * (index + 1) - 600, changeImpact: index === 0 ? -600 : 0,
+    sources: ['CONFIRMED', 'SCENARIO_CHANGE'] })),
+}
+
+for (const theme of ['light', 'dark'] as const) {
+  test(`ED-05: live average, monthly evidence and matching speech (${theme})`, async ({ page }, info) => {
+    await fixture(page, theme)
+    await page.setViewportSize({ width: theme === 'light' ? 360 : 1440, height: 1000 })
+    await page.addInitScript(({ result, theme }) => {
+      const store = JSON.parse(sessionStorage.getItem('userStore')!)
+      store.appVoice = theme === 'light' ? 'warm' : 'founder'
+      sessionStorage.setItem('userStore', JSON.stringify(store))
+      sessionStorage.setItem('planning-decision-session-v1', JSON.stringify({ version: 1, sessionId: 'result-fixture', userId: 'fixture-user', workspaceId: 'fixture-workspace', sourceType: 'BUDGET_BASED', scenarioId: null }))
+      sessionStorage.setItem('planning-scenario-wizard-v3', JSON.stringify({ scenarioName: result.scenarioName, months: 12, currentScenarioId: null, budgetId: 'fixture-budget', adjustments: [], scenarioLines: [] }))
+      sessionStorage.setItem('planning-scenario-latest-result', JSON.stringify({ sessionId: 'result-fixture', scenarioId: 'preview', result }))
+      Object.defineProperty(window, 'speechSynthesis', { configurable: true, value: { cancel() {}, speak(utterance: any) { (window as any).__resultSpeech = utterance.text } } })
+      ;(window as any).SpeechSynthesisUtterance = class { constructor(public text: string) {} }
+    }, { result: resultFixture, theme })
+    const writes: string[] = []
+    page.on('request', request => { if (request.method() !== 'GET' && request.url().includes('/fixture-api')) writes.push(request.url()) })
+    await page.goto('/planning/scenarios/preview?simulatedAt=fixture')
+    const explanation = page.locator('.result-explanation')
+    await expect(explanation).toHaveAttribute('data-origin', 'live')
+    await expect(explanation.getByRole('heading', { level: 2 })).toHaveText(/Em média, R\$\s*100,00 a menos por mês/)
+    await expect(explanation).toContainText('Período informado pelo cálculo: 6 mês(es).')
+    await expect(explanation).not.toContainText('12 mês(es)')
+    await expect(explanation).toContainText('não uma parcela')
+    await expect(explanation).toContainText('2026-11')
+    await expect(explanation).toContainText('faltariam')
+    await page.locator('.security-notice__close').click()
+    await expect(page.getByTestId('result-months')).not.toHaveAttribute('open', '')
+    await expect(page.getByTestId('result-evidence')).not.toHaveAttribute('open', '')
+    await page.getByRole('button', { name: 'Ouvir assessor', exact: true }).click()
+    const speech = await page.evaluate(() => (window as any).__resultSpeech as string)
+    expect(speech).toContain((await explanation.getByRole('heading', { level: 2 }).textContent())!)
+    expect(speech).toContain('não uma parcela')
+    expect(speech).toContain('Primeiro mês com saldo negativo')
+    expect(speech).not.toContain('Runway')
+    await page.getByRole('button', { name: 'Parar áudio', exact: true }).click()
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
+    await page.screenshot({ path: info.outputPath(`result-${theme}.png`), fullPage: true, animations: 'disabled' })
+    const details = page.getByTestId('result-months')
+    await details.locator('summary').focus()
+    await page.keyboard.press('Enter')
+    await expect(details).toHaveAttribute('open', '')
+    await expect(details.locator('li').first()).toContainText(/-R\$\s*600,00/)
+    await expect(details.locator('li').nth(1)).toContainText(/R\$\s*0,00/)
+    await expect(details).toContainText('Plano-base')
+    expect(writes).toEqual([])
+  })
+}
+
+test('ED-05: incomplete saved result stays unknown until an explicit recalculation', async ({ page }, info) => {
+  await fixture(page, 'light')
+  await page.setViewportSize({ width: 360, height: 1000 })
+  const writes: string[] = []
+  await page.route('**/fixture-api/budgets/current**', route => route.fulfill({ status: 204 }))
+  await page.route('**/fixture-api/scenarios**', async route => {
+    if (route.request().method() === 'GET') return route.fulfill({ json: [{ id: 'partial', name: 'Registro incompleto', sourceType: 'BUDGET_BASED', months: null, deltas: [], decisionStatus: 'NO_DATA' }] })
+    writes.push(new URL(route.request().url()).pathname)
+    return route.fulfill({ json: { ...resultFixture, months: 3 } })
+  })
+  await page.goto('/planning/scenarios/partial')
+  const explanation = page.locator('.result-explanation')
+  await expect(explanation).toHaveAttribute('data-origin', 'saved')
+  await expect(explanation).toContainText('Ainda faltam dados')
+  await expect(explanation).toContainText('período total não foi informado')
+  await expect(explanation).toContainText('primeiro mês de saldo negativo não está disponível')
+  await page.locator('.security-notice__close').click()
+  await page.getByTestId('result-evidence').locator('summary').click()
+  await expect(explanation).not.toContainText('R$')
+  expect(writes).toEqual([])
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
+  await page.screenshot({ path: info.outputPath('result-partial.png'), fullPage: true, animations: 'disabled' })
+  await page.getByRole('button', { name: 'Recalcular', exact: true }).click()
+  await expect(explanation).toHaveAttribute('data-origin', 'live')
+  await expect(explanation).toContainText('Resultado atualizado pelo recálculo solicitado')
+  await expect(explanation).toContainText('Período informado pelo cálculo: 3 mês(es).')
+  expect(writes).toEqual(['/fixture-api/scenarios/simulate'])
+})
+
+test('ED-05: debt remains a payment comparison, not a budget average', async ({ page }, info) => {
+  await fixture(page, 'light')
+  await page.setViewportSize({ width: 360, height: 1000 })
+  let writes = 0
+  const option = { name: 'Parcelamento', totalPaid: 1200, totalExtraCost: 200, monthlyImpact: 100, riskLevel: 'LOW', predictabilityLevel: 'HIGH', explanation: 'Custo conhecido nas condições informadas.' }
+  await page.route('**/fixture-api/scenarios**', async route => {
+    if (route.request().method() !== 'GET') writes += 1
+    return route.fulfill({ json: [{ id: 'debt', name: 'Como pagar', sourceType: 'MANUAL_TYPED', scenarioType: 'DEBT_PAYMENT_DECISION', deltas: [], months: 1, scenarioMonthlyImpact: -100, decisionStatus: 'WATCH',
+      debtInput: { title: 'Como pagar', totalAmount: 1000, availableCash: 0, options: [] },
+      debtComparison: { cheapestOption: 'Parcelamento', safestOption: 'Parcelamento', recommendedOption: 'Parcelamento', tradeOffSummary: 'Compare custo total e previsibilidade.', recommendationReason: 'Condições informadas para esta comparação.', options: [option], warnings: [] } }] })
+  })
+  await page.goto('/planning/scenarios/debt')
+  const explanation = page.locator('.result-explanation')
+  await expect(explanation).toContainText('formas de pagar')
+  await expect(explanation).toContainText('não é uma projeção mensal do seu orçamento')
+  await expect(explanation).not.toContainText('Em média')
+  await expect(page.locator('.debt-option-card')).toContainText('1.200,00')
+  await expect(page.getByTestId('result-months')).toHaveCount(0)
+  await page.locator('.security-notice__close').click()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
+  await page.screenshot({ path: info.outputPath('result-debt.png'), fullPage: true, animations: 'disabled' })
+  expect(writes).toBe(0)
+})
+
+test('ED-05: legacy forecast does not invent current money, sources or dates', async ({ page }) => {
+  await fixture(page, 'dark')
+  await page.route('**/fixture-api/budgets/current**', route => route.fulfill({ status: 204 }))
+  let writes = 0
+  await page.route('**/fixture-api/scenarios**', async route => {
+    if (route.request().method() !== 'GET') writes += 1
+    return route.fulfill({ json: [{ id: 'legacy', name: 'Registro antigo', deltas: [], decisionStatus: 'WATCH', forecast: [{ month: '2025-07', baselineProjectedBalance: 123, scenarioProjectedBalance: -456, deltaImpact: -25, status: 'deficit' }] }] })
+  })
+  await page.goto('/planning/scenarios/legacy')
+  const explanation = page.locator('.result-explanation')
+  await expect(explanation).toHaveAttribute('data-origin', 'legacy')
+  await expect(explanation).toContainText('impacto mensal não foi informado')
+  await page.getByTestId('result-months').locator('summary').click()
+  await expect(explanation).toContainText('2025-07')
+  await expect(explanation).toContainText('receitas, gastos e fontes não foram informados')
+  await expect(explanation).not.toContainText('R$ 0,00')
+  expect(writes).toBe(0)
+})
+
 for (const theme of ['light', 'dark'] as const) {
   test(`ED-04: guided expense reduction, review and preview only (${theme})`, async ({ page }, info) => {
     await fixture(page, theme)

@@ -70,6 +70,9 @@ vi.mock('vue-i18n', () => ({
         'contentExperience.planning.scenarioResult.cheapestOption': 'Cheapest option',
         'contentExperience.planning.scenarioResult.recommendedOption': 'Recommended option',
         'contentExperience.planning.scenarioResult.forecastDetails': 'Projection rows',
+        'decisionJourney.result.monthlyDetails': 'Projection rows',
+        'decisionJourney.result.sourceBudget': 'Budget',
+        'decisionJourney.result.sourceChange': 'Scenario change',
         'contentExperience.planning.scenarioResult.saveAndCreateDecision': 'Save and create decision',
         'planning.scenarios.table_month': 'Month',
         'planning.scenarios.table_baseline_flow': 'Baseline income / expense',
@@ -287,9 +290,10 @@ describe('ScenarioResultView debt scenario', () => {
     await flushPromises()
     expect(wrapper.text()).toContain('Projection rows')
 
-    const projectionTitle = wrapper.findAll('.v-expansion-panel-title').find((item) => item.text().includes('Projection rows'))
-    expect(projectionTitle).toBeTruthy()
-    await projectionTitle!.trigger('click')
+    const projectionTitle = wrapper.find('[data-testid="result-months"] summary')
+    expect(projectionTitle.exists()).toBe(true)
+    expect(wrapper.find('[data-testid="result-months"]').attributes('open')).toBeUndefined()
+    await projectionTitle.trigger('click')
     await flushPromises()
 
     expect(wrapper.text()).toContain('2026-07')
@@ -377,5 +381,69 @@ describe('ScenarioResultView debt scenario', () => {
     await flushPromises()
     expect(wrapper.text()).toContain('Bridge credit')
     expect(budgetServiceMock.getCurrent).not.toHaveBeenCalled()
+  })
+
+  it('opens incomplete saved results without automatic simulation or invented evidence', async () => {
+    sessionStorage.clear()
+    routeState.params.id = 'partial'
+    scenarioServiceMock.list.mockResolvedValue({ data: [{ id: 'partial', name: 'Partial history', months: null, deltas: [], projectedFinalBalance: 500 }] })
+    const wrapper = mount(ScenarioResultView, { global: { plugins: [vuetify] } })
+    await flushPromises()
+    expect(wrapper.find('[data-origin="saved"]').exists()).toBe(true)
+    const model = (wrapper.vm as any).presentation
+    expect(model.months).toBeNull()
+    expect(model.initialBalance.value).toBeNull()
+    expect(model.availableForGoals.value).toBeNull()
+    expect(model.riskKnown).toBe(false)
+    expect(scenarioServiceMock.simulate).not.toHaveBeenCalled()
+    expect(scenarioServiceMock.save).not.toHaveBeenCalled()
+  })
+
+  it('marks requested recalculation as live and preserves its returned horizon', async () => {
+    sessionStorage.clear()
+    routeState.params.id = 'partial'
+    scenarioServiceMock.list.mockResolvedValue({ data: [{ id: 'partial', name: 'History', months: 6, deltas: [] }] })
+    scenarioServiceMock.simulate.mockResolvedValue({ data: { sourceType: 'BUDGET_BASED', months: 3, scenarioMonthlyImpact: -50, decisionStatus: 'WATCH', forecast: [], impactedGoalNames: [] } })
+    const wrapper = mount(ScenarioResultView, { global: { plugins: [vuetify] } })
+    await flushPromises()
+    expect(scenarioServiceMock.simulate).not.toHaveBeenCalled()
+    await (wrapper.vm as any).recalculateResult()
+    await flushPromises()
+    expect((wrapper.vm as any).presentation).toMatchObject({ origin: 'live', recalculated: true, months: 3 })
+    expect(scenarioServiceMock.simulate).toHaveBeenCalledTimes(1)
+    expect(scenarioServiceMock.save).not.toHaveBeenCalled()
+    expect(wrapper.text()).toContain('decisionJourney.result.recalculated')
+  })
+
+  it('still shows historical evidence when the current plan cannot be loaded', async () => {
+    sessionStorage.clear()
+    routeState.params.id = 'history'
+    scenarioServiceMock.list.mockResolvedValue({ data: [{ id: 'history', name: 'Historical evidence', deltas: [], scenarioMonthlyImpact: -25, decisionStatus: 'WATCH' }] })
+    budgetServiceMock.getCurrent.mockRejectedValueOnce(new Error('unavailable'))
+    const wrapper = mount(ScenarioResultView, { global: { plugins: [vuetify] } })
+    await flushPromises()
+    expect(wrapper.text()).toContain('Historical evidence')
+    expect((wrapper.vm as any).presentation.impact.value).toBe(-25)
+    expect((wrapper.vm as any).snapshot.currentScenarioId).toBe('history')
+    expect(scenarioServiceMock.simulate).not.toHaveBeenCalled()
+  })
+
+  it('blocks result actions until the saved assumptions finish loading', async () => {
+    sessionStorage.clear()
+    routeState.params.id = 'pending'
+    scenarioServiceMock.list.mockResolvedValue({ data: [{ id: 'pending', name: 'Pending plan', deltas: [], scenarioMonthlyImpact: 25 }] })
+    let finish!: (value: unknown) => void
+    budgetServiceMock.getCurrent.mockImplementationOnce(() => new Promise(resolve => { finish = resolve }))
+    const wrapper = mount(ScenarioResultView, { global: { plugins: [vuetify] } })
+    await flushPromises()
+    expect(wrapper.text()).toContain('Pending plan')
+    expect((wrapper.vm as any).isLoading).toBe(true)
+    await (wrapper.vm as any).recalculateResult()
+    await (wrapper.vm as any).saveScenario()
+    expect(scenarioServiceMock.simulate).not.toHaveBeenCalled()
+    expect(scenarioServiceMock.save).not.toHaveBeenCalled()
+    finish({ status: 204, data: null })
+    await flushPromises()
+    expect((wrapper.vm as any).isLoading).toBe(false)
   })
 })

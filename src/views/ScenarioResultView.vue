@@ -1,7 +1,7 @@
 <template>
   <div class="cb-page">
     <div class="cb-container scenario-result">
-      <page-header :title="t('contentExperience.planning.scenarioResult.title')" :meta="t('contentExperience.planning.scenarioResult.subtitle')">
+      <page-header :title="t('decisionJourney.result.title')" :meta="t('decisionJourney.result.subtitle')">
         <template #actions>
           <v-btn variant="text" color="var(--cb-primary)" style="min-width:0;padding:0 4px 0 0" @click="router.back()">
             <v-icon start size="20">mdi-arrow-left</v-icon>
@@ -11,41 +11,18 @@
       </page-header>
 
       <div class="result-shell" v-if="result">
+        <p v-if="isLoading" role="status">{{ t('decisionJourney.result.loading') }}</p>
         <alert-strip v-if="isScenarioLockedForEdit" variant="warning" :description="t('contentExperience.planning.scenarioResult.lockedNotice')" />
-        <alert-strip v-if="isShowingSavedSnapshot" variant="info" :description="t('contentExperience.planning.scenarioResult.savedSnapshotNotice')" />
-        <div class="hero-card">
-          <span class="hero-card__label">{{
-            tVoice(
-              'scenarioResult.monthlyImpact',
-              'contentExperience.planning.scenarioResult.monthlyImpact'
-            )
-          }}</span>
-          <strong
-            :class="{
-              'positive-value': result.scenarioMonthlyImpact > 0,
-              'negative-value': result.scenarioMonthlyImpact < 0
-            }"
-          >
-            {{ formatSignedCurrency(result.scenarioMonthlyImpact) }}
-          </strong>
-          <p>{{ scenarioSummary }}</p>
-          <div v-if="isSpeechSupported" class="hero-card__voice-actions">
-            <v-btn
-              size="small"
-              variant="tonal"
-              color="var(--cb-primary)"
+        <DecisionResultExplanation :model="presentation" :copy="narrative">
+          <template #voice>
+            <button v-if="isSpeechSupported" type="button" class="result-voice"
               :aria-label="isSpeaking ? t('contentExperience.planning.scenarioResult.stopAdvisor') : t('contentExperience.planning.scenarioResult.listenAdvisor')"
-              @click="toggleAdvisorSpeech"
-            >
+              @click="toggleAdvisorSpeech">
               <v-icon start>{{ isSpeaking ? 'mdi-stop-circle-outline' : 'mdi-volume-high' }}</v-icon>
-              {{
-                isSpeaking
-                  ? t('contentExperience.planning.scenarioResult.stopAdvisor')
-                  : t('contentExperience.planning.scenarioResult.listenAdvisor')
-              }}
-            </v-btn>
-          </div>
-        </div>
+              {{ isSpeaking ? t('contentExperience.planning.scenarioResult.stopAdvisor') : t('contentExperience.planning.scenarioResult.listenAdvisor') }}
+            </button>
+          </template>
+        </DecisionResultExplanation>
 
         <div v-if="isManualTypedScenario && result.debtComparison" class="debt-comparison">
           <div class="metrics-grid">
@@ -138,139 +115,13 @@
           </v-alert>
         </div>
 
-        <div v-else class="metrics-grid">
-          <div class="metric-card">
-            <span>{{ t('planning.scenarios.final_balance') }}</span>
-            <strong :class="{ 'negative-value': result.projectedFinalBalance < 0 }">{{
-              formatCurrency(result.projectedFinalBalance)
-            }}</strong>
-          </div>
-          <div class="metric-card">
-            <span>{{ t('planning.scenarios.status') }}</span>
-            <strong :class="decisionTone">{{ decisionLabel }}</strong>
-          </div>
-          <div class="metric-card">
-            <span>{{ t('planning.scenarios.available_for_goals') }}</span>
-            <strong>{{ formatCurrency(result.availableForGoals) }}</strong>
-          </div>
-        </div>
-
-        <div v-if="!isManualTypedScenario" class="projection-basis">
-          <div class="projection-basis__copy">
-            <span>{{
-              tVoice(
-                'scenarioResult.projectionBasisLabel',
-                'contentExperience.planning.scenarioResult.projectionBasisLabel'
-              )
-            }}</span>
-            <p>{{ projectionBasisText }}</p>
-          </div>
-          <div class="projection-basis__formula">
-            <div>
-              <span>{{ t('contentExperience.planning.scenarioResult.initialBalance') }}</span>
-              <strong>{{ formatCurrency(result.currentBalance) }}</strong>
-            </div>
-            <div>
-              <span>{{ t('contentExperience.planning.scenarioResult.monthlyBaseline') }}</span>
-              <strong>{{ formatSignedCurrency(result.baselineMonthlyNet) }}</strong>
-            </div>
-            <div>
-              <span>{{ t('contentExperience.planning.scenarioResult.monthlyScenarioNet') }}</span>
-              <strong :class="{ 'negative-value': scenarioMonthlyNet < 0 }">{{ formatSignedCurrency(scenarioMonthlyNet) }}</strong>
-            </div>
-            <div>
-              <span>{{ t('contentExperience.planning.scenarioResult.baselineFinalBalance') }}</span>
-              <strong>{{ formatCurrency(baselineFinalBalance) }}</strong>
-            </div>
-          </div>
-        </div>
-
-        <v-expansion-panels v-if="!isManualTypedScenario" variant="accordion">
-          <v-expansion-panel>
-            <v-expansion-panel-title>{{
-              t('contentExperience.planning.scenarioResult.forecastDetails')
-            }}</v-expansion-panel-title>
-            <v-expansion-panel-text>
-              <p class="forecast-explainer">
-                {{
-                  tVoice(
-                    'scenarioResult.forecastExplainer',
-                    'contentExperience.planning.scenarioResult.forecastExplainer'
-                  )
-                }}
-              </p>
-              <div class="forecast-table">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>{{ t('planning.scenarios.table_month') }}</th>
-                      <th>{{ t('planning.scenarios.table_baseline') }}</th>
-                      <th>{{ t('planning.scenarios.table_scenario') }}</th>
-                      <th>{{ t('planning.scenarios.table_delta') }}</th>
-                      <th>{{ t('planning.scenarios.table_sources') }}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="item in projectionRows" :key="item.period">
-                      <td :data-label="t('planning.scenarios.table_month')">{{ item.period }}</td>
-                      <td :data-label="t('planning.scenarios.table_baseline')">
-                        <div class="projection-cell">
-                          <strong>{{ formatCurrency(item.baselineBalance) }}</strong>
-                          <span v-if="!item.isLegacyForecast">{{ formatFlow(item.baselineIncome, item.baselineExpense) }}</span>
-                        </div>
-                      </td>
-                      <td :data-label="t('planning.scenarios.table_scenario')">
-                        <div class="projection-cell">
-                          <strong>{{ formatCurrency(item.scenarioBalance) }}</strong>
-                          <span v-if="!item.isLegacyForecast">{{ formatFlow(item.scenarioIncome, item.scenarioExpense) }}</span>
-                        </div>
-                      </td>
-                      <td
-                        :data-label="t('planning.scenarios.table_delta')"
-                        :class="{ 'negative-value': item.changeImpact < 0, 'positive-value': item.changeImpact > 0 }"
-                      >
-                        {{ formatSignedCurrency(item.changeImpact) }}
-                      </td>
-                      <td :data-label="t('planning.scenarios.table_sources')">
-                        <div class="source-chips">
-                          <span v-for="source in sourceLabels(item.sources)" :key="source">{{ source }}</span>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </v-expansion-panel-text>
-          </v-expansion-panel>
-          <v-expansion-panel>
-            <v-expansion-panel-title>{{
-              t('contentExperience.planning.scenarioResult.impactedGoals')
-            }}</v-expansion-panel-title>
-            <v-expansion-panel-text>
-              <div v-if="result.impactedGoalNames?.length" class="goal-tags">
-                <v-chip
-                  v-for="goal in result.impactedGoalNames"
-                  :key="goal"
-                  size="small"
-                  variant="tonal"
-                  color="warning"
-                  class="mr-2 mb-2"
-                >
-                  {{ goal }}
-                </v-chip>
-              </div>
-              <p v-else>{{ t('contentExperience.planning.scenarioResult.noImpactedGoals') }}</p>
-            </v-expansion-panel-text>
-          </v-expansion-panel>
-        </v-expansion-panels>
-
         <div class="result-actions">
           <v-btn
             class="result-action result-action--primary"
             color="var(--cb-primary)"
             :loading="isCreatingDecision"
             :disabled="
-              isCreatingDecision || isSaving || (isScenarioLockedForEdit && Boolean(scenarioId))
+              isLoading || isCreatingDecision || isSaving || (isScenarioLockedForEdit && Boolean(scenarioId))
             "
             @click="createDecisionFromScenario"
           >
@@ -283,7 +134,7 @@
             variant="tonal"
             color="var(--cb-primary)"
             :loading="isSaving"
-            :disabled="isSaving || isScenarioLockedForEdit"
+            :disabled="isLoading || isSaving || isScenarioLockedForEdit"
             @click="saveScenario"
           >
             <v-icon start>mdi-content-save-outline</v-icon>
@@ -293,17 +144,17 @@
             class="result-action"
             variant="text"
             :loading="isRecalculating"
-            :disabled="isRecalculating"
+            :disabled="isLoading || isRecalculating"
             @click="recalculateResult"
           >
             <v-icon start>mdi-refresh</v-icon>
             {{ t('contentExperience.planning.scenarioResult.recalculate') }}
           </v-btn>
-          <v-btn class="result-action" variant="text" @click="editScenario">
+          <v-btn class="result-action" variant="text" :disabled="isLoading" @click="editScenario">
             <v-icon start>mdi-pencil-outline</v-icon>
             {{ editActionLabel }}
           </v-btn>
-          <v-btn class="result-action" variant="text" @click="newScenario">
+          <v-btn class="result-action" variant="text" :disabled="isLoading" @click="newScenario">
             <v-icon start>mdi-file-plus-outline</v-icon>
             {{ t('planning.scenarios.new_scenario') }}
           </v-btn>
@@ -344,9 +195,10 @@
         </div>
       </div>
 
+      <div v-else-if="isLoading" class="empty-results" role="status">{{ t('decisionJourney.result.loading') }}</div>
       <div class="empty-results" v-else>
         <v-icon color="var(--cb-ink-muted)" size="28">mdi-chart-timeline-variant</v-icon>
-        <p>{{ t('planning.scenarios.results_placeholder') }}</p>
+        <p>{{ errorMessage || t('planning.scenarios.results_placeholder') }}</p>
         <v-btn
           color="var(--cb-primary)"
           variant="tonal"
@@ -365,11 +217,11 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import PageHeader from '@/components/PageHeader.vue'
 import AlertStrip from '@/components/AlertStrip.vue'
+import DecisionResultExplanation from '@/components/decision/DecisionResultExplanation.vue'
+import { savedResultEvidence, presentDecisionResult, decisionResultNarrative, type ResultEvidence, type ResultOrigin } from '@/utils/decisionResultPresentation'
 import DecisionService from '@/services/DecisionService'
 import ScenarioService, {
   type SavedScenario,
-  type ScenarioProjectionItem,
-  type ScenarioSimulationResponse
 } from '@/services/ScenarioService'
 import BudgetService from '@/services/BudgetService'
 import {
@@ -398,18 +250,21 @@ import { readJourneyResult, writeJourneyResult, setJourneyValue, JOURNEY_RESULT_
 const route = useRoute()
 const router = useRouter()
 const { t, locale } = useI18n()
-const { appVoice, tVoice } = useAppVoice()
+const { appVoice } = useAppVoice()
 const userStore = useUserStore()
 const DECISIONS_FLASH_SUCCESS_KEY = 'decisions-flash-success'
 
-const result = ref<ScenarioSimulationResponse | null>(null)
+const result = ref<ResultEvidence | null>(null)
 const scenarioId = ref<string | null>(null)
 const isSaving = ref(false)
 const isCreatingDecision = ref(false)
 const isRecalculating = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
-const isShowingSavedSnapshot = ref(false)
+const resultOrigin = ref<ResultOrigin>('live')
+const wasRecalculated = ref(false)
+const isLoading = ref(false)
+let loadRevision = 0
 const isScenarioLockedForEdit = ref(false)
 const isSpeaking = ref(false)
 const debtSnapshot = ref<DebtScenarioSnapshot | null>(null)
@@ -417,10 +272,6 @@ const canWriteScenarios = computed(() => userStore.canWrite)
 const isSpeechSupported = computed(() =>
   typeof window !== 'undefined' && 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window
 )
-
-type ProjectionDisplayRow = ScenarioProjectionItem & {
-  isLegacyForecast?: boolean
-}
 
 const snapshot = reactive<ScenarioWizardSnapshot>({
   scenarioName: '',
@@ -430,13 +281,16 @@ const snapshot = reactive<ScenarioWizardSnapshot>({
   scenarioLines: []
 })
 const resetLocalResult = () => {
+  loadRevision += 1
+  isLoading.value = false
   result.value = null
   scenarioId.value = null
   debtSnapshot.value = null
   Object.assign(snapshot, { scenarioName: '', months: 6, currentScenarioId: null, budgetId: undefined,
     periodMonth: undefined, periodYear: undefined, adjustments: [], scenarioLines: [] })
   isScenarioLockedForEdit.value = false
-  isShowingSavedSnapshot.value = false
+  resultOrigin.value = 'live'
+  wasRecalculated.value = false
   isSaving.value = false
   isCreatingDecision.value = false
   isRecalculating.value = false
@@ -446,198 +300,14 @@ const resetLocalResult = () => {
 }
 const journey = useDecisionJourneySession(resetLocalResult)
 
-const decisionTone = computed(() => {
-  if (result.value?.decisionStatus === 'ACTION_NEEDED') return 'negative-value'
-  if (result.value?.decisionStatus === 'WATCH') return 'warning-value'
-  return 'positive-value'
-})
-
-const isManualTypedScenario = computed(
-  () =>
-    result.value?.sourceType === 'MANUAL_TYPED' || debtSnapshot.value?.sourceType === 'MANUAL_TYPED'
-)
-
-const decisionLabel = computed(() => {
-  if (result.value?.decisionStatus === 'ACTION_NEEDED')
-    return t('planning.scenarios.status_action_needed')
-  if (result.value?.decisionStatus === 'WATCH') return t('planning.scenarios.status_watch')
-  if (result.value?.decisionStatus === 'STABLE') return t('planning.scenarios.status_stable')
-  return t('planning.scenarios.status_no_data')
-})
-
-const scenarioMonthlyNet = computed(() =>
-  Number(result.value?.baselineMonthlyNet || 0) + Number(result.value?.scenarioMonthlyImpact || 0)
-)
-
-const baselineFinalBalance = computed(() => {
-  const last = projectionRows.value[projectionRows.value.length - 1]
-  if (last) return Number(last.baselineBalance || 0)
-  return (
-    Number(result.value?.currentBalance || 0) +
-    Number(result.value?.baselineMonthlyNet || 0) * Number(result.value?.months || 0)
-  )
-})
-
-const projectionRows = computed<ProjectionDisplayRow[]>(() => {
-  const projection = result.value?.projection
-  if (Array.isArray(projection) && projection.length) {
-    return projection.map((item) => ({
-      period: item.period,
-      baselineIncome: Number(item.baselineIncome || 0),
-      baselineExpense: Number(item.baselineExpense || 0),
-      baselineBalance: Number(item.baselineBalance || 0),
-      scenarioIncome: Number(item.scenarioIncome || 0),
-      scenarioExpense: Number(item.scenarioExpense || 0),
-      scenarioBalance: Number(item.scenarioBalance || 0),
-      changeImpact: Number(item.changeImpact || 0),
-      sources: Array.isArray(item.sources) ? item.sources : [],
-    }))
-  }
-
-  const forecast = result.value?.forecast || []
-  return forecast.map((item) => ({
-    period: item.month,
-    baselineIncome: 0,
-    baselineExpense: 0,
-    baselineBalance: Number(item.baselineProjectedBalance || 0),
-    scenarioIncome: 0,
-    scenarioExpense: 0,
-    scenarioBalance: Number(item.scenarioProjectedBalance || 0),
-    changeImpact: Number(item.deltaImpact || 0),
-    sources: ['LEGACY_FORECAST'],
-    isLegacyForecast: true,
-  }))
-})
-
-const formatCurrency = (value: number) =>
-  Number(value || 0).toLocaleString(
-    locale.value === 'en'
-      ? 'en-US'
-      : locale.value === 'fr'
-        ? 'fr-FR'
-        : locale.value === 'es'
-          ? 'es-ES'
-          : 'pt-BR',
-    { style: 'currency', currency: 'BRL' }
-  )
-
-const formatSignedCurrency = (value: number) => {
-  const absolute = formatCurrency(Math.abs(value))
-  return value > 0 ? `+${absolute}` : value < 0 ? `-${absolute}` : absolute
-}
-
-const formatFlow = (income: number, expense: number) => {
-  if (!income && !expense) return '—'
-  return `${formatCurrency(income)} / ${formatCurrency(expense)}`
-}
-
-const sourceLabels = (sources: string[] = []) => {
-  if (!sources.length) return ['—']
-  const labels: Record<string, string> = {
-    CONFIRMED: t('planning.scenarios.source_confirmed', 'Budget'),
-    PROJECTED: t('planning.scenarios.source_projected', 'Projected'),
-    SCENARIO_CHANGE: t('planning.scenarios.source_scenario_change', 'Scenario change'),
-    LEGACY_FORECAST: t('planning.scenarios.source_legacy_forecast', 'Legacy forecast'),
-  }
-  return sources.map((source) => labels[source] || source)
-}
-
-const projectionBasisText = computed(() => {
-  if (!result.value) return ''
-  return t('contentExperience.planning.scenarioResult.projectionBasisText', {
-    initial: formatCurrency(result.value.currentBalance),
-    baseline: formatSignedCurrency(result.value.baselineMonthlyNet),
-    impact: formatSignedCurrency(result.value.scenarioMonthlyImpact),
-    scenarioNet: formatSignedCurrency(scenarioMonthlyNet.value),
-    months: result.value.months
-  })
-})
-
-const firstImpactedGoalName = computed(() =>
-  String(result.value?.impactedGoalNames?.[0] || '').trim()
-)
-
-const scenarioSummary = computed(() => {
-  if (!result.value) return ''
-  if (appVoice.value === 'default') {
-    return result.value.summary || consequenceMessage.value
-  }
-
-  const commonParams = {
-    amount: formatCurrency(Math.abs(result.value.scenarioMonthlyImpact)),
-    count: result.value.impactedGoalsCount || result.value.impactedGoalNames?.length || 0,
-    goal: firstImpactedGoalName.value || t('contentExperience.planning.scenarioResult.goalsFallback'),
-    riskMonth: result.value.firstRiskMonth || t('planning.scenarios.no_risk_month'),
-    scenarioNet: formatSignedCurrency(scenarioMonthlyNet.value)
-  }
-
-  if (result.value.decisionStatus === 'ACTION_NEEDED') {
-    return tVoice(
-      'scenarioResult.summary.actionNeeded',
-      'planning.scenarios.consequence_negative',
-      commonParams
-    )
-  }
-  if (result.value.decisionStatus === 'WATCH') {
-    return tVoice(
-      'scenarioResult.summary.watch',
-      'planning.scenarios.consequence_negative',
-      commonParams
-    )
-  }
-  if (result.value.decisionStatus === 'STABLE') {
-    return tVoice(
-      'scenarioResult.summary.stable',
-      'planning.scenarios.consequence_positive',
-      commonParams
-    )
-  }
-  return result.value.summary || consequenceMessage.value
-})
-
-const advisorSpeechText = computed(() => {
-  if (!result.value) return ''
-
-  const commonParams = {
-    baseline: formatSignedCurrency(result.value.baselineMonthlyNet),
-    impact: formatSignedCurrency(result.value.scenarioMonthlyImpact),
-    scenarioNet: formatSignedCurrency(scenarioMonthlyNet.value),
-    finalBalance: formatCurrency(result.value.projectedFinalBalance),
-    months: result.value.months,
-    count: result.value.impactedGoalsCount || result.value.impactedGoalNames?.length || 0,
-    goal: firstImpactedGoalName.value || t('contentExperience.planning.scenarioResult.goalsFallback'),
-    riskMonth: result.value.firstRiskMonth || t('planning.scenarios.no_risk_month')
-  }
-
-  if (result.value.decisionStatus === 'ACTION_NEEDED') {
-    return tVoice(
-      'scenarioResult.advisorSpeech.actionNeeded',
-      'contentExperience.planning.scenarioResult.advisorSpeechActionNeeded',
-      commonParams
-    )
-  }
-  if (result.value.decisionStatus === 'WATCH') {
-    return tVoice(
-      'scenarioResult.advisorSpeech.watch',
-      'contentExperience.planning.scenarioResult.advisorSpeechWatch',
-      commonParams
-    )
-  }
-  if (result.value.decisionStatus === 'STABLE') {
-    return tVoice(
-      'scenarioResult.advisorSpeech.stable',
-      'contentExperience.planning.scenarioResult.advisorSpeechStable',
-      commonParams
-    )
-  }
-  return [
-    scenarioSummary.value,
-    projectionBasisText.value,
-    t('contentExperience.planning.scenarioResult.advisorSpeechFinalBalance', {
-      amount: formatCurrency(result.value.projectedFinalBalance)
-    })
-  ].filter(Boolean).join(' ')
-})
+const isManualTypedScenario = computed(() =>
+  result.value?.sourceType === 'MANUAL_TYPED' || debtSnapshot.value?.sourceType === 'MANUAL_TYPED')
+const presentation = computed(() => presentDecisionResult(result.value || {}, resultOrigin.value, wasRecalculated.value, isManualTypedScenario.value))
+const formatCurrency = (value: unknown) => typeof value === 'number' && Number.isFinite(value)
+  ? value.toLocaleString(locale.value, { style: 'currency', currency: 'BRL' })
+  : t('decisionJourney.result.unavailable')
+const narrative = computed(() => decisionResultNarrative(presentation.value, (key, params) => t(key, params || {}), formatCurrency))
+const advisorSpeechText = computed(() => narrative.value.speech)
 
 const resolveSpeechLocale = (): string => {
   if (locale.value === 'en') return 'en-US'
@@ -677,20 +347,7 @@ const toggleAdvisorSpeech = () => {
   window.speechSynthesis.speak(utterance)
 }
 
-const consequenceMessage = computed(() => {
-  if (!result.value) return ''
-  if (result.value.scenarioMonthlyImpact < 0) {
-    return t('planning.scenarios.consequence_negative', {
-      amount: formatCurrency(Math.abs(result.value.scenarioMonthlyImpact))
-    })
-  }
-  if (result.value.scenarioMonthlyImpact > 0) {
-    return t('planning.scenarios.consequence_positive', {
-      amount: formatCurrency(result.value.scenarioMonthlyImpact)
-    })
-  }
-  return t('planning.scenarios.consequence_neutral')
-})
+watch(advisorSpeechText, () => stopAdvisorSpeech())
 
 const extractErrorStatus = (error: unknown): number =>
   Number((error as { response?: { status?: number } })?.response?.status || 0)
@@ -735,47 +392,7 @@ const refreshScenarioGovernance = async (targetScenarioId: string | null) => {
   }
 }
 
-const buildResultFromSavedScenario = (saved: SavedScenario): ScenarioSimulationResponse => ({
-  scenarioName: saved.name || t('planning.scenarios.default_name'),
-  scenarioType: saved.scenarioType,
-  sourceType: saved.sourceType,
-  months: Number(saved.months || 6),
-  currentBalance: 0,
-  baselineMonthlyNet: 0,
-  scenarioMonthlyImpact: Number(saved.scenarioMonthlyImpact || 0),
-  projectedFinalBalance: Number(saved.projectedFinalBalance || 0),
-  decisionStatus:
-    saved.decisionStatus === 'ACTION_NEEDED' ||
-    saved.decisionStatus === 'WATCH' ||
-    saved.decisionStatus === 'STABLE'
-      ? saved.decisionStatus
-      : 'NO_DATA',
-  firstRiskMonth: null,
-  availableForGoals: Math.max(0, Number(saved.projectedFinalBalance || 0)),
-  impactedGoalsCount: Number(saved.impactedGoalsCount || 0),
-  summary: saved.summary || '',
-  forecast: saved.forecast || [],
-  projection: saved.projection || [],
-  impactedGoalNames: saved.impactedGoalNames || [],
-  debtComparison: saved.debtComparison || null
-})
-
-const hasPersistedScenarioResult = (saved: SavedScenario): boolean => {
-  const hasMetrics =
-    saved.decisionStatus != null ||
-    saved.projectedFinalBalance != null ||
-    saved.scenarioMonthlyImpact != null ||
-    saved.impactedGoalsCount != null
-  if (saved.sourceType === 'MANUAL_TYPED') return hasMetrics
-  return (
-    hasMetrics &&
-    ((Array.isArray(saved.projection) && saved.projection.length > 0) ||
-      (Array.isArray(saved.forecast) && saved.forecast.length > 0))
-  )
-}
-
-const loadResult = async () => {
-  resetLocalResult()
+const hydrateResult = async () => {
   const routeId = String(route.params.id || '')
   let operation = journey.restore()
   const hasFreshSimulationHint =
@@ -811,10 +428,15 @@ const loadResult = async () => {
     scenarioId.value = saved.id
     await refreshScenarioGovernance(saved.id)
     if (!journey.isCurrent(operation)) return
+    // Read the historical evidence independently of the current plan's availability.
+    result.value = savedResultEvidence(saved)
+    resultOrigin.value = saved.projection?.length ? 'saved' : saved.forecast?.length ? 'legacy' : 'saved'
     if (saved.sourceType === 'MANUAL_TYPED') {
       debtSnapshot.value = snapshotFromSavedDebtScenario(saved)
       saveDebtSnapshot(debtSnapshot.value)
     } else {
+      Object.assign(snapshot, snapshotFromSavedScenario(saved))
+      saveWizardSnapshot(snapshot)
       const { data: budget, status } = await BudgetService.getCurrent(new Date().getMonth() + 1, new Date().getFullYear())
       if (!journey.isCurrent(operation)) return
       const currentBudget = status !== 204 && budget && typeof budget === 'object' && 'id' in budget ? budget : null
@@ -824,17 +446,7 @@ const loadResult = async () => {
       }
       Object.assign(snapshot, rebuilt)
       saveWizardSnapshot(snapshot)
-      if (!hasPersistedScenarioResult(saved)) {
-        const { data } = await ScenarioService.simulate(buildSimulationPayload(snapshot))
-        if (!journey.isCurrent(operation)) return
-        result.value = data
-        isShowingSavedSnapshot.value = false
-        writeJourneyResult(operation, saved.id, data)
-        return
-      }
     }
-    result.value = buildResultFromSavedScenario(saved)
-    isShowingSavedSnapshot.value = true
   } catch (e) {
     if (!journey.isCurrent(operation)) return
     console.error(e)
@@ -842,12 +454,24 @@ const loadResult = async () => {
   }
 }
 
+const loadResult = async () => {
+  resetLocalResult()
+  const revision = loadRevision
+  isLoading.value = true
+  try {
+    await hydrateResult()
+  } finally {
+    if (revision === loadRevision) isLoading.value = false
+  }
+}
+
 const recalculateResult = async () => {
   const operation = journey.session.value
-  if (!journey.isCurrent(operation) || isRecalculating.value) return
+  if (!journey.isCurrent(operation) || isLoading.value || isRecalculating.value) return
   if (isManualTypedScenario.value && !debtSnapshot.value) return
   if (!isManualTypedScenario.value && !snapshot.budgetId && !snapshot.currentScenarioId) return
   isRecalculating.value = true
+  stopAdvisorSpeech()
   errorMessage.value = ''
   try {
     const payload =
@@ -857,7 +481,8 @@ const recalculateResult = async () => {
     const { data } = await ScenarioService.simulate(payload)
     if (!journey.isCurrent(operation)) return
     result.value = data
-    isShowingSavedSnapshot.value = false
+    resultOrigin.value = 'live'
+    wasRecalculated.value = true
     writeJourneyResult(operation, scenarioId.value || 'preview', data)
   } catch (e) {
     if (!journey.isCurrent(operation)) return
@@ -921,7 +546,7 @@ const ensureScenarioPersisted = async (operation: JourneySession): Promise<strin
 
 const saveScenario = async () => {
   const operation = journey.session.value
-  if (!journey.isCurrent(operation) || isSaving.value || isCreatingDecision.value) return
+  if (!journey.isCurrent(operation) || isLoading.value || isSaving.value || isCreatingDecision.value) return
   errorMessage.value = ''
   successMessage.value = ''
   isSaving.value = true
@@ -938,7 +563,7 @@ const saveScenario = async () => {
     } else {
       saveWizardSnapshot(snapshot)
     }
-    isShowingSavedSnapshot.value = true
+    wasRecalculated.value = false
     successMessage.value = t('planning.scenarios.save_success', {
       name: snapshot.scenarioName || t('planning.scenarios.default_name')
     })
@@ -960,7 +585,7 @@ const saveScenario = async () => {
 
 const createDecisionFromScenario = async () => {
   const operation = journey.session.value
-  if (!journey.isCurrent(operation) || isSaving.value || isCreatingDecision.value) return
+  if (!journey.isCurrent(operation) || isLoading.value || isSaving.value || isCreatingDecision.value) return
   isCreatingDecision.value = true
   errorMessage.value = ''
   try {
@@ -988,7 +613,7 @@ const createDecisionFromScenario = async () => {
 }
 
 const editScenario = async () => {
-  if (!journey.isCurrent()) return
+  if (!journey.isCurrent() || isLoading.value) return
   if (debtSnapshot.value) {
     saveDebtSnapshot(debtSnapshot.value)
   } else {
@@ -1023,6 +648,7 @@ const editScenario = async () => {
 }
 
 const newScenario = async () => {
+  if (isLoading.value) return
   clearWizardSnapshot()
   clearDebtSnapshot()
   setJourneyValue(JOURNEY_RESULT_KEY, null)
@@ -1042,6 +668,8 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.result-voice { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 16px; border-radius: 8px; border: 1px solid currentColor; color: var(--cb-ink); background: transparent; cursor: pointer; }
+.result-voice:focus-visible { outline: 3px solid var(--cb-primary); outline-offset: 3px; }
 .scenario-result {
   max-width: 1080px;
 }
@@ -1323,6 +951,7 @@ onUnmounted(() => {
 .warning-value  { color: var(--cb-warning); }
 
 @media (max-width: 600px) {
+  :deep(.cb-page-header) { flex-direction: column; align-items: stretch; }
   .scenario-result {
     padding-inline: 0;
   }
