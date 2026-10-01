@@ -263,6 +263,99 @@ async function fixture(page: Page, theme: 'light' | 'dark', role = 'ROLE_OWNER')
 }
 
 for (const theme of ['light', 'dark'] as const) {
+  test(`ED-06: save, recover creation, confirm application and follow existing decision (${theme})`, async ({ page }, info) => {
+    await fixture(page, theme)
+    await page.setViewportSize({ width: theme === 'light' ? 360 : 1440, height: 1000 })
+    await page.addInitScript(result => {
+      sessionStorage.setItem('planning-decision-session-v1', JSON.stringify({ version: 1, sessionId: 'continuation-fixture', userId: 'fixture-user', workspaceId: 'fixture-workspace', sourceType: 'BUDGET_BASED', scenarioId: null }))
+      sessionStorage.setItem('planning-scenario-wizard-v3', JSON.stringify({ scenarioName: result.scenarioName, months: 6, currentScenarioId: null, budgetId: 'fixture-budget', adjustments: [], scenarioLines: [] }))
+      sessionStorage.setItem('planning-scenario-latest-result', JSON.stringify({ sessionId: 'continuation-fixture', scenarioId: 'preview', result }))
+    }, resultFixture)
+    let saved: any = null
+    let decision: any = null
+    let saves = 0
+    let creates = 0
+    let applies = 0
+    await page.route('**/fixture-api/budgets/current**', route => route.fulfill({ status: 204 }))
+    await page.route('**/fixture-api/scenarios**', async route => {
+      const path = new URL(route.request().url()).pathname
+      if (route.request().method() === 'GET') return route.fulfill({ json: saved ? [saved] : [] })
+      if (path.endsWith('/save')) {
+        saves++
+        saved = { ...resultFixture, ...route.request().postDataJSON(), id: 'saved-continuation', lines: [] }
+        return route.fulfill({ json: saved })
+      }
+      expect(path).toMatch(/\/simulate$/)
+      return route.fulfill({ json: resultFixture })
+    })
+    await page.route('**/fixture-api/decisions**', async route => {
+      const path = new URL(route.request().url()).pathname
+      if (route.request().method() === 'GET') return route.fulfill({ json: decision ? [decision] : [] })
+      if (path.includes('/from-scenario/')) {
+        creates++
+        if (creates === 1) return route.fulfill({ status: 503, json: { message: 'Synthetic creation failure' } })
+        decision = { id: 'decision-continuation', scenarioId: saved.id, title: saved.name, status: 'OPEN', approveVotes: 0, rejectVotes: 0, votes: [], comments: [], canCurrentUserApply: true }
+        return route.fulfill({ json: decision })
+      }
+      expect(path).toMatch(/\/apply$/)
+      applies++
+      decision = { ...decision, status: 'APPROVED', appliedAt: '2026-10-01T12:00:00Z', canCurrentUserApply: false }
+      return route.fulfill({ json: { decisionId: decision.id, status: decision.status, appliedAt: decision.appliedAt, updatedBudget: { id: 'fixture-budget', net: 50, totalIncome: 1000, totalExpense: 950 } } })
+    })
+    await page.goto('/planning/scenarios/preview?simulatedAt=fixture')
+    await page.locator('.security-notice__close').click()
+    await expect(page.locator('.result-action--primary')).toHaveText(/Salvar simulação/)
+    await page.getByRole('button', { name: 'Salvar simulação', exact: true }).click()
+    await expect(page).toHaveURL(/\/planning\/scenarios\/saved-continuation$/)
+    await expect(page.locator('.result-action--primary')).toHaveText(/Criar decisão/)
+    expect({ saves, creates, applies }).toEqual({ saves: 1, creates: 0, applies: 0 })
+    await page.getByRole('button', { name: 'Criar decisão', exact: true }).click()
+    await expect(page).toHaveURL(/decisionPending=503/)
+    await expect(page.getByText(/A simulação foi salva. A criação da decisão não foi confirmada/)).toBeVisible()
+    await page.reload()
+    await expect(page.getByText(/A simulação foi salva. A criação da decisão não foi confirmada/)).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Criar decisão', exact: true })).toBeEnabled()
+    await page.screenshot({ path: info.outputPath(`continuation-recovery-${theme}.png`), fullPage: true, animations: 'disabled' })
+    await page.getByRole('button', { name: 'Criar decisão', exact: true }).click()
+    await expect(page).toHaveURL(/\/decisions\?scenarios=saved-continuation/)
+    await expect(page.getByText('Decisão em aberto', { exact: true })).toBeVisible()
+    expect({ saves, creates, applies }).toEqual({ saves: 1, creates: 2, applies: 0 })
+    const collaboration = page.locator('.decision-collaboration')
+    await expect(collaboration).not.toHaveAttribute('open', '')
+    await collaboration.locator('summary').focus()
+    await page.keyboard.press('Enter')
+    await expect(collaboration).toHaveAttribute('open', '')
+    await collaboration.locator('summary').click()
+    await page.getByRole('button', { name: 'Aplicar ao plano', exact: true }).click()
+    await expect(page.getByRole('dialog')).toContainText('Não realiza pagamentos')
+    expect(applies).toBe(0)
+    await page.getByRole('dialog').getByRole('button', { name: 'Cancelar', exact: true }).click()
+    expect(applies).toBe(0)
+    await page.getByRole('button', { name: 'Aplicar ao plano', exact: true }).click()
+    for (const button of await page.getByRole('dialog').getByRole('button').all()) {
+      const box = await button.boundingBox()
+      expect(box).not.toBeNull()
+      expect(box!.x).toBeGreaterThanOrEqual(0)
+      expect(box!.x + box!.width).toBeLessThanOrEqual(page.viewportSize()!.width)
+    }
+    await page.screenshot({ path: info.outputPath(`continuation-confirm-${theme}.png`), fullPage: true, animations: 'disabled' })
+    await page.getByRole('button', { name: 'Confirmar aplicação', exact: true }).click()
+    await expect(page.getByRole('dialog')).not.toBeVisible()
+    await page.getByRole('button', { name: /Fechadas/ }).click()
+    await expect(page.getByText('Aplicada ao plano', { exact: true })).toBeVisible()
+    expect(applies).toBe(1)
+    await expect(page.getByRole('button', { name: 'Aplicar ao plano', exact: true })).toHaveCount(0)
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    await page.screenshot({ path: info.outputPath(`continuation-applied-${theme}.png`), fullPage: true, animations: 'disabled' })
+    await page.goto('/planning/scenarios')
+    await expect(page.getByRole('button', { name: 'Acompanhar decisão', exact: true })).toBeVisible()
+    await page.getByRole('button', { name: 'Acompanhar decisão', exact: true }).click()
+    await expect(page).toHaveURL(/\/decisions\?scenarios=saved-continuation/)
+    expect({ saves, creates, applies }).toEqual({ saves: 1, creates: 2, applies: 1 })
+  })
+}
+
+for (const theme of ['light', 'dark'] as const) {
   for (const width of [1440, 360]) {
     test(`${theme} ${width}: direct entry, layout, keyboard and palette`, async ({ page }, info) => {
       await fixture(page, theme)

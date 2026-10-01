@@ -114,10 +114,14 @@ const flushPromises = async () => {
 describe('ScenarioResultView debt scenario', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    scenarioServiceMock.save.mockReset()
+    decisionServiceMock.createFromScenario.mockReset()
+    scenarioServiceMock.list.mockResolvedValue({ data: [] })
     sessionStorage.clear()
     userStoreMock.getCurrentWorkspaceId = context.workspaceId
     userStoreMock.getUser.id = context.userId
     userStoreMock.isAuthenticated = true
+    userStoreMock.canWrite = true
     routeState.params.id = 'preview'
     beginJourneySession(context, 'MANUAL_TYPED')
     scenarioServiceMock.save.mockResolvedValue({ data: { id: 'scenario-debt-1', name: 'Debt choice' } })
@@ -226,6 +230,149 @@ describe('ScenarioResultView debt scenario', () => {
     expect(decisionServiceMock.createFromScenario).toHaveBeenCalledWith('scenario-debt-1')
     expect(routerPush).toHaveBeenCalled()
   })
+
+  it('saves only the simulation, then creates a decision without saving again', async () => {
+    const wrapper = mount(ScenarioResultView, { global: { plugins: [vuetify] } })
+    await flushPromises()
+    expect(wrapper.find('.result-action--primary').text()).toContain('decisionJourney.continuation.saveOnly')
+    await (wrapper.vm as any).saveScenario()
+    expect(scenarioServiceMock.save).toHaveBeenCalledTimes(1)
+    expect(decisionServiceMock.createFromScenario).not.toHaveBeenCalled()
+    await (wrapper.vm as any).createDecisionFromScenario()
+    expect(scenarioServiceMock.save).toHaveBeenCalledTimes(1)
+    expect(decisionServiceMock.createFromScenario).toHaveBeenCalledTimes(1)
+  })
+
+  it.each([403, 409, 500])('retains a saved simulation after create fails with %s and retries only creation', async status => {
+    decisionServiceMock.createFromScenario.mockRejectedValueOnce({ response: { status } })
+    const wrapper = mount(ScenarioResultView, { global: { plugins: [vuetify] } })
+    await flushPromises()
+    await (wrapper.vm as any).createDecisionFromScenario()
+    expect(wrapper.text()).toContain('decisionJourney.continuation.savedAfterFailure')
+    expect(wrapper.text()).toContain(status === 403 ? 'decisionJourney.continuation.forbidden' : status === 409 ? 'decisionJourney.continuation.conflict' : 'decisionJourney.continuation.failed')
+    expect(routerReplace).toHaveBeenCalledWith({ name: 'planning-scenarios-result', params: { id: 'scenario-debt-1' }, query: { decisionPending: String(status) } })
+    await (wrapper.vm as any).createDecisionFromScenario()
+    expect(scenarioServiceMock.save).toHaveBeenCalledTimes(1)
+    expect(decisionServiceMock.createFromScenario).toHaveBeenCalledTimes(2)
+  })
+
+  it('does not repeat saves or creation while a request is pending', async () => {
+    let finish!: (value: unknown) => void
+    scenarioServiceMock.save.mockImplementationOnce(() => new Promise(resolve => { finish = resolve }))
+    const wrapper = mount(ScenarioResultView, { global: { plugins: [vuetify] } })
+    await flushPromises()
+    const pending = (wrapper.vm as any).createDecisionFromScenario()
+    await (wrapper.vm as any).createDecisionFromScenario()
+    await (wrapper.vm as any).saveScenario()
+    expect(scenarioServiceMock.save).toHaveBeenCalledTimes(1)
+    finish({ data: { id: 'saved', name: 'Debt' } })
+    await pending
+    expect(decisionServiceMock.createFromScenario).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not write a preview without write permission', async () => {
+    userStoreMock.canWrite = false
+    const wrapper = mount(ScenarioResultView, { global: { plugins: [vuetify] } })
+    await flushPromises()
+    await (wrapper.vm as any).saveScenario()
+    await (wrapper.vm as any).createDecisionFromScenario()
+    expect(scenarioServiceMock.save).not.toHaveBeenCalled()
+    expect(decisionServiceMock.createFromScenario).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    { status: 'OPEN', approveVotes: 1, rejectVotes: 0 },
+    { status: 'APPROVED', approveVotes: 0, rejectVotes: 0 },
+    { status: 'REJECTED', approveVotes: 0, rejectVotes: 0 },
+    { status: 'OPEN', approveVotes: 0, rejectVotes: 0, appliedAt: '2026-10-01' },
+  ])('keeps governed $status scenarios read-only and routes edits to a new version', async decision => {
+    await setupSavedDebt()
+    decisionServiceMock.list.mockResolvedValue({ data: [{ id: 'decision', scenarioId: 'saved', ...decision }] })
+    const wrapper = mount(ScenarioResultView, { global: { plugins: [vuetify] } })
+    await flushPromises()
+    expect(wrapper.text()).toContain('decisionJourney.continuation.openDecision')
+    await (wrapper.vm as any).saveScenario()
+    await (wrapper.vm as any).createDecisionFromScenario()
+    expect(scenarioServiceMock.save).not.toHaveBeenCalled()
+    expect(decisionServiceMock.createFromScenario).not.toHaveBeenCalled()
+    await (wrapper.vm as any).editScenario()
+    expect(routerPush).toHaveBeenCalledWith({ name: 'planning-scenarios-debt-new', query: { cloneFrom: 'saved', locked: '1' } })
+  })
+
+  it('keeps an open decision with no votes editable without creating another decision', async () => {
+    await setupSavedDebt()
+    decisionServiceMock.list.mockResolvedValue({ data: [{ id: 'decision', scenarioId: 'saved', status: 'OPEN', approveVotes: 0, rejectVotes: 0 }] })
+    const wrapper = mount(ScenarioResultView, { global: { plugins: [vuetify] } })
+    await flushPromises()
+    await (wrapper.vm as any).editScenario()
+    expect(routerPush).toHaveBeenCalledWith({ name: 'planning-scenarios-debt-edit', params: { id: 'saved' } })
+    await (wrapper.vm as any).createDecisionFromScenario()
+    expect(decisionServiceMock.createFromScenario).not.toHaveBeenCalled()
+  })
+
+  it('blocks mutation when governance cannot be loaded', async () => {
+    await setupSavedDebt()
+    decisionServiceMock.list.mockRejectedValueOnce(new Error('offline'))
+    const wrapper = mount(ScenarioResultView, { global: { plugins: [vuetify] } })
+    await flushPromises()
+    expect(wrapper.text()).toContain('decisionJourney.continuation.governanceUnknown')
+    await (wrapper.vm as any).saveScenario()
+    await (wrapper.vm as any).createDecisionFromScenario()
+    await (wrapper.vm as any).editScenario()
+    expect(scenarioServiceMock.save).not.toHaveBeenCalled()
+    expect(decisionServiceMock.createFromScenario).not.toHaveBeenCalled()
+    expect(routerPush).not.toHaveBeenCalled()
+  })
+
+  it('preserves the existing 409 save fallback as an explicitly named new version', async () => {
+    scenarioServiceMock.save.mockRejectedValueOnce({ response: { status: 409 } })
+    const wrapper = mount(ScenarioResultView, { global: { plugins: [vuetify] } })
+    await flushPromises()
+    await (wrapper.vm as any).saveScenario()
+    expect(scenarioServiceMock.save).toHaveBeenCalledTimes(2)
+    expect(scenarioServiceMock.save.mock.calls[1][0].id).toBeUndefined()
+    expect(wrapper.text()).toContain('decisionJourney.continuation.versionSaved')
+    expect(decisionServiceMock.createFromScenario).not.toHaveBeenCalled()
+  })
+
+  it('does not proceed to creation when saving is forbidden', async () => {
+    scenarioServiceMock.save.mockRejectedValueOnce({ response: { status: 403 } })
+    const wrapper = mount(ScenarioResultView, { global: { plugins: [vuetify] } })
+    await flushPromises()
+    await (wrapper.vm as any).createDecisionFromScenario()
+    expect(decisionServiceMock.createFromScenario).not.toHaveBeenCalled()
+    expect((wrapper.vm as any).needsSave).toBe(true)
+    expect(wrapper.text()).toContain('decisionJourney.continuation.forbidden')
+    expect(wrapper.text()).not.toContain('decisionJourney.continuation.savedAfterFailure')
+  })
+
+  it('checks for an existing decision before retrying an uncertain creation', async () => {
+    decisionServiceMock.createFromScenario.mockRejectedValueOnce(new Error('connection lost'))
+    const wrapper = mount(ScenarioResultView, { global: { plugins: [vuetify] } })
+    await flushPromises()
+    await (wrapper.vm as any).createDecisionFromScenario()
+    decisionServiceMock.list.mockResolvedValue({ data: [{ id: 'existing', scenarioId: 'scenario-debt-1', status: 'OPEN', approveVotes: 0, rejectVotes: 0 }] })
+    await (wrapper.vm as any).createDecisionFromScenario()
+    expect(scenarioServiceMock.save).toHaveBeenCalledTimes(1)
+    expect(decisionServiceMock.createFromScenario).toHaveBeenCalledTimes(1)
+    expect(routerPush).toHaveBeenCalledWith({ name: 'decisions', query: { scenarios: 'scenario-debt-1' } })
+  })
+
+  it('can create from an already saved record without requiring a scenario write', async () => {
+    await setupSavedDebt()
+    userStoreMock.canWrite = false
+    const wrapper = mount(ScenarioResultView, { global: { plugins: [vuetify] } })
+    await flushPromises()
+    await (wrapper.vm as any).createDecisionFromScenario()
+    expect(scenarioServiceMock.save).not.toHaveBeenCalled()
+    expect(decisionServiceMock.createFromScenario).toHaveBeenCalledExactlyOnceWith('saved')
+  })
+
+  async function setupSavedDebt() {
+    const debtInput = JSON.parse(sessionStorage.getItem('planning-debt-scenario-wizard-v1')!).debtInput
+    routeState.params.id = 'saved'
+    scenarioServiceMock.list.mockResolvedValue({ data: [{ id: 'saved', name: 'Saved debt', sourceType: 'MANUAL_TYPED', debtInput, deltas: [] }] })
+  }
 
   it('renders projection rows instead of legacy forecast rows for budget scenarios', async () => {
     sessionStorage.clear()

@@ -10,6 +10,8 @@
           </v-btn>
         </template>
       </page-header>
+      <p>{{ t('decisionJourney.continuation.createHelp') }}</p>
+      <v-alert v-if="actionError" type="error" variant="tonal" role="alert">{{ actionError }}</v-alert>
 
       <!-- Success alert -->
       <alert-strip
@@ -117,6 +119,7 @@
                 {{ decision.status }}
               </v-chip>
             </div>
+            <p>{{ t(decision.stageKey + 'Help') }}</p>
 
             <!-- Impact strip -->
             <div class="cb-decision-card__impact">
@@ -129,6 +132,8 @@
 
             <p class="cb-decision-card__consequence">{{ decision.consequenceMessage }}</p>
 
+            <details v-if="decision.decisionId" class="decision-collaboration">
+              <summary>{{ t('decisionJourney.continuation.collaboration') }}</summary>
             <!-- Voting section -->
             <div v-if="decision.decisionId" class="cb-decision-card__votes">
               <div class="cb-decision-card__votes-header">
@@ -156,7 +161,7 @@
                   variant="tonal"
                   size="small"
                   :color="decision.currentUserVote === 'APPROVE' ? 'success' : undefined"
-                  :disabled="!decision.isOpenDecision || !canUseCollaboration"
+                  :disabled="Boolean(decisionAction) || !decision.isOpenDecision || !canUseCollaboration"
                   :loading="activeDecisionId === decision.decisionId && decisionAction === 'vote-approve'"
                   @click="openVoteDialog(decision.decisionId, 'APPROVE')"
                 >
@@ -167,7 +172,7 @@
                   variant="tonal"
                   size="small"
                   :color="decision.currentUserVote === 'REJECT' ? 'error' : undefined"
-                  :disabled="!decision.isOpenDecision || !canUseCollaboration"
+                  :disabled="Boolean(decisionAction) || !decision.isOpenDecision || !canUseCollaboration"
                   :loading="activeDecisionId === decision.decisionId && decisionAction === 'vote-reject'"
                   @click="openVoteDialog(decision.decisionId, 'REJECT')"
                 >
@@ -179,7 +184,7 @@
                   variant="text"
                   size="small"
                   color="var(--cb-ink-muted)"
-                  :disabled="!canUseCollaboration"
+                  :disabled="Boolean(decisionAction) || !canUseCollaboration"
                   :loading="activeDecisionId === decision.decisionId && decisionAction === 'vote-clear'"
                   @click="clearDecisionVote(decision.decisionId)"
                 >
@@ -220,6 +225,8 @@
               </div>
             </div>
 
+            </details>
+
             <!-- Metrics -->
             <div class="cb-decision-card__metrics">
               <div class="cb-decision-card__metric">
@@ -248,23 +255,24 @@
                   class="cb-btn-accent"
                   size="large"
                   :loading="activeDecisionId === decision.scenarioId && decisionAction === 'create'"
+                  :disabled="Boolean(decisionAction)"
                   @click="trackDecision(decision.scenarioId)"
                 >
                   <v-icon start size="16">mdi-bookmark-plus-outline</v-icon>
-                  {{ t('decisions.track_decision') }}
+                  {{ t('decisionJourney.continuation.create') }}
                 </v-btn>
               </template>
               <template v-else>
                 <v-tooltip
                   v-if="decision.isOpenDecision && (!decision.canApply || !canUseCollaboration)"
-                  :text="canUseCollaboration ? t('decisions.not_enough_approvals') : t('decisions.collaboration_locked')"
+                  :text="canUseCollaboration ? (decision.applyBlockedReason || t('decisions.not_enough_approvals')) : t('decisions.collaboration_locked')"
                   location="top"
                 >
                   <template #activator="{ props }">
                     <span v-bind="props">
                       <v-btn variant="flat" color="success" size="large" disabled>
                         <v-icon start>mdi-flash-outline</v-icon>
-                        {{ t('decisions.execute_decision') }}
+                        {{ t('decisionJourney.continuation.apply') }}
                       </v-btn>
                     </span>
                   </template>
@@ -275,12 +283,16 @@
                   color="success"
                   size="large"
                   :loading="activeDecisionId === decision.decisionId && decisionAction === 'apply'"
-                  @click="applyDecision(decision.decisionId)"
+                  :disabled="Boolean(decisionAction)"
+                  @click="pendingApplyId = decision.decisionId"
                 >
                   <v-icon start>mdi-flash-outline</v-icon>
-                  {{ t('decisions.execute_decision') }}
+                  {{ t('decisionJourney.continuation.apply') }}
                 </v-btn>
               </template>
+              <v-btn v-if="decision.decisionId && !decision.isOpenDecision" variant="flat" color="var(--cb-primary)" @click="openScenario(decision.scenarioId)">
+                {{ t('decisionJourney.continuation.review') }}
+              </v-btn>
 
               <!-- Secondary actions row -->
               <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
@@ -288,7 +300,7 @@
                   <v-icon start size="14">mdi-link-variant</v-icon>
                   {{ t('decisions.copy_public_link') }}
                 </v-btn>
-                <v-btn v-if="decision.isOpenDecision" variant="outlined" size="small" color="error" style="text-transform:none" :loading="activeDecisionId === decision.decisionId && decisionAction === 'reject'" @click="updateDecisionStatus(decision.decisionId || '', 'REJECTED')">
+                <v-btn v-if="decision.isOpenDecision" variant="outlined" size="small" color="error" style="text-transform:none" :disabled="Boolean(decisionAction)" :loading="activeDecisionId === decision.decisionId && decisionAction === 'reject'" @click="updateDecisionStatus(decision.decisionId || '', 'REJECTED')">
                   <v-icon start size="14">mdi-close</v-icon>
                   {{ t('decisions.reject_action') }}
                 </v-btn>
@@ -351,7 +363,7 @@
                       <v-btn
                         color="var(--cb-accent)"
                         variant="tonal"
-                        :disabled="!commentDrafts[decision.decisionId]?.trim()"
+                        :disabled="Boolean(decisionAction) || !commentDrafts[decision.decisionId]?.trim()"
                         :loading="activeDecisionId === decision.decisionId && decisionAction === 'comment'"
                         @click="addDecisionComment(decision.decisionId)"
                       >
@@ -407,6 +419,7 @@
             color="var(--cb-accent)"
             variant="flat"
             :loading="Boolean(voteDialog.decisionId) && activeDecisionId === voteDialog.decisionId && (decisionAction === 'vote-approve' || decisionAction === 'vote-reject')"
+            :disabled="Boolean(decisionAction)"
             @click="submitVoteFromDialog"
           >
             {{ t('decisions.submit_vote') }}
@@ -415,11 +428,22 @@
       </v-card>
     </v-dialog>
 
+    <v-dialog :model-value="Boolean(pendingApplyId)" :persistent="Boolean(decisionAction)" max-width="560" @update:model-value="value => { if (!value && !decisionAction) pendingApplyId = null }">
+      <v-card>
+        <v-card-title>{{ t('decisionJourney.continuation.apply') }}</v-card-title>
+        <v-card-text>{{ t('decisionJourney.continuation.applyHelp') }}</v-card-text>
+        <v-card-actions class="decision-confirm-actions">
+          <v-btn variant="text" :disabled="Boolean(decisionAction)" @click="pendingApplyId = null">{{ t('decisions.cancel') }}</v-btn>
+          <v-btn variant="flat" color="var(--cb-primary)" :disabled="Boolean(decisionAction)" :loading="decisionAction === 'apply'" @click="applyDecision(pendingApplyId || '')">{{ t('decisionJourney.continuation.confirmApply') }}</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
     <!-- Create decision from scenario dialog -->
-    <v-dialog v-model="decisionCreationDialogOpen" max-width="640">
+    <v-dialog v-model="decisionCreationDialogOpen" :persistent="Boolean(decisionAction)" max-width="640">
       <v-card>
         <v-card-title>{{ t('decisions.choose_scenario') }}</v-card-title>
         <v-card-text>
+          <p>{{ t('decisionJourney.continuation.createHelp') }}</p>
           <div v-if="availableScenariosForDecision.length" class="decision-create-list">
             <button
               v-for="scenario in availableScenariosForDecision"
@@ -446,7 +470,7 @@
           <v-btn
             color="var(--cb-accent)"
             variant="flat"
-            :disabled="!selectedScenarioToCreate"
+            :disabled="Boolean(decisionAction) || !selectedScenarioToCreate"
             :loading="Boolean(selectedScenarioToCreate) && activeDecisionId === selectedScenarioToCreate && decisionAction === 'create'"
             @click="createDecisionFromSelectedScenario"
           >
@@ -469,6 +493,7 @@ import ScenarioService, { type SavedScenario, type ScenarioDeltaType, type Scena
 import DecisionService, { type DecisionComment, type DecisionVote, type DecisionVoteValue, type PersistedDecision, type PersistedDecisionStatus } from '@/services/DecisionService'
 import BillingOrchestrationService, { type BillingSummaryResponse } from '@/services/BillingOrchestrationService'
 import { useUserStore } from '@/plugins/userStore'
+import { decisionStageKey, decisionActionErrorKey } from '@/utils/decisionLifecycle'
 
 const { t, locale } = useI18n()
 const route = useRoute()
@@ -478,6 +503,8 @@ const DECISIONS_FLASH_SUCCESS_KEY = 'decisions-flash-success'
 
 const isLoading = ref(false)
 const error = ref('')
+const actionError = ref('')
+const pendingApplyId = ref<string | null>(null)
 const successMessage = ref('')
 const activeDecisionId = ref<string | null>(null)
 const decisionAction = ref<'create' | 'apply' | 'reject' | 'comment' | 'vote-approve' | 'vote-reject' | 'vote-clear' | null>(null)
@@ -628,7 +655,8 @@ const decisionCards = computed(() =>
       decisionId: persisted?.id || null,
       title: scenario.name,
       scenarioLabel: t('decisions.scenario_label', { name: scenario.name }),
-      status: statusLabel(result.decisionStatus, persisted?.status),
+      status: persisted ? t(decisionStageKey(persisted)) : statusLabel(result.decisionStatus),
+      stageKey: decisionStageKey(persisted),
       persistedStatus: persisted?.status || null,
       statusColor: statusColor(result.decisionStatus, persisted?.status),
       consequenceMessage: result.scenarioMonthlyImpact < 0
@@ -656,8 +684,8 @@ const decisionCards = computed(() =>
       teamReasoning,
       approvalReasoning,
       rejectionReasoning,
-      isOpenDecision: persisted?.status === 'OPEN',
-      canApply: Boolean(persisted?.canCurrentUserApply),
+      isOpenDecision: persisted?.status === 'OPEN' && !persisted.appliedAt,
+      canApply: Boolean(persisted?.canCurrentUserApply && !persisted.appliedAt),
       applyBlockedReason: persisted?.applyBlockedReason || null,
     }
   })
@@ -668,11 +696,11 @@ const withDecisionCount = computed(() =>
 )
 
 const openDecisionCount = computed(() =>
-  decisionCards.value.filter((decision) => decision.persistedStatus === 'OPEN').length
+  decisionCards.value.filter((decision) => decision.isOpenDecision).length
 )
 
 const closedDecisionCount = computed(() =>
-  decisionCards.value.filter((decision) => Boolean(decision.persistedStatus) && decision.persistedStatus !== 'OPEN').length
+  decisionCards.value.filter((decision) => Boolean(decision.decisionId) && !decision.isOpenDecision).length
 )
 
 const decisionSummaryItems = computed(() => [
@@ -685,13 +713,13 @@ const decisionSummaryItems = computed(() => [
 
 const filteredDecisionCards = computed(() => {
   if (decisionFilter.value === 'open') {
-    return decisionCards.value.filter((decision) => decision.persistedStatus === 'OPEN')
+    return decisionCards.value.filter((decision) => decision.isOpenDecision)
   }
   if (decisionFilter.value === 'withDecision') {
     return decisionCards.value.filter((decision) => Boolean(decision.decisionId))
   }
   if (decisionFilter.value === 'closed') {
-    return decisionCards.value.filter((decision) => Boolean(decision.persistedStatus) && decision.persistedStatus !== 'OPEN')
+    return decisionCards.value.filter((decision) => Boolean(decision.decisionId) && !decision.isOpenDecision)
   }
   return []
 })
@@ -861,20 +889,22 @@ const openDecisionCreationDialog = () => {
 }
 
 const closeDecisionCreationDialog = () => {
+  if (decisionAction.value) return
   decisionCreationDialogOpen.value = false
   selectedScenarioToCreate.value = null
 }
 
 const createDecisionFromSelectedScenario = async () => {
-  if (!selectedScenarioToCreate.value) return
-  await trackDecision(selectedScenarioToCreate.value)
-  closeDecisionCreationDialog()
+  if (!selectedScenarioToCreate.value || decisionAction.value) return
+  if (await trackDecision(selectedScenarioToCreate.value)) closeDecisionCreationDialog()
 }
 
 const trackDecision = async (scenarioId: string) => {
+  if (decisionAction.value || persistedDecisions.value.some(d => d.scenarioId === scenarioId)) return false
   activeDecisionId.value = scenarioId
   decisionAction.value = 'create'
   successMessage.value = ''
+  actionError.value = ''
   try {
     const { data } = await DecisionService.createFromScenario(scenarioId)
     persistedDecisions.value = [
@@ -885,9 +915,11 @@ const trackDecision = async (scenarioId: string) => {
     successMessage.value = scenarioName
       ? t('decisions.created_from_scenario', { name: scenarioName })
       : t('decisions.created_success')
+    return true
   } catch (trackError) {
     console.error(trackError)
-    error.value = t('decisions.persist_error')
+    actionError.value = t(decisionActionErrorKey(trackError))
+    return false
   } finally {
     activeDecisionId.value = null
     decisionAction.value = null
@@ -895,9 +927,12 @@ const trackDecision = async (scenarioId: string) => {
 }
 
 const updateDecisionStatus = async (decisionId: string, status: PersistedDecisionStatus) => {
+  const decision = persistedDecisions.value.find(d => d.id === decisionId)
+  if (decisionAction.value || !decision || decision.status !== 'OPEN' || decision.appliedAt || status !== 'REJECTED') return
   activeDecisionId.value = decisionId
   decisionAction.value = status === 'REJECTED' ? 'reject' : null
   successMessage.value = ''
+  actionError.value = ''
   try {
     const { data } = await DecisionService.updateStatus(decisionId, status)
     persistedDecisions.value = persistedDecisions.value.map((decision) =>
@@ -905,7 +940,7 @@ const updateDecisionStatus = async (decisionId: string, status: PersistedDecisio
     )
   } catch (statusError) {
     console.error(statusError)
-    error.value = t('decisions.persist_error')
+    actionError.value = t(decisionActionErrorKey(statusError))
   } finally {
     activeDecisionId.value = null
     decisionAction.value = null
@@ -913,6 +948,8 @@ const updateDecisionStatus = async (decisionId: string, status: PersistedDecisio
 }
 
 const applyDecision = async (decisionId: string) => {
+  const decision = persistedDecisions.value.find(d => d.id === decisionId)
+  if (decisionAction.value || !decision || decision.status !== 'OPEN' || decision.appliedAt || !decision.canCurrentUserApply) return
   if (!canUseCollaboration.value) {
     error.value = t('decisions.collaboration_locked')
     await goToChoosePlan()
@@ -921,18 +958,20 @@ const applyDecision = async (decisionId: string) => {
   activeDecisionId.value = decisionId
   decisionAction.value = 'apply'
   successMessage.value = ''
+  actionError.value = ''
   try {
     const { data } = await DecisionService.applyDecision(decisionId)
     persistedDecisions.value = persistedDecisions.value.map((decision) =>
       decision.id === decisionId
-        ? { ...decision, status: data.status, appliedAt: data.appliedAt }
+        ? { ...decision, status: data.status, appliedAt: data.appliedAt, canCurrentUserApply: false }
         : decision
     )
     successMessage.value = t('decisions.decision_applied_success', { net: formatCurrency(data.updatedBudget?.net || 0) })
   } catch (applyError) {
     console.error(applyError)
-    error.value = t('decisions.persist_error')
+    actionError.value = t(decisionActionErrorKey(applyError))
   } finally {
+    pendingApplyId.value = null
     activeDecisionId.value = null
     decisionAction.value = null
   }
@@ -960,6 +999,7 @@ const copyPublicDecisionLink = async (decisionId: string) => {
 }
 
 const addDecisionComment = async (decisionId: string) => {
+  if (decisionAction.value) return
   if (!canUseCollaboration.value) {
     error.value = t('decisions.collaboration_locked_discussion')
     await goToChoosePlan()
@@ -990,6 +1030,7 @@ const addDecisionComment = async (decisionId: string) => {
 }
 
 const voteDecision = async (decisionId: string, voteValue: DecisionVoteValue, justification?: string | null) => {
+  if (decisionAction.value) return
   if (!canUseCollaboration.value) {
     error.value = t('decisions.collaboration_locked')
     await goToChoosePlan()
@@ -1010,6 +1051,7 @@ const voteDecision = async (decisionId: string, voteValue: DecisionVoteValue, ju
 }
 
 const clearDecisionVote = async (decisionId: string) => {
+  if (decisionAction.value) return
   if (!canUseCollaboration.value) {
     error.value = t('decisions.collaboration_locked')
     await goToChoosePlan()
@@ -1049,6 +1091,7 @@ const closeVoteDialog = () => {
 }
 
 const submitVoteFromDialog = async () => {
+  if (decisionAction.value) return
   const decisionId = voteDialog.value.decisionId
   const voteValue = voteDialog.value.voteValue
   if (!decisionId || !voteValue) {
@@ -1092,6 +1135,11 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.decision-confirm-actions { flex-wrap: wrap; justify-content: flex-end; padding: 16px; gap: 8px; }
+.decision-confirm-actions :deep(.v-btn) { margin: 0; max-width: 100%; }
+.decision-collaboration { margin: 12px 0; }
+.decision-collaboration summary { cursor: pointer; padding: 12px; border: 1px solid var(--cb-border-card); border-radius: 8px; font-weight: 600; }
+.decision-collaboration summary:focus-visible { outline: 3px solid var(--cb-primary); outline-offset: 3px; }
 /* ── Decision reasoning vote chips ─────── */
 .decision-reasoning__toggle {
   width: fit-content;
@@ -1163,6 +1211,8 @@ onMounted(async () => {
 }
 
 .cb-decision-card {
+  min-width: 0;
+  overflow-wrap: anywhere;
   background: var(--cb-surface);
   border-radius: var(--cb-radius-card);
   border: 1px solid var(--cb-border-card);
@@ -1303,6 +1353,7 @@ onMounted(async () => {
 }
 
 .cb-decision-card__actions {
+  display: block;
   border-top: 1px solid var(--cb-border);
   padding-top: 14px;
   margin-bottom: 12px;
@@ -1325,5 +1376,7 @@ onMounted(async () => {
   .cb-decision-card__head {
     flex-direction: column;
   }
+  .cb-decision-card { padding: 16px; }
+  .cb-decision-card__actions :deep(.v-btn) { max-width: 100%; }
 }
 </style>

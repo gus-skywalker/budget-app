@@ -14,7 +14,7 @@
         <div class="cb-card__header">
           <div>
             <h3 class="cb-card__title">{{ t('planning.scenarios.saved_title') }}</h3>
-            <p class="scenarios-subtitle">{{ t('planning.scenarios.saved_subtitle') }}</p>
+            <p class="scenarios-subtitle">{{ t('decisionJourney.continuation.saveHelp') }}</p>
           </div>
         </div>
         <div class="cb-card__body scenarios-body">
@@ -25,15 +25,13 @@
           </div>
 
           <div v-else-if="savedScenarios.length" class="saved-scenarios-list">
-          <button
+          <article
             v-for="scenario in savedScenarios"
             :key="scenario.id"
-            type="button"
             class="saved-scenario-card"
-            @click="openResult(scenario.id)"
           >
             <div class="saved-scenario-card__header">
-              <strong>{{ scenario.name }}</strong>
+              <button type="button" class="saved-scenario-open" @click="openResult(scenario.id)"><strong>{{ scenario.name }}</strong></button>
               <div class="saved-scenario-card__header-tags">
                 <span :class="['status-chip', scenarioTone(scenario)]">{{
                   scenarioLabel(scenario)
@@ -94,10 +92,11 @@
                 size="small"
                 color="var(--cb-primary)"
                 :loading="creatingDecisionId === scenario.id"
+                :disabled="Boolean(creatingDecisionId)"
                 @click.stop="createDecisionFromScenario(scenario)"
               >
                 <v-icon start>mdi-lightbulb-outline</v-icon>
-                {{ t('planning.scenarios.create_decision_from_scenario') }}
+                {{ hasScenarioDecision(scenario.id) ? t('decisionJourney.continuation.openDecision') : t('decisionJourney.continuation.create') }}
               </v-btn>
               <v-tooltip
                 v-if="canWriteScenarios && hasScenarioDecision(scenario.id)"
@@ -125,7 +124,7 @@
                 {{ t('planning.scenarios.delete_action') }}
               </v-btn>
             </div>
-          </button>
+          </article>
           </div>
 
           <div v-else class="cb-empty-state">
@@ -146,6 +145,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { decisionActionErrorKey, decisionLocksScenario } from '@/utils/decisionLifecycle'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import ScenarioService, { type SavedScenario } from '@/services/ScenarioService'
@@ -235,9 +235,7 @@ const loadSavedScenarios = async () => {
       const scenarioId = String(decision?.scenarioId || '')
       if (!scenarioId) return
       nextWithDecision.add(scenarioId)
-      const totalVotes = Number(decision?.approveVotes || 0) + Number(decision?.rejectVotes || 0)
-      const status = String(decision?.status || '').toUpperCase()
-      if (totalVotes > 0 || Boolean(status && status !== 'OPEN')) {
+      if (decisionLocksScenario(decision)) {
         nextLocked.add(scenarioId)
       }
     })
@@ -305,10 +303,16 @@ const deleteScenario = async (scenario: SavedScenario) => {
 }
 
 const createDecisionFromScenario = async (scenario: SavedScenario) => {
+  if (creatingDecisionId.value) return
+  if (hasScenarioDecision(scenario.id)) {
+    await router.push({ name: 'decisions', query: { scenarios: scenario.id } })
+    return
+  }
   creatingDecisionId.value = scenario.id
   errorMessage.value = ''
   try {
     await DecisionService.createFromScenario(scenario.id)
+    scenariosWithAnyDecision.value.add(scenario.id)
     window.sessionStorage.setItem(
       DECISIONS_FLASH_SUCCESS_KEY,
       JSON.stringify({ scenarioName: scenario.name || t('planning.scenarios.default_name') })
@@ -316,7 +320,7 @@ const createDecisionFromScenario = async (scenario: SavedScenario) => {
     await router.push({ name: 'decisions', query: { scenarios: scenario.id } })
   } catch (e) {
     console.error(e)
-    errorMessage.value = t('planning.scenarios.error')
+    errorMessage.value = t(decisionActionErrorKey(e))
   } finally {
     creatingDecisionId.value = null
   }
@@ -328,6 +332,8 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.saved-scenario-open { text-align: left; color: inherit; font: inherit; border-radius: 4px; }
+.saved-scenario-open:focus-visible { outline: 3px solid var(--cb-primary); outline-offset: 3px; }
 .scenarios-subtitle {
   font-size: 0.82rem;
   color: var(--cb-ink-muted);

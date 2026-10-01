@@ -18,7 +18,8 @@
       <template v-else-if="decision">
         <section class="title-section">
           <h2>{{ decision.title }}</h2>
-          <p class="status">{{ decision.status }}</p>
+          <p class="status">{{ t(decisionStageKey(decision)) }}</p>
+          <p>{{ t('decisionJourney.continuation.publicHelp') }}</p>
         </section>
 
         <section class="impact-card">
@@ -66,6 +67,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import DecisionService, { type PublicDecision } from '@/services/DecisionService'
+import { decisionStageKey } from '@/utils/decisionLifecycle'
 
 const route = useRoute()
 const router = useRouter()

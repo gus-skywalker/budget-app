@@ -115,13 +115,28 @@
           </v-alert>
         </div>
 
+        <section class="continuation-summary" aria-labelledby="continuation-title">
+          <h2 id="continuation-title">{{ t('decisionJourney.continuation.title') }}</h2>
+          <p role="status">{{ continuationStage }}</p>
+          <p>{{ t('decisionJourney.continuation.saveHelp') }}</p>
+          <p>{{ t('decisionJourney.continuation.createHelp') }}</p>
+          <p v-if="needsSave && !canWriteScenarios">{{ t('planning.scenarios.save_forbidden') }}</p>
+          <p v-if="!governanceKnown">{{ t('decisionJourney.continuation.governanceUnknown') }}</p>
+          <v-btn v-if="!governanceKnown" variant="text" :disabled="isBusy" @click="refreshScenarioGovernance(scenarioId)">{{ t('decisionJourney.continuation.refresh') }}</v-btn>
+        </section>
         <div class="result-actions">
+          <v-btn v-if="linkedDecision" class="result-action result-action--primary" color="var(--cb-primary)" :disabled="isBusy" @click="openLinkedDecision">
+            {{ t('decisionJourney.continuation.openDecision') }}
+          </v-btn>
           <v-btn
-            class="result-action result-action--primary"
+            v-else
+            class="result-action"
+            :class="{ 'result-action--primary': !needsSave }"
+            :variant="needsSave ? 'text' : 'flat'"
             color="var(--cb-primary)"
             :loading="isCreatingDecision"
             :disabled="
-              isLoading || isCreatingDecision || isSaving || (isScenarioLockedForEdit && Boolean(scenarioId))
+              isBusy || !governanceKnown || (needsSave && !canWriteScenarios) || isScenarioLockedForEdit
             "
             @click="createDecisionFromScenario"
           >
@@ -129,32 +144,33 @@
             {{ createDecisionLabel }}
           </v-btn>
           <v-btn
-            v-if="canWriteScenarios"
+            v-if="canWriteScenarios && needsSave"
             class="result-action"
-            variant="tonal"
+            :class="{ 'result-action--primary': !linkedDecision }"
+            :variant="linkedDecision ? 'tonal' : 'flat'"
             color="var(--cb-primary)"
             :loading="isSaving"
-            :disabled="isLoading || isSaving || isScenarioLockedForEdit"
+            :disabled="isBusy || !governanceKnown || isScenarioLockedForEdit"
             @click="saveScenario"
           >
             <v-icon start>mdi-content-save-outline</v-icon>
-            {{ t('planning.scenarios.save') }}
+            {{ t('decisionJourney.continuation.saveOnly') }}
           </v-btn>
           <v-btn
             class="result-action"
             variant="text"
             :loading="isRecalculating"
-            :disabled="isLoading || isRecalculating"
+            :disabled="isBusy"
             @click="recalculateResult"
           >
             <v-icon start>mdi-refresh</v-icon>
             {{ t('contentExperience.planning.scenarioResult.recalculate') }}
           </v-btn>
-          <v-btn class="result-action" variant="text" :disabled="isLoading" @click="editScenario">
+          <v-btn class="result-action" variant="text" :disabled="isBusy || !governanceKnown" @click="editScenario">
             <v-icon start>mdi-pencil-outline</v-icon>
             {{ editActionLabel }}
           </v-btn>
-          <v-btn class="result-action" variant="text" :disabled="isLoading" @click="newScenario">
+          <v-btn class="result-action" variant="text" :disabled="isBusy" @click="newScenario">
             <v-icon start>mdi-file-plus-outline</v-icon>
             {{ t('planning.scenarios.new_scenario') }}
           </v-btn>
@@ -176,13 +192,8 @@
           </div>
           <div class="scenario-feedback__body">
             <strong>{{ successMessage }}</strong>
-            <span>{{ t('planning.scenarios.save_success_next_step') }}</span>
           </div>
           <div class="scenario-feedback__actions">
-            <v-btn size="small" variant="tonal" color="success" @click="createDecisionFromScenario">
-              <v-icon start size="18">mdi-lightbulb-outline</v-icon>
-              {{ t('contentExperience.planning.scenarioResult.createDecision') }}
-            </v-btn>
             <v-btn
               size="small"
               variant="text"
@@ -219,7 +230,8 @@ import PageHeader from '@/components/PageHeader.vue'
 import AlertStrip from '@/components/AlertStrip.vue'
 import DecisionResultExplanation from '@/components/decision/DecisionResultExplanation.vue'
 import { savedResultEvidence, presentDecisionResult, decisionResultNarrative, type ResultEvidence, type ResultOrigin } from '@/utils/decisionResultPresentation'
-import DecisionService from '@/services/DecisionService'
+import DecisionService, { type PersistedDecision } from '@/services/DecisionService'
+import { decisionLocksScenario, decisionStageKey, decisionActionErrorKey } from '@/utils/decisionLifecycle'
 import ScenarioService, {
   type SavedScenario,
 } from '@/services/ScenarioService'
@@ -266,6 +278,12 @@ const wasRecalculated = ref(false)
 const isLoading = ref(false)
 let loadRevision = 0
 const isScenarioLockedForEdit = ref(false)
+const linkedDecision = ref<PersistedDecision | null>(null)
+const governanceKnown = ref(true)
+const needsSave = ref(true)
+const isBusy = computed(() => isLoading.value || isSaving.value || isCreatingDecision.value || isRecalculating.value)
+const continuationStage = computed(() => linkedDecision.value ? t(decisionStageKey(linkedDecision.value))
+  : t(needsSave.value ? 'decisionJourney.continuation.preview' : 'decisionJourney.continuation.saved'))
 const isSpeaking = ref(false)
 const debtSnapshot = ref<DebtScenarioSnapshot | null>(null)
 const canWriteScenarios = computed(() => userStore.canWrite)
@@ -289,6 +307,9 @@ const resetLocalResult = () => {
   Object.assign(snapshot, { scenarioName: '', months: 6, currentScenarioId: null, budgetId: undefined,
     periodMonth: undefined, periodYear: undefined, adjustments: [], scenarioLines: [] })
   isScenarioLockedForEdit.value = false
+  linkedDecision.value = null
+  governanceKnown.value = true
+  needsSave.value = true
   resultOrigin.value = 'live'
   wasRecalculated.value = false
   isSaving.value = false
@@ -359,7 +380,7 @@ const buildVersionedScenarioName = (name?: string): string => {
 }
 
 const createDecisionLabel = computed(() =>
-  scenarioId.value
+  !needsSave.value
     ? t('contentExperience.planning.scenarioResult.createDecision')
     : t('contentExperience.planning.scenarioResult.saveAndCreateDecision')
 )
@@ -374,21 +395,22 @@ const refreshScenarioGovernance = async (targetScenarioId: string | null) => {
   const operation = journey.session.value
   if (!targetScenarioId) {
     isScenarioLockedForEdit.value = false
+    linkedDecision.value = null
+    governanceKnown.value = true
     return
   }
+  governanceKnown.value = false
   try {
     const { data } = await DecisionService.list()
     if (!journey.isCurrent(operation)) return
-    const decisions = Array.isArray(data) ? data : []
-    const linkedDecision = decisions.find((decision) => decision.scenarioId === targetScenarioId)
-    const totalVotes =
-      Number(linkedDecision?.approveVotes || 0) + Number(linkedDecision?.rejectVotes || 0)
-    const decisionStatus = String(linkedDecision?.status || '').toUpperCase()
-    isScenarioLockedForEdit.value =
-      totalVotes > 0 || Boolean(decisionStatus && decisionStatus !== 'OPEN')
+    if (!Array.isArray(data)) throw new Error('Invalid decision governance response')
+    const decisions = data
+    linkedDecision.value = decisions.find((decision) => decision.scenarioId === targetScenarioId) || null
+    isScenarioLockedForEdit.value = decisionLocksScenario(linkedDecision.value)
+    governanceKnown.value = true
   } catch {
-    // Keep editing available if we cannot determine lock status.
-    if (journey.isCurrent(operation)) isScenarioLockedForEdit.value = false
+    // Unknown governance must not be presented as permission to overwrite a scenario.
+    if (journey.isCurrent(operation)) governanceKnown.value = false
   }
 }
 
@@ -426,8 +448,13 @@ const hydrateResult = async () => {
       if (!operation) return
     }
     scenarioId.value = saved.id
+    needsSave.value = false
     await refreshScenarioGovernance(saved.id)
     if (!journey.isCurrent(operation)) return
+    if (route.query.decisionPending && !linkedDecision.value) {
+      successMessage.value = t('decisionJourney.continuation.savedAfterFailure')
+      errorMessage.value = t(decisionActionErrorKey({ response: { status: Number(route.query.decisionPending) } }))
+    }
     // Read the historical evidence independently of the current plan's availability.
     result.value = savedResultEvidence(saved)
     resultOrigin.value = saved.projection?.length ? 'saved' : saved.forecast?.length ? 'legacy' : 'saved'
@@ -467,7 +494,7 @@ const loadResult = async () => {
 
 const recalculateResult = async () => {
   const operation = journey.session.value
-  if (!journey.isCurrent(operation) || isLoading.value || isRecalculating.value) return
+  if (!journey.isCurrent(operation) || isBusy.value) return
   if (isManualTypedScenario.value && !debtSnapshot.value) return
   if (!isManualTypedScenario.value && !snapshot.budgetId && !snapshot.currentScenarioId) return
   isRecalculating.value = true
@@ -483,6 +510,7 @@ const recalculateResult = async () => {
     result.value = data
     resultOrigin.value = 'live'
     wasRecalculated.value = true
+    needsSave.value = true
     writeJourneyResult(operation, scenarioId.value || 'preview', data)
   } catch (e) {
     if (!journey.isCurrent(operation)) return
@@ -508,6 +536,7 @@ const ensureScenarioPersisted = async (operation: JourneySession): Promise<strin
     journey.linkScenario(data.id)
     snapshot.currentScenarioId = data.id
     scenarioId.value = data.id
+    needsSave.value = false
     snapshot.scenarioName = data.name || snapshot.scenarioName
     if (debtSnapshot.value) {
       debtSnapshot.value.currentScenarioId = data.id
@@ -532,6 +561,10 @@ const ensureScenarioPersisted = async (operation: JourneySession): Promise<strin
     journey.linkScenario(data.id)
     snapshot.currentScenarioId = data.id
     scenarioId.value = data.id
+    needsSave.value = false
+    linkedDecision.value = null
+    isScenarioLockedForEdit.value = false
+    successMessage.value = t('decisionJourney.continuation.versionSaved')
     snapshot.scenarioName = data.name || conflictSafeName
     if (debtSnapshot.value) {
       debtSnapshot.value.currentScenarioId = data.id
@@ -546,7 +579,7 @@ const ensureScenarioPersisted = async (operation: JourneySession): Promise<strin
 
 const saveScenario = async () => {
   const operation = journey.session.value
-  if (!journey.isCurrent(operation) || isLoading.value || isSaving.value || isCreatingDecision.value) return
+  if (!journey.isCurrent(operation) || isBusy.value || !canWriteScenarios.value || !governanceKnown.value || isScenarioLockedForEdit.value) return
   errorMessage.value = ''
   successMessage.value = ''
   isSaving.value = true
@@ -564,7 +597,7 @@ const saveScenario = async () => {
       saveWizardSnapshot(snapshot)
     }
     wasRecalculated.value = false
-    successMessage.value = t('planning.scenarios.save_success', {
+    successMessage.value ||= t('planning.scenarios.save_success', {
       name: snapshot.scenarioName || t('planning.scenarios.default_name')
     })
     if (route.params.id !== persistedId) {
@@ -585,14 +618,26 @@ const saveScenario = async () => {
 
 const createDecisionFromScenario = async () => {
   const operation = journey.session.value
-  if (!journey.isCurrent(operation) || isLoading.value || isSaving.value || isCreatingDecision.value) return
+  if (!journey.isCurrent(operation) || isBusy.value || !governanceKnown.value || isScenarioLockedForEdit.value || linkedDecision.value || (needsSave.value && !canWriteScenarios.value)) return
   isCreatingDecision.value = true
   errorMessage.value = ''
   try {
-    const persistedScenarioId = await ensureScenarioPersisted(operation)
+    if (scenarioId.value) {
+      await refreshScenarioGovernance(scenarioId.value)
+      if (!journey.isCurrent(operation)) return
+      if (!governanceKnown.value) return
+      if (linkedDecision.value) {
+        await router.push({ name: 'decisions', query: { scenarios: scenarioId.value } })
+        return
+      }
+    }
+    const persistedScenarioId = needsSave.value ? await ensureScenarioPersisted(operation) : scenarioId.value
+    if (!persistedScenarioId) throw new Error('Missing saved scenario')
     if (!journey.isCurrent(operation)) return
-    await DecisionService.createFromScenario(persistedScenarioId)
+    const { data: createdDecision } = await DecisionService.createFromScenario(persistedScenarioId)
     if (!journey.isCurrent(operation)) return
+    linkedDecision.value = createdDecision
+    isScenarioLockedForEdit.value = decisionLocksScenario(createdDecision)
     setJourneyValue(
       DECISIONS_FLASH_SUCCESS_KEY,
       JSON.stringify({
@@ -606,14 +651,20 @@ const createDecisionFromScenario = async () => {
   } catch (e) {
     if (!journey.isCurrent(operation)) return
     console.error(e)
-    errorMessage.value = t('planning.scenarios.error')
+    errorMessage.value = t(decisionActionErrorKey(e))
+    if (scenarioId.value && !needsSave.value && !linkedDecision.value) {
+      successMessage.value = t('decisionJourney.continuation.savedAfterFailure')
+      // Retain the saved ID in the URL as well as the draft, so refresh can resume safely.
+      await router.replace({ name: 'planning-scenarios-result', params: { id: scenarioId.value },
+        query: { decisionPending: String(extractErrorStatus(e) || 'unknown') } })
+    }
   } finally {
     if (journey.isCurrent(operation)) isCreatingDecision.value = false
   }
 }
 
 const editScenario = async () => {
-  if (!journey.isCurrent() || isLoading.value) return
+  if (!journey.isCurrent() || isBusy.value || !governanceKnown.value) return
   if (debtSnapshot.value) {
     saveDebtSnapshot(debtSnapshot.value)
   } else {
@@ -648,13 +699,17 @@ const editScenario = async () => {
 }
 
 const newScenario = async () => {
-  if (isLoading.value) return
+  if (isBusy.value) return
   clearWizardSnapshot()
   clearDebtSnapshot()
   setJourneyValue(JOURNEY_RESULT_KEY, null)
   await router.push({
     name: isManualTypedScenario.value ? 'planning-scenarios-debt-new' : 'planning-scenarios-new'
   })
+}
+
+const openLinkedDecision = () => {
+  if (!isBusy.value && linkedDecision.value) return router.push({ name: 'decisions', query: { scenarios: linkedDecision.value.scenarioId } })
 }
 
 onMounted(() => {
@@ -668,6 +723,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.continuation-summary { display: grid; gap: 8px; }
 .result-voice { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 16px; border-radius: 8px; border: 1px solid currentColor; color: var(--cb-ink); background: transparent; cursor: pointer; }
 .result-voice:focus-visible { outline: 3px solid var(--cb-primary); outline-offset: 3px; }
 .scenario-result {

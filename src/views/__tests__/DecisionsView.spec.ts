@@ -9,13 +9,14 @@ import type { SavedScenario, ScenarioDeltaInput, ScenarioSimulationRequest } fro
 
 enableAutoUnmount(afterEach)
 
-const { simulate, list, decisionList, replace } = vi.hoisted(() => ({
+const { simulate, list, decisionList, replace, apply, create, updateStatus, billing } = vi.hoisted(() => ({
   simulate: vi.fn(), list: vi.fn(), decisionList: vi.fn(), replace: vi.fn(),
+  apply: vi.fn(), create: vi.fn(), updateStatus: vi.fn(), billing: vi.fn(),
 }))
 vi.mock('@/services/ScenarioService', () => ({ default: { simulate, list } }))
-vi.mock('@/services/DecisionService', () => ({ default: { list: decisionList } }))
-vi.mock('@/services/BillingOrchestrationService', () => ({ default: {} }))
-vi.mock('@/plugins/userStore', () => ({ useUserStore: () => ({ getWorkspaces: [] }) }))
+vi.mock('@/services/DecisionService', () => ({ default: { list: decisionList, applyDecision: apply, createFromScenario: create, updateStatus } }))
+vi.mock('@/services/BillingOrchestrationService', () => ({ default: { getBillingSummary: billing } }))
+vi.mock('@/plugins/userStore', () => ({ useUserStore: () => ({ getWorkspaces: [], getCurrentWorkspaceId: 'workspace' }) }))
 vi.mock('vue-router', () => ({
   useRoute: () => ({ query: {} }),
   useRouter: () => ({ replace, push: vi.fn() }),
@@ -43,12 +44,93 @@ beforeEach(() => {
   vi.clearAllMocks()
   sessionStorage.clear()
   decisionList.mockResolvedValue({ data: [] })
+  billing.mockResolvedValue({ data: { capabilities: { collaborationEnabled: true } } })
+  apply.mockReset()
+  create.mockReset()
   simulate.mockResolvedValue({ data: {
     scenarioName: 'Mudança salva', months: 12, currentBalance: 1000, baselineMonthlyNet: 100,
     scenarioMonthlyImpact: -20, projectedFinalBalance: 1960, decisionStatus: 'STABLE',
     availableForGoals: 1960, impactedGoalsCount: 0, impactedGoalNames: [], forecast: [],
   } })
   replace.mockResolvedValue(undefined)
+})
+
+describe('DecisionsView continuation commands', () => {
+  const open = { id: 'decision', scenarioId: 'saved-1', title: 'Decision', status: 'OPEN', approveVotes: 0, rejectVotes: 0, canCurrentUserApply: true }
+  async function mountDecision(overrides = {}) {
+    list.mockResolvedValue({ data: [baseScenario()] })
+    decisionList.mockResolvedValue({ data: [{ ...open, ...overrides }] })
+    const wrapper = shallowMount(DecisionsView, { global: { plugins: [createVuetify({ components, directives })] } })
+    await flushPromises()
+    return wrapper
+  }
+
+  it('creates a decision without applying it and suppresses repeated creation', async () => {
+    const wrapper = await mountDecision()
+    ;(wrapper.vm as any).persistedDecisions = []
+    let finish!: (value: unknown) => void
+    create.mockImplementationOnce(() => new Promise(resolve => { finish = resolve }))
+    const first = (wrapper.vm as any).trackDecision('saved-1')
+    await (wrapper.vm as any).trackDecision('saved-1')
+    expect(create).toHaveBeenCalledTimes(1)
+    finish({ data: open })
+    await first
+    await (wrapper.vm as any).trackDecision('saved-1')
+    expect(create).toHaveBeenCalledTimes(1)
+    expect(apply).not.toHaveBeenCalled()
+  })
+
+  it('applies only once during sending and never again after an application record', async () => {
+    const wrapper = await mountDecision()
+    let finish!: (value: unknown) => void
+    apply.mockImplementationOnce(() => new Promise(resolve => { finish = resolve }))
+    const pending = (wrapper.vm as any).applyDecision('decision')
+    await (wrapper.vm as any).applyDecision('decision')
+    expect(apply).toHaveBeenCalledTimes(1)
+    finish({ data: { status: 'APPROVED', appliedAt: '2026-10-01', updatedBudget: { net: 100 } } })
+    await pending
+    expect((wrapper.vm as any).decisionCards[0].stageKey).toBe('decisionJourney.continuation.applied')
+    await (wrapper.vm as any).applyDecision('decision')
+    expect(apply).toHaveBeenCalledTimes(1)
+  })
+
+  it.each([
+    { status: 'APPROVED' }, { status: 'REJECTED' }, { appliedAt: '2026-10-01' },
+    { canCurrentUserApply: false, applyBlockedReason: 'Debt is informational' },
+  ])('honors status, application evidence and backend permissions: %j', async overrides => {
+    const wrapper = await mountDecision(overrides)
+    await (wrapper.vm as any).applyDecision('decision')
+    expect(apply).not.toHaveBeenCalled()
+    if (overrides.applyBlockedReason) expect(wrapper.text()).toContain(overrides.applyBlockedReason)
+  })
+
+  it('retains the collaboration entitlement gate', async () => {
+    billing.mockResolvedValue({ data: { capabilities: { collaborationEnabled: false } } })
+    const wrapper = await mountDecision()
+    await (wrapper.vm as any).applyDecision('decision')
+    expect(apply).not.toHaveBeenCalled()
+  })
+
+  it.each([403, 409])('keeps cards visible and reports application refusal %s without success', async status => {
+    const wrapper = await mountDecision()
+    apply.mockRejectedValueOnce({ response: { status } })
+    await (wrapper.vm as any).applyDecision('decision')
+    expect((wrapper.vm as any).error).toBe('')
+    expect((wrapper.vm as any).successMessage).toBe('')
+    expect((wrapper.vm as any).actionError).toBe(`decisionJourney.continuation.${status === 403 ? 'forbidden' : 'conflict'}`)
+    expect((wrapper.vm as any).decisionCards[0].stageKey).toBe('decisionJourney.continuation.open')
+    expect((wrapper.vm as any).pendingApplyId).toBeNull()
+  })
+
+  it('retains the creation dialog selection after failure', async () => {
+    const wrapper = await mountDecision()
+    ;(wrapper.vm as any).persistedDecisions = []
+    ;(wrapper.vm as any).openDecisionCreationDialog()
+    create.mockRejectedValueOnce({ response: { status: 403 } })
+    await (wrapper.vm as any).createDecisionFromSelectedScenario()
+    expect((wrapper.vm as any).decisionCreationDialogOpen).toBe(true)
+    expect((wrapper.vm as any).selectedScenarioToCreate).toBe('saved-1')
+  })
 })
 
 describe('DecisionsView saved simulation request', () => {

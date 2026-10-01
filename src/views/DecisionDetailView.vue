@@ -11,7 +11,8 @@
       </div>
       <div v-else-if="decision" class="decision-detail">
         <h1 class="page-title">{{ decision.title }}</h1>
-        <p class="status">{{ t('decisionDetail.status_label', { status: decision.status }) }}</p>
+        <p class="status">{{ t(decisionStageKey(decision)) }}</p>
+        <p>{{ t('decisionJourney.continuation.publicHelp') }}</p>
         <div class="impact">
           <span>{{ t('decisionDetail.monthly_impact') }}: <strong>{{ formatCurrency(decision.impact.monthlyImpact) }}</strong></span>
           <span>{{ t('decisionDetail.projected_final_balance') }}: <strong>{{ formatCurrency(decision.impact.projectedFinalBalance) }}</strong></span>
@@ -45,6 +46,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import DecisionService, { type PublicDecision } from '@/services/DecisionService'
+import { decisionStageKey } from '@/utils/decisionLifecycle'
 
 const route = useRoute()
 const { t, locale } = useI18n()
