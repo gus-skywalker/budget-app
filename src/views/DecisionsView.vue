@@ -465,7 +465,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import PageHeader from '@/components/PageHeader.vue'
 import AlertStrip from '@/components/AlertStrip.vue'
-import ScenarioService, { type SavedScenario, type ScenarioDeltaType, type ScenarioSimulationResponse } from '@/services/ScenarioService'
+import ScenarioService, { type SavedScenario, type ScenarioDeltaType, type ScenarioSimulationRequest, type ScenarioSimulationResponse } from '@/services/ScenarioService'
 import DecisionService, { type DecisionComment, type DecisionVote, type DecisionVoteValue, type PersistedDecision, type PersistedDecisionStatus } from '@/services/DecisionService'
 import BillingOrchestrationService, { type BillingSummaryResponse } from '@/services/BillingOrchestrationService'
 import { useUserStore } from '@/plugins/userStore'
@@ -546,7 +546,7 @@ const getVotePreview = (vote: DecisionVote) => {
   return { fullText, preview, isExpanded, shouldTruncate }
 }
 
-const getSavedScenarioPayload = (scenario: SavedScenario) => ({
+const getSavedScenarioPayload = (scenario: SavedScenario): ScenarioSimulationRequest => ({
   id: scenario.id,
   budgetId: scenario.budgetId,
   name: scenario.name,
@@ -558,8 +558,11 @@ const getSavedScenarioPayload = (scenario: SavedScenario) => ({
     ...(scenario.deltas || []).map((delta) => ({
       label: delta.label,
       type: delta.type,
+      temporalType: delta.temporalType,
       amount: Number(delta.amount || 0),
+      percentage: delta.percentage,
       startMonthOffset: Number(delta.startMonthOffset || 0),
+      endMonthOffset: delta.endMonthOffset,
     })),
     ...((scenario.lines || [])
       .map((line) => {
