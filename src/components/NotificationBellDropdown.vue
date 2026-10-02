@@ -7,7 +7,7 @@
     @update:model-value="emit('update:modelValue', $event)"
   >
     <template #activator="{ props }">
-      <v-btn icon variant="text" class="notification-bell" v-bind="props">
+      <v-btn icon variant="text" class="notification-bell" :aria-label="t('notifications.title')" v-bind="props">
         <v-badge
           :model-value="unreadCount > 0"
           :content="unreadCount > 99 ? '99+' : unreadCount"
@@ -110,7 +110,7 @@ function formatTimestamp(value?: string): string {
 
 <style scoped>
 .notification-bell {
-  color: #0f172a;
+  color: var(--cb-ink);
 }
 
 .notification-card {

@@ -146,7 +146,7 @@
 
           <section v-show="step === 4" class="wizard-panel">
             <h2 ref="reviewHeading" tabindex="-1">{{ t('decisionJourney.form.reviewTitle') }}</h2>
-            <p>{{ t('decisionJourney.form.reviewHelp') }}</p>
+            <p id="scenario-review-help">{{ t('decisionJourney.form.reviewHelp') }}</p>
 
             <div class="review-box">
               <div>
@@ -169,13 +169,14 @@
             <ul class="review-changes" :aria-label="t('decisionJourney.form.changesTitle')">
               <ScenarioDeltaSummary v-for="(delta, index) in reviewDeltas" :key="index" :delta="delta" />
             </ul>
-            <p v-if="!canSimulate">{{ t('decisionJourney.form.noChanges') }}</p>
+            <p v-if="!canSimulate" id="scenario-no-changes">{{ t('decisionJourney.form.noChanges') }}</p>
 
             <v-btn
               color="var(--cb-primary)"
               size="large"
               :loading="isSimulating"
               :disabled="isSimulating || !canSimulate"
+              :aria-describedby="!canSimulate ? 'scenario-no-changes' : errorMessage ? 'scenario-simulation-error' : 'scenario-review-help'"
               @click="simulate"
             >
               <v-icon start>mdi-chart-line-variant</v-icon>
@@ -204,7 +205,7 @@
             </v-btn>
           </div>
 
-          <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
+          <p v-if="errorMessage" id="scenario-simulation-error" class="error-message" role="alert">{{ errorMessage }}</p>
         </template>
       </div>
     </div>
@@ -447,6 +448,11 @@ const loadBudget = async (retry = false) => {
       clearWizardSnapshot()
       startNewScenario(data, true, false)
       applyRouteTemplate()
+      // Fresh entry still clears old drafts. Once initialized, this specific URL resumes
+      // its scoped draft on refresh/back; choosing a new intention creates a fresh URL.
+      if (isGuided.value && route.query.resume !== '1') {
+        await router.replace({ query: { ...route.query, resume: '1' } })
+      }
       return
     }
 

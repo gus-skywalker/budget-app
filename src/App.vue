@@ -39,6 +39,8 @@ const showFocusedOnboardingChrome = computed(
   () => !focusedOnboardingRoutes.has(String(route.name || ''))
 )
 const hideAppChrome = computed(() => Boolean(route.meta?.hideAppChrome))
+const isDecisionJourney = computed(() => route.path.startsWith('/planning/scenarios') ||
+  ['planning-decision-start', 'planning-budget', 'decisions'].includes(String(route.name)))
 const workspaceScopedViewKey = computed(() => {
   const routeKey = String(route.name || route.path || 'view')
   const workspaceKey = currentWorkspaceId.value || 'personal'
@@ -187,7 +189,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <v-app>
+  <v-app :class="{ 'decision-journey-shell': isDecisionJourney }">
     <SideBar v-if="isAuthenticated && !hideAppChrome" />
     <v-main>
       <div
@@ -228,6 +230,24 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+.decision-journey-shell .global-context-container {
+  top: 0;
+  min-height: 80px;
+  padding-bottom: 8px;
+  background: var(--cb-page-bg);
+}
+.decision-journey-shell :deep(h1),
+.decision-journey-shell :deep(h2),
+.decision-journey-shell :deep(button),
+.decision-journey-shell :deep(input),
+.decision-journey-shell :deep(summary) { scroll-margin-top: 96px; }
+.decision-journey-shell :deep(.mobile-nav-trigger) { z-index: 1100; }
+.decision-journey-shell.v-theme--light :deep(.result-action--primary) { color: #fff !important; }
+.decision-journey-shell.v-theme--dark :deep(.result-action--primary) { color: #0e1117 !important; }
+@media (max-width: 600px) {
+  .decision-journey-shell :deep(.cb-page-header) { flex-direction: column; align-items: stretch; }
+  .decision-journey-shell :deep(.cb-page-header__actions) { flex-wrap: wrap; }
+}
 .global-context-container {
   position: sticky;
   top: 8px;

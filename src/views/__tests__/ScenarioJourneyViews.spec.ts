@@ -76,6 +76,37 @@ describe('budget journey views', () => {
     expect(vm.step).toBe(2)
   })
 
+  it('marks an initialized guided draft as resumable without changing its session', async () => {
+    route.query = { guided: '1', intent: 'monthly-change' }
+    const wrapper = shallowMount(ScenarioBuilderView, mountOptions)
+    await flushPromises()
+    const sessionId = readJourneySession(context)!.sessionId
+    expect(replace).toHaveBeenCalledWith({ query: { guided: '1', intent: 'monthly-change', resume: '1' } })
+    ;(wrapper.vm as any).snapshot.adjustments[0].amount = 137
+    await flushPromises()
+    wrapper.unmount()
+    route.query = { guided: '1', intent: 'monthly-change', resume: '1' }
+    const resumed = shallowMount(ScenarioBuilderView, mountOptions)
+    await flushPromises()
+    expect((resumed.vm as any).snapshot.adjustments[0].amount).toBe(137)
+    expect(readJourneySession(context)!.sessionId).toBe(sessionId)
+    expect(api.simulate).not.toHaveBeenCalled()
+  })
+
+  it('still starts a clean draft when a new intention has no resume marker', async () => {
+    route.query = { guided: '1', intent: 'monthly-change' }
+    const first = shallowMount(ScenarioBuilderView, mountOptions)
+    await flushPromises()
+    const firstId = readJourneySession(context)!.sessionId
+    ;(first.vm as any).snapshot.adjustments[0].amount = 137
+    await flushPromises()
+    first.unmount()
+    const fresh = shallowMount(ScenarioBuilderView, mountOptions)
+    await flushPromises()
+    expect((fresh.vm as any).snapshot.adjustments[0].amount).toBe(0)
+    expect(readJourneySession(context)!.sessionId).not.toBe(firstId)
+  })
+
   it('starts a fresh budget session after a debt session and removes its preview', async () => {
     beginJourneySession(context, 'MANUAL_TYPED', 'debt-1')
     sessionStorage.setItem('planning-debt-scenario-wizard-v1', JSON.stringify({ currentScenarioId: 'debt-1' }))

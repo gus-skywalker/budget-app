@@ -1,6 +1,6 @@
 <template>
   <div class="cb-page">
-    <div class="cb-container scenario-result">
+    <div ref="resultContainer" class="cb-container scenario-result">
       <page-header :title="t('decisionJourney.result.title')" :meta="t('decisionJourney.result.subtitle')">
         <template #actions>
           <v-btn variant="text" color="var(--cb-primary)" style="min-width:0;padding:0 4px 0 0" @click="router.back()">
@@ -223,7 +223,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import PageHeader from '@/components/PageHeader.vue'
@@ -267,6 +267,7 @@ const userStore = useUserStore()
 const DECISIONS_FLASH_SUCCESS_KEY = 'decisions-flash-success'
 
 const result = ref<ResultEvidence | null>(null)
+const resultContainer = ref<HTMLElement | null>(null)
 const scenarioId = ref<string | null>(null)
 const isSaving = ref(false)
 const isCreatingDecision = ref(false)
@@ -488,7 +489,14 @@ const loadResult = async () => {
   try {
     await hydrateResult()
   } finally {
-    if (revision === loadRevision) isLoading.value = false
+    if (revision === loadRevision) {
+      isLoading.value = false
+      await nextTick()
+      if (revision !== loadRevision) return
+      const heading = resultContainer.value?.querySelector('h1')
+      heading?.setAttribute('tabindex', '-1')
+      heading?.focus({ preventScroll: true })
+    }
   }
 }
 
