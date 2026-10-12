@@ -180,6 +180,8 @@ export default async function setup() {
     // Keep an isolated Playwright topology usable when the developer's normal
     // 5173/8080 stack is already running. This is test-only configuration.
     APP_CORS_ALLOWED_ORIGINS: `http://127.0.0.1:${appPort},http://localhost:${appPort}`,
+    // Invitations created by role-based E2E tests must stay inside the disposable topology.
+    QUARKUS_MAILER_MOCK: 'true',
   }
   const localJava21 = process.env.CLOSING_E2E_JAVA_HOME
     ?? ['/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home', '/usr/local/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home'].find(existsSync)

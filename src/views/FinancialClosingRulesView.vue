@@ -23,7 +23,9 @@
         </div>
       </section>
 
-      <section v-if="selectedSource" class="cb-card editor" aria-labelledby="rule-editor-title">
+      <details v-if="selectedSource" class="cb-card optional-rules" :open="!selectedSource.dependencyCurrent">
+      <summary>{{ selectedSource.dependencyCurrent ? 'Adicionar ou revisar dedução da fonte' : 'Configurar dedução da fonte' }} <small>{{ selectedSource.displayName }}</small></summary>
+      <section class="editor" aria-labelledby="rule-editor-title">
         <div class="section-heading"><div><p class="eyebrow">Dedução sobre a fonte bruta · {{ selectedSource.displayName }}</p><h2 id="rule-editor-title">{{ editingRule ? 'Revisar dedução' : 'Adicionar dedução da fonte' }}</h2><p>Use para impostos, taxas ou retenções percentuais. A dedução é rateada de forma auditável entre os participantes já atribuídos à fonte.</p></div><v-btn v-if="editingRule" variant="text" @click="resetForm">Nova regra</v-btn></div>
         <div v-if="rulesFor(selectedSource.sourceId).length" class="rule-list">
           <article v-for="rule in rulesFor(selectedSource.sourceId)" :key="rule.id" class="rule-row"><div><strong>{{ rule.name }}</strong><small>{{ rule.percentage }}% · {{ incidenceLabel(rule) }} · {{ baseLabel(rule.baseReference) }} · revisão {{ rule.revision }}</small></div><v-btn size="small" variant="text" @click="editRule(rule)">Revisar</v-btn></article>
@@ -39,6 +41,7 @@
           <v-btn color="primary" :loading="saving" :disabled="!formValid" @click="saveRule">{{ editingRule ? 'Salvar nova revisão' : 'Adicionar regra' }}</v-btn>
         </div>
       </section>
+      </details>
 
       <details v-if="selectedSource" class="cb-card optional-rules"><summary>Ajustes individuais <small>Opcional · após o rateio</small></summary>
       <section class="editor" aria-labelledby="participant-adjustment-title">
@@ -103,12 +106,13 @@ function back(){router.push({name:'planning-financial-closings',query:{closingId
 </style>
 <style scoped>
 .optional-rules { margin-bottom: 20px; }
-.optional-rules summary { cursor: pointer; padding: 18px 20px; font-weight: 700; }
+.optional-rules summary { cursor: pointer; padding: 18px 44px 18px 20px; font-weight: 700; line-height: 1.4; overflow-wrap: anywhere; }
 .optional-rules summary:focus-visible { outline: 3px solid var(--cb-primary, #3451b2); outline-offset: -3px; }
 .optional-rules summary small { display: block; color: var(--cb-text-muted, #667085); font-weight: 400; }
 .optional-rules .editor { margin: 0; padding-top: 0; }
 @media (max-width: 700px) {
   .rules-page { padding-bottom: 24px; }
+  .rules-page .narrow { padding-top: 64px; }
   .sticky-action { position: static; margin-top: 24px; padding: 16px; border: 1px solid var(--cb-border-card, #ddd); border-radius: 12px; }
 }
 </style>

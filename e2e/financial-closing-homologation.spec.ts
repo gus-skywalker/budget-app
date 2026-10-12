@@ -112,20 +112,21 @@ test(`homologates deduction, adjustment, reserves and receivable on ${viewport.n
   await expect(page.getByRole('heading', { name: 'Revise as incidências antes de calcular' })).toBeVisible()
   await captureStage(page, 'closing-rules')
 
+  await page.locator('details.optional-rules').first().locator('summary').click()
   await page.getByLabel('Nome da dedução').fill('Imposto sintético da fonte')
   await page.getByLabel('Percentual').first().fill('13.33')
   await page.getByLabel('Justificativa da revisão').first().fill('Incidência sanitizada conferida para homologação')
   await page.getByRole('button', { name: 'Adicionar regra' }).click()
   await expect(page.getByText('Imposto sintético da fonte', { exact: true })).toBeVisible()
 
-  await page.locator('details.optional-rules').first().locator('summary').click()
+  await page.locator('details.optional-rules').nth(1).locator('summary').click()
   await chooseOption(page, 'Participante', 'Participante sanitizado')
   await chooseOption(page, 'Efeito no valor', 'Desconto')
   await page.getByRole('spinbutton', { name: 'Valor Valor' }).fill('1.34')
   await page.getByLabel('Justificativa do ajuste').fill('Ajuste sanitizado posterior às deduções')
   await page.getByRole('button', { name: 'Adicionar ajuste individual' }).click()
 
-  await page.locator('details.optional-rules').nth(1).locator('summary').click()
+  await page.locator('details.optional-rules').nth(2).locator('summary').click()
   await page.getByLabel('Nome da regra').fill('TM sintética')
   await page.getByLabel('Percentual da PL').fill('10')
   await page.getByLabel('Justificativa da revisão').last().fill('Reserva TM sanitizada')
@@ -186,3 +187,50 @@ test(`homologates deduction, adjustment, reserves and receivable on ${viewport.n
   await captureStage(page, 'closing-lot-history')
 })
 }
+
+test('requires an explicit profile choice when two compatible profiles match a source', async ({ page, request }) => {
+  const state = runtime()
+  const { closing, source } = await prepare(request, state)
+  const profilePath = `/financial-closings/${closing.id}/versions/${closing.currentVersion.versionNumber}/import-profiles`
+  const profiles = await apiJson<Array<{ id: string; profileKey: string; sourceKey: string }>>(request, state, 'get', profilePath)
+  const original = profiles.find(profile => profile.sourceKey === source.sourceKey && profile.profileKey === 'HOMOLOG_RULES_XLSX')
+  expect(original).toBeDefined()
+  const detail = await apiJson<{ config: Record<string, unknown> }>(request, state, 'get', `${profilePath}/${original!.id}`)
+  await apiJson(request, state, 'post', profilePath, {
+    profileKey: 'HOMOLOG_RULES_XLSX_ALTERNATE', displayName: 'Perfil alternativo sintético', sourceKey: source.sourceKey,
+    config: detail.config,
+  })
+  await apiJson(request, state, 'post', profilePath, {
+    profileKey: 'HOMOLOG_RULES_XLSX_INCOMPATIBLE', displayName: 'Perfil incompatível sintético', sourceKey: source.sourceKey,
+    config: { ...detail.config, headerSignature: ['COLUNA_INEXISTENTE'] },
+  })
+
+  await authenticate(page, state, 'light')
+  await page.goto(`/planning/financial-closings?closingId=${closing.id}`)
+  await closeCookieNotice(page)
+  await page.getByRole('button', { name: 'Importar workbook' }).click()
+  await page.getByLabel('Entendo que acessarei dados protegidos nesta leitura').check()
+  await page.locator('input[type="file"]').setInputFiles(fixture)
+  await page.getByRole('button', { name: 'Identificar fontes' }).click()
+  await expect(page.getByText('Há mais de um perfil compatível para esta fonte.')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Revisar fontes deste lote' })).toBeDisabled()
+
+  const profileField = page.getByText('Escolha o perfil desta fonte', { exact: true }).locator('xpath=ancestor::*[contains(@class,"v-input")][1]')
+  await profileField.getByRole('combobox').first().click()
+  await expect(page.locator('.v-overlay-container').getByText('Perfil incompatível sintético · versão 1')).toHaveCount(0)
+  await page.locator('.v-overlay-container').getByText('Perfil alternativo sintético · versão 1').click()
+  await expect(page.getByRole('button', { name: 'Revisar fontes deste lote' })).toBeEnabled()
+  await expect(page.getByText('Perfil alternativo sintético · versão 1 · entrará neste lote')).toBeVisible()
+  await page.getByRole('button', { name: 'Alterar perfil' }).click()
+  await expect(page.getByRole('button', { name: 'Revisar fontes deste lote' })).toBeDisabled()
+
+  await page.getByText('Escolha o perfil desta fonte', { exact: true }).locator('xpath=ancestor::*[contains(@class,"v-input")][1]').getByRole('combobox').first().click()
+  await page.locator('.v-overlay-container').getByText('Perfil alternativo sintético · versão 1').click()
+  await page.getByRole('button', { name: 'Revisar fontes deste lote' }).click()
+  await expect(page.getByText('Fonte pronta para o lote', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Preparar lote completo' }).click()
+  await page.getByRole('button', { name: 'Conferir importação' }).click()
+  await page.getByLabel('Confirmo que estas fontes entram na revisão do cálculo').check()
+  await page.getByRole('button', { name: 'Materializar fontes' }).click()
+  await expect(page.getByRole('heading', { name: 'Lote adicionado à base editável' })).toBeVisible()
+})

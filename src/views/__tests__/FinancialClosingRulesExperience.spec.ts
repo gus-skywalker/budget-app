@@ -48,14 +48,14 @@ describe('FinancialClosingRulesView experience states', () => {
     await wrapper.get('[role="alert"] button').trigger('click')
     await flushPromises()
     expect(wrapper.find('[role="alert"]').exists()).toBe(false)
-    expect(wrapper.get('details.optional-rules').text()).toContain('Ajustes individuais')
+    expect(wrapper.findAll('details.optional-rules')[1].text()).toContain('Ajustes individuais')
   })
 
   it('starts optional rules collapsed while keeping source review visible', async () => {
     const wrapper = mountView()
     await flushPromises()
-    expect(wrapper.findAll('details.optional-rules')).toHaveLength(2)
-    expect(wrapper.findAll('details.optional-rules').every((details) => details.attributes('open') === undefined)).toBe(true)
+    expect(wrapper.findAll('details.optional-rules')).toHaveLength(3)
+    expect(wrapper.findAll('details.optional-rules').slice(1).every((details) => details.attributes('open') === undefined)).toBe(true)
     expect(wrapper.text()).toContain('Confirmar sem dedução')
   })
 })

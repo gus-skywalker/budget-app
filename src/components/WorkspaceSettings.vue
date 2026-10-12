@@ -122,7 +122,8 @@
                   variant="outlined"
                   density="comfortable"
                   prepend-inner-icon="mdi-office-building"
-                  :disabled="formLoading || !canManageWorkspace"
+                  :disabled="formLoading"
+                  :readonly="!canManageWorkspace"
                   :rules="[requiredRule]"
                   class="mb-4"
                 />
@@ -134,7 +135,8 @@
                   auto-grow
                   rows="3"
                   prepend-inner-icon="mdi-text"
-                  :disabled="formLoading || !canManageWorkspace"
+                  :disabled="formLoading"
+                  :readonly="!canManageWorkspace"
                 />
                 <v-btn
                   v-if="canManageWorkspace"
@@ -1084,12 +1086,17 @@ onUnmounted(() => {
   width: 100%;
 }
 
-
-
+.workspace-settings .cb-card__header {
+  display: block;
+}
 
 .card-description {
   margin: 8px 0 0;
   color: #6b7280;
+}
+
+:global(.v-theme--dark .workspace-settings .card-description) {
+  color: #cbd5e1;
 }
 
 .section-title {
