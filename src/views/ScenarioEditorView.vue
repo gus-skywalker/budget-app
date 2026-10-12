@@ -1,5 +1,5 @@
 <template>
-  <div class="cb-page">
+  <div class="cb-page experience-page experience-page--scenario-editor">
     <div class="cb-container scenario-editor">
       <page-header
         :title="t('decisionJourney.form.editTitle')"

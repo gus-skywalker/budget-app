@@ -1,5 +1,5 @@
 <template>
-  <div class="cb-page decision-page">
+  <div class="cb-page decision-page experience-page experience-page--closing">
     <div class="cb-container narrow">
       <v-btn class="back-action" variant="text" prepend-icon="mdi-arrow-left" @click="back">Voltar para a competência</v-btn>
       <page-header title="Decisão da Produtividade" :summary-items="headerSummary" />

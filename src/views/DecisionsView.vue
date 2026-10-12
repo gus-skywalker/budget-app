@@ -1,5 +1,5 @@
 <template>
-  <div class="cb-page">
+  <div class="cb-page experience-page experience-page--decisions">
     <div class="cb-container">
 
       <!-- Page Header -->
@@ -133,7 +133,10 @@
             <p class="cb-decision-card__consequence">{{ decision.consequenceMessage }}</p>
 
             <details v-if="decision.decisionId" class="decision-collaboration">
-              <summary>{{ t('decisionJourney.continuation.collaboration') }}</summary>
+              <summary>
+                {{ t('decisionJourney.continuation.collaboration') }}
+                <PlanTierBadge v-if="billingSummary && !canUseCollaboration" tier="STARTER" />
+              </summary>
             <!-- Voting section -->
             <div v-if="decision.decisionId" class="cb-decision-card__votes">
               <div class="cb-decision-card__votes-header">
@@ -489,7 +492,9 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import PageHeader from '@/components/PageHeader.vue'
 import AlertStrip from '@/components/AlertStrip.vue'
-import ScenarioService, { type SavedScenario, type ScenarioDeltaType, type ScenarioSimulationRequest, type ScenarioSimulationResponse } from '@/services/ScenarioService'
+import PlanTierBadge from '@/components/PlanTierBadge.vue'
+import ScenarioService, { type SavedScenario, type ScenarioSimulationResponse } from '@/services/ScenarioService'
+import { buildSavedScenarioSimulationRequest } from '@/utils/savedScenarioSimulation'
 import DecisionService, { type DecisionComment, type DecisionVote, type DecisionVoteValue, type PersistedDecision, type PersistedDecisionStatus } from '@/services/DecisionService'
 import BillingOrchestrationService, { type BillingSummaryResponse } from '@/services/BillingOrchestrationService'
 import { useUserStore } from '@/plugins/userStore'
@@ -573,46 +578,8 @@ const getVotePreview = (vote: DecisionVote) => {
   return { fullText, preview, isExpanded, shouldTruncate }
 }
 
-const getSavedScenarioPayload = (scenario: SavedScenario): ScenarioSimulationRequest => ({
-  id: scenario.id,
-  budgetId: scenario.budgetId,
-  name: scenario.name,
-  scenarioType: scenario.scenarioType,
-  sourceType: scenario.sourceType,
-  months: scenario.months || 6,
-  debtInput: scenario.debtInput || undefined,
-  deltas: [
-    ...(scenario.deltas || []).map((delta) => ({
-      label: delta.label,
-      type: delta.type,
-      temporalType: delta.temporalType,
-      amount: Number(delta.amount || 0),
-      percentage: delta.percentage,
-      startMonthOffset: Number(delta.startMonthOffset || 0),
-      endMonthOffset: delta.endMonthOffset,
-    })),
-    ...((scenario.lines || [])
-      .map((line) => {
-        const delta = Number(line.adjustedAmount || 0) - Number(line.originalAmount || 0)
-        if (!delta) return null
-        if (line.type === 'INCOME') {
-          return {
-            label: t('planning.scenarios.baseline_adjustment_label', { category: line.category }),
-            type: (delta > 0 ? 'MONTHLY_INCOME' : 'MONTHLY_EXPENSE') as ScenarioDeltaType,
-            amount: Math.abs(delta),
-            startMonthOffset: 0,
-          }
-        }
-        return {
-          label: t('planning.scenarios.baseline_adjustment_label', { category: line.category }),
-          type: (delta > 0 ? 'MONTHLY_EXPENSE' : 'MONTHLY_INCOME') as ScenarioDeltaType,
-          amount: Math.abs(delta),
-          startMonthOffset: 0,
-        }
-      })
-      .filter((item): item is { label: string; type: ScenarioDeltaType; amount: number; startMonthOffset: number } => Boolean(item))),
-  ],
-})
+const getSavedScenarioPayload = (scenario: SavedScenario) =>
+  buildSavedScenarioSimulationRequest(scenario, (category) => t('planning.scenarios.baseline_adjustment_label', { category }))
 
 const statusLabel = (scenarioStatus?: string, persistedStatus?: PersistedDecisionStatus) => {
   if (persistedStatus === 'APPROVED') return t('decisions.status_approved')

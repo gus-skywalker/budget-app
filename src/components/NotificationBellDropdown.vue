@@ -113,6 +113,11 @@ function formatTimestamp(value?: string): string {
   color: var(--cb-ink);
 }
 
+.notification-bell:focus-visible {
+  outline: 3px solid var(--cb-ink);
+  outline-offset: 3px;
+}
+
 .notification-card {
   border: 1px solid #e2e8f0;
   width: min(420px, calc(100vw - 96px));

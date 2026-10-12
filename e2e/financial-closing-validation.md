@@ -11,6 +11,7 @@ com screenshot, vídeo ou trace anexado.
 - BFF público: `http://127.0.0.1:8080/api`
 - Serviço de fechamento: `http://127.0.0.1:8081` — nunca aberto pelo browser.
 - Use apenas workspaces e usuários sintéticos locais.
+- O perfil descartável `demo` semeia uma assinatura Team ativa para `demo-owner`; o guard real permanece ligado. Nunca reaproveite essa fixture no ambiente normal.
 - Nunca use planilhas, PDFs ou identificadores reais.
 - Em qualquer falha, registre URL, mensagem visível, ação executada e trace.
 
@@ -64,6 +65,13 @@ aplicada pela jornada e o valor residual, se houver.
 | --- | --- |
 | `npm run test:e2e:closing:ui` | prova que a competência é criada pela interface e que o browser não acessa `:8081` |
 | `npm run test:e2e:closing` | prova automatizada local do fluxo de importação, cálculo, decisão, provisão e replay |
+
+Na revisão visual EV-15, `financial-closing-homologation.spec.ts` percorre desktop
+claro, celular claro e celular escuro a 360 px, verifica ausência de overflow e
+salva capturas de fontes, painel, regras, resultado, decisão e histórico do lote no diretório de
+resultados do Playwright. O banner de segurança é dispensado após a primeira
+visita para avaliar o fluxo sem a sobreposição inicial. Os testes automatizados
+não demonstram, sozinhos, compreensão por uma pessoa leiga.
 
 O segundo comando ainda possui preparação sintética pelo BFF. Durante esta
 validação, qualquer passo que não possa ser realizado pela UI deve ser marcado

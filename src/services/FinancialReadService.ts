@@ -54,7 +54,9 @@ const buildTransactionParams = (params: TransactionQueryParams = {}) => ({
 })
 
 const buildTransactionFilterParams = (params: TransactionQueryParams = {}) => {
-  const { limit: _limit, offset: _offset, ...filters } = buildTransactionParams(params)
+  const filters: Partial<ReturnType<typeof buildTransactionParams>> = { ...buildTransactionParams(params) }
+  delete filters.limit
+  delete filters.offset
   return filters
 }
 
@@ -72,16 +74,18 @@ export const getMonthDateRange = (month: number, year: number) => {
 
 async function fetchTransactionsByDirection({
   direction,
+  clientFilter,
   ...params
-}: TransactionQueryParams & { direction: TransactionDirection }): Promise<PagedResponse<TransactionView>> {
+}: TransactionQueryParams & { direction: TransactionDirection; clientFilter?: (transaction: TransactionView) => boolean }): Promise<PagedResponse<TransactionView>> {
   const requestedLimit = clampLimit(params.limit)
   const requestedOffset = clampOffset(params.offset)
   const scanLimit = MAX_LIMIT
   let scanOffset = 0
   let filteredTotal = 0
+  let hasMore = true
   const collectedItems: TransactionView[] = []
 
-  while (true) {
+  while (hasMore) {
     const response = await axiosInterceptor.get<PagedResponse<TransactionView>>(`${API_URL}/transactions`, {
       params: buildTransactionParams({
         ...params,
@@ -91,7 +95,7 @@ async function fetchTransactionsByDirection({
     })
 
     const page = response.data
-    const directionalItems = (page.items || []).filter((item) => item.direction === direction)
+    const directionalItems = (page.items || []).filter((item) => item.direction === direction && (!clientFilter || clientFilter(item)))
     const skipOnCurrentPage = Math.max(requestedOffset - filteredTotal, 0)
 
     filteredTotal += directionalItems.length
@@ -103,9 +107,7 @@ async function fetchTransactionsByDirection({
 
     scanOffset += page.items.length
 
-    if (scanOffset >= page.total || page.items.length === 0) {
-      break
-    }
+    hasMore = scanOffset < page.total && page.items.length > 0
   }
 
   return {

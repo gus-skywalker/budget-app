@@ -4,6 +4,7 @@ export default {
       common: {
         blog: 'Blog',
         start: 'Começar',
+        download: 'Baixar',
         contentCenter: 'Content Center',
         contentTemplate: 'Ler artigo',
         playbook: 'Abrir playbook'
@@ -449,6 +450,7 @@ export default {
       common: {
         blog: 'Blog',
         start: 'Get started',
+        download: 'Download',
         contentCenter: 'Content Center',
         contentTemplate: 'Read article',
         playbook: 'Open playbook'
@@ -900,6 +902,6 @@ export default {
       }
     }
   },
-  fr: {},
-  es: {}
+  fr: { contentExperience: { common: { download: 'Télécharger' } } },
+  es: { contentExperience: { common: { download: 'Descargar' } } }
 }

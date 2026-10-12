@@ -1,5 +1,5 @@
 <template>
-  <div class="cb-page">
+  <div class="cb-page experience-page experience-page--decision-detail">
     <div class="cb-container">
       <div v-if="loading" class="empty-state">
         <v-icon color="#94a3b8" size="28">mdi-timer-sand</v-icon>

@@ -224,7 +224,7 @@ export default {
 }
 
 .daily-analysis__summary {
-  color: var(--cb-ink-muted);
+  color: var(--cb-ink-secondary);
   font-size: 0.8rem;
   margin: 2px 0 0;
   overflow-wrap: anywhere;
@@ -293,7 +293,7 @@ export default {
 }
 
 .daily-analysis__metrics span {
-  color: var(--cb-ink-muted);
+  color: var(--cb-ink-secondary);
   font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -393,7 +393,7 @@ export default {
 
 .daily-analysis__highest-mark,
 .daily-analysis__count {
-  color: var(--cb-ink-muted);
+  color: var(--cb-ink-secondary);
   font-size: 0.62rem;
 }
 
@@ -405,7 +405,7 @@ export default {
 .daily-analysis__state,
 .daily-analysis__empty {
   align-items: center;
-  color: var(--cb-ink-muted);
+  color: var(--cb-ink-secondary);
   display: flex;
   font-size: 0.84rem;
   height: 100%;

@@ -1,19 +1,13 @@
 <template>
-  <div class="cb-page">
+  <div class="cb-page experience-page experience-page--budget">
     <div class="cb-container">
       <!-- Page header with summary strip (shows when active budget exists) -->
-      <page-header :title="t('planning.budget.title')" :summary-items="budgetSummaryItems">
-        <template #actions>
-          <v-btn
-            v-if="activeBudget && !isLoading && !budgetLoadFailed && userStore.canWrite"
-            class="cb-btn-primary decision-entry-cta"
-            @click="goToScenarioCreation"
-          >
-            <v-icon start>mdi-chart-timeline-variant</v-icon>
-            {{ t(guidedReturn ? 'decisionJourney.base.continue' : 'decisionJourney.start') }}
-          </v-btn>
-        </template>
-      </page-header>
+      <page-header
+        class="budget-page-header"
+        :title="t('planning.budget.title')"
+        :period="activeBudget && !isLoading && !budgetLoadFailed ? activeBudgetPeriod : undefined"
+        :summary-items="isLoading || budgetLoadFailed ? [] : budgetSummaryItems"
+      />
 
       <alert-strip v-if="guidedReturn" variant="info" :description="t('decisionJourney.base.prepareHelp')" />
 
@@ -33,26 +27,51 @@
       </div>
       <template v-else>
         <!-- Active budget card -->
-        <div v-if="activeBudget" class="cb-card cb-active-budget-card">
-          <div class="cb-active-budget-card__kicker">{{ t('planning.budget.active_baseline') }}</div>
+        <section v-if="activeBudget" class="cb-card cb-active-budget-card" aria-labelledby="active-budget-title">
+          <div class="cb-active-budget-card__kicker">{{ t('planning.budget.active_plan') }}</div>
           <div class="cb-active-budget-card__head">
-            <h2 class="cb-active-budget-card__title">{{ baselineTitle(activeBudget) }}</h2>
-            <v-chip color="success" variant="tonal" size="small">{{ t('planning.budget.used_by_scenarios') }}</v-chip>
+            <h2 id="active-budget-title" class="cb-active-budget-card__title">{{ t('planning.budget.current_plan_title') }}</h2>
+            <v-chip color="success" variant="tonal" size="small">{{ t('planning.budget.used_by_decisions') }}</v-chip>
           </div>
-          <div class="cb-active-budget-card__meta">
-            <span>{{ activeBudget.periodMonth }}/{{ activeBudget.periodYear }}</span>
-            <span>{{ t('planning.budget.lines_count', { count: activeBudget.lines?.length || 0 }) }}</span>
-            <span>{{ baselineSourceLabel(activeBudget) }}</span>
+          <div class="cb-active-budget-card__facts">
+            <div>
+              <span>{{ t('planning.budget.reference_period') }}</span>
+              <strong>{{ activeBudgetPeriod }}</strong>
+            </div>
+            <div>
+              <span>{{ t('planning.budget.value_source') }}</span>
+              <strong>{{ baselineSourceLabel(activeBudget) }}</strong>
+            </div>
+            <div>
+              <span>{{ t('planning.budget.plan_detail') }}</span>
+              <strong>{{ t('planning.budget.lines_count', { count: activeBudget.lines?.length || 0 }) }}</strong>
+            </div>
           </div>
+          <p class="cb-active-budget-card__source-note">{{ baselineSourceExplanation(activeBudget) }}</p>
           <div class="cb-active-budget-card__baseline">
-            <span>{{ t('planning.budget.scenario_starting_point') }}</span>
+            <span>{{ t('planning.budget.planned_monthly_result') }}</span>
             <strong :class="activeBudget.net < 0 ? 'cb-summary-item__value--negative' : 'cb-summary-item__value--positive'">
               {{ formatCurrency(activeBudget.net) }}/{{ t('planning.budget.month_short') }}
             </strong>
           </div>
+          <p class="cb-active-budget-card__interpretation">{{ t('planning.budget.not_current_balance') }}</p>
+          <alert-strip v-if="!activeBudgetMatchesCurrentMonth" variant="info" :description="t('planning.budget.reference_period_notice')" />
           <alert-strip v-if="activeBaselineNotice" variant="info" :description="activeBaselineNotice" />
-          <p v-if="guidedReturn">{{ t('decisionJourney.base.notBankBalance') }}</p>
-        </div>
+          <div class="cb-active-budget-card__next-step">
+            <div>
+              <h3>{{ t('planning.budget.next_step_title') }}</h3>
+              <p>{{ t('planning.budget.next_step_description') }}</p>
+            </div>
+            <v-btn
+              v-if="userStore.canWrite"
+              class="cb-btn-primary decision-entry-cta"
+              @click="goToScenarioCreation"
+            >
+              <v-icon start>mdi-chart-timeline-variant</v-icon>
+              {{ t(guidedReturn ? 'decisionJourney.base.continue' : 'decisionJourney.start') }}
+            </v-btn>
+          </div>
+        </section>
 
         <!-- Empty state — no active budget, no editors open -->
         <div v-if="!activeBudget && !showSuggestionEditor && !showManualEditor" class="cb-empty-state">
@@ -67,12 +86,45 @@
         </div>
 
         <!-- Create baseline options (always shown when admin and no editor open) -->
-        <div v-if="canManageBudget && !showSuggestionEditor && !showManualEditor" class="cb-baseline-options">
+        <button
+          v-if="canManageBudget && activeBudget && !showSuggestionEditor && !showManualEditor"
+          type="button"
+          class="cb-budget-alternatives"
+          :aria-expanded="budgetOptionsExpanded"
+          aria-controls="budget-source-options"
+          @click="budgetOptionsExpanded = !budgetOptionsExpanded"
+        >
+          <span>
+            <strong>{{ t('planning.budget.review_other_sources') }}</strong>
+            <small>{{ t('planning.budget.review_other_sources_hint') }}</small>
+          </span>
+          <v-icon>{{ budgetOptionsExpanded ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+        </button>
+        <div
+          v-if="canManageBudget && !showSuggestionEditor && !showManualEditor"
+          v-show="!activeBudget || budgetOptionsExpanded"
+          id="budget-source-options"
+          class="cb-baseline-options"
+        >
+          <h2 v-if="!activeBudget" class="cb-baseline-options__title">{{ t('planning.budget.choose_start') }}</h2>
+          <div v-if="!guidedReturn || activeBudget" class="cb-baseline-option cb-card">
+            <v-icon color="var(--cb-primary)" size="26">mdi-pencil-outline</v-icon>
+            <div class="cb-baseline-option__body">
+              <span class="cb-baseline-option__tag">{{ t('planning.budget.source_tag_manual') }}</span>
+              <h3>{{ t('planning.budget.quick_manual_baseline') }}</h3>
+              <p>{{ t('planning.budget.quick_manual_description') }}</p>
+            </div>
+            <v-btn :variant="hasSuggestionData ? 'tonal' : 'flat'" class="cb-btn-secondary" @click="startManualBudget">
+              <v-icon start>mdi-plus-circle-outline</v-icon>
+              {{ t('planning.budget.create_manually') }}
+            </v-btn>
+          </div>
           <div class="cb-baseline-option cb-card">
             <v-icon color="var(--cb-positive)" size="26">mdi-bank-transfer-in</v-icon>
             <div class="cb-baseline-option__body">
               <span class="cb-baseline-option__tag">{{ t('planning.budget.source_tag_suggested') }}</span>
-              <h4>{{ t('planning.budget.suggested_from_transactions') }}</h4>
+              <PlanTierBadge v-if="billingSummary && !canUsePlanningIntelligence" tier="STARTER" />
+              <h3>{{ t('planning.budget.suggested_from_transactions') }}</h3>
               <p>{{ suggestionMessage }}</p>
             </div>
             <v-btn
@@ -90,7 +142,8 @@
             <v-icon color="var(--cb-accent)" size="26">mdi-finance</v-icon>
             <div class="cb-baseline-option__body">
               <span class="cb-baseline-option__tag">{{ t('planning.budget.source_tag_real') }}</span>
-              <h4>{{ t('planning.budget.real_baseline_openfinance') }}</h4>
+              <PlanTierBadge v-if="billingSummary && !canUseConnectedFinance" tier="STARTER" />
+              <h3>{{ t('planning.budget.real_baseline_openfinance') }}</h3>
               <p>{{ consolidatedBaselineMessage }}</p>
             </div>
             <v-btn
@@ -104,18 +157,6 @@
             </v-btn>
           </div>
 
-          <div v-if="!guidedReturn || activeBudget" class="cb-baseline-option cb-card">
-            <v-icon color="var(--cb-primary)" size="26">mdi-pencil-outline</v-icon>
-            <div class="cb-baseline-option__body">
-              <span class="cb-baseline-option__tag">{{ t('planning.budget.source_tag_manual') }}</span>
-              <h4>{{ t('planning.budget.quick_manual_baseline') }}</h4>
-              <p>{{ t('planning.budget.quick_manual_description') }}</p>
-            </div>
-            <v-btn :variant="hasSuggestionData ? 'tonal' : 'flat'" class="cb-btn-secondary" @click="startManualBudget">
-              <v-icon start>mdi-plus-circle-outline</v-icon>
-              {{ t('planning.budget.create_manually') }}
-            </v-btn>
-          </div>
         </div>
 
         <!-- Alternative budgets -->
@@ -422,6 +463,7 @@ import type { OpenFinanceConnection } from '@/types/openFinance'
 import { useUserStore } from '@/plugins/userStore'
 import PageHeader from '@/components/PageHeader.vue'
 import AlertStrip from '@/components/AlertStrip.vue'
+import PlanTierBadge from '@/components/PlanTierBadge.vue'
 import { readBudgetReturn } from '@/utils/decisionBudgetReturn'
 import '@/assets/decision-entry.css'
 
@@ -455,6 +497,7 @@ const visibleOpenFinanceConnections = ref<OpenFinanceConnection[]>([])
 const billingSummary = ref<BillingSummaryResponse | null>(null)
 const showSuggestionEditor = ref(false)
 const showManualEditor = ref(false)
+const budgetOptionsExpanded = ref(false)
 const deleteBaselineDialog = ref(false)
 const budgetPendingDeletion = ref<Budget | null>(null)
 const bannerMessage = ref('')
@@ -491,6 +534,7 @@ watch(() => [userStore.getUser?.id, userStore.getCurrentWorkspaceId, userStore.i
   visibleOpenFinanceConnections.value = []
   showManualEditor.value = false
   showSuggestionEditor.value = false
+  budgetOptionsExpanded.value = false
   bannerMessage.value = ''
   emptyBudgetMessage.value = ''
   editorErrorMessage.value = ''
@@ -510,6 +554,16 @@ const canUsePlanningIntelligence = computed(() => capabilityValue('planningIntel
 const canUseConnectedFinance = computed(() => capabilityValue('connectedFinanceEnabled'))
 
 const now = computed(() => new Date())
+const activeBudgetPeriod = computed(() => {
+  const budget = activeBudget.value
+  if (!budget) return ''
+  const date = new Date(budget.periodYear, budget.periodMonth - 1, 1)
+  const language = locale.value === 'en' ? 'en-US' : locale.value === 'fr' ? 'fr-FR' : locale.value === 'es' ? 'es-ES' : 'pt-BR'
+  return new Intl.DateTimeFormat(language, { month: 'long', year: 'numeric' }).format(date)
+})
+const activeBudgetMatchesCurrentMonth = computed(() =>
+  activeBudget.value?.periodMonth === now.value.getMonth() + 1 && activeBudget.value?.periodYear === now.value.getFullYear()
+)
 const suggestedIncomeTotal = computed(() =>
   editableSuggestionLines.value
     .filter((line) => line.type === 'INCOME')
@@ -1079,8 +1133,13 @@ const isOpenFinanceAggregatedBaseline = (budget: Budget): boolean => {
 const baselineSourceLabel = (budget: Budget): string => {
   if (isOpenFinanceAggregatedBaseline(budget)) return t('planning.budget.source_openfinance')
   if (isQuickManualBudget(budget)) return t('planning.budget.source_quick_manual')
-  if ((budget.lines || []).length > 1) return t('planning.budget.source_detailed_budget')
-  return t('planning.budget.source_manual_budget')
+  return t('planning.budget.source_not_recorded')
+}
+
+const baselineSourceExplanation = (budget: Budget): string => {
+  if (isOpenFinanceAggregatedBaseline(budget)) return t('planning.budget.source_explanation_openfinance')
+  if (isQuickManualBudget(budget)) return t('planning.budget.source_explanation_quick_manual')
+  return t('planning.budget.source_explanation_unknown')
 }
 
 const baselineTitle = (budget: Budget): string => {
@@ -1104,21 +1163,23 @@ onMounted(async () => {
 /* Active budget card */
 .cb-active-budget-card {
   margin-bottom: 24px;
+  padding: 24px;
 }
 
 .cb-active-budget-card__kicker {
   font-size: .75rem;
   text-transform: uppercase;
   letter-spacing: .06em;
-  color: var(--cb-ink-muted);
+  color: var(--cb-ink-secondary);
   margin-bottom: 6px;
 }
 
 .cb-active-budget-card__head {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 12px;
-  margin-bottom: 8px;
+  margin-bottom: 18px;
 }
 
 .cb-active-budget-card__title {
@@ -1129,31 +1190,120 @@ onMounted(async () => {
   margin: 0;
 }
 
-.cb-active-budget-card__meta {
+.cb-active-budget-card__facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.cb-active-budget-card__facts > div {
+  background: var(--cb-surface-soft);
+  border: 1px solid var(--cb-border);
+  border-radius: 10px;
   display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 12px;
+}
+
+.cb-active-budget-card__facts span {
+  color: var(--cb-ink-secondary);
+  font-size: .75rem;
+}
+
+.cb-active-budget-card__facts strong {
+  color: var(--cb-ink);
+  font-size: .87rem;
+  overflow-wrap: anywhere;
+}
+
+.cb-active-budget-card__source-note,
+.cb-active-budget-card__interpretation {
+  color: var(--cb-ink-secondary);
   font-size: .82rem;
-  color: var(--cb-ink-muted);
-  margin-bottom: 12px;
+  line-height: 1.5;
+  margin: 10px 0 0;
 }
 
 .cb-active-budget-card__baseline {
-  display: inline-flex;
   align-items: baseline;
-  gap: 8px;
-  padding: 8px 12px;
-  border: 1px solid var(--cb-border, rgba(23,32,51,.08));
-  border-radius: 8px;
-  background: rgba(255,255,255,.72);
-  font-size: .82rem;
-  color: var(--cb-ink-muted);
-  margin-bottom: 12px;
+  border-top: 1px solid var(--cb-border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  justify-content: space-between;
+  margin-top: 18px;
+  padding-top: 18px;
+}
+
+.cb-active-budget-card__baseline span {
+  color: var(--cb-ink-secondary);
+  font-size: .85rem;
 }
 
 .cb-active-budget-card__baseline strong {
   font-family: var(--cb-font-heading);
-  font-size: .95rem;
+  font-size: 1.15rem;
+}
+
+.cb-active-budget-card__next-step {
+  align-items: center;
+  background: var(--cb-surface-soft);
+  border: 1px solid var(--cb-border);
+  border-radius: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: space-between;
+  margin-top: 18px;
+  padding: 16px;
+}
+
+.cb-active-budget-card__next-step h3,
+.cb-baseline-options__title {
+  color: var(--cb-ink);
+  font-family: var(--cb-font-heading);
+  font-size: 1rem;
+  margin: 0 0 4px;
+}
+
+.cb-active-budget-card__next-step p {
+  color: var(--cb-ink-secondary);
+  font-size: .82rem;
+  line-height: 1.5;
+  margin: 0;
+  max-width: 62ch;
+}
+
+.cb-budget-alternatives {
+  align-items: center;
+  background: var(--cb-surface);
+  border: 1px solid var(--cb-border);
+  border-radius: 12px;
+  color: var(--cb-ink);
+  cursor: pointer;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 14px 18px;
+  text-align: left;
+  width: 100%;
+}
+
+.cb-budget-alternatives strong,
+.cb-budget-alternatives small {
+  display: block;
+}
+
+.cb-budget-alternatives small {
+  color: var(--cb-ink-secondary);
+  margin-top: 3px;
+}
+
+.cb-budget-alternatives:focus-visible {
+  outline: 3px solid var(--cb-primary);
+  outline-offset: 3px;
 }
 
 /* Baseline option cards */
@@ -1162,6 +1312,10 @@ onMounted(async () => {
   flex-direction: column;
   gap: 16px;
   margin-top: 16px;
+}
+
+.cb-baseline-options__title {
+  margin-bottom: 0;
 }
 
 .cb-baseline-option {
@@ -1175,12 +1329,49 @@ onMounted(async () => {
   flex: 1;
 }
 
-.cb-baseline-option__body h4 {
+.cb-baseline-option__body h3 {
   font-family: var(--cb-font-heading);
   font-size: .95rem;
   font-weight: 700;
   color: var(--cb-ink);
   margin: 0 0 4px;
+}
+
+@media (max-width: 720px) {
+  .budget-page-header {
+    display: block;
+  }
+
+  .budget-page-header :deep(.cb-page-header__strip) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .budget-page-header :deep(.cb-summary-divider) {
+    display: none;
+  }
+
+  .budget-page-header :deep(.cb-summary-item) {
+    min-width: 0;
+  }
+
+  .cb-active-budget-card__facts {
+    grid-template-columns: 1fr;
+  }
+
+  .cb-baseline-option {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .cb-baseline-option__body {
+    flex-basis: calc(100% - 44px);
+  }
+
+  .cb-baseline-option > .v-btn {
+    width: 100%;
+  }
 }
 
 .cb-baseline-option__tag {

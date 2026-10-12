@@ -1,5 +1,5 @@
 <template>
-  <div class="cb-page">
+  <div class="cb-page experience-page experience-page--cashflow">
     <div class="cb-container">
       <page-header :title="t('cashflow.title')" :meta="t('cashflow.subtitle')" />
 
@@ -8,30 +8,36 @@
         <span>{{ t('transactionVisibility.cashflowBadge') }} — {{ t('transactionVisibility.cashflowScopeNote') }}</span>
       </div>
 
-      <div class="cb-card cf-card">
-        <div class="cb-card__header">
-          <h2 class="cb-card__title">
-            <v-icon color="var(--cb-primary)" size="16" class="mr-2">mdi-chart-areaspline</v-icon>
-            {{ t('cashflow.flow_title') }}
-          </h2>
+      <section class="cb-card cashflow-intro" aria-labelledby="cashflow-intro-title">
+        <div>
+          <span class="cashflow-intro__eyebrow">{{ t('cashflow.guide_eyebrow') }}</span>
+          <h2 id="cashflow-intro-title">{{ t('cashflow.guide_title') }}</h2>
+          <p>{{ t('cashflow.guide_description') }}</p>
         </div>
+        <v-icon class="cashflow-intro__icon" size="48" aria-hidden="true">mdi-chart-timeline-variant</v-icon>
+      </section>
+
+      <section class="cb-card cf-card" :aria-label="t('cashflow.flow_title')">
         <div class="cb-card__body">
+          <PlanTierBadge v-if="billingSummary && !canUseAdvancedCashflow" tier="TEAM" />
           <CashflowDashboard :enabled="canUseAdvancedCashflow" @upgrade="goToChoosePlan('advanced-cashflow')" />
         </div>
-      </div>
+      </section>
 
-      <div class="cb-card">
-        <div class="cb-card__header">
+      <details class="cb-card cashflow-explore">
+        <summary class="cashflow-explore__summary">
           <div class="insights-heading">
             <h2 class="cb-card__title">
               <v-icon color="var(--cb-primary)" size="16" class="mr-2">mdi-brain</v-icon>
               {{ t('cashflow.insights_title') }}
             </h2>
+            <PlanTierBadge v-if="billingSummary && !canUseAi" tier="STARTER" />
             <p class="insights-subtitle">{{ t('cashflow.insights_subtitle') }}</p>
           </div>
           <span class="experimental-badge">{{ t('cashflow.experimental_badge') }}</span>
-        </div>
-        <div class="cb-card__body">
+          <v-icon class="cashflow-explore__chevron" size="22" aria-hidden="true">mdi-chevron-down</v-icon>
+        </summary>
+        <div class="cb-card__body cashflow-explore__body">
           <p class="experimental-note">{{ t('cashflow.experimental_note') }}</p>
           <div class="insights-context">
             <div class="insights-context__item">
@@ -71,7 +77,7 @@
             <AnomalyDetectionTable :enabled="canUseAi" @upgrade="goToChoosePlan('ai')" />
           </div>
         </div>
-      </div>
+      </details>
     </div>
   </div>
 </template>
@@ -87,6 +93,7 @@ import AiService from '@/services/aiService'
 import BillingOrchestrationService, { type BillingSummaryResponse } from '@/services/BillingOrchestrationService'
 import { useUserStore } from '@/plugins/userStore'
 import PageHeader from '@/components/PageHeader.vue'
+import PlanTierBadge from '@/components/PlanTierBadge.vue'
 
 const { t, locale } = useI18n()
 const router = useRouter()
@@ -171,6 +178,62 @@ onMounted(async () => {
 
 .cf-card {
   margin-bottom: 20px;
+}
+
+.cashflow-intro {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 20px;
+  padding: clamp(24px, 4vw, 38px);
+}
+
+.cashflow-intro__eyebrow {
+  display: inline-flex;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: var(--cb-accent-bg);
+  color: var(--cb-ink);
+  font-size: .74rem;
+  font-weight: 750;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.cashflow-intro h2 {
+  margin: 20px 0 10px;
+  font-family: var(--cb-font-heading);
+  font-size: clamp(1.55rem, 3vw, 2.45rem);
+  letter-spacing: -.035em;
+  line-height: 1.16;
+}
+
+.cashflow-intro p { max-width: 650px; margin: 0; color: var(--cb-ink-secondary); line-height: 1.55; }
+.cashflow-intro__icon { color: var(--cb-accent); flex: none; }
+
+.cashflow-explore { overflow: hidden; }
+.cashflow-explore__summary {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 80px;
+  padding: 20px 24px;
+  cursor: pointer;
+  list-style: none;
+}
+.cashflow-explore__summary::-webkit-details-marker { display: none; }
+.cashflow-explore__summary .insights-heading { flex: 1; min-width: 0; }
+.cashflow-explore__summary .cb-card__title { margin: 0; }
+.cashflow-explore__chevron { transition: transform .2s ease; }
+.cashflow-explore[open] .cashflow-explore__chevron { transform: rotate(180deg); }
+.cashflow-explore__body { border-top: 1px solid var(--cb-border-card); }
+
+@media (max-width: 600px) {
+  .cashflow-intro__icon { display: none; }
+  .cashflow-explore__summary { flex-wrap: wrap; }
+  .cashflow-explore__summary .insights-heading { flex-basis: 100%; }
+  .insights-grid { grid-template-columns: minmax(0, 1fr); }
 }
 
 .insights-heading {

@@ -1,10 +1,10 @@
 <template>
-  <div class="cb-page">
+  <div class="cb-page experience-page experience-page--accounts">
     <div class="cb-container">
       <page-header :title="t('accounts.title')" :meta="t('accounts.subtitle')">
         <template v-if="conflictCount > 0" #actions>
           <v-chip color="var(--cb-warning)" variant="tonal" prepend-icon="mdi-alert">
-            {{ conflictCount }} conflito(s) Open Finance pendente(s)
+            {{ t('accounts.pending_conflicts', { count: conflictCount }) }}
           </v-chip>
         </template>
       </page-header>
@@ -22,31 +22,11 @@
         :description="t('accounts.connected_finance_locked_description')"
       />
 
-      <div class="cb-card accounts-optout-card">
-        <div class="cb-card__header">
-          <h2 class="cb-card__title">
-            <v-icon color="var(--cb-primary)" class="mr-2" size="18">mdi-shield-account-outline</v-icon>
-            Controle de conexão e opt-out
-          </h2>
-        </div>
-        <div class="cb-card__body">
-          <p class="story-text">
-            Se você quiser sair do Open Finance, o caminho é simples: vá em Conexões, desconecte o banco e a sincronização automática é interrompida.
-          </p>
-          <p class="story-text">
-            O histórico já importado pode continuar disponível para auditoria; a gestão de retenção e exclusão deve seguir as políticas legais abaixo.
-          </p>
-          <div class="story-actions">
-            <v-btn color="var(--cb-primary)" variant="tonal" @click="goToConnections">
-              <v-icon start>{{ canUseConnectedFinance ? 'mdi-link-variant-off' : 'mdi-lock-open-outline' }}</v-icon>
-              {{ canUseConnectedFinance ? t('accounts.go_to_connections') : t('accounts.open_finance_upgrade_cta') }}
-            </v-btn>
-            <v-btn variant="text" @click="openLegalDoc('privacy-policy')">Política de Privacidade</v-btn>
-            <v-btn variant="text" @click="openLegalDoc('terms-of-use')">Termos de Uso</v-btn>
-            <v-btn variant="text" @click="openLegalDoc('cookie-policy')">Política de Cookies</v-btn>
-          </div>
-        </div>
-      </div>
+      <alert-strip
+        v-if="connectionsLoadError"
+        variant="info"
+        :description="t('accounts.connections_load_error')"
+      />
 
       <div class="cb-card">
         <div class="cb-card__header">
@@ -58,7 +38,12 @@
         <div class="cb-card__body">
           <div v-if="loading" class="cb-empty-state">
             <v-icon size="40" color="var(--cb-ink-muted)">mdi-timer-sand</v-icon>
-            <p>Carregando contas...</p>
+            <p>{{ t('accounts.loading') }}</p>
+          </div>
+          <div v-else-if="accountsLoadError" class="cb-empty-state" role="alert">
+            <v-icon size="40" color="var(--cb-risk)">mdi-alert-circle-outline</v-icon>
+            <p>{{ t('accounts.load_error') }}</p>
+            <v-btn variant="tonal" color="var(--cb-primary)" @click="fetchAccounts">{{ t('accounts.retry') }}</v-btn>
           </div>
           <div v-else-if="visibleAccounts.length" class="accounts-grid">
             <div v-for="account in visibleAccounts" :key="account.id" class="account-card">
@@ -78,7 +63,13 @@
                 </div>
                 <v-chip size="small" variant="tonal" color="var(--cb-accent)">{{ account.currency }}</v-chip>
               </div>
-              <div class="account-card__balance">{{ formatCurrency(account.balance, account.currency) }}</div>
+              <div v-if="account.id.startsWith('open-finance-connection-')" class="account-card__balance account-card__balance--unavailable">
+                {{ t('accounts.balance_unavailable') }}
+              </div>
+              <div v-else class="account-card__balance">{{ formatCurrency(account.balance, account.currency) }}</div>
+              <p class="account-card__source">
+                {{ t('accounts.source_label') }}: {{ String(account.provider || '').toUpperCase() === 'OPEN_FINANCE' ? 'Open Finance' : t('accounts.manual_source') }}
+              </p>
               <div v-if="findConnectionForAccount(account)" class="account-card__chips">
                 <v-chip size="x-small" variant="tonal" color="var(--cb-accent)">Open Finance</v-chip>
                 <v-chip
@@ -108,6 +99,32 @@
           </div>
         </div>
       </div>
+
+      <details class="cb-card accounts-optout-card">
+        <summary class="accounts-optout-card__summary">
+          <v-icon color="var(--cb-primary)" size="20">mdi-shield-account-outline</v-icon>
+          <span>{{ t('accounts.connection_control') }}</span>
+          <v-icon class="accounts-optout-card__chevron" size="20">mdi-chevron-down</v-icon>
+        </summary>
+        <div class="cb-card__body">
+          <p class="story-text">
+            {{ t('accounts.optout_explanation') }}
+          </p>
+          <p class="story-text">
+            {{ t('accounts.optout_history') }}
+          </p>
+          <div class="story-actions">
+            <v-btn color="var(--cb-primary)" variant="tonal" @click="goToConnections">
+              <v-icon start>{{ canUseConnectedFinance ? 'mdi-link-variant-off' : 'mdi-lock-open-outline' }}</v-icon>
+              {{ canUseConnectedFinance ? t('accounts.go_to_connections') : t('accounts.open_finance_upgrade_cta') }}
+            </v-btn>
+            <PlanTierBadge v-if="billingSummary && !canUseConnectedFinance" tier="STARTER" />
+            <v-btn variant="text" @click="openLegalDoc('privacy-policy')">{{ t('accounts.privacy_policy') }}</v-btn>
+            <v-btn variant="text" @click="openLegalDoc('terms-of-use')">{{ t('accounts.terms_of_use') }}</v-btn>
+            <v-btn variant="text" @click="openLegalDoc('cookie-policy')">{{ t('accounts.cookie_policy') }}</v-btn>
+          </div>
+        </div>
+      </details>
     </div>
   </div>
 </template>
@@ -125,6 +142,7 @@ import type { OpenFinanceConnection } from '@/types/openFinance'
 import { useUserStore } from '@/plugins/userStore'
 import PageHeader from '@/components/PageHeader.vue'
 import AlertStrip from '@/components/AlertStrip.vue'
+import PlanTierBadge from '@/components/PlanTierBadge.vue'
 
 const { t, locale } = useI18n()
 const router = useRouter()
@@ -132,6 +150,8 @@ const userStore = useUserStore()
 
 const accounts = ref<AccountView[]>([])
 const loading = ref(false)
+const accountsLoadError = ref(false)
+const connectionsLoadError = ref(false)
 const conflictCount = ref(0)
 const openFinanceConnections = ref<OpenFinanceConnection[]>([])
 const billingSummary = ref<BillingSummaryResponse | null>(null)
@@ -291,10 +311,19 @@ const markAccountLogoAsFailed = (accountId: string) => {
 
 const fetchAccounts = async () => {
   loading.value = true
+  accountsLoadError.value = false
+  connectionsLoadError.value = false
   try {
     const accountsResponse = await FinancialReadService.fetchAccounts()
     accounts.value = accountsResponse.data || []
+  } catch (error) {
+    console.error('Erro ao carregar contas:', error)
+    accountsLoadError.value = true
+    loading.value = false
+    return
+  }
 
+  try {
     if (!canUseConnectedFinance.value) {
       conflictCount.value = 0
       openFinanceConnections.value = []
@@ -308,7 +337,8 @@ const fetchAccounts = async () => {
     conflictCount.value = Array.isArray(conflictsResponse.data) ? conflictsResponse.data.length : 0
     openFinanceConnections.value = Array.isArray(connectionsResponse.data) ? connectionsResponse.data : []
   } catch (error) {
-    console.error('Erro ao carregar contas:', error)
+    console.error('Erro ao carregar conexões Open Finance:', error)
+    connectionsLoadError.value = true
   } finally {
     loading.value = false
   }
@@ -351,8 +381,12 @@ onMounted(async () => {
 <style scoped>
 /* Opt-out info card spacing */
 .accounts-optout-card {
-  margin-bottom: 20px;
+  margin-top: 20px;
 }
+.accounts-optout-card__summary { display: flex; align-items: center; gap: 12px; padding: 20px 24px; cursor: pointer; list-style: none; color: var(--cb-ink); font-weight: 700; }
+.accounts-optout-card__summary::-webkit-details-marker { display: none; }
+.accounts-optout-card__chevron { margin-left: auto; transition: transform .2s ease; }
+.accounts-optout-card[open] .accounts-optout-card__chevron { transform: rotate(180deg); }
 
 .story-text {
   margin: 0 0 10px;
@@ -433,6 +467,8 @@ onMounted(async () => {
   font-weight: 700;
   color: var(--cb-primary);
 }
+.account-card__balance--unavailable { font-size: 1rem; }
+.account-card__source { margin: 4px 0 0; color: var(--cb-ink-muted); font-size: .8rem; }
 
 .account-card__chips {
   display: flex;

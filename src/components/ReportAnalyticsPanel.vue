@@ -16,11 +16,12 @@
       </div>
     </div>
 
-    <v-alert v-if="loadError" type="error" variant="tonal" closable @click:close="loadError = false">
+    <v-alert v-if="loadError" type="error" variant="tonal">
       {{ t('reportAnalytics.loadError') }}
+      <v-btn class="ml-2" size="small" variant="text" @click="loadAnalytics">{{ t('reportAnalytics.retry') }}</v-btn>
     </v-alert>
 
-    <div class="report-analytics__hero">
+    <div v-if="analytics && !isLoading && !loadError" class="report-analytics__hero">
       <div class="report-analytics__metric">
         <span>{{ t('reportAnalytics.totalSpent') }}</span>
         <strong>{{ formatMoney(summary.expenses) }}</strong>
@@ -40,7 +41,7 @@
       <v-progress-circular indeterminate color="var(--cb-primary)" size="34" />
     </div>
 
-    <template v-else>
+    <template v-else-if="analytics && !loadError">
       <div class="report-analytics__grid">
         <article class="report-panel report-panel--categories">
           <div class="report-panel__header">

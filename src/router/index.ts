@@ -48,6 +48,13 @@ import { readInviteAcceptanceRedirect } from '@/utils/inviteAcceptanceContext'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
+    // Isolated EV-01 design specimen: unavailable in production builds.
+    ...(import.meta.env.DEV ? [{
+      path: '/__visual-foundation',
+      name: 'visual-foundation-preview',
+      component: () => import('@/views/VisualFoundationPreview.vue'),
+      meta: { hideAppChrome: true }
+    }] : []),
     // PRINCIPAIS DO DOMÍNIO
     {
       path: '/dashboard',

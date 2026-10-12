@@ -1,5 +1,5 @@
 <template>
-  <div class="cb-page">
+  <div class="cb-page experience-page experience-page--goals">
     <FinancialGoal />
   </div>
 </template>

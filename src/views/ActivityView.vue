@@ -1,5 +1,5 @@
 <template>
-  <div class="cb-page">
+  <div class="cb-page experience-page experience-page--activity">
     <div class="cb-container">
       <page-header :title="t('overview.activity_title')" :meta="t('activity.subtitle')">
         <template #actions>
@@ -32,6 +32,14 @@
 
           <div v-if="loading" class="cb-empty-state">
             <p>{{ t('overview.activity_loading') }}</p>
+          </div>
+
+          <div v-else-if="loadError" class="cb-empty-state" role="alert">
+            <v-icon size="40" color="var(--cb-ink-muted)">mdi-alert-circle-outline</v-icon>
+            <p>{{ t('activity.load_error') }}</p>
+            <v-btn variant="tonal" color="var(--cb-primary)" @click="loadActivity">
+              {{ t('activity.try_again') }}
+            </v-btn>
           </div>
 
           <div v-else-if="filteredActivity.length" class="activity-feed">
@@ -87,6 +95,7 @@ const { t, locale } = useI18n()
 const router = useRouter()
 
 const loading = ref(false)
+const loadError = ref(false)
 const recentActivity = ref<WorkspaceActivityEvent[]>([])
 const selectedFilter = ref<'all' | 'transactions' | 'scenarios' | 'decisions'>('all')
 
@@ -111,12 +120,14 @@ const getLocaleForFormatting = () => {
 
 const loadActivity = async () => {
   loading.value = true
+  loadError.value = false
   try {
     const { data } = await ActivityService.list(30)
     recentActivity.value = Array.isArray(data) ? data : []
   } catch (error) {
     console.error('Error loading activity feed:', error)
     recentActivity.value = []
+    loadError.value = true
   } finally {
     loading.value = false
   }
@@ -158,7 +169,7 @@ const formatActivityTime = (value?: string) => {
 const activityRoute = (event: WorkspaceActivityEvent) => {
   const relatedType = String(event?.relatedEntityType || '')
   if (relatedType === 'TRANSACTION') return '/transactions'
-  if (relatedType === 'SCENARIO') return '/planning/scenarios/:id'
+  if (relatedType === 'SCENARIO' && event?.relatedEntityId) return '/planning/scenarios/:id'
   if (relatedType === 'DECISION') return '/decisions'
   return null
 }

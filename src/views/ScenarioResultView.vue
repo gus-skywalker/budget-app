@@ -1,5 +1,5 @@
 <template>
-  <div class="cb-page">
+  <div class="cb-page experience-page experience-page--scenario-result">
     <div ref="resultContainer" class="cb-container scenario-result">
       <page-header :title="t('decisionJourney.result.title')" :meta="t('decisionJourney.result.subtitle')">
         <template #actions>

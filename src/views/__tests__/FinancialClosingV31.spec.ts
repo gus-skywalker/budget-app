@@ -1,10 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { config, mount } from '@vue/test-utils'
+import { createI18n } from 'vue-i18n'
 import { createVuetify } from 'vuetify'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
 import FinancialClosingPanelView from '@/views/FinancialClosingPanelView.vue'
 import FinancialClosingImportWizardView from '@/views/FinancialClosingImportWizardView.vue'
+import pt from '@/assets/locales/pt.json'
 
 const { serviceMock, routerPush, routerReplace, routeState, userStore } = vi.hoisted(() => ({
   routerPush: vi.fn(), routerReplace: vi.fn(), routeState: { params: {} as Record<string,string>, query: {} as Record<string,string> },
@@ -22,6 +24,7 @@ vi.mock('@/plugins/userStore',()=>({useUserStore:()=>userStore}))
 class ResizeObserverMock { observe() {} unobserve() {} disconnect() {} }
 globalThis.ResizeObserver=ResizeObserverMock as any
 const vuetify=createVuetify({components,directives});const flush=async()=>{await Promise.resolve();await new Promise(resolve=>setTimeout(resolve,0));await Promise.resolve()}
+config.global.plugins = [createI18n({ legacy: false, locale: 'pt', messages: { pt } })]
 const closing={id:'closing-1',workspaceId:'workspace-1',closingKey:'DEFAULT',periodMonth:8,periodYear:2026,currency:'BRL',workflowStatus:'DRAFT',settlementStatus:'NOT_ISSUED',currentVersion:{id:'version-1',versionNumber:1,versionStatus:'EDITABLE',inputRevision:1,calculatedRevision:null,calculationCurrent:false}}
 const materialized={id:'review-1',status:'DRAFT',revision:1,selectedSourceCount:1,preflightHmac:null,stagingExpiresAt:'2026-08-19T12:00:00Z',reviewExpiresAt:'2026-09-11T12:00:00Z',publicationId:null,sources:[{id:'source-review-1',guidedReviewSessionId:'guided-1',sourceKey:'KNOWN_SOURCE',status:'MATERIALIZED',revision:2,candidateCount:2,additionTotal:120,reversalTotal:20}]}
 const preflightReview={...materialized,status:'PREFLIGHT_READY',revision:2,preflightHmac:'opaque-preflight'}
@@ -46,6 +49,30 @@ describe('Financial closing V31 journey',()=>{
     const wrapper=mount(FinancialClosingPanelView,{global:{plugins:[vuetify],stubs:{PageHeader:{props:['title'],template:'<header><slot name="actions" />{{title}}</header>'},AlertStrip:true}}});await flush();await flush()
     ;(wrapper.vm as any).showCreate=true;await flush()
     expect(wrapper.text()).toContain('Abrir ou criar uma competência');expect(wrapper.text()).toContain('Cada mês possui uma única apuração no escopo DEFAULT')
+  })
+
+  it('does not present a failed competence list as an empty list and allows retry',async()=>{
+    serviceMock.list.mockRejectedValueOnce(new Error('Unavailable'))
+    const wrapper=mount(FinancialClosingPanelView,{global:{plugins:[vuetify],stubs:{PageHeader:{props:['title'],template:'<header><slot name="actions" />{{title}}</header>'},AlertStrip:true}}});await flush();await flush()
+    expect(wrapper.get('[role="alert"]').text()).toContain('Não foi possível carregar as competências')
+    expect(wrapper.text()).not.toContain('Comece uma competência')
+    expect(wrapper.text()).not.toContain('Criar competência')
+    await wrapper.get('[role="alert"] button').trigger('click');await flush();await flush()
+    expect(serviceMock.list).toHaveBeenCalledTimes(2)
+    expect(wrapper.find('[role="alert"]').exists()).toBe(false)
+    expect(wrapper.text()).toContain('Base editável')
+  })
+
+  it('explains the plan gate without claiming that the closing service failed',async()=>{
+    serviceMock.list.mockRejectedValueOnce({response:{status:403,data:{feature:'financial-closing'}}})
+    const wrapper=mount(FinancialClosingPanelView,{global:{plugins:[vuetify],stubs:{PageHeader:{props:['title'],template:'<header><slot name="actions" />{{title}}</header>'},AlertStrip:true}}});await flush();await flush()
+    expect(wrapper.text()).toContain('A Apuração não está disponível no plano atual deste espaço')
+    expect(wrapper.text()).not.toContain('Não foi possível carregar as competências')
+    expect(wrapper.text()).not.toContain('Criar competência')
+    const actions=wrapper.findAll('button')
+    expect(actions.find(button=>button.text().includes('Abrir ou criar competência'))?.attributes('disabled')).toBeDefined()
+    await actions.find(button=>button.text().includes('Ver planos'))?.trigger('click')
+    expect(routerPush).toHaveBeenCalledWith({name:'choose-plan',query:{feature:'financial-closing'}})
   })
 
   it('lets an operator discard an unpublished active workbook review and keep the competence open',async()=>{

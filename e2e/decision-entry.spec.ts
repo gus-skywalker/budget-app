@@ -30,6 +30,10 @@ for (const theme of ['light', 'dark'] as const) {
     page.on('request', request => { if (request.method() !== 'GET' && request.url().includes('/fixture-api')) writes.push(request.url()) })
     await page.goto('/planning/scenarios/preview?simulatedAt=fixture')
     const explanation = page.locator('.result-explanation')
+    if (theme === 'light') {
+      const primaryTextColor = await page.locator('.result-action--primary .v-btn__content').first().evaluate(element => getComputedStyle(element).color)
+      expect(primaryTextColor).toBe('rgb(24, 55, 43)')
+    }
     await expect(explanation).toHaveAttribute('data-origin', 'live')
     await expect(explanation.getByRole('heading', { level: 2 })).toHaveText(/Em média, R\$\s*100,00 a menos por mês/)
     await expect(explanation).toContainText('Período informado pelo cálculo: 6 mês(es).')
@@ -164,7 +168,7 @@ for (const theme of ['light', 'dark'] as const) {
       await option.click()
       await expect(list).toBeHidden()
     }
-    await card.getByRole('textbox', { name: 'Dê um nome à mudança (opcional)' }).fill('Assinatura')
+    await card.getByRole('textbox', { name: 'Nome (opcional)' }).fill('Assinatura')
     await choose('Que tipo de mudança é essa?', 'Reduzir um gasto')
     await card.getByRole('spinbutton', { name: 'Qual é o valor por mês?' }).fill('100')
     await choose('Isso acontece uma vez ou todo mês?', 'Todo mês, por um período')
@@ -401,8 +405,41 @@ for (const theme of ['light', 'dark'] as const) {
       await expect(card).toBeFocused()
       await page.keyboard.press('Enter')
       await expect(page).toHaveURL(/planning\/scenarios\/debt\/new\?guided=1&intent=payment-options/)
+      await expect(page.locator('.experience-page--debt-builder')).toBeVisible()
     })
   }
+}
+
+for (const theme of ['light', 'dark'] as const) {
+  test(`guided scenario keeps the entry palette through its form (${theme})`, async ({ page }, info) => {
+    await fixture(page, theme)
+    await page.setViewportSize({ width: theme === 'light' ? 360 : 1440, height: 900 })
+    await page.route('**/fixture-api/budgets/current**', route => route.fulfill({ json: {
+      id: 'fixture-budget', periodMonth: 10, periodYear: 2026, totalIncome: 3000, totalExpense: 2000, net: 1000, lines: [],
+    } }))
+    await page.goto('/planning/scenarios/new?guided=1&intent=monthly-change&resume=1')
+    await expect(page.getByText('Passo 1 de 3')).toBeVisible()
+    const root = page.locator('.experience-page--scenario-builder')
+    const visual = await root.evaluate(element => ({
+      background: getComputedStyle(element).backgroundColor,
+      primary: getComputedStyle(element).getPropertyValue('--cb-primary').trim(),
+      stepBackground: getComputedStyle(element.querySelector('.wizard-step')!).backgroundColor,
+      width: document.documentElement.scrollWidth,
+    }))
+    expect(visual.background).toBe(theme === 'light' ? 'rgb(250, 251, 247)' : 'rgb(14, 17, 23)')
+    expect(visual.primary).toBe(theme === 'light' ? '#10cc83' : '#e8693e')
+    if (theme === 'light') expect(visual.stepBackground).toBe('rgb(237, 250, 88)')
+    if (theme === 'light') {
+      expect(await page.locator('.wizard-steps .v-progress-linear__determinate').evaluate(element => getComputedStyle(element).backgroundColor)).toBe('rgb(16, 204, 131)')
+    }
+    expect(visual.width).toBeLessThanOrEqual(page.viewportSize()!.width)
+    await page.locator('.security-notice__close').click()
+    await page.screenshot({ path: info.outputPath(`guided-scenario-${theme}.png`) })
+    await page.getByRole('button', { name: 'Próximo', exact: true }).click()
+    await expect(page.getByRole('heading', { name: 'O que vai mudar?' })).toBeVisible()
+    await page.screenshot({ path: info.outputPath(`guided-scenario-change-${theme}.png`) })
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  })
 }
 
 test('entry links, read-only paths and absence of financial writes', async ({ page }) => {
@@ -410,6 +447,7 @@ test('entry links, read-only paths and absence of financial writes', async ({ pa
   const writes: string[] = []
   page.on('request', request => { if (request.method() !== 'GET' && request.url().includes('/fixture-api')) writes.push(request.url()) })
   await page.goto('/planning/scenarios')
+  await expect(page.locator('.experience-page--scenarios-hub')).toBeVisible()
   await page.getByRole('button', { name: 'Começar uma decisão' }).first().click()
   await expect(page).toHaveURL(/planning\/decide$/)
   await expect(page.getByRole('status')).toContainText('acesso de leitura')
@@ -419,6 +457,7 @@ test('entry links, read-only paths and absence of financial writes', async ({ pa
   await page.locator('[data-intent="organize-month"]').click()
   await expect(page).toHaveURL(/planning\/budget$/)
   await page.goto('/decisions')
+  await expect(page.locator('.experience-page--decisions')).toBeVisible()
   await page.getByRole('link', { name: 'Começar uma decisão' }).click()
   await expect(page).toHaveURL(/planning\/decide$/)
   expect(writes).toEqual([])

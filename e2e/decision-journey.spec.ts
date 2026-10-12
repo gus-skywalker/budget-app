@@ -81,7 +81,7 @@ for (const theme of ['light', 'dark'] as const) {
       await page.setViewportSize({ width, height: 1000 })
       await enterPremises(page)
       const card = page.locator('.scenario-change-card')
-      await card.getByRole('textbox', { name: 'Dê um nome à mudança (opcional)' }).fill('Curso de teste')
+      await card.getByRole('textbox', { name: 'Nome (opcional)' }).fill('Curso de teste')
       await card.getByRole('spinbutton', { name: 'Qual é o valor por mês?' }).fill('100')
       await page.getByText('Mais opções: nome, período e valores do plano', { exact: true }).click()
       await page.getByRole('textbox', { name: /Nome deste teste/ }).fill('Homologação ED-07')

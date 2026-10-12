@@ -1,5 +1,5 @@
 <template>
-  <div class="cb-page">
+  <div class="cb-page experience-page experience-page--settings">
     <div class="cb-container">
       <page-header :title="$t('account_management.title')" :meta="$t('account_management.subtitle')" />
 
@@ -113,7 +113,7 @@
                     ></v-select>
                     <v-btn 
                       @click="saveProfile"
-                     
+                      class="settings-primary-action"
                       size="large"
                       :loading="isSavingProfile"
                       :disabled="isSavingProfile || isLoadingProfile"
@@ -126,17 +126,14 @@
                 </div>
               </div>
 
-              <div class="cb-card mt-6 danger-zone-card">
-                <div class="cb-card__header">
-                  <h2 class="cb-card__title danger-title">
-                    <v-icon color="error" class="mr-2">mdi-alert-octagon</v-icon>
-                    {{ $t('account_management.danger_zone_title') }}
-                  </h2>
-                  <p class="card-description">
-                    {{ $t('account_management.delete_account_description') }}
-                  </p>
-                </div>
+              <details class="cb-card mt-6 danger-zone-card">
+                <summary class="danger-zone-card__summary">
+                  <v-icon color="error">mdi-alert-octagon</v-icon>
+                  <span>{{ $t('account_management.danger_zone_title') }}</span>
+                  <v-icon class="danger-zone-card__chevron">mdi-chevron-down</v-icon>
+                </summary>
                 <div class="cb-card__body">
+                  <p class="card-description mb-4">{{ $t('account_management.delete_account_description') }}</p>
                   <v-btn
                     color="error"
                     variant="outlined"
@@ -147,7 +144,7 @@
                     {{ $t('account_management.delete_account_button') }}
                   </v-btn>
                 </div>
-              </div>
+              </details>
             </v-col>
           </v-row>
         </v-window-item>
@@ -380,7 +377,7 @@
 
               <v-btn 
                 @click="saveAlertSettings"
-                class="mt-6"
+                class="mt-6 settings-primary-action"
                 size="large"
                 block
               >
@@ -407,6 +404,7 @@
                 variant="tonal"
                 class="mb-6"
               >
+                <PlanTierBadge v-if="billingSummary" tier="STARTER" class="mr-2" />
                 {{ $t('openFinance.settings.connected_finance_locked') }}
                 <template #append>
                   <v-btn size="small" variant="text" color="var(--cb-primary)" @click="goToChoosePlan">
@@ -774,6 +772,7 @@
 
 <script setup lang="ts">
 import PageHeader from '@/components/PageHeader.vue'
+import PlanTierBadge from '@/components/PlanTierBadge.vue'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
@@ -1764,13 +1763,17 @@ const saveAlertSettings = async () => {
 .tab-text  { display: inline; }
 
 @media (max-width: 600px) {
-  .settings-tab { min-width: 56px !important; padding: 12px 8px !important; }
-  .tab-text { display: none; }
-  .tab-icon { margin-right: 0; }
+  .settings-tab { min-width: 96px !important; padding: 12px 14px !important; }
+  .tab-text { display: inline; }
+  .tab-icon { display: none; }
 }
 
 /* ── Danger zone ─────────────────────────────────────────────────────────── */
 .danger-zone-card { border-color: rgba(235, 51, 73, 0.28); }
+.danger-zone-card__summary { display: flex; align-items: center; gap: 10px; padding: 18px 20px; cursor: pointer; list-style: none; color: #c62828; font-weight: 700; }
+.danger-zone-card__summary::-webkit-details-marker { display: none; }
+.danger-zone-card__chevron { margin-left: auto; transition: transform .2s ease; }
+.danger-zone-card[open] .danger-zone-card__chevron { transform: rotate(180deg); }
 .danger-title     { color: #c62828; }
 
 /* ── Card partials ──────────────────────────────────────────────────────── */

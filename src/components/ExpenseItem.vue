@@ -77,18 +77,20 @@
             {{ $t('expenseItem.suggestionReady') }}
           </v-chip>
           <v-btn
+            v-if="canWrite"
             size="x-small"
             variant="text"
             color="var(--cb-primary)"
             :loading="aiSuggesting"
-            :disabled="aiSuggesting"
+            :disabled="aiSuggesting || (showAiPlanBadge && !canUseAi)"
             @click.stop="$emit('suggestCategory', expense)"
           >
             <v-icon start size="14">mdi-brain</v-icon>
             {{ $t('expenseItem.suggestCategory') }}
           </v-btn>
+          <PlanTierBadge v-if="canWrite && showAiPlanBadge" tier="STARTER" />
           <v-btn
-            v-if="hasSuggestionReady"
+            v-if="canWrite && hasSuggestionReady"
             size="x-small"
             variant="text"
             color="var(--cb-primary)"
@@ -116,6 +118,7 @@
             {{ suggestionDetails.reasoningLabel }}
           </div>
           <v-btn
+            v-if="canWrite"
             size="x-small"
             color="var(--cb-primary)"
             variant="tonal"
@@ -130,7 +133,7 @@
         <v-list-item-subtitle v-if="expense.reconciliationConflictReason" class="expense-detail-note">
           {{ expense.reconciliationConflictReason }}
         </v-list-item-subtitle>
-        <div v-if="expense.reconciliationConflictId" class="conflict-resolution-row expense-detail-row">
+        <div v-if="canWrite && expense.reconciliationConflictId" class="conflict-resolution-row expense-detail-row">
           <v-btn
             size="x-small"
             variant="outlined"
@@ -183,8 +186,9 @@
             icon
             size="x-small"
             variant="text"
-            class="agreement-toggle-btn"
-            :title="$t('sharedExpenseAgreement.visibility.toggle')"
+          class="agreement-toggle-btn"
+          :title="$t('sharedExpenseAgreement.visibility.toggle')"
+          :aria-label="$t('sharedExpenseAgreement.visibility.toggle')"
             @click.stop="toggleAgreementVisibility"
           >
             <v-icon size="15">{{ isAgreementVisibilityOpen ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
@@ -195,7 +199,7 @@
           :agreements="sharedAgreements"
         />
       </div>
-      <div class="expense-actions">
+      <div v-if="canWrite" class="expense-actions">
         <v-btn
           v-if="expense.visibilityScope === 'WORKSPACE'"
           icon
@@ -203,6 +207,7 @@
           variant="text"
           @click.stop="$emit('openComments', expense)"
           class="expense-action-btn expense-action-btn--share"
+          :aria-label="$t('transactions.details.comments')"
         >
           <v-icon size="15">mdi-comment-text-outline</v-icon>
         </v-btn>
@@ -212,6 +217,7 @@
           variant="text"
           @click.stop="$emit('openAttachments', expense)"
           class="expense-action-btn expense-action-btn--share"
+          :aria-label="$t('expenseItem.manageAttachments')"
         >
           <v-icon size="15">mdi-share-variant</v-icon>
         </v-btn>
@@ -219,7 +225,8 @@
           icon
           size="x-small"
           variant="text"
-          title="Criar combinado de divisão"
+          :title="$t('sharedExpenseAgreement.title')"
+          :aria-label="$t('sharedExpenseAgreement.title')"
           @click.stop="openAgreementDialog"
           class="expense-action-btn expense-action-btn--agreement"
         >
@@ -230,6 +237,7 @@
           size="x-small"
           variant="text"
           :title="$t('transactionReminder.title')"
+          :aria-label="$t('transactionReminder.title')"
           @click.stop="$emit('openReminder', expense)"
           class="expense-action-btn expense-action-btn--timer"
         >
@@ -241,6 +249,7 @@
           size="x-small"
           variant="text"
           :title="expense.excludedFromPlanning ? $t('expenseItem.restorePlanning') : $t('expenseItem.excludeFromPlanning')"
+          :aria-label="expense.excludedFromPlanning ? $t('expenseItem.restorePlanning') : $t('expenseItem.excludeFromPlanning')"
           @click.stop="$emit('togglePlanningExclusion', expense)"
           class="expense-action-btn expense-action-btn--planning"
         >
@@ -253,12 +262,14 @@
           variant="text"
           @click.stop="$emit('deleteExpense', expense)"
           class="expense-action-btn expense-action-btn--delete"
+          :aria-label="$t('expenseItem.delete')"
         >
           <v-icon size="15">mdi-delete</v-icon>
         </v-btn>
       </div>
     </div>
     <shared-expense-agreement-dialog
+      v-if="canWrite"
       v-model="isAgreementDialogOpen"
       :expense="expense"
       :agreement="editingAgreement"
@@ -272,14 +283,28 @@
 <script>
 import SharedExpenseAgreementDialog from '@/components/SharedExpenseAgreementDialog.vue'
 import SharedExpenseAgreementVisibility from '@/components/SharedExpenseAgreementVisibility.vue'
+import PlanTierBadge from '@/components/PlanTierBadge.vue'
 
 export default {
   name: 'ExpenseItem',
   components: {
     SharedExpenseAgreementDialog,
     SharedExpenseAgreementVisibility,
+    PlanTierBadge,
   },
   props: {
+    canWrite: {
+      type: Boolean,
+      default: true,
+    },
+    canUseAi: {
+      type: Boolean,
+      default: true,
+    },
+    showAiPlanBadge: {
+      type: Boolean,
+      default: false,
+    },
     expense: {
       type: Object,
       required: true,

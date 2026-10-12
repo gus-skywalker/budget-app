@@ -1,5 +1,5 @@
 <template>
-  <div class="cb-page rules-page"><div class="cb-container narrow">
+  <div class="cb-page rules-page experience-page experience-page--closing"><div class="cb-container narrow">
     <v-btn variant="text" prepend-icon="mdi-arrow-left" @click="back">Voltar para a competência</v-btn>
     <page-header title="Regras do cálculo" :summary-items="headerSummary" />
     <alert-strip v-if="errorMessage" variant="info" :description="errorMessage" />

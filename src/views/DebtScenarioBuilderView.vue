@@ -1,5 +1,5 @@
 <template>
-  <div class="cb-page">
+  <div class="cb-page experience-page experience-page--debt-builder">
     <div class="cb-container debt-scenario-builder">
       <page-header :title="t('contentExperience.planning.debtBuilder.title')" :meta="t('contentExperience.planning.debtBuilder.subtitle')">
         <template #actions>

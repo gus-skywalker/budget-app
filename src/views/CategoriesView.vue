@@ -1,5 +1,5 @@
 <template>
-  <div class="cb-page">
+  <div class="cb-page experience-page experience-page--categories">
     <div class="cb-container">
       <page-header :title="$t('categories_page.title')" :meta="$t('categories_page.subtitle')">
         <template #actions>
@@ -7,6 +7,7 @@
             <v-icon start>{{ canUseConnectedFinance ? 'mdi-bank-outline' : 'mdi-lock-outline' }}</v-icon>
             {{ canUseConnectedFinance ? $t('categories_page.open_finance') : $t('categories_page.open_finance_upgrade_cta') }}
           </v-btn>
+          <PlanTierBadge v-if="billingSummary && !canUseConnectedFinance" tier="STARTER" />
           <v-btn
             v-if="activeTab === 'categories'"
             color="var(--cb-primary)"
@@ -53,6 +54,11 @@
         </div>
 
         <div v-if="activeTab === 'categories'" class="tabs-shell__content">
+          <details class="category-overview">
+            <summary class="category-overview__summary">
+              <span>{{ $t('categories_page.category_insight.overview_action') }}</span>
+              <v-icon size="20">mdi-chevron-down</v-icon>
+            </summary>
           <div class="stats-grid">
             <div class="stat-card">
               <div class="stat-card__label">{{ $t('categories_page.stats.system_categories') }}</div>
@@ -145,6 +151,8 @@
 
             <p v-else class="category-spend-board__empty">{{ $t('categories_page.monthly_spend.empty') }}</p>
           </section>
+
+          </details>
 
           <div class="content-grid">
             <section class="cb-card surface-card category-catalog-card">
@@ -953,6 +961,7 @@
 
 <script setup lang="ts">
 import PageHeader from '@/components/PageHeader.vue'
+import PlanTierBadge from '@/components/PlanTierBadge.vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
@@ -1463,7 +1472,7 @@ const fetchCategorySpend = async () => {
     const items: TransactionView[] = []
     let offset = 0
     const limit = 200
-    while (true) {
+    for (;;) {
       const response = await FinancialReadService.fetchTransactions({
         ...currentMonthRange.value,
         limit,
@@ -2063,6 +2072,11 @@ watch(locale, () => {
 }
 
 .tabs-shell__content { padding: 24px; }
+.category-overview { margin-bottom: 24px; border: 1px solid var(--cb-border-card); border-radius: 16px; }
+.category-overview__summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 20px; cursor: pointer; list-style: none; color: var(--cb-ink); font-weight: 700; }
+.category-overview__summary::-webkit-details-marker { display: none; }
+.category-overview[open] .category-overview__summary .v-icon { transform: rotate(180deg); }
+.category-overview > .stats-grid, .category-overview > .insight-band, .category-overview > .category-spend-board { margin: 0 20px 20px; }
 
 .categories-tabs :deep(.v-tab) {
   text-transform: none;
@@ -2743,6 +2757,7 @@ watch(locale, () => {
   .drawer-shell__footer { padding-left: 16px; padding-right: 16px; }
 
   .stats-grid                  { grid-template-columns: 1fr; }
+  .insight-band__meta          { grid-template-columns: 1fr; }
   .category-spend-board        { padding: 18px; }
   .category-spend-board__meta  { grid-template-columns: 1fr; }
   .category-spend-list__row    { grid-template-columns: 14px minmax(0, 1fr); }

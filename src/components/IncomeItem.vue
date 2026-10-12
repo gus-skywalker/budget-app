@@ -52,7 +52,7 @@
             {{ income.openFinanceSharingLabel }}
           </v-chip>
         </div>
-        <div v-if="income.reconciliationConflictId" class="conflict-resolution-row income-detail-row">
+        <div v-if="canWrite && income.reconciliationConflictId" class="conflict-resolution-row income-detail-row">
           <v-btn
             size="x-small"
             variant="outlined"
@@ -76,13 +76,14 @@
         </div>
       </div>
 
-      <div class="income-btn-group">
+      <div v-if="canWrite" class="income-btn-group">
         <v-btn
           v-if="income.visibilityScope === 'WORKSPACE'"
           icon
           size="x-small"
           variant="text"
           class="income-action-btn income-action-btn--share"
+          :aria-label="$t('transactions.details.comments')"
           @click.stop="$emit('openComments', income)"
         >
           <v-icon size="15">mdi-comment-text-outline</v-icon>
@@ -92,6 +93,7 @@
           size="x-small"
           variant="text"
           class="income-action-btn income-action-btn--timer"
+          :aria-label="$t('transactions.actions.toggle_recurring')"
           @click.stop="handleToggleRecurring"
         >
           <v-icon size="15">{{ income.isRecurring ? 'mdi-star-outline' : 'mdi-star' }}</v-icon>
@@ -103,6 +105,7 @@
           variant="text"
           class="income-action-btn income-action-btn--planning"
           :title="income.excludedFromPlanning ? $t('incomeItem.restorePlanning') : $t('incomeItem.excludeFromPlanning')"
+          :aria-label="income.excludedFromPlanning ? $t('incomeItem.restorePlanning') : $t('incomeItem.excludeFromPlanning')"
           @click.stop="$emit('togglePlanningExclusion', income)"
         >
           <v-icon size="15">{{ income.excludedFromPlanning ? 'mdi-plus-circle-outline' : 'mdi-minus-circle-outline' }}</v-icon>
@@ -113,6 +116,7 @@
           size="x-small"
           variant="text"
           class="income-action-btn income-action-btn--delete"
+          :aria-label="$t('expenseItem.delete')"
           @click.stop="$emit('deleteIncome', income)"
         >
           <v-icon size="15">mdi-delete</v-icon>
@@ -121,7 +125,7 @@
     </div>
 
     <!-- Diálogo para escolher a quantidade de meses -->
-    <v-dialog v-model="recurrenceDialog" persistent max-width="400px">
+    <v-dialog v-if="canWrite" v-model="recurrenceDialog" persistent max-width="400px">
       <v-card>
         <v-card-title>{{ $t('incomeItem.choose_months') }}</v-card-title>
         <v-card-text>
@@ -141,6 +145,10 @@
 export default {
   name: 'IncomeItem',
   props: {
+    canWrite: {
+      type: Boolean,
+      default: true,
+    },
     income: Object,
     resolvingAction: {
       type: String,

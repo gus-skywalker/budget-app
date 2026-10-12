@@ -27,19 +27,26 @@ async function apiJson<T>(request: APIRequestContext, state: Runtime, method: 'g
   return response.status() === 204 ? undefined as T : await response.json() as T
 }
 
-async function authenticate(page: Page, state: Runtime) {
-  await page.addInitScript(({ token, workspaceId, workspaceName }) => {
+async function authenticate(page: Page, state: Runtime, theme: 'light' | 'dark') {
+  await page.addInitScript(({ token, workspaceId, workspaceName, theme }) => {
     sessionStorage.setItem('userStore', JSON.stringify({
       token, auth: true,
       user: { id: 'demo-owner', username: 'Operador de homologação', language: 'PT', userRoles: ['ROLE_ADMIN'], workspaces: [{ workspaceId, workspaceName, role: 'ROLE_OWNER' }] },
-      currentWorkspaceId: workspaceId, tenantRole: 'ROLE_OWNER', language: 'PT', appVoice: 'default',
+      currentWorkspaceId: workspaceId, tenantRole: 'ROLE_OWNER', language: 'PT', appVoice: 'default', preferredTheme: theme,
     }))
-  }, { token: state.accessToken, workspaceId: state.workspaceId, workspaceName: state.workspaceName })
+  }, { token: state.accessToken, workspaceId: state.workspaceId, workspaceName: state.workspaceName, theme })
 }
 
 async function closeCookieNotice(page: Page) {
   const dialog = page.getByRole('alertdialog', { name: 'Aviso' })
   if (await dialog.isVisible()) await dialog.getByRole('button', { name: 'Recusar' }).click()
+  const securityNotice = page.getByRole('button', { name: 'Dispensar informativo de segurança' })
+  if (await securityNotice.isVisible()) await securityNotice.click()
+}
+
+async function captureStage(page: Page, stage: string) {
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0)
+  await page.screenshot({ path: test.info().outputPath(`${stage}.png`), fullPage: true })
 }
 
 async function prepare(request: APIRequestContext, state: Runtime): Promise<{ closing: Closing; source: Source; participant: Participant }> {
@@ -70,6 +77,7 @@ async function materialize(page: Page, closing: Closing) {
   await page.locator('input[type="file"]').setInputFiles(fixture)
   await page.getByRole('button', { name: 'Identificar fontes' }).click()
   await expect(page.getByRole('heading', { name: 'Escolha as fontes que entram neste lote' })).toBeVisible()
+  await captureStage(page, 'import-sources')
   await expect(page.getByText('V31_SOURCE', { exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Revisar fontes deste lote' })).toBeEnabled()
   await page.getByRole('button', { name: 'Revisar fontes deste lote' }).click()
@@ -88,14 +96,21 @@ async function chooseOption(page: Page, label: string, option: string) {
   await page.keyboard.press('Escape')
 }
 
-test('homologates deduction, adjustment, reserves and receivable in exact cents through the public UI', async ({ page, request }) => {
+for (const viewport of [{ name: 'desktop-light', width: 1440, height: 960, theme: 'light' }, { name: 'mobile-light', width: 360, height: 800, theme: 'light' }, { name: 'mobile-dark', width: 360, height: 800, theme: 'dark' }] as const) {
+test(`homologates deduction, adjustment, reserves and receivable on ${viewport.name}`, async ({ page, request }) => {
+  await page.setViewportSize({ width: viewport.width, height: viewport.height })
   const state = runtime()
   const { closing, participant } = await prepare(request, state)
-  await authenticate(page, state)
+  await authenticate(page, state, viewport.theme)
   await materialize(page, closing)
+  await expect(page.locator(`.v-theme--${viewport.theme}`).first()).toBeVisible()
+  await expect(page.getByRole('main', { name: 'Etapas do fechamento' })).toBeVisible()
+  await captureStage(page, 'closing-panel')
 
   await page.getByRole('button', { name: /Revisar regras|Ver regras/ }).first().click()
   await expect(page).toHaveURL(new RegExp(`/financial-closings/${closing.id}/rules$`))
+  await expect(page.getByRole('heading', { name: 'Revise as incidências antes de calcular' })).toBeVisible()
+  await captureStage(page, 'closing-rules')
 
   await page.getByLabel('Nome da dedução').fill('Imposto sintético da fonte')
   await page.getByLabel('Percentual').first().fill('13.33')
@@ -125,6 +140,7 @@ test('homologates deduction, adjustment, reserves and receivable in exact cents 
   await page.getByRole('button', { name: 'Continuar para o resultado' }).click()
   await page.getByRole('button', { name: 'Calcular resultado' }).click()
   await expect(page.getByRole('heading', { name: 'Cálculo atual' })).toBeVisible()
+  await captureStage(page, 'closing-result')
   await expect(page.getByText('R$ 172,00', { exact: true }).first()).toBeVisible()
   await expect(page.getByText('R$ 146,20', { exact: true }).first()).toBeVisible()
   await expect(page.getByText('Ajuste sanitizado posterior às deduções', { exact: true })).toBeVisible()
@@ -155,4 +171,16 @@ test('homologates deduction, adjustment, reserves and receivable in exact cents 
   await page.getByLabel('Confirmo a publicação financeira deste cálculo').check()
   await page.getByRole('button', { name: 'Publicar financeiramente' }).click()
   await expect(page.getByRole('button', { name: 'Continuar para decisão' })).toBeVisible()
+  await page.getByRole('button', { name: 'Continuar para decisão' }).click()
+  await expect(page.getByRole('heading', { name: 'Decisão da Produtividade' })).toBeVisible()
+  await expect(page.locator('#decision-state-title')).toBeVisible()
+  await captureStage(page, 'closing-decision')
+  await page.getByRole('button', { name: 'Voltar para a competência' }).click()
+  await expect(page.getByRole('main', { name: 'Etapas do fechamento' })).toBeVisible()
+  await page.getByRole('button', { name: 'Ver lote completo' }).first().click()
+  await expect(page.getByRole('heading', { name: 'Lote materializado' })).toBeVisible()
+  await expect(page.getByText('Contribui para a competência', { exact: true })).toBeVisible()
+  await expect(page.locator('dl div').filter({ has: page.getByText('Itens deste lote', { exact: true }) }).locator('dd')).toHaveText('2')
+  await captureStage(page, 'closing-lot-history')
 })
+}

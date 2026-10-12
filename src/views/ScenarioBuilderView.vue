@@ -1,5 +1,5 @@
 <template>
-  <div class="cb-page">
+  <div class="cb-page experience-page experience-page--scenario-builder">
     <div class="cb-container scenario-wizard">
       <page-header :title="t(isGuided ? 'decisionJourney.form.title' : 'planning.scenarios.title')" :meta="t(isGuided ? 'decisionJourney.form.subtitle' : 'planning.scenarios.subtitle')">
         <template #actions>

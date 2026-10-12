@@ -1,0 +1,675 @@
+/* EV visual language: bring the decision entry's light theme to reviewed
+   product pages. Keep these tokens local; the existing dark theme
+   and semantic risk/success colors remain unchanged. */
+.v-theme--light .experience-page {
+  --cb-page-bg: #fafbf7;
+  --cb-page-bg-alt: #f3f7f2;
+  --cb-surface: #fff;
+  --cb-surface-soft: #f3f7f2;
+  --cb-primary: #10cc83;
+  --cb-primary-hover: #0eaa6c;
+  --cb-primary-bg: #e7f8ed;
+  --cb-accent: #246c51;
+  --cb-accent-hover: #19553e;
+  --cb-accent-bg: #e7f8ed;
+  --cb-ink: #18372b;
+  --cb-ink-secondary: #50645b;
+  --cb-ink-muted: #50645b;
+  --cb-border: #ccd7ce;
+  --cb-border-card: #ccd7ce;
+  --cb-border-chip: #ccd7ce;
+  --cb-border-btn: #aebfb3;
+  --cb-radius-card: 20px;
+  --cb-radius-button: 10px;
+  --cb-shadow-card: 0 3px 14px rgba(24, 55, 43, .045);
+  --cb-max-w: 1120px;
+  background: var(--cb-page-bg);
+  color: var(--cb-ink);
+}
+
+.v-theme--light .experience-page > .cb-container,
+.v-theme--light .experience-page > .financial-goal-shell > .cb-container {
+  padding-top: clamp(24px, 4vw, 48px);
+  padding-bottom: 48px;
+}
+
+.v-theme--light .experience-page .cb-page-header {
+  align-items: flex-end;
+  gap: 24px;
+  margin-bottom: clamp(28px, 4vw, 44px);
+}
+
+.v-theme--light .experience-page .cb-page-header__left::before {
+  content: '';
+  display: block;
+  width: 72px;
+  height: 8px;
+  margin-bottom: 20px;
+  border-radius: 4px;
+  background: #edfa58;
+}
+
+.v-theme--light .experience-page .cb-page-header__title {
+  max-width: 830px;
+  color: var(--cb-ink);
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  font-weight: 750;
+  letter-spacing: -.045em;
+  line-height: 1.12;
+}
+
+.v-theme--light .experience-page .cb-page-header__meta {
+  max-width: 680px;
+  margin-top: 12px;
+  color: var(--cb-ink-secondary);
+  font-size: 1.02rem;
+  line-height: 1.55;
+}
+
+.v-theme--light .experience-page .cb-card,
+.v-theme--light .experience-page .cb-insight-card,
+.v-theme--light .experience-page .transaction-controls,
+.v-theme--light .experience-page .dashboard-hero,
+.v-theme--light .experience-page .dashboard-month,
+.v-theme--light .experience-page .dashboard-comparison,
+.v-theme--light .experience-page .dashboard-explore {
+  border: 1px solid var(--cb-border-card);
+  border-radius: 20px;
+  box-shadow: var(--cb-shadow-card);
+}
+
+.v-theme--light .experience-page .cb-btn-primary,
+.v-theme--light .experience-page .dashboard-hero__action {
+  min-height: 44px;
+  border-radius: 10px !important;
+  background: #10cc83 !important;
+  color: #18372b !important;
+  font-family: var(--cb-font-heading) !important;
+  font-weight: 750 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  box-shadow: none !important;
+}
+
+.v-theme--light .experience-page .cb-btn-primary:hover,
+.v-theme--light .experience-page .dashboard-hero__action:hover {
+  background: #0eaa6c !important;
+  color: #0d2f22 !important;
+}
+
+.v-theme--light .experience-page .cb-btn-secondary {
+  border-color: var(--cb-border-btn) !important;
+  border-radius: 10px !important;
+  color: var(--cb-ink) !important;
+  font-weight: 700 !important;
+}
+
+.v-theme--light .experience-page :is(button, a, summary):focus-visible,
+.v-theme--light .experience-page .v-btn:focus-visible {
+  outline: 3px solid #18372b;
+  outline-offset: 3px;
+}
+
+/* Page-specific accents follow the same hierarchy as /planning/decide. */
+.v-theme--light .experience-page--dashboard .dashboard-hero {
+  border-color: #bed0c2;
+  background: #f3f7f2;
+  padding: clamp(24px, 4vw, 38px);
+}
+
+.v-theme--light .experience-page--dashboard .dashboard-hero__eyebrow,
+.v-theme--light .experience-page--budget .cb-active-budget-card__kicker,
+.v-theme--light .experience-page--insights .cb-insight-card--lead .cb-insight-card__eyebrow {
+  display: inline-flex;
+  width: fit-content;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: #edfa58;
+  color: #18372b;
+  font-weight: 750;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.v-theme--light .experience-page--dashboard .dashboard-hero h2 {
+  font-size: clamp(1.75rem, 3vw, 2.6rem);
+  letter-spacing: -.035em;
+}
+
+.v-theme--light .experience-page--transactions .transaction-controls {
+  padding: clamp(18px, 3vw, 26px);
+  background: #fff;
+}
+
+.v-theme--light .experience-page--transactions .cb-chip--active:not(.cb-chip--warning) {
+  border-color: #18372b;
+  background: #edfa58;
+  color: #18372b;
+  box-shadow: none;
+}
+
+.v-theme--light .experience-page--budget .cb-active-budget-card {
+  border-color: #bed0c2;
+  padding: clamp(24px, 4vw, 36px);
+  background: #f3f7f2;
+}
+
+.v-theme--light .experience-page--budget .cb-active-budget-card__title {
+  font-size: clamp(1.4rem, 2.5vw, 2rem);
+  letter-spacing: -.025em;
+}
+
+.v-theme--light .experience-page--budget .cb-baseline-option,
+.v-theme--light .experience-page--goals .goal-item {
+  border-radius: 20px;
+  background: #fff;
+}
+
+.v-theme--light .experience-page--goals .goal-empty-intro {
+  border-radius: 18px;
+  padding: clamp(24px, 4vw, 36px);
+  background: #f3f7f2;
+}
+
+.v-theme--light .experience-page--goals .goal-ideas-toggle {
+  border-color: var(--cb-border);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.v-theme--light .experience-page--insights .cb-insight-card--lead {
+  border-color: #bed0c2;
+  background: #f3f7f2;
+}
+
+/* Cash flow keeps the projection first and the experimental tools optional. */
+.v-theme--light .experience-page--cashflow .cashflow-intro {
+  border-color: #bed0c2;
+  background: #f3f7f2;
+}
+
+.v-theme--light .experience-page--cashflow .cashflow-intro__eyebrow {
+  background: #edfa58;
+  color: #18372b;
+}
+
+.v-theme--light .experience-page--cashflow :is(.cf-card, .cashflow-explore) {
+  border-color: #ccd7ce;
+  border-radius: 20px;
+  background: #fff;
+}
+
+.v-theme--light .experience-page--cashflow .ai-card {
+  min-width: 0;
+  border: 0;
+  background: transparent;
+}
+
+.v-theme--light .experience-page--cashflow .cf-card .ai-card {
+  padding: 0;
+}
+
+.v-theme--light .experience-page--cashflow .ai-card > header h2 {
+  color: #18372b;
+  font-family: var(--cb-font-heading);
+  font-size: clamp(1.4rem, 2.5vw, 1.9rem);
+  letter-spacing: -.03em;
+}
+
+.v-theme--light .experience-page--cashflow .ai-card > header p {
+  color: #50645b;
+}
+
+.v-theme--light .experience-page--cashflow .ai-form button:not(:disabled),
+.v-theme--light .experience-page--cashflow .locked-state button {
+  min-height: 44px;
+  border-radius: 10px;
+  background: #10cc83;
+  color: #18372b;
+  font-family: var(--cb-font-heading);
+  font-weight: 750;
+}
+
+.v-theme--light .experience-page--cashflow .ai-form :is(input, select) {
+  min-height: 44px;
+  border: 1px solid #aebfb3;
+  border-radius: 10px;
+  background: #fff;
+  color: #18372b;
+  padding: 8px 12px;
+}
+
+.v-theme--light .experience-page--cashflow .ai-form :is(input, select):focus-visible,
+.v-theme--light .experience-page--cashflow .ai-card button:focus-visible,
+.v-theme--light .experience-page--cashflow .cashflow-explore__summary:focus-visible {
+  outline: 3px solid #18372b;
+  outline-offset: 3px;
+}
+
+.v-theme--light .experience-page--cashflow .cashflow-answer {
+  background: #f3f7f2;
+}
+
+.v-theme--light .experience-page--cashflow .cashflow-explore__summary:hover {
+  background: #f3f7f2;
+}
+
+/* The decision journey after /planning/decide uses the same visual grammar.
+   Keep progress, scenarios, simulation and decisions scoped to the light theme. */
+.v-theme--light .experience-page :is(.wizard-shell, .editor-shell, .result-shell) {
+  border: 1px solid #ccd7ce;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: var(--cb-shadow-card);
+  padding: clamp(20px, 3vw, 34px);
+}
+
+.v-theme--light .experience-page :is(.wizard-step, .hero-card__label) {
+  display: inline-flex;
+  align-self: flex-start;
+  width: fit-content;
+  border-radius: 6px;
+  padding: 6px 12px;
+  background: #edfa58;
+  color: #18372b;
+  font-size: .76rem;
+  font-weight: 750;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.v-theme--light .experience-page .wizard-steps {
+  gap: 14px;
+  margin-bottom: 8px;
+}
+
+.v-theme--light .experience-page .wizard-steps .v-progress-linear {
+  border-radius: 999px;
+  background: #e7f3e8;
+}
+
+.v-theme--light .experience-page .wizard-steps .v-progress-linear__determinate,
+.v-theme--light .experience-page .wizard-steps .v-progress-linear__indeterminate {
+  background: #10cc83 !important;
+}
+
+.v-theme--light .experience-page .cb-page-header__actions .v-btn:not(.cb-btn-primary, .decision-entry-cta) {
+  border: 1px solid #ccd7ce;
+  border-radius: 10px;
+  background: #fff !important;
+  color: #18372b !important;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.v-theme--light .experience-page .wizard-panel h2 {
+  color: #18372b;
+  font-family: var(--cb-font-heading);
+  font-size: clamp(1.45rem, 2.8vw, 2rem);
+  font-weight: 750;
+  letter-spacing: -.03em;
+  line-height: 1.2;
+}
+
+.v-theme--light .experience-page--scenario-builder .wizard-panel,
+.v-theme--light .experience-page--debt-builder .wizard-panel {
+  border-color: #ccd7ce;
+  border-radius: 18px;
+  background: #f3f7f2;
+  padding: clamp(18px, 3vw, 28px);
+}
+
+.v-theme--light .experience-page :is(.metric-card, .review-box > div, .summary-item, .option-card, .debt-option-card, .template-card, .adjustment-card) {
+  border-color: #ccd7ce;
+  border-radius: 16px;
+  background: #fff;
+  color: #18372b;
+}
+
+.v-theme--light .experience-page .scenario-change-card,
+.v-theme--light .experience-page .scenario-advanced {
+  border: 1px solid #ccd7ce;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 2px 9px rgba(24, 55, 43, .04);
+}
+
+.v-theme--light .experience-page .change-summary,
+.v-theme--light .experience-page .projection-basis {
+  border-color: #ccd7ce;
+  border-radius: 12px;
+  background: #f3f7f2;
+}
+
+.v-theme--light .experience-page .template-card--active,
+.v-theme--light .experience-page .template-card:hover {
+  border-color: #18372b;
+  background: #edfa58;
+}
+
+.v-theme--light .experience-page .wizard-footer,
+.v-theme--light .experience-page .editor-footer {
+  border-top: 1px solid #ccd7ce;
+  padding-top: 20px;
+}
+
+.v-theme--light .experience-page .wizard-footer .v-btn:not(.v-btn--variant-text),
+.v-theme--light .experience-page .wizard-panel > .v-btn:not(.v-btn--variant-text),
+.v-theme--light .experience-page .add-change-btn,
+.v-theme--light .experience-page .decision-entry-cta,
+.v-theme--light .experience-page .result-action--primary {
+  min-height: 44px;
+  border-radius: 10px;
+  background: #10cc83 !important;
+  color: #18372b !important;
+  font-family: var(--cb-font-heading);
+  font-weight: 750;
+  letter-spacing: 0;
+  text-transform: none;
+  box-shadow: none;
+}
+
+.v-theme--light .experience-page .v-btn.v-theme--light.result-action--primary {
+  color: #18372b !important;
+}
+
+.v-theme--light .experience-page .result-action--primary :is(.v-btn__content, .v-btn__prepend, .v-icon) {
+  color: #18372b !important;
+}
+
+.v-theme--light .experience-page--scenario-result .result-explanation,
+.v-theme--light .experience-page--scenario-result .hero-card {
+  border-color: #bed0c2;
+  border-radius: 20px;
+  background: #f3f7f2;
+}
+
+.v-theme--light .experience-page--scenarios-hub .saved-scenario-card,
+.v-theme--light .experience-page--decisions .decision-create-item {
+  border-color: #ccd7ce;
+  border-radius: 18px;
+  background: #fff;
+}
+
+.v-theme--light .experience-page--decisions .cb-chip--active:not(.cb-chip--warning) {
+  border-color: #18372b;
+  background: #edfa58;
+  color: #18372b;
+}
+
+.v-theme--light .experience-page--decision-detail .decision-detail {
+  border: 1px solid #ccd7ce;
+  border-radius: 20px;
+  background: #fff;
+  padding: clamp(20px, 3vw, 32px);
+}
+
+.v-theme--light .experience-page--decision-detail .page-title {
+  color: #18372b;
+  font-family: var(--cb-font-heading);
+  font-size: clamp(2rem, 4vw, 3rem);
+  letter-spacing: -.04em;
+}
+
+/* Reports: read the period first; export tools remain an explicit second step. */
+.v-theme--light .experience-page--reports .report-analytics__toolbar,
+.v-theme--light .experience-page--reports .report-analytics__hero,
+.v-theme--light .experience-page--reports .report-panel,
+.v-theme--light .experience-page--reports .report-export {
+  border-color: #ccd7ce;
+  border-radius: 20px;
+  box-shadow: var(--cb-shadow-card);
+}
+.v-theme--light .experience-page--reports .report-analytics__hero {
+  border-color: #bed0c2;
+  background: #f3f7f2;
+}
+.v-theme--light .experience-page--reports .report-export__icon {
+  background: #edfa58;
+  color: #18372b;
+}
+.v-theme--light .experience-page--reports .report-export__summary:hover {
+  background: #f3f7f2;
+}
+.v-theme--light .experience-page--reports .report-generator-wrapper .v-btn.v-btn--variant-elevated {
+  background: #10cc83 !important;
+  color: #18372b !important;
+  border-radius: 10px;
+  box-shadow: none;
+}
+.v-theme--light .experience-page--reports .report-generator-wrapper .cb-card__title .v-icon,
+.v-theme--light .experience-page--reports .report-generator-wrapper .report-scope-row .v-chip {
+  color: #246c51 !important;
+}
+.v-theme--light .experience-page--reports .report-generator-wrapper .report-scope-row .v-chip {
+  border-color: #bed0c2 !important;
+}
+
+/* Accounts: the list and its balance are the primary reading surface. */
+.v-theme--light .experience-page--accounts .account-card {
+  border-color: #ccd7ce;
+  border-radius: 16px;
+  background: #f3f7f2;
+}
+.v-theme--light .experience-page--accounts .account-card__balance {
+  color: #18372b;
+}
+.v-theme--light .experience-page--accounts .accounts-optout-card__summary:hover {
+  background: #f3f7f2;
+}
+
+/* Categories: everyday organization first, optional structure and spending detail second. */
+.v-theme--light .experience-page--categories .category-overview,
+.v-theme--light .experience-page--categories .category-spend-board,
+.v-theme--light .experience-page--categories .stat-card,
+.v-theme--light .experience-page--categories .insight-band {
+  border-color: #ccd7ce;
+  border-radius: 16px;
+}
+.v-theme--light .experience-page--categories .category-overview__summary:hover,
+.v-theme--light .experience-page--categories .category-row:hover {
+  background: #f3f7f2;
+}
+.v-theme--light .experience-page--categories .insight-band {
+  background: #f3f7f2;
+}
+.v-theme--light .experience-page--categories .category-spend-board__summary h2 {
+  color: #18372b;
+}
+.v-theme--light .experience-page--categories .categories-tabs .v-tab--selected {
+  color: #18372b;
+  font-weight: 800;
+}
+.v-theme--light .experience-page--categories .categories-tabs .v-tabs__slider {
+  background: #10cc83;
+}
+.v-theme--light .experience-page--categories .category-overview__summary::before {
+  content: '';
+  width: 8px;
+  height: 24px;
+  border-radius: 4px;
+  background: #edfa58;
+}
+.v-theme--light .experience-page--categories .cb-page-header__actions .v-btn:last-child {
+  background: #10cc83 !important;
+  color: #18372b !important;
+  border-radius: 10px;
+  box-shadow: none;
+}
+.v-theme--light .experience-page--categories .cb-page-header__actions .v-btn:first-child {
+  border-color: #aebfb3 !important;
+  color: #18372b !important;
+  border-radius: 10px;
+}
+
+/* Supporting pages use the same calm canvas and action hierarchy. */
+.v-theme--light .experience-page--settings .modern-tabs,
+.v-theme--light .experience-page--activity .activity-filters {
+  border-bottom: 1px solid #ccd7ce;
+  padding-bottom: 12px;
+}
+.v-theme--light .experience-page--settings .modern-tabs .v-tab--selected {
+  color: #18372b !important;
+  font-weight: 800;
+}
+.v-theme--light .experience-page--settings .modern-tabs .v-tabs__slider { background: #10cc83; }
+.v-theme--light .experience-page--settings .settings-tab .v-icon { color: #50645b; }
+.v-theme--light .experience-page--settings .settings-tab.v-tab--selected .v-icon { color: #18372b; }
+.v-theme--light .experience-page--settings .cb-card:not(.danger-zone-card) .cb-card__title .v-icon { color: #246c51 !important; }
+.v-theme--light .experience-page--settings .settings-primary-action {
+  min-height: 44px;
+  border-radius: 10px;
+  background: #10cc83 !important;
+  color: #18372b !important;
+  font-weight: 750;
+  text-transform: none;
+  box-shadow: none;
+}
+.experience-page--settings .danger-zone-card .v-btn {
+  min-height: 48px;
+  height: auto;
+  white-space: normal;
+  padding-block: 12px;
+}
+.experience-page--settings .danger-zone-card .v-btn__content {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.v-theme--light .experience-page--activity .activity-row__icon {
+  background: #edfa58;
+}
+.v-theme--light .experience-page--activity .activity-filters .v-chip--variant-flat {
+  background: #edfa58 !important;
+  color: #18372b !important;
+  font-weight: 800;
+}
+.v-theme--light .experience-page--shared {
+  max-width: 1120px;
+  margin: 0 auto;
+  min-height: 100vh;
+  padding: clamp(24px, 4vw, 48px);
+}
+.v-theme--light .experience-page--shared .shared-header::before {
+  content: '';
+  position: absolute;
+  width: 72px;
+  height: 8px;
+  border-radius: 4px;
+  background: #edfa58;
+}
+.v-theme--light .experience-page--shared .shared-header {
+  position: relative;
+  padding-top: 24px;
+}
+.v-theme--light .experience-page--shared .shared-header::before { top: 0; left: 0; }
+.v-theme--light .experience-page--shared .shared-header h1 {
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  letter-spacing: -.045em;
+}
+.v-theme--light .experience-page--shared .agreement-item,
+.v-theme--light .experience-page--shared .shared-state {
+  border: 1px solid #ccd7ce;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: var(--cb-shadow-card);
+}
+
+/* Closing keeps all financial rules intact; distinguish available steps by form. */
+.v-theme--light .experience-page--closing.experience-page { background: #fafbf7; }
+.v-theme--light .experience-page--closing :is(.competence, .journey-card, .wizard-card, .intro, .blocked) {
+  border-color: #ccd7ce;
+  border-radius: 20px;
+  box-shadow: var(--cb-shadow-card);
+}
+.v-theme--light .experience-page--closing .journey-card { opacity: 1; background: #f3f7f2; }
+.v-theme--light .experience-page--closing .journey-card.active { background: #fff; border-color: #10cc83; }
+.v-theme--light .experience-page--closing .step-number {
+  border-radius: 10px;
+  background: #edfa58;
+  color: #18372b;
+}
+.v-theme--light .experience-page--closing .v-btn.bg-primary {
+  background: #10cc83 !important;
+  color: #18372b !important;
+  border-radius: 10px;
+  box-shadow: none;
+}
+.v-theme--light .experience-page--closing .cb-page-header__actions .v-btn {
+  background: #10cc83 !important;
+  color: #18372b !important;
+  border-radius: 10px;
+  box-shadow: none;
+}
+.v-theme--light .experience-page--closing .v-progress-linear__determinate {
+  background: #10cc83 !important;
+}
+
+@media (max-width: 640px) {
+  .experience-page--activity .cb-page-header,
+  .experience-page--closing .cb-page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .experience-page--activity .cb-page-header__actions,
+  .experience-page--closing .cb-page-header__actions { width: 100%; }
+  .experience-page--closing .cb-page-header__actions .v-btn { width: 100%; }
+}
+
+/* Public decision has no app chrome; scope every light override to its page. */
+.v-theme--light .public-decision-page.public-decision-page {
+  background: radial-gradient(circle at 95% 5%, #edfa58 0, transparent 18rem), #fafbf7;
+  color: #18372b;
+}
+.v-theme--light .public-decision-page .public-header {
+  max-width: 760px;
+  margin: 0 auto 28px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #ccd7ce;
+  text-align: left;
+}
+.v-theme--light .public-decision-page .logo { font-weight: 800; letter-spacing: -.04em; }
+.v-theme--light .public-decision-page .tagline { color: #50645b; }
+.v-theme--light .public-decision-page .public-content { gap: 16px; }
+.v-theme--light .public-decision-page :is(.state-card, .title-section, .impact-card, .summary-card, .votes-card, .reasoning-card, .cta-card) {
+  border-color: #ccd7ce;
+  border-radius: 20px;
+  padding: clamp(20px, 4vw, 30px);
+  box-shadow: 0 3px 14px rgba(24, 55, 43, .045);
+}
+.v-theme--light .public-decision-page .title-section { text-align: left; }
+.v-theme--light .public-decision-page .title-section::before {
+  content: '';
+  display: block;
+  width: 64px;
+  height: 7px;
+  margin-bottom: 18px;
+  border-radius: 4px;
+  background: #edfa58;
+}
+.v-theme--light .public-decision-page .title-section h2 { font-size: clamp(2rem, 4vw, 3rem); letter-spacing: -.04em; }
+.v-theme--light .public-decision-page .status { color: #246c51; }
+.v-theme--light .public-decision-page .impact-card { border-color: #bed0c2; background: #f3f7f2; }
+.v-theme--light .public-decision-page .impact-label { color: #50645b; font-weight: 700; }
+.v-theme--light .public-decision-page .impact-value { letter-spacing: -.04em; }
+.v-theme--light .public-decision-page .impact-meta { color: #50645b; }
+.v-theme--light .public-decision-page .impact-value.neutral { color: #18372b; }
+.v-theme--light .public-decision-page .cta-card { background: #edfa58; text-align: left; }
+.v-theme--light .public-decision-page .cta-card .v-btn {
+  background: #10cc83 !important;
+  color: #18372b !important;
+  border-radius: 10px !important;
+  font-weight: 750;
+  text-transform: none;
+  box-shadow: none;
+}
+
+@media (max-width: 600px) {
+  .v-theme--light .experience-page .cb-page-header {
+    align-items: stretch;
+  }
+
+  .v-theme--light .experience-page .cb-page-header__left::before {
+    margin-bottom: 16px;
+  }
+}

@@ -92,4 +92,127 @@ describe('TransactionsView daily filter route integration', () => {
     expect(items[2].value).toContain('640')
     expect(items[4].value).toContain('260')
   })
+
+  it('keeps income and expense scope filters independent', () => {
+    const context = {
+      monthlyIncomes: [{ id: 1, visibility: 'PRIVATE' }],
+      monthlyExpenses: [{ id: 2, visibility: 'WORKSPACE_SHARED' }],
+      incomeListFilter: 'private',
+      expenseListFilter: 'workspace',
+      applyTransactionFilter: vi.fn((items: unknown[]) => items),
+      applyExpenseDrillDown: vi.fn((items: unknown[]) => items),
+    }
+
+    computed.filteredMonthlyIncomes.call(context)
+    computed.filteredMonthlyExpenses.call(context)
+
+    expect(context.applyTransactionFilter).toHaveBeenNthCalledWith(1, context.monthlyIncomes, 'private')
+    expect(context.applyTransactionFilter).toHaveBeenNthCalledWith(2, context.monthlyExpenses, 'workspace')
+  })
+
+  it('keeps manually selected scopes when only the route month changes', () => {
+    const context: any = {
+      selectedExpenseMonth: 10,
+      selectedExpenseYear: 2026,
+      incomeListFilter: 'workspace',
+      expenseListFilter: 'private',
+      hadRouteScopeFilter: false,
+      $route: { query: { month: '11', year: '2026' } },
+    }
+
+    methods.applyBudgetQueryFilters.call(context)
+
+    expect(context.selectedExpenseMonth).toBe(11)
+    expect(context.incomeListFilter).toBe('workspace')
+    expect(context.expenseListFilter).toBe('private')
+  })
+
+  it('applies explicit deep-link scope and clears it when removed', () => {
+    const context: any = {
+      selectedExpenseMonth: 10,
+      selectedExpenseYear: 2026,
+      incomeListFilter: 'all',
+      expenseListFilter: 'all',
+      hadRouteScopeFilter: false,
+      $route: { query: { month: '10', year: '2026', visibility: 'private' } },
+    }
+
+    methods.applyBudgetQueryFilters.call(context)
+    expect(context.incomeListFilter).toBe('private')
+    expect(context.expenseListFilter).toBe('private')
+    expect(context.hadRouteScopeFilter).toBe(true)
+
+    context.$route.query = { month: '10', year: '2026' }
+    methods.applyBudgetQueryFilters.call(context)
+    expect(context.incomeListFilter).toBe('all')
+    expect(context.expenseListFilter).toBe('all')
+  })
+
+  it('lets a manual scope replace the scope inherited from a deep link', () => {
+    const replace = vi.fn()
+    const context: any = {
+      selectedExpenseMonth: 10,
+      selectedExpenseYear: 2026,
+      incomeListFilter: 'all',
+      expenseListFilter: 'all',
+      hadRouteScopeFilter: false,
+      $route: { query: { month: '10', year: '2026', visibility: 'private' } },
+      $router: { replace },
+    }
+
+    methods.applyBudgetQueryFilters.call(context)
+    methods.selectListFilter.call(context, 'expense', 'workspace')
+    expect(replace).toHaveBeenCalledWith({ name: 'transactions', query: { month: '10', year: '2026' } })
+
+    context.$route.query = { month: '11', year: '2026' }
+    methods.applyBudgetQueryFilters.call(context)
+    expect(context.expenseListFilter).toBe('workspace')
+  })
+
+  it('resets only the selected list page when its scope changes', () => {
+    const resetIncomePaginationAndFetch = vi.fn()
+    const resetExpensePaginationAndFetch = vi.fn()
+    const context: any = {
+      incomeListFilter: 'all',
+      expenseListFilter: 'all',
+      hadRouteScopeFilter: false,
+      resetIncomePaginationAndFetch,
+      resetExpensePaginationAndFetch,
+    }
+
+    methods.selectListFilter.call(context, 'expense', 'private')
+    expect(context.expenseListFilter).toBe('private')
+    expect(resetExpensePaginationAndFetch).toHaveBeenCalledOnce()
+    expect(resetIncomePaginationAndFetch).not.toHaveBeenCalled()
+
+    methods.selectListFilter.call(context, 'income', 'workspace')
+    expect(context.incomeListFilter).toBe('workspace')
+    expect(resetIncomePaginationAndFetch).toHaveBeenCalledOnce()
+  })
+
+  it('advances and reverses pagination within the active list only', () => {
+    const fetchMonthlyExpenses = vi.fn()
+    const fetchMonthlyIncomes = vi.fn()
+    const context: any = {
+      expensePagination: { limit: 20, offset: 0, total: 42 },
+      incomePagination: { limit: 20, offset: 0, total: 21 },
+      canGoToNextExpensePage: true,
+      canGoToPreviousExpensePage: true,
+      canGoToNextIncomePage: true,
+      fetchMonthlyExpenses,
+      fetchMonthlyIncomes,
+    }
+
+    methods.goToNextExpensePage.call(context)
+    expect(context.expensePagination.offset).toBe(20)
+    expect(context.incomePagination.offset).toBe(0)
+    expect(fetchMonthlyExpenses).toHaveBeenCalledOnce()
+
+    methods.goToPreviousExpensePage.call(context)
+    expect(context.expensePagination.offset).toBe(0)
+
+    methods.goToNextIncomePage.call(context)
+    expect(context.incomePagination.offset).toBe(20)
+    expect(fetchMonthlyIncomes).toHaveBeenCalledOnce()
+  })
 })

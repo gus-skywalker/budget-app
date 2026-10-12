@@ -1,5 +1,5 @@
 <template>
-  <div class="cb-page">
+  <div class="cb-page experience-page experience-page--scenarios-hub">
     <div class="cb-container">
       <page-header :title="t('planning.scenarios.title')" :meta="t('planning.scenarios.subtitle')">
         <template #actions>

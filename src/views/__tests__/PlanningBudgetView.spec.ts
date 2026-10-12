@@ -210,6 +210,39 @@ describe('PlanningBudgetView suggestion flow', () => {
     expect(routerPush).toHaveBeenCalledWith({ name: 'planning-scenarios-new', query: { guided: '1', intent: 'monthly-change', resume: '1' } })
   })
 
+  it('shows the active plan period, known source and next step before alternative creation methods', async () => {
+    budgetServiceMock.list.mockResolvedValue({ data: [active] })
+    const wrapper = mountBudget()
+    await flushPromises()
+
+    expect(wrapper.find('#active-budget-title').exists()).toBe(true)
+    expect(wrapper.find('.cb-active-budget-card__facts').text()).toContain('setembro de 2026')
+    expect(wrapper.find('.cb-active-budget-card__facts').text()).toContain('planning.budget.source_quick_manual')
+    expect(wrapper.text()).toContain('planning.budget.not_current_balance')
+    expect(wrapper.text()).toContain('planning.budget.reference_period_notice')
+    expect(wrapper.find('.cb-active-budget-card__next-step button').exists()).toBe(true)
+    expect(wrapper.find('#budget-source-options').isVisible()).toBe(false)
+    expect(budgetServiceMock.activate).not.toHaveBeenCalled()
+
+    await wrapper.find('.cb-budget-alternatives').trigger('click')
+    await flushPromises()
+    expect(wrapper.find('.cb-budget-alternatives').attributes('aria-expanded')).toBe('true')
+    expect(wrapper.find('#budget-source-options').attributes('style')).not.toContain('display: none')
+  })
+
+  it('does not invent a saved plan provenance that the budget response does not contain', async () => {
+    const categorized = { ...active, lines: [
+      { id: 'income', category: 'Salary', type: 'INCOME', plannedAmount: 3000 },
+      { id: 'expense', category: 'Rent', type: 'EXPENSE', plannedAmount: 1800 },
+    ] }
+    budgetServiceMock.list.mockResolvedValue({ data: [categorized] })
+    const wrapper = mountBudget()
+    await flushPromises()
+
+    expect(wrapper.find('.cb-active-budget-card__facts').text()).toContain('planning.budget.source_not_recorded')
+    expect(wrapper.find('.cb-active-budget-card__source-note').text()).toBe('planning.budget.source_explanation_unknown')
+  })
+
   it('activates a manual plan only on confirmation, then offers the original journey', async () => {
     seedReturn()
     billingOrchestrationServiceMock.getBillingSummary.mockRejectedValue(new Error('unavailable'))
@@ -835,7 +868,8 @@ describe('PlanningBudgetView suggestion flow', () => {
 
     expect(budgetServiceMock.generateBaseline).toHaveBeenCalledTimes(1)
     expect(wrapper.text()).toContain('OpenFinance baseline activated.')
-    expect(wrapper.text()).toContain('OpenFinance consolidated baseline')
+    expect(wrapper.find('#active-budget-title').text()).toBe('planning.budget.current_plan_title')
+    expect(wrapper.find('.cb-active-budget-card__facts').text()).toContain('OpenFinance baseline')
     expect(wrapper.text()).toContain('This OpenFinance baseline is a saved monthly snapshot.')
   })
 

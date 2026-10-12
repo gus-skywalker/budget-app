@@ -1,15 +1,17 @@
 <template>
-  <div class="cb-page">
+  <div class="cb-page experience-page experience-page--transactions">
     <div class="cb-container">
 
       <!-- Page Header with Summary Strip -->
       <page-header
+        class="transactions-page-header"
         :title="$t('sidebar.transactions')"
         :period="activeMonthLabel"
-        :summary-items="transactionSummaryItems"
+        :summary-items="isLoadingTransactionSummary || transactionSummaryLoadFailed ? [] : transactionSummaryItems"
       >
         <template #actions>
           <v-btn
+            v-if="canWriteCurrentWorkspace"
             size="small"
             variant="tonal"
             color="var(--cb-ink-secondary)"
@@ -20,6 +22,7 @@
             {{ $t('income.save') }}
           </v-btn>
           <v-btn
+            v-if="canWriteCurrentWorkspace"
             size="small"
             class="cb-btn-primary"
             @click="openFormDrawer('expense')"
@@ -29,6 +32,16 @@
           </v-btn>
         </template>
       </page-header>
+
+      <alert-strip
+        v-if="transactionSummaryLoadFailed"
+        variant="warning"
+        :title="$t('transactions.summary_error')"
+      >
+        <template #actions>
+          <v-btn size="small" variant="text" @click="fetchMonthlyTransactionSummary">{{ $t('common.retry') }}</v-btn>
+        </template>
+      </alert-strip>
 
       <!-- Alert: Open Finance conflicts -->
       <alert-strip
@@ -42,20 +55,22 @@
             variant="text"
             color="var(--cb-warning)"
             style="text-transform:none"
-            @click="activeTab = 'expense'; expenseListFilter = 'conflicts'"
+            @click="activeTab = 'expense'; selectListFilter('expense', 'conflicts')"
           >
             {{ $t('common.resolve') || 'Resolver' }}
           </v-btn>
         </template>
       </alert-strip>
 
-      <!-- Filter Bar: Tabs + Month Nav + Filter Chips -->
-      <div class="cb-filter-bar">
-        <div class="cb-filter-chips">
+      <!-- Transaction type and month are separate from the list scope. -->
+      <section class="transaction-controls" :aria-label="$t('transactions.navigation.title')">
+        <div class="transaction-controls__primary">
+          <div class="cb-filter-chips" role="group" :aria-label="$t('transactions.navigation.type')">
           <!-- Tab: Despesas -->
           <button
             class="cb-chip"
             :class="{ 'cb-chip--active': activeTab === 'expense' }"
+            :aria-pressed="activeTab === 'expense'"
             @click="activeTab = 'expense'"
           >
             <v-icon size="12" start>mdi-trending-down</v-icon>
@@ -65,26 +80,40 @@
           <button
             class="cb-chip"
             :class="{ 'cb-chip--active': activeTab === 'income' }"
+            :aria-pressed="activeTab === 'income'"
             @click="activeTab = 'income'"
           >
             <v-icon size="12" start>mdi-trending-up</v-icon>
             {{ $t('income.title') }}
           </button>
 
-          <div style="width:1px;height:20px;background:rgba(23,32,51,.12);margin:0 4px;align-self:center"></div>
-
+          </div>
+          <div class="cb-month-nav" role="group" :aria-label="$t('transactions.navigation.period')">
+            <v-btn icon size="x-small" variant="text" :aria-label="$t('transactions.navigation.previous_month')" @click="goToPrevMonth">
+              <v-icon size="16">mdi-chevron-left</v-icon>
+            </v-btn>
+            <span class="cb-month-nav__label" aria-live="polite">{{ activeMonthLabel }}</span>
+            <v-btn icon size="x-small" variant="text" :aria-label="$t('transactions.navigation.next_month')" @click="goToNextMonth">
+              <v-icon size="16">mdi-chevron-right</v-icon>
+            </v-btn>
+          </div>
+        </div>
+        <div class="transaction-controls__scope">
+          <span class="transaction-controls__label">{{ $t('transactions.navigation.scope') }}</span>
+          <div class="cb-filter-chips" role="group" :aria-label="$t('transactions.navigation.scope')">
           <!-- Expense filters -->
           <template v-if="activeTab === 'expense'">
-            <button class="cb-chip" :class="{ 'cb-chip--active': expenseListFilter === 'all' }" @click="expenseListFilter = 'all'">{{ $t('transactionVisibility.filters.all') }}</button>
-            <button class="cb-chip" :class="{ 'cb-chip--active': expenseListFilter === 'workspace' }" @click="expenseListFilter = 'workspace'">{{ $t('transactionVisibility.filters.workspace') }}</button>
-            <button class="cb-chip" :class="{ 'cb-chip--active': expenseListFilter === 'private' }" @click="expenseListFilter = 'private'">{{ $t('transactionVisibility.filters.private') }}</button>
-            <button class="cb-chip" :class="{ 'cb-chip--active': expenseListFilter === 'open-finance' }" @click="expenseListFilter = 'open-finance'">{{ $t('transactions.filters.open_finance') }}</button>
-            <button class="cb-chip" :class="{ 'cb-chip--active': expenseListFilter === 'uncategorized' }" @click="expenseListFilter = 'uncategorized'">{{ $t('expense.uncategorized_only') }}</button>
+            <button class="cb-chip" :class="{ 'cb-chip--active': expenseListFilter === 'all' }" :aria-pressed="expenseListFilter === 'all'" @click="selectListFilter('expense', 'all')">{{ $t('transactionVisibility.filters.all') }}</button>
+            <button class="cb-chip" :class="{ 'cb-chip--active': expenseListFilter === 'workspace' }" :aria-pressed="expenseListFilter === 'workspace'" @click="selectListFilter('expense', 'workspace')">{{ $t('transactionVisibility.filters.workspace') }}</button>
+            <button class="cb-chip" :class="{ 'cb-chip--active': expenseListFilter === 'private' }" :aria-pressed="expenseListFilter === 'private'" @click="selectListFilter('expense', 'private')">{{ $t('transactionVisibility.filters.private') }}</button>
+            <button class="cb-chip" :class="{ 'cb-chip--active': expenseListFilter === 'open-finance' }" :aria-pressed="expenseListFilter === 'open-finance'" @click="selectListFilter('expense', 'open-finance')">{{ $t('transactions.filters.open_finance') }}</button>
+            <button class="cb-chip" :class="{ 'cb-chip--active': expenseListFilter === 'uncategorized' }" :aria-pressed="expenseListFilter === 'uncategorized'" @click="selectListFilter('expense', 'uncategorized')">{{ $t('expense.uncategorized_only') }}</button>
             <button
               v-if="openFinanceConflicts.length > 0"
               class="cb-chip cb-chip--warning"
               :class="{ 'cb-chip--active': expenseListFilter === 'conflicts' }"
-              @click="expenseListFilter = 'conflicts'"
+              :aria-pressed="expenseListFilter === 'conflicts'"
+              @click="selectListFilter('expense', 'conflicts')"
             >
               {{ $t('transactions.filters.conflicts') }} ({{ openFinanceConflicts.length }})
             </button>
@@ -92,32 +121,23 @@
 
           <!-- Income filters -->
           <template v-else>
-            <button class="cb-chip" :class="{ 'cb-chip--active': incomeListFilter === 'all' }" @click="incomeListFilter = 'all'">{{ $t('transactionVisibility.filters.all') }}</button>
-            <button class="cb-chip" :class="{ 'cb-chip--active': incomeListFilter === 'workspace' }" @click="incomeListFilter = 'workspace'">{{ $t('transactionVisibility.filters.workspace') }}</button>
-            <button class="cb-chip" :class="{ 'cb-chip--active': incomeListFilter === 'private' }" @click="incomeListFilter = 'private'">{{ $t('transactionVisibility.filters.private') }}</button>
-            <button class="cb-chip" :class="{ 'cb-chip--active': incomeListFilter === 'open-finance' }" @click="incomeListFilter = 'open-finance'">{{ $t('transactions.filters.open_finance') }}</button>
+            <button class="cb-chip" :class="{ 'cb-chip--active': incomeListFilter === 'all' }" :aria-pressed="incomeListFilter === 'all'" @click="selectListFilter('income', 'all')">{{ $t('transactionVisibility.filters.all') }}</button>
+            <button class="cb-chip" :class="{ 'cb-chip--active': incomeListFilter === 'workspace' }" :aria-pressed="incomeListFilter === 'workspace'" @click="selectListFilter('income', 'workspace')">{{ $t('transactionVisibility.filters.workspace') }}</button>
+            <button class="cb-chip" :class="{ 'cb-chip--active': incomeListFilter === 'private' }" :aria-pressed="incomeListFilter === 'private'" @click="selectListFilter('income', 'private')">{{ $t('transactionVisibility.filters.private') }}</button>
+            <button class="cb-chip" :class="{ 'cb-chip--active': incomeListFilter === 'open-finance' }" :aria-pressed="incomeListFilter === 'open-finance'" @click="selectListFilter('income', 'open-finance')">{{ $t('transactions.filters.open_finance') }}</button>
             <button
               v-if="openFinanceConflicts.length > 0"
               class="cb-chip cb-chip--warning"
               :class="{ 'cb-chip--active': incomeListFilter === 'conflicts' }"
-              @click="incomeListFilter = 'conflicts'"
+              :aria-pressed="incomeListFilter === 'conflicts'"
+              @click="selectListFilter('income', 'conflicts')"
             >
               {{ $t('transactions.filters.conflicts') }} ({{ openFinanceConflicts.length }})
             </button>
           </template>
+          </div>
         </div>
-
-        <!-- Month Nav -->
-        <div class="cb-month-nav">
-          <v-btn icon size="x-small" variant="text" @click="goToPrevMonth">
-            <v-icon size="16">mdi-chevron-left</v-icon>
-          </v-btn>
-          <span class="cb-month-nav__label">{{ activeMonthLabel }}</span>
-          <v-btn icon size="x-small" variant="text" @click="goToNextMonth">
-            <v-icon size="16">mdi-chevron-right</v-icon>
-          </v-btn>
-        </div>
-      </div>
+      </section>
 
       <!-- Expense Drill-Down Banner -->
       <div
@@ -140,10 +160,13 @@
       </div>
 
       <!-- AI Batch Queue (expenses only, when uncategorized exist) -->
-      <div v-if="activeTab === 'expense' && uncategorizedExpenses.length" class="cb-card" style="margin-bottom:12px">
+      <div v-if="canWriteCurrentWorkspace && activeTab === 'expense' && uncategorizedExpenses.length" class="cb-card" style="margin-bottom:12px">
         <div class="cb-card__body" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
           <div>
-            <div class="cb-card__title" style="margin-bottom:2px">{{ $t('expense.ai_queue_title') }}</div>
+            <div class="cb-card__title" style="margin-bottom:2px">
+              {{ $t('expense.ai_queue_title') }}
+              <PlanTierBadge v-if="billingSummary && !canUseAi" tier="STARTER" class="ml-2" />
+            </div>
             <div style="font-size:.8rem;color:var(--cb-ink-muted)">
               {{ $t('expense.ai_queue_summary', { total: uncategorizedExpenses.length, suggested: uncategorizedSuggestionCount }) }}
             </div>
@@ -199,6 +222,9 @@
               v-for="(item, index) in filteredMonthlyExpenses"
               :key="index"
               :expense="item"
+              :can-write="canWriteCurrentWorkspace"
+              :can-use-ai="canUseAi"
+              :show-ai-plan-badge="Boolean(billingSummary) && !canUseAi"
               :reminder-state="reminderStateFor(item)"
               :resolving-action="resolvingConflictId === item.reconciliationConflictId ? resolvingConflictAction : null"
               :ai-suggesting="aiSuggestingExpenseId === item.id"
@@ -219,21 +245,26 @@
               @select="openTransactionDetails('expense', item)"
             />
           </v-list>
+          <div v-else-if="!isLoadingExpenses && expensesLoadFailed" class="transaction-list-state" role="alert">
+            <v-icon size="32" color="var(--cb-warning)">mdi-alert-circle-outline</v-icon>
+            <p>{{ $t('transactions.list_error.expense') }}</p>
+            <v-btn size="small" variant="tonal" @click="fetchMonthlyExpenses">{{ $t('common.retry') }}</v-btn>
+          </div>
           <div v-else-if="!isLoadingExpenses" style="padding:40px 24px;text-align:center">
             <v-icon size="40" color="var(--cb-ink-disabled)" style="display:block;margin:0 auto 12px">mdi-receipt-text-outline</v-icon>
             <p style="font-family:var(--cb-font-heading);font-size:.925rem;font-weight:600;color:var(--cb-ink);margin:0 0 8px">{{ expenseEmptyMessage }}</p>
-            <v-btn size="small" class="cb-btn-primary mt-2" @click="openFormDrawer('expense')">
+            <v-btn v-if="canWriteCurrentWorkspace" size="small" class="cb-btn-primary mt-2" @click="openFormDrawer('expense')">
               <v-icon start size="14">mdi-plus</v-icon>{{ $t('expense.save') }}
             </v-btn>
           </div>
           <div v-else style="padding:40px 24px;text-align:center">
             <v-progress-circular indeterminate color="var(--cb-primary)" size="32" />
           </div>
-          <div v-if="expensePagination.total > expensePagination.limit" class="cb-tx-pagination">
+          <div v-if="!isLoadingExpenses && !expensesLoadFailed && expensePagination.total > expensePagination.limit" class="cb-tx-pagination">
             <span class="cb-tx-pagination__label">{{ expenseRangeLabel }}</span>
             <div style="display:flex;gap:2px">
-              <v-btn icon size="x-small" variant="text" :disabled="!canGoToPreviousExpensePage" @click="goToPreviousExpensePage"><v-icon>mdi-chevron-left</v-icon></v-btn>
-              <v-btn icon size="x-small" variant="text" :disabled="!canGoToNextExpensePage" @click="goToNextExpensePage"><v-icon>mdi-chevron-right</v-icon></v-btn>
+              <v-btn icon size="x-small" variant="text" :aria-label="$t('transactions.pagination.previous')" :disabled="!canGoToPreviousExpensePage" @click="goToPreviousExpensePage"><v-icon>mdi-chevron-left</v-icon></v-btn>
+              <v-btn icon size="x-small" variant="text" :aria-label="$t('transactions.pagination.next')" :disabled="!canGoToNextExpensePage" @click="goToNextExpensePage"><v-icon>mdi-chevron-right</v-icon></v-btn>
             </div>
           </div>
         </template>
@@ -245,6 +276,7 @@
               v-for="(item, index) in filteredMonthlyIncomes"
               :key="index"
               :income="item"
+              :can-write="canWriteCurrentWorkspace"
               :resolving-action="resolvingConflictId === item.reconciliationConflictId ? resolvingConflictAction : null"
               @toggle-recurring="toggleRecurring"
               @deleteIncome="deleteIncome"
@@ -254,21 +286,26 @@
               @select="openTransactionDetails('income', item)"
             />
           </v-list>
+          <div v-else-if="!isLoadingIncomes && incomesLoadFailed" class="transaction-list-state" role="alert">
+            <v-icon size="32" color="var(--cb-warning)">mdi-alert-circle-outline</v-icon>
+            <p>{{ $t('transactions.list_error.income') }}</p>
+            <v-btn size="small" variant="tonal" @click="fetchMonthlyIncomes">{{ $t('common.retry') }}</v-btn>
+          </div>
           <div v-else-if="!isLoadingIncomes" style="padding:40px 24px;text-align:center">
             <v-icon size="40" color="var(--cb-ink-disabled)" style="display:block;margin:0 auto 12px">mdi-cash-plus</v-icon>
             <p style="font-family:var(--cb-font-heading);font-size:.925rem;font-weight:600;color:var(--cb-ink);margin:0 0 8px">{{ incomeEmptyMessage }}</p>
-            <v-btn size="small" class="cb-btn-primary mt-2" @click="openFormDrawer('income')">
+            <v-btn v-if="canWriteCurrentWorkspace" size="small" class="cb-btn-primary mt-2" @click="openFormDrawer('income')">
               <v-icon start size="14">mdi-plus</v-icon>{{ $t('income.save') }}
             </v-btn>
           </div>
           <div v-else style="padding:40px 24px;text-align:center">
             <v-progress-circular indeterminate color="var(--cb-primary)" size="32" />
           </div>
-          <div v-if="incomePagination.total > incomePagination.limit" class="cb-tx-pagination">
+          <div v-if="!isLoadingIncomes && !incomesLoadFailed && incomePagination.total > incomePagination.limit" class="cb-tx-pagination">
             <span class="cb-tx-pagination__label">{{ incomeRangeLabel }}</span>
             <div style="display:flex;gap:2px">
-              <v-btn icon size="x-small" variant="text" :disabled="!canGoToPreviousIncomePage" @click="goToPreviousIncomePage"><v-icon>mdi-chevron-left</v-icon></v-btn>
-              <v-btn icon size="x-small" variant="text" :disabled="!canGoToNextIncomePage" @click="goToNextIncomePage"><v-icon>mdi-chevron-right</v-icon></v-btn>
+              <v-btn icon size="x-small" variant="text" :aria-label="$t('transactions.pagination.previous')" :disabled="!canGoToPreviousIncomePage" @click="goToPreviousIncomePage"><v-icon>mdi-chevron-left</v-icon></v-btn>
+              <v-btn icon size="x-small" variant="text" :aria-label="$t('transactions.pagination.next')" :disabled="!canGoToNextIncomePage" @click="goToNextIncomePage"><v-icon>mdi-chevron-right</v-icon></v-btn>
             </div>
           </div>
         </template>
@@ -294,7 +331,7 @@
             <h2>{{ selectedTransactionDetails.description }}</h2>
             <span class="transaction-details-panel__date">{{ formatDetailsDate(selectedTransactionDetails.date) }}</span>
           </div>
-          <v-btn icon size="small" variant="text" @click="closeTransactionDetails">
+          <v-btn icon size="small" variant="text" :aria-label="$t('common.close')" @click="closeTransactionDetails">
             <v-icon>mdi-close</v-icon>
           </v-btn>
         </div>
@@ -304,7 +341,7 @@
         </div>
 
         <div class="transaction-details-panel__actions">
-          <v-btn size="small" class="cb-btn-primary" @click="editSelectedTransaction">
+          <v-btn v-if="canWriteCurrentWorkspace" size="small" class="cb-btn-primary" @click="editSelectedTransaction">
             <v-icon start size="14">mdi-pencil-outline</v-icon>
             {{ $t('transactions.details.edit') }}
           </v-btn>
@@ -350,6 +387,7 @@
                 <strong>{{ transactionCommentsStatusLabel(selectedTransactionDetails) }}</strong>
               </div>
               <v-btn
+                v-if="canWriteCurrentWorkspace"
                 size="x-small"
                 variant="tonal"
                 color="var(--cb-primary)"
@@ -364,6 +402,7 @@
                 <strong>{{ transactionAgreementStatusLabel(selectedTransactionDetails) }}</strong>
               </div>
               <v-btn
+                v-if="canWriteCurrentWorkspace"
                 size="x-small"
                 variant="tonal"
                 color="var(--cb-primary)"
@@ -378,6 +417,7 @@
                 <strong>{{ transactionAttachmentStatusLabel(selectedTransactionDetails) }}</strong>
               </div>
               <v-btn
+                v-if="canWriteCurrentWorkspace"
                 size="x-small"
                 variant="tonal"
                 color="var(--cb-primary)"
@@ -393,7 +433,7 @@
                 <strong>{{ transactionReminderStatusLabel(selectedTransactionDetails) }}</strong>
               </div>
               <v-btn
-                v-if="transactionReminderStatus(selectedTransactionDetails) !== 'loading'"
+                v-if="canWriteCurrentWorkspace && transactionReminderStatus(selectedTransactionDetails) !== 'loading'"
                 size="x-small"
                 variant="tonal"
                 color="var(--cb-primary)"
@@ -570,6 +610,7 @@
                 <v-btn variant="tonal" color="var(--cb-accent)" :loading="isSuggestingExpenseCategory" :disabled="!canSuggestExpenseCategory" @click="suggestExpenseCategory" size="small">
                   <v-icon start size="14">mdi-brain</v-icon>{{ $t('expense.ai_suggest_category') }}
                 </v-btn>
+                <PlanTierBadge v-if="billingSummary && !canUseAi" tier="STARTER" />
                 <span v-if="expenseCategorySuggestion" class="ai-category-row__meta">
                   {{ expenseCategorySuggestionSourceLabel(expenseCategorySuggestion.source) }} · {{ Math.round((expenseCategorySuggestion.suggestedCategory?.confidence || 0) * 100) }}%
                 </span>
@@ -623,7 +664,7 @@
           <v-btn variant="text" :disabled="deleteTransactionDialog.deleting" @click="closeDeleteTransactionDialog">
             {{ $t('common.cancel') }}
           </v-btn>
-          <v-btn color="error" variant="flat" :loading="deleteTransactionDialog.deleting" @click="confirmDeleteTransaction">
+          <v-btn color="error" variant="flat" :loading="deleteTransactionDialog.deleting" :disabled="!canWriteCurrentWorkspace" @click="confirmDeleteTransaction">
             <v-icon start>mdi-delete-outline</v-icon>
             {{ $t('transactions.delete_dialog.confirm') }}
           </v-btn>
@@ -707,6 +748,7 @@ import { useUserStore } from '@/plugins/userStore'
 import PageHeader from '@/components/PageHeader.vue'
 import AlertStrip from '@/components/AlertStrip.vue'
 import DailyExpenseAnalysis from '@/components/DailyExpenseAnalysis.vue'
+import PlanTierBadge from '@/components/PlanTierBadge.vue'
 
 const toLocalISODate = (date = new Date()) => {
   const timeOffset = date.getTimezoneOffset() * 60000
@@ -821,6 +863,7 @@ export default {
     PageHeader,
     AlertStrip,
     DailyExpenseAnalysis,
+    PlanTierBadge,
   },
   data() {
     // const currentYear = new Date().getFullYear();
@@ -931,6 +974,7 @@ export default {
         deleting: false,
       },
       isLoadingTransactionSummary: false,
+      transactionSummaryLoadFailed: false,
       transactionSummaryRequestId: 0,
       incomePagination: {
         limit: 20,
@@ -944,10 +988,15 @@ export default {
       },
       isLoadingIncomes: false,
       isLoadingExpenses: false,
+      incomesLoadFailed: false,
+      expensesLoadFailed: false,
+      incomeListRequestId: 0,
+      expenseListRequestId: 0,
       isLoadingDailyConsumption: false,
       dailyConsumptionError: false,
       incomeListFilter: 'all',
       expenseListFilter: 'all',
+      hadRouteScopeFilter: false,
       isEditingIncome: false,
       editingIncomeId: null,
       isEditingExpense: false,
@@ -1005,6 +1054,9 @@ export default {
     }
   },
   computed: {
+    canWriteCurrentWorkspace() {
+      return useUserStore().canWrite
+    },
     selectedTransactionDetails() {
       return this.transactionDetailsPanel.transaction
     },
@@ -1317,7 +1369,9 @@ export default {
         if (this.$route?.name !== 'transactions') {
           return
         }
+        const previousIncomeFilter = this.incomeListFilter
         this.applyBudgetQueryFilters()
+        if (this.incomeListFilter !== previousIncomeFilter) this.resetIncomePaginationAndFetch()
         this.resetExpensePaginationAndFetch()
         this.fetchMonthlyTransactionSummary()
       },
@@ -1344,6 +1398,7 @@ export default {
   methods: {
     // --- drawer helpers ---
     openFormDrawer(mode) {
+      if (!this.canWriteCurrentWorkspace) return
       this.closeTransactionDetails()
       this.formMode = mode || 'expense'
       this.showFormDrawer = true
@@ -1365,6 +1420,7 @@ export default {
       this.transactionDetailsPanel.show = false
     },
     editSelectedTransaction() {
+      if (!this.canWriteCurrentWorkspace) return
       const transaction = this.selectedTransactionDetails
       const type = this.transactionDetailsPanel.type
       if (!transaction) return
@@ -1910,6 +1966,22 @@ export default {
         this.$router.replace({ name: 'transactions', query })
       }
     },
+    selectListFilter(kind, filter) {
+      if (kind === 'income') {
+        this.incomeListFilter = filter
+        this.resetIncomePaginationAndFetch()
+      } else {
+        this.expenseListFilter = filter
+        if (!this.hadRouteScopeFilter) this.resetExpensePaginationAndFetch()
+      }
+
+      if (!this.hadRouteScopeFilter) return
+      this.hadRouteScopeFilter = false
+      const query = { ...this.$route.query }
+      delete query.visibility
+      delete query.openFinance
+      this.$router.replace({ name: 'transactions', query })
+    },
     applyTransactionFilter(items, filter) {
       if (!Array.isArray(items)) {
         return []
@@ -1985,26 +2057,20 @@ export default {
         && routeDay.startsWith(expectedMonthPrefix)
         ? routeDay
         : null
-      if (query.openFinance === '1') {
-        this.incomeListFilter = 'open-finance'
-        this.expenseListFilter = 'open-finance'
-        return
+      const routeScopeFilter = query.openFinance === '1'
+        ? 'open-finance'
+        : normalizedVisibility === 'workspace' || normalizedVisibility === 'private'
+          ? normalizedVisibility
+          : null
+      if (routeScopeFilter) {
+        this.incomeListFilter = routeScopeFilter
+        this.expenseListFilter = routeScopeFilter
+        this.hadRouteScopeFilter = true
+      } else if (this.hadRouteScopeFilter) {
+        this.incomeListFilter = 'all'
+        this.expenseListFilter = 'all'
+        this.hadRouteScopeFilter = false
       }
-
-      if (normalizedVisibility === 'workspace') {
-        this.incomeListFilter = 'workspace'
-        this.expenseListFilter = 'workspace'
-        return
-      }
-
-      if (normalizedVisibility === 'private') {
-        this.incomeListFilter = 'private'
-        this.expenseListFilter = 'private'
-        return
-      }
-
-      this.incomeListFilter = 'all'
-      this.expenseListFilter = 'all'
     },
     clearExpenseDrillDown() {
       this.$router.replace({
@@ -2985,6 +3051,8 @@ export default {
           this.openFinanceConflicts = Array.isArray(response?.data) ? response.data : []
           this.monthlyIncomes = this.monthlyIncomes.map((income) => this.enrichIncomeWithConflict(income))
           this.monthlyExpenses = this.monthlyExpenses.map((expense) => this.enrichExpenseWithConflict(expense))
+          if (this.incomeListFilter === 'conflicts') this.resetIncomePaginationAndFetch()
+          if (this.expenseListFilter === 'conflicts') this.resetExpensePaginationAndFetch()
         })
         .catch((error) => {
           console.error('Erro ao buscar conflitos Open Finance:', error)
@@ -3011,6 +3079,7 @@ export default {
       const isExpenseTab = this.activeTab === 'expense'
       const requestId = ++this.transactionSummaryRequestId
       this.isLoadingTransactionSummary = true
+      this.transactionSummaryLoadFailed = false
       const actualSummary = FinancialReadService.fetchTransactionPeriodSummary({
         fromDate: isExpenseTab && this.routeExpenseDay ? this.routeExpenseDay : fromDate,
         toDate: isExpenseTab && this.routeExpenseDay ? this.routeExpenseDay : toDate,
@@ -3048,6 +3117,7 @@ export default {
         .catch((error) => {
           if (requestId !== this.transactionSummaryRequestId) return
           console.error('Error fetching transaction period summary:', error)
+          this.transactionSummaryLoadFailed = true
           this.monthlyTransactionSummary = { incomeAmount: 0, expenseAmount: 0, netAmount: 0 }
           this.monthlyForecastSummary = { incomeAmount: 0, expenseAmount: 0, netAmount: 0 }
         })
@@ -3093,9 +3163,16 @@ export default {
       const monthNumber = this.selectedIncomeMonth;
       const yearNumber = this.selectedIncomeYear;
       if (monthNumber !== null) {
+        const requestId = ++this.incomeListRequestId;
         this.isLoadingIncomes = true;
-        return IncomeService.fetchMonthlyIncomes(monthNumber, yearNumber, this.incomePagination)
+        this.incomesLoadFailed = false;
+        return IncomeService.fetchMonthlyIncomes(monthNumber, yearNumber, {
+          ...this.incomePagination,
+          listFilter: this.incomeListFilter,
+          conflictIds: this.openFinanceConflicts.map((conflict) => conflict.existingTransactionId).filter(Boolean),
+        })
           .then((response) => {
+            if (requestId !== this.incomeListRequestId) return;
             const page = response?.data || {}
             this.monthlyIncomes = this.normalizeCollection(page).map((income) => this.enrichIncomeWithConflict(income));
             this.incomePagination.total = Number(page.total ?? this.monthlyIncomes.length)
@@ -3103,10 +3180,13 @@ export default {
             this.incomePagination.offset = Number(page.offset ?? this.incomePagination.offset)
           })
           .catch((error) => {
+            if (requestId !== this.incomeListRequestId) return;
             console.error('Error fetching monthly incomes:', error);
+            this.incomesLoadFailed = true;
+            this.monthlyIncomes = [];
           })
           .finally(() => {
-            this.isLoadingIncomes = false;
+            if (requestId === this.incomeListRequestId) this.isLoadingIncomes = false;
           });
       }
       return Promise.resolve()
@@ -3307,6 +3387,7 @@ export default {
       this.openDeleteTransactionDialog(expense, 'expense')
     },
     openDeleteTransactionDialog(transaction, kind) {
+      if (this.canWriteCurrentWorkspace === false) return
       if (!transaction?.id) return
       this.deleteTransactionDialog = { show: true, transaction, kind, deleting: false }
     },
@@ -3315,6 +3396,7 @@ export default {
       this.deleteTransactionDialog = { show: false, transaction: null, kind: null, deleting: false }
     },
     confirmDeleteTransaction() {
+      if (this.canWriteCurrentWorkspace === false) return
       const { transaction, kind } = this.deleteTransactionDialog
       if (!transaction?.id || !kind) return
       this.deleteTransactionDialog.deleting = true
@@ -3348,7 +3430,7 @@ export default {
         return
       }
 
-      const nextExcludedState = !Boolean(transaction.excludedFromPlanning)
+      const nextExcludedState = !transaction.excludedFromPlanning
       const confirmMessage = nextExcludedState
         ? this.$t('transactionPlanning.confirmExclude')
         : this.$t('transactionPlanning.confirmRestore')
@@ -3530,27 +3612,37 @@ export default {
       const monthNumber = this.selectedExpenseMonth;
       const yearNumber = this.selectedExpenseYear;
       if (monthNumber !== null) {
+        const requestId = ++this.expenseListRequestId;
         this.isLoadingExpenses = true;
+        this.expensesLoadFailed = false;
         return ExpenseService.fetchMonthlyExpenses(monthNumber, yearNumber, {
           ...this.expensePagination,
           categoryId: this.routeExpenseCategoryId || undefined,
           uncategorized: this.routeExpenseUncategorized || undefined,
           day: this.routeExpenseDay || undefined,
           reportScope: this.routeExpenseReportScope || undefined,
+          listFilter: this.expenseListFilter,
+          accountId: this.routeExpenseAccountId || undefined,
+          category: this.routeExpenseCategory || undefined,
+          conflictIds: this.openFinanceConflicts.map((conflict) => conflict.existingTransactionId).filter(Boolean),
         })
           .then((response) => {
+            if (requestId !== this.expenseListRequestId) return;
             const page = response?.data || {}
             this.monthlyExpenses = this.normalizeCollection(page).map((expense) => this.enrichExpenseWithConflict(expense));
             this.expensePagination.total = Number(page.total ?? this.monthlyExpenses.length)
             this.expensePagination.limit = Number(page.limit ?? this.expensePagination.limit)
             this.expensePagination.offset = Number(page.offset ?? this.expensePagination.offset)
-            return this.loadSharedExpenseAgreements()
+            return this.loadSharedExpenseAgreements(requestId)
           })
           .catch((error) => {
+            if (requestId !== this.expenseListRequestId) return;
             console.error('Error fetching monthly expenses:', error);
+            this.expensesLoadFailed = true;
+            this.monthlyExpenses = [];
           })
           .finally(() => {
-            this.isLoadingExpenses = false;
+            if (requestId === this.expenseListRequestId) this.isLoadingExpenses = false;
           });
       }
       return Promise.resolve()
@@ -3583,13 +3675,14 @@ export default {
           this.isLoadingDailyConsumption = false
         })
     },
-    loadSharedExpenseAgreements() {
+    loadSharedExpenseAgreements(requestId = this.expenseListRequestId) {
       if (!this.monthlyExpenses.length) {
         return Promise.resolve()
       }
 
       return SharedExpenseAgreementService.list()
         .then((response) => {
+          if (requestId !== this.expenseListRequestId) return;
           const agreements = Array.isArray(response?.data) ? response.data : []
           const agreementsByTransaction = agreements.reduce((acc, agreement) => {
             const transactionId = agreement?.transactionId
@@ -3939,9 +4032,142 @@ export default {
 </script>
 
 <style scoped>
+.transactions-page-header :deep(.cb-summary-item__label) {
+  color: var(--cb-ink-secondary);
+}
+
+@media (max-width: 720px) {
+  .transactions-page-header {
+    display: block;
+  }
+
+  .transactions-page-header :deep(.cb-page-header__actions) {
+    flex-wrap: wrap;
+    margin-top: 12px;
+  }
+
+  .transactions-page-header :deep(.cb-page-header__strip) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .transactions-page-header :deep(.cb-summary-divider) {
+    display: none;
+  }
+
+  .transactions-page-header :deep(.cb-summary-item) {
+    min-width: 0;
+  }
+}
+
+/* Keep the current period and transaction type distinct from list scope. */
+.transaction-controls {
+  background: var(--cb-surface);
+  border: 1px solid var(--cb-border-chip);
+  border-radius: 14px;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+}
+
+.transaction-controls__primary,
+.transaction-controls__scope {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.transaction-controls__primary {
+  border-bottom: 1px solid var(--cb-border-chip);
+  padding-bottom: 12px;
+}
+
+.transaction-controls__scope {
+  justify-content: flex-start;
+  padding-top: 12px;
+}
+
+.transaction-controls__label {
+  color: var(--cb-ink-secondary);
+  font-size: 0.73rem;
+  font-weight: 750;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.transaction-controls .cb-chip {
+  min-height: 34px;
+}
+
+.transaction-controls .cb-chip:focus-visible {
+  outline: 2px solid var(--cb-primary);
+  outline-offset: 2px;
+}
+
+.transaction-list-state {
+  align-items: center;
+  color: var(--cb-ink-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 40px 24px;
+  text-align: center;
+}
+
+.transaction-list-state p {
+  margin: 0;
+  max-width: 36ch;
+}
+
+.cb-tx-pagination {
+  align-items: center;
+  border-top: 1px solid var(--cb-border);
+  color: var(--cb-ink-secondary);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between;
+  min-height: 52px;
+  padding: 8px 16px;
+}
+
+.cb-tx-pagination__label {
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+@media (max-width: 560px) {
+  .transaction-controls__primary {
+    align-items: stretch;
+  }
+
+  .transaction-controls__primary > .cb-filter-chips,
+  .transaction-controls__primary > .cb-month-nav {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .transaction-controls__primary > .cb-filter-chips .cb-chip {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .transaction-controls__scope .cb-filter-chips {
+    width: 100%;
+  }
+}
+
 /* ── Form inputs ───────────────────────── */
 .transaction-details-drawer {
   max-width: 100vw;
+}
+
+/* The fixed mobile menu trigger otherwise sits above this temporary drawer. */
+:global(body:has(.transaction-details-drawer.v-navigation-drawer--active) .mobile-nav-trigger) {
+  visibility: hidden;
 }
 
 .transaction-details-drawer :deep(.v-navigation-drawer__content) {
@@ -3968,7 +4194,7 @@ export default {
 }
 
 .transaction-details-panel__eyebrow {
-  color: var(--cb-ink-muted);
+  color: var(--cb-ink-secondary);
   display: block;
   font-size: 0.72rem;
   font-weight: 800;
@@ -3987,7 +4213,7 @@ export default {
 }
 
 .transaction-details-panel__date {
-  color: var(--cb-ink-muted);
+  color: var(--cb-ink-secondary);
   display: inline-block;
   font-size: 0.82rem;
   margin-top: 6px;
@@ -4009,7 +4235,7 @@ export default {
 }
 
 .transaction-details-section {
-  border-top: 1px solid rgba(23, 32, 51, 0.08);
+  border-top: 1px solid var(--cb-border);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -4017,7 +4243,7 @@ export default {
 }
 
 .transaction-details-section__label {
-  color: var(--cb-ink-muted);
+  color: var(--cb-ink-secondary);
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.06em;
@@ -4032,15 +4258,15 @@ export default {
 
 .transaction-details-field,
 .transaction-details-list__row {
-  background: rgba(23, 32, 51, 0.035);
-  border: 1px solid rgba(23, 32, 51, 0.06);
+  background: var(--cb-surface-soft);
+  border: 1px solid var(--cb-border);
   border-radius: 8px;
   padding: 10px;
 }
 
 .transaction-details-field span,
 .transaction-details-list__row span {
-  color: var(--cb-ink-muted);
+  color: var(--cb-ink-secondary);
   display: block;
   font-size: 0.72rem;
   font-weight: 700;
@@ -4080,7 +4306,7 @@ export default {
 }
 
 .transaction-details-note {
-  background: rgba(23, 32, 51, 0.035);
+  background: var(--cb-surface-soft);
   border-radius: 8px;
   color: var(--cb-ink-secondary);
   font-size: 0.82rem;

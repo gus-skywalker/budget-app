@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useTheme } from 'vuetify'
 import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/plugins/userStore'
 import WorkspaceSwitcher from '@/components/WorkspaceSwitcher.vue'
+import PlanTierBadge from '@/components/PlanTierBadge.vue'
+import BillingOrchestrationService, { type BillingSummaryResponse } from '@/services/BillingOrchestrationService'
+import { isSidebarRouteActive, sidebarRouteCurrentState } from '@/utils/sidebarNavigation'
 import type { RouteLocationRaw } from 'vue-router'
 
 const router = useRouter()
@@ -16,7 +19,10 @@ const showLogoutDialog = ref(false)
 const expandOnHover = ref(true)
 const isMobile = ref(false)
 const drawerOpen = ref(true)
+const billingSummary = ref<BillingSummaryResponse | null>(null)
+let billingRequestId = 0
 const sidebarWidth = computed(() => (isMobile.value ? 280 : 248))
+const closingLocked = computed(() => billingSummary.value?.capabilities?.financialClosingEnabled === false)
 
 type NavItem = {
   key: string
@@ -25,6 +31,7 @@ type NavItem = {
   to?: RouteLocationRaw
   disabled: boolean
   primary?: boolean
+  lockedTier?: 'STARTER' | 'TEAM'
 }
 
 type NavSection = {
@@ -51,6 +58,22 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('resize', checkMobile)
 })
+
+watch(() => route.fullPath, () => {
+  if (isMobile.value) drawerOpen.value = false
+})
+
+watch(() => userStore.getCurrentWorkspaceId, async (workspaceId) => {
+  const requestId = ++billingRequestId
+  billingSummary.value = null
+  if (!workspaceId) return
+  try {
+    const { data } = await BillingOrchestrationService.getBillingSummary(String(workspaceId))
+    if (requestId === billingRequestId) billingSummary.value = data
+  } catch {
+    // Do not guess plan access when billing cannot be loaded.
+  }
+}, { immediate: true })
 
 const user = computed(() => userStore.getUser)
 const userAvatar = computed(() => user.value?.avatar || '/favicon.ico')
@@ -194,7 +217,8 @@ const mainNavSections = computed<NavSection[]>(() => [
         title: t('sidebar.planning_financial_closings'),
         icon: 'mdi-table-account',
         to: { name: 'planning-financial-closings' },
-        disabled: false
+        disabled: false,
+        lockedTier: closingLocked.value ? 'TEAM' : undefined
       },
       {
         key: 'planning-scenarios',
@@ -258,7 +282,13 @@ const legalItems = computed<NavItem[]>(() => [
 function isItemActive(item: NavItem): boolean {
   if (!item.to) return false
   const target = router.resolve(item.to)
-  return target.name === route.name
+  return isSidebarRouteActive(item.key, target.name?.toString(), route.name?.toString())
+}
+
+function itemCurrentState(item: NavItem): 'page' | 'location' | undefined {
+  if (!item.to) return undefined
+  const target = router.resolve(item.to)
+  return sidebarRouteCurrentState(item.key, target.name?.toString(), route.name?.toString())
 }
 
 </script>
@@ -270,7 +300,8 @@ function isItemActive(item: NavItem): boolean {
     color="primary"
     :icon="drawerOpen ? 'mdi-close' : 'mdi-menu'"
     size="large"
-    :aria-label="$t('sidebar.open_navigation')"
+    :aria-label="$t(drawerOpen ? 'sidebar.close_navigation' : 'sidebar.open_navigation')"
+    :aria-expanded="drawerOpen"
     @click.stop="drawerOpen = !drawerOpen"
   />
 
@@ -315,7 +346,7 @@ function isItemActive(item: NavItem): boolean {
             v-for="item in section.items"
             :key="item.key"
             :disabled="isMobile"
-            :text="item.title"
+            :text="item.lockedTier ? `${item.title} · ${t('planTierBadge.requiresTeam')}` : item.title"
             location="end"
           >
             <template v-slot:activator="{ props }">
@@ -323,14 +354,21 @@ function isItemActive(item: NavItem): boolean {
                 v-bind="props"
                 :prepend-icon="item.icon"
                 :title="item.title"
+                :aria-label="item.lockedTier ? `${item.title}. ${t('planTierBadge.requiresTeam')}` : item.title"
                 :to="item.to"
                 :disabled="item.disabled"
                 :active="isItemActive(item)"
+                :aria-current="itemCurrentState(item)"
                 :class="{
                   'primary-nav-item': item.primary,
-                  'active-nav-item': isItemActive(item)
+                  'active-nav-item': isItemActive(item),
+                  'plan-locked-nav-item': Boolean(item.lockedTier)
                 }"
-              ></v-list-item>
+              >
+                <template v-if="item.lockedTier" #append>
+                  <PlanTierBadge :tier="item.lockedTier" />
+                </template>
+              </v-list-item>
             </template>
           </v-tooltip>
           <v-divider class="section-divider"></v-divider>
@@ -359,6 +397,7 @@ function isItemActive(item: NavItem): boolean {
                 :to="item.to"
                 :disabled="item.disabled"
                 :active="isItemActive(item)"
+                :aria-current="itemCurrentState(item)"
                 :class="{ 'active-nav-item': isItemActive(item) }"
               ></v-list-item>
             </template>
@@ -381,6 +420,7 @@ function isItemActive(item: NavItem): boolean {
                   :title="item.title"
                   :to="item.to"
                   :active="isItemActive(item)"
+                  :aria-current="itemCurrentState(item)"
                   :class="{ 'active-nav-item': isItemActive(item) }"
                 ></v-list-item>
               </template>
@@ -456,6 +496,18 @@ function isItemActive(item: NavItem): boolean {
     box-shadow 0.2s ease;
 }
 
+.mobile-nav-trigger:focus-visible {
+  outline: 3px solid var(--cb-ink);
+  outline-offset: 3px;
+}
+
+.app-sidebar :deep(.v-list-item:focus-visible),
+.app-sidebar :deep(.v-list:focus-visible),
+.app-sidebar :deep(.v-btn:focus-visible) {
+  outline: 3px solid var(--cb-ink);
+  outline-offset: -3px;
+}
+
 .mobile-nav-trigger--open {
   left: min(
     calc(env(safe-area-inset-left, 0px) + 220px),
@@ -505,6 +557,15 @@ function isItemActive(item: NavItem): boolean {
   padding-bottom: 4px;
 }
 
+.app-sidebar :deep(.plan-locked-nav-item .v-list-item-title) {
+  white-space: normal;
+  line-height: 1.2;
+}
+
+.app-sidebar :deep(.plan-locked-nav-item .v-list-item__append) {
+  margin-inline-start: 4px;
+}
+
 .section-divider {
   margin: 8px 14px 10px;
   opacity: 0.35;
@@ -516,6 +577,12 @@ function isItemActive(item: NavItem): boolean {
 
 .sidebar-theme-toggle {
   margin-bottom: 6px;
+}
+
+.sidebar-theme-toggle :deep(.v-selection-control__wrapper:has(input:focus-visible)) {
+  outline: 3px solid var(--cb-ink);
+  outline-offset: 3px;
+  border-radius: 999px;
 }
 
 .sidebar-section {

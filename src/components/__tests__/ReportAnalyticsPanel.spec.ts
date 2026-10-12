@@ -100,7 +100,7 @@ const flushPromises = async () => {
 
 const stubs = {
   VSelect: { props: ['modelValue', 'items'], template: '<div class="select-stub" />' },
-  VAlert: true,
+  VAlert: { template: '<div class="alert-stub"><slot /></div>' },
   VProgressCircular: true,
   VIcon: true,
   VBtn: { template: '<button><slot /></button>' },
@@ -155,6 +155,29 @@ describe('ReportAnalyticsPanel', () => {
     await flushPromises()
 
     expect(analyticsMock).toHaveBeenCalledWith(expect.any(String), expect.any(String), 'VISIBLE_TO_ACTOR')
+  })
+
+  it('does not present zero totals as real after a load failure and recovers on retry', async () => {
+    analyticsMock.mockRejectedValueOnce(new Error('temporary failure'))
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+    try {
+      const wrapper = mountPanel()
+      await flushPromises()
+
+      expect(wrapper.find('.report-analytics__hero').exists()).toBe(false)
+      expect(wrapper.find('.report-analytics__grid').exists()).toBe(false)
+      expect(wrapper.find('.alert-stub').exists()).toBe(true)
+
+      const retry = wrapper.findAll('button').find((button) => button.text().includes('reportAnalytics.retry'))
+      expect(retry).toBeDefined()
+      await retry!.trigger('click')
+      await flushPromises()
+
+      expect(wrapper.find('.report-analytics__hero').exists()).toBe(true)
+      expect(wrapper.find('.alert-stub').exists()).toBe(false)
+    } finally {
+      consoleError.mockRestore()
+    }
   })
 
   it('propagates the selected scope to analytics, drill-down and Transactions navigation', async () => {

@@ -1,5 +1,5 @@
 <template>
-  <main class="shared-with-me-page">
+  <main class="shared-with-me-page experience-page experience-page--shared">
     <header class="shared-header">
       <div>
         <span class="section-kicker">{{ t('sharedWithMe.kicker') }}</span>

@@ -90,6 +90,7 @@ export interface BillingSummaryResponse {
     advancedScenariosEnabled?: boolean
     advancedCashflowEnabled?: boolean
     advancedToolsEnabled: boolean
+    financialClosingEnabled?: boolean
   }
   checkedAt: string
 }

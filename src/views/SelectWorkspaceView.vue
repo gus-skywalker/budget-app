@@ -4,7 +4,7 @@
       <v-row justify="center">
         <v-col cols="12" md="8" lg="6">
           <v-card class="elevation-12 gradient-card">
-            <v-card-title class="d-flex align-center justify-space-between">
+            <v-card-title class="workspace-card-heading d-flex align-center justify-space-between">
               <div>
                 <h2 class="title mb-1">{{ t('workspaceSelector.title') }}</h2>
                 <p class="subtitle">{{ t('workspaceSelector.desc') }}</p>
@@ -147,6 +147,21 @@ const selectWorkspace = async (workspaceId: string) => {
 .subtitle {
   margin: 0;
   color: rgba(255, 255, 255, 0.7);
+}
+
+.workspace-card-heading {
+  gap: 12px;
+  flex-wrap: wrap;
+  white-space: normal;
+}
+
+.workspace-card-heading > div {
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+
+.workspace-card-heading .subtitle {
+  overflow-wrap: anywhere;
 }
 
 .workspace-entry {

@@ -1,14 +1,48 @@
 <template>
   <div class="financial-goal-shell">
     <div class="cb-container">
-          <div class="cb-card">
-            <div class="cb-card__header">
-              <h2 class="cb-card__title">
-                <v-icon color="var(--cb-primary)" class="mr-2">mdi-bullseye-arrow</v-icon>
-                {{ $t('financial_goals.title') }}
-              </h2>
-            </div>
+      <page-header :title="$t('financial_goals.title')" :meta="$t('financial_goals.page_intro')">
+        <template #actions>
+          <v-btn v-if="financialGoals.length && !isAddingOrEditing && canWriteGoals" class="cb-btn-primary" @click="addNewGoal">
+            <v-icon start>mdi-plus-circle-outline</v-icon>
+            {{ $t('financial_goals.new_goal') }}
+          </v-btn>
+        </template>
+      </page-header>
+          <div class="cb-card goal-main-card">
             <div class="cb-card__body">
+              <div v-if="goalsLoading" class="goal-list-state" role="status">{{ $t('financial_goals.loading') }}</div>
+              <div v-else-if="goalsLoadFailed" class="goal-list-state" role="alert">
+                <p>{{ $t('financial_goals.load_error') }}</p>
+                <v-btn variant="tonal" @click="fetchFinancialGoals">{{ $t('financial_goals.retry') }}</v-btn>
+              </div>
+              <div v-else-if="!financialGoals.length && !isAddingOrEditing" class="goal-empty-intro">
+                <v-icon size="36" color="var(--cb-primary)">mdi-bullseye-arrow</v-icon>
+                <h2>{{ $t('financial_goals.empty_title') }}</h2>
+                <p>{{ $t('financial_goals.empty_description') }}</p>
+                <v-btn v-if="canWriteGoals" class="cb-btn-primary" @click="addNewGoal">
+                  <v-icon start>mdi-plus-circle-outline</v-icon>
+                  {{ $t('financial_goals.new_goal') }}
+                </v-btn>
+                <p v-else>{{ $t('financial_goals.read_only_hint') }}</p>
+              </div>
+
+              <button
+                v-if="!isAddingOrEditing && !goalsLoading && !goalsLoadFailed"
+                type="button"
+                class="goal-ideas-toggle"
+                :aria-expanded="showGoalIdeas"
+                aria-controls="goal-ideas-content"
+                @click="showGoalIdeas = !showGoalIdeas"
+              >
+                <span>
+                  <strong>{{ $t('financial_goals.ideas_title') }}</strong>
+                  <small>{{ $t('financial_goals.ideas_description') }}</small>
+                </span>
+                <v-icon>{{ showGoalIdeas ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+              </button>
+
+              <div id="goal-ideas-content" v-show="showGoalIdeas && !isAddingOrEditing && !goalsLoading && !goalsLoadFailed" class="goal-ideas-content">
               <v-alert
                 type="info"
                 variant="tonal"
@@ -152,7 +186,8 @@
 
                       <div class="suggestion-footer">
                         <span class="suggestion-footer__text">{{ $t('financial_goals.suggested_goals_footer') }}</span>
-                        <v-btn 
+                        <v-btn
+                          v-if="canWriteGoals"
                           color="success" 
                           @click="acceptSuggestedGoal(suggestion)"
                          
@@ -163,11 +198,37 @@
                       </div>
                     </article>
                   </div>
+                  <div v-else-if="suggestionsLoadFailed" class="goal-list-state" role="alert">
+                    <p>{{ $t('financial_goals.suggestions_error') }}</p>
+                    <v-btn variant="tonal" @click="fetchSuggestions">{{ $t('financial_goals.retry') }}</v-btn>
+                  </div>
                   <div v-else-if="suggestedGoalsFetched" class="empty-state">
                     <p class="empty-message">{{ $t('financial_goals.no_suggestions') }}</p>
                   </div>
                 </div>
               </div>
+
+              <div class="goal-template-section mt-4">
+                <div class="goal-template-section__header">
+                  <h3 class="goal-template-section__title">{{ $t('financial_goals.templates_title') }}</h3>
+                  <p class="goal-template-section__subtitle">{{ $t('financial_goals.templates_subtitle') }}</p>
+                </div>
+                <div class="goal-template-grid">
+                  <button
+                    v-for="template in goalTemplates()"
+                    :key="template.key"
+                    type="button"
+                    class="goal-template-card"
+                    :disabled="!canWriteGoals"
+                    @click="startFromTemplate(template)"
+                  >
+                    <v-icon color="var(--cb-primary)" size="26">{{ template.icon }}</v-icon>
+                    <span class="goal-template-card__title">{{ template.title }}</span>
+                    <span class="goal-template-card__description">{{ template.description }}</span>
+                  </button>
+                </div>
+              </div>
+              </div><!-- goal-ideas-content -->
 
               <!-- Formulário para adicionar ou editar metas -->
               <v-form v-if="isAddingOrEditing" @submit.prevent="submitGoalForm" ref="formRef" class="goal-form">
@@ -347,140 +408,65 @@
                 <v-divider class="my-4"></v-divider>
               </v-form>
 
-              <!-- Botão para adicionar uma nova meta -->
-              <div v-if="!isAddingOrEditing" class="goal-template-section mt-4">
-                <div class="goal-template-section__header">
-                  <h3 class="goal-template-section__title">{{ $t('financial_goals.templates_title') }}</h3>
-                  <p class="goal-template-section__subtitle">{{ $t('financial_goals.templates_subtitle') }}</p>
-                </div>
-                <div class="goal-template-grid">
-                  <button
-                    v-for="template in goalTemplates()"
-                    :key="template.key"
-                    type="button"
-                    class="goal-template-card"
-                    @click="startFromTemplate(template)"
-                  >
-                    <v-icon color="var(--cb-primary)" size="26">{{ template.icon }}</v-icon>
-                    <div class="goal-template-card__title">{{ template.title }}</div>
-                    <div class="goal-template-card__description">{{ template.description }}</div>
-                  </button>
-                </div>
-              </div>
-
-              <v-btn 
-                v-if="!isAddingOrEditing" 
-                @click="addNewGoal" 
-                color="var(--cb-primary)"
-                size="large"
-                block
-              >
-                <v-icon left>mdi-plus-circle</v-icon>
-                {{ $t('financial_goals.new_goal') }}
-              </v-btn>
-
-            <!-- Lista de objetivos financeiros -->
-              <v-list v-if="financialGoals.length" class="mt-4">
-              <v-list-item v-for="goal in financialGoals" :key="goal.id" :id="`goal-${goal.id}`" class="goal-item">
-                <v-row align="center" class="w-200">
-                  <v-col>
-                    <v-list-item-title>{{ goal.name }}</v-list-item-title>
-                    <v-list-item-subtitle>
-                      {{ $t('financial_goals.target_amount') }}: ${{ goal.targetAmount }} |
-                      {{ $t('financial_goals.deadline_label') }}: {{ formatDate(goal.deadline) }}
-                    </v-list-item-subtitle>
-                    <!-- Progresso da meta -->
-                    <v-progress-linear :model-value="goal.progress" color="green" height="10"
-                      rounded></v-progress-linear>
-                    <div>{{ $t('financial_goals.progress') }}: {{ goal.progress }}%</div>
-
-                    <div class="goal-insight-grid">
-                      <div class="goal-insight-chip">
-                        <span class="goal-insight-chip__label">{{ $t('financial_goals.remaining_amount') }}</span>
-                        <span class="goal-insight-chip__value">{{ formatCurrency(goal.remainingAmount || 0) }}</span>
-                      </div>
-                      <div class="goal-insight-chip">
-                        <span class="goal-insight-chip__label">{{ $t('financial_goals.goal_months_left') }}</span>
-                        <span class="goal-insight-chip__value">{{ $t('financial_goals.months_count', { count: goal.monthsRemaining || 0 }) }}</span>
-                      </div>
-                      <div class="goal-insight-chip">
-                        <span class="goal-insight-chip__label">{{ $t('financial_goals.goal_monthly_suggestion') }}</span>
-                        <span class="goal-insight-chip__value">{{ $t('financial_goals.amount_per_month', { amount: formatCurrency(goal.suggestedContributionAmount || 0) }) }}</span>
-                      </div>
-                      <div class="goal-insight-chip" :class="paceStatusClass(goal.paceStatus)">
-                        <span class="goal-insight-chip__label">{{ $t('financial_goals.pace') }}</span>
-                        <span class="goal-insight-chip__value">{{ paceStatusLabel(goal.paceStatus) }}</span>
-                      </div>
+              <section v-if="financialGoals.length && !isAddingOrEditing && !goalsLoading && !goalsLoadFailed" class="goal-list" :aria-label="$t('financial_goals.your_goals')">
+                <h2>{{ $t('financial_goals.your_goals') }}</h2>
+                <article v-for="goal in financialGoals" :key="goal.id" :id="`goal-${goal.id}`" class="goal-item">
+                  <div class="goal-item__header">
+                    <div>
+                      <h3>{{ goal.name }}</h3>
+                      <span class="goal-item__pace" :class="paceStatusClass(goal.paceStatus)">{{ paceStatusLabel(goal.paceStatus) }}</span>
                     </div>
-
-                    <v-alert
-                      v-if="goal.insightMessage"
-                      variant="tonal"
-                      density="comfortable"
-                      class="goal-insight-alert"
-                      :type="goal.paceStatus === 'AT_RISK' ? 'warning' : 'info'"
-                    >
-                      {{ goal.insightMessage }}
-                    </v-alert>
-
-                    <div v-if="goal.plannedContributionMessage" class="goal-planned-message">
-                      {{ goal.plannedContributionMessage }}
+                    <div v-if="canWriteGoals" class="goal-item__actions">
+                      <v-btn icon variant="text" class="goal-action-btn goal-action-btn--edit" :aria-label="$t('financial_goals.edit_goal', { name: goal.name })" @click="editGoal(goal)"><v-icon>mdi-pencil</v-icon></v-btn>
+                      <v-btn icon variant="text" class="goal-action-btn goal-action-btn--delete" :aria-label="$t('financial_goals.delete_goal', { name: goal.name })" @click="deleteGoal(goal)"><v-icon>mdi-delete</v-icon></v-btn>
                     </div>
+                  </div>
 
-                    <!-- Histórico de contribuições -->
-                    <v-row v-if="goal.contributions?.length">
-                      <v-col>
-                        <h3>{{ $t('financial_goals.contribution_history') }}</h3>
-                        <v-list>
-                          <v-list-item v-for="contribution in goal.contributions" :key="contribution.id">
-                            <v-list-item-title>
-                              {{ $t('financial_goals.amount') }}: ${{ contribution.amount }}
-                            </v-list-item-title>
-                            <v-list-item-subtitle>
-                              {{ $t('financial_goals.date') }}: {{ formatDate(contribution.date) }}
-                            </v-list-item-subtitle>
-                            <v-list-item-action>
-                              <v-btn icon @click="deleteContribution(contribution.id, goal.id)">
-                                <v-icon>mdi-delete</v-icon>
-                              </v-btn>
-                            </v-list-item-action>
-                          </v-list-item>
-                        </v-list>
-                      </v-col>
-                    </v-row>
+                  <div class="goal-item__target">
+                    <div><span>{{ $t('financial_goals.target_amount') }}</span><strong>{{ formatCurrency(goal.targetAmount) }}</strong></div>
+                    <div><span>{{ $t('financial_goals.deadline_label') }}</span><strong>{{ goal.deadline ? formatDate(goal.deadline) : $t('financial_goals.no_deadline') }}</strong></div>
+                  </div>
 
-                    <!-- Adicionar contribuição -->
+                  <div class="goal-item__progress-heading">
+                    <span>{{ $t('financial_goals.progress') }}</span>
+                    <strong>{{ goal.progress != null ? `${goal.progress}%` : $t('financial_goals.not_available') }}</strong>
+                  </div>
+                  <v-progress-linear v-if="goal.progress != null" :model-value="goal.progress" :aria-label="$t('financial_goals.progress')" color="var(--cb-primary)" height="10" rounded />
+
+                  <div class="goal-insight-grid">
+                    <div v-if="goal.remainingAmount != null" class="goal-insight-chip">
+                      <span class="goal-insight-chip__label">{{ $t('financial_goals.remaining_amount') }}</span>
+                      <span class="goal-insight-chip__value">{{ formatCurrency(goal.remainingAmount || 0) }}</span>
+                    </div>
+                    <div v-if="goal.monthsRemaining != null" class="goal-insight-chip">
+                      <span class="goal-insight-chip__label">{{ $t('financial_goals.goal_months_left') }}</span>
+                      <span class="goal-insight-chip__value">{{ $t('financial_goals.months_count', { count: goal.monthsRemaining }) }}</span>
+                    </div>
+                    <div v-if="goal.suggestedContributionAmount != null" class="goal-insight-chip">
+                      <span class="goal-insight-chip__label">{{ $t('financial_goals.goal_monthly_suggestion') }}</span>
+                      <span class="goal-insight-chip__value">{{ $t('financial_goals.amount_per_month', { amount: formatCurrency(goal.suggestedContributionAmount) }) }}</span>
+                    </div>
+                  </div>
+
+                  <div v-if="goal.paceStatus === 'AT_RISK' || goal.insightMessage" class="goal-item__insight" :class="{ 'goal-item__insight--risk': goal.paceStatus === 'AT_RISK' }" role="note">
+                    <strong>{{ $t(goal.paceStatus === 'AT_RISK' ? 'financial_goals.risk_reason' : 'financial_goals.progress_context') }}</strong>
+                    <p>{{ goal.insightMessage || $t('financial_goals.risk_reason_fallback') }}</p>
+                  </div>
+                  <p v-if="goal.plannedContributionMessage" class="goal-planned-message">{{ goal.plannedContributionMessage }}</p>
+
+                  <details v-if="goal.contributions?.length" class="goal-item__details">
+                    <summary>{{ $t('financial_goals.contribution_history') }} ({{ goal.contributions.length }})</summary>
+                    <div v-for="contribution in goal.contributions" :key="contribution.id" class="goal-item__contribution">
+                      <span>{{ formatCurrency(contribution.amount) }} · {{ formatDate(contribution.date) }}</span>
+                      <v-btn v-if="canWriteGoals" icon size="small" variant="text" :aria-label="$t('financial_goals.delete_contribution', { amount: formatCurrency(contribution.amount) })" @click="deleteContribution(contribution.id, goal.id)"><v-icon>mdi-delete-outline</v-icon></v-btn>
+                    </div>
+                  </details>
+                  <details v-if="canWriteGoals" class="goal-item__details">
+                    <summary>{{ $t('financial_goals.add_contribution') }}</summary>
                     <ContributionComponent :goal="goal" @contribution-added="fetchFinancialGoals" />
-
-                  </v-col>
-                  <v-col class="d-flex justify-end">
-                    <v-btn @click="editGoal(goal)" icon variant="text" class="goal-action-btn goal-action-btn--edit">
-                      <v-icon size="15">mdi-pencil</v-icon>
-                    </v-btn>
-                    <v-btn @click="deleteGoal(goal)" icon variant="text" class="goal-action-btn goal-action-btn--delete">
-                      <v-icon size="15">mdi-delete</v-icon>
-                    </v-btn>
-                  </v-col>
-                </v-row>
-                <v-divider></v-divider>
-              </v-list-item>
-            </v-list>
-
-              <!-- Alerta para quando não houver metas -->
-              <div v-else class="empty-state">
-                <v-icon size="64" color="var(--cb-primary)" class="mb-4">mdi-bullseye-arrow</v-icon>
-                <p class="empty-message">{{ $t('financial_goals.no_goals') }}</p>
-                <p class="empty-submessage">{{ $t('financial_goals.empty_state_tip') }}</p>
-                <v-btn
-                  variant="outlined"
-                  color="var(--cb-primary)"
-                  class="mt-4"
-                  @click="goToConnections"
-                >
-                  <v-icon left>mdi-bank-outline</v-icon>
-                  {{ $t('financial_goals.tip_cta') }}
-                </v-btn>
-              </div>
+                  </details>
+                </article>
+              </section>
             </div>
           </div>
     </div>
@@ -502,6 +488,7 @@
 </template>
 
 <script>
+import PageHeader from '@/components/PageHeader.vue';
 import FinancialGoalService from '@/services/FinancialGoalService';
 import ContributionComponent from '@/components/Contribution.vue';
 import DataService from '@/services/DataService';
@@ -511,13 +498,19 @@ import { useUserStore } from '@/plugins/userStore';
 
 export default {
   components: {
+    PageHeader,
     ContributionComponent,
   },
   data() {
     return {
       financialGoals: [],
+      goalsLoading: true,
+      goalsLoadFailed: false,
+      goalListRequestId: 0,
+      showGoalIdeas: false,
       suggestedGoals: [],
       suggestedGoalsFetched: false, // Para controlar a exibição do alerta de ausência de sugestões
+      suggestionsLoadFailed: false,
       isAddingOrEditing: false,
       isEditing: false,
       goalForm: {
@@ -548,6 +541,16 @@ export default {
     };
   },
   watch: {
+    currentWorkspaceId() {
+      this.goalListRequestId++;
+      this.financialGoals = [];
+      this.suggestedGoals = [];
+      this.suggestedGoalsFetched = false;
+      this.monthOverview = { totalIncome: 0, totalExpense: 0 };
+      this.fetchFinancialGoals();
+      this.fetchMonthOverview();
+      this.loadBillingCapabilities();
+    },
     '$i18n.locale'(newLocale) {
       if (newLocale && newLocale !== this.selectedLanguage) {
         this.selectedLanguage = newLocale;
@@ -559,6 +562,9 @@ export default {
     },
   },
   computed: {
+    canWriteGoals() {
+      return useUserStore().canWrite;
+    },
     currentWorkspaceId() {
       const userStore = useUserStore();
       return userStore.getCurrentWorkspaceId || userStore.getPreferredWorkspaceId || userStore.getWorkspaces?.[0]?.workspaceId || '';
@@ -612,6 +618,7 @@ export default {
       return !value || value >= today || this.$t('validation.future_date');
     },
     addNewGoal() {
+      if (!this.canWriteGoals) return;
       this.isAddingOrEditing = true;
       this.isEditing = false;
       this.goalCategorySuggestion = null;
@@ -690,6 +697,7 @@ export default {
       ];
     },
     startFromTemplate(template) {
+      if (!this.canWriteGoals) return;
       this.addNewGoal();
       const resolvedCategory = this.resolveTemplateCategory(template.form.category);
       this.goalForm = {
@@ -699,6 +707,7 @@ export default {
       };
     },
     editGoal(goal) {
+      if (!this.canWriteGoals) return;
       this.isAddingOrEditing = true;
       this.isEditing = true;
       this.editedGoalId = goal.id;
@@ -729,6 +738,7 @@ export default {
       };
     },
     submitGoalForm() {
+      if (!this.canWriteGoals) return;
       const isFormValid = this.$refs.formRef.validate();
       if (!isFormValid) return;
 
@@ -753,6 +763,7 @@ export default {
       }
     },
     deleteGoal(goal) {
+      if (!this.canWriteGoals) return;
       if (confirm(this.$t('financial_goals.confirm_delete_goal'))) {
         FinancialGoalService.deleteFinancialGoal(goal.id)
           .then(() => {
@@ -764,6 +775,7 @@ export default {
       }
     },
     deleteContribution(contributionId, goalId) {
+      if (!this.canWriteGoals) return;
       if (confirm(this.$t('financial_goals.confirm_delete_contribution'))) {
         FinancialGoalService.deleteContribution(goalId, contributionId)
           .then(() => {
@@ -775,6 +787,7 @@ export default {
       }
     },
     addContribution(goalId, contributionData) {
+      if (!this.canWriteGoals) return;
       FinancialGoalService.addContribution(goalId, contributionData)
         .then(() => {
           this.fetchFinancialGoals();
@@ -784,6 +797,7 @@ export default {
         });
     },
     acceptSuggestedGoal(suggestion) {
+      if (!this.canWriteGoals) return;
       const payload = {
         name: suggestion.name,
         category: suggestion.category,
@@ -813,13 +827,24 @@ export default {
         });
     },
     fetchFinancialGoals() {
-      FinancialGoalService.fetchFinancialGoals()
+      const requestId = ++this.goalListRequestId;
+      this.goalsLoading = true;
+      this.goalsLoadFailed = false;
+      return FinancialGoalService.fetchFinancialGoals()
         .then((response) => {
+          if (requestId !== this.goalListRequestId) return;
+          if (!Array.isArray(response?.data)) throw new Error('Unexpected financial goals response');
           this.financialGoals = response.data;
           this.checkGoalDeadlines();
         })
         .catch((error) => {
+          if (requestId !== this.goalListRequestId) return;
           console.error('Erro ao buscar metas financeiras:', error);
+          this.goalsLoadFailed = true;
+          this.financialGoals = [];
+        })
+        .finally(() => {
+          if (requestId === this.goalListRequestId) this.goalsLoading = false;
         });
     },
     fetchMonthOverview() {
@@ -1117,6 +1142,7 @@ export default {
     },
     fetchSuggestions() {
       const overview = this.getCurrentMonthOverview();
+      this.suggestionsLoadFailed = false;
       if (!this.canFetchSuggestions) {
         this.suggestedGoals = [];
         this.suggestedGoalsFetched = true;
@@ -1124,12 +1150,14 @@ export default {
       }
       FinancialGoalService.suggestGoalsBasedOnIncome(overview)
         .then((response) => {
-          this.suggestedGoals = response.data;
+          this.suggestedGoals = Array.isArray(response?.data) ? response.data : [];
           this.suggestedGoalsFetched = this.suggestedGoals.length === 0;
         })
         .catch((error) => {
           console.error('Erro ao buscar metas sugeridas:', error);
-          this.suggestedGoalsFetched = true;
+          this.suggestedGoals = [];
+          this.suggestedGoalsFetched = false;
+          this.suggestionsLoadFailed = true;
         });
     },
     formatDate(dateStr) {
@@ -1247,6 +1275,73 @@ export default {
   padding: 0;
 }
 
+.goal-main-card {
+  margin-top: 16px;
+}
+
+.goal-list-state,
+.goal-empty-intro {
+  color: var(--cb-ink-secondary);
+  padding: 24px;
+}
+
+.goal-empty-intro {
+  background: var(--cb-surface-soft);
+  border: 1px solid var(--cb-border);
+  border-radius: 12px;
+}
+
+.goal-empty-intro h2,
+.goal-list h2 {
+  color: var(--cb-ink);
+  font-family: var(--cb-font-heading);
+  font-size: 1.15rem;
+  margin: 8px 0;
+}
+
+.goal-empty-intro p {
+  line-height: 1.5;
+  max-width: 60ch;
+  margin-bottom: 16px;
+}
+
+.goal-ideas-toggle {
+  align-items: center;
+  background: var(--cb-surface);
+  border: 1px solid var(--cb-border);
+  border-radius: 12px;
+  color: var(--cb-ink);
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 14px 16px;
+  text-align: left;
+  width: 100%;
+}
+
+.goal-ideas-toggle strong,
+.goal-ideas-toggle small {
+  display: block;
+}
+
+.goal-ideas-toggle small {
+  color: var(--cb-ink-secondary);
+  margin-top: 3px;
+}
+
+.goal-ideas-toggle:focus-visible,
+.goal-template-card:focus-visible,
+.goal-item__details summary:focus-visible {
+  outline: 3px solid var(--cb-primary);
+  outline-offset: 3px;
+}
+
+.goal-ideas-content {
+  margin-top: 16px;
+}
+
 .suggestions-helper {
   margin: 0 0 16px;
   color: var(--cb-ink-muted);
@@ -1272,16 +1367,122 @@ export default {
 /* ── Goal items ───────────────────────────────────────────────────────────── */
 .goal-item {
   padding: 20px;
-  background: color-mix(in srgb, var(--cb-primary) 4%, transparent);
+  background: var(--cb-surface-soft);
   border-radius: 12px;
   margin-bottom: 16px;
-  border: 1px solid color-mix(in srgb, var(--cb-primary) 10%, transparent);
-  transition: all 0.3s ease;
+  border: 1px solid var(--cb-border);
 }
 
-.goal-item:hover {
-  background: color-mix(in srgb, var(--cb-primary) 7%, transparent);
-  border-color: color-mix(in srgb, var(--cb-primary) 18%, transparent);
+.goal-list {
+  margin-top: 24px;
+}
+
+.goal-list h2 {
+  margin-bottom: 14px;
+}
+
+.goal-item__header,
+.goal-item__target,
+.goal-item__progress-heading,
+.goal-item__contribution {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.goal-item__header h3 {
+  color: var(--cb-ink);
+  font-family: var(--cb-font-heading);
+  font-size: 1.05rem;
+  margin: 0 0 6px;
+  overflow-wrap: anywhere;
+}
+
+.goal-item__pace {
+  border: 1px solid var(--cb-border);
+  border-radius: 999px;
+  color: var(--cb-ink-secondary);
+  display: inline-block;
+  font-size: .75rem;
+  font-weight: 700;
+  padding: 3px 8px;
+}
+
+.goal-item__actions {
+  display: flex;
+  gap: 4px;
+}
+
+.goal-item__target {
+  background: var(--cb-surface);
+  border: 1px solid var(--cb-border);
+  border-radius: 10px;
+  margin: 16px 0;
+  padding: 12px;
+}
+
+.goal-item__target > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.goal-item__target span,
+.goal-item__progress-heading span {
+  color: var(--cb-ink-secondary);
+  font-size: .78rem;
+}
+
+.goal-item__target strong,
+.goal-item__progress-heading strong {
+  color: var(--cb-ink);
+  font-size: .95rem;
+}
+
+.goal-item__progress-heading {
+  margin-bottom: 8px;
+}
+
+.goal-item__insight {
+  background: var(--cb-surface);
+  border: 1px solid var(--cb-border);
+  border-radius: 10px;
+  color: var(--cb-ink-secondary);
+  margin-top: 14px;
+  padding: 12px;
+}
+
+.goal-item__insight--risk {
+  border-color: var(--cb-warning);
+}
+
+.goal-item__insight strong {
+  color: var(--cb-ink);
+}
+
+.goal-item__insight p {
+  line-height: 1.5;
+  margin: 5px 0 0;
+}
+
+.goal-item__details {
+  border-top: 1px solid var(--cb-border);
+  margin-top: 14px;
+  padding-top: 12px;
+}
+
+.goal-item__details summary {
+  color: var(--cb-ink);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.goal-item__contribution {
+  color: var(--cb-ink-secondary);
+  padding: 10px 0;
 }
 
 .goal-item .goal-action-btn {
@@ -1290,17 +1491,13 @@ export default {
   height: 36px !important;
   padding: 0 !important;
   border-radius: 6px !important;
-  color: rgba(15, 23, 42, 0.46) !important;
+  color: var(--cb-ink-secondary) !important;
   transition: color 0.18s ease, background-color 0.18s ease;
 }
 
 .goal-item .goal-action-btn .v-icon { font-size: 18px !important; }
-.goal-item .goal-action-btn--edit .v-icon  { color: rgba(59, 130, 246, 0.74) !important; }
-.goal-item .goal-action-btn--delete .v-icon { color: rgba(239, 68, 68, 0.74) !important; }
-.goal-item .goal-action-btn:hover { background-color: rgba(15, 23, 42, 0.04) !important; }
-.goal-item .goal-action-btn--edit:hover  .v-icon { color: rgba(59, 130, 246, 0.92) !important; }
-.goal-item .goal-action-btn--delete:hover .v-icon { color: rgba(239, 68, 68, 0.95) !important; }
-.goal-item .goal-action-btn--delete:hover { background-color: rgba(239, 68, 68, 0.08) !important; }
+.goal-item .goal-action-btn--delete .v-icon { color: var(--cb-warning) !important; }
+.goal-item .goal-action-btn:hover { background-color: var(--cb-surface) !important; }
 
 /* ── Progress ─────────────────────────────────────────────────────────────── */
 .progress-text {
@@ -1328,7 +1525,7 @@ export default {
   border: 1px solid var(--cb-border-card);
 }
 
-.goal-insight-chip__label { font-size: 0.77rem; color: var(--cb-ink-muted); }
+.goal-insight-chip__label { font-size: 0.77rem; color: var(--cb-ink-secondary); }
 .goal-insight-chip__value { font-size: 0.92rem; font-weight: 700; color: var(--cb-ink); }
 
 .goal-insight-chip--ahead { background: rgba(32, 95, 99, 0.08); border-color: rgba(32, 95, 99, 0.18); }
@@ -1341,7 +1538,7 @@ export default {
 .goal-planned-message {
   margin-top: 10px;
   font-size: 0.92rem;
-  color: var(--cb-ink-muted);
+  color: var(--cb-ink-secondary);
 }
 
 /* ── Tip banner ───────────────────────────────────────────────────────────── */

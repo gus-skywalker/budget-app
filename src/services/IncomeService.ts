@@ -1,5 +1,6 @@
 import axiosInterceptor from './axiosInterceptor'
 import FinancialReadService, { getMonthDateRange } from './FinancialReadService'
+import { matchesTransactionListScope } from '@/utils/transactionListScope'
 import {
   normalizeTransactionVisibilityScope,
   toTransactionVisibilityScopeRequest,
@@ -91,7 +92,7 @@ export default {
   delete(id: string): Promise<any> {
     return FinancialReadService.deleteTransaction(id)
   },
-  fetchMonthlyIncomes(month: number, year: number, pagination: { limit?: number; offset?: number } = {}): Promise<any> {
+  fetchMonthlyIncomes(month: number, year: number, pagination: { limit?: number; offset?: number; listFilter?: string; conflictIds?: string[] } = {}): Promise<any> {
     const { fromDate, toDate } = getMonthDateRange(month, year)
 
     return FinancialReadService.fetchTransactionsByDirection({
@@ -100,6 +101,7 @@ export default {
       toDate,
       periodMonth: month,
       periodYear: year,
+      clientFilter: (transaction) => matchesTransactionListScope(transaction, pagination.listFilter, pagination.conflictIds),
       limit: pagination.limit,
       offset: pagination.offset,
     }).then((page) => ({

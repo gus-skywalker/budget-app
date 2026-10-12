@@ -1,102 +1,92 @@
 <template>
-  <div class="cb-page">
+  <div class="cb-page experience-page experience-page--dashboard">
     <div class="cb-container">
 
       <!-- Page Header with Summary Strip -->
       <page-header
         :title="t('overview.title')"
-        :period="`${monthName} ${year}`"
-        :summary-items="dashboardSummaryItems"
+        :period="localizedPeriod"
       />
 
-      <!-- Alert: Open Finance conflicts -->
-      <alert-strip
-        v-if="openFinanceConflictCount > 0"
-        variant="warning"
-        :title="$t('overview.open_finance_conflicts', { count: openFinanceConflictCount })"
-      />
-
-      <!-- Open Finance observability strip -->
-      <div v-if="openFinanceObservabilitySummary" class="cb-of-strip">
-        <div class="overview-pill">
-          <span class="overview-pill__label">{{ $t('overview.open_finance_label') }}</span>
-          <span class="overview-pill__value">{{ $t('overview.open_finance_accounts', { count: openFinanceObservabilitySummary.connectedAccounts }) }}</span>
+      <section class="dashboard-hero" aria-labelledby="dashboard-hero-title" :aria-busy="isOverviewPending">
+        <div class="dashboard-hero__content">
+          <p class="dashboard-hero__eyebrow">{{ $t('overview.guided_month_label') }}</p>
+          <h2 id="dashboard-hero-title">{{ $t(heroTitleKey) }}</h2>
+          <p class="dashboard-hero__description">{{ $t(heroDescriptionKey) }}</p>
+          <p v-if="dashboardLoadFailed" class="dashboard-hero__source" role="alert">{{ $t('overview.guided_load_error') }}</p>
+          <p v-else-if="budgetComparisonState === 'error' && !hasMonthlyActivity" class="dashboard-hero__source" role="alert">{{ $t('overview.guided_plan_error_description') }}</p>
+          <p v-else-if="!isOverviewPending" class="dashboard-hero__source">{{ $t(heroSourceKey, { period: localizedPeriod }) }}</p>
         </div>
-        <div class="overview-pill">
-          <span class="overview-pill__label">{{ $t('overview.imported_label') }}</span>
-          <span class="overview-pill__value">{{ openFinanceObservabilitySummary.importedTransactions }}</span>
+        <div class="dashboard-hero__aside">
+          <template v-if="heroAmount !== null && !overviewUnavailable">
+            <span>{{ $t(heroAmountLabelKey) }}</span>
+            <strong>{{ formatCurrency(heroAmount) }}</strong>
+          </template>
+          <v-btn v-if="overviewUnavailable" class="dashboard-hero__action" @click="refreshDashboard()">{{ $t('overview.guided_retry') }}</v-btn>
+          <v-btn v-else-if="!isOverviewPending" class="dashboard-hero__action" :to="primaryAction.to">{{ $t(primaryAction.labelKey) }}</v-btn>
         </div>
-        <div class="overview-pill" :class="{ 'overview-pill--warning': openFinanceObservabilitySummary.accountsAtRateLimitToday > 0 }">
-          <span class="overview-pill__label">{{ $t('overview.rate_limit_today') }}</span>
-          <span class="overview-pill__value">{{ openFinanceObservabilitySummary.accountsAtRateLimitToday }}</span>
-        </div>
-        <div v-if="openFinanceObservabilitySummary.lastSyncTrigger" class="overview-pill">
-          <span class="overview-pill__label">{{ $t('overview.last_sync') }}</span>
-          <span class="overview-pill__value">
-            {{ openFinanceObservabilitySummary.lastSyncTrigger === 'AUTOMATIC' ? $t('overview.sync_automatic') : $t('overview.sync_manual') }}
-          </span>
-        </div>
-      </div>
-
-      <!-- Snapshot Cards -->
-      <section class="section-block">
-        <v-row class="overview-cards">
-          <v-col cols="12" md="3">
-            <div class="stat-card savings-card stat-card--clickable" @click="openAccountDrillDown()">
-              <div class="stat-icon"><v-icon size="40" color="white">mdi-piggy-bank</v-icon></div>
-              <div class="stat-content">
-                <div class="stat-label">{{ $t('overview.snapshot_balance') }}</div>
-                <div class="stat-value">{{ formatCurrency(dashboardSummary.totalBalance) }}</div>
-              </div>
-            </div>
-          </v-col>
-          <v-col cols="12" md="3">
-            <div class="stat-card income-card">
-              <div class="stat-icon"><v-icon size="40" color="white">mdi-trending-up</v-icon></div>
-              <div class="stat-content">
-                <div class="stat-label">{{ $t('overview.snapshot_income') }}</div>
-                <div class="stat-value">{{ formatCurrency(dashboardSummary.monthlyIncome) }}</div>
-              </div>
-            </div>
-          </v-col>
-          <v-col cols="12" md="3">
-            <div class="stat-card expense-card stat-card--clickable" @click="openCategoryDrillDown()">
-              <div class="stat-icon"><v-icon size="40" color="white">mdi-trending-down</v-icon></div>
-              <div class="stat-content">
-                <div class="stat-label">{{ $t('overview.snapshot_expenses') }}</div>
-                <div class="stat-value">{{ formatCurrency(dashboardSummary.monthlyExpenses) }}</div>
-              </div>
-            </div>
-          </v-col>
-          <v-col cols="12" md="3">
-            <div class="stat-card cashflow-card">
-              <div class="stat-icon"><v-icon size="40" color="white">mdi-chart-areaspline</v-icon></div>
-              <div class="stat-content">
-                <div class="stat-label">{{ $t('overview.snapshot_net') }}</div>
-                <div class="stat-value">{{ formatCurrency(netMonthlyCashflow) }}</div>
-              </div>
-            </div>
-          </v-col>
-          <v-col cols="12" md="3">
-            <div class="stat-card cashflow-card">
-              <div class="stat-icon"><v-icon size="40" color="white">mdi-calendar-clock</v-icon></div>
-              <div class="stat-content">
-                <div class="stat-label">{{ $t('overview.monthly_forecast_net') }}</div>
-                <div class="stat-value">{{ formatCurrency(monthlyForecastCashflow) }}</div>
-              </div>
-            </div>
-          </v-col>
-        </v-row>
       </section>
+
+      <section v-if="!dashboardLoadFailed && (openFinanceConflictCount > 0 || goalsAtRisk.length || cashflowDecisionData?.decisionStatus === 'ACTION_NEEDED')" class="dashboard-attention" aria-labelledby="dashboard-attention-title">
+        <h2 id="dashboard-attention-title">{{ $t('overview.guided_attention_title') }}</h2>
+        <p v-if="openFinanceConflictCount > 0">{{ $t('overview.open_finance_conflicts', { count: openFinanceConflictCount }) }}</p>
+        <p v-if="goalsAtRisk.length">{{ $t('overview.goals_risk_signal', { count: goalsAtRisk.length }) }} <router-link to="/planning/goals">{{ $t('overview.view_goals') }}</router-link></p>
+        <p v-if="cashflowDecisionData?.decisionStatus === 'ACTION_NEEDED'">{{ cashflowDecisionSummary ? localizeKnownCashflowText(cashflowDecisionSummary) : $t('overview.guided_cashflow_attention') }} <router-link to="/cashflow">{{ $t('overview.view_cashflow') }}</router-link></p>
+      </section>
+
+      <section class="dashboard-month" aria-labelledby="dashboard-month-title">
+        <div class="section-header"><h2 id="dashboard-month-title" class="section-title">{{ $t('overview.guided_month_details') }}</h2></div>
+        <p v-if="!hasMonthlyActivity && !dashboardLoadFailed" class="dashboard-month__note">{{ $t('overview.guided_no_activity_note') }}</p>
+        <div v-if="!dashboardLoadFailed" class="dashboard-month__grid">
+          <button type="button" class="dashboard-month__metric" @click="openAccountDrillDown()">
+            <span>{{ $t('overview.snapshot_balance') }}</span><strong>{{ formatCurrency(dashboardSummary.totalBalance) }}</strong>
+            <small>{{ $t('overview.guided_accounts_source') }}</small>
+          </button>
+          <div class="dashboard-month__metric"><span>{{ $t('overview.snapshot_income') }}</span><strong>{{ formatCurrency(dashboardSummary.monthlyIncome) }}</strong><small>{{ $t('overview.guided_recorded_source') }}</small></div>
+          <button type="button" class="dashboard-month__metric" @click="openCategoryDrillDown()"><span>{{ $t('overview.snapshot_expenses') }}</span><strong>{{ formatCurrency(dashboardSummary.monthlyExpenses) }}</strong><small>{{ $t('overview.guided_recorded_source') }}</small></button>
+          <div class="dashboard-month__metric"><span>{{ $t('overview.snapshot_net') }}</span><strong>{{ formatCurrency(netMonthlyCashflow) }}</strong><small>{{ $t('overview.guided_recorded_source') }}</small></div>
+          <div class="dashboard-month__metric"><span>{{ $t('overview.monthly_forecast_net') }}</span><strong>{{ formatCurrency(monthlyForecastCashflow) }}</strong><small>{{ $t('overview.guided_forecast_source') }}</small></div>
+        </div>
+      </section>
+
+      <section class="dashboard-comparison" aria-labelledby="dashboard-comparison-title">
+        <h2 id="dashboard-comparison-title">{{ $t('overview.comparison_title') }}</h2>
+        <p v-if="budgetComparisonLoading">{{ $t('overview.comparison_loading') }}</p>
+        <p v-else-if="budgetComparisonState === 'error'" role="alert">{{ $t('overview.guided_comparison_error') }}</p>
+        <p v-else-if="budgetComparisonState === 'no-budget'">{{ $t('overview.comparison_no_budget') }} <router-link to="/planning/budget">{{ $t('overview.guided_create_plan') }}</router-link></p>
+        <template v-else-if="budgetComparison">
+          <div class="dashboard-comparison__values">
+            <div><span>{{ $t('overview.comparison_planned_net') }}</span><strong>{{ formatCurrency(budgetComparison.summary.plannedNet) }}</strong><small>{{ $t('overview.guided_plan_source') }}</small></div>
+            <div><span>{{ $t('overview.comparison_actual_net') }}</span><strong>{{ formatCurrency(budgetComparison.summary.actualNet) }}</strong><small>{{ $t('overview.guided_recorded_source') }}</small></div>
+            <div v-if="hasComparisonActivity"><span>{{ $t('overview.comparison_difference') }}</span><strong>{{ formatCurrency(budgetComparison.summary.netDelta) }}</strong><small>{{ $t('overview.guided_comparison_source') }}</small></div>
+          </div>
+          <p v-if="!hasComparisonActivity" class="dashboard-month__note">{{ $t('overview.guided_plan_without_activity') }}</p>
+          <p v-else>{{ comparisonInsightText }}</p>
+          <router-link to="/planning/budget">{{ $t('overview.guided_review_plan') }}</router-link>
+        </template>
+      </section>
+
+      <details class="dashboard-explore">
+        <summary>{{ $t('overview.guided_explore_title') }}</summary>
+
+      <!-- Open Finance diagnostics remain available without defining the month. -->
+      <div v-if="openFinanceObservabilitySummary" class="cb-of-strip">
+        <div class="overview-pill"><span class="overview-pill__label">{{ $t('overview.open_finance_label') }}</span><span class="overview-pill__value">{{ $t('overview.open_finance_accounts', { count: openFinanceObservabilitySummary.connectedAccounts }) }}</span></div>
+        <div class="overview-pill"><span class="overview-pill__label">{{ $t('overview.imported_label') }}</span><span class="overview-pill__value">{{ openFinanceObservabilitySummary.importedTransactions }}</span></div>
+        <div class="overview-pill" :class="{ 'overview-pill--warning': openFinanceObservabilitySummary.accountsAtRateLimitToday > 0 }"><span class="overview-pill__label">{{ $t('overview.rate_limit_today') }}</span><span class="overview-pill__value">{{ openFinanceObservabilitySummary.accountsAtRateLimitToday }}</span></div>
+        <div v-if="openFinanceObservabilitySummary.lastSyncTrigger" class="overview-pill"><span class="overview-pill__label">{{ $t('overview.last_sync') }}</span><span class="overview-pill__value">{{ openFinanceObservabilitySummary.lastSyncTrigger === 'AUTOMATIC' ? $t('overview.sync_automatic') : $t('overview.sync_manual') }}</span></div>
+      </div>
 
       <!-- Trends Chart -->
       <section class="section-block">
-        <div class="section-header cb-collapsible-header" style="cursor:pointer" @click="showTrendsChart = !showTrendsChart">
+        <div class="section-header">
           <h2 class="section-title">
-            <v-icon color="var(--cb-primary)" size="18" class="mr-1">mdi-chart-line</v-icon>
-            {{ $t('trends.title') }}
+            <button type="button" class="dashboard-trends-toggle" :aria-expanded="showTrendsChart" @click="toggleTrendsChart">
+              <v-icon color="var(--cb-primary)" size="18" class="mr-1">mdi-chart-line</v-icon>
+              {{ $t('trends.title') }}
+              <v-icon size="20" color="var(--cb-ink-muted)">{{ showTrendsChart ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+            </button>
           </h2>
-          <v-icon size="20" color="var(--cb-ink-muted)">{{ showTrendsChart ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
         </div>
         <div v-if="showTrendsChart" style="padding-top:12px">
           <v-row align="center" class="filters-row">
@@ -296,6 +286,9 @@
             <p>{{ $t('overview.comparison_no_budget') }}</p>
           </div>
         </template>
+        <div v-else-if="budgetComparisonState === 'error'" class="projection-placeholder" role="alert">
+          <p>{{ $t('overview.guided_comparison_error') }}</p>
+        </div>
         <template v-else-if="budgetComparison">
           <div class="projection-grid">
             <div class="projection-card">
@@ -306,19 +299,19 @@
               <div class="projection-label">{{ $t('overview.comparison_actual_net') }}</div>
               <div class="projection-value">{{ formatCurrency(budgetComparison.summary.actualNet) }}</div>
             </div>
-            <div class="projection-card">
+            <div v-if="hasComparisonActivity" class="projection-card">
               <div class="projection-label">{{ $t('overview.comparison_difference') }}</div>
               <div class="projection-value" :class="budgetComparison.summary.netDelta < 0 ? 'delta-negative' : 'delta-positive'">
                 {{ formatCurrency(budgetComparison.summary.netDelta) }}
               </div>
             </div>
           </div>
-          <div class="insight-pill mt-4">
+          <div v-if="hasComparisonActivity" class="insight-pill mt-4">
             <v-icon size="18" :color="budgetComparison.summary.netDelta < 0 ? 'var(--cb-risk)' : 'var(--cb-positive)'">mdi-information-outline</v-icon>
             <span>{{ comparisonInsightText }}</span>
           </div>
           <div v-if="!hasComparisonActivity" class="projection-placeholder mt-4">
-            <p>{{ $t('overview.comparison_no_activity') }}</p>
+            <p>{{ $t('overview.guided_plan_without_activity') }}</p>
           </div>
           <div v-else class="comparison-table-wrap mt-4">
             <v-table density="comfortable">
@@ -368,9 +361,9 @@
             </div>
             <div class="cb-card__body">
               <div v-if="topCategoriesDisplay.length" class="categories-list">
-                <div v-for="category in topCategoriesDisplay" :key="category" class="category-row category-row--clickable" @click="openCategoryDrillDown(category)">
+                <div v-for="category in topCategoriesDisplay" :key="category" class="category-row">
                   <v-icon size="18" color="var(--cb-primary)">mdi-tag-outline</v-icon>
-                  <span>{{ category }}</span>
+                  <button type="button" class="dashboard-category-link" @click="openCategoryDrillDown(category)">{{ category }}</button>
                   <v-btn icon size="x-small" variant="text" @click.stop="openExpenseReport(category)">
                     <v-icon size="18" color="var(--cb-primary)">mdi-file-chart-outline</v-icon>
                   </v-btn>
@@ -420,7 +413,7 @@
         <div v-else-if="hasRuleBasedInsights" class="insights-grid">
           <div v-for="insight in financialInsights" :key="`${insight.type}-${insight.message}`" class="insight-pill">
             <v-icon size="18" :color="insightColor(insight.type)">{{ insightIcon(insight.type) }}</v-icon>
-            <span :class="insightMessageClass(insight.type)">{{ insight.message }}</span>
+            <span :class="insightMessageClass(insight.type)">{{ financialInsightMessage(insight) }}</span>
           </div>
         </div>
         <div v-else class="projection-placeholder">
@@ -470,7 +463,7 @@
         <div v-else class="projection-placeholder">
           <p>{{ $t('overview.approved_decisions_empty') }}</p>
         </div>
-        <div class="insight-pill mt-4">
+        <div v-if="approvedDecisionCards.length" class="insight-pill mt-4">
           <v-icon size="18" color="var(--cb-accent)">mdi-chart-line</v-icon>
           <span>{{ approvedImpactSummary }}</span>
         </div>
@@ -549,7 +542,7 @@
           <p>{{ $t('overview.projection_placeholder') }}</p>
         </div>
       </section>
-
+      </details>
     </div><!-- end cb-container -->
 
     <!-- Drill-down dialog -->
@@ -621,7 +614,6 @@ import { resolveAnyWorkspaceContext } from '@/services/BillingWorkspaceContext'
 import { useUserStore } from '@/plugins/userStore'
 import { useI18n } from 'vue-i18n'
 import PageHeader from '@/components/PageHeader.vue'
-import AlertStrip from '@/components/AlertStrip.vue'
 import 'chartjs-adapter-moment'
 
 Chart.register(...registerables)
@@ -663,9 +655,61 @@ export default {
   },
   components: {
     PageHeader,
-    AlertStrip,
   },
   computed: {
+    canWriteCurrentWorkspace() {
+      return useUserStore().canWrite
+    },
+    isOverviewPending() {
+      return !this.dashboardLoadFailed && (this.dashboardLoading || (!this.hasMonthlyActivity && (this.budgetComparisonLoading || this.budgetComparisonState === 'idle')))
+    },
+    overviewUnavailable() {
+      return this.dashboardLoadFailed || (!this.hasMonthlyActivity && this.budgetComparisonState === 'error')
+    },
+    localizedPeriod() {
+      return new Intl.DateTimeFormat(this.getLocaleForFormatting(), { month: 'long', year: 'numeric' }).format(new Date(this.year, this.month - 1, 1))
+    },
+    hasMonthlyActivity() {
+      return this.monthTransactions.length > 0 || Number(this.dashboardSummary.monthlyIncome || 0) !== 0 || Number(this.dashboardSummary.monthlyExpenses || 0) !== 0 || this.hasComparisonActivity
+    },
+    heroTitleKey() {
+      if (this.dashboardLoadFailed) return 'overview.guided_error_title'
+      if (!this.hasMonthlyActivity && this.budgetComparisonState === 'error') return 'overview.guided_plan_error_title'
+      if (this.isOverviewPending) return 'overview.guided_loading_title'
+      if (this.openFinanceConflictCount > 0 || this.cashflowDecisionData?.decisionStatus === 'ACTION_NEEDED' || this.goalsAtRisk.length) return 'overview.guided_attention_hero_title'
+      if (!this.hasMonthlyActivity && this.budgetComparisonState === 'no-budget') return 'overview.guided_no_plan_title'
+      if (!this.hasMonthlyActivity) return 'overview.guided_no_activity_title'
+      return 'overview.guided_current_title'
+    },
+    heroDescriptionKey() {
+      if (this.dashboardLoadFailed) return 'overview.guided_error_description'
+      if (!this.hasMonthlyActivity && this.budgetComparisonState === 'error') return 'overview.guided_plan_error_description'
+      if (this.isOverviewPending) return 'overview.guided_loading_description'
+      if (!this.hasMonthlyActivity && this.budgetComparisonState === 'no-budget') return 'overview.guided_no_plan_description'
+      if (!this.hasMonthlyActivity) return 'overview.guided_no_activity_description'
+      return 'overview.guided_current_description'
+    },
+    heroSourceKey() {
+      if (!this.hasMonthlyActivity && this.budgetComparison) return 'overview.guided_plan_period_source'
+      return 'overview.guided_period_source'
+    },
+    heroAmount() {
+      if (this.isOverviewPending || this.overviewUnavailable) return null
+      if (!this.hasMonthlyActivity) return this.budgetComparison ? Number(this.budgetComparison.summary.plannedNet || 0) : null
+      return this.netMonthlyCashflow
+    },
+    heroAmountLabelKey() {
+      return this.hasMonthlyActivity ? 'overview.guided_actual_net_label' : 'overview.guided_planned_net_label'
+    },
+    primaryAction() {
+      if (this.openFinanceConflictCount > 0) return { labelKey: 'overview.guided_review_transactions', to: '/transactions' }
+      if (this.cashflowDecisionData?.decisionStatus === 'ACTION_NEEDED') return { labelKey: 'overview.view_cashflow', to: '/cashflow' }
+      if (this.goalsAtRisk.length) return { labelKey: 'overview.view_goals', to: '/planning/goals' }
+      if (!this.canWriteCurrentWorkspace) return { labelKey: 'overview.guided_review_transactions', to: '/transactions' }
+      if (this.budgetComparisonState === 'no-budget') return { labelKey: 'overview.guided_create_plan', to: '/planning/budget' }
+      if (!this.hasMonthlyActivity) return { labelKey: 'overview.guided_review_transactions', to: '/transactions' }
+      return { labelKey: 'overview.guided_start_decision', to: '/planning/decide' }
+    },
     netMonthlyCashflow() {
       return Number(this.dashboardSummary.monthlyIncome || 0) - Number(this.dashboardSummary.monthlyExpenses || 0)
     },
@@ -1156,21 +1200,6 @@ export default {
       // When workspace changes, vue-router may reuse the component instance. We watch this to refresh data.
       return useUserStore().currentWorkspaceId
     },
-    dashboardSummaryItems() {
-      const fmt = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-      const net = this.netMonthlyCashflow
-      return [
-        { label: this.$t('overview.snapshot_balance'), value: fmt(this.dashboardSummary.totalBalance) },
-        { divider: true },
-        { label: this.$t('overview.snapshot_income'), value: fmt(this.dashboardSummary.monthlyIncome), valueClass: 'cb-summary-item__value--positive' },
-        { divider: true },
-        { label: this.$t('overview.snapshot_expenses'), value: fmt(this.dashboardSummary.monthlyExpenses), valueClass: 'cb-summary-item__value--negative' },
-        { divider: true },
-        { label: this.$t('overview.snapshot_net'), value: fmt(net), valueClass: net >= 0 ? 'cb-summary-item__value--positive' : 'cb-summary-item__value--negative' },
-        { divider: true },
-        { label: this.$t('overview.monthly_forecast_net'), value: fmt(this.monthlyForecastCashflow), valueClass: this.monthlyForecastCashflow >= 0 ? 'cb-summary-item__value--positive' : 'cb-summary-item__value--negative' },
-      ]
-    },
   },
   data() {
     const today = new Date();
@@ -1179,6 +1208,7 @@ export default {
       refreshing: false,
       requestTokens: {},
       dashboardLoading: false,
+      dashboardLoadFailed: false,
       dashboardSummary: createEmptyDashboardSummary(),
       accounts: [],
       monthTransactions: [],
@@ -1201,7 +1231,7 @@ export default {
       budgetComparisonLoading: false,
       budgetComparisonState: 'idle',
       showAllComparisonLines: false,
-      showTrendsChart: true,
+      showTrendsChart: false,
       hasPremiumAccess: false,
       canUseConnectedFinance: false,
       canUseAdvancedCashflow: false,
@@ -1216,7 +1246,6 @@ export default {
       day: today.getDate(),
       month: today.getMonth() + 1,
       year: today.getFullYear(),
-      monthName: this.getMonthName(today.getMonth()),
       chartType: 'line',
       chartTypes: [
         { title: 'Line Chart', value: 'line' },
@@ -1235,11 +1264,11 @@ export default {
     }
   },
   mounted() {
-    this.refreshDashboard('mounted')
+    this.refreshDashboard()
   },
   activated() {
     // When cached via <KeepAlive>, refresh in the background without wiping the current UI.
-    this.refreshDashboard('activated')
+    this.refreshDashboard()
   },
   deactivated() {
     // KeepAlive preserves component state, but we rebuild the chart when returning
@@ -1257,12 +1286,12 @@ export default {
       }
     },
     '$route.query.refresh'() {
-      this.refreshDashboard('route-refresh')
+      this.refreshDashboard()
     },
     currentWorkspaceId(next, prev) {
       if (next && next !== prev) {
         this.resetWorkspaceScopedDashboardState()
-        this.refreshDashboard('workspace-change')
+        this.refreshDashboard()
       }
     },
   },
@@ -1375,7 +1404,7 @@ export default {
     isLatestRequest(key, token) {
       return Number(this.requestTokens?.[key] || 0) === Number(token || 0)
     },
-    async refreshDashboard(reason = 'manual') {
+    async refreshDashboard() {
       const refreshToken = this.beginRequest('refreshDashboard')
       this.refreshing = true
 
@@ -1484,6 +1513,22 @@ export default {
       if (type === 'POSITIVE') return 'insight-text--positive'
       return 'insight-text--info'
     },
+    financialInsightMessage(insight) {
+      const keyByCode = {
+        CATEGORY_EXPENSE_OVER: 'overview.financial_insight_category_expense_over',
+        CATEGORY_INCOME_UNDER: 'overview.financial_insight_category_income_under',
+        NET_BELOW_PLAN: 'overview.financial_insight_net_below_plan',
+        NET_ABOVE_PLAN: 'overview.financial_insight_net_above_plan',
+        DECISION_IMPACT: 'overview.financial_insight_decision_impact',
+      }
+      const key = keyByCode[insight?.code]
+      if (!key || insight?.amount == null || !Number.isFinite(Number(insight.amount))) return insight?.message || ''
+      const value = Number(insight.amount)
+      const amount = insight.code === 'DECISION_IMPACT'
+        ? `${value > 0 ? '+' : ''}${this.formatCurrency(value)}`
+        : this.formatCurrency(Math.abs(value))
+      return this.$t(key, { category: insight.category || '', amount })
+    },
     fetchFinancialInsights() {
       const requestToken = this.beginRequest('financialInsights')
       this.financialInsightsLoading = true
@@ -1544,12 +1589,9 @@ export default {
           this.budgetComparisonLoading = false
         })
     },
-    getMonthName(monthIndex) {
-      const monthNames = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-      ];
-      return monthNames[monthIndex];
+    toggleTrendsChart() {
+      this.showTrendsChart = !this.showTrendsChart
+      if (this.showTrendsChart) this.$nextTick(() => this.createChart())
     },
     isCurrentOverviewContext(workspaceId, selectedTimePeriod, selectedCategory) {
       const currentWorkspaceId = this.currentWorkspaceId || null
@@ -1681,6 +1723,7 @@ export default {
     fetchOverviewCoreSnapshot() {
       const requestToken = this.beginRequest('overviewCore')
       this.dashboardLoading = true
+      this.dashboardLoadFailed = false
       const workspaceId = this.currentWorkspaceId || null
       const selectedTimePeriod = this.selectedTimePeriod
       const selectedCategory = this.selectedCategory || ''
@@ -1704,6 +1747,7 @@ export default {
         })
         .catch((error) => {
           console.error('Error fetching overview core snapshot:', error)
+          if (this.isLatestRequest('overviewCore', requestToken)) this.dashboardLoadFailed = true
         })
         .finally(() => {
           if (!this.isLatestRequest('overviewCore', requestToken)) return
@@ -2125,6 +2169,61 @@ export default {
 </script>
 
 <style scoped>
+.cb-page { --dashboard-surface: var(--cb-surface); --dashboard-soft: var(--cb-surface-soft); --dashboard-line: var(--cb-border-chip); --dashboard-action: var(--cb-primary); --dashboard-on-action: #0e1117; --dashboard-ink: var(--cb-ink); --dashboard-muted: var(--cb-ink-secondary); }
+:global(.v-theme--light) .cb-page { --dashboard-soft: #f3f7f2; --dashboard-line: #ccd7ce; --dashboard-action: #10cc83; --dashboard-on-action: #18372b; --dashboard-ink: #18372b; --dashboard-muted: #50645b; background: #fafbf7; }
+.dashboard-hero,
+.dashboard-month,
+.dashboard-comparison,
+.dashboard-explore { border: 1px solid var(--dashboard-line); border-radius: 18px; background: var(--dashboard-surface); margin-bottom: 20px; padding: clamp(18px, 3vw, 28px); }
+.dashboard-explore { --cb-ink-muted: var(--dashboard-muted); }
+.dashboard-hero { display: flex; align-items: center; justify-content: space-between; gap: 24px; background: var(--dashboard-soft); }
+.dashboard-hero__content { min-width: 0; max-width: 650px; }
+.dashboard-hero__eyebrow { color: var(--dashboard-muted); font-size: .74rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.dashboard-hero h2 { color: var(--dashboard-ink); font-family: var(--cb-font-heading); font-size: clamp(1.5rem, 3vw, 2.3rem); line-height: 1.18; margin: 6px 0 12px; }
+.dashboard-hero__description { color: var(--dashboard-muted); margin-bottom: 10px; }
+.dashboard-hero__source { color: var(--dashboard-muted); font-size: .82rem; margin: 0; }
+.dashboard-hero__aside { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; min-width: 180px; }
+.dashboard-hero__aside > span { color: var(--dashboard-muted); font-size: .84rem; }
+.dashboard-hero__aside > strong { color: var(--dashboard-ink); font-family: var(--cb-font-heading); font-size: clamp(1.6rem, 3vw, 2.1rem); white-space: nowrap; }
+.dashboard-hero__action { min-height: 44px; background: var(--dashboard-action) !important; color: var(--dashboard-on-action) !important; font-weight: 700; letter-spacing: 0; text-transform: none; }
+.dashboard-attention { border: 1px solid var(--cb-warning); border-radius: 14px; padding: 16px 20px; margin-bottom: 20px; background: var(--cb-warning-bg); }
+.dashboard-attention h2 { font-size: 1.1rem; margin: 0 0 8px; }
+.dashboard-attention p { margin: 6px 0; }
+.dashboard-attention a,
+.dashboard-comparison a { color: var(--dashboard-ink); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.dashboard-month h2,
+.dashboard-comparison h2 { color: var(--dashboard-ink); font-family: var(--cb-font-heading); font-size: 1.2rem; margin: 0 0 16px; }
+.dashboard-month__note { color: var(--dashboard-muted); background: var(--dashboard-soft); border-radius: 10px; padding: 12px 14px; }
+.dashboard-month__grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.dashboard-month__metric { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; min-height: 116px; text-align: left; border: 1px solid var(--dashboard-line); border-radius: 12px; padding: 14px; background: var(--dashboard-surface); color: var(--dashboard-ink); }
+.dashboard-month__metric span,
+.dashboard-comparison__values span { color: var(--dashboard-muted); font-size: .8rem; }
+.dashboard-month__metric strong,
+.dashboard-comparison__values strong { color: var(--dashboard-ink); font-family: var(--cb-font-heading); font-size: 1.15rem; overflow-wrap: anywhere; }
+.dashboard-month__metric small,
+.dashboard-comparison__values small { color: var(--dashboard-muted); font-size: .72rem; margin-top: auto; }
+.dashboard-month__metric:is(button):hover { border-color: var(--dashboard-ink); }
+.dashboard-comparison__values { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; }
+.dashboard-comparison__values > div { display: flex; flex-direction: column; gap: 5px; border: 1px solid var(--dashboard-line); border-radius: 10px; padding: 14px; }
+.dashboard-explore > summary { color: var(--dashboard-ink); cursor: pointer; font-family: var(--cb-font-heading); font-size: 1.2rem; font-weight: 700; min-height: 44px; padding: 8px 0; }
+.dashboard-explore[open] > summary { margin-bottom: 24px; border-bottom: 1px solid var(--dashboard-line); }
+.dashboard-explore :deep(.v-row) { margin-left: 0; margin-right: 0; }
+.dashboard-trends-toggle,
+.dashboard-category-link { color: var(--dashboard-ink); background: transparent; text-align: left; }
+.dashboard-trends-toggle { display: flex; align-items: center; gap: 5px; font: inherit; }
+.dashboard-category-link { text-decoration: underline; text-underline-offset: 3px; }
+.cb-page :is(button, a, summary):focus-visible { outline: 3px solid var(--dashboard-ink); outline-offset: 3px; }
+@media (max-width: 760px) {
+  .dashboard-hero { flex-direction: column; align-items: stretch; }
+  .dashboard-hero__aside { min-width: 0; }
+  .dashboard-month__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dashboard-comparison__values { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 420px) {
+  .dashboard-hero__action { width: 100%; }
+  .dashboard-month__metric { padding: 10px; }
+  .dashboard-month__metric strong { font-size: 1rem; }
+}
 /* ── Comparison table ───────────────────── */
 .comparison-table-wrap {
   border: 1px solid var(--cb-border-card);

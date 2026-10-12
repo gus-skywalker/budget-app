@@ -1,12 +1,25 @@
 <template>
-  <div class="cb-page closing-panel">
+  <div class="cb-page closing-panel experience-page experience-page--closing">
     <div class="cb-container">
       <page-header title="Apuração de resultados" :summary-items="headerSummary">
-        <template #actions><v-btn color="primary" prepend-icon="mdi-calendar-plus" @click="showCreate = !showCreate">Abrir ou criar competência</v-btn></template>
+        <template #actions><v-btn color="primary" prepend-icon="mdi-calendar-plus" :disabled="loading || loadFailed || planLocked" @click="showCreate = !showCreate">Abrir ou criar competência</v-btn></template>
       </page-header>
 
       <alert-strip v-if="errorMessage" variant="info" :description="errorMessage" />
       <div v-if="loading" class="cb-empty-state" role="status"><v-progress-circular indeterminate /><p>Carregando competência…</p></div>
+      <div v-else-if="planLocked" class="cb-empty-state" role="status">
+        <v-icon size="44">mdi-lock-outline</v-icon>
+        <PlanTierBadge tier="TEAM" />
+        <p class="cb-empty-state__title">A Apuração não está disponível no plano atual deste espaço.</p>
+        <p>Você pode continuar usando as demais áreas do CoBudget. Para abrir competências, escolha um plano que inclua Apuração de resultados.</p>
+        <v-btn color="primary" variant="tonal" @click="router.push({ name: 'choose-plan', query: { feature: 'financial-closing' } })">Ver planos</v-btn>
+      </div>
+      <div v-else-if="loadFailed" class="cb-empty-state" role="alert">
+        <v-icon size="44">mdi-alert-circle-outline</v-icon>
+        <p class="cb-empty-state__title">Não foi possível carregar as competências.</p>
+        <p>Não sabemos ainda se há uma competência aberta neste espaço.</p>
+        <v-btn color="primary" variant="tonal" @click="load">Tentar novamente</v-btn>
+      </div>
       <div v-else-if="!selectedClosing" class="cb-empty-state">
         <v-icon size="44">mdi-calendar-plus</v-icon><p class="cb-empty-state__title">Comece uma competência</p>
         <p>Crie o período antes de preparar os dados de origem.</p>
@@ -69,9 +82,10 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PageHeader from '@/components/PageHeader.vue'
 import AlertStrip from '@/components/AlertStrip.vue'
+import PlanTierBadge from '@/components/PlanTierBadge.vue'
 import FinancialClosingService, { type DeductionReadiness, type FinancialClosing, type ImportReadiness, type ImportReadinessSource, type MaterializedLot, type MaterializedLotSource, type PayoutDecision, type WorkbookReviewProgress } from '@/services/FinancialClosingService'
 
-const route=useRoute(),router=useRouter();const closings=ref<FinancialClosing[]>([]),selectedId=ref(''),progress=ref<WorkbookReviewProgress|null>(null),lots=ref<MaterializedLot[]>([]),importReadiness=ref<ImportReadiness|null>(null),deductionReadiness=ref<DeductionReadiness|null>(null),payoutDecision=ref<PayoutDecision|null>(null),loading=ref(true),lotsLoading=ref(false),creating=ref(false),restarting=ref(false),discardingReview=ref(false),removingLot=ref(''),replacingLot=ref(''),removingSource=ref(''),replacingSource=ref(''),showCreate=ref(false),errorMessage=ref(''),lotsError=ref('');const month=ref(new Date().getMonth()+1),year=ref(new Date().getFullYear());
+const route=useRoute(),router=useRouter();const closings=ref<FinancialClosing[]>([]),selectedId=ref(''),progress=ref<WorkbookReviewProgress|null>(null),lots=ref<MaterializedLot[]>([]),importReadiness=ref<ImportReadiness|null>(null),deductionReadiness=ref<DeductionReadiness|null>(null),payoutDecision=ref<PayoutDecision|null>(null),loading=ref(true),loadFailed=ref(false),planLocked=ref(false),lotsLoading=ref(false),creating=ref(false),restarting=ref(false),discardingReview=ref(false),removingLot=ref(''),replacingLot=ref(''),removingSource=ref(''),replacingSource=ref(''),showCreate=ref(false),errorMessage=ref(''),lotsError=ref('');const month=ref(new Date().getMonth()+1),year=ref(new Date().getFullYear());
 const months=Array.from({length:12},(_,index)=>({title:String(index+1).padStart(2,'0'),value:index+1}));
 const selectedClosing=computed(()=>closings.value.find(item=>item.id===selectedId.value)||null);const closingOptions=computed(()=>closings.value.map(item=>({title:`${String(item.periodMonth).padStart(2,'0')}/${item.periodYear} · ${item.closingKey}`,value:item.id})));
 const headerSummary=computed(()=>selectedClosing.value?[{label:'Competência',value:`${String(selectedClosing.value.periodMonth).padStart(2,'0')}/${selectedClosing.value.periodYear}`},{label:'Escopo',value:selectedClosing.value.closingKey}]:[]);
@@ -88,7 +102,7 @@ const rulesAction=computed(()=>deductionReadiness.value?.readyToCalculate?'Ver r
 const decisionTitle=computed(()=>payoutDecision.value?.status==='APPROVED'?'Decisão aprovada':payoutDecision.value?.status==='REVIEW'?'Aguardando autorização final':payoutDecision.value?.status==='DRAFT'?'Proposta em preparação':decisionAvailable.value?'Pronta para decisão':'Aguardando resultado atual');
 const decisionDescription=computed(()=>payoutDecision.value?.status==='APPROVED'?`${payoutDecision.value.issuedObligationCount} obrigação(ões) emitida(s), sem executar transferência bancária.`:payoutDecision.value?.status==='REVIEW'?'A proposta está bloqueada para edição e aguarda um aprovador elegível.':payoutDecision.value?.status==='DRAFT'?'Revise os Valores a Receber antes de enviar para autorização.':'A aprovação usa somente o Valor a Receber e preserva TM, TI e reservas.');
 const decisionAction=computed(()=>payoutDecision.value?.status==='APPROVED'?'Ver decisão':payoutDecision.value?.status==='REVIEW'?'Revisar autorização':payoutDecision.value?.status==='DRAFT'?'Continuar proposta':'Preparar decisão');
-async function load(){loading.value=true;errorMessage.value='';try{closings.value=(await FinancialClosingService.list()).data;const requested=String(route.query.closingId||route.params.closingId||'');selectedId.value=closings.value.some(item=>item.id===requested)?requested:(closings.value[0]?.id||'');await loadProgress()}catch{errorMessage.value='Não foi possível carregar o painel da competência.'}finally{loading.value=false}}
+async function load(){loading.value=true;loadFailed.value=false;planLocked.value=false;errorMessage.value='';try{closings.value=(await FinancialClosingService.list()).data;const requested=String(route.query.closingId||route.params.closingId||'');selectedId.value=closings.value.some(item=>item.id===requested)?requested:(closings.value[0]?.id||'');await loadProgress()}catch(error:any){planLocked.value=error?.response?.status===403&&error?.response?.data?.feature==='financial-closing';loadFailed.value=!planLocked.value}finally{loading.value=false}}
 async function loadProgress(){const closing=selectedClosing.value;if(!closing){progress.value=null;lots.value=[];importReadiness.value=null;deductionReadiness.value=null;payoutDecision.value=null;return}lotsLoading.value=true;lotsError.value='';try{lots.value=(await FinancialClosingService.materializedLots(closing)).data}catch{lots.value=[];lotsError.value='Não foi possível carregar os lotes da base editável.'}finally{lotsLoading.value=false}try{const response=await FinancialClosingService.latestWorkbookReview(closing);progress.value=response.status===204?null:(response.data||null)}catch{progress.value=null}try{importReadiness.value=(await FinancialClosingService.importReadiness(closing)).data}catch{importReadiness.value=null}if(inputsReady.value){try{deductionReadiness.value=(await FinancialClosingService.deductionReadiness(closing)).data}catch{deductionReadiness.value=null}}else deductionReadiness.value=null;try{const decisions=(await FinancialClosingService.payoutDecisions(closing)).data;payoutDecision.value=decisions.find(item=>item.status==='REVIEW')||decisions.find(item=>item.status==='DRAFT')||decisions.find(item=>item.status==='APPROVED')||null}catch{payoutDecision.value=null}}
 async function createClosing(){creating.value=true;try{const created=(await FinancialClosingService.createOrGet(month.value,year.value,'DEFAULT','BRL')).data;await load();selectedId.value=created.id;showCreate.value=false}catch{errorMessage.value='Não foi possível criar a competência.'}finally{creating.value=false}}
 async function restartCompetence(){const closing=selectedClosing.value;if(!closing)return;const justification=window.prompt('Registre por que esta competência deve ser refeita. A versão atual permanecerá no histórico.');if(!justification?.trim()||!window.confirm('Criar uma nova versão vazia desta competência? Fontes e participantes serão preservados; dados financeiros não serão copiados.'))return;restarting.value=true;errorMessage.value='';try{const restarted=(await FinancialClosingService.restartCompetence(closing.id,justification.trim())).data;closings.value=closings.value.map(item=>item.id===restarted.id?restarted:item);await loadProgress()}catch(error:any){errorMessage.value=error?.response?.status===409?'Esta competência possui decisão aprovada ou obrigação emitida. Use o fluxo de correção financeira.':'Não foi possível recomeçar a competência.'}finally{restarting.value=false}}
