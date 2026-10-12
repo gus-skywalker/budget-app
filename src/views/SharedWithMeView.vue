@@ -9,6 +9,7 @@
       <v-btn
         icon
         variant="text"
+        :aria-label="t('sharedWithMe.refresh')"
         :title="t('sharedWithMe.refresh')"
         :loading="loading"
         @click="loadReceivedAgreements"
@@ -17,11 +18,11 @@
       </v-btn>
     </header>
 
-    <section v-if="loading" class="shared-state">
+    <section v-if="loading" class="shared-state" role="status">
       <v-progress-circular indeterminate color="var(--cb-primary)" />
     </section>
 
-    <section v-else-if="errorMessage" class="shared-state shared-state--error">
+    <section v-else-if="errorMessage" class="shared-state shared-state--error" role="alert">
       <v-icon size="34">mdi-alert-circle-outline</v-icon>
       <p>{{ errorMessage }}</p>
       <v-btn color="var(--cb-primary)" variant="tonal" @click="loadReceivedAgreements">
@@ -47,7 +48,7 @@
               {{ participantSummary(agreement) }} · {{ paymentModeLabel(agreement.paymentMode) }}
             </p>
           </div>
-          <strong>{{ formatCurrency(myShare(agreement)) }}</strong>
+          <strong v-if="myParticipant(agreement)">{{ formatCurrency(myShare(agreement)) }}</strong>
         </div>
 
         <div class="agreement-details">
@@ -65,7 +66,7 @@
           </div>
         </div>
 
-        <div class="obligation-list">
+        <div v-if="myParticipant(agreement)" class="obligation-list">
           <div
             v-for="obligation in myObligations(agreement)"
             :key="obligation.id"
@@ -128,21 +129,21 @@ const myParticipant = (agreement: SharedExpenseAgreement) => {
     const email = String(participant.email || '').trim().toLowerCase()
     return (currentUserId.value && userId === currentUserId.value)
       || (currentUserEmail.value && email === currentUserEmail.value)
-  }) || participants[0]
+  }) || null
 }
 
-const myShare = (agreement: SharedExpenseAgreement) => myParticipant(agreement)?.sharedAmount || agreement.sharedAmount
+const myShare = (agreement: SharedExpenseAgreement) => myParticipant(agreement)?.sharedAmount ?? 0
 
 const myObligations = (agreement: SharedExpenseAgreement): SharedExpenseObligation[] => {
   const participant = myParticipant(agreement)
   const obligations = Array.isArray(agreement.obligations) ? agreement.obligations : []
-  if (!participant?.id) return obligations
+  if (!participant?.id) return []
   return obligations.filter((obligation) => obligation.participantId === participant.id)
 }
 
 const participantSummary = (agreement: SharedExpenseAgreement) => {
   const participant = myParticipant(agreement)
-  return participant?.email || participant?.displayName || t('sharedWithMe.you')
+  return participant?.email || participant?.displayName || t('sharedWithMe.participantUnknown')
 }
 
 const paymentModeLabel = (mode: SharedExpensePaymentMode) => {

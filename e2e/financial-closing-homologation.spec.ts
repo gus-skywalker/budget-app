@@ -118,12 +118,14 @@ test(`homologates deduction, adjustment, reserves and receivable on ${viewport.n
   await page.getByRole('button', { name: 'Adicionar regra' }).click()
   await expect(page.getByText('Imposto sintético da fonte', { exact: true })).toBeVisible()
 
+  await page.locator('details.optional-rules').first().locator('summary').click()
   await chooseOption(page, 'Participante', 'Participante sanitizado')
   await chooseOption(page, 'Efeito no valor', 'Desconto')
   await page.getByRole('spinbutton', { name: 'Valor Valor' }).fill('1.34')
   await page.getByLabel('Justificativa do ajuste').fill('Ajuste sanitizado posterior às deduções')
   await page.getByRole('button', { name: 'Adicionar ajuste individual' }).click()
 
+  await page.locator('details.optional-rules').nth(1).locator('summary').click()
   await page.getByLabel('Nome da regra').fill('TM sintética')
   await page.getByLabel('Percentual da PL').fill('10')
   await page.getByLabel('Justificativa da revisão').last().fill('Reserva TM sanitizada')

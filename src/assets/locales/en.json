@@ -2841,6 +2841,7 @@
     "firstDueDate": "First due date",
     "installments": "Installments",
     "installment": "Installment {number}",
+    "participantUnknown": "Your share could not be identified; check with the sender",
     "you": "You"
   },
   "transactionPlanning": {

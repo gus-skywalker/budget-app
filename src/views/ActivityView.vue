@@ -24,6 +24,7 @@
               size="small"
               :variant="selectedFilter === filter.value ? 'flat' : 'outlined'"
               :color="selectedFilter === filter.value ? 'var(--cb-primary)' : undefined"
+              :aria-pressed="selectedFilter === filter.value"
               @click="selectedFilter = filter.value"
             >
               {{ filter.title }}

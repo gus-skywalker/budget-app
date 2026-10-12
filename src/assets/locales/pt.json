@@ -2821,6 +2821,7 @@
     "firstDueDate": "Primeiro vencimento",
     "installments": "Parcelas",
     "installment": "Parcela {number}",
+    "participantUnknown": "Sua participação não foi identificada; confira com quem compartilhou",
     "you": "Você"
   },
   "transactionPlanning": {

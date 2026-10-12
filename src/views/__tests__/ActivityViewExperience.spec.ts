@@ -44,4 +44,21 @@ describe('ActivityView experience states', () => {
     expect(wrapper.text()).toContain('Cenário')
     expect(wrapper.text()).not.toContain('overview.activity_open')
   })
+
+  it('filters populated activity and opens only valid related items', async () => {
+    list.mockResolvedValue({ data: [
+      { id: 'tx-1', eventType: 'TRANSACTION_SHARED_CREATED', title: 'Despesa conjunta', relatedEntityType: 'TRANSACTION', createdAt: '2026-10-11T10:00:00Z' },
+      { id: 'scenario-1', eventType: 'SCENARIO_CREATED', title: 'Plano de viagem', relatedEntityType: 'SCENARIO', relatedEntityId: 'scenario-1', createdAt: '2026-10-11T11:00:00Z' },
+    ] })
+    const wrapper = mountView()
+    await flushPromises()
+    expect(wrapper.findAll('.activity-row')).toHaveLength(2)
+
+    await wrapper.findAll('.activity-filters button')[2].trigger('click')
+    expect(wrapper.findAll('.activity-row')).toHaveLength(1)
+    expect(wrapper.text()).toContain('Plano de viagem')
+    expect(wrapper.text()).not.toContain('Despesa conjunta')
+    await wrapper.get('.activity-row__meta button').trigger('click')
+    expect(push).toHaveBeenCalledWith({ name: 'planning-scenarios-result', params: { id: 'scenario-1' } })
+  })
 })

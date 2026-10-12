@@ -33,6 +33,7 @@ const activeLot={publicationId:'publication-1',reviewId:'review-1',status:'MATER
 
 describe('Financial closing V31 journey',()=>{
   beforeEach(()=>{
+    userStore.getTenantRole='ROLE_OWNER'
     vi.clearAllMocks();sessionStorage.clear();routeState.params={};routeState.query={};serviceMock.list.mockResolvedValue({data:[{...closing,currentVersion:{...closing.currentVersion}}]});serviceMock.participants.mockResolvedValue({data:[]});serviceMock.sources.mockResolvedValue({data:[]});serviceMock.latestWorkbookReview.mockResolvedValue({status:204,data:undefined});serviceMock.materializedLots.mockResolvedValue({data:[]});serviceMock.cancelWorkbookMaterialization.mockResolvedValue({data:{...activeLot,status:'CANCELLED'}});serviceMock.cancelWorkbookSourceMaterialization.mockResolvedValue({data:{reviewSourceId:'source-review-1',active:false,replayed:false}});serviceMock.importReadiness.mockResolvedValue({data:{sources:[],readyToCalculate:false,blockingSourceKeys:[]}});serviceMock.deductionReadiness.mockResolvedValue({data:{sources:[],readyToCalculate:false,blockingSourceKeys:[]}});serviceMock.productivityDeductions.mockResolvedValue({data:[]});serviceMock.payoutDecisions.mockResolvedValue({data:[]});serviceMock.grantSensitiveAccess.mockResolvedValue({data:{granted:true}});
     serviceMock.workbookInventory.mockResolvedValue({data:{sheets:[{sheetName:'Known source',classification:'FINANCIAL_SOURCE_PROBABLE',suggestedSourceKey:'KNOWN_SOURCE',nonEmptyDataRows:2,detail:'Compatible structure',recommendedProfileId:'profile-1',recommendedProfileName:'Known profile',selectionStatus:'AUTO_SELECTED'},{sheetName:'Needs review',classification:'SUPPORT_REVIEW',suggestedSourceKey:'NEW_SOURCE',nonEmptyDataRows:1,detail:'Needs review',selectionStatus:'REVIEW_REQUIRED'}]}});
     serviceMock.restartCompetence.mockResolvedValue({data:{...closing,currentVersion:{...closing.currentVersion,id:'version-2',versionNumber:2,inputRevision:0,calculationCurrent:false,financialPublicationCurrent:false}}});
@@ -322,6 +323,15 @@ describe('Financial closing V31 journey',()=>{
     const wrapper=mount(FinancialClosingImportWizardView,{global:{plugins:[vuetify],stubs:{AlertStrip:{props:['description'],template:'<div>{{description}}</div>'}}}});await flush();await flush();
     ;(wrapper.vm as any).workbookInput=new File(['synthetic'],'synthetic.xlsx');(wrapper.vm as any).sensitiveConfirmed=true;await (wrapper.vm as any).inventoryWorkbook();await flush();
     expect(wrapper.text()).toContain('Habilite o acesso protegido deste fechamento');await (wrapper.vm as any).enableOwnerSensitiveAccess();expect(serviceMock.grantSensitiveAccess).toHaveBeenCalledWith(closing,'owner-1',true)
+  })
+
+  it('explains protected access to a non-owner without offering owner actions',async()=>{
+    routeState.params={closingId:'closing-1',reviewId:'new'};userStore.getTenantRole='ROLE_MEMBER';serviceMock.initiateWorkbookReview.mockRejectedValue({response:{status:403}})
+    const wrapper=mount(FinancialClosingImportWizardView,{global:{plugins:[vuetify],stubs:{AlertStrip:{props:['description'],template:'<div>{{description}}</div>'}}}});await flush();await flush()
+    ;(wrapper.vm as any).workbookInput=new File(['synthetic'],'synthetic.xlsx');(wrapper.vm as any).sensitiveConfirmed=true;await (wrapper.vm as any).inventoryWorkbook();await flush()
+    expect(wrapper.text()).toContain('Peça ao proprietário do espaço que revise sua permissão')
+    expect(wrapper.text()).not.toContain('Habilitar leitura protegida')
+    expect(serviceMock.grantSensitiveAccess).not.toHaveBeenCalled()
   })
 
   it('rebuilds expired staging with only the originally selected source set',async()=>{
