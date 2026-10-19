@@ -1050,7 +1050,39 @@
   },
   "planTierBadge": {
     "requiresStarter": "Disponível a partir do Starter Casa",
-    "requiresTeam": "Disponível no Team"
+    "requiresTeam": "Disponível no Team",
+    "containsStarter": "Esta página inclui recursos do Starter Casa; as funções básicas continuam disponíveis",
+    "containsTeam": "Esta página inclui recursos do Team; as funções básicas continuam disponíveis",
+    "partialSummary": "Alguns recursos exigem {tiers}; funções básicas disponíveis"
+  },
+  "planAccess": {
+    "title": "O que seu plano libera",
+    "intro": "Veja os recursos deste plano no espaço atual. Um selo indica o plano necessário para liberar o que ainda não está disponível.",
+    "loading": "Conferindo seu plano...",
+    "unavailable": "Não foi possível conferir os recursos do seu plano agora. Tente novamente mais tarde.",
+    "unknown": "Acesso não confirmado",
+    "included": "Disponível",
+    "starterTier": "· Starter+",
+    "teamTier": "· Team",
+    "freeBase": "Lançamentos e categorias manuais, cenários básicos e decisões pessoais fazem parte do Free.",
+    "limitsTitle": "Limites do seu plano",
+    "permissionsNote": "O acesso também pode depender do seu papel no espaço. Falhas de consulta não significam que o recurso está bloqueado.",
+    "viewPlans": "Comparar planos",
+    "features": {
+      "connectedFinance": "Conexões financeiras e Open Finance",
+      "ai": "Sugestões com IA",
+      "planningIntelligence": "Sugestões de orçamento e base pelo histórico",
+      "advancedScenarios": "Cenários avançados",
+      "collaboration": "Colaboração e decisões compartilhadas",
+      "advancedCashflow": "Fluxo de caixa avançado",
+      "financialClosing": "Apuração de resultados compartilhada"
+    },
+    "limits": {
+      "workspaces": "Espaços",
+      "members": "Membros por espaço",
+      "scenarios": "Cenários salvos",
+      "decisions": "Decisões salvas"
+    }
   },
   "transactionComments": {
     "title": "Comentários da movimentação",
@@ -1108,7 +1140,19 @@
       "scope": "Mostrar"
     },
     "subtitle": "Gerencie entradas e despesas manuais, acompanhe lançamentos Open Finance e controle o que entra no planejamento.",
-    "add_expense": "Salvar despesa",
+    "add_expense": "Nova despesa",
+    "add_income": "Nova entrada",
+    "editor": {
+      "eyebrow": "Lançamento manual",
+      "edit_income_title": "Editar entrada",
+      "edit_expense_title": "Editar despesa",
+      "income_description": "Registre o valor e escolha como esta entrada aparece no espaço.",
+      "expense_description": "Registre o gasto e organize categoria, conta e visibilidade.",
+      "main_details": "Dados principais",
+      "organization": "Organização e acesso",
+      "save_expense": "Salvar despesa",
+      "update_expense": "Salvar alterações"
+    },
     "delete_dialog": {
       "title": "Excluir transação?",
       "description": "Você está prestes a excluir \"{description}\".",
@@ -1365,6 +1409,9 @@
   "categories_page": {
     "title": "Categorias",
     "subtitle": "Organize os lançamentos por categoria.",
+    "editor_eyebrow": "Organização do espaço",
+    "money_out": "Dinheiro sai",
+    "money_in": "Dinheiro entra",
     "list_title": "Categorias Monitoradas",
     "empty": "Nenhuma categoria encontrada.",
     "open_finance": "Open Finance",
@@ -1462,7 +1509,7 @@
     "automation_preview_empty": "Nenhum lançamento sem categoria seria alterado por esta regra.",
     "empty_automations_filter": "Nenhuma automação encontrada para esse filtro.",
     "edit_category": "Editar categoria",
-    "category_drawer_description": "Organize o catálogo do espaço com uma taxonomia consistente para orçamento, IA e cenários.",
+    "category_drawer_description": "Dê um nome claro e escolha como esta categoria aparece nos lançamentos.",
     "structure": "Estrutura",
     "name": "Nome",
     "category_name_placeholder": "Ex: Marketing, Receita recorrente",
@@ -1475,7 +1522,7 @@
     "save_adjustments": "Salvar ajustes",
     "create_category": "Criar categoria",
     "edit_tag": "Editar tag",
-    "tag_drawer_description": "Crie rótulos transversais para contexto, filtros e automações futuras.",
+    "tag_drawer_description": "Crie um rótulo para encontrar e agrupar lançamentos sem mudar a categoria.",
     "tag_identity": "Identidade da tag",
     "tag_name_placeholder": "Ex: Reembolso, Viagem, Empresa",
     "tag_preview": "Prévia da tag",
@@ -1483,7 +1530,7 @@
     "create_tag": "Criar tag",
     "edit_automation": "Editar automação",
     "new_automation": "Nova automação",
-    "automation_drawer_description": "Crie uma regra explícita para categorizar transações por descrição e aplique no histórico quando fizer sentido.",
+    "automation_drawer_description": "Defina quando a descrição de um lançamento deve receber uma categoria. Revise a prévia antes de aplicar.",
     "rule": "Regra",
     "rule_name": "Nome da regra",
     "rule_name_placeholder": "Ex: Uber => Transporte",
@@ -2968,6 +3015,9 @@
   "choosePlan": {
     "title": "Escolha como vocês vão decidir o próximo passo.",
     "subtitle": "CoBudget transforma conversas sobre dinheiro em escolhas com impacto visível — em casa ou no negócio.",
+    "connected_finance_eyebrow": "Você veio do Open Finance",
+    "connected_finance_title": "Conecte seus dados quando fizer sentido para você.",
+    "connected_finance_description": "Compare os planos e veja qual libera essa conexão. Você decide se quer conectar uma conta depois.",
     "ai_title": "Clareza para decidir, não só controlar",
     "ai_desc": "Starter Casa e Team usam dados e cenários para tornar o próximo passo visível:",
     "ai_feature_1": "Previsão de despesas e cashflow avançado",

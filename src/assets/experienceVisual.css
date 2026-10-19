@@ -97,6 +97,80 @@
   color: #0d2f22 !important;
 }
 
+/* Creation actions share one restrained plus mark across the experience pages. */
+.experience-page .cb-create-action {
+  min-height: 48px;
+  height: auto;
+  max-width: 100%;
+  padding: 6px 7px 6px 18px !important;
+  border-radius: 14px !important;
+  font-weight: 750;
+  letter-spacing: 0;
+  text-transform: none;
+  box-shadow: none;
+}
+
+.experience-page .cb-create-action .v-btn__content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-width: 0;
+  white-space: normal;
+  text-align: left;
+}
+
+.experience-page .cb-create-action__mark {
+  display: inline-grid;
+  flex: 0 0 32px;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+  font-family: var(--cb-font-heading);
+  font-size: 1.2rem;
+  font-weight: 800;
+  line-height: 1;
+  transition: transform .18s ease;
+}
+
+.experience-page .cb-create-action__mark--add { font-size: 1.45rem; font-weight: 600; }
+.experience-page .cb-create-action:hover .cb-create-action__mark { transform: scale(1.06); }
+
+.v-theme--light .experience-page .cb-create-action:not(.cb-create-action--secondary) {
+  border: 1px solid #10cc83;
+  background: #10cc83 !important;
+  color: #18372b !important;
+}
+
+.v-theme--light .experience-page .cb-create-action:not(.cb-create-action--secondary) .cb-create-action__mark {
+  background: #edfa58;
+}
+
+.v-theme--light .experience-page .cb-create-action--secondary {
+  border: 1px solid #aebfb3;
+  background: #fff !important;
+  color: #18372b !important;
+}
+
+.v-theme--light .experience-page .cb-create-action--secondary .cb-create-action__mark--add {
+  background: #edfa58;
+  color: #18372b;
+}
+
+.v-theme--light .experience-page--transactions .transaction-controls .transaction-type-chip--expense.cb-chip--active {
+  border-color: #a3af39;
+  background: #f7fad6;
+  color: #18372b;
+}
+
+.v-theme--light .experience-page--transactions .transaction-controls .transaction-type-chip--income.cb-chip--active {
+  border-color: #10cc83;
+  background: #e7f8ed;
+  color: #18372b;
+}
+
 .v-theme--light .experience-page .cb-btn-secondary {
   border-color: var(--cb-border-btn) !important;
   border-radius: 10px !important;
@@ -293,7 +367,7 @@
   background: #10cc83 !important;
 }
 
-.v-theme--light .experience-page .cb-page-header__actions .v-btn:not(.cb-btn-primary, .decision-entry-cta) {
+.v-theme--light .experience-page .cb-page-header__actions .v-btn:not(.cb-btn-primary, .decision-entry-cta, .cb-create-action) {
   border: 1px solid #ccd7ce;
   border-radius: 10px;
   background: #fff !important;
@@ -516,7 +590,63 @@
 .v-theme--light .experience-page--settings .modern-tabs .v-tabs__slider { background: #10cc83; }
 .v-theme--light .experience-page--settings .settings-tab .v-icon { color: #50645b; }
 .v-theme--light .experience-page--settings .settings-tab.v-tab--selected .v-icon { color: #18372b; }
+.v-theme--light .experience-page--settings .v-theme--light { --cb-primary: #10cc83; }
 .v-theme--light .experience-page--settings .cb-card:not(.danger-zone-card) .cb-card__title .v-icon { color: #246c51 !important; }
+.v-theme--light .experience-page--settings :is(.settings-workspace, .settings-preferences, .settings-subscription) .cb-card {
+  border-color: #ccd7ce;
+  background: #fff;
+}
+.v-theme--light .experience-page--settings :is(.settings-workspace, .settings-preferences, .settings-subscription) .cb-card__header {
+  display: block;
+  padding: 22px 24px 18px;
+  background: #f3f7f2;
+  border-bottom: 1px solid #dce7dd;
+}
+.v-theme--light .experience-page--settings :is(.settings-workspace, .settings-preferences, .settings-subscription) .cb-card__header::before {
+  content: '';
+  display: block;
+  width: 40px;
+  height: 6px;
+  margin-bottom: 14px;
+  border-radius: 8px;
+  background: #edfa58;
+}
+.v-theme--light .experience-page--settings :is(.settings-workspace, .settings-preferences, .settings-subscription) .cb-card__title {
+  color: #18372b;
+  font-size: 1.14rem;
+  font-weight: 800;
+  letter-spacing: -.015em;
+}
+.v-theme--light .experience-page--settings :is(.settings-workspace, .settings-preferences, .settings-subscription) .cb-card__body {
+  padding: clamp(18px, 3vw, 26px);
+}
+.v-theme--light .experience-page--settings .settings-preferences .setting-item {
+  gap: 24px;
+  padding-block: 8px;
+}
+.v-theme--light .experience-page--settings .settings-preferences .setting-hint {
+  max-width: 56ch;
+  line-height: 1.5;
+}
+.v-theme--light .experience-page--settings .settings-preferences .settings-primary-action {
+  max-width: 330px;
+}
+.v-theme--light .experience-page--settings .settings-subscription .subscription-overview {
+  border: 1px solid #dce7dd;
+  border-radius: 16px;
+  background: #f3f7f2;
+}
+.v-theme--light .experience-page--settings .settings-subscription .plan-option {
+  border: 1px solid #dce7dd;
+  border-radius: 14px;
+  background: #fff;
+}
+.v-theme--light .experience-page--settings .settings-subscription .plan-option:hover:not(.disabled) {
+  border-color: #10cc83;
+  background: #f3f7f2;
+  transform: none;
+}
+.v-theme--light .experience-page--settings .settings-subscription .plan-price { color: #246c51; }
 .v-theme--light .experience-page--settings .settings-primary-action {
   min-height: 44px;
   border-radius: 10px;
@@ -525,6 +655,10 @@
   font-weight: 750;
   text-transform: none;
   box-shadow: none;
+}
+@media (max-width: 600px) {
+  .v-theme--light .experience-page--settings .settings-preferences .settings-primary-action { max-width: none; }
+  .v-theme--light .experience-page--settings :is(.settings-workspace, .settings-preferences, .settings-subscription) .cb-card__header { padding: 20px; }
 }
 .experience-page--settings .danger-zone-card .v-btn {
   min-height: 48px;
@@ -672,4 +806,243 @@
   .v-theme--light .experience-page .cb-page-header__left::before {
     margin-bottom: 16px;
   }
+}
+
+/* The editors are teleported outside their pages, so page-scoped tokens do
+   not reach them. Keep the new light treatment local to these slide-overs. */
+.transaction-form-drawer .v-navigation-drawer__content,
+.category-drawer .v-navigation-drawer__content {
+  display: flex;
+  flex-direction: column;
+}
+
+/* The fixed mobile menu button sits above Vuetify's temporary drawers. */
+body:has(.transaction-form-drawer.v-navigation-drawer--active, .category-drawer.v-navigation-drawer--active) .mobile-nav-trigger {
+  visibility: hidden;
+}
+
+.transaction-form-shell,
+.category-drawer .drawer-shell {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.transaction-form-header,
+.v-navigation-drawer.category-drawer .drawer-shell__header {
+  align-items: flex-start;
+  gap: 18px;
+  padding: 28px 28px 24px;
+}
+
+.transaction-form-header__copy,
+.category-drawer .drawer-shell__header > div:first-child { min-width: 0; }
+
+.transaction-form-header__eyebrow,
+.category-drawer .drawer-shell__eyebrow {
+  display: inline-block;
+  margin-bottom: 12px;
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .1em;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.transaction-form-header .cb-drawer-title,
+.category-drawer .drawer-shell__header h2 {
+  margin: 0 0 8px;
+  font-size: clamp(1.7rem, 4vw, 2rem);
+  letter-spacing: -.045em;
+  line-height: 1.16;
+}
+
+.transaction-form-header p,
+.category-drawer .drawer-shell__header p {
+  max-width: 34ch;
+  margin: 0;
+  font-size: .92rem;
+  line-height: 1.5;
+}
+
+.transaction-form-header .v-btn,
+.category-drawer .drawer-shell__header .v-btn { flex: 0 0 auto; }
+
+.transaction-form-body,
+.v-navigation-drawer.category-drawer .drawer-shell__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 0 auto;
+  gap: 16px;
+  padding: 24px 28px 32px;
+}
+
+.transaction-form-section,
+.category-drawer .drawer-section {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--cb-border-card);
+  border-radius: 16px;
+  background: var(--cb-surface);
+}
+
+.transaction-form-section__label,
+.category-drawer .drawer-section__label {
+  display: block;
+  margin-bottom: 20px;
+  font-size: .73rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.transaction-form-section .v-row { margin-bottom: -12px; }
+
+.transaction-form-footer,
+.v-navigation-drawer.category-drawer .drawer-shell__footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: auto;
+  /* Reserve the lower-right corner for the persistent privacy control. */
+  padding: 16px 64px max(16px, env(safe-area-inset-bottom)) 28px;
+  border-top: 1px solid var(--cb-border);
+  background: var(--cb-surface);
+}
+
+.transaction-form-footer .v-btn,
+.category-drawer .drawer-shell__footer .v-btn {
+  min-height: 46px;
+  height: auto;
+  padding-inline: 20px;
+  border-radius: 10px;
+  font-weight: 750;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: normal;
+}
+
+.v-theme--light.transaction-form-drawer,
+.v-theme--light.category-drawer,
+.v-theme--light.transaction-form-drawer .v-theme--light,
+.v-theme--light.category-drawer .v-theme--light {
+  --cb-primary: #10cc83;
+  --cb-accent: #246c51;
+  --cb-surface: #fff;
+  --cb-surface-soft: #f3f7f2;
+  --cb-border: #ccd7ce;
+  --cb-border-card: #dce7dd;
+  --cb-ink: #18372b;
+  --cb-ink-muted: #50645b;
+}
+
+.v-theme--light:is(.transaction-form-drawer, .category-drawer) .v-navigation-drawer__content {
+  background: #fafbf7;
+}
+
+.v-theme--light .transaction-form-header,
+.v-theme--light .category-drawer .drawer-shell__header,
+.v-theme--light.transaction-form-drawer .transaction-form-header,
+.v-theme--light.category-drawer .drawer-shell__header {
+  border-bottom: 1px solid #dce7dd;
+  background: #fff;
+}
+
+.v-theme--light:is(.transaction-form-drawer, .category-drawer) :is(.transaction-form-header__eyebrow, .drawer-shell__eyebrow) {
+  color: #246c51;
+}
+
+.v-theme--light:is(.transaction-form-drawer, .category-drawer) :is(.transaction-form-header, .drawer-shell__header) h2 {
+  color: #18372b;
+}
+
+.v-theme--light:is(.transaction-form-drawer, .category-drawer) :is(.transaction-form-header, .drawer-shell__header) p {
+  color: #50645b;
+}
+
+.v-theme--light:is(.transaction-form-drawer, .category-drawer) :is(.transaction-form-section__label, .drawer-section__label) {
+  color: #246c51;
+}
+
+.v-theme--light:is(.transaction-form-drawer, .category-drawer) :is(.transaction-form-section, .drawer-section) {
+  box-shadow: 0 2px 12px rgba(24, 55, 43, .035);
+}
+
+.v-theme--light:is(.transaction-form-drawer, .category-drawer) :is(.transaction-form-footer__primary, .drawer-shell__save) {
+  background: #10cc83 !important;
+  color: #18372b !important;
+  box-shadow: none;
+}
+
+.v-theme--light:is(.transaction-form-drawer, .category-drawer) :is(.transaction-form-footer__secondary, .drawer-shell__cancel) {
+  border-color: #aebfb3;
+  background: #fff !important;
+  color: #18372b !important;
+}
+
+.v-theme--light.category-drawer .type-toggle__option {
+  border-color: #ccd7ce;
+  border-radius: 10px;
+  background: #f3f7f2;
+  color: #50645b;
+}
+
+.v-theme--light.category-drawer .type-toggle__option--expense {
+  --type-toggle-accent: #a3af39;
+  --type-toggle-background: #f7fad6;
+}
+
+.v-theme--light.category-drawer .type-toggle__option--income {
+  --type-toggle-accent: #10a66c;
+  --type-toggle-background: #e7f8ed;
+}
+
+.v-theme--light.category-drawer .type-toggle__option--active {
+  border-color: var(--type-toggle-accent);
+  background: var(--type-toggle-background);
+  color: #18372b;
+  box-shadow: inset 0 0 0 1px var(--type-toggle-accent);
+}
+
+.v-theme--light.category-drawer :is(.icon-option, .preview-card) {
+  border-color: #dce7dd;
+  border-radius: 12px;
+  background: #f3f7f2;
+}
+
+.v-theme--light.category-drawer .icon-option--active {
+  border-color: #10cc83;
+  background: #e7f8ed;
+  color: #246c51;
+  box-shadow: inset 0 0 0 1px #10cc83;
+}
+
+.v-theme--light.category-drawer :is(.preview-card strong, .preview-card .tag-pill span) { color: #18372b; }
+.v-theme--light.category-drawer .preview-card > div > span { color: #50645b; }
+
+.v-theme--light:is(.transaction-form-drawer, .category-drawer) :is(button, .v-btn):focus-visible {
+  outline: 3px solid #18372b;
+  outline-offset: 2px;
+}
+
+@media (max-width: 600px) {
+  .transaction-form-header,
+  .v-navigation-drawer.category-drawer .drawer-shell__header { padding: 24px 18px 20px; }
+
+  .transaction-form-body,
+  .v-navigation-drawer.category-drawer .drawer-shell__body { padding: 18px 14px 28px; }
+
+  .transaction-form-section,
+  .category-drawer .drawer-section { padding: 18px; }
+
+  .transaction-form-footer,
+  .v-navigation-drawer.category-drawer .drawer-shell__footer { padding-left: 14px; padding-right: 58px; }
+
+  .transaction-form-footer .v-btn,
+  .category-drawer .drawer-shell__footer .v-btn { flex: 1 1 0; min-width: 0; }
 }

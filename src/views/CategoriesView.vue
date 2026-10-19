@@ -10,27 +10,30 @@
           <PlanTierBadge v-if="billingSummary && !canUseConnectedFinance" tier="STARTER" />
           <v-btn
             v-if="activeTab === 'categories'"
+            class="cb-create-action"
             color="var(--cb-primary)"
             @click="startCreateCategory"
           >
-            <v-icon start>mdi-plus</v-icon>
-            {{ $t('categories_page.new_category') }}
+            <span>{{ $t('categories_page.new_category') }}</span>
+            <span class="cb-create-action__mark cb-create-action__mark--add" aria-hidden="true">+</span>
           </v-btn>
           <v-btn
             v-else-if="activeTab === 'tags'"
+            class="cb-create-action"
             color="var(--cb-primary)"
             @click="startCreateTag"
           >
-            <v-icon start>mdi-plus</v-icon>
-            {{ $t('categories_page.new_tag') }}
+            <span>{{ $t('categories_page.new_tag') }}</span>
+            <span class="cb-create-action__mark cb-create-action__mark--add" aria-hidden="true">+</span>
           </v-btn>
           <v-btn
             v-else
+            class="cb-create-action"
             color="var(--cb-primary)"
             @click="startCreateAutomation"
           >
-            <v-icon start>mdi-plus</v-icon>
-            {{ $t('categories_page.create_automation') }}
+            <span>{{ $t('categories_page.create_automation') }}</span>
+            <span class="cb-create-action__mark cb-create-action__mark--add" aria-hidden="true">+</span>
           </v-btn>
         </template>
       </page-header>
@@ -682,10 +685,11 @@
       <div class="drawer-shell">
         <div class="drawer-shell__header">
           <div>
+            <span class="drawer-shell__eyebrow">{{ $t('categories_page.editor_eyebrow') }}</span>
             <h2>{{ editingCategoryId ? $t('categories_page.edit_category') : $t('categories_page.new_category') }}</h2>
             <p>{{ $t('categories_page.category_drawer_description') }}</p>
           </div>
-          <v-btn icon variant="text" @click="closeEditor">
+          <v-btn icon variant="text" :aria-label="$t('common.close')" @click="closeEditor">
             <v-icon>mdi-close</v-icon>
           </v-btn>
         </div>
@@ -696,21 +700,27 @@
             <div class="type-toggle">
               <button
                 type="button"
-                class="type-toggle__option"
+                class="type-toggle__option type-toggle__option--expense"
                 :class="{ 'type-toggle__option--active': editorDirection === 'EXPENSE' }"
+                :aria-pressed="editorDirection === 'EXPENSE'"
                 @click="editorDirection = 'EXPENSE'"
               >
-                <v-icon size="18">mdi-arrow-up</v-icon>
-                {{ $t('categories_page.expense') }}
+                <span class="type-toggle__copy">
+                  <strong>{{ $t('categories_page.expense') }}</strong>
+                  <small>{{ $t('categories_page.money_out') }}</small>
+                </span>
               </button>
               <button
                 type="button"
-                class="type-toggle__option"
+                class="type-toggle__option type-toggle__option--income"
                 :class="{ 'type-toggle__option--active': editorDirection === 'INCOME' }"
+                :aria-pressed="editorDirection === 'INCOME'"
                 @click="editorDirection = 'INCOME'"
               >
-                <v-icon size="18">mdi-arrow-down</v-icon>
-                {{ $t('categories_page.income') }}
+                <span class="type-toggle__copy">
+                  <strong>{{ $t('categories_page.income') }}</strong>
+                  <small>{{ $t('categories_page.money_in') }}</small>
+                </span>
               </button>
             </div>
 
@@ -720,6 +730,7 @@
               :placeholder="$t('categories_page.category_name_placeholder')"
               variant="outlined"
               density="comfortable"
+              hide-details="auto"
               color="var(--cb-primary)"
               class="modern-input"
             />
@@ -745,6 +756,7 @@
               clearable
               variant="outlined"
               density="comfortable"
+              hide-details="auto"
               color="var(--cb-primary)"
               class="modern-input"
             />
@@ -759,6 +771,8 @@
                 type="button"
                 class="icon-option"
                 :class="{ 'icon-option--active': editorDisplayIcon === icon }"
+                :aria-label="`${$t('categories_page.visual_identity')}: ${icon.replace('mdi-', '')}`"
+                :aria-pressed="editorDisplayIcon === icon"
                 @click="editorDisplayIcon = icon"
               >
                 <v-icon>{{ icon }}</v-icon>
@@ -773,6 +787,8 @@
                 class="color-option"
                 :class="{ 'color-option--active': editorDisplayColor === color }"
                 :style="{ backgroundColor: color }"
+                :aria-label="`${$t('categories_page.visual_identity')}: ${color}`"
+                :aria-pressed="editorDisplayColor === color"
                 @click="editorDisplayColor = color"
               >
                 <v-icon v-if="editorDisplayColor === color" color="white" size="18">mdi-check</v-icon>
@@ -795,8 +811,8 @@
         </div>
 
         <div class="drawer-shell__footer">
-          <v-btn variant="text" @click="closeEditor">{{ $t('common.cancel') }}</v-btn>
-          <v-btn :loading="savingCategory" @click="saveCategory">
+          <v-btn class="drawer-shell__cancel" variant="outlined" @click="closeEditor">{{ $t('common.cancel') }}</v-btn>
+          <v-btn class="drawer-shell__save" :loading="savingCategory" @click="saveCategory">
             {{ editingCategoryId ? $t('categories_page.save_adjustments') : $t('categories_page.create_category') }}
           </v-btn>
         </div>
@@ -813,10 +829,11 @@
       <div class="drawer-shell">
         <div class="drawer-shell__header">
           <div>
+            <span class="drawer-shell__eyebrow">{{ $t('categories_page.editor_eyebrow') }}</span>
             <h2>{{ editingTagId ? $t('categories_page.edit_tag') : $t('categories_page.new_tag') }}</h2>
             <p>{{ $t('categories_page.tag_drawer_description') }}</p>
           </div>
-          <v-btn icon variant="text" @click="closeTagEditor">
+          <v-btn icon variant="text" :aria-label="$t('common.close')" @click="closeTagEditor">
             <v-icon>mdi-close</v-icon>
           </v-btn>
         </div>
@@ -830,6 +847,7 @@
               :placeholder="$t('categories_page.tag_name_placeholder')"
               variant="outlined"
               density="comfortable"
+              hide-details="auto"
               color="var(--cb-primary)"
               class="modern-input"
             />
@@ -842,6 +860,8 @@
                 class="color-option"
                 :class="{ 'color-option--active': tagEditorColor === color }"
                 :style="{ backgroundColor: color }"
+                :aria-label="`${$t('categories_page.visual_identity')}: ${color}`"
+                :aria-pressed="tagEditorColor === color"
                 @click="tagEditorColor = color"
               >
                 <v-icon v-if="tagEditorColor === color" color="white" size="18">mdi-check</v-icon>
@@ -858,8 +878,8 @@
         </div>
 
         <div class="drawer-shell__footer">
-          <v-btn variant="text" @click="closeTagEditor">{{ $t('common.cancel') }}</v-btn>
-          <v-btn :loading="savingTag" @click="saveTag">
+          <v-btn class="drawer-shell__cancel" variant="outlined" @click="closeTagEditor">{{ $t('common.cancel') }}</v-btn>
+          <v-btn class="drawer-shell__save" :loading="savingTag" @click="saveTag">
             {{ editingTagId ? $t('categories_page.save_tag') : $t('categories_page.create_tag') }}
           </v-btn>
         </div>
@@ -876,10 +896,11 @@
       <div class="drawer-shell">
         <div class="drawer-shell__header">
           <div>
+            <span class="drawer-shell__eyebrow">{{ $t('categories_page.editor_eyebrow') }}</span>
             <h2>{{ editingAutomationId ? $t('categories_page.edit_automation') : $t('categories_page.new_automation') }}</h2>
             <p>{{ $t('categories_page.automation_drawer_description') }}</p>
           </div>
-          <v-btn icon variant="text" @click="closeAutomationEditor">
+          <v-btn icon variant="text" :aria-label="$t('common.close')" @click="closeAutomationEditor">
             <v-icon>mdi-close</v-icon>
           </v-btn>
         </div>
@@ -893,6 +914,7 @@
               :placeholder="$t('categories_page.rule_name_placeholder')"
               variant="outlined"
               density="comfortable"
+              hide-details="auto"
               color="var(--cb-primary)"
               class="modern-input"
             />
@@ -906,6 +928,7 @@
                 :label="$t('categories_page.operator')"
                 variant="outlined"
                 density="comfortable"
+                hide-details="auto"
                 color="var(--cb-primary)"
                 class="modern-input"
               />
@@ -915,6 +938,7 @@
                 :placeholder="$t('categories_page.description_text_placeholder')"
                 variant="outlined"
                 density="comfortable"
+                hide-details="auto"
                 color="var(--cb-primary)"
                 class="modern-input"
               />
@@ -928,6 +952,7 @@
               :label="$t('categories_page.target_category')"
               variant="outlined"
               density="comfortable"
+              hide-details="auto"
               color="var(--cb-primary)"
               class="modern-input"
             />
@@ -949,8 +974,8 @@
         </div>
 
         <div class="drawer-shell__footer">
-          <v-btn variant="text" @click="closeAutomationEditor">{{ $t('common.cancel') }}</v-btn>
-          <v-btn :loading="savingAutomation" @click="saveAutomation">
+          <v-btn class="drawer-shell__cancel" variant="outlined" @click="closeAutomationEditor">{{ $t('common.cancel') }}</v-btn>
+          <v-btn class="drawer-shell__save" :loading="savingAutomation" @click="saveAutomation">
             {{ editingAutomationId ? $t('categories_page.save_automation') : $t('categories_page.create_automation') }}
           </v-btn>
         </div>
@@ -2618,7 +2643,7 @@ watch(locale, () => {
 }
 
 .drawer-shell__header h2 { margin: 0 0 8px; color: var(--cb-ink); font-size: 1.9rem; }
-.drawer-shell__header p  { margin: 0; color: var(--cb-ink-muted); }
+.drawer-shell__header p  { margin: 0; color: var(--cb-ink-secondary); }
 
 .drawer-shell__body { padding: 24px; display: flex; flex-direction: column; gap: 24px; }
 
@@ -2640,23 +2665,48 @@ watch(locale, () => {
 }
 
 .type-toggle__option {
-  min-height: 54px;
-  border-radius: 8px;
+  min-height: 68px;
+  padding: 10px 12px;
+  border-radius: 10px;
   border: 1px solid var(--cb-border);
   background: var(--cb-surface-soft);
-  color: var(--cb-ink-muted);
+  color: var(--cb-ink-secondary);
   font-weight: 600;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
+  justify-content: flex-start;
+  gap: 10px;
+  text-align: left;
 }
 
+.type-toggle__option::before {
+  content: '';
+  flex: 0 0 12px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--type-toggle-accent);
+}
+
+.type-toggle__option--expense {
+  --type-toggle-accent: var(--cb-warning);
+  --type-toggle-background: var(--cb-warning-bg);
+}
+
+.type-toggle__option--income {
+  --type-toggle-accent: var(--cb-positive);
+  --type-toggle-background: var(--cb-positive-bg);
+}
+
+.type-toggle__copy { display: grid; gap: 2px; min-width: 0; }
+.type-toggle__copy strong { font-size: .96rem; line-height: 1.18; }
+.type-toggle__copy small { font-size: .72rem; font-weight: 600; line-height: 1.25; }
+
 .type-toggle__option--active {
-  background: var(--cb-primary);
-  color: #ffffff;
-  border-color: color-mix(in srgb, var(--cb-primary) 35%, transparent);
-  box-shadow: 0 4px 14px color-mix(in srgb, var(--cb-primary) 22%, transparent);
+  background: var(--type-toggle-background);
+  color: var(--cb-ink);
+  border-color: var(--type-toggle-accent);
+  box-shadow: inset 0 0 0 1px var(--type-toggle-accent);
 }
 
 /* ── Icon + color pickers ────────────────────────────────────────────────── */

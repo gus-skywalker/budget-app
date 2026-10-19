@@ -959,7 +959,39 @@
   },
   "planTierBadge": {
     "requiresStarter": "Disponible à partir de Starter Casa",
-    "requiresTeam": "Disponible avec Team"
+    "requiresTeam": "Disponible avec Team",
+    "containsStarter": "Cette page comprend des fonctions Starter Casa ; les fonctions de base restent disponibles",
+    "containsTeam": "Cette page comprend des fonctions Team ; les fonctions de base restent disponibles",
+    "partialSummary": "Certaines fonctions nécessitent {tiers} ; les fonctions de base restent disponibles"
+  },
+  "planAccess": {
+    "title": "Ce que comprend votre offre",
+    "intro": "Consultez les fonctions disponibles dans cet espace. Un badge indique l'offre requise pour celles qui ne le sont pas encore.",
+    "loading": "Vérification de votre offre...",
+    "unavailable": "Impossible de vérifier les fonctions de votre offre pour le moment. Réessayez plus tard.",
+    "unknown": "Accès non confirmé",
+    "included": "Disponible",
+    "starterTier": "· Starter+",
+    "teamTier": "· Team",
+    "freeBase": "Les transactions et catégories manuelles, les scénarios de base et les décisions personnelles sont inclus dans Free.",
+    "limitsTitle": "Limites de votre offre",
+    "permissionsNote": "L'accès peut aussi dépendre de votre rôle dans l'espace. Un échec de vérification ne signifie pas que la fonction est bloquée.",
+    "viewPlans": "Comparer les offres",
+    "features": {
+      "connectedFinance": "Connexions financières et Open Finance",
+      "ai": "Suggestions par IA",
+      "planningIntelligence": "Suggestions de budget et base fondée sur l'historique",
+      "advancedScenarios": "Scénarios avancés",
+      "collaboration": "Collaboration et décisions partagées",
+      "advancedCashflow": "Trésorerie avancée",
+      "financialClosing": "Clôture partagée des résultats"
+    },
+    "limits": {
+      "workspaces": "Espaces",
+      "members": "Membres par espace",
+      "scenarios": "Scénarios enregistrés",
+      "decisions": "Décisions enregistrées"
+    }
   },
   "transactionComments": {
     "title": "Commentaires de la transaction",
@@ -1017,7 +1049,19 @@
       "scope": "Afficher"
     },
     "subtitle": "Gérez les revenus et dépenses manuels, suivez les écritures Open Finance et contrôlez ce qui entre dans la planification.",
-    "add_expense": "Enregistrer la dépense",
+    "add_expense": "Nouvelle dépense",
+    "add_income": "Nouveau revenu",
+    "editor": {
+      "eyebrow": "Opération manuelle",
+      "edit_income_title": "Modifier un revenu",
+      "edit_expense_title": "Modifier une dépense",
+      "income_description": "Saisissez le montant et choisissez comment ce revenu apparaît dans l’espace.",
+      "expense_description": "Saisissez la dépense et organisez sa catégorie, son compte et sa visibilité.",
+      "main_details": "Informations principales",
+      "organization": "Organisation et accès",
+      "save_expense": "Enregistrer la dépense",
+      "update_expense": "Enregistrer les modifications"
+    },
     "payment_method_not_informed_open_finance": "Non communiqué par Open Finance",
     "applied_filter": "Filtre appliqué",
     "filters": {
@@ -1158,6 +1202,12 @@
   "categories_page": {
     "title": "Catégories",
     "subtitle": "Organisez les écritures par catégorie.",
+    "editor_eyebrow": "Organisation de l’espace",
+    "money_out": "Argent qui sort",
+    "money_in": "Argent qui entre",
+    "category_drawer_description": "Donnez un nom clair à cette catégorie et choisissez comment elle apparaît dans les opérations.",
+    "tag_drawer_description": "Créez une étiquette pour retrouver et regrouper des opérations sans changer leur catégorie.",
+    "automation_drawer_description": "Définissez quand la description d’une opération doit recevoir une catégorie. Vérifiez l’aperçu avant de l’appliquer.",
     "list_title": "Catégories suivies",
     "empty": "Aucune catégorie trouvée.",
     "open_finance_upgrade_cta": "Activer Open Finance",
@@ -2056,6 +2106,9 @@
   "choosePlan": {
     "title": "Choisissez comment mieux décider avec votre argent.",
     "subtitle": "Utilisez Free pour découvrir le coeur de CoBudget. Passez à un plan supérieur lorsque vous avez besoin de données réelles, d'IA, de collaboration et d'échelle.",
+    "connected_finance_eyebrow": "Vous venez d’Open Finance",
+    "connected_finance_title": "Connectez vos données quand cela a du sens pour vous.",
+    "connected_finance_description": "Comparez les offres pour voir laquelle permet cette connexion. Vous pourrez décider plus tard si vous souhaitez connecter un compte.",
     "ai_title": "IA et automatisation commencent avec Starter+",
     "ai_desc": "Starter et Team débloquent les couches payantes d'intelligence financière :",
     "ai_feature_1": "Prévision des dépenses et cashflow avancé",

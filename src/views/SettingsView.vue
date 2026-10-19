@@ -250,9 +250,9 @@
         </v-window-item>
 
         <!-- Tab: Preferências -->
-        <v-window-item value="preferences">
+        <v-window-item value="preferences" class="settings-preferences">
           <v-row>
-            <v-col cols="12" md="8" lg="6">
+            <v-col cols="12" md="10" lg="8">
               <div class="cb-card">
                 <div class="cb-card__header">
                   <h2 class="cb-card__title">
@@ -381,7 +381,6 @@
                 size="large"
                 block
               >
-                <v-icon left>mdi-content-save</v-icon>
                 {{ $t('account_management.save_preferences') }}
               </v-btn>
             </v-col>
@@ -389,7 +388,7 @@
         </v-window-item>
 
         <!-- Tab: Empresa -->
-        <v-window-item value="workspace">
+        <v-window-item value="workspace" class="settings-workspace">
           <TrustContextCard context="workspace" class="mb-6" />
           <WorkspaceSettings />
         </v-window-item>
@@ -728,7 +727,7 @@
         </v-window-item>
 
         <!-- Tab: Assinatura -->
-        <v-window-item value="subscription">
+        <v-window-item value="subscription" class="settings-subscription">
           <SubscriptionManagement :user="user" />
         </v-window-item>
       </v-window>

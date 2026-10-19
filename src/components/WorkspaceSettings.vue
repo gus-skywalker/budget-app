@@ -60,13 +60,12 @@
                 />
                 <v-btn
                   type="submit"
+                  class="settings-primary-action mt-4"
                   color="primary"
-                  class="mt-4"
                   block
                   :loading="creatingWorkspace"
                   :disabled="creatingWorkspace"
                 >
-                  <v-icon left>mdi-check-circle</v-icon>
                   {{ $t('workspaceSettings.create_workspace') }}
                 </v-btn>
               </v-form>
@@ -141,13 +140,12 @@
                 <v-btn
                   v-if="canManageWorkspace"
                   type="submit"
+                  class="settings-primary-action mt-4"
                   color="primary"
-                  class="mt-4"
                   :loading="savingWorkspace"
                   :disabled="formLoading"
                   block
                 >
-                  <v-icon left>mdi-content-save</v-icon>
                   {{ $t('workspaceSettings.save_changes') }}
                 </v-btn>
               </v-form>
@@ -189,11 +187,11 @@
                 />
                 <v-btn
                   type="submit"
+                  class="settings-primary-action"
                   color="primary"
                   block
                   :loading="inviteLoading"
                 >
-                  <v-icon left>mdi-send</v-icon>
                   {{ $t('workspaceSettings.send_invite') }}
                 </v-btn>
               </v-form>

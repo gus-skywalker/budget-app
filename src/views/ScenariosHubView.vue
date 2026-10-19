@@ -3,9 +3,9 @@
     <div class="cb-container">
       <page-header :title="t('planning.scenarios.title')" :meta="t('planning.scenarios.subtitle')">
         <template #actions>
-          <v-btn class="decision-entry-cta" color="var(--cb-primary)" @click="createScenario">
-            <v-icon start>mdi-plus-circle-outline</v-icon>
-            {{ t('decisionJourney.start') }}
+          <v-btn class="decision-entry-cta cb-create-action" color="var(--cb-primary)" @click="createScenario">
+            <span>{{ t('decisionJourney.start') }}</span>
+            <span class="cb-create-action__mark cb-create-action__mark--add" aria-hidden="true">+</span>
           </v-btn>
         </template>
       </page-header>
@@ -130,9 +130,9 @@
           <div v-else class="cb-empty-state">
             <v-icon size="40" color="var(--cb-ink-muted)">mdi-content-save-outline</v-icon>
             <p>{{ t('planning.scenarios.saved_placeholder') }}</p>
-            <v-btn class="decision-entry-cta" color="var(--cb-primary)" @click="createScenario">
-              <v-icon start>mdi-plus</v-icon>
-              {{ t('decisionJourney.start') }}
+            <v-btn class="decision-entry-cta cb-create-action" color="var(--cb-primary)" @click="createScenario">
+              <span>{{ t('decisionJourney.start') }}</span>
+              <span class="cb-create-action__mark cb-create-action__mark--add" aria-hidden="true">+</span>
             </v-btn>
           </div>
 

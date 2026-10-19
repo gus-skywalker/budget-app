@@ -8,6 +8,7 @@ import WorkspaceSwitcher from '@/components/WorkspaceSwitcher.vue'
 import PlanTierBadge from '@/components/PlanTierBadge.vue'
 import BillingOrchestrationService, { type BillingSummaryResponse } from '@/services/BillingOrchestrationService'
 import { isSidebarRouteActive, sidebarRouteCurrentState } from '@/utils/sidebarNavigation'
+import { sidebarPlanHints } from '@/utils/sidebarPlanHints'
 import type { RouteLocationRaw } from 'vue-router'
 
 const router = useRouter()
@@ -32,12 +33,21 @@ type NavItem = {
   disabled: boolean
   primary?: boolean
   lockedTier?: 'STARTER' | 'TEAM'
+  planHints?: Array<'STARTER' | 'TEAM'>
 }
 
 type NavSection = {
   key: string
   title: string
   items: NavItem[]
+}
+
+const planHints = (key: string) => sidebarPlanHints(key, billingSummary.value)
+
+function itemPlanDescription(item: NavItem): string {
+  if (item.lockedTier) return `${item.title} · ${t('planTierBadge.requiresTeam')}`
+  const tiers = (item.planHints || []).join(' / ')
+  return tiers ? `${item.title} · ${t('planTierBadge.partialSummary', { tiers })}` : item.title
 }
 
 const checkMobile = () => {
@@ -121,6 +131,7 @@ const mainNavSections = computed<NavSection[]>(() => [
         icon: 'mdi-lightbulb-outline',
         to: { name: 'decisions' },
         primary: true,
+        planHints: planHints('decisions'),
         disabled: false
       },
       {
@@ -155,6 +166,7 @@ const mainNavSections = computed<NavSection[]>(() => [
         title: t('sidebar.overview'),
         icon: 'mdi-view-dashboard',
         to: { name: 'dashboard' },
+        planHints: planHints('overview'),
         disabled: false
       },
       {
@@ -162,6 +174,7 @@ const mainNavSections = computed<NavSection[]>(() => [
         title: t('sidebar.transactions'),
         icon: 'mdi-swap-horizontal',
         to: { name: 'transactions' },
+        planHints: planHints('transactions'),
         disabled: false
       },
       {
@@ -169,6 +182,7 @@ const mainNavSections = computed<NavSection[]>(() => [
         title: t('sidebar.cashflow'),
         icon: 'mdi-chart-waterfall',
         to: { name: 'cashflow' },
+        planHints: planHints('cashflow'),
         disabled: false
       },
       {
@@ -190,6 +204,7 @@ const mainNavSections = computed<NavSection[]>(() => [
         title: t('sidebar.accounts'),
         icon: 'mdi-bank-outline',
         to: { name: 'accounts' },
+        planHints: planHints('accounts'),
         disabled: false
       },
       {
@@ -197,6 +212,7 @@ const mainNavSections = computed<NavSection[]>(() => [
         title: t('sidebar.categories'),
         icon: 'mdi-shape-outline',
         to: { name: 'categories' },
+        planHints: planHints('categories'),
         disabled: false
       }
     ]
@@ -210,6 +226,7 @@ const mainNavSections = computed<NavSection[]>(() => [
         title: t('sidebar.planning_budget'),
         icon: 'mdi-wallet-outline',
         to: { name: 'planning-budget' },
+        planHints: planHints('planning-budget'),
         disabled: false
       },
       {
@@ -225,6 +242,7 @@ const mainNavSections = computed<NavSection[]>(() => [
         title: t('sidebar.planning_scenarios'),
         icon: 'mdi-layers-triple-outline',
         to: { name: 'planning-scenarios' },
+        planHints: planHints('planning-scenarios'),
         disabled: false
       },
       {
@@ -232,6 +250,7 @@ const mainNavSections = computed<NavSection[]>(() => [
         title: t('sidebar.planning_goals'),
         icon: 'mdi-bullseye-arrow',
         to: { name: 'planning-goals' },
+        planHints: planHints('planning-goals'),
         disabled: false
       }
     ]
@@ -244,6 +263,7 @@ const settingsItems = computed<NavItem[]>(() => [
     title: t('sidebar.settings'),
     icon: 'mdi-cog-outline',
     to: { name: 'settings' },
+    planHints: planHints('settings'),
     disabled: false
   },
   {
@@ -346,7 +366,7 @@ function itemCurrentState(item: NavItem): 'page' | 'location' | undefined {
             v-for="item in section.items"
             :key="item.key"
             :disabled="isMobile"
-            :text="item.lockedTier ? `${item.title} · ${t('planTierBadge.requiresTeam')}` : item.title"
+            :text="itemPlanDescription(item)"
             location="end"
           >
             <template v-slot:activator="{ props }">
@@ -354,7 +374,7 @@ function itemCurrentState(item: NavItem): 'page' | 'location' | undefined {
                 v-bind="props"
                 :prepend-icon="item.icon"
                 :title="item.title"
-                :aria-label="item.lockedTier ? `${item.title}. ${t('planTierBadge.requiresTeam')}` : item.title"
+                :aria-label="itemPlanDescription(item)"
                 :to="item.to"
                 :disabled="item.disabled"
                 :active="isItemActive(item)"
@@ -362,11 +382,14 @@ function itemCurrentState(item: NavItem): 'page' | 'location' | undefined {
                 :class="{
                   'primary-nav-item': item.primary,
                   'active-nav-item': isItemActive(item),
-                  'plan-locked-nav-item': Boolean(item.lockedTier)
+                  'plan-locked-nav-item': Boolean(item.lockedTier || item.planHints?.length)
                 }"
               >
-                <template v-if="item.lockedTier" #append>
-                  <PlanTierBadge :tier="item.lockedTier" />
+                <template v-if="item.lockedTier || item.planHints?.length" #append>
+                  <span class="sidebar-tier-badges">
+                    <PlanTierBadge v-if="item.lockedTier" :tier="item.lockedTier" />
+                    <PlanTierBadge v-for="tier in item.planHints" :key="tier" :tier="tier" scope="partial" />
+                  </span>
                 </template>
               </v-list-item>
             </template>
@@ -386,7 +409,7 @@ function itemCurrentState(item: NavItem): 'page' | 'location' | undefined {
             v-for="item in settingsItems"
             :key="item.key"
             :disabled="isMobile"
-            :text="item.title"
+            :text="itemPlanDescription(item)"
             location="end"
           >
             <template v-slot:activator="{ props }">
@@ -394,12 +417,19 @@ function itemCurrentState(item: NavItem): 'page' | 'location' | undefined {
                 v-bind="props"
                 :prepend-icon="item.icon"
                 :title="item.title"
+                :aria-label="itemPlanDescription(item)"
                 :to="item.to"
                 :disabled="item.disabled"
                 :active="isItemActive(item)"
                 :aria-current="itemCurrentState(item)"
-                :class="{ 'active-nav-item': isItemActive(item) }"
-              ></v-list-item>
+                :class="{ 'active-nav-item': isItemActive(item), 'plan-locked-nav-item': Boolean(item.planHints?.length) }"
+              >
+                <template v-if="item.planHints?.length" #append>
+                  <span class="sidebar-tier-badges">
+                    <PlanTierBadge v-for="tier in item.planHints" :key="tier" :tier="tier" scope="partial" />
+                  </span>
+                </template>
+              </v-list-item>
             </template>
           </v-tooltip>
           <v-list-group value="legal" prepend-icon="mdi-scale-balance">
@@ -564,6 +594,13 @@ function itemCurrentState(item: NavItem): 'page' | 'location' | undefined {
 
 .app-sidebar :deep(.plan-locked-nav-item .v-list-item__append) {
   margin-inline-start: 4px;
+}
+
+.sidebar-tier-badges {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
 }
 
 .section-divider {

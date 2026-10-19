@@ -1056,7 +1056,39 @@
   },
   "planTierBadge": {
     "requiresStarter": "Available with Starter Casa or higher",
-    "requiresTeam": "Available with Team"
+    "requiresTeam": "Available with Team",
+    "containsStarter": "This page includes Starter Casa features; basic features remain available",
+    "containsTeam": "This page includes Team features; basic features remain available",
+    "partialSummary": "Some features require {tiers}; basic features remain available"
+  },
+  "planAccess": {
+    "title": "What your plan includes",
+    "intro": "See the features available to this workspace. A badge shows the plan needed for anything not yet available.",
+    "loading": "Checking your plan...",
+    "unavailable": "We couldn't check your plan features right now. Please try again later.",
+    "unknown": "Access not confirmed",
+    "included": "Available",
+    "starterTier": "· Starter+",
+    "teamTier": "· Team",
+    "freeBase": "Manual transactions and categories, basic scenarios, and personal decisions are included in Free.",
+    "limitsTitle": "Your plan limits",
+    "permissionsNote": "Access may also depend on your workspace role. A failed check does not mean a feature is locked.",
+    "viewPlans": "Compare plans",
+    "features": {
+      "connectedFinance": "Financial connections and Open Finance",
+      "ai": "AI suggestions",
+      "planningIntelligence": "Budget suggestions and history-based baseline",
+      "advancedScenarios": "Advanced scenarios",
+      "collaboration": "Collaboration and shared decisions",
+      "advancedCashflow": "Advanced cashflow",
+      "financialClosing": "Shared result closing"
+    },
+    "limits": {
+      "workspaces": "Workspaces",
+      "members": "Members per workspace",
+      "scenarios": "Saved scenarios",
+      "decisions": "Saved decisions"
+    }
   },
   "transactionComments": {
     "title": "Transaction comments",
@@ -1114,7 +1146,19 @@
       "scope": "Show"
     },
     "subtitle": "Manage manual income and expenses, follow Open Finance entries, and control what enters planning.",
-    "add_expense": "Save expense",
+    "add_expense": "New expense",
+    "add_income": "New income",
+    "editor": {
+      "eyebrow": "Manual transaction",
+      "edit_income_title": "Edit income",
+      "edit_expense_title": "Edit expense",
+      "income_description": "Record the amount and choose how this income appears in the workspace.",
+      "expense_description": "Record the expense and organize its category, account, and visibility.",
+      "main_details": "Main details",
+      "organization": "Organization and access",
+      "save_expense": "Save expense",
+      "update_expense": "Save changes"
+    },
     "delete_dialog": {
       "title": "Delete transaction?",
       "description": "You are about to delete \"{description}\".",
@@ -1375,6 +1419,9 @@
   "categories_page": {
     "title": "Categories",
     "subtitle": "Organize entries by category.",
+    "editor_eyebrow": "Workspace organization",
+    "money_out": "Money out",
+    "money_in": "Money in",
     "list_title": "Tracked Categories",
     "empty": "No categories found.",
     "open_finance": "Open Finance",
@@ -1472,7 +1519,7 @@
     "automation_preview_empty": "No uncategorized entry would be changed by this rule.",
     "empty_automations_filter": "No automation found for this filter.",
     "edit_category": "Edit category",
-    "category_drawer_description": "Organize the workspace catalog with a consistent taxonomy for budget, AI, and scenarios.",
+    "category_drawer_description": "Give this category a clear name and choose how it appears on transactions.",
     "structure": "Structure",
     "name": "Name",
     "category_name_placeholder": "E.g. Marketing, Recurring revenue",
@@ -1485,7 +1532,7 @@
     "save_adjustments": "Save adjustments",
     "create_category": "Create category",
     "edit_tag": "Edit tag",
-    "tag_drawer_description": "Create cross-cutting labels for context, filters, and future automations.",
+    "tag_drawer_description": "Create a label to find and group transactions without changing their category.",
     "tag_identity": "Tag identity",
     "tag_name_placeholder": "E.g. Reimbursement, Travel, Company",
     "tag_preview": "Tag preview",
@@ -1493,7 +1540,7 @@
     "create_tag": "Create tag",
     "edit_automation": "Edit automation",
     "new_automation": "New automation",
-    "automation_drawer_description": "Create an explicit rule to categorize transactions by description and apply it to history when useful.",
+    "automation_drawer_description": "Define when a transaction description should receive a category. Review the preview before applying it.",
     "rule": "Rule",
     "rule_name": "Rule name",
     "rule_name_placeholder": "E.g. Uber => Transportation",
@@ -2988,6 +3035,9 @@
   "choosePlan": {
     "title": "Choose how you want to make better money decisions.",
     "subtitle": "Use Free to experience CoBudget's core. Upgrade when you need real data, AI, collaboration, and scale.",
+    "connected_finance_eyebrow": "You came from Open Finance",
+    "connected_finance_title": "Connect your data when it makes sense for you.",
+    "connected_finance_description": "Compare the plans to see which one enables this connection. You can decide whether to connect an account later.",
     "ai_title": "AI and automation start on Starter+",
     "ai_desc": "Starter and Team unlock the paid intelligence layers:",
     "ai_feature_1": "Expense forecasting and advanced cashflow",

@@ -2,7 +2,7 @@
   <v-container
     id="blog-page"
     fluid
-    :class="['blog-page', isInAppShell ? 'blog-page--app' : 'blog-page--public']"
+    :class="['blog-page', isInAppShell ? 'blog-page--app experience-page experience-page--blog' : 'blog-page--public']"
   >
     <header v-if="!isInAppShell" class="blog-header">
       <div class="shell blog-header__shell">
@@ -560,6 +560,65 @@ async function handleNewsletterSubmit() {
   --line: var(--cb-border-card);
 }
 
+:global(.v-theme--light #blog-page.blog-page--app) {
+  --page-bg: #fafbf7;
+  --surface: #fff;
+  --surface-soft: #f3f7f2;
+  --ink: #18372b;
+  --ink-soft: #50645b;
+  --line: #ccd7ce;
+  --brand: #10cc83;
+  --brand-strong: #0eaa6c;
+  --accent-soft: #e7f8ed;
+  --shadow-soft: 0 4px 18px rgba(24, 55, 43, .055);
+}
+
+:global(.v-theme--light #blog-page.blog-page--app .section-kicker),
+:global(.v-theme--light #blog-page.blog-page--app .eyebrow) {
+  background: #edfa58;
+  color: #18372b;
+}
+
+:global(.v-theme--light #blog-page.blog-page--app .hero__copy) {
+  border-color: #b9d0bc;
+  background: linear-gradient(145deg, #f3f7f2, #fff 70%);
+  padding: clamp(24px, 4vw, 40px);
+}
+
+:global(.v-theme--light #blog-page.blog-page--app .hero__copy::before) {
+  content: '';
+  display: block;
+  width: 68px;
+  height: 8px;
+  margin-bottom: 20px;
+  border-radius: 4px;
+  background: #edfa58;
+}
+
+:global(.v-theme--light #blog-page.blog-page--app .hero__panel-card--accent),
+:global(.v-theme--light #blog-page.blog-page--app .playbook-card) {
+  background: #f3f7f2;
+  border-color: #b9d0bc;
+}
+
+:global(.v-theme--light #blog-page.blog-page--app .btn-primary) {
+  background: #10cc83;
+  color: #18372b;
+}
+
+:global(.v-theme--light #blog-page.blog-page--app .btn-primary:hover) {
+  background: #0eaa6c;
+}
+
+:global(.v-theme--light #blog-page.blog-page--app .btn-secondary) {
+  border-color: #aebfb3;
+}
+
+:global(.v-theme--light #blog-page.blog-page--app .topic-chip) {
+  background: #fff;
+  color: #19553e;
+}
+
 #blog-page.blog-page--public {
   --page-bg: #f5f1e8;
   --surface: rgba(255, 255, 255, 0.82);
@@ -577,7 +636,7 @@ async function handleNewsletterSubmit() {
     linear-gradient(180deg, #fbf8f2 0%, #f8f4ed 52%, #fdfaf5 100%);
 }
 
-:global(.v-theme--dark) #blog-page.blog-page--app {
+:global(.v-theme--dark #blog-page.blog-page--app) {
   --page-bg: var(--cb-page-bg);
   --surface: var(--cb-surface);
   --surface-soft: var(--cb-surface-soft);

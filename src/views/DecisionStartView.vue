@@ -17,6 +17,7 @@
           <span class="intent-card__top"><v-icon class="intent-card__icon" size="28" aria-hidden="true">{{ intent.icon }}</v-icon><v-icon size="22" aria-hidden="true">{{ blockedReason(intent) ? 'mdi-lock-outline' : 'mdi-arrow-top-right' }}</v-icon></span>
           <span class="intent-card__title">{{ t(intentKey(intent, 'title')) }}</span>
           <span :id="`intent-${intent.id}-description`" class="intent-card__description">{{ t(intentKey(intent, 'description')) }}</span>
+          <PlanTierBadge v-if="intent.advanced && accessState === 'denied'" tier="STARTER" class="intent-card__tier" />
           <span class="intent-card__action">{{ t(blockedReason(intent) || 'decisionJourney.continue') }}<v-icon v-if="!blockedReason(intent)" size="18" aria-hidden="true">mdi-arrow-right</v-icon></span>
         </button>
       </section>
@@ -49,6 +50,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useTheme } from 'vuetify'
 import PageHeader from '@/components/PageHeader.vue'
+import PlanTierBadge from '@/components/PlanTierBadge.vue'
 import { useUserStore } from '@/plugins/userStore'
 import BillingOrchestrationService from '@/services/BillingOrchestrationService'
 import { advancedDecisionAccess, decisionDestination, decisionIntents, intentKey, type DecisionIntent } from '@/utils/decisionJourney'
@@ -109,6 +111,7 @@ onScopeDispose(() => { generation++ })
 .intent-card--featured .intent-card__icon, .intent-card--featured .intent-card__action { background: var(--journey-action); color: var(--journey-on-action); }
 .intent-card__title { font-size: 1.35rem; font-weight: 750; line-height: 1.25; margin-bottom: 12px; }
 .intent-card__description { color: var(--journey-muted); font-size: .94rem; line-height: 1.6; margin-bottom: 26px; }
+.intent-card__tier { margin-bottom: 12px; }
 .intent-card__action { margin-top: auto; min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 8px; border-radius: 10px; padding: 10px 12px; font-size: .9rem; font-weight: 700; }
 .intent-card[aria-disabled='true'] { cursor: not-allowed; border-style: dashed; }
 .intent-card[aria-disabled='true'] .intent-card__action { background: var(--journey-highlight); color: var(--journey-ink); }

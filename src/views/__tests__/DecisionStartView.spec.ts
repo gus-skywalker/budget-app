@@ -95,6 +95,7 @@ describe('decision entry', () => {
     const { wrapper } = await setup()
     await flushPromises()
     expect(wrapper.get('[data-intent="payment-options"]').text()).toContain('Não incluído no plano atual')
+    expect(wrapper.get('[data-intent="payment-options"] .plan-tier-badge').text()).toContain('STARTER')
     expect(wrapper.get('[data-intent="monthly-change"]').attributes('aria-disabled')).toBe('false')
   })
 

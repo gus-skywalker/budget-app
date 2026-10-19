@@ -14,21 +14,20 @@
             v-if="canWriteCurrentWorkspace"
             size="small"
             variant="tonal"
-            color="var(--cb-ink-secondary)"
-            style="text-transform:none;font-weight:600;letter-spacing:0"
+            class="cb-create-action cb-create-action--secondary"
             @click="openFormDrawer('income')"
           >
-            <v-icon start size="14">mdi-trending-up</v-icon>
-            {{ $t('income.save') }}
+            <span>{{ $t('transactions.add_income') }}</span>
+            <span class="cb-create-action__mark cb-create-action__mark--add" aria-hidden="true">+</span>
           </v-btn>
           <v-btn
             v-if="canWriteCurrentWorkspace"
             size="small"
-            class="cb-btn-primary"
+            class="cb-btn-primary cb-create-action"
             @click="openFormDrawer('expense')"
           >
-            <v-icon start size="14">mdi-plus</v-icon>
-            {{ $t('transactions.add_expense') }}
+            <span>{{ $t('transactions.add_expense') }}</span>
+            <span class="cb-create-action__mark cb-create-action__mark--add" aria-hidden="true">+</span>
           </v-btn>
         </template>
       </page-header>
@@ -68,22 +67,22 @@
           <div class="cb-filter-chips" role="group" :aria-label="$t('transactions.navigation.type')">
           <!-- Tab: Despesas -->
           <button
-            class="cb-chip"
+            class="cb-chip transaction-type-chip transaction-type-chip--expense"
             :class="{ 'cb-chip--active': activeTab === 'expense' }"
             :aria-pressed="activeTab === 'expense'"
             @click="activeTab = 'expense'"
           >
-            <v-icon size="12" start>mdi-trending-down</v-icon>
+            <span class="transaction-type-chip__dot" aria-hidden="true"></span>
             {{ $t('expense.title') }}
           </button>
           <!-- Tab: Receitas -->
           <button
-            class="cb-chip"
+            class="cb-chip transaction-type-chip transaction-type-chip--income"
             :class="{ 'cb-chip--active': activeTab === 'income' }"
             :aria-pressed="activeTab === 'income'"
             @click="activeTab = 'income'"
           >
-            <v-icon size="12" start>mdi-trending-up</v-icon>
+            <span class="transaction-type-chip__dot" aria-hidden="true"></span>
             {{ $t('income.title') }}
           </button>
 
@@ -253,8 +252,8 @@
           <div v-else-if="!isLoadingExpenses" style="padding:40px 24px;text-align:center">
             <v-icon size="40" color="var(--cb-ink-disabled)" style="display:block;margin:0 auto 12px">mdi-receipt-text-outline</v-icon>
             <p style="font-family:var(--cb-font-heading);font-size:.925rem;font-weight:600;color:var(--cb-ink);margin:0 0 8px">{{ expenseEmptyMessage }}</p>
-            <v-btn v-if="canWriteCurrentWorkspace" size="small" class="cb-btn-primary mt-2" @click="openFormDrawer('expense')">
-              <v-icon start size="14">mdi-plus</v-icon>{{ $t('expense.save') }}
+            <v-btn v-if="canWriteCurrentWorkspace" size="small" class="cb-btn-primary cb-create-action mt-2" @click="openFormDrawer('expense')">
+              <span>{{ $t('transactions.add_expense') }}</span><span class="cb-create-action__mark cb-create-action__mark--add" aria-hidden="true">+</span>
             </v-btn>
           </div>
           <div v-else style="padding:40px 24px;text-align:center">
@@ -294,8 +293,8 @@
           <div v-else-if="!isLoadingIncomes" style="padding:40px 24px;text-align:center">
             <v-icon size="40" color="var(--cb-ink-disabled)" style="display:block;margin:0 auto 12px">mdi-cash-plus</v-icon>
             <p style="font-family:var(--cb-font-heading);font-size:.925rem;font-weight:600;color:var(--cb-ink);margin:0 0 8px">{{ incomeEmptyMessage }}</p>
-            <v-btn v-if="canWriteCurrentWorkspace" size="small" class="cb-btn-primary mt-2" @click="openFormDrawer('income')">
-              <v-icon start size="14">mdi-plus</v-icon>{{ $t('income.save') }}
+            <v-btn v-if="canWriteCurrentWorkspace" size="small" class="cb-btn-primary cb-create-action mt-2" @click="openFormDrawer('income')">
+              <span>{{ $t('transactions.add_income') }}</span><span class="cb-create-action__mark cb-create-action__mark--add" aria-hidden="true">+</span>
             </v-btn>
           </div>
           <div v-else style="padding:40px 24px;text-align:center">
@@ -525,38 +524,49 @@
     <v-navigation-drawer
       v-model="showFormDrawer"
       location="right"
-      :width="400"
+      :width="460"
       temporary
+      class="transaction-form-drawer"
     >
-      <div class="cb-drawer-header">
-        <h2 class="cb-drawer-title">
-          {{ formMode === 'income' ? $t('income.title') : $t('expense.title') }}
-          <span
-            v-if="(formMode === 'income' && isEditingIncome) || (formMode === 'expense' && isEditingExpense)"
-            style="font-weight:400;font-size:.82em;color:var(--cb-ink-muted);margin-left:6px"
-          >— editando</span>
-        </h2>
-        <v-btn icon size="small" variant="text" @click="closeFormDrawer">
-          <v-icon>mdi-close</v-icon>
-        </v-btn>
-      </div>
-      <div class="cb-drawer-body">
+      <div class="transaction-form-shell">
+        <div class="cb-drawer-header transaction-form-header">
+          <div class="transaction-form-header__copy">
+            <span class="transaction-form-header__eyebrow">{{ $t('transactions.editor.eyebrow') }}</span>
+            <h2 class="cb-drawer-title">
+              {{ formMode === 'income'
+                ? $t(isEditingIncome ? 'transactions.editor.edit_income_title' : 'transactions.add_income')
+                : $t(isEditingExpense ? 'transactions.editor.edit_expense_title' : 'transactions.add_expense') }}
+            </h2>
+            <p>{{ $t(formMode === 'income' ? 'transactions.editor.income_description' : 'transactions.editor.expense_description') }}</p>
+          </div>
+          <v-btn icon size="small" variant="text" :aria-label="$t('common.close')" @click="cancelFormDrawer">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </div>
+        <div class="cb-drawer-body transaction-form-body">
 
         <!-- INCOME FORM -->
         <template v-if="formMode === 'income'">
+          <section class="transaction-form-section">
+            <span class="transaction-form-section__label">{{ $t('transactions.editor.main_details') }}</span>
           <v-row>
             <v-col cols="12" sm="6">
-              <v-text-field :label="$t('common.date')" type="date" v-model="income.date" variant="outlined" density="comfortable" color="var(--cb-accent)" class="modern-input" />
+              <v-text-field :label="$t('common.date')" type="date" v-model="income.date" variant="outlined" density="comfortable" hide-details="auto" color="var(--cb-accent)" class="modern-input" />
             </v-col>
             <v-col cols="12" sm="6">
-              <v-text-field :label="$t('common.amount')" type="text" inputmode="decimal" :model-value="income.amount" @update:model-value="onIncomeAmountInput" variant="outlined" density="comfortable" color="var(--cb-accent)" class="modern-input" :rules="[requiredAmount, validCurrencyFormat]" />
+              <v-text-field :label="$t('common.amount')" type="text" inputmode="decimal" :model-value="income.amount" @update:model-value="onIncomeAmountInput" variant="outlined" density="comfortable" hide-details="auto" color="var(--cb-accent)" class="modern-input" :rules="[requiredAmount, validCurrencyFormat]" />
             </v-col>
             <v-col cols="12">
-              <v-text-field :label="$t('common.description')" v-model="income.description" variant="outlined" density="comfortable" color="var(--cb-accent)" class="modern-input" />
+              <v-text-field :label="$t('common.description')" v-model="income.description" variant="outlined" density="comfortable" hide-details="auto" color="var(--cb-accent)" class="modern-input" />
             </v-col>
+          </v-row>
+          </section>
+          <section class="transaction-form-section">
+            <span class="transaction-form-section__label">{{ $t('transactions.editor.organization') }}</span>
+          <v-row>
             <v-col cols="12">
-              <v-text-field v-if="income.openFinance" :label="$t('common.payment_method')" :model-value="openFinancePaymentMethodLabel(income)" readonly variant="outlined" density="comfortable" color="var(--cb-accent)" class="modern-input" />
-              <v-select v-else :label="$t('common.payment_method')" v-model="income.paymentMethod" :items="paymentMethods" item-title="name" item-value="id" variant="outlined" density="comfortable" color="var(--cb-accent)" class="modern-input" />
+              <v-text-field v-if="income.openFinance" :label="$t('common.payment_method')" :model-value="openFinancePaymentMethodLabel(income)" readonly variant="outlined" density="comfortable" hide-details="auto" color="var(--cb-accent)" class="modern-input" />
+              <v-select v-else :label="$t('common.payment_method')" v-model="income.paymentMethod" :items="paymentMethods" item-title="name" item-value="id" variant="outlined" density="comfortable" hide-details="auto" color="var(--cb-accent)" class="modern-input" />
             </v-col>
             <v-col cols="12">
               <v-select :label="$t('transactionVisibility.label')" v-model="income.visibilityScope" :items="localizedTransactionVisibilityOptions" item-title="title" item-value="value" variant="outlined" density="comfortable" color="var(--cb-accent)" class="modern-input" :hint="transactionVisibilityHint(income.visibilityScope)" persistent-hint />
@@ -565,13 +575,7 @@
               <v-select :label="$t('common.account')" v-model="income.accountId" :items="financialAccounts" item-title="displayName" item-value="id" variant="outlined" density="comfortable" color="var(--cb-accent)" class="modern-input" :disabled="isLoadingFinancialAccounts || !financialAccounts.length" :hint="financialAccountsHint" persistent-hint />
             </v-col>
           </v-row>
-          <v-btn color="var(--cb-accent)" @click="saveIncome" size="large" block style="text-transform:none;font-weight:600;letter-spacing:0;margin-top:8px">
-            <v-icon start size="16">mdi-content-save</v-icon>
-            {{ isEditingIncome ? $t('income.update') : $t('income.save') }}
-          </v-btn>
-          <v-btn v-if="isEditingIncome" variant="tonal" color="grey" size="large" block style="text-transform:none;margin-top:8px" @click="cancelIncomeEdit">
-            <v-icon start size="16">mdi-cancel</v-icon>{{ $t('common.cancel_edit') }}
-          </v-btn>
+          </section>
         </template>
 
         <!-- EXPENSE FORM -->
@@ -579,18 +583,25 @@
           <v-alert v-if="isEditingExpense && expense.openFinance" type="info" variant="tonal" density="comfortable" class="mb-4">
             {{ $t('transactions.open_finance_edit_notice') }}
           </v-alert>
+          <section class="transaction-form-section">
+            <span class="transaction-form-section__label">{{ $t('transactions.editor.main_details') }}</span>
           <v-row>
             <v-col cols="12" sm="6">
-              <v-text-field :label="$t('common.date')" type="date" v-model="expense.date" :disabled="expense.openFinance" variant="outlined" density="comfortable" color="var(--cb-primary)" class="modern-input" />
+              <v-text-field :label="$t('common.date')" type="date" v-model="expense.date" :disabled="expense.openFinance" variant="outlined" density="comfortable" hide-details="auto" color="var(--cb-primary)" class="modern-input" />
             </v-col>
             <v-col cols="12" sm="6">
-              <v-text-field :label="$t('common.amount')" type="text" inputmode="decimal" :model-value="expense.amount" @update:model-value="onExpenseAmountInput" :disabled="expense.openFinance" variant="outlined" density="comfortable" color="var(--cb-primary)" class="modern-input" :rules="[requiredAmount, validCurrencyFormat]" />
+              <v-text-field :label="$t('common.amount')" type="text" inputmode="decimal" :model-value="expense.amount" @update:model-value="onExpenseAmountInput" :disabled="expense.openFinance" variant="outlined" density="comfortable" hide-details="auto" color="var(--cb-primary)" class="modern-input" :rules="[requiredAmount, validCurrencyFormat]" />
             </v-col>
             <v-col cols="12">
-              <v-text-field :label="$t('common.description')" v-model="expense.description" :disabled="expense.openFinance" variant="outlined" density="comfortable" color="var(--cb-primary)" class="modern-input" />
+              <v-text-field :label="$t('common.description')" v-model="expense.description" :disabled="expense.openFinance" variant="outlined" density="comfortable" hide-details="auto" color="var(--cb-primary)" class="modern-input" />
             </v-col>
+          </v-row>
+          </section>
+          <section class="transaction-form-section">
+            <span class="transaction-form-section__label">{{ $t('transactions.editor.organization') }}</span>
+          <v-row>
             <v-col cols="12" sm="6">
-              <v-select :label="$t('common.category')" v-model="expense.category" :items="categories" item-title="name" item-value="id" variant="outlined" density="comfortable" color="var(--cb-primary)" class="modern-input">
+              <v-select :label="$t('common.category')" v-model="expense.category" :items="categories" item-title="name" item-value="id" variant="outlined" density="comfortable" hide-details="auto" color="var(--cb-primary)" class="modern-input">
                 <template #item="{ item, props }">
                   <v-list-item v-bind="props">
                     <template #prepend><v-icon :icon="resolveCategoryIcon(item.raw)" :color="resolveCategoryColor(item.raw)" class="mr-2" /></template>
@@ -602,8 +613,8 @@
               </v-select>
             </v-col>
             <v-col cols="12" sm="6">
-              <v-text-field v-if="expense.openFinance" :label="$t('common.payment_method')" :model-value="openFinancePaymentMethodLabel(expense)" readonly variant="outlined" density="comfortable" color="var(--cb-primary)" class="modern-input" />
-              <v-select v-else :label="$t('common.payment_method')" v-model="expense.paymentMethod" :items="paymentMethods" item-title="name" item-value="id" variant="outlined" density="comfortable" color="var(--cb-primary)" class="modern-input" />
+              <v-text-field v-if="expense.openFinance" :label="$t('common.payment_method')" :model-value="openFinancePaymentMethodLabel(expense)" readonly variant="outlined" density="comfortable" hide-details="auto" color="var(--cb-primary)" class="modern-input" />
+              <v-select v-else :label="$t('common.payment_method')" v-model="expense.paymentMethod" :items="paymentMethods" item-title="name" item-value="id" variant="outlined" density="comfortable" hide-details="auto" color="var(--cb-primary)" class="modern-input" />
             </v-col>
             <v-col cols="12">
               <div class="ai-category-row">
@@ -633,15 +644,25 @@
               <v-select :label="$t('transactionVisibility.label')" v-model="expense.visibilityScope" :items="localizedTransactionVisibilityOptions" item-title="title" item-value="value" :disabled="expense.openFinance" variant="outlined" density="comfortable" color="var(--cb-primary)" class="modern-input" :hint="transactionVisibilityHint(expense.visibilityScope)" persistent-hint />
             </v-col>
           </v-row>
-          <v-btn color="var(--cb-primary)" @click="saveExpense" size="large" block style="text-transform:none;font-weight:600;letter-spacing:0;margin-top:8px">
-            <v-icon start size="16">mdi-content-save</v-icon>
-            {{ isEditingExpense ? $t('expense.update') : $t('expense.save') }}
-          </v-btn>
-          <v-btn v-if="isEditingExpense" variant="tonal" color="grey" size="large" block style="text-transform:none;margin-top:8px" @click="cancelExpenseEdit">
-            <v-icon start size="16">mdi-cancel</v-icon>{{ $t('common.cancel_edit') }}
-          </v-btn>
+          </section>
         </template>
 
+        </div>
+        <div class="transaction-form-footer">
+          <v-btn
+            variant="outlined"
+            class="transaction-form-footer__secondary"
+            @click="cancelFormDrawer"
+          >
+            {{ $t('common.cancel') }}
+          </v-btn>
+          <v-btn v-if="formMode === 'income'" class="transaction-form-footer__primary" @click="saveIncome">
+            {{ isEditingIncome ? $t('income.update') : $t('income.save') }}
+          </v-btn>
+          <v-btn v-else class="transaction-form-footer__primary" @click="saveExpense">
+            {{ isEditingExpense ? $t('transactions.editor.update_expense') : $t('transactions.editor.save_expense') }}
+          </v-btn>
+        </div>
       </div>
     </v-navigation-drawer>
 
@@ -1405,6 +1426,15 @@ export default {
     },
     closeFormDrawer() {
       this.showFormDrawer = false
+    },
+    cancelFormDrawer() {
+      if (this.formMode === 'income' && this.isEditingIncome) {
+        this.cancelIncomeEdit()
+      } else if (this.formMode === 'expense' && this.isEditingExpense) {
+        this.cancelExpenseEdit()
+      } else {
+        this.closeFormDrawer()
+      }
     },
     openTransactionDetails(type, transaction) {
       if (!transaction) return
@@ -4099,6 +4129,32 @@ export default {
 
 .transaction-controls .cb-chip {
   min-height: 34px;
+}
+
+.transaction-type-chip--expense {
+  --transaction-type-accent: var(--cb-warning);
+  --transaction-type-background: var(--cb-warning-bg);
+}
+
+.transaction-type-chip--income {
+  --transaction-type-accent: var(--cb-positive);
+  --transaction-type-background: var(--cb-positive-bg);
+}
+
+.transaction-controls .transaction-type-chip.cb-chip--active {
+  border-color: var(--transaction-type-accent);
+  background: var(--transaction-type-background);
+  color: var(--cb-ink);
+}
+
+.transaction-type-chip__dot {
+  display: inline-block;
+  flex: 0 0 9px;
+  width: 9px;
+  height: 9px;
+  margin-right: 7px;
+  border-radius: 50%;
+  background: var(--transaction-type-accent);
 }
 
 .transaction-controls .cb-chip:focus-visible {

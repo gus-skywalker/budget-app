@@ -1,8 +1,8 @@
 <template>
-  <div class="select-workspace-view">
-    <v-container class="py-12">
+  <div class="select-workspace-view experience-page experience-page--workspace-select">
+    <v-container class="workspace-selector-shell py-12">
       <v-row justify="center">
-        <v-col cols="12" md="8" lg="6">
+        <v-col cols="12" md="9" lg="7">
           <v-card class="elevation-12 gradient-card">
             <v-card-title class="workspace-card-heading d-flex align-center justify-space-between">
               <div>
@@ -59,12 +59,13 @@
             <v-card-actions class="action-area">
               <v-spacer />
               <v-btn
+                class="cb-create-action"
                 color="primary"
                 variant="elevated"
-                prepend-icon="mdi-plus"
                 @click="router.push({ name: 'create-workspace', query: { redirect: redirectTarget } })"
               >
-                {{ t('workspaceSwitcher.create_new_workspace') }}
+                <span>{{ t('workspaceSwitcher.create_new_workspace') }}</span>
+                <span class="cb-create-action__mark" aria-hidden="true">↗</span>
               </v-btn>
             </v-card-actions>
           </v-card>
@@ -184,5 +185,91 @@ const selectWorkspace = async (workspaceId: string) => {
 
 .action-area {
   background: rgba(255, 255, 255, 0.04);
+}
+
+.workspace-selector-shell { max-width: 1120px; }
+
+:global(.v-theme--light .select-workspace-view) {
+  background:
+    radial-gradient(circle at 86% 8%, rgba(237, 250, 88, .3), transparent 26%),
+    radial-gradient(circle at 5% 88%, rgba(16, 204, 131, .11), transparent 34%),
+    #fafbf7;
+  color: #18372b;
+}
+
+:global(.v-theme--light .select-workspace-view .gradient-card) {
+  border: 1px solid #ccd7ce;
+  border-radius: 24px;
+  background: #fff;
+  color: #18372b;
+  box-shadow: 0 22px 55px rgba(24, 55, 43, .1) !important;
+}
+
+:global(.v-theme--light .select-workspace-view .workspace-card-heading) {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  padding: clamp(24px, 4vw, 38px);
+  white-space: normal;
+}
+
+:global(.v-theme--light .select-workspace-view .workspace-card-heading > div::before) {
+  content: '';
+  display: block;
+  width: 70px;
+  height: 8px;
+  margin-bottom: 22px;
+  border-radius: 8px;
+  background: #edfa58;
+}
+
+:global(.v-theme--light .select-workspace-view .title) {
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 800;
+  letter-spacing: -.04em;
+  line-height: 1.1;
+}
+
+:global(.v-theme--light .select-workspace-view .subtitle),
+:global(.v-theme--light .select-workspace-view .role-label) { color: #50645b; }
+
+:global(.v-theme--light .select-workspace-view .workspace-card-heading .v-chip) {
+  background: #e7f8ed !important;
+  color: #18372b !important;
+  font-weight: 750;
+}
+
+:global(.v-theme--light .select-workspace-view .workspace-entry) {
+  min-height: 74px;
+  margin-bottom: 10px;
+  border: 1px solid #d8e2da;
+  border-radius: 14px;
+  background: #fff;
+}
+
+:global(.v-theme--light .select-workspace-view .workspace-entry:hover),
+:global(.v-theme--light .select-workspace-view .workspace-entry:focus-visible) {
+  border-color: #10cc83;
+  background: #f3f7f2;
+}
+
+:global(.v-theme--light .select-workspace-view .workspace-entry:focus-visible) {
+  outline: 3px solid #18372b;
+  outline-offset: 2px;
+}
+
+:global(.v-theme--light .select-workspace-view .workspace-entry .v-avatar) {
+  background: #e7f8ed !important;
+  color: #246c51 !important;
+}
+
+:global(.v-theme--light .select-workspace-view .action-area) {
+  padding: 18px 24px;
+  background: #f3f7f2;
+}
+
+@media (max-width: 600px) {
+  :global(.v-theme--light .select-workspace-view .workspace-card-heading) { padding: 24px 20px; }
+  :global(.v-theme--light .select-workspace-view .action-area .v-btn) { width: 100%; }
 }
 </style>

@@ -6,6 +6,11 @@
           <span class="eyebrow">{{ $t('landingPage.auth.signupNow') }}</span>
           <h1>{{ $t('choosePlan.title') }}</h1>
           <p class="hero-subtitle">{{ $t('choosePlan.subtitle') }}</p>
+          <div v-if="activeFeature === 'connected-finance'" class="feature-context" role="note">
+            <span class="feature-context__eyebrow">{{ $t('choosePlan.connected_finance_eyebrow') }}</span>
+            <strong>{{ $t('choosePlan.connected_finance_title') }}</strong>
+            <p>{{ $t('choosePlan.connected_finance_description') }}</p>
+          </div>
 
           <div class="hero-notes">
             <article class="note-card">
@@ -200,6 +205,9 @@ export default {
     }
   },
   computed: {
+    activeFeature() {
+      return this.$route?.query?.feature === 'connected-finance' ? 'connected-finance' : null
+    },
     activeSegment() {
       const segment = this.$route?.query?.segment
       return segment === 'casa' || segment === 'negocio' ? segment : null
@@ -395,6 +403,29 @@ p {
   max-width: 60ch;
   font-size: 1.18rem;
 }
+
+.feature-context {
+  display: grid;
+  gap: 5px;
+  max-width: 590px;
+  margin-top: 24px;
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: var(--shadow-soft);
+}
+
+.feature-context__eyebrow {
+  color: var(--accent-strong);
+  font-size: .74rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.feature-context strong { font-size: 1.08rem; }
+.feature-context p { font-size: .94rem; }
 
 .hero-notes,
 .trust-grid,
@@ -870,5 +901,116 @@ p {
   font-weight: 700;
   line-height: 1.5;
   text-align: center;
+}
+
+/* Inside the product, the light plan comparison follows the decision
+   experience. The public offer component and dark palette are untouched. */
+:global(.v-theme--light #choose-plan-page) {
+  --ink: #18372b;
+  --ink-soft: #50645b;
+  --line: #ccd7ce;
+  --brand: #10cc83;
+  --brand-strong: #19553e;
+  --accent: #246c51;
+  --accent-strong: #19553e;
+  --shadow: 0 18px 38px rgba(24, 55, 43, .1);
+  --shadow-soft: 0 4px 18px rgba(24, 55, 43, .055);
+  background: radial-gradient(circle at 92% 4%, rgba(237, 250, 88, .24), transparent 22%), #fafbf7;
+  font-family: var(--cb-font-body, 'Source Sans 3', sans-serif);
+}
+
+:global(.v-theme--light #choose-plan-page .eyebrow),
+:global(.v-theme--light #choose-plan-page .section-kicker) {
+  background: #edfa58;
+  color: #18372b;
+}
+
+:global(.v-theme--light #choose-plan-page .feature-context) {
+  border-color: #b9d0bc;
+  background: #f3f7f2;
+  border-left: 6px solid #10cc83;
+}
+
+:global(.v-theme--light #choose-plan-page .note-card),
+:global(.v-theme--light #choose-plan-page .trust-card),
+:global(.v-theme--light #choose-plan-page .faq-shell) {
+  background: #fff;
+}
+
+:global(.v-theme--light #choose-plan-page .ai-summary-card) {
+  background: linear-gradient(145deg, #eef8ef, #fff 68%);
+}
+
+:global(.v-theme--light #choose-plan-page .feature-list-ai li) {
+  border-color: #d8e5d9;
+}
+
+:global(.v-theme--light #choose-plan-page .segment-context),
+:global(.v-theme--light #choose-plan-page .segment-context--negocio) {
+  border-color: #bad4c1;
+  background: #edf8ed;
+}
+
+:global(.v-theme--light #choose-plan-page .plan-card.starter),
+:global(.v-theme--light #choose-plan-page .plan-card.free) {
+  background: #fff;
+}
+
+:global(.v-theme--light #choose-plan-page .plan-card.team) {
+  background: linear-gradient(165deg, #f0f8ef, #fff 64%);
+  border-color: #aacdb3;
+}
+
+:global(.v-theme--light #choose-plan-page .plan-card--segment-focus),
+:global(.v-theme--light #choose-plan-page .plan-card.team.plan-card--segment-focus) {
+  border-color: #10cc83;
+  box-shadow: 0 18px 42px rgba(24, 121, 78, .14);
+}
+
+:global(.v-theme--light #choose-plan-page .plan-ribbon),
+:global(.v-theme--light #choose-plan-page .plan-offer__promotion) {
+  background: #edfa58;
+  color: #18372b;
+}
+
+:global(.v-theme--light #choose-plan-page .plan-offer__promotion p),
+:global(.v-theme--light #choose-plan-page .plan-offer__badge) {
+  color: #18372b;
+}
+
+:global(.v-theme--light #choose-plan-page .plan-offer),
+:global(.v-theme--light #choose-plan-page .plan-offer__headline) {
+  color: #18372b;
+}
+
+:global(.v-theme--light #choose-plan-page .plan-offer__description),
+:global(.v-theme--light #choose-plan-page .plan-offer__price span),
+:global(.v-theme--light #choose-plan-page .plan-offer__conditions),
+:global(.v-theme--light #choose-plan-page .plan-offer__annual-content p) {
+  color: #50645b;
+}
+
+:global(.v-theme--light #choose-plan-page .plan-offer__primary) {
+  border-radius: 12px;
+  background: #10cc83;
+  color: #18372b;
+}
+
+:global(.v-theme--light #choose-plan-page .plan-offer__secondary) {
+  border-radius: 12px;
+  border-color: #aebfb3;
+  color: #18372b;
+}
+
+:global(.v-theme--light #choose-plan-page .plan-offer__tag),
+:global(.v-theme--light #choose-plan-page .plan-tag),
+:global(.v-theme--light #choose-plan-page .summary-tag) {
+  background: #e7f8ed;
+  color: #19553e;
+}
+
+:global(.v-theme--light #choose-plan-page .btn-outline) {
+  border-color: #aebfb3;
+  color: #18372b;
 }
 </style>

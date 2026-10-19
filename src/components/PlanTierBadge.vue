@@ -2,9 +2,11 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-const props = defineProps<{ tier: 'STARTER' | 'TEAM' }>()
+const props = withDefaults(defineProps<{ tier: 'STARTER' | 'TEAM'; scope?: 'required' | 'partial' }>(), { scope: 'required' })
 const { t } = useI18n()
-const description = computed(() => t(props.tier === 'TEAM' ? 'planTierBadge.requiresTeam' : 'planTierBadge.requiresStarter'))
+const description = computed(() => t(props.scope === 'partial'
+  ? props.tier === 'TEAM' ? 'planTierBadge.containsTeam' : 'planTierBadge.containsStarter'
+  : props.tier === 'TEAM' ? 'planTierBadge.requiresTeam' : 'planTierBadge.requiresStarter'))
 </script>
 
 <template>

@@ -961,7 +961,39 @@
   },
   "planTierBadge": {
     "requiresStarter": "Disponible desde Starter Casa",
-    "requiresTeam": "Disponible en Team"
+    "requiresTeam": "Disponible en Team",
+    "containsStarter": "Esta página incluye funciones de Starter Casa; las funciones básicas siguen disponibles",
+    "containsTeam": "Esta página incluye funciones de Team; las funciones básicas siguen disponibles",
+    "partialSummary": "Algunas funciones requieren {tiers}; las funciones básicas siguen disponibles"
+  },
+  "planAccess": {
+    "title": "Qué incluye tu plan",
+    "intro": "Consulta las funciones disponibles en este espacio. Una etiqueta indica el plan necesario para las que aún no están disponibles.",
+    "loading": "Comprobando tu plan...",
+    "unavailable": "No pudimos comprobar las funciones de tu plan ahora. Inténtalo más tarde.",
+    "unknown": "Acceso sin confirmar",
+    "included": "Disponible",
+    "starterTier": "· Starter+",
+    "teamTier": "· Team",
+    "freeBase": "Los movimientos y categorías manuales, los escenarios básicos y las decisiones personales están incluidos en Free.",
+    "limitsTitle": "Límites de tu plan",
+    "permissionsNote": "El acceso también puede depender de tu función en el espacio. Un error de consulta no significa que la función esté bloqueada.",
+    "viewPlans": "Comparar planes",
+    "features": {
+      "connectedFinance": "Conexiones financieras y Open Finance",
+      "ai": "Sugerencias con IA",
+      "planningIntelligence": "Sugerencias de presupuesto y base según el historial",
+      "advancedScenarios": "Escenarios avanzados",
+      "collaboration": "Colaboración y decisiones compartidas",
+      "advancedCashflow": "Flujo de caja avanzado",
+      "financialClosing": "Cierre de resultados compartido"
+    },
+    "limits": {
+      "workspaces": "Espacios",
+      "members": "Miembros por espacio",
+      "scenarios": "Escenarios guardados",
+      "decisions": "Decisiones guardadas"
+    }
   },
   "transactionComments": {
     "title": "Comentarios del movimiento",
@@ -1019,7 +1051,19 @@
       "scope": "Mostrar"
     },
     "subtitle": "Gestiona ingresos y gastos manuales, acompaña registros de Open Finance y controla qué entra en la planificación.",
-    "add_expense": "Guardar gasto",
+    "add_expense": "Nuevo gasto",
+    "add_income": "Nuevo ingreso",
+    "editor": {
+      "eyebrow": "Movimiento manual",
+      "edit_income_title": "Editar ingreso",
+      "edit_expense_title": "Editar gasto",
+      "income_description": "Registra el importe y elige cómo aparece este ingreso en el espacio.",
+      "expense_description": "Registra el gasto y organiza su categoría, cuenta y visibilidad.",
+      "main_details": "Datos principales",
+      "organization": "Organización y acceso",
+      "save_expense": "Guardar gasto",
+      "update_expense": "Guardar cambios"
+    },
     "payment_method_not_informed_open_finance": "No informado por Open Finance",
     "applied_filter": "Filtro aplicado",
     "filters": {
@@ -1161,6 +1205,12 @@
   "categories_page": {
     "title": "Categorías",
     "subtitle": "Organiza los registros por categoría.",
+    "editor_eyebrow": "Organización del espacio",
+    "money_out": "Dinero que sale",
+    "money_in": "Dinero que entra",
+    "category_drawer_description": "Ponle un nombre claro y elige cómo aparece esta categoría en los movimientos.",
+    "tag_drawer_description": "Crea una etiqueta para encontrar y agrupar movimientos sin cambiar su categoría.",
+    "automation_drawer_description": "Define cuándo la descripción de un movimiento debe recibir una categoría. Revisa la vista previa antes de aplicarla.",
     "list_title": "Categorías monitoreadas",
     "empty": "No se encontraron categorías.",
     "open_finance_upgrade_cta": "Activar Open Finance",
@@ -2092,6 +2142,9 @@
   "choosePlan": {
     "title": "Elige cómo quieres decidir mejor sobre el dinero.",
     "subtitle": "Usa Free para experimentar el núcleo de CoBudget. Haz upgrade cuando necesites datos reales, IA, colaboración y escala.",
+    "connected_finance_eyebrow": "Vienes de Open Finance",
+    "connected_finance_title": "Conecta tus datos cuando tenga sentido para ti.",
+    "connected_finance_description": "Compara los planes para ver cuál permite esta conexión. Puedes decidir si conectas una cuenta después.",
     "ai_title": "IA y automatización empiezan en Starter+",
     "ai_desc": "Starter y Team desbloquean las capas pagas de inteligencia financiera:",
     "ai_feature_1": "Predicción de gastos y cashflow avanzado",

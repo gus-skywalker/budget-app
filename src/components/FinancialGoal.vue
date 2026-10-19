@@ -3,9 +3,9 @@
     <div class="cb-container">
       <page-header :title="$t('financial_goals.title')" :meta="$t('financial_goals.page_intro')">
         <template #actions>
-          <v-btn v-if="financialGoals.length && !isAddingOrEditing && canWriteGoals" class="cb-btn-primary" @click="addNewGoal">
-            <v-icon start>mdi-plus-circle-outline</v-icon>
-            {{ $t('financial_goals.new_goal') }}
+          <v-btn v-if="financialGoals.length && !isAddingOrEditing && canWriteGoals" class="cb-btn-primary cb-create-action" @click="addNewGoal">
+            <span>{{ $t('financial_goals.new_goal') }}</span>
+            <span class="cb-create-action__mark cb-create-action__mark--add" aria-hidden="true">+</span>
           </v-btn>
         </template>
       </page-header>
@@ -20,9 +20,9 @@
                 <v-icon size="36" color="var(--cb-primary)">mdi-bullseye-arrow</v-icon>
                 <h2>{{ $t('financial_goals.empty_title') }}</h2>
                 <p>{{ $t('financial_goals.empty_description') }}</p>
-                <v-btn v-if="canWriteGoals" class="cb-btn-primary" @click="addNewGoal">
-                  <v-icon start>mdi-plus-circle-outline</v-icon>
-                  {{ $t('financial_goals.new_goal') }}
+                <v-btn v-if="canWriteGoals" class="cb-btn-primary cb-create-action" @click="addNewGoal">
+                  <span>{{ $t('financial_goals.new_goal') }}</span>
+                  <span class="cb-create-action__mark cb-create-action__mark--add" aria-hidden="true">+</span>
                 </v-btn>
                 <p v-else>{{ $t('financial_goals.read_only_hint') }}</p>
               </div>
@@ -268,9 +268,11 @@
                     :disabled="!canSuggestGoalCategory"
                     @click="suggestGoalCategory"
                   >
-                    <v-icon start>{{ canUseAi ? 'mdi-brain' : 'mdi-lock-outline' }}</v-icon>
-                    {{ canUseAi ? $t('financial_goals.ai_suggest_category') : $t('financial_goals.ai_upgrade_cta') }}
+                    <v-icon start>{{ aiPlanLocked ? 'mdi-lock-outline' : 'mdi-brain' }}</v-icon>
+                    {{ aiPlanLocked ? $t('financial_goals.ai_upgrade_cta') : $t('financial_goals.ai_suggest_category') }}
                   </v-btn>
+                  <PlanTierBadge v-if="aiPlanLocked" tier="STARTER" />
+                  <span v-else-if="!billingSummary" class="goal-ai-row__meta">{{ $t('planAccess.unknown') }}</span>
                   <span v-if="goalCategorySuggestion" class="goal-ai-row__meta">
                     {{ goalCategorySuggestionSourceLabel(goalCategorySuggestion.source) }}
                     • {{ Math.round((goalCategorySuggestion.suggestedCategory?.confidence || 0) * 100) }}%
@@ -387,7 +389,6 @@
                       color="var(--cb-primary)"
                       size="large"
                     >
-                      <v-icon left>{{ isEditing ? 'mdi-check' : 'mdi-plus' }}</v-icon>
                       {{ isEditing ? $t('financial_goals.update') : $t('financial_goals.add') }}
                     </v-btn>
                   </v-col>
@@ -494,12 +495,14 @@ import ContributionComponent from '@/components/Contribution.vue';
 import DataService from '@/services/DataService';
 import AiService from '@/services/aiService';
 import BillingOrchestrationService from '@/services/BillingOrchestrationService';
+import PlanTierBadge from '@/components/PlanTierBadge.vue';
 import { useUserStore } from '@/plugins/userStore';
 
 export default {
   components: {
     PageHeader,
     ContributionComponent,
+    PlanTierBadge,
   },
   data() {
     return {
@@ -574,6 +577,9 @@ export default {
       if (!capabilities) return false;
       if (typeof capabilities.aiEnabled === 'boolean') return capabilities.aiEnabled;
       return Boolean(this.billingSummary?.hasPremiumAccess);
+    },
+    aiPlanLocked() {
+      return this.billingSummary?.capabilities?.aiEnabled === false;
     },
     canSuggestGoalCategory() {
       return this.canUseAi && Boolean(String(this.goalForm.name || '').trim());

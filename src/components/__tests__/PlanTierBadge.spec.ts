@@ -21,4 +21,12 @@ describe('PlanTierBadge', () => {
     expect(badge.text()).toContain('TEAM')
     expect(badge.attributes('aria-label')).toBe('planTierBadge.requiresTeam')
   })
+
+  it('distinguishes a paid feature inside an otherwise accessible page', () => {
+    const badge = mount(PlanTierBadge, {
+      props: { tier: 'STARTER', scope: 'partial' },
+      global: { stubs: { VIcon: { template: '<span aria-hidden="true"><slot /></span>' } } },
+    })
+    expect(badge.attributes('aria-label')).toBe('planTierBadge.containsStarter')
+  })
 })

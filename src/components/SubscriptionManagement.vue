@@ -1,6 +1,6 @@
 // src/components/SubscriptionManagement.vue
 <template>
-  <v-row>
+  <v-row class="subscription-management">
     <v-col cols="12" lg="10">
       <!-- Card do Plano Atual -->
       <div class="cb-card mb-6">
@@ -109,10 +109,12 @@
         </div>
       </div>
 
+      <PlanAccessOverview :summary="billingSummary" :loading="billingState === 'loading'" />
+
       <!-- Card de Mudança de Plano -->
       <div class="cb-card mb-6">
         <div class="cb-card__header">
-          <div class="cb-card__header card-header-row">
+          <div class="card-header-row">
             <div>
               <h2 class="cb-card__title">
                 <v-icon color="var(--cb-primary)" class="mr-2">mdi-swap-horizontal</v-icon>
@@ -403,6 +405,8 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import BillingDecisionService from '@/services/BillingDecisionService'
 import BillingOrchestrationService from '@/services/BillingOrchestrationService'
+import type { BillingSummaryResponse } from '@/services/BillingOrchestrationService'
+import PlanAccessOverview from '@/components/PlanAccessOverview.vue'
 import {
   requireActiveWorkspaceContext,
   resolveAnyWorkspaceContext,
@@ -455,6 +459,8 @@ const workspaceQuota = ref<BillingAccessWorkspaceQuota | null>(null)
 const billingAccountId = ref<string | null>(null)
 const selectedPlan = ref<MaybePlanId>(''); // Para atualizar o plano
 const hasPremiumAccess = ref(false);
+const billingSummary = ref<BillingSummaryResponse | null>(null)
+const billingState = ref<'loading' | 'ready' | 'error'>('loading')
 const lastLoadedPlan = ref<MaybePlanId>('');
 const showPlanDetails = ref(false);
 const notification = ref({
@@ -550,6 +556,9 @@ const mapTierToLabel = (tier: Exclude<PlanTier, ''>) => {
 
 // Obter o texto do plano atual
 const currentPlanText = computed(() => {
+    if (billingState.value !== 'ready') {
+      return t(billingState.value === 'loading' ? 'planAccess.loading' : 'planAccess.unavailable')
+    }
     if (isPlanId(currentPlan.value)) {
         return mapTierCycleToLabel(mapPlanIdToTier(currentPlan.value), mapPlanIdToCycle(currentPlan.value));
     }
@@ -668,13 +677,22 @@ const changePlanActionText = computed(() => {
 });
 
 const loadSubscriptionDetails = async () => {
+  billingState.value = 'loading'
+  billingSummary.value = null
   try {
     const workspaceContext = resolveAnyWorkspaceContext(userStore)
     if (!actorUserId.value || !workspaceContext) {
+      billingState.value = 'error'
       return
     }
 
     const access = await BillingOrchestrationService.getBillingSummary(workspaceContext.workspaceId)
+    if (!access.data) {
+      billingState.value = 'error'
+      return
+    }
+    billingSummary.value = access.data
+    billingState.value = 'ready'
     billingAccountId.value = access.data?.billingAccountId || null
     hasPremiumAccess.value = Boolean(access.data?.hasPremiumAccess)
     const resolvedStatus = access.data?.subscriptionStatus || (access.data?.hasPremiumAccess ? 'ACTIVE' : 'NONE')
@@ -727,6 +745,8 @@ const loadSubscriptionDetails = async () => {
     }
     lastLoadedPlan.value = currentPlan.value
   } catch (error) {
+    billingState.value = 'error'
+    billingSummary.value = null
     workspaceQuota.value = null
     console.error(t('subscription_management.error_load_details'), error);
   }

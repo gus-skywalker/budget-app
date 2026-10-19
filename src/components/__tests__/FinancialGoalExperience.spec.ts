@@ -47,7 +47,10 @@ const mountGoals = () => mount(FinancialGoal, {
   global: {
     plugins: [vuetify],
     mocks: { $t: (key: string, params?: Record<string, unknown>) => params ? `${key} ${JSON.stringify(params)}` : key, $i18n: { locale: 'pt' }, $router: { push: vi.fn() } },
-    stubs: { ContributionComponent: { template: '<div class="contribution-form-stub" />' } },
+    stubs: {
+      ContributionComponent: { template: '<div class="contribution-form-stub" />' },
+      PlanTierBadge: { props: ['tier'], template: '<span class="plan-tier-badge">{{ tier }}</span>' },
+    },
   },
 })
 
@@ -77,6 +80,22 @@ describe('FinancialGoal guided experience', () => {
     await flushPromises()
     expect(wrapper.find('.goal-ideas-toggle').attributes('aria-expanded')).toBe('true')
     expect(wrapper.find('#goal-ideas-content').attributes('style')).not.toContain('display: none')
+  })
+
+  it('labels a confirmed AI plan restriction without labeling an unknown response as locked', async () => {
+    billing.getBillingSummary.mockResolvedValueOnce({ data: { capabilities: { aiEnabled: false } } })
+    const locked = mountGoals()
+    await flushPromises()
+    await locked.find('.goal-empty-intro button').trigger('click')
+    await flushPromises()
+    expect(locked.find('.goal-ai-row .plan-tier-badge').text()).toContain('STARTER')
+
+    billing.getBillingSummary.mockResolvedValueOnce({ data: { capabilities: {} } })
+    const unknown = mountGoals()
+    await flushPromises()
+    await unknown.find('.goal-empty-intro button').trigger('click')
+    await flushPromises()
+    expect(unknown.find('.goal-ai-row .plan-tier-badge').exists()).toBe(false)
   })
 
   it('places the saved target, progress, deadline and risk reason before optional actions', async () => {

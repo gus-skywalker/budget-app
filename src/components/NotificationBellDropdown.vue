@@ -20,9 +20,11 @@
       </v-btn>
     </template>
 
-    <v-card class="notification-card">
-      <v-card-title class="notification-title">{{ t('notifications.title') }}</v-card-title>
-      <v-divider />
+    <v-card class="notification-card" elevation="0">
+      <v-card-title class="notification-title">
+        <span class="notification-title__accent" aria-hidden="true"></span>
+        {{ t('notifications.title') }}
+      </v-card-title>
       <v-list v-if="latestNotifications.length" density="comfortable" class="notification-list">
         <v-list-item
           v-for="notification in latestNotifications"
@@ -39,7 +41,10 @@
           </v-list-item-subtitle>
         </v-list-item>
       </v-list>
-      <div v-else class="notification-empty">{{ t('notifications.empty') }}</div>
+      <div v-else class="notification-empty">
+        <span class="notification-empty__illustration" aria-hidden="true"><span></span></span>
+        <span>{{ t('notifications.empty') }}</span>
+      </div>
     </v-card>
   </v-menu>
 </template>
@@ -119,19 +124,61 @@ function formatTimestamp(value?: string): string {
 }
 
 .notification-card {
-  border: 1px solid #e2e8f0;
-  width: min(420px, calc(100vw - 96px));
-  max-width: calc(100vw - 96px);
+  border: 1px solid var(--cb-border-card, #ccd7ce);
+  border-radius: 18px !important;
+  width: min(380px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
+  overflow: hidden;
+  box-shadow: 0 16px 38px rgba(17, 43, 31, .14) !important;
 }
 
 .notification-title {
-  font-size: 0.95rem;
-  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--cb-border-card, #ccd7ce);
+  font-size: 1.05rem;
+  font-weight: 750;
+  line-height: 1.3;
+}
+
+.notification-title__accent {
+  display: block;
+  flex: 0 0 8px;
+  width: 8px;
+  height: 24px;
+  border-radius: 4px;
+  background: #10cc83;
 }
 
 .notification-list {
-  max-height: 420px;
+  max-height: 360px;
   overflow-y: auto;
+  padding: 8px;
+}
+
+.notification-list :deep(.v-list-item) {
+  border-radius: 12px;
+  margin-bottom: 4px;
+  padding: 12px;
+}
+
+.notification-unread { background: rgba(16, 204, 131, .08); }
+
+.notification-list :deep(.v-list-item:hover) { background: rgba(16, 204, 131, .12); }
+
+.notification-list :deep(.v-list-item-subtitle) { opacity: 1; }
+
+.notification-list :deep(.v-list-item-title) { white-space: normal; }
+
+.notification-list :deep(.v-list-item__content) { min-width: 0; }
+
+.notification-list :deep(.v-list-item) { cursor: pointer; }
+
+.notification-list :deep(.v-list-item:focus-visible) {
+  outline: 3px solid #18372b;
+  outline-offset: -2px;
 }
 
 .notification-message {
@@ -155,15 +202,48 @@ function formatTimestamp(value?: string): string {
 }
 
 .notification-empty {
-  padding: 16px;
-  color: #64748b;
-  font-size: 0.9rem;
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  padding: 28px 20px 32px;
+  color: var(--cb-ink-secondary, #50645b);
+  font-size: .93rem;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.notification-empty__illustration {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  background: #e7f8ed;
+}
+
+.notification-empty__illustration > span {
+  width: 15px;
+  height: 15px;
+  border: 4px solid #246c51;
+  border-radius: 50%;
+  box-shadow: 0 0 0 5px #edfa58;
+}
+
+:global(.v-theme--dark .notification-title__accent) { background: var(--cb-primary, #10cc83); }
+
+:global(.v-theme--dark .notification-empty__illustration) {
+  background: var(--cb-surface-soft, #273645);
+}
+
+:global(.v-theme--dark .notification-empty__illustration > span) {
+  border-color: var(--cb-primary, #10cc83);
+  box-shadow: 0 0 0 5px var(--cb-surface, #18242e);
 }
 
 @media (max-width: 600px) {
   .notification-card {
-    width: min(360px, calc(100vw - 84px));
-    max-width: calc(100vw - 84px);
+    width: min(360px, calc(100vw - 24px));
+    max-width: calc(100vw - 24px);
   }
 
   .notification-meta {
@@ -174,8 +254,8 @@ function formatTimestamp(value?: string): string {
 
 @media (max-width: 430px) {
   .notification-card {
-    width: min(320px, calc(100vw - 72px));
-    max-width: calc(100vw - 72px);
+    width: min(320px, calc(100vw - 20px));
+    max-width: calc(100vw - 20px);
   }
 }
 </style>
