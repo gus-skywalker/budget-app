@@ -1,0 +1,1583 @@
+<template>
+  <div class="cb-page experience-page experience-page--budget">
+    <div class="cb-container">
+      <!-- Page header with summary strip (shows when active budget exists) -->
+      <page-header
+        class="budget-page-header"
+        :title="t('planning.budget.title')"
+        :period="activeBudget && !isLoading && !budgetLoadFailed ? activeBudgetPeriod : undefined"
+        :summary-items="isLoading || budgetLoadFailed ? [] : budgetSummaryItems"
+      />
+
+      <alert-strip v-if="guidedReturn" variant="info" :description="t('decisionJourney.base.prepareHelp')" />
+
+      <!-- Alerts -->
+      <alert-strip v-if="emptyBudgetMessage" variant="info" :description="emptyBudgetMessage" />
+      <alert-strip v-if="bannerMessage" variant="info" :description="bannerMessage" />
+
+      <!-- Loading -->
+      <div v-if="isLoading" class="cb-empty-state">
+        <v-icon size="40">mdi-timer-sand</v-icon>
+        <p>{{ t('planning.budget.loading_baselines') }}</p>
+      </div>
+
+      <div v-else-if="budgetLoadFailed" class="cb-empty-state" role="alert">
+        <p>{{ t('decisionJourney.base.loadError') }}</p>
+        <v-btn @click="loadCurrentBudget">{{ t('decisionJourney.retry') }}</v-btn>
+      </div>
+      <template v-else>
+        <!-- Active budget card -->
+        <section v-if="activeBudget" class="cb-card cb-active-budget-card" aria-labelledby="active-budget-title">
+          <div class="cb-active-budget-card__kicker">{{ t('planning.budget.active_plan') }}</div>
+          <div class="cb-active-budget-card__head">
+            <h2 id="active-budget-title" class="cb-active-budget-card__title">{{ t('planning.budget.current_plan_title') }}</h2>
+            <v-chip color="success" variant="tonal" size="small">{{ t('planning.budget.used_by_decisions') }}</v-chip>
+          </div>
+          <div class="cb-active-budget-card__facts">
+            <div>
+              <span>{{ t('planning.budget.reference_period') }}</span>
+              <strong>{{ activeBudgetPeriod }}</strong>
+            </div>
+            <div>
+              <span>{{ t('planning.budget.value_source') }}</span>
+              <strong>{{ baselineSourceLabel(activeBudget) }}</strong>
+            </div>
+            <div>
+              <span>{{ t('planning.budget.plan_detail') }}</span>
+              <strong>{{ t('planning.budget.lines_count', { count: activeBudget.lines?.length || 0 }) }}</strong>
+            </div>
+          </div>
+          <p class="cb-active-budget-card__source-note">{{ baselineSourceExplanation(activeBudget) }}</p>
+          <div class="cb-active-budget-card__baseline">
+            <span>{{ t('planning.budget.planned_monthly_result') }}</span>
+            <strong :class="activeBudget.net < 0 ? 'cb-summary-item__value--negative' : 'cb-summary-item__value--positive'">
+              {{ formatCurrency(activeBudget.net) }}/{{ t('planning.budget.month_short') }}
+            </strong>
+          </div>
+          <p class="cb-active-budget-card__interpretation">{{ t('planning.budget.not_current_balance') }}</p>
+          <alert-strip v-if="!activeBudgetMatchesCurrentMonth" variant="info" :description="t('planning.budget.reference_period_notice')" />
+          <alert-strip v-if="activeBaselineNotice" variant="info" :description="activeBaselineNotice" />
+          <div class="cb-active-budget-card__next-step">
+            <div>
+              <h3>{{ t('planning.budget.next_step_title') }}</h3>
+              <p>{{ t('planning.budget.next_step_description') }}</p>
+            </div>
+            <v-btn
+              v-if="userStore.canWrite"
+              class="cb-btn-primary decision-entry-cta"
+              @click="goToScenarioCreation"
+            >
+              <v-icon start>mdi-chart-timeline-variant</v-icon>
+              {{ t(guidedReturn ? 'decisionJourney.base.continue' : 'decisionJourney.start') }}
+            </v-btn>
+          </div>
+        </section>
+
+        <!-- Empty state — no active budget, no editors open -->
+        <div v-if="!activeBudget && !showSuggestionEditor && !showManualEditor" class="cb-empty-state">
+          <v-icon size="40">mdi-wallet-plus-outline</v-icon>
+          <p class="cb-empty-state__title">{{ t(guidedReturn ? 'decisionJourney.base.emptyTitle' : 'planning.budget.empty_start_title') }}</p>
+          <p v-if="!guidedReturn">{{ t('planning.budget.empty_start_description') }}</p>
+          <p v-if="!canManageBudget">{{ t('planning.budget.manage_permission_hint') }}</p>
+          <template v-if="guidedReturn && canManageBudget">
+            <p>{{ t('decisionJourney.base.manualHelp') }}</p>
+            <v-btn class="cb-btn-primary decision-entry-cta" @click="startManualBudget">{{ t('planning.budget.create_manually') }}</v-btn>
+          </template>
+        </div>
+
+        <!-- Create baseline options (always shown when admin and no editor open) -->
+        <button
+          v-if="canManageBudget && activeBudget && !showSuggestionEditor && !showManualEditor"
+          type="button"
+          class="cb-budget-alternatives"
+          :aria-expanded="budgetOptionsExpanded"
+          aria-controls="budget-source-options"
+          @click="budgetOptionsExpanded = !budgetOptionsExpanded"
+        >
+          <span>
+            <strong>{{ t('planning.budget.review_other_sources') }}</strong>
+            <small>{{ t('planning.budget.review_other_sources_hint') }}</small>
+          </span>
+          <v-icon>{{ budgetOptionsExpanded ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+        </button>
+        <div
+          v-if="canManageBudget && !showSuggestionEditor && !showManualEditor"
+          v-show="!activeBudget || budgetOptionsExpanded"
+          id="budget-source-options"
+          class="cb-baseline-options"
+        >
+          <h2 v-if="!activeBudget" class="cb-baseline-options__title">{{ t('planning.budget.choose_start') }}</h2>
+          <div v-if="!guidedReturn || activeBudget" class="cb-baseline-option cb-card">
+            <v-icon color="var(--cb-primary)" size="26">mdi-pencil-outline</v-icon>
+            <div class="cb-baseline-option__body">
+              <span class="cb-baseline-option__tag">{{ t('planning.budget.source_tag_manual') }}</span>
+              <h3>{{ t('planning.budget.quick_manual_baseline') }}</h3>
+              <p>{{ t('planning.budget.quick_manual_description') }}</p>
+            </div>
+            <v-btn :variant="hasSuggestionData ? 'tonal' : 'flat'" class="cb-btn-secondary" @click="startManualBudget">
+              <v-icon start>mdi-plus-circle-outline</v-icon>
+              {{ t('planning.budget.create_manually') }}
+            </v-btn>
+          </div>
+          <div class="cb-baseline-option cb-card">
+            <v-icon color="var(--cb-positive)" size="26">mdi-bank-transfer-in</v-icon>
+            <div class="cb-baseline-option__body">
+              <span class="cb-baseline-option__tag">{{ t('planning.budget.source_tag_suggested') }}</span>
+              <PlanTierBadge v-if="billingSummary && !canUsePlanningIntelligence" tier="STARTER" />
+              <h3>{{ t('planning.budget.suggested_from_transactions') }}</h3>
+              <p>{{ suggestionMessage }}</p>
+            </div>
+            <v-btn
+              class="cb-btn-primary"
+              :loading="isGeneratingSuggestion"
+              :disabled="isGeneratingSuggestion"
+              @click="generateSuggestion"
+            >
+              <v-icon start>{{ canUsePlanningIntelligence ? 'mdi-auto-fix' : 'mdi-lock-outline' }}</v-icon>
+              {{ canUsePlanningIntelligence ? t('planning.budget.generate_suggested_budget') : t('planning.budget.upgrade_to_unlock') }}
+            </v-btn>
+          </div>
+
+          <div class="cb-baseline-option cb-card">
+            <v-icon color="var(--cb-accent)" size="26">mdi-finance</v-icon>
+            <div class="cb-baseline-option__body">
+              <span class="cb-baseline-option__tag">{{ t('planning.budget.source_tag_real') }}</span>
+              <PlanTierBadge v-if="billingSummary && !canUseConnectedFinance" tier="STARTER" />
+              <h3>{{ t('planning.budget.real_baseline_openfinance') }}</h3>
+              <p>{{ consolidatedBaselineMessage }}</p>
+            </div>
+            <v-btn
+              class="cb-btn-accent"
+              :loading="isGeneratingRealBaseline"
+              :disabled="isGeneratingRealBaseline"
+              @click="generateRealBaseline"
+            >
+              <v-icon start>{{ canUseConnectedFinance ? 'mdi-chart-box-outline' : 'mdi-lock-outline' }}</v-icon>
+              {{ canUseConnectedFinance ? t('planning.budget.generate_real_baseline') : t('planning.budget.upgrade_to_unlock') }}
+            </v-btn>
+          </div>
+
+        </div>
+
+        <!-- Alternative budgets -->
+        <div v-if="canManageBudget && usableAlternativeBudgets.length" class="cb-card cb-alt-budgets">
+          <p class="cb-alt-budgets__kicker">{{ t('planning.budget.available_baselines') }}</p>
+          <h3 class="cb-alt-budgets__title">{{ t('planning.budget.other_versions_for_period', { month: now.getMonth() + 1, year: now.getFullYear() }) }}</h3>
+          <div class="cb-alt-budgets__list">
+            <div
+              v-for="budget in usableAlternativeBudgets"
+              :key="budget.id"
+              class="cb-alt-budget-row"
+            >
+              <div class="cb-alt-budget-row__info">
+                <h4>{{ baselineTitle(budget) }}</h4>
+                <p>{{ baselineSourceLabel(budget) }} · {{ t('planning.budget.lines_count', { count: budget.lines?.length || 0 }) }}</p>
+              </div>
+              <div class="cb-alt-budget-row__numbers">
+                <span>{{ t('planning.budget.net') }}</span>
+                <strong :class="{ 'cb-summary-item__value--negative': budget.net < 0 }">{{ formatCurrency(budget.net) }}</strong>
+              </div>
+              <div class="cb-alt-budget-row__actions">
+                <v-btn
+                  class="cb-btn-secondary"
+                  variant="tonal"
+                  :loading="activatingBudgetId === budget.id"
+                  :disabled="Boolean(activatingBudgetId) || Boolean(deletingBudgetId)"
+                  @click="activateExistingBudget(budget)"
+                >
+                  {{ t('planning.budget.set_active') }}
+                </v-btn>
+                <v-btn
+                  icon
+                  variant="text"
+                  color="error"
+                  :aria-label="t('planning.budget.delete_baseline')"
+                  :disabled="Boolean(activatingBudgetId) || Boolean(deletingBudgetId)"
+                  @click="requestDeleteBudget(budget)"
+                >
+                  <v-icon>mdi-delete-outline</v-icon>
+                </v-btn>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <!-- Editor drawer (right side) -->
+    <v-navigation-drawer
+      :model-value="showSuggestionEditor || showManualEditor"
+      location="right"
+      width="480"
+      temporary
+      @update:model-value="(v) => { if (!v) closeEditor() }"
+    >
+      <div class="cb-drawer-header">
+        <div class="cb-drawer-header__title">
+          {{ editorTitle }}
+        </div>
+        <v-btn icon variant="text" @click="closeEditor">
+          <v-icon>mdi-close</v-icon>
+        </v-btn>
+      </div>
+      <alert-strip
+        v-if="editorErrorMessage"
+        class="cb-editor-alert"
+        variant="info"
+        :description="editorErrorMessage"
+      />
+
+      <!-- Suggestion editor -->
+      <div v-if="showSuggestionEditor && suggestion" class="cb-editor-body">
+        <p class="cb-editor-body__note">{{ t('planning.budget.suggestion_lookback', { count: suggestion.lookbackMonths || 3 }) }}</p>
+
+        <div class="cb-budget-summary-grid">
+          <div class="cb-budget-summary-item">
+            <span>{{ t('planning.budget.suggested_income') }}</span>
+            <strong class="cb-summary-item__value--positive">{{ formatCurrency(suggestedIncomeTotal) }}</strong>
+          </div>
+          <div class="cb-budget-summary-item">
+            <span>{{ t('planning.budget.suggested_expense') }}</span>
+            <strong class="cb-summary-item__value--negative">{{ formatCurrency(suggestedExpenseTotal) }}</strong>
+          </div>
+          <div class="cb-budget-summary-item">
+            <span>{{ t('planning.budget.net') }}</span>
+            <strong :class="suggestedNetTotal < 0 ? 'cb-summary-item__value--negative' : 'cb-summary-item__value--positive'">{{ formatCurrency(suggestedNetTotal) }}</strong>
+          </div>
+        </div>
+
+        <v-table density="comfortable" class="cb-suggestion-table">
+          <thead>
+            <tr>
+              <th>{{ t('planning.budget.category') }}</th>
+              <th>{{ t('planning.budget.suggested') }}</th>
+              <th>{{ t('planning.budget.confidence') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(line, index) in editableSuggestionLines" :key="`${line.type}-${line.category}-${index}`">
+              <td>{{ line.category }} <span class="cb-line-type">{{ line.type }}</span></td>
+              <td>
+                <v-text-field
+                  v-model.number="line.suggestedAmount"
+                  type="number"
+                  min="0"
+                  density="compact"
+                  variant="outlined"
+                  hide-details
+                />
+              </td>
+              <td>
+                <v-chip size="x-small" variant="tonal" :color="confidenceColor(line.confidence)">
+                  {{ line.confidence }}
+                </v-chip>
+              </td>
+            </tr>
+          </tbody>
+        </v-table>
+
+        <div class="cb-editor-actions">
+          <v-btn
+            class="cb-btn-primary"
+            :loading="isUsingSuggestedPlan"
+            :disabled="isUsingSuggestedPlan || !hasSuggestedBudgetValues"
+            @click="useSuggestedPlan"
+          >
+            <v-icon start>mdi-check-circle-outline</v-icon>
+            {{ t('planning.budget.activate_this_plan') }}
+          </v-btn>
+          <v-btn variant="text" color="var(--cb-ink-muted)" @click="cancelSuggestion">
+            {{ t('common.cancel') }}
+          </v-btn>
+        </div>
+      </div>
+
+      <!-- Manual editor — quick mode -->
+      <div v-else-if="showManualEditor && manualMode === 'quick'" class="cb-editor-body">
+        <p class="cb-editor-body__note">{{ t('planning.budget.quick_baseline_description') }}</p>
+        <div class="cb-quick-baseline-row">
+          <v-text-field
+            v-model.number="quickBaselineAmount"
+            :label="t('planning.budget.monthly_net_cashflow')"
+            type="number"
+            density="comfortable"
+            variant="outlined"
+            prefix="R$"
+            hide-details
+          />
+          <div class="cb-budget-summary-item">
+            <span>{{ t('planning.budget.baseline') }}</span>
+            <strong :class="Number(quickBaselineAmount || 0) < 0 ? 'cb-summary-item__value--negative' : 'cb-summary-item__value--positive'">
+              {{ formatCurrency(Number(quickBaselineAmount || 0)) }}
+            </strong>
+          </div>
+        </div>
+        <div class="cb-editor-actions">
+          <v-btn
+            class="cb-btn-primary"
+            :loading="isCreatingManualBudget"
+            :disabled="isCreatingManualBudget || !hasQuickBaselineValue"
+            @click="createQuickBaselineBudget"
+          >
+            <v-icon start>mdi-check-circle-outline</v-icon>
+            {{ t('planning.budget.activate_quick_baseline') }}
+          </v-btn>
+          <v-btn variant="tonal" color="var(--cb-primary)" @click="startDetailedManualBudget">
+            <v-icon start>mdi-format-list-bulleted</v-icon>
+            {{ t('planning.budget.use_detailed_budget') }}
+          </v-btn>
+          <v-btn variant="text" color="var(--cb-ink-muted)" @click="cancelManualBudget">
+            {{ t('common.cancel') }}
+          </v-btn>
+        </div>
+      </div>
+
+      <!-- Manual editor — detailed mode -->
+      <div v-else-if="showManualEditor" class="cb-editor-body">
+        <p class="cb-editor-body__note">{{ t('planning.budget.detailed_manual_description') }}</p>
+
+        <div class="cb-budget-summary-grid">
+          <div class="cb-budget-summary-item">
+            <span>{{ t('planning.budget.income') }}</span>
+            <strong class="cb-summary-item__value--positive">{{ formatCurrency(manualIncomeTotal) }}</strong>
+          </div>
+          <div class="cb-budget-summary-item">
+            <span>{{ t('planning.budget.expense') }}</span>
+            <strong class="cb-summary-item__value--negative">{{ formatCurrency(manualExpenseTotal) }}</strong>
+          </div>
+          <div class="cb-budget-summary-item">
+            <span>{{ t('planning.budget.net') }}</span>
+            <strong :class="manualNetTotal < 0 ? 'cb-summary-item__value--negative' : 'cb-summary-item__value--positive'">{{ formatCurrency(manualNetTotal) }}</strong>
+          </div>
+        </div>
+
+        <div class="cb-manual-lines">
+          <div
+            v-for="(line, index) in editableManualLines"
+            :key="line.id"
+            class="cb-manual-line"
+          >
+            <v-text-field
+              v-model="line.category"
+              :label="t('planning.budget.category')"
+              density="comfortable"
+              variant="outlined"
+              hide-details
+            />
+            <v-btn-toggle v-model="line.type" mandatory divided color="var(--cb-primary)">
+              <v-btn value="INCOME">{{ t('planning.budget.income') }}</v-btn>
+              <v-btn value="EXPENSE">{{ t('planning.budget.expense') }}</v-btn>
+            </v-btn-toggle>
+            <v-text-field
+              v-model.number="line.plannedAmount"
+              :label="t('planning.budget.monthly_amount')"
+              type="number"
+              min="0"
+              density="comfortable"
+              variant="outlined"
+              hide-details
+            />
+            <v-btn
+              icon
+              variant="text"
+              color="error"
+              :disabled="editableManualLines.length === 1"
+              @click="removeManualLine(index)"
+            >
+              <v-icon>mdi-delete-outline</v-icon>
+            </v-btn>
+          </div>
+        </div>
+
+        <div class="cb-editor-actions">
+          <v-btn variant="tonal" color="var(--cb-primary)" @click="addManualLine">
+            <v-icon start>mdi-plus</v-icon>
+            {{ t('planning.budget.add_line') }}
+          </v-btn>
+          <v-btn
+            class="cb-btn-primary"
+            :loading="isCreatingManualBudget"
+            :disabled="isCreatingManualBudget || !hasManualBudgetValues"
+            @click="createManualBudget"
+          >
+            <v-icon start>mdi-check-circle-outline</v-icon>
+            {{ t('planning.budget.activate_detailed_budget') }}
+          </v-btn>
+          <v-btn variant="text" color="var(--cb-ink-muted)" @click="startManualBudget">
+            {{ t('planning.budget.quick_baseline') }}
+          </v-btn>
+          <v-btn variant="text" color="var(--cb-ink-muted)" @click="cancelManualBudget">
+            {{ t('common.cancel') }}
+          </v-btn>
+        </div>
+      </div>
+    </v-navigation-drawer>
+
+    <v-dialog v-model="deleteBaselineDialog" max-width="520">
+      <v-card>
+        <v-card-title class="text-h6">
+          {{ t('planning.budget.delete_baseline_confirm_title') }}
+        </v-card-title>
+        <v-card-text>
+          <p class="mb-2">
+            {{ t('planning.budget.delete_baseline_confirm_message') }}
+          </p>
+          <div v-if="budgetPendingDeletion" class="cb-delete-baseline-summary">
+            <span>{{ baselineTitle(budgetPendingDeletion) }}</span>
+            <strong>{{ formatCurrency(budgetPendingDeletion.net) }}</strong>
+          </div>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" :disabled="Boolean(deletingBudgetId)" @click="cancelDeleteBudget">
+            {{ t('common.cancel') }}
+          </v-btn>
+          <v-btn
+            color="error"
+            variant="elevated"
+            :loading="Boolean(deletingBudgetId)"
+            @click="confirmDeleteBudget"
+          >
+            <v-icon start>mdi-delete-outline</v-icon>
+            {{ t('planning.budget.delete_baseline') }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed, onMounted, onScopeDispose, ref, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import BudgetService, {
+  type Budget,
+  type BudgetLineType,
+  type BudgetSuggestion,
+  type BudgetSuggestionLine
+} from '@/services/BudgetService'
+import OpenFinanceService from '@/services/OpenFinanceService'
+import BillingOrchestrationService, { type BillingSummaryResponse } from '@/services/BillingOrchestrationService'
+import type { OpenFinanceConnection } from '@/types/openFinance'
+import { useUserStore } from '@/plugins/userStore'
+import PageHeader from '@/components/PageHeader.vue'
+import AlertStrip from '@/components/AlertStrip.vue'
+import PlanTierBadge from '@/components/PlanTierBadge.vue'
+import { readBudgetReturn } from '@/utils/decisionBudgetReturn'
+import '@/assets/decision-entry.css'
+
+type ManualBudgetLine = {
+  id: string
+  category: string
+  type: BudgetLineType
+  plannedAmount: number
+}
+
+type ManualBudgetMode = 'quick' | 'detailed'
+
+const router = useRouter()
+const route = useRoute()
+const { t, locale } = useI18n()
+const userStore = useUserStore()
+
+const isLoading = ref(false)
+const budgetLoadFailed = ref(false)
+const isCreatingManualBudget = ref(false)
+const isGeneratingSuggestion = ref(false)
+const isGeneratingRealBaseline = ref(false)
+const isUsingSuggestedPlan = ref(false)
+const activatingBudgetId = ref<string | null>(null)
+const deletingBudgetId = ref<string | null>(null)
+const activeBudget = ref<Budget | null>(null)
+const allBudgets = ref<Budget[]>([])
+const suggestion = ref<BudgetSuggestion | null>(null)
+const hasSuggestionData = ref(false)
+const visibleOpenFinanceConnections = ref<OpenFinanceConnection[]>([])
+const billingSummary = ref<BillingSummaryResponse | null>(null)
+const showSuggestionEditor = ref(false)
+const showManualEditor = ref(false)
+const budgetOptionsExpanded = ref(false)
+const deleteBaselineDialog = ref(false)
+const budgetPendingDeletion = ref<Budget | null>(null)
+const bannerMessage = ref('')
+const emptyBudgetMessage = ref('')
+const editorErrorMessage = ref('')
+const canManageBudget = computed(() => userStore.isTenantAdmin)
+const editableSuggestionLines = ref<BudgetSuggestionLine[]>([])
+const editableManualLines = ref<ManualBudgetLine[]>([])
+const manualMode = ref<ManualBudgetMode>('quick')
+const quickBaselineAmount = ref<number | null>(null)
+const currentWorkspaceId = computed(() =>
+  userStore.getCurrentWorkspaceId || userStore.getPreferredWorkspaceId || userStore.getWorkspaces[0]?.workspaceId || ''
+)
+const journeyContext = computed(() => userStore.isAuthenticated && userStore.getUser?.id && userStore.getCurrentWorkspaceId
+  ? { userId: userStore.getUser.id, workspaceId: userStore.getCurrentWorkspaceId } : null)
+const guidedReturn = computed(() => readBudgetReturn(route.query, journeyContext.value))
+let contextEpoch = 0
+let alive = true
+const operationGuard = () => {
+  const epoch = contextEpoch
+  return () => alive && contextEpoch === epoch
+}
+onScopeDispose(() => { alive = false })
+watch(() => [userStore.getUser?.id, userStore.getCurrentWorkspaceId, userStore.isAuthenticated], () => {
+  contextEpoch++
+  activeBudget.value = null
+  allBudgets.value = []
+  billingSummary.value = null
+  suggestion.value = null
+  hasSuggestionData.value = false
+  quickBaselineAmount.value = null
+  editableManualLines.value = []
+  editableSuggestionLines.value = []
+  visibleOpenFinanceConnections.value = []
+  showManualEditor.value = false
+  showSuggestionEditor.value = false
+  budgetOptionsExpanded.value = false
+  bannerMessage.value = ''
+  emptyBudgetMessage.value = ''
+  editorErrorMessage.value = ''
+  isLoading.value = false
+  isCreatingManualBudget.value = false
+  activatingBudgetId.value = null
+  budgetLoadFailed.value = false
+}, { flush: 'sync' })
+const capabilityValue = (name: keyof NonNullable<BillingSummaryResponse['capabilities']>) => {
+  const capabilities = billingSummary.value?.capabilities
+  if (!capabilities) return false
+  const explicit = capabilities[name]
+  if (typeof explicit === 'boolean') return explicit
+  return Boolean(capabilities.advancedToolsEnabled || billingSummary.value?.hasPremiumAccess)
+}
+const canUsePlanningIntelligence = computed(() => capabilityValue('planningIntelligenceEnabled'))
+const canUseConnectedFinance = computed(() => capabilityValue('connectedFinanceEnabled'))
+
+const now = computed(() => new Date())
+const activeBudgetPeriod = computed(() => {
+  const budget = activeBudget.value
+  if (!budget) return ''
+  const date = new Date(budget.periodYear, budget.periodMonth - 1, 1)
+  const language = locale.value === 'en' ? 'en-US' : locale.value === 'fr' ? 'fr-FR' : locale.value === 'es' ? 'es-ES' : 'pt-BR'
+  return new Intl.DateTimeFormat(language, { month: 'long', year: 'numeric' }).format(date)
+})
+const activeBudgetMatchesCurrentMonth = computed(() =>
+  activeBudget.value?.periodMonth === now.value.getMonth() + 1 && activeBudget.value?.periodYear === now.value.getFullYear()
+)
+const suggestedIncomeTotal = computed(() =>
+  editableSuggestionLines.value
+    .filter((line) => line.type === 'INCOME')
+    .reduce((total, line) => total + Number(line.suggestedAmount || 0), 0)
+)
+const suggestedExpenseTotal = computed(() =>
+  editableSuggestionLines.value
+    .filter((line) => line.type === 'EXPENSE')
+    .reduce((total, line) => total + Number(line.suggestedAmount || 0), 0)
+)
+const suggestedNetTotal = computed(() => suggestedIncomeTotal.value - suggestedExpenseTotal.value)
+const hasSuggestedBudgetValues = computed(() =>
+  editableSuggestionLines.value.some((line) => Number(line.suggestedAmount || 0) > 0)
+)
+const manualIncomeTotal = computed(() =>
+  editableManualLines.value
+    .filter((line) => line.type === 'INCOME')
+    .reduce((total, line) => total + Number(line.plannedAmount || 0), 0)
+)
+const manualExpenseTotal = computed(() =>
+  editableManualLines.value
+    .filter((line) => line.type === 'EXPENSE')
+    .reduce((total, line) => total + Number(line.plannedAmount || 0), 0)
+)
+const manualNetTotal = computed(() => manualIncomeTotal.value - manualExpenseTotal.value)
+const hasQuickBaselineValue = computed(() => Number(quickBaselineAmount.value || 0) !== 0)
+const hasManualBudgetValues = computed(() =>
+  editableManualLines.value.some(
+    (line) => manualLineCategory(line).length > 0 && Number(line.plannedAmount || 0) > 0
+  )
+)
+const usableAlternativeBudgets = computed(() =>
+  allBudgets.value.filter(
+    (budget) => budget.id !== activeBudget.value?.id && hasUsableBudgetBaseline(budget)
+  )
+)
+const hasVisibleOpenFinanceConnection = computed(() =>
+  visibleOpenFinanceConnections.value.some(isConnectedOpenFinanceConnection)
+)
+const hasVisiblePlanningSharedConnection = computed(() =>
+  visibleOpenFinanceConnections.value.some(isPlanningSharedConnection)
+)
+const hasVisiblePrivateOnlyPlanningSource = computed(() =>
+  visibleOpenFinanceConnections.value.some(isPrivateOnlyPlanningSource)
+)
+const planningSharingDisabledNotice = computed(() =>
+  hasVisiblePrivateOnlyPlanningSource.value && !hasVisiblePlanningSharedConnection.value
+)
+const suggestionMessage = computed(() =>
+  !canUsePlanningIntelligence.value
+    ? t('planning.budget.suggestion_message_locked')
+    : hasSuggestionData.value
+    ? t('planning.budget.suggestion_message_ready')
+    : planningSharingDisabledNotice.value
+      ? t('planning.budget.suggestion_message_sharing_disabled')
+      : hasVisibleOpenFinanceConnection.value
+        ? t('planning.budget.suggestion_message_synced_no_data')
+        : t('planning.budget.suggestion_message_unavailable')
+)
+const consolidatedBaselineMessage = computed(() =>
+  !canUseConnectedFinance.value
+    ? t('planning.budget.consolidated_message_locked')
+    : planningSharingDisabledNotice.value
+    ? t('planning.budget.consolidated_message_sharing_disabled')
+    : hasVisibleOpenFinanceConnection.value
+      ? t('planning.budget.consolidated_message_ready')
+      : t('planning.budget.consolidated_message_connect')
+)
+const activeBaselineNotice = computed(() => {
+  if (!activeBudget.value || !isOpenFinanceAggregatedBaseline(activeBudget.value)) {
+    return ''
+  }
+  if (planningSharingDisabledNotice.value) {
+    return t('planning.budget.active_baseline_sharing_disabled')
+  }
+  return t('planning.budget.active_baseline_snapshot')
+})
+
+const budgetSummaryItems = computed(() => {
+  if (!activeBudget.value) return []
+  const b = activeBudget.value
+  return [
+    { label: t('planning.budget.total_income'), value: formatCurrency(b.totalIncome), valueClass: 'cb-summary-item__value--positive' },
+    { divider: true },
+    { label: t('planning.budget.total_expense'), value: formatCurrency(b.totalExpense), valueClass: 'cb-summary-item__value--negative' },
+    { divider: true },
+    { label: t('planning.budget.net'), value: formatCurrency(b.net), valueClass: b.net < 0 ? 'cb-summary-item__value--negative' : 'cb-summary-item__value--positive' },
+  ]
+})
+
+const editorTitle = computed(() => {
+  if (showSuggestionEditor.value) return t('planning.budget.suggested_budget')
+  if (manualMode.value === 'detailed') return t('planning.budget.detailed_manual_budget')
+  return t('planning.budget.quick_baseline')
+})
+
+const closeEditor = () => {
+  showSuggestionEditor.value = false
+  showManualEditor.value = false
+  editorErrorMessage.value = ''
+}
+
+const formatCurrency = (value: number) =>
+  Number(value || 0).toLocaleString(
+    locale.value === 'en' ? 'en-US' : locale.value === 'fr' ? 'fr-FR' : locale.value === 'es' ? 'es-ES' : 'pt-BR',
+    { style: 'currency', currency: 'BRL' }
+  )
+
+const createManualLine = (defaults?: Partial<ManualBudgetLine>): ManualBudgetLine => ({
+  id: defaults?.id || crypto.randomUUID(),
+  category: defaults?.category || (defaults?.type === 'INCOME'
+    ? t('planning.budget.default_income_category')
+    : t('planning.budget.default_expense_category')),
+  type: defaults?.type || 'EXPENSE',
+  plannedAmount: Number(defaults?.plannedAmount || 0),
+})
+
+const manualLineCategory = (line: Pick<ManualBudgetLine, 'category' | 'type'>): string => {
+  const category = line.category.trim()
+  if (category) return category
+  return line.type === 'INCOME'
+    ? t('planning.budget.default_income_category')
+    : t('planning.budget.default_expense_category')
+}
+
+const editableLinesFromSuggestion = (data?: BudgetSuggestion | null): BudgetSuggestionLine[] => {
+  const lines = Array.isArray(data?.lines) ? data.lines : []
+  if (lines.length) {
+    return lines.map((line) => ({
+      ...line,
+      suggestedAmount: Number(line.suggestedAmount || 0),
+    }))
+  }
+
+  const fallbackLines: BudgetSuggestionLine[] = []
+  const suggestedIncome = Number(data?.suggestedIncome || 0)
+  const suggestedExpense = Number(data?.suggestedExpense || 0)
+  if (suggestedIncome > 0) {
+    fallbackLines.push({
+      category: t('planning.budget.default_income_category'),
+      type: 'INCOME',
+      suggestedAmount: suggestedIncome,
+      confidence: 'LOW',
+    })
+  }
+  if (suggestedExpense > 0) {
+    fallbackLines.push({
+      category: t('planning.budget.default_expense_category'),
+      type: 'EXPENSE',
+      suggestedAmount: suggestedExpense,
+      confidence: 'LOW',
+    })
+  }
+  return fallbackLines
+}
+
+const hasUsableBudgetBaseline = (budget: Budget): boolean =>
+  Array.isArray(budget.lines) &&
+  budget.lines.some((line) => Number(line.plannedAmount || 0) > 0)
+
+const isConnectedOpenFinanceConnection = (connection: OpenFinanceConnection): boolean =>
+  connection.status === 'CONNECTED' || connection.status === 'ERROR'
+
+const isPlanningSharedConnection = (connection: OpenFinanceConnection): boolean => {
+  if (!isConnectedOpenFinanceConnection(connection)) return false
+  if (connection.payerDocumentType === 'CNPJ') {
+    return connection.sharingPolicy === 'BUSINESS_SHARED' || connection.accessScope === 'WORKSPACE_SHARED'
+  }
+  return connection.planningSharingLevel === 'PLANNING_IMPACT_ONLY' || connection.sharingPolicy === 'PLANNING_IMPACT_ONLY'
+}
+
+const isPrivateOnlyPlanningSource = (connection: OpenFinanceConnection): boolean =>
+  isConnectedOpenFinanceConnection(connection) &&
+  connection.payerDocumentType === 'CPF' &&
+  (connection.planningSharingLevel === 'PRIVATE' || connection.sharingPolicy === 'PRIVATE_ONLY')
+
+const findActiveBudget = (budgets: Budget[]): Budget | null =>
+  budgets.find((budget) => budget.status === 'ACTIVE' && hasUsableBudgetBaseline(budget)) || null
+
+const loadCurrentBudget = async () => {
+  const current = operationGuard()
+  isLoading.value = true
+  budgetLoadFailed.value = false
+  activeBudget.value = null
+  allBudgets.value = []
+  emptyBudgetMessage.value = ''
+  try {
+    const { data } = await BudgetService.list(now.value.getMonth() + 1, now.value.getFullYear())
+    if (!current()) return
+    if (!Array.isArray(data)) throw new Error('Invalid budgets response')
+    const budgets = data
+    allBudgets.value = budgets
+    const currentBudget = findActiveBudget(budgets)
+    if (!currentBudget && budgets.some((budget) => budget.status === 'ACTIVE')) {
+      activeBudget.value = null
+      emptyBudgetMessage.value = t('planning.budget.empty_current_plan')
+      void preloadSuggestionAvailability()
+      return
+    }
+
+    activeBudget.value = currentBudget
+    showSuggestionEditor.value = false
+    showManualEditor.value = false
+    void preloadSuggestionAvailability()
+  } catch (error) {
+    if (!current()) return
+    console.error(error)
+    activeBudget.value = null
+    budgetLoadFailed.value = true
+  } finally {
+    if (current()) isLoading.value = false
+  }
+}
+
+const loadOpenFinancePlanningContext = async () => {
+  const current = operationGuard()
+  if (!canUseConnectedFinance.value) {
+    visibleOpenFinanceConnections.value = []
+    return
+  }
+  try {
+    const { data } = await OpenFinanceService.listConnections()
+    if (!current()) return
+    visibleOpenFinanceConnections.value = Array.isArray(data) ? data : []
+  } catch (error) {
+    if (!current()) return
+    console.error(error)
+    visibleOpenFinanceConnections.value = []
+  }
+}
+
+const preloadSuggestionAvailability = async () => {
+  const current = operationGuard()
+  if (!canUsePlanningIntelligence.value) {
+    suggestion.value = null
+    hasSuggestionData.value = false
+    return
+  }
+  try {
+    const { data } = await BudgetService.getSuggestions(now.value.getMonth() + 1, now.value.getFullYear())
+    if (!current()) return
+    suggestion.value = data
+    hasSuggestionData.value = editableLinesFromSuggestion(data).length > 0
+  } catch (error) {
+    if (!current()) return
+    console.error(error)
+    suggestion.value = null
+    hasSuggestionData.value = false
+  }
+}
+
+const generateSuggestion = async () => {
+  if (!canUsePlanningIntelligence.value) {
+    emptyBudgetMessage.value = t('planning.budget.planning_intelligence_locked')
+    await router.push({ name: 'choose-plan', query: { feature: 'planning-intelligence' } })
+    return
+  }
+  isGeneratingSuggestion.value = true
+  showManualEditor.value = false
+  bannerMessage.value = ''
+  emptyBudgetMessage.value = ''
+  try {
+    const { data } = await BudgetService.getSuggestions(now.value.getMonth() + 1, now.value.getFullYear())
+    suggestion.value = data
+    editableSuggestionLines.value = editableLinesFromSuggestion(data)
+    showSuggestionEditor.value = editableSuggestionLines.value.length > 0
+    hasSuggestionData.value = editableSuggestionLines.value.length > 0
+    if (!hasSuggestionData.value) {
+      emptyBudgetMessage.value = planningSharingDisabledNotice.value
+        ? t('planning.budget.generate_suggestion_sharing_disabled')
+        : t('planning.budget.generate_suggestion_no_data')
+    }
+  } catch (error) {
+    console.error(error)
+    emptyBudgetMessage.value = t('planning.budget.generate_suggestion_error')
+  } finally {
+    isGeneratingSuggestion.value = false
+  }
+}
+
+const generateRealBaseline = async () => {
+  if (!canUseConnectedFinance.value) {
+    emptyBudgetMessage.value = t('planning.budget.connected_finance_locked')
+    await router.push({ name: 'choose-plan', query: { feature: 'connected-finance' } })
+    return
+  }
+  isGeneratingRealBaseline.value = true
+  bannerMessage.value = ''
+  emptyBudgetMessage.value = ''
+  showSuggestionEditor.value = false
+  showManualEditor.value = false
+  try {
+    const { data } = await BudgetService.generateBaseline(now.value.getMonth() + 1, now.value.getFullYear())
+    if (!data || data.status === 'NO_DATA' || !data.budgetId) {
+      emptyBudgetMessage.value = planningSharingDisabledNotice.value
+        ? t('planning.budget.generate_real_sharing_disabled')
+        : hasVisibleOpenFinanceConnection.value
+          ? t('planning.budget.generate_real_no_data')
+          : t('planning.budget.generate_real_no_connection')
+      return
+    }
+    await loadCurrentBudget()
+    bannerMessage.value = t('planning.budget.real_baseline_activated', {
+      income: formatCurrency(data.incomeTotal),
+      expense: formatCurrency(data.expenseTotal),
+      net: formatCurrency(data.netAmount),
+    })
+  } catch (error) {
+    console.error(error)
+    emptyBudgetMessage.value = t('planning.budget.generate_real_error')
+  } finally {
+    isGeneratingRealBaseline.value = false
+  }
+}
+
+const cancelSuggestion = () => {
+  showSuggestionEditor.value = false
+}
+
+const useSuggestedPlan = async () => {
+  if (!suggestion.value) return
+  isUsingSuggestedPlan.value = true
+  try {
+    const { data } = await BudgetService.createFromSuggestion({
+      month: suggestion.value.month,
+      year: suggestion.value.year,
+      lines: editableSuggestionLines.value.map((line) => ({
+        ...line,
+        suggestedAmount: Number(line.suggestedAmount || 0),
+      })).filter((line) => Number(line.suggestedAmount || 0) > 0),
+    })
+    if (data?.id) {
+      await BudgetService.activate(data.id)
+    }
+    await loadCurrentBudget()
+    showSuggestionEditor.value = false
+    bannerMessage.value = t('planning.budget.suggested_budget_activated')
+  } catch (error) {
+    console.error(error)
+  } finally {
+    isUsingSuggestedPlan.value = false
+  }
+}
+
+const startManualBudget = () => {
+  if (!canManageBudget.value) return
+  showSuggestionEditor.value = false
+  showManualEditor.value = true
+  manualMode.value = 'quick'
+  quickBaselineAmount.value = null
+  editorErrorMessage.value = ''
+}
+
+const startDetailedManualBudget = () => {
+  manualMode.value = 'detailed'
+  editorErrorMessage.value = ''
+  editableManualLines.value = [
+    createManualLine({ category: t('planning.budget.default_income_category'), type: 'INCOME' }),
+    createManualLine({ category: t('planning.budget.default_expense_category'), type: 'EXPENSE' }),
+  ]
+}
+
+const addManualLine = () => {
+  editableManualLines.value.push(createManualLine())
+}
+
+const removeManualLine = (index: number) => {
+  if (editableManualLines.value.length === 1) return
+  editableManualLines.value.splice(index, 1)
+}
+
+const cancelManualBudget = () => {
+  showManualEditor.value = false
+  manualMode.value = 'quick'
+  quickBaselineAmount.value = null
+  editableManualLines.value = []
+  editorErrorMessage.value = ''
+}
+
+const createQuickBaselineBudget = async () => {
+  if (!canManageBudget.value || isCreatingManualBudget.value) return
+  const current = operationGuard()
+  const baselineAmount = Number(quickBaselineAmount.value || 0)
+
+  if (baselineAmount === 0) {
+    editorErrorMessage.value = t('planning.budget.quick_baseline_required')
+    return
+  }
+
+  isCreatingManualBudget.value = true
+  editorErrorMessage.value = ''
+  try {
+    const { data: createdBudget } = await BudgetService.create({
+      periodMonth: now.value.getMonth() + 1,
+      periodYear: now.value.getFullYear(),
+      status: 'DRAFT',
+    })
+
+    if (!current() || !canManageBudget.value) return
+    if (!createdBudget?.id) {
+      editorErrorMessage.value = t('planning.budget.manual_budget_error')
+      return
+    }
+
+    await BudgetService.addLine(createdBudget.id, {
+      category: 'Manual net baseline',
+      type: baselineAmount > 0 ? 'INCOME' : 'EXPENSE',
+      plannedAmount: Math.abs(baselineAmount),
+    })
+
+    if (!current() || !canManageBudget.value) return
+    await BudgetService.activate(createdBudget.id)
+    if (!current()) return
+    showManualEditor.value = false
+    bannerMessage.value = t('planning.budget.quick_baseline_activated')
+    await loadCurrentBudget()
+  } catch (error) {
+    if (!current()) return
+    console.error(error)
+    editorErrorMessage.value = t('planning.budget.manual_budget_error')
+  } finally {
+    if (current()) isCreatingManualBudget.value = false
+  }
+}
+
+const activateExistingBudget = async (budget: Budget) => {
+  if (!canManageBudget.value || activatingBudgetId.value) return
+  const current = operationGuard()
+  activatingBudgetId.value = budget.id
+  emptyBudgetMessage.value = ''
+  try {
+    await BudgetService.activate(budget.id)
+    if (!current()) return
+    await loadCurrentBudget()
+    if (!current()) return
+    bannerMessage.value = t('planning.budget.existing_baseline_activated', { name: baselineTitle(budget) })
+  } catch (error) {
+    console.error(error)
+  } finally {
+    if (current()) activatingBudgetId.value = null
+  }
+}
+
+const requestDeleteBudget = (budget: Budget) => {
+  budgetPendingDeletion.value = budget
+  deleteBaselineDialog.value = true
+  emptyBudgetMessage.value = ''
+}
+
+const cancelDeleteBudget = () => {
+  if (deletingBudgetId.value) return
+  deleteBaselineDialog.value = false
+  budgetPendingDeletion.value = null
+}
+
+const confirmDeleteBudget = async () => {
+  const budget = budgetPendingDeletion.value
+  if (!budget) return
+
+  deletingBudgetId.value = budget.id
+  emptyBudgetMessage.value = ''
+  bannerMessage.value = ''
+  try {
+    await BudgetService.deleteBudget(budget.id)
+    allBudgets.value = allBudgets.value.filter((item) => item.id !== budget.id)
+    deleteBaselineDialog.value = false
+    budgetPendingDeletion.value = null
+    bannerMessage.value = t('planning.budget.baseline_deleted')
+    await loadCurrentBudget()
+  } catch (error) {
+    console.error(error)
+    emptyBudgetMessage.value = t('planning.budget.delete_baseline_error')
+  } finally {
+    deletingBudgetId.value = null
+  }
+}
+
+const createManualBudget = async () => {
+  if (!canManageBudget.value || isCreatingManualBudget.value) return
+  const current = operationGuard()
+  const lines = editableManualLines.value
+    .map((line) => ({
+      category: manualLineCategory(line),
+      type: line.type,
+      plannedAmount: Number(line.plannedAmount || 0),
+    }))
+    .filter((line) => line.category.length > 0 && line.plannedAmount > 0)
+
+  if (!lines.length) {
+    editorErrorMessage.value = t('planning.budget.manual_budget_required')
+    return
+  }
+
+  isCreatingManualBudget.value = true
+  editorErrorMessage.value = ''
+  try {
+    const { data: createdBudget } = await BudgetService.create({
+      periodMonth: now.value.getMonth() + 1,
+      periodYear: now.value.getFullYear(),
+      status: 'DRAFT',
+    })
+
+    if (!current() || !canManageBudget.value) return
+    if (!createdBudget?.id) {
+      editorErrorMessage.value = t('planning.budget.manual_budget_error')
+      return
+    }
+
+    for (const line of lines) {
+      if (!current() || !canManageBudget.value) return
+      await BudgetService.addLine(createdBudget.id, line)
+    }
+
+    if (!current() || !canManageBudget.value) return
+    await BudgetService.activate(createdBudget.id)
+    if (!current()) return
+    showManualEditor.value = false
+    bannerMessage.value = t('planning.budget.manual_budget_activated')
+    await loadCurrentBudget()
+  } catch (error) {
+    if (!current()) return
+    console.error(error)
+    editorErrorMessage.value = t('planning.budget.manual_budget_error')
+  } finally {
+    if (current()) isCreatingManualBudget.value = false
+  }
+}
+
+const goToScenarioCreation = async () => {
+  if (!activeBudget.value || isLoading.value || budgetLoadFailed.value || !userStore.canWrite) return
+  await router.push(readBudgetReturn(route.query, journeyContext.value) || { name: 'planning-decision-start' })
+}
+
+const loadBillingCapabilities = async () => {
+  const current = operationGuard()
+  const workspaceId = currentWorkspaceId.value
+  if (!workspaceId) {
+    billingSummary.value = null
+    return
+  }
+  try {
+    const { data } = await BillingOrchestrationService.getBillingSummary(workspaceId)
+    if (!current()) return
+    billingSummary.value = data || null
+  } catch (error) {
+    if (!current()) return
+    console.error(error)
+    billingSummary.value = null
+  }
+}
+
+const confidenceColor = (confidence?: string) => {
+  if (confidence === 'HIGH') return 'success'
+  if (confidence === 'MEDIUM') return 'warning'
+  return 'default'
+}
+
+const isQuickManualBudget = (budget: Budget): boolean =>
+  (budget.lines || []).length === 1 &&
+  String(budget.lines[0]?.category || '').toLowerCase() === 'manual net baseline'
+
+const isOpenFinanceAggregatedBaseline = (budget: Budget): boolean => {
+  const categories = (budget.lines || []).map((line) => String(line.category || '').toLowerCase())
+  return categories.includes('openfinance aggregated income') || categories.includes('openfinance aggregated expense')
+}
+
+const baselineSourceLabel = (budget: Budget): string => {
+  if (isOpenFinanceAggregatedBaseline(budget)) return t('planning.budget.source_openfinance')
+  if (isQuickManualBudget(budget)) return t('planning.budget.source_quick_manual')
+  return t('planning.budget.source_not_recorded')
+}
+
+const baselineSourceExplanation = (budget: Budget): string => {
+  if (isOpenFinanceAggregatedBaseline(budget)) return t('planning.budget.source_explanation_openfinance')
+  if (isQuickManualBudget(budget)) return t('planning.budget.source_explanation_quick_manual')
+  return t('planning.budget.source_explanation_unknown')
+}
+
+const baselineTitle = (budget: Budget): string => {
+  if (isOpenFinanceAggregatedBaseline(budget)) return t('planning.budget.title_openfinance_baseline')
+  if (isQuickManualBudget(budget)) return t('planning.budget.title_quick_manual_baseline')
+  if (budget.status === 'ACTIVE') return t('planning.budget.title_current_baseline')
+  return t('planning.budget.title_budget_baseline')
+}
+
+onMounted(async () => {
+  const current = operationGuard()
+  // A manual plan does not wait for billing or connected-finance availability.
+  await Promise.all([loadCurrentBudget(), (async () => {
+    await loadBillingCapabilities()
+    if (current()) await Promise.all([loadOpenFinancePlanningContext(), preloadSuggestionAvailability()])
+  })()])
+})
+</script>
+
+<style scoped>
+/* Active budget card */
+.cb-active-budget-card {
+  margin-bottom: 24px;
+  padding: 24px;
+}
+
+.cb-active-budget-card__kicker {
+  font-size: .75rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--cb-ink-secondary);
+  margin-bottom: 6px;
+}
+
+.cb-active-budget-card__head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.cb-active-budget-card__title {
+  font-family: var(--cb-font-heading);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--cb-ink);
+  margin: 0;
+}
+
+.cb-active-budget-card__facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.cb-active-budget-card__facts > div {
+  background: var(--cb-surface-soft);
+  border: 1px solid var(--cb-border);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 12px;
+}
+
+.cb-active-budget-card__facts span {
+  color: var(--cb-ink-secondary);
+  font-size: .75rem;
+}
+
+.cb-active-budget-card__facts strong {
+  color: var(--cb-ink);
+  font-size: .87rem;
+  overflow-wrap: anywhere;
+}
+
+.cb-active-budget-card__source-note,
+.cb-active-budget-card__interpretation {
+  color: var(--cb-ink-secondary);
+  font-size: .82rem;
+  line-height: 1.5;
+  margin: 10px 0 0;
+}
+
+.cb-active-budget-card__baseline {
+  align-items: baseline;
+  border-top: 1px solid var(--cb-border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  justify-content: space-between;
+  margin-top: 18px;
+  padding-top: 18px;
+}
+
+.cb-active-budget-card__baseline span {
+  color: var(--cb-ink-secondary);
+  font-size: .85rem;
+}
+
+.cb-active-budget-card__baseline strong {
+  font-family: var(--cb-font-heading);
+  font-size: 1.15rem;
+}
+
+.cb-active-budget-card__next-step {
+  align-items: center;
+  background: var(--cb-surface-soft);
+  border: 1px solid var(--cb-border);
+  border-radius: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: space-between;
+  margin-top: 18px;
+  padding: 16px;
+}
+
+.cb-active-budget-card__next-step h3,
+.cb-baseline-options__title {
+  color: var(--cb-ink);
+  font-family: var(--cb-font-heading);
+  font-size: 1rem;
+  margin: 0 0 4px;
+}
+
+.cb-active-budget-card__next-step p {
+  color: var(--cb-ink-secondary);
+  font-size: .82rem;
+  line-height: 1.5;
+  margin: 0;
+  max-width: 62ch;
+}
+
+.cb-budget-alternatives {
+  align-items: center;
+  background: var(--cb-surface);
+  border: 1px solid var(--cb-border);
+  border-radius: 12px;
+  color: var(--cb-ink);
+  cursor: pointer;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 14px 18px;
+  text-align: left;
+  width: 100%;
+}
+
+.cb-budget-alternatives strong,
+.cb-budget-alternatives small {
+  display: block;
+}
+
+.cb-budget-alternatives small {
+  color: var(--cb-ink-secondary);
+  margin-top: 3px;
+}
+
+.cb-budget-alternatives:focus-visible {
+  outline: 3px solid var(--cb-primary);
+  outline-offset: 3px;
+}
+
+/* Baseline option cards */
+.cb-baseline-options {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.cb-baseline-options__title {
+  margin-bottom: 0;
+}
+
+.cb-baseline-option {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+}
+
+.cb-baseline-option__body {
+  flex: 1;
+}
+
+.cb-baseline-option__body h3 {
+  font-family: var(--cb-font-heading);
+  font-size: .95rem;
+  font-weight: 700;
+  color: var(--cb-ink);
+  margin: 0 0 4px;
+}
+
+@media (max-width: 720px) {
+  .budget-page-header {
+    display: block;
+  }
+
+  .budget-page-header :deep(.cb-page-header__strip) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .budget-page-header :deep(.cb-summary-divider) {
+    display: none;
+  }
+
+  .budget-page-header :deep(.cb-summary-item) {
+    min-width: 0;
+  }
+
+  .cb-active-budget-card__facts {
+    grid-template-columns: 1fr;
+  }
+
+  .cb-baseline-option {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .cb-baseline-option__body {
+    flex-basis: calc(100% - 44px);
+  }
+
+  .cb-baseline-option > .v-btn {
+    width: 100%;
+  }
+}
+
+.cb-baseline-option__tag {
+  display: inline-block;
+  margin-bottom: 5px;
+  font-size: .68rem;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--cb-ink-muted);
+}
+
+.cb-baseline-option__body p {
+  font-size: .82rem;
+  color: var(--cb-ink-muted);
+  margin: 0;
+}
+
+/* Alternative budgets */
+.cb-alt-budgets {
+  margin-top: 24px;
+}
+
+.cb-alt-budgets__kicker {
+  font-size: .75rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--cb-ink-muted);
+  margin: 0 0 4px;
+}
+
+.cb-alt-budgets__title {
+  font-family: var(--cb-font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--cb-ink);
+  margin: 0 0 16px;
+}
+
+.cb-alt-budgets__list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cb-alt-budget-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0;
+  border-top: 1px solid var(--cb-border, rgba(23,32,51,.08));
+}
+
+.cb-alt-budget-row__info {
+  flex: 1;
+}
+
+.cb-alt-budget-row__info h4 {
+  font-family: var(--cb-font-heading);
+  font-size: .9rem;
+  font-weight: 700;
+  color: var(--cb-ink);
+  margin: 0 0 2px;
+}
+
+.cb-alt-budget-row__info p {
+  font-size: .8rem;
+  color: var(--cb-ink-muted);
+  margin: 0;
+}
+
+.cb-alt-budget-row__numbers {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  font-size: .8rem;
+  color: var(--cb-ink-muted);
+}
+
+.cb-alt-budget-row__numbers strong {
+  font-family: var(--cb-font-heading);
+  font-size: 1rem;
+  color: var(--cb-ink);
+}
+
+.cb-alt-budget-row__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.cb-delete-baseline-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--cb-border, rgba(23,32,51,.08));
+  border-radius: 8px;
+  background: rgba(23,32,51,.03);
+}
+
+.cb-delete-baseline-summary span {
+  font-size: .85rem;
+  color: var(--cb-ink-secondary);
+}
+
+.cb-delete-baseline-summary strong {
+  color: var(--cb-ink);
+}
+
+/* Editor drawer */
+.cb-editor-alert {
+  margin: 16px 24px 0;
+}
+
+.cb-editor-body {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+}
+
+.cb-editor-body__note {
+  font-size: .875rem;
+  color: var(--cb-ink-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.cb-budget-summary-grid {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.cb-budget-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: .82rem;
+  color: var(--cb-ink-muted);
+}
+
+.cb-budget-summary-item strong {
+  font-family: var(--cb-font-heading);
+  font-size: 1.1rem;
+  color: var(--cb-ink);
+}
+
+.cb-suggestion-table {
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--cb-border, rgba(23,32,51,.08));
+}
+
+.cb-line-type {
+  font-size: .75rem;
+  color: var(--cb-ink-muted);
+  margin-left: 4px;
+}
+
+.cb-quick-baseline-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.cb-manual-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cb-manual-line {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.cb-editor-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding-top: 8px;
+  border-top: 1px solid var(--cb-border, rgba(23,32,51,.08));
+}
+
+@media (max-width: 600px) {
+  .cb-baseline-option {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .cb-manual-line {
+    grid-template-columns: 1fr;
+  }
+
+  .cb-alt-budget-row {
+    flex-wrap: wrap;
+  }
+}
+</style>

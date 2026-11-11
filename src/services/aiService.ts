@@ -1,0 +1,295 @@
+import axiosInterceptor from './axiosInterceptor'
+
+const AI_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
+
+export type AiTransactionType = 'INCOME' | 'EXPENSE'
+
+export interface AiTransaction {
+  transactionId?: string
+  userId?: string
+  type: AiTransactionType
+  date: string
+  amount: number
+  currency: string
+  categoryId?: number
+  categoryCode?: string
+  description?: string
+  paymentMethodId?: number
+}
+
+export interface MonthlyExpensesPredictionRequest {
+  categoryId?: number
+  forecastMonths?: number
+  historicalTransactions?: AiTransaction[]
+}
+
+export interface PredictionCategory {
+  id?: number
+  code?: string
+  name?: string
+}
+
+export interface MonthlyExpensePredictionItem {
+  month: string
+  category?: PredictionCategory
+  predictedAmount: number
+  confidence: number
+  historicalAverage?: number
+  trend?: string
+  minExpected?: number
+  maxExpected?: number
+}
+
+export interface MonthlyExpensesPredictionResponse {
+  predictions: MonthlyExpensePredictionItem[]
+  totalPredicted: number
+  modelAccuracy?: number
+  creditCardAverage?: number
+  creditCardShare?: number
+  creditCardTrend?: string
+  recurringCreditCardAverage?: number
+  recurringCreditCardCount?: number
+  pendingCreditCardAmount?: number
+}
+
+export interface AnomalyDetectionRequest {
+  transactions?: AiTransaction[]
+  windowDays?: number
+  sensitivity?: number
+}
+
+export interface AnomalyExpense {
+  id?: string
+  date?: string
+  amount: number
+  description?: string
+  categoryId?: number
+  categoryCode?: string
+  categoryName?: string
+}
+
+export interface AnomalyExpectedRange {
+  min: number
+  max: number
+  average: number
+}
+
+export type AnomalySeverity = 'medium' | 'high'
+
+export interface AnomalyDetectionItem {
+  expense: AnomalyExpense
+  expectedRange: AnomalyExpectedRange
+  deviation: number
+  severity: AnomalySeverity
+  suggestion?: string
+}
+
+export interface AnomalyDetectionSummary {
+  totalTransactionsAnalyzed: number
+  anomaliesCount: number
+  totalAnomalousAmount: number
+  highestAnomalyScore: number
+  summaryText?: string
+}
+
+export interface AnomalyDetectionResponse {
+  anomalies: AnomalyDetectionItem[]
+  summary: AnomalyDetectionSummary
+}
+
+export interface AutoCategorizeExpenseInput {
+  expenseId?: string
+  description?: string
+  amount: number
+  paymentMethodId?: number
+  bankCategoryId?: string
+}
+
+export interface CategorySuggestion {
+  id: number
+  code: string
+  name: string
+  confidence: number
+}
+
+export interface AutoCategorizeSuggestion {
+  expenseId?: string
+  suggestedCategory: CategorySuggestion
+  alternativeCategories: CategorySuggestion[]
+  reasoning?: string
+  source?: string
+}
+
+export interface AutoCategorizeRequest {
+  expenses: AutoCategorizeExpenseInput[]
+}
+
+export interface AutoCategorizeResponse {
+  suggestions: AutoCategorizeSuggestion[]
+  reason?: string
+}
+
+export interface ApplyOpenFinanceCategorizationRequest {
+  month?: number
+  year?: number
+  fromDate?: string
+  toDate?: string
+  limit?: number
+}
+
+export interface AppliedCategorizationItem {
+  transactionId: string
+  date?: string
+  description?: string
+  amount?: number
+  categoryId?: number
+  categoryCode?: string
+  categoryName?: string
+  confidence?: number
+  source?: string
+  status?: string
+  reason?: string
+}
+
+export interface ApplyOpenFinanceCategorizationResponse {
+  scanned: number
+  candidates: number
+  suggested: number
+  applied: number
+  skipped: number
+  noSuggestion: number
+  reason?: string
+  items: AppliedCategorizationItem[]
+}
+
+export interface SavingsRecommendationRequest {
+  savingsGoalAmount?: number
+  targetDate?: string
+}
+
+export interface SavingsAction {
+  id: string
+  description: string
+  estimatedMonthlyImpact: number
+  categoryId?: number
+  difficultyLevel: string
+  confidence: number
+}
+
+export interface SavingsPlan {
+  recommendedMonthlySavings: number
+  projectedBalanceByTargetDate: number
+  probabilityOfSuccess: number
+  actions: SavingsAction[]
+}
+
+export interface SavingsRecommendationResponse {
+  plan: SavingsPlan
+  summaryText?: string
+}
+
+export interface CashflowInsightsRequest {
+  months?: number
+}
+
+export interface CashflowProjectionResponse {
+  historyFrom: string | null
+  historyThrough: string | null
+  historicalNetAmount: number
+  averageMonthlyNet: number
+  decisionStatus: 'ACTION_NEEDED' | 'WATCH' | 'STABLE' | 'NO_DATA'
+  forecast: Array<Pick<CashflowForecastItem, 'month' | 'predictedIncome' | 'predictedExpenses' | 'projectedBalance' | 'status'>>
+}
+
+export type CashflowStatus = 'surplus' | 'deficit'
+
+export interface CashflowAlert {
+  severity: string
+  message: string
+  suggestions: string[]
+}
+
+export interface CashflowForecastItem {
+  month: string
+  predictedIncome: number
+  predictedExpenses: number
+  projectedBalance: number
+  status: CashflowStatus
+  alert?: CashflowAlert
+}
+
+export interface CashflowInsightsResponse {
+  currentBalance: number
+  forecast: CashflowForecastItem[]
+  averageMonthlyBalance: number
+  insights: string[]
+  decisionStatus?: 'ACTION_NEEDED' | 'WATCH' | 'STABLE' | 'NO_DATA'
+  availableForGoals?: number
+  requiredMonthlyAdjustment?: number
+  goalsAtRiskCount?: number
+  goalsOnTrackCount?: number
+  nextRiskMonth?: string | null
+  primaryDriverType?: string
+  primaryDriver?: string
+  recommendedAction?: string
+  recommendedActionAmount?: number
+  opportunityMessage?: string
+  riskWindowStart?: string | null
+}
+
+const AiService = {
+  predictMonthlyExpenses(payload: MonthlyExpensesPredictionRequest) {
+    return axiosInterceptor.post<MonthlyExpensesPredictionResponse>(
+    '/ai/predictions/monthly-expenses',
+    //   '/ai/monthly-expenses-prediction',
+      payload,
+      { baseURL: AI_BASE_URL }
+    )
+  },
+  detectAnomalies(payload: AnomalyDetectionRequest) {
+    return axiosInterceptor.post<AnomalyDetectionResponse>(
+    '/ai/anomalies',
+    //   '/ai/anomaly-detection',
+      payload,
+      { baseURL: AI_BASE_URL }
+    )
+  },
+  autoCategorize(payload: AutoCategorizeRequest) {
+    return axiosInterceptor.post<AutoCategorizeResponse>(
+    '/ai/categorize',
+    //   '/ai/auto-categorize',
+      payload,
+      { baseURL: AI_BASE_URL }
+    )
+  },
+  applyOpenFinanceCategorization(payload: ApplyOpenFinanceCategorizationRequest) {
+    return axiosInterceptor.post<ApplyOpenFinanceCategorizationResponse>(
+      '/ai/categorize/open-finance/apply',
+      payload,
+      { baseURL: AI_BASE_URL }
+    )
+  },
+  getSavingsRecommendations(payload: SavingsRecommendationRequest) {
+    return axiosInterceptor.post<SavingsRecommendationResponse>(
+      '/ai/savings-recommendations',
+      payload,
+      { baseURL: AI_BASE_URL }
+    )
+  },
+  getCashflowInsights(payload: CashflowInsightsRequest) {
+    return axiosInterceptor.post<CashflowInsightsResponse>(
+      '/ai/cashflow-insights',
+      payload,
+      { baseURL: AI_BASE_URL }
+    )
+  },
+  getCashflowProjection(payload: CashflowInsightsRequest) {
+    return axiosInterceptor.post<CashflowProjectionResponse>(
+      '/cashflow/projection',
+      payload,
+      { baseURL: AI_BASE_URL }
+    )
+  }
+}
+
+export default AiService

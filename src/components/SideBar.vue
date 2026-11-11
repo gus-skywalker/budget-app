@@ -1,0 +1,699 @@
+<script setup lang="ts">
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useTheme } from 'vuetify'
+import { useI18n } from 'vue-i18n'
+import { useUserStore } from '@/plugins/userStore'
+import WorkspaceSwitcher from '@/components/WorkspaceSwitcher.vue'
+import PlanTierBadge from '@/components/PlanTierBadge.vue'
+import BillingOrchestrationService, { type BillingSummaryResponse } from '@/services/BillingOrchestrationService'
+import { isSidebarRouteActive, sidebarRouteCurrentState } from '@/utils/sidebarNavigation'
+import { sidebarPlanHints } from '@/utils/sidebarPlanHints'
+import type { RouteLocationRaw } from 'vue-router'
+
+const router = useRouter()
+const route = useRoute()
+const theme = useTheme()
+const { t } = useI18n()
+const userStore = useUserStore()
+const showLogoutDialog = ref(false)
+const expandOnHover = ref(true)
+const isMobile = ref(false)
+const drawerOpen = ref(true)
+const billingSummary = ref<BillingSummaryResponse | null>(null)
+let billingRequestId = 0
+const sidebarWidth = computed(() => (isMobile.value ? 320 : 304))
+const closingLocked = computed(() => billingSummary.value?.capabilities?.financialClosingEnabled === false)
+
+type NavItem = {
+  key: string
+  title: string
+  icon: string
+  to?: RouteLocationRaw
+  disabled: boolean
+  primary?: boolean
+  lockedTier?: 'STARTER' | 'TEAM'
+  planHints?: Array<'STARTER' | 'TEAM'>
+}
+
+type NavSection = {
+  key: string
+  title: string
+  items: NavItem[]
+}
+
+const planHints = (key: string) => sidebarPlanHints(key, billingSummary.value)
+
+function itemPlanDescription(item: NavItem): string {
+  if (item.lockedTier) return `${item.title} · ${t('planTierBadge.requiresTeam')}`
+  const tiers = (item.planHints || []).join(' / ')
+  return tiers ? `${item.title} · ${t('planTierBadge.partialSummary', { tiers })}` : item.title
+}
+
+const checkMobile = () => {
+  const width = window.innerWidth
+  const nextIsMobile = width < 780
+  if (nextIsMobile !== isMobile.value) {
+    drawerOpen.value = !nextIsMobile
+  }
+  isMobile.value = nextIsMobile
+  expandOnHover.value = !isMobile.value
+}
+
+onMounted(() => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
+})
+
+watch(() => route.fullPath, () => {
+  if (isMobile.value) drawerOpen.value = false
+})
+
+watch(() => userStore.getCurrentWorkspaceId, async (workspaceId) => {
+  const requestId = ++billingRequestId
+  billingSummary.value = null
+  if (!workspaceId) return
+  try {
+    const { data } = await BillingOrchestrationService.getBillingSummary(String(workspaceId))
+    if (requestId === billingRequestId) billingSummary.value = data
+  } catch {
+    // Do not guess plan access when billing cannot be loaded.
+  }
+}, { immediate: true })
+
+const user = computed(() => userStore.getUser)
+const userAvatar = computed(() => user.value?.avatar || '/favicon.ico')
+
+const logoutUser = async () => {
+  showLogoutDialog.value = false
+  await userStore.logout()
+  await router.push('/login')
+}
+
+const confirmLogout = () => {
+  showLogoutDialog.value = true
+}
+
+const cancelLogout = () => {
+  showLogoutDialog.value = false
+}
+
+function redirectToOAuth2LoginPage() {
+  const authUrl = `${import.meta.env.VITE_API_BASE_URL}/login`
+  window.location.href = authUrl
+}
+
+function toggleTheme() {
+  const currentTheme = theme.global.current.value.dark ? 'light' : 'dark'
+  theme.global.name.value = currentTheme
+  userStore.setPreferredTheme(currentTheme)
+  requestAnimationFrame(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  })
+}
+
+function navigateToAccountAdmin() {
+  router.push({ name: 'settings' })
+}
+
+const mainNavSections = computed<NavSection[]>(() => [
+  {
+    key: 'decision',
+    title: t('sidebar.sections.decisions'),
+    items: [
+      {
+        key: 'decisions',
+        title: t('sidebar.decisions'),
+        icon: 'mdi-lightbulb-outline',
+        to: { name: 'decisions' },
+        primary: true,
+        planHints: planHints('decisions'),
+        disabled: false
+      },
+      {
+        key: 'insights',
+        title: t('sidebar.insights'),
+        icon: 'mdi-brain',
+        to: { name: 'insights' },
+        disabled: false
+      },
+      {
+        key: 'activity',
+        title: t('sidebar.activity'),
+        icon: 'mdi-timeline-text-outline',
+        to: { name: 'activity' },
+        disabled: false
+      },
+      {
+        key: 'blog-app',
+        title: 'Blog',
+        icon: 'mdi-post-outline',
+        to: { name: 'blog-app' },
+        disabled: false
+      }
+    ]
+  },
+  {
+    key: 'financials',
+    title: t('sidebar.sections.financials'),
+    items: [
+      {
+        key: 'overview',
+        title: t('sidebar.overview'),
+        icon: 'mdi-view-dashboard',
+        to: { name: 'dashboard' },
+        planHints: planHints('overview'),
+        disabled: false
+      },
+      {
+        key: 'transactions',
+        title: t('sidebar.transactions'),
+        icon: 'mdi-swap-horizontal',
+        to: { name: 'transactions' },
+        planHints: planHints('transactions'),
+        disabled: false
+      },
+      {
+        key: 'cashflow',
+        title: t('sidebar.cashflow'),
+        icon: 'mdi-chart-waterfall',
+        to: { name: 'cashflow' },
+        planHints: planHints('cashflow'),
+        disabled: false
+      },
+      {
+        key: 'report',
+        title: t('sidebar.report'),
+        icon: 'mdi-chart-donut',
+        to: { name: 'report' },
+        disabled: false
+      },
+      {
+        key: 'shared-with-me',
+        title: t('sidebar.shared_with_me'),
+        icon: 'mdi-handshake-outline',
+        to: { name: 'shared-with-me' },
+        disabled: false
+      },
+      {
+        key: 'accounts',
+        title: t('sidebar.accounts'),
+        icon: 'mdi-bank-outline',
+        to: { name: 'accounts' },
+        planHints: planHints('accounts'),
+        disabled: false
+      },
+      {
+        key: 'categories',
+        title: t('sidebar.categories'),
+        icon: 'mdi-shape-outline',
+        to: { name: 'categories' },
+        planHints: planHints('categories'),
+        disabled: false
+      }
+    ]
+  },
+  {
+    key: 'planning',
+    title: t('sidebar.sections.planning'),
+    items: [
+      {
+        key: 'planning-budget',
+        title: t('sidebar.planning_budget'),
+        icon: 'mdi-wallet-outline',
+        to: { name: 'planning-budget' },
+        planHints: planHints('planning-budget'),
+        disabled: false
+      },
+      {
+        key: 'planning-financial-closings',
+        title: t('sidebar.planning_financial_closings'),
+        icon: 'mdi-table-account',
+        to: { name: 'planning-financial-closings' },
+        disabled: false,
+        lockedTier: closingLocked.value ? 'TEAM' : undefined
+      },
+      {
+        key: 'planning-scenarios',
+        title: t('sidebar.planning_scenarios'),
+        icon: 'mdi-layers-triple-outline',
+        to: { name: 'planning-scenarios' },
+        planHints: planHints('planning-scenarios'),
+        disabled: false
+      },
+      {
+        key: 'planning-goals',
+        title: t('sidebar.planning_goals'),
+        icon: 'mdi-bullseye-arrow',
+        to: { name: 'planning-goals' },
+        planHints: planHints('planning-goals'),
+        disabled: false
+      }
+    ]
+  }
+])
+
+const settingsItems = computed<NavItem[]>(() => [
+  {
+    key: 'settings',
+    title: t('sidebar.settings'),
+    icon: 'mdi-cog-outline',
+    to: { name: 'settings' },
+    planHints: planHints('settings'),
+    disabled: false
+  },
+  {
+    key: 'workspace',
+    title: t('sidebar.workspace.label'),
+    icon: 'mdi-briefcase-outline',
+    to: userStore.hasMultipleWorkspaces ? { name: 'select-workspace' } : undefined,
+    disabled: !userStore.hasMultipleWorkspaces
+  }
+])
+
+const legalItems = computed<NavItem[]>(() => [
+  {
+    key: 'privacy-policy',
+    title: t('sidebar.legal.privacy_policy'),
+    icon: 'mdi-shield-account-outline',
+    to: { name: 'privacy-policy' },
+    disabled: false
+  },
+  {
+    key: 'terms-of-use',
+    title: t('sidebar.legal.terms_of_service'),
+    icon: 'mdi-file-document-outline',
+    to: { name: 'terms-of-use' },
+    disabled: false
+  },
+  {
+    key: 'cookie-policy',
+    title: t('sidebar.legal.cookie_policy'),
+    icon: 'mdi-cookie-outline',
+    to: { name: 'cookie-policy' },
+    disabled: false
+  }
+])
+
+function isItemActive(item: NavItem): boolean {
+  if (!item.to) return false
+  const target = router.resolve(item.to)
+  return isSidebarRouteActive(item.key, target.name?.toString(), route.name?.toString())
+}
+
+function itemCurrentState(item: NavItem): 'page' | 'location' | undefined {
+  if (!item.to) return undefined
+  const target = router.resolve(item.to)
+  return sidebarRouteCurrentState(item.key, target.name?.toString(), route.name?.toString())
+}
+
+</script>
+
+<template>
+  <v-btn
+    v-if="isMobile"
+    :class="['mobile-nav-trigger', { 'mobile-nav-trigger--open': drawerOpen }]"
+    color="primary"
+    :icon="drawerOpen ? 'mdi-close' : 'mdi-menu'"
+    size="large"
+    :aria-label="$t(drawerOpen ? 'sidebar.close_navigation' : 'sidebar.open_navigation')"
+    :aria-expanded="drawerOpen"
+    @click.stop="drawerOpen = !drawerOpen"
+  />
+
+  <v-navigation-drawer
+    v-if="!isMobile || drawerOpen"
+    v-model="drawerOpen"
+    app
+    :class="['app-sidebar', { 'app-sidebar--mobile': isMobile }]"
+    :disable-route-watcher="isMobile"
+    :expand-on-hover="expandOnHover"
+    :permanent="!isMobile"
+    :persistent="isMobile"
+    :rail="!isMobile"
+    :rail-width="64"
+    :temporary="isMobile"
+    :width="sidebarWidth"
+    ref="drawer"
+  >
+    <div class="sidebar-scroll-shell">
+      <v-list v-if="user">
+        <v-list-item
+          :prepend-avatar="userAvatar"
+          :subtitle="user.email"
+          :title="user.username"
+          @click="navigateToAccountAdmin"
+        ></v-list-item>
+      </v-list>
+      <v-list v-else>
+        <v-btn @click="redirectToOAuth2LoginPage">{{ $t('sidebar.login_oauth2') }}</v-btn>
+      </v-list>
+
+      <v-divider></v-divider>
+
+      <div class="workspace-switcher-wrapper">
+        <WorkspaceSwitcher />
+      </div>
+
+      <v-list class="sidebar-main-list" density="compact" nav>
+        <template v-for="section in mainNavSections" :key="section.key">
+          <v-list-subheader class="sidebar-section">{{ section.title }}</v-list-subheader>
+          <v-tooltip
+            v-for="item in section.items"
+            :key="item.key"
+            :disabled="isMobile"
+            :text="itemPlanDescription(item)"
+            location="end"
+          >
+            <template v-slot:activator="{ props }">
+              <v-list-item
+                v-bind="props"
+                :prepend-icon="item.icon"
+                :title="item.title"
+                :aria-label="itemPlanDescription(item)"
+                :to="item.to"
+                :disabled="item.disabled"
+                :active="isItemActive(item)"
+                :aria-current="itemCurrentState(item)"
+                :class="{
+                  'primary-nav-item': item.primary,
+                  'active-nav-item': isItemActive(item),
+                  'plan-locked-nav-item': Boolean(item.lockedTier || item.planHints?.length)
+                }"
+              >
+                <template v-if="item.lockedTier || item.planHints?.length" #append>
+                  <span class="sidebar-tier-badges">
+                    <PlanTierBadge v-if="item.lockedTier" :tier="item.lockedTier" />
+                    <PlanTierBadge v-for="(tier, index) in item.planHints" :key="tier" :tier="tier" :show-lock="index === 0 && !item.lockedTier" scope="partial" />
+                  </span>
+                </template>
+              </v-list-item>
+            </template>
+          </v-tooltip>
+          <v-divider class="section-divider"></v-divider>
+        </template>
+      </v-list>
+
+      <v-spacer></v-spacer>
+
+      <div class="sidebar-settings">
+        <v-list density="compact" nav>
+          <v-list-subheader class="sidebar-section">{{
+            $t('sidebar.sections.settings')
+          }}</v-list-subheader>
+          <v-tooltip
+            v-for="item in settingsItems"
+            :key="item.key"
+            :disabled="isMobile"
+            :text="itemPlanDescription(item)"
+            location="end"
+          >
+            <template v-slot:activator="{ props }">
+              <v-list-item
+                v-bind="props"
+                :prepend-icon="item.icon"
+                :title="item.title"
+                :aria-label="itemPlanDescription(item)"
+                :to="item.to"
+                :disabled="item.disabled"
+                :active="isItemActive(item)"
+                :aria-current="itemCurrentState(item)"
+                :class="{ 'active-nav-item': isItemActive(item), 'plan-locked-nav-item': Boolean(item.planHints?.length) }"
+              >
+                <template v-if="item.planHints?.length" #append>
+                  <span class="sidebar-tier-badges">
+                    <PlanTierBadge v-for="(tier, index) in item.planHints" :key="tier" :tier="tier" :show-lock="index === 0 && !item.lockedTier" scope="partial" />
+                  </span>
+                </template>
+              </v-list-item>
+            </template>
+          </v-tooltip>
+          <v-list-group value="legal" prepend-icon="mdi-scale-balance">
+            <template v-slot:activator="{ props }">
+              <v-list-item v-bind="props" :title="$t('sidebar.legal.title')"></v-list-item>
+            </template>
+            <v-tooltip
+              v-for="item in legalItems"
+              :key="item.key"
+              :disabled="isMobile"
+              :text="item.title"
+              location="end"
+            >
+              <template v-slot:activator="{ props }">
+                <v-list-item
+                  v-bind="props"
+                  :prepend-icon="item.icon"
+                  :title="item.title"
+                  :to="item.to"
+                  :active="isItemActive(item)"
+                  :aria-current="itemCurrentState(item)"
+                  :class="{ 'active-nav-item': isItemActive(item) }"
+                ></v-list-item>
+              </template>
+            </v-tooltip>
+          </v-list-group>
+        </v-list>
+
+        <v-divider></v-divider>
+
+        <v-tooltip :text="$t('sidebar.toggle_theme')" location="end">
+          <template v-slot:activator="{ props }">
+            <v-switch
+              v-bind="props"
+              @click="toggleTheme"
+              hide-details
+              class="ml-4 mt-2 sidebar-theme-toggle"
+            >
+              <template v-slot:prepend>
+                <v-icon>{{
+                  theme.global.current.value.dark ? 'mdi-weather-night' : 'mdi-weather-sunny'
+                }}</v-icon>
+              </template>
+            </v-switch>
+          </template>
+        </v-tooltip>
+
+        <v-tooltip :text="$t('sidebar.logout')" location="end">
+          <template v-slot:activator="{ props }">
+            <v-list density="compact" nav>
+              <v-list-item
+                v-bind="props"
+                @click="confirmLogout"
+                :title="$t('sidebar.logout')"
+                prepend-icon="mdi-logout"
+              ></v-list-item>
+            </v-list>
+          </template>
+        </v-tooltip>
+      </div>
+    </div>
+  </v-navigation-drawer>
+
+  <v-dialog v-model="showLogoutDialog" max-width="400">
+    <v-card>
+      <v-card-title class="headline">
+        {{ $t('sidebar.logout_confirmation_title') }}
+      </v-card-title>
+      <v-card-text>
+        {{ $t('sidebar.logout_confirmation_message') }}
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn color="grey" variant="text" @click="cancelLogout">
+          {{ $t('sidebar.cancel') }}
+        </v-btn>
+        <v-btn color="red" variant="text" @click="logoutUser">
+          {{ $t('sidebar.confirm') }}
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+</template>
+
+<style scoped>
+.mobile-nav-trigger {
+  position: fixed;
+  z-index: 2600;
+  top: calc(env(safe-area-inset-top, 0px) + 14px);
+  left: calc(env(safe-area-inset-left, 0px) + 14px);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.24);
+  transition:
+    left 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.mobile-nav-trigger:focus-visible {
+  outline: 3px solid var(--cb-ink);
+  outline-offset: 3px;
+}
+
+.app-sidebar :deep(.v-list-item:focus-visible),
+.app-sidebar :deep(.v-list:focus-visible),
+.app-sidebar :deep(.v-btn:focus-visible) {
+  outline: 3px solid var(--cb-ink);
+  outline-offset: -3px;
+}
+
+.mobile-nav-trigger--open {
+  left: min(
+    calc(env(safe-area-inset-left, 0px) + 220px),
+    calc(100vw - env(safe-area-inset-right, 0px) - 66px)
+  );
+}
+
+.sidebar-scroll-shell {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-sidebar--mobile {
+  max-width: calc(100vw - 48px);
+}
+
+.app-sidebar--mobile :deep(.v-navigation-drawer__content) {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.app-sidebar--mobile .sidebar-scroll-shell {
+  min-height: auto;
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+}
+
+.app-sidebar--mobile :deep(.v-spacer) {
+  display: none;
+}
+
+.app-sidebar--mobile .workspace-switcher-wrapper {
+  padding: 10px 12px;
+}
+
+.app-sidebar--mobile .section-divider {
+  margin-inline: 10px;
+}
+
+.app-sidebar--mobile .sidebar-main-list,
+.app-sidebar--mobile .sidebar-settings :deep(.v-list) {
+  padding-inline: 6px;
+}
+
+.sidebar-main-list {
+  padding-bottom: 4px;
+}
+
+.app-sidebar :deep(.plan-locked-nav-item .v-list-item-title) {
+  white-space: normal;
+  line-height: 1.2;
+}
+
+.app-sidebar :deep(.plan-locked-nav-item .v-list-item__append) {
+  margin-inline-start: 4px;
+}
+
+.sidebar-tier-badges {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 5px;
+}
+
+.sidebar-tier-badges :deep(.plan-tier-badge + .plan-tier-badge)::before {
+  content: '·';
+  color: rgb(var(--v-theme-on-surface));
+  opacity: 0.5;
+  margin-inline-end: 1px;
+}
+
+.app-sidebar .sidebar-main-list :deep(.v-list-item__prepend > .v-list-item__spacer) {
+  width: 16px;
+}
+
+.app-sidebar :deep(.plan-locked-nav-item .v-list-item-title) {
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
+}
+
+.section-divider {
+  margin: 8px 14px 10px;
+  opacity: 0.35;
+}
+
+.sidebar-settings {
+  padding-bottom: 8px;
+}
+
+.sidebar-theme-toggle {
+  margin-bottom: 6px;
+}
+
+.sidebar-theme-toggle :deep(.v-selection-control__wrapper:has(input:focus-visible)) {
+  outline: 3px solid var(--cb-ink);
+  outline-offset: 3px;
+  border-radius: 999px;
+}
+
+.sidebar-section {
+  margin-top: 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.v-theme--dark .sidebar-section {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.active-nav-item {
+  border-radius: 10px;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.active-nav-item.v-list-item--active {
+  background: color-mix(in srgb, var(--cb-primary) 10%, transparent);
+}
+
+.v-theme--dark .active-nav-item.v-list-item--active {
+  background: color-mix(in srgb, var(--cb-primary) 20%, transparent);
+}
+
+.primary-nav-item {
+  background: color-mix(in srgb, var(--cb-primary) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--cb-primary) 28%, transparent);
+  border-radius: 10px;
+  margin: 2px 6px;
+}
+
+.primary-nav-item:hover {
+  background: color-mix(in srgb, var(--cb-primary) 16%, transparent);
+}
+
+.v-theme--dark .primary-nav-item {
+  background: color-mix(in srgb, var(--cb-primary) 22%, transparent);
+  border-color: color-mix(in srgb, var(--cb-primary) 40%, transparent);
+}
+
+.workspace-switcher-wrapper {
+  padding: 12px 16px;
+}
+
+.workspace-switcher-wrapper :deep(.workspace-switcher-btn) {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.language-select {
+  max-width: 120px;
+  font-size: 0.9rem;
+}
+</style>

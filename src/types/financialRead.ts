@@ -1,0 +1,159 @@
+export interface AccountView {
+  id: string
+  name: string
+  provider: string
+  accountType: string
+  currency: string
+  balance: number
+  bankCode?: string | null
+  institutionKey?: string | null
+  institutionName?: string | null
+}
+
+export type TransactionDirection = 'INFLOW' | 'OUTFLOW'
+export type TransactionSource = 'MANUAL' | 'OPEN_FINANCE' | 'SYSTEM'
+export type TransactionStatus = 'PENDING' | 'POSTED' | 'CANCELLED'
+export type CanonicalTransactionVisibilityScope = 'PRIVATE' | 'WORKSPACE'
+export type TransactionVisibilityScope = CanonicalTransactionVisibilityScope
+export type ReportScope = 'VISIBLE_TO_ACTOR' | 'WORKSPACE_SHARED'
+
+export interface TransactionView {
+  id: string
+  date: string
+  description: string
+  amount: number
+  direction: TransactionDirection
+  category: string | null
+  categoryId?: number | null
+  categoryCode?: string | null
+  categoryName?: string | null
+  categorySystemDefined?: boolean | null
+  categoryDisplayColor?: string | null
+  categoryDisplayIcon?: string | null
+  categorizationSource?: string | null
+  categorizationReason?: string | null
+  categorizationRuleId?: number | null
+  categorizedAt?: string | null
+  categorizedByUserId?: string | null
+  paymentMethodId?: number | null
+  paymentMethodName?: string | null
+  accountId: string | null
+  accountName: string | null
+  status: string
+  visibilityScope?: TransactionVisibilityScope
+  ownerUserId?: string | null
+  excludedFromPlanning?: boolean
+  source?: TransactionSource
+  openFinance?: boolean
+  openFinanceRawStatus?: string | null
+  openFinanceBankCategoryId?: string | null
+  reconciliationStatus?: string | null
+  reconciliationMatchedBy?: string | null
+  reconciliationConflictReason?: string | null
+  originalAmount?: number | null
+  originalCurrencyCode?: string | null
+  currencyCode?: string | null
+}
+
+export interface LedgerEntryRequest {
+  accountId: string
+  direction: TransactionDirection
+  amount: number
+  categoryId?: number | null
+  paymentMethodId?: number | null
+  paymentMethodName?: string | null
+  categorizationSource?: string | null
+  categorizationReason?: string | null
+  categorizationRuleId?: number | null
+}
+
+export interface TransactionRequest {
+  transactionDate: string
+  description: string
+  source?: TransactionSource
+  status?: TransactionStatus
+  externalId?: string | null
+  visibilityScope?: TransactionVisibilityScope
+  entries: LedgerEntryRequest[]
+}
+
+export interface TransactionPlanningExclusionRequest {
+  excludedFromPlanning: boolean
+}
+
+export interface TransactionAttachmentListItem {
+  id: string
+  fileName: string
+  kind: string | null
+  sizeBytes: number
+  createdAt: string
+}
+
+export interface TransactionCommentView {
+  id: string
+  transactionId: string
+  authorUserId: string
+  body: string
+  createdAt: string
+}
+
+export interface DashboardView {
+  totalBalance: number
+  monthlyIncome: number
+  monthlyExpenses: number
+  monthlyForecastIncome?: number
+  monthlyForecastExpenses?: number
+  recentTransactions: TransactionView[]
+  topCategories: string[]
+}
+
+export interface PagedResponse<T> {
+  items: T[]
+  total: number
+  limit: number
+  offset: number
+}
+
+export interface TransactionDailySummaryDay {
+  date: string
+  expenseAmount: number
+  transactionCount: number
+}
+
+export interface TransactionDailySummaryResponse {
+  currency: string
+  days: TransactionDailySummaryDay[]
+}
+
+export interface TransactionPeriodSummaryResponse {
+  currency: string
+  incomeAmount: number
+  expenseAmount: number
+  netAmount: number
+  incomeTransactionCount: number
+  expenseTransactionCount: number
+}
+
+export interface TransactionQueryParams {
+  fromDate?: string
+  toDate?: string
+  accountId?: string
+  direction?: TransactionDirection
+  categoryId?: number
+  uncategorized?: boolean
+  excludedFromPlanning?: boolean
+  visibilityScope?: TransactionVisibilityScope
+  reportScope?: ReportScope
+  periodMonth?: number
+  periodYear?: number
+  limit?: number
+  offset?: number
+}
+
+export const normalizeTransactionVisibilityScope = (scope?: string | null): CanonicalTransactionVisibilityScope => {
+  return scope === 'PRIVATE' ? 'PRIVATE' : 'WORKSPACE'
+}
+
+export const toTransactionVisibilityScopeRequest = (scope?: string | null): CanonicalTransactionVisibilityScope => {
+  return scope === 'PRIVATE' ? 'PRIVATE' : 'WORKSPACE'
+}

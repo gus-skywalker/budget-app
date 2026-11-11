@@ -1,0 +1,1016 @@
+<template>
+  <v-container id="choose-plan-page" fluid class="choose-plan-page">
+    <section class="plan-hero">
+      <div class="shell hero-grid">
+        <div class="hero-copy">
+          <span class="eyebrow">{{ $t('landingPage.auth.signupNow') }}</span>
+          <h1>{{ $t('choosePlan.title') }}</h1>
+          <p class="hero-subtitle">{{ $t('choosePlan.subtitle') }}</p>
+          <div v-if="activeFeature === 'connected-finance'" class="feature-context" role="note">
+            <span class="feature-context__eyebrow">{{ $t('choosePlan.connected_finance_eyebrow') }}</span>
+            <strong>{{ $t('choosePlan.connected_finance_title') }}</strong>
+            <p>{{ $t('choosePlan.connected_finance_description') }}</p>
+          </div>
+
+          <div class="hero-notes">
+            <article class="note-card">
+              <div class="icon-chip icon-chip-contrast">
+                <v-icon size="20">mdi-brain</v-icon>
+              </div>
+              <div>
+                <strong>{{ $t('choosePlan.ai_title') }}</strong>
+                <p>{{ $t('choosePlan.ai_desc') }}</p>
+              </div>
+            </article>
+
+            <article class="note-card">
+              <div class="icon-chip icon-chip-warm">
+                <v-icon size="20">mdi-shield-lock-outline</v-icon>
+              </div>
+              <div>
+                <strong>{{ $t('choosePlan.payment_security_title') }}</strong>
+                <p>{{ $t('choosePlan.payment_security_text') }}</p>
+              </div>
+            </article>
+          </div>
+        </div>
+
+        <div class="hero-side">
+          <div class="ai-summary-card">
+            <div class="summary-head">
+              <span class="summary-tag">{{ $t('landingPage.ai.title') }}</span>
+              <h2>{{ $t('choosePlan.ai_title') }}</h2>
+            </div>
+
+            <ul class="feature-list feature-list-ai">
+              <li v-for="item in aiFeatures" :key="item.labelKey">
+                <div class="icon-chip icon-chip-contrast icon-chip-small">
+                  <v-icon size="18">{{ item.icon }}</v-icon>
+                </div>
+                <span>{{ $t(item.labelKey) }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="plans" class="plans-section section-block">
+      <div class="shell">
+        <div class="section-heading">
+          <span class="section-kicker">{{ $t('choosePlan.best_offer') }}</span>
+          <h2>{{ $t('choosePlan.title') }}</h2>
+          <p>{{ $t('choosePlan.subtitle') }}</p>
+          <div v-if="activeSegment" class="segment-context" :class="`segment-context--${activeSegment}`">
+            <div class="segment-context__icon">
+              <v-icon size="20">{{ activeSegment === 'casa' ? 'mdi-home-heart' : 'mdi-chart-timeline-variant' }}</v-icon>
+            </div>
+            <div>
+              <span>{{ $t(`choosePlan.segment_${activeSegment}_eyebrow`) }}</span>
+              <strong>{{ $t(`choosePlan.segment_${activeSegment}_title`) }}</strong>
+              <p>{{ $t(`choosePlan.segment_${activeSegment}_description`) }}</p>
+            </div>
+          </div>
+        </div>
+
+        <p class="launch-availability">{{ $t('launchOffer.availability', { total: teamLaunchOffer.maxClaims }) }}</p>
+        <div class="plans-grid">
+          <article class="plan-card free">
+            <div class="plan-head">
+              <span class="plan-tag free-tag">{{ $t('choosePlan.free_tag') }}</span>
+              <h3>{{ $t('choosePlan.free_name') }}</h3>
+              <p class="plan-subtitle">{{ $t('choosePlan.free_subtitle') }}</p>
+            </div>
+
+            <div class="price-stack">
+              <div class="price-row free-price">
+                <span class="price-label">{{ $t('choosePlan.free_price_label') }}</span>
+                <span class="price-amount">{{ $t('choosePlan.free_price') }}</span>
+              </div>
+            </div>
+
+            <ul class="feature-list">
+              <li v-for="item in freeFeatures" :key="item.labelKey">
+                <div class="icon-chip icon-chip-contrast icon-chip-small">
+                  <v-icon size="18">{{ item.icon }}</v-icon>
+                </div>
+                <span>{{ $t(item.labelKey) }}</span>
+              </li>
+            </ul>
+
+            <div class="plan-cta">
+              <button class="btn btn-outline free-outline" type="button" @click.prevent="goToApp">
+                {{ $t('choosePlan.free_cta') }}
+              </button>
+            </div>
+          </article>
+
+          <article class="plan-card starter" :class="{ 'plan-card--segment-focus': activeSegment === 'casa' }">
+            <PlanOfferCard tier="casa" @select="redirectToCheckout" />
+          </article>
+
+          <article class="plan-card team" :class="{ 'plan-card--segment-focus': activeSegment === 'negocio' }">
+            <PlanOfferCard tier="team" @select="redirectToCheckout" />
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-block trust-section">
+      <div class="shell trust-grid">
+        <article class="trust-card">
+          <div class="icon-chip icon-chip-warm">
+            <v-icon size="20">mdi-backup-restore</v-icon>
+          </div>
+          <div>
+            <h3>{{ $t('choosePlan.cancellation_title') }}</h3>
+            <p>{{ $t('choosePlan.cancellation_text') }}</p>
+          </div>
+        </article>
+
+        <article class="trust-card">
+          <div class="icon-chip icon-chip-contrast">
+            <v-icon size="20">mdi-lock-check-outline</v-icon>
+          </div>
+          <div>
+            <h3>{{ $t('choosePlan.payment_security_title') }}</h3>
+            <p>{{ $t('choosePlan.payment_security_text') }}</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section-block faq-wrapper">
+      <div class="shell faq-shell">
+        <FAQ :faqs="faqs" />
+      </div>
+    </section>
+
+    <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="4000">
+      {{ snackbar.message }}
+    </v-snackbar>
+  </v-container>
+</template>
+
+<script>
+import FAQ from '@/components/FAQ.vue'
+import OnboardingOrchestrator from '@/services/OnboardingOrchestrator'
+import PlanOfferCard from '@/components/PlanOfferCard.vue'
+import { TEAM_LAUNCH_OFFER } from '@/constants/teamLaunchOffer'
+import { useUserStore } from '@/plugins/userStore'
+import { parseApiError } from '@/utils/errorHandler'
+
+export default {
+  name: 'ChoosePlan',
+  components: {
+    FAQ,
+    PlanOfferCard,
+  },
+  data() {
+    return {
+      faqs: [
+        { question: 'choosePlanFaq.q1', answer: 'choosePlanFaq.a1' },
+        { question: 'choosePlanFaq.q2', answer: 'choosePlanFaq.a2' },
+        { question: 'choosePlanFaq.q3', answer: 'choosePlanFaq.a3' },
+        { question: 'choosePlanFaq.q4', answer: 'choosePlanFaq.a4' },
+        { question: 'choosePlanFaq.q5', answer: 'choosePlanFaq.a5' },
+        { question: 'faq.q1', answer: 'faq.a1' },
+        { question: 'faq.q2', answer: 'faq.a2' },
+        { question: 'faq.q3', answer: 'faq.a3' },
+        { question: 'faq.q4', answer: 'faq.a4' },
+        { question: 'faq.q5', answer: 'faq.a5' },
+        { question: 'faq.q6', answer: 'faq.a6' },
+        { question: 'faq.q7', answer: 'faq.a7' },
+      ],
+      selectedPlan: null,
+      teamLaunchOffer: TEAM_LAUNCH_OFFER,
+      snackbar: {
+        show: false,
+        message: '',
+        color: 'error',
+      },
+      aiFeatures: [
+        { icon: 'mdi-chart-box-outline', labelKey: 'choosePlan.ai_feature_1' },
+        { icon: 'mdi-bell-alert-outline', labelKey: 'choosePlan.ai_feature_2' },
+        { icon: 'mdi-piggy-bank-outline', labelKey: 'choosePlan.ai_feature_3' },
+        { icon: 'mdi-tag-multiple-outline', labelKey: 'choosePlan.ai_feature_4' },
+      ],
+      freeFeatures: [
+        { icon: 'mdi-briefcase-outline', labelKey: 'choosePlan.free_feature_1' },
+        { icon: 'mdi-account-outline', labelKey: 'choosePlan.free_feature_2' },
+        { icon: 'mdi-shape-outline', labelKey: 'choosePlan.free_feature_3' },
+        { icon: 'mdi-chart-timeline-variant', labelKey: 'choosePlan.free_feature_4' },
+        { icon: 'mdi-lightbulb-on-outline', labelKey: 'choosePlan.free_feature_5' },
+      ],
+    }
+  },
+  computed: {
+    activeFeature() {
+      return this.$route?.query?.feature === 'connected-finance' ? 'connected-finance' : null
+    },
+    activeSegment() {
+      const segment = this.$route?.query?.segment
+      return segment === 'casa' || segment === 'negocio' ? segment : null
+    },
+    isAuthenticated() {
+      try {
+        const userStore = useUserStore()
+        return userStore.isAuthenticated
+      } catch (e) {
+        return false
+      }
+    },
+  },
+  mounted() {
+    const preselectedPlan = this.$route?.query?.plan
+    if (typeof preselectedPlan === 'string' && preselectedPlan.trim()) {
+      this.redirectToCheckout(preselectedPlan.trim())
+      return
+    }
+  },
+  methods: {
+    async redirectToCheckout(plan) {
+      try {
+        this.selectedPlan = plan
+        if (!this.isAuthenticated) {
+          localStorage.setItem('selectedPlan', plan)
+          const redirect = OnboardingOrchestrator.buildRedirectPath('/choose-plan', { plan })
+          this.$router.push({
+            name: 'login',
+            query: {
+              redirect,
+            },
+          })
+          return
+        }
+        const userStore = useUserStore()
+        const resolution = await OnboardingOrchestrator.resolvePostAuthRoute({
+          router: this.$router,
+          userStore,
+          redirect: '/checkout',
+          plan: String(plan),
+        })
+
+        await this.$router.push(resolution.route)
+      } catch (error) {
+        this.handleError(error)
+      }
+    },
+
+    goToApp() {
+      if (this.isAuthenticated) {
+        this.$router.push({ name: 'dashboard' })
+        return
+      }
+      this.$router.push({ name: 'login', query: { signup: 'true' } })
+    },
+
+    handleError(error) {
+      console.error('Erro no processo de checkout:', error)
+      const errorMessage = parseApiError(error, this.$t('choosePlan.error_continue_process'))
+
+      if (this.$vuetify) {
+        this.$vuetify.notify({
+          type: 'error',
+          text: errorMessage,
+        })
+      } else {
+        this.snackbar = {
+          show: true,
+          message: errorMessage,
+          color: 'error',
+        }
+      }
+    },
+  },
+}
+</script>
+
+<style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Source+Sans+3:wght@400;500;600;700&display=swap');
+
+#choose-plan-page {
+  --ink: #172033;
+  --ink-soft: #536177;
+  --line: rgba(23, 32, 51, 0.12);
+  --brand: #b6551f;
+  --brand-strong: #8e4318;
+  --accent: #205f63;
+  --accent-strong: #173f4b;
+  --shadow: 0 16px 34px rgba(23, 32, 51, 0.08);
+  --shadow-soft: 0 10px 22px rgba(23, 32, 51, 0.05);
+  background:
+    radial-gradient(circle at top left, rgba(32, 95, 99, 0.08), transparent 28%),
+    radial-gradient(circle at 85% 10%, rgba(182, 85, 31, 0.08), transparent 20%),
+    linear-gradient(180deg, #fbf8f2 0%, #f8f4ed 52%, #fdfaf5 100%);
+  color: var(--ink);
+  font-family: 'Source Sans 3', sans-serif;
+  max-width: none !important;
+  padding: 0 !important;
+}
+
+#choose-plan-page :deep(*) {
+  box-sizing: border-box;
+}
+
+#choose-plan-page :deep(.v-icon) {
+  color: inherit;
+}
+
+.shell {
+  width: min(1180px, calc(100vw - 32px));
+  margin: 0 auto;
+}
+
+.section-block {
+  padding: 84px 0;
+}
+
+.plan-hero {
+  padding: 72px 0 44px;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: 28px;
+  align-items: start;
+}
+
+.eyebrow,
+.section-kicker,
+.summary-tag {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.eyebrow,
+.section-kicker {
+  background: rgba(32, 95, 99, 0.1);
+  color: var(--accent-strong);
+}
+
+.summary-tag {
+  background: rgba(32, 95, 99, 0.1);
+  color: var(--accent-strong);
+}
+
+h1,
+h2,
+h3,
+.price-amount,
+.plan-tag,
+.plan-ribbon,
+.btn {
+  font-family: 'Manrope', sans-serif;
+}
+
+h1 {
+  margin: 16px 0 14px;
+  font-size: clamp(2.5rem, 4.5vw, 4.4rem);
+  line-height: 0.98;
+  letter-spacing: -0.05em;
+}
+
+h2 {
+  margin: 0 0 12px;
+  font-size: clamp(1.9rem, 3vw, 3rem);
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+}
+
+h3 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 1.05rem;
+  line-height: 1.65;
+}
+
+.hero-subtitle,
+.section-heading p {
+  max-width: 60ch;
+  font-size: 1.18rem;
+}
+
+.feature-context {
+  display: grid;
+  gap: 5px;
+  max-width: 590px;
+  margin-top: 24px;
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: var(--shadow-soft);
+}
+
+.feature-context__eyebrow {
+  color: var(--accent-strong);
+  font-size: .74rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.feature-context strong { font-size: 1.08rem; }
+.feature-context p { font-size: .94rem; }
+
+.hero-notes,
+.trust-grid,
+.plans-grid {
+  display: grid;
+  gap: 20px;
+}
+
+.hero-notes {
+  margin-top: 28px;
+}
+
+.note-card,
+.plan-card,
+.trust-card,
+.ai-summary-card,
+.faq-shell {
+  border-radius: 28px;
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-soft);
+}
+
+.note-card,
+.trust-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 16px;
+  padding: 22px;
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.hero-side {
+  position: sticky;
+  top: 24px;
+}
+
+.ai-summary-card {
+  padding: 26px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(242, 236, 227, 0.82) 100%);
+  color: var(--ink);
+  box-shadow: var(--shadow-soft);
+}
+
+.ai-summary-card p,
+.ai-summary-card span,
+.ai-summary-card h2 {
+  color: inherit;
+}
+
+.summary-head {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.feature-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.feature-list li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.feature-list-ai li {
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(23, 32, 51, 0.08);
+}
+
+.plans-section {
+  padding-top: 28px;
+}
+
+.section-heading {
+  text-align: center;
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  margin-bottom: 34px;
+}
+
+.segment-context {
+  align-items: center;
+  background: rgba(182, 85, 31, 0.08);
+  border: 1px solid rgba(182, 85, 31, 0.18);
+  border-radius: 18px;
+  display: flex;
+  gap: 13px;
+  margin-top: 10px;
+  max-width: 650px;
+  padding: 14px 16px;
+  text-align: left;
+}
+
+.segment-context--negocio {
+  background: rgba(32, 95, 99, 0.08);
+  border-color: rgba(32, 95, 99, 0.18);
+}
+
+.segment-context__icon {
+  align-items: center;
+  background: rgba(182, 85, 31, 0.12);
+  border-radius: 12px;
+  color: var(--brand-strong);
+  display: flex;
+  flex: 0 0 auto;
+  height: 40px;
+  justify-content: center;
+  width: 40px;
+}
+
+.segment-context--negocio .segment-context__icon {
+  background: rgba(32, 95, 99, 0.12);
+  color: var(--accent-strong);
+}
+
+.segment-context span,
+.segment-context strong,
+.segment-context p {
+  display: block;
+}
+
+.segment-context span {
+  color: var(--brand-strong);
+  font-size: 0.69rem;
+  font-weight: 850;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.segment-context--negocio span { color: var(--accent-strong); }
+
+.segment-context strong {
+  color: var(--ink);
+  font-size: 0.9rem;
+  margin-top: 2px;
+}
+
+.segment-context p {
+  color: var(--ink-soft);
+  font-size: 0.79rem;
+  line-height: 1.4;
+  margin-top: 2px;
+}
+
+.plans-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+}
+
+.plan-card {
+  min-width: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 28px;
+  background: #fff;
+}
+
+.plan-card.starter {
+  background: linear-gradient(180deg, #fff 0%, #fcf5ec 100%);
+}
+
+.plan-card.free {
+  background: linear-gradient(180deg, #fff 0%, #f7faf8 100%);
+}
+
+.plan-card.team {
+  background: linear-gradient(180deg, #fbf7ef 0%, #f4ece2 100%);
+  color: var(--ink);
+  border-color: rgba(32, 95, 99, 0.14);
+  box-shadow: var(--shadow);
+}
+
+.plan-card--segment-focus {
+  border-color: var(--brand);
+  box-shadow: 0 24px 48px rgba(182, 85, 31, 0.18);
+  transform: translateY(-8px);
+}
+
+.plan-card.team.plan-card--segment-focus {
+  border-color: var(--accent-strong);
+  box-shadow: 0 24px 48px rgba(32, 95, 99, 0.2);
+}
+
+.plan-card.team p,
+.plan-card.team span,
+.plan-card.team h3,
+.plan-card.team li {
+  color: inherit;
+}
+
+.plan-head {
+  display: grid;
+  gap: 10px;
+}
+
+.plan-tag {
+  display: inline-flex;
+  width: fit-content;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.starter-tag {
+  background: rgba(182, 85, 31, 0.12);
+  color: var(--brand-strong);
+}
+
+.free-tag {
+  background: rgba(32, 95, 99, 0.1);
+  color: var(--accent-strong);
+}
+
+.team-tag {
+  background: rgba(32, 95, 99, 0.12);
+  color: var(--accent-strong);
+}
+
+.plan-ribbon {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: #f2c76d;
+  color: #3d2a10;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.plan-subtitle {
+  min-height: 52px;
+}
+
+.price-stack {
+  display: grid;
+  gap: 14px;
+}
+
+.price-row {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(23, 32, 51, 0.04);
+}
+
+.price-row.annual {
+  border: 1px dashed rgba(23, 32, 51, 0.12);
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.free-price {
+  min-height: 118px;
+  align-content: center;
+}
+
+.team-highlight,
+.team-annual {
+  background: rgba(255, 255, 255, 0.72);
+  border-color: rgba(23, 32, 51, 0.1);
+}
+
+.price-label {
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.price-amount {
+  font-size: 1.72rem;
+  line-height: 1.1;
+}
+
+.price-strike,
+.price-note {
+  font-size: 0.88rem;
+}
+
+.price-strike {
+  text-decoration: line-through;
+}
+
+.price-badge {
+  display: inline-flex;
+  width: fit-content;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.16);
+  color: #11653a;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.plan-card.team .price-badge {
+  background: rgba(32, 95, 99, 0.12);
+  color: var(--accent-strong);
+}
+
+.plan-cta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: auto;
+}
+
+.btn {
+  min-height: 50px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn-outline {
+  background: transparent;
+}
+
+.btn-solid {
+  color: #fff;
+}
+
+.starter-outline {
+  border-color: rgba(182, 85, 31, 0.28);
+  color: var(--brand-strong);
+}
+
+.free-outline {
+  grid-column: 1 / -1;
+  border-color: rgba(32, 95, 99, 0.22);
+  color: var(--accent-strong);
+}
+
+.starter-solid {
+  background: linear-gradient(135deg, var(--brand) 0%, #d16b31 100%);
+}
+
+.team-outline {
+  border-color: rgba(32, 95, 99, 0.22);
+  color: var(--accent-strong);
+}
+
+.team-solid {
+  background: linear-gradient(135deg, #205f63 0%, #2d7b7d 100%);
+  color: #fff;
+}
+
+.trust-section {
+  padding-top: 0;
+}
+
+.trust-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.faq-wrapper {
+  padding-top: 0;
+}
+
+.faq-shell {
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.icon-chip {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  background: rgba(182, 85, 31, 0.1);
+  color: var(--brand-strong);
+}
+
+.icon-chip-small {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+}
+
+.icon-chip-dark {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.icon-chip-warm {
+  background: rgba(217, 141, 44, 0.14);
+  color: #8c4f10;
+}
+
+.icon-chip-contrast {
+  background: rgba(32, 95, 99, 0.12);
+  color: var(--accent-strong);
+}
+
+@media (max-width: 1080px) {
+  .hero-grid,
+  .plans-grid,
+  .trust-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-side {
+    position: static;
+  }
+}
+
+@media (max-width: 760px) {
+  .shell {
+    width: min(100vw - 24px, 100%);
+  }
+
+  .plan-hero,
+  .section-block {
+    padding: 68px 0;
+  }
+
+  h1 {
+    font-size: clamp(2.2rem, 12vw, 3.2rem);
+  }
+
+  h2 {
+    font-size: clamp(1.8rem, 9vw, 2.5rem);
+  }
+
+  .plan-card,
+  .note-card,
+  .trust-card,
+  .ai-summary-card {
+    border-radius: 22px;
+    padding: 20px;
+  }
+
+  .plan-card--segment-focus {
+    transform: none;
+  }
+
+  .plan-cta {
+    grid-template-columns: 1fr;
+  }
+
+}
+.launch-availability {
+  margin: 0 0 24px;
+  padding: 14px 20px;
+  border-radius: 16px;
+  border: 1px solid rgba(32, 95, 99, 0.2);
+  background: rgba(32, 95, 99, 0.06);
+  color: #173f4b;
+  font-weight: 700;
+  line-height: 1.5;
+  text-align: center;
+}
+
+/* Inside the product, the light plan comparison follows the decision
+   experience. The public offer component and dark palette are untouched. */
+:global(.v-theme--light #choose-plan-page) {
+  --ink: #18372b;
+  --ink-soft: #50645b;
+  --line: #ccd7ce;
+  --brand: #10cc83;
+  --brand-strong: #19553e;
+  --accent: #246c51;
+  --accent-strong: #19553e;
+  --shadow: 0 18px 38px rgba(24, 55, 43, .1);
+  --shadow-soft: 0 4px 18px rgba(24, 55, 43, .055);
+  background: radial-gradient(circle at 92% 4%, rgba(237, 250, 88, .24), transparent 22%), #fafbf7;
+  font-family: var(--cb-font-body, 'Source Sans 3', sans-serif);
+}
+
+:global(.v-theme--light #choose-plan-page .eyebrow),
+:global(.v-theme--light #choose-plan-page .section-kicker) {
+  background: #edfa58;
+  color: #18372b;
+}
+
+:global(.v-theme--light #choose-plan-page .feature-context) {
+  border-color: #b9d0bc;
+  background: #f3f7f2;
+  border-left: 6px solid #10cc83;
+}
+
+:global(.v-theme--light #choose-plan-page .note-card),
+:global(.v-theme--light #choose-plan-page .trust-card),
+:global(.v-theme--light #choose-plan-page .faq-shell) {
+  background: #fff;
+}
+
+:global(.v-theme--light #choose-plan-page .ai-summary-card) {
+  background: linear-gradient(145deg, #eef8ef, #fff 68%);
+}
+
+:global(.v-theme--light #choose-plan-page .feature-list-ai li) {
+  border-color: #d8e5d9;
+}
+
+:global(.v-theme--light #choose-plan-page .segment-context),
+:global(.v-theme--light #choose-plan-page .segment-context--negocio) {
+  border-color: #bad4c1;
+  background: #edf8ed;
+}
+
+:global(.v-theme--light #choose-plan-page .plan-card.starter),
+:global(.v-theme--light #choose-plan-page .plan-card.free) {
+  background: #fff;
+}
+
+:global(.v-theme--light #choose-plan-page .plan-card.team) {
+  background: linear-gradient(165deg, #f0f8ef, #fff 64%);
+  border-color: #aacdb3;
+}
+
+:global(.v-theme--light #choose-plan-page .plan-card--segment-focus),
+:global(.v-theme--light #choose-plan-page .plan-card.team.plan-card--segment-focus) {
+  border-color: #10cc83;
+  box-shadow: 0 18px 42px rgba(24, 121, 78, .14);
+}
+
+:global(.v-theme--light #choose-plan-page .plan-ribbon),
+:global(.v-theme--light #choose-plan-page .plan-offer__promotion) {
+  background: #edfa58;
+  color: #18372b;
+}
+
+:global(.v-theme--light #choose-plan-page .plan-offer__promotion p),
+:global(.v-theme--light #choose-plan-page .plan-offer__badge) {
+  color: #18372b;
+}
+
+:global(.v-theme--light #choose-plan-page .plan-offer),
+:global(.v-theme--light #choose-plan-page .plan-offer__headline) {
+  color: #18372b;
+}
+
+:global(.v-theme--light #choose-plan-page .plan-offer__description),
+:global(.v-theme--light #choose-plan-page .plan-offer__price span),
+:global(.v-theme--light #choose-plan-page .plan-offer__conditions),
+:global(.v-theme--light #choose-plan-page .plan-offer__annual-content p) {
+  color: #50645b;
+}
+
+:global(.v-theme--light #choose-plan-page .plan-offer__primary) {
+  border-radius: 12px;
+  background: #10cc83;
+  color: #18372b;
+}
+
+:global(.v-theme--light #choose-plan-page .plan-offer__secondary) {
+  border-radius: 12px;
+  border-color: #aebfb3;
+  color: #18372b;
+}
+
+:global(.v-theme--light #choose-plan-page .plan-offer__tag),
+:global(.v-theme--light #choose-plan-page .plan-tag),
+:global(.v-theme--light #choose-plan-page .summary-tag) {
+  background: #e7f8ed;
+  color: #19553e;
+}
+
+:global(.v-theme--light #choose-plan-page .btn-outline) {
+  border-color: #aebfb3;
+  color: #18372b;
+}
+</style>

@@ -1,0 +1,1187 @@
+<template>
+  <div class="auth-page login-page">
+    <transition name="fade">
+      <div v-if="error" class="snackbar error-snackbar" @click="closeNotification('error')">
+        {{ error }}
+        <span class="close-btn">&times;</span>
+      </div>
+    </transition>
+    <transition name="fade">
+      <div v-if="loginSuccess" class="snackbar success-snackbar" @click="closeNotification('success')">
+        {{ loginSuccess }}
+        <span class="close-btn">&times;</span>
+      </div>
+    </transition>
+    <transition name="fade">
+      <div v-if="signupError" class="snackbar error-snackbar" @click="closeNotification('signupError')">
+        {{ signupError }}
+        <span class="close-btn">&times;</span>
+      </div>
+    </transition>
+    <transition name="fade">
+      <div v-if="signupSuccess" class="snackbar success-snackbar" @click="closeNotification('signupSuccess')">
+        {{ signupSuccess }}
+        <span class="close-btn">&times;</span>
+      </div>
+    </transition>
+
+    <div class="auth-shell">
+      <section class="auth-hero">
+        <div class="hero-card">
+          <button class="brand-link" type="button" @click="router.push({ name: 'landing' })">
+            <img src="/logo.jpg" alt="CoBudget" class="logo-image" />
+            <span>CoBudget</span>
+          </button>
+
+          <div class="hero-copy">
+            <span class="section-tag">{{ showSignupForm ? $t('authentication.signup.title') : $t('authentication.login.title') }}</span>
+            <h1>{{ $t('authentication.hero.title') }}</h1>
+            <p>{{ $t('authentication.hero.subtitle') }}</p>
+          </div>
+
+          <div class="hero-features">
+            <div class="feature-item">
+              <div class="feature-icon">
+                <v-icon size="18">mdi-shield-check-outline</v-icon>
+              </div>
+              <span>{{ $t('authentication.hero.feature_security') }}</span>
+            </div>
+            <div class="feature-item">
+              <div class="feature-icon">
+                <v-icon size="18">mdi-finance</v-icon>
+              </div>
+              <span>{{ $t('authentication.hero.feature_visibility') }}</span>
+            </div>
+            <div class="feature-item">
+              <div class="feature-icon">
+                <v-icon size="18">mdi-account-group-outline</v-icon>
+              </div>
+              <span>{{ $t('authentication.hero.feature_collaboration') }}</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="auth-panel">
+        <div class="panel-card">
+          <div class="panel-header">
+            <div class="panel-switch">
+              <button
+                type="button"
+                class="switch-chip"
+                :class="{ active: !showSignupForm }"
+                @click="toggleForm(false)"
+              >
+                {{ $t('authentication.login.title') }}
+              </button>
+              <button
+                type="button"
+                class="switch-chip"
+                :class="{ active: showSignupForm }"
+                @click="toggleForm(true)"
+              >
+                {{ $t('authentication.signup.title') }}
+              </button>
+            </div>
+
+            <div v-if="!showSignupForm" class="auth-form-header">
+              <h2 class="form-title">{{ $t('authentication.login.title') }}</h2>
+              <p class="form-description">{{ $t('authentication.login.description') }}</p>
+            </div>
+
+            <div v-else class="auth-form-header">
+              <h2 class="form-title">{{ $t('authentication.signup.title') }}</h2>
+              <p class="form-description">{{ $t('authentication.signup.description') }}</p>
+            </div>
+          </div>
+
+          <div v-if="!showSignupForm" class="auth-form">
+            <form @submit.prevent="userLogin">
+              <button type="button" class="oauth-button" @click="loginWithGoogle">
+                <img src="https://cdn-icons-png.flaticon.com/512/281/281764.png" alt="Google" />
+                {{ $t('authentication.login.google_login') }}
+              </button>
+
+              <div class="divider">
+                <span>{{ $t('authentication.common.or') }}</span>
+              </div>
+
+              <div class="form-group">
+                <label for="email">{{ $t('authentication.login.email_label') }}</label>
+                <input
+                  id="email"
+                  type="email"
+                  v-model="userData.email"
+                  :placeholder="$t('authentication.login.email_label')"
+                  @input="resetEmailValidation"
+                  @blur="validateEmail"
+                  :class="{ 'invalid-email': !emailValid }"
+                  required
+                />
+                <span v-if="!emailValid" class="error-message">{{ $t('authentication.login.invalid_email') }}</span>
+              </div>
+
+              <div class="form-group password-field">
+                <label for="password">{{ $t('authentication.login.password_label') }}</label>
+                <div class="password-input-wrapper">
+                  <input
+                    id="password"
+                    :type="showPassword ? 'text' : 'password'"
+                    v-model="userData.password"
+                    :placeholder="$t('authentication.login.password_label')"
+                    required
+                  />
+                  <button
+                    type="button"
+                    class="toggle-password"
+                    @click="togglePasswordVisibility"
+                    :title="showPassword ? $t('authentication.common.hide_password') : $t('authentication.common.show_password')"
+                  >
+                    <v-icon size="18">{{ showPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline' }}</v-icon>
+                  </button>
+                </div>
+              </div>
+
+              <p class="forgot-password-link">
+                <a href="#" @click.prevent="goToForgotPassword">{{ $t('authentication.login.forgot_password') }}</a>
+              </p>
+
+              <button type="submit" class="btn btn-primary" :disabled="isLoading">
+                <span v-if="isLoading" class="spinner"></span>
+                <span v-else>{{ $t('authentication.login.login_button') }}</span>
+              </button>
+
+              <div v-if="emailNotVerified" class="verification-help">
+                <p class="verification-help-text">{{ $t('authentication.messages.email_not_verified') }}</p>
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  :disabled="isResendingVerification || !userData.email"
+                  @click="resendVerificationEmail"
+                >
+                  <span v-if="isResendingVerification" class="spinner"></span>
+                  <span v-else>{{ $t('authentication.messages.resend_verification') }}</span>
+                </button>
+              </div>
+
+              <p class="switch-form">
+                {{ $t('authentication.login.not_registered') }}
+                <a href="#" @click.prevent="toggleForm(true)">{{ $t('authentication.login.create_account_link') }}</a>
+              </p>
+
+              <p class="terms-links">
+                {{ $t('authentication.common.login_terms_prefix') }}
+                <router-link to="/terms-of-use">{{ $t('authentication.common.terms_of_use') }}</router-link>
+                {{ $t('authentication.common.and') }}
+                <router-link to="/privacy-policy">{{ $t('authentication.common.privacy_policy') }}</router-link>
+              </p>
+            </form>
+
+          </div>
+
+          <div v-else class="auth-form">
+            <form @submit.prevent="userSignup">
+              <div class="form-group">
+                <label for="username">{{ $t('authentication.signup.username_label') }}</label>
+                <input id="username" type="text" v-model="signupData.username" :placeholder="$t('authentication.signup.username_label')" required />
+              </div>
+
+              <div class="form-group">
+                <label for="signup-email">{{ $t('authentication.signup.email_label') }}</label>
+                <input id="signup-email" type="email" v-model="signupData.email" :placeholder="$t('authentication.signup.email_label')" required />
+              </div>
+
+              <div class="form-group password-field">
+                <label for="signup-password">{{ $t('authentication.signup.password_label') }}</label>
+                <div class="password-input-wrapper">
+                  <input
+                    id="signup-password"
+                    :type="showPassword ? 'text' : 'password'"
+                    v-model="signupData.password"
+                    :placeholder="$t('authentication.signup.password_label')"
+                    required
+                  />
+                  <button
+                    type="button"
+                    class="toggle-password"
+                    @click="togglePasswordVisibility"
+                    :title="showPassword ? $t('authentication.common.hide_password') : $t('authentication.common.show_password')"
+                  >
+                    <v-icon size="18">{{ showPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline' }}</v-icon>
+                  </button>
+                </div>
+              </div>
+
+              <div class="form-group password-field">
+                <label for="confirmPassword">{{ $t('authentication.signup.confirm_password_label') }}</label>
+                <div class="password-input-wrapper">
+                  <input
+                    id="confirmPassword"
+                    :type="showConfirmPassword ? 'text' : 'password'"
+                    v-model="signupData.confirmPassword"
+                    :placeholder="$t('authentication.signup.confirm_password_label')"
+                    required
+                  />
+                  <button
+                    type="button"
+                    class="toggle-password"
+                    @click="toggleConfirmPasswordVisibility"
+                    :title="showConfirmPassword ? $t('authentication.common.hide_password') : $t('authentication.common.show_password')"
+                  >
+                    <v-icon size="18">{{ showConfirmPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline' }}</v-icon>
+                  </button>
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-primary" :disabled="isLoading">
+                <span v-if="isLoading" class="spinner"></span>
+                <span v-else>{{ $t('authentication.signup.signup_button') }}</span>
+              </button>
+
+              <p class="switch-form">
+                {{ $t('authentication.signup.already_registered') }}
+                <a href="#" @click.prevent="toggleForm(false)">{{ $t('authentication.signup.login_here_link') }}</a>
+              </p>
+
+              <p class="terms-links">
+                {{ $t('authentication.common.signup_terms_prefix') }}
+                <router-link to="/terms-of-use">{{ $t('authentication.common.terms_of_use') }}</router-link>
+                {{ $t('authentication.common.and') }}
+                <router-link to="/privacy-policy">{{ $t('authentication.common.privacy_policy') }}</router-link>
+              </p>
+            </form>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useUserStore } from '@/plugins/userStore'
+import { useRouter, useRoute } from 'vue-router'
+import { updateI18nLocale } from '@/i18n'
+import { readInviteAcceptanceRedirect } from '@/utils/inviteAcceptanceContext'
+import AuthService from '@/services/AuthService'
+import OnboardingOrchestrator from '@/services/OnboardingOrchestrator'
+import { clearDevQuickAccess } from '@/utils/devQuickAccess'
+import { parseApiError } from '@/utils/errorHandler'
+
+const router = useRouter()
+const route = useRoute()
+const { t, locale } = useI18n()
+const userData = ref({ email: '', password: '' })
+const signupData = ref({ email: '', password: '', confirmPassword: '', username: '' })
+const error = ref(null)
+const loginSuccess = ref(null)
+const signupError = ref(null)
+const signupSuccess = ref(null)
+const emailNotVerified = ref(false)
+const isResendingVerification = ref(false)
+const showSignupForm = ref(false)
+const isLoading = ref(false)
+const showPassword = ref(false)
+const showConfirmPassword = ref(false)
+const emailValid = ref(true)
+
+onMounted(() => {
+  if (route.query && route.query.signup === 'true') {
+    toggleForm(true)
+  }
+  if (route.query && typeof route.query.oauthError === 'string') {
+    const oauthError = route.query.oauthError
+    const purgeAfter = typeof route.query.purgeAfter === 'string' ? route.query.purgeAfter : null
+
+    if (oauthError === 'account_deleted_pending_purge') {
+      error.value = purgeAfter
+        ? t('authentication.messages.oauth_account_deleted_pending_purge_with_date', { purgeAfter })
+        : t('authentication.messages.oauth_account_deleted_pending_purge')
+    } else {
+      error.value = t('authentication.messages.oauth_login_failed')
+    }
+
+    setTimeout(() => {
+      error.value = null
+    }, 8000)
+
+    const cleanedQuery = { ...route.query }
+    delete cleanedQuery.oauthError
+    delete cleanedQuery.purgeAfter
+    router.replace({ query: cleanedQuery })
+  }
+  if (route.query && route.query.accountDeleted === 'true') {
+    loginSuccess.value = t('authentication.messages.account_deleted_success')
+    setTimeout(() => {
+      loginSuccess.value = null
+    }, 7000)
+    const cleanedQuery = { ...route.query }
+    delete cleanedQuery.accountDeleted
+    router.replace({ query: cleanedQuery })
+  }
+})
+
+const getLoginErrorMessage = (err) => {
+  const status = err?.response?.status
+  const data = err?.response?.data
+  const errorCode = typeof data === 'string' ? data : data?.error
+
+  if (err?.code === 'ERR_NETWORK' || !err?.response) {
+    return t('authentication.messages.network_error')
+  }
+
+  if (errorCode === 'EMAIL_NOT_VERIFIED') {
+    return t('authentication.messages.email_not_verified')
+  }
+
+  if (status === 401 || status === 403) {
+    return t('authentication.messages.login_failed')
+  }
+
+  if (status >= 500) {
+    return t('authentication.messages.server_unavailable')
+  }
+
+  return parseApiError(err, t('authentication.messages.login_unavailable'))
+}
+
+const userLogin = async () => {
+  try {
+    isLoading.value = true
+    emailNotVerified.value = false
+    const store = useUserStore()
+
+    const res = await AuthService.signIn(userData.value)
+    if (res.data) {
+      clearDevQuickAccess()
+      store.handleSigninResponse(res.data)
+      updateI18nLocale(res.data.language || 'PT')
+
+      try {
+        await store.reconcileWorkspaceContext()
+        await store.hydrateWorkspaceDetailsFromBudget()
+      } catch (hydrateError) {
+        console.warn('Não foi possível reconciliar/hidratar workspaces no login.', hydrateError)
+      }
+
+      const redirectTarget = readInviteAcceptanceRedirect() || route.query.redirect
+      const storedSelectedPlan =
+        typeof window !== 'undefined' && typeof window.localStorage !== 'undefined'
+          ? window.localStorage.getItem('selectedPlan')
+          : null
+      const normalizedRedirect = typeof redirectTarget === 'string' ? redirectTarget : ''
+      const billingFlowPlan = typeof route.query.plan === 'string' && route.query.plan.trim()
+        ? route.query.plan.trim()
+        : storedSelectedPlan?.trim() || null
+      const isBillingFlow = normalizedRedirect.startsWith('/choose-plan') || normalizedRedirect.startsWith('/checkout')
+
+      const onboarding = await OnboardingOrchestrator.resolvePostAuthRoute({
+        router,
+        userStore: store,
+        redirect: isBillingFlow && billingFlowPlan ? '/checkout' : redirectTarget,
+        plan: isBillingFlow ? billingFlowPlan : route.query.plan,
+        defaultRedirect: '/dashboard'
+      })
+
+      loginSuccess.value = t('authentication.messages.login_success')
+      setTimeout(() => {
+        loginSuccess.value = null
+        router.push(onboarding.route)
+      }, 800)
+    }
+  } catch (err) {
+    console.error('Login error:', err)
+    console.error('Store no momento do erro:', useUserStore())
+
+    const errorCode = typeof err?.response?.data === 'string'
+      ? err.response.data
+      : err?.response?.data?.error
+    emailNotVerified.value = errorCode === 'EMAIL_NOT_VERIFIED'
+
+    error.value = getLoginErrorMessage(err)
+    setTimeout(() => {
+      error.value = null
+    }, 4000)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const userSignup = async () => {
+  if (signupData.value.password !== signupData.value.confirmPassword) {
+    signupError.value = t('authentication.messages.password_mismatch')
+    setTimeout(() => {
+      signupError.value = null
+    }, 4000)
+    return
+  }
+  try {
+    isLoading.value = true
+
+    const requestData = {
+      username: signupData.value.username,
+      email: signupData.value.email,
+      password: signupData.value.password,
+      language: String(locale.value || 'pt').slice(0, 2).toUpperCase()
+    }
+
+    const res = await AuthService.signUp(requestData)
+
+    if (res.status === 201) {
+      const createdEmail = signupData.value.email
+      signupSuccess.value = t('authentication.messages.signup_success_ready')
+      setTimeout(() => {
+        signupSuccess.value = null
+        clearSignupForm()
+        toggleForm(false)
+        userData.value.email = createdEmail
+        emailNotVerified.value = true
+        loginSuccess.value = t('authentication.messages.signup_verify_email_notice')
+        setTimeout(() => {
+          loginSuccess.value = null
+        }, 7000)
+      }, 3000)
+    } else {
+      signupError.value = t('authentication.messages.signup_failed')
+      setTimeout(() => {
+        signupError.value = null
+      }, 4000)
+    }
+
+  } catch (err) {
+    console.error('Signup error:', err)
+    const backendMessage = typeof err?.response?.data === 'string'
+      ? err.response.data
+      : err?.response?.data?.message
+
+    const shouldReactivate = typeof backendMessage === 'string'
+      && backendMessage.toLowerCase().includes('account canceled')
+
+    if (shouldReactivate) {
+      try {
+        await AuthService.reactivate({
+          username: signupData.value.username,
+          email: signupData.value.email,
+          password: signupData.value.password
+        })
+
+        const reactivatedEmail = signupData.value.email
+        signupSuccess.value = t('authentication.messages.signup_success_ready')
+        setTimeout(() => {
+          signupSuccess.value = null
+          clearSignupForm()
+          toggleForm(false)
+          userData.value.email = reactivatedEmail
+          emailNotVerified.value = true
+          loginSuccess.value = t('authentication.messages.reactivation_success_verify_email')
+          setTimeout(() => {
+            loginSuccess.value = null
+          }, 7000)
+        }, 1200)
+        return
+      } catch (reactivationError) {
+        console.error('Reactivation error:', reactivationError)
+      }
+    }
+
+    signupError.value = t('authentication.messages.signup_failed')
+    setTimeout(() => {
+      signupError.value = null
+    }, 4000)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const resendVerificationEmail = async () => {
+  if (!userData.value.email) {
+    error.value = t('authentication.login.invalid_email')
+    return
+  }
+  try {
+    isResendingVerification.value = true
+    await AuthService.resendVerification(userData.value.email)
+    loginSuccess.value = t('authentication.messages.resend_verification_success')
+    setTimeout(() => {
+      loginSuccess.value = null
+    }, 4000)
+  } catch (err) {
+    error.value = t('authentication.messages.resend_verification_failed')
+    setTimeout(() => {
+      error.value = null
+    }, 4000)
+  } finally {
+    isResendingVerification.value = false
+  }
+}
+
+const clearSignupForm = () => {
+  signupData.value = { email: '', password: '', confirmPassword: '', username: '' }
+}
+
+const toggleForm = (isSignup) => {
+  showSignupForm.value = isSignup
+  if (isSignup) clearSignupForm()
+}
+
+const loginWithGoogle = () => {
+  window.location.href = AuthService.getOAuthAuthorizationUrl('google')
+}
+
+const goToForgotPassword = () => {
+  router.push('/forgot-password')
+}
+
+const togglePasswordVisibility = () => {
+  showPassword.value = !showPassword.value
+}
+
+const toggleConfirmPasswordVisibility = () => {
+  showConfirmPassword.value = !showConfirmPassword.value
+}
+
+const validateEmail = () => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  emailValid.value = emailRegex.test(userData.value.email)
+}
+
+const resetEmailValidation = () => {
+  emailValid.value = true
+}
+
+const closeNotification = (type) => {
+  if (type === 'error') error.value = null
+  if (type === 'success') loginSuccess.value = null
+  if (type === 'signupError') signupError.value = null
+  if (type === 'signupSuccess') signupSuccess.value = null
+}
+</script>
+
+<style>
+body:has(.login-page) {
+  background:
+    radial-gradient(circle at top left, rgba(32, 95, 99, 0.08), transparent 28%),
+    radial-gradient(circle at 85% 10%, rgba(182, 85, 31, 0.08), transparent 20%),
+    linear-gradient(180deg, #fbf8f2 0%, #f8f4ed 52%, #fdfaf5 100%) !important;
+  overflow-x: hidden;
+}
+
+body:has(.login-page) .v-application {
+  background: transparent !important;
+}
+
+body:has(.login-page) .v-main {
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+body:has(.login-page) .main-content {
+  padding: 0 !important;
+  background: transparent !important;
+}
+</style>
+
+<style scoped>
+.auth-page {
+  min-height: 100vh;
+  padding: 24px;
+  color: #172033;
+  font-family: 'Source Sans 3', sans-serif;
+}
+
+.auth-shell {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(420px, 0.88fr);
+  gap: 22px;
+  align-items: stretch;
+}
+
+.auth-hero,
+.panel-card,
+.snackbar {
+  border: 1px solid rgba(23, 32, 51, 0.1);
+  box-shadow: 0 12px 28px rgba(23, 32, 51, 0.06);
+}
+
+.auth-hero {
+  min-height: calc(100vh - 48px);
+  border-radius: 32px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(242, 236, 227, 0.78) 100%);
+  padding: 28px;
+}
+
+.hero-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.brand-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  width: fit-content;
+  border: 0;
+  background: transparent;
+  font-family: 'Manrope', sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #172033;
+  cursor: pointer;
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.5s;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+}
+
+.snackbar {
+  position: fixed;
+  top: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 280px;
+  max-width: 90vw;
+  padding: 16px 32px;
+  border-radius: 16px;
+  font-size: 1rem;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+.error-snackbar {
+  background: rgba(182, 85, 31, 0.1);
+  color: #8e4318;
+}
+.success-snackbar {
+  background: rgba(32, 95, 99, 0.12);
+  color: #173f4b;
+}
+.close-btn {
+  margin-left: 24px;
+  font-size: 1.2em;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.hero-copy {
+  display: grid;
+  gap: 18px;
+  max-width: 540px;
+}
+
+.section-tag {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  border-radius: 999px;
+  padding: 8px 14px;
+  background: rgba(32, 95, 99, 0.1);
+  color: #173f4b;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.hero-copy h1,
+.form-title,
+.panel-switch,
+.btn {
+  font-family: 'Manrope', sans-serif;
+}
+
+.hero-copy h1 {
+  margin: 0;
+  font-size: clamp(2.5rem, 5vw, 4.4rem);
+  line-height: 0.98;
+  letter-spacing: -0.05em;
+}
+
+.hero-copy p {
+  margin: 0;
+  color: #536177;
+  font-size: 1.12rem;
+  line-height: 1.7;
+}
+
+.hero-features {
+  display: grid;
+  gap: 16px;
+  margin-top: auto;
+}
+
+.feature-item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 16px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(23, 32, 51, 0.08);
+}
+
+.logo-image {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  object-fit: cover;
+  box-shadow: 0 10px 18px rgba(23, 32, 51, 0.08);
+}
+
+.feature-icon {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: rgba(32, 95, 99, 0.12);
+  color: #173f4b;
+}
+
+.auth-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.panel-card {
+  width: 100%;
+  max-width: 560px;
+  border-radius: 32px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 30px;
+}
+
+.panel-header {
+  display: grid;
+  gap: 22px;
+  margin-bottom: 26px;
+}
+
+.panel-switch {
+  display: inline-flex;
+  gap: 8px;
+  width: fit-content;
+  padding: 6px;
+  border-radius: 999px;
+  background: rgba(23, 32, 51, 0.05);
+}
+
+.switch-chip {
+  min-height: 40px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #536177;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.switch-chip.active {
+  background: #ffffff;
+  color: #172033;
+  box-shadow: 0 6px 14px rgba(23, 32, 51, 0.06);
+}
+
+.verification-help {
+  margin-top: 14px;
+  margin-bottom: 14px;
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(37, 99, 235, 0.06);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+}
+
+.verification-help-text {
+  margin: 0 0 8px 0;
+  color: #1d4ed8;
+  font-size: 0.95rem;
+}
+
+.btn.btn-secondary {
+  width: 100%;
+  background: #ffffff;
+  color: #1d4ed8;
+  border: 1px solid rgba(37, 99, 235, 0.35);
+}
+
+.btn.btn-secondary:hover {
+  background: #eef4ff;
+}
+
+.auth-form {
+  width: 100%;
+}
+
+.auth-form-header {
+  display: grid;
+  gap: 8px;
+}
+
+.form-title {
+  margin: 0;
+  font-size: clamp(1.9rem, 3vw, 2.5rem);
+  font-weight: 700;
+  color: #172033;
+}
+
+.form-description {
+  margin: 0;
+  color: #536177;
+  line-height: 1.6;
+}
+
+.form-group {
+  margin-bottom: 24px;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #172033;
+  font-size: 0.95rem;
+}
+
+input[type='text'],
+input[type='email'],
+input[type='password'] {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid rgba(23, 32, 51, 0.14);
+  border-radius: 8px;
+  background-color: #ffffff;
+  color: #1a1a1a;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+input:focus {
+  outline: none;
+  border-color: #205f63;
+  box-shadow: 0 0 0 4px rgba(32, 95, 99, 0.1);
+}
+
+.password-field {
+  position: relative;
+}
+
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper input {
+  width: 100%;
+  padding-right: 45px;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 12px;
+  cursor: pointer;
+  user-select: none;
+  color: #536177;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 8px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+}
+
+.toggle-password:hover {
+  color: #172033;
+}
+
+.invalid-email {
+  border-color: #b6551f !important;
+  background-color: rgba(182, 85, 31, 0.06) !important;
+}
+
+.error-message {
+  color: #b6551f;
+  font-size: 0.85em;
+  margin-top: 6px;
+  display: block;
+}
+
+.forgot-password-link {
+  text-align: right;
+  margin-bottom: 24px;
+}
+
+.forgot-password-link a {
+  font-size: 0.9rem;
+  color: #205f63;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.forgot-password-link a:hover {
+  color: #173f4b;
+  text-decoration: underline;
+}
+
+.btn {
+  width: 100%;
+  padding: 14px 24px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #b6551f 0%, #d16b31 100%);
+  color: white;
+  box-shadow: 0 10px 18px rgba(182, 85, 31, 0.16);
+}
+
+.btn-primary:hover:not(:disabled) {
+  box-shadow: 0 14px 24px rgba(182, 85, 31, 0.2);
+  transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.spinner {
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid #fff;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 24px 0;
+  color: #536177;
+  opacity: 0.7;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e0e0e0;
+}
+
+.divider span {
+  padding: 0 16px;
+  font-size: 0.9rem;
+}
+
+.oauth-button {
+  width: 100%;
+  padding: 12px 24px;
+  background-color: #ffffff;
+  border: 1px solid rgba(23, 32, 51, 0.14);
+  border-radius: 999px;
+  font-size: 1rem;
+  cursor: pointer;
+  color: #172033;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.oauth-button:hover {
+  border-color: #205f63;
+  background-color: rgba(32, 95, 99, 0.04);
+}
+
+.oauth-button img {
+  width: 20px;
+  height: 20px;
+}
+
+.switch-form {
+  text-align: center;
+  margin-top: 32px;
+  color: #536177;
+  opacity: 0.9;
+}
+
+.switch-form a {
+  color: #205f63;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+
+.switch-form a:hover {
+  color: #173f4b;
+  text-decoration: underline;
+}
+
+.terms-links {
+  text-align: center;
+  margin-top: 24px;
+  font-size: 0.85rem;
+  color: #758298;
+  line-height: 1.5;
+}
+
+.terms-links a {
+  color: #205f63;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.terms-links a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 1024px) {
+  .auth-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-hero {
+    min-height: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .auth-page {
+    padding: 12px;
+  }
+
+  .auth-shell {
+    gap: 14px;
+  }
+
+  .auth-hero,
+  .panel-card {
+    border-radius: 24px;
+    padding: 20px;
+  }
+
+  .hero-copy h1 {
+    font-size: clamp(2rem, 11vw, 3rem);
+  }
+
+  .panel-card {
+    padding: 22px;
+  }
+
+  .panel-switch {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .switch-chip {
+    flex: 1;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .form-title {
+    font-size: 1.5rem;
+  }
+
+  .form-description {
+    font-size: 0.9rem;
+  }
+
+  input[type='text'],
+  input[type='email'],
+  input[type='password'] {
+    padding: 12px 14px;
+    font-size: 0.95rem;
+  }
+
+  .btn {
+    padding: 12px 20px;
+    font-size: 0.95rem;
+  }
+
+  .oauth-button {
+    padding: 10px 20px;
+    font-size: 0.95rem;
+  }
+}
+
+.workspace-fields {
+  margin-top: 12px;
+  padding: 16px;
+  background-color: rgba(32, 95, 99, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(32, 95, 99, 0.12);
+}
+
+.workspace-fields input.form-control,
+.workspace-fields input[type='text'] {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid rgba(23, 32, 51, 0.14);
+  border-radius: 8px;
+  background-color: #ffffff;
+  color: #1a1a1a;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  margin-bottom: 8px;
+}
+
+.workspace-fields input:focus {
+  outline: none;
+  border-color: #205f63;
+  box-shadow: 0 0 0 3px rgba(32, 95, 99, 0.1);
+}
+
+.workspace-fields small {
+  display: block;
+  font-size: 0.85rem;
+  color: #666;
+  line-height: 1.4;
+}
+
+input[type="checkbox"] {
+  margin-right: 8px;
+  transform: scale(1.1);
+}
+
+</style>

@@ -1,0 +1,3 @@
+/* Only the journey entry buttons in light mode; dark retains existing tokens. */
+.v-theme--light .decision-entry-cta { background: #10cc83 !important; color: #18372b !important; }
+.v-theme--light .decision-entry-cta:focus-visible { outline: 3px solid #18372b; outline-offset: 3px; }
